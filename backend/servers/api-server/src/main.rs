@@ -31,8 +31,9 @@ use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
-    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig,
-    QuietHoursDrainWorker, Scheduler, SchedulerConfig,
+    EmailService, JwtService, NotificationDigestConfig, NotificationDigestWorker,
+    PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig, QuietHoursDrainWorker, Scheduler,
+    SchedulerConfig,
 };
 use state::AppState;
 
@@ -654,6 +655,18 @@ async fn main() -> anyhow::Result<()> {
         QuietHoursDrainConfig::from_env(),
     );
     let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();
+
+    // Story 2B.3 / PM #969 gap 1: email a notification digest to users who have
+    // been inactive for >24h and have unread (pending) notifications. Drives the
+    // previously-uncalled `create_digest` write path. Polls on an interval and is
+    // disabled-safe (no crash when env vars are unset; gated per-user behind the
+    // `digest_enabled` preference).
+    let notification_digest_worker = NotificationDigestWorker::new(
+        db_pool.clone(),
+        email_service.clone(),
+        NotificationDigestConfig::from_env(),
+    );
+    let _notification_digest_handle = notification_digest_worker.start();
 
     // Phase 5 — admin dependency injection (B7).
     //

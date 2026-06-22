@@ -1128,6 +1128,123 @@ impl EmailService {
         }
     }
 
+    /// Send the 24h-inactivity notification digest (Story 2B.3, PM #969 gap 1).
+    ///
+    /// Renders a localized summary of unread notifications — a total plus a
+    /// per-category breakdown taken from `category_counts` (keyed by
+    /// `entity_type`, e.g. `{ "fault": 5, "vote": 2 }`) — and always includes a
+    /// link to manage/unsubscribe from digests. Delivery goes through
+    /// [`Self::send_html_email`], so it degrades to logging when SMTP is
+    /// unconfigured and surfaces transport failures to the caller (the worker
+    /// only marks the digest sent on `Ok`).
+    pub async fn send_digest_email(
+        &self,
+        to: &str,
+        locale: &Locale,
+        notification_count: i64,
+        category_counts: &serde_json::Value,
+    ) -> Result<(), EmailError> {
+        // Manage/unsubscribe link — the digest opt-in lives in notification settings.
+        let unsubscribe_url = format!("{}/settings/notifications", self.base_url);
+        let unsubscribe_url_h = Self::html_escape(&unsubscribe_url);
+
+        let (subject, heading, intro, manage_label, footer) = match locale {
+            Locale::Slovak => (
+                format!("Máte {} nových upozornení", notification_count),
+                "Súhrn upozornení",
+                "Kým ste boli preč, nazbierali sa vám nové upozornenia:",
+                "Spravovať upozornenia alebo sa odhlásiť",
+                "Tento súhrn dostávate, pretože máte zapnuté e-mailové súhrny.",
+            ),
+            Locale::Czech => (
+                format!("Máte {} nových upozornění", notification_count),
+                "Souhrn upozornění",
+                "Zatímco jste byli pryč, nasbírala se nová upozornění:",
+                "Spravovat upozornění nebo se odhlásit",
+                "Tento souhrn dostáváte, protože máte zapnuté e-mailové souhrny.",
+            ),
+            Locale::German => (
+                format!("Sie haben {} neue Benachrichtigungen", notification_count),
+                "Benachrichtigungsübersicht",
+                "Während Ihrer Abwesenheit sind neue Benachrichtigungen eingegangen:",
+                "Benachrichtigungen verwalten oder abbestellen",
+                "Sie erhalten diese Übersicht, weil E-Mail-Zusammenfassungen aktiviert sind.",
+            ),
+            Locale::English => (
+                format!("You have {} new notifications", notification_count),
+                "Notification summary",
+                "While you were away, new notifications piled up:",
+                "Manage notifications or unsubscribe",
+                "You receive this summary because email digests are enabled.",
+            ),
+        };
+
+        // Build the per-category rows (HTML) and plain-text lines.
+        let mut rows_html = String::new();
+        let mut rows_text = String::new();
+        if let Some(map) = category_counts.as_object() {
+            let mut entries: Vec<(&String, i64)> = map
+                .iter()
+                .map(|(k, v)| (k, v.as_i64().unwrap_or(0)))
+                .collect();
+            // Stable, deterministic ordering: highest count first, then name.
+            entries.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
+            for (category, count) in entries {
+                let label = Self::humanize_category(category);
+                let label_h = Self::html_escape(&label);
+                rows_html.push_str(&format!(
+                    r#"<tr><td style="padding:6px 12px;border-bottom:1px solid #e2e8f0">{label_h}</td><td style="padding:6px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold">{count}</td></tr>"#
+                ));
+                rows_text.push_str(&format!("  - {label}: {count}\n"));
+            }
+        }
+
+        let html_body = format!(
+            r#"<!DOCTYPE html>
+<html lang="{lang}"><head><meta charset="UTF-8"><title>{heading}</title></head>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#2c5282">{heading}</h2>
+  <p>{intro}</p>
+  <table style="border-collapse:collapse;width:100%;margin:16px 0">{rows_html}</table>
+  <p style="margin:24px 0">
+    <a href="{unsubscribe_url_h}" style="color:#2c5282">{manage_label}</a>
+  </p>
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
+  <p style="font-size:12px;color:#718096">{footer}</p>
+</body></html>"#,
+            lang = locale.as_str(),
+        );
+
+        let text_body = format!(
+            "{heading}\n\n{intro}\n\n{rows_text}\n{manage_label}: {unsubscribe_url}\n\n{footer}\n",
+        );
+
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
+    }
+
+    /// Turn a raw `entity_type` (e.g. `fault`, `vote`, `announcement`) into a
+    /// human-friendly, Title-Cased label for the digest breakdown.
+    fn humanize_category(category: &str) -> String {
+        let cleaned = category.replace(['_', '-'], " ");
+        let mut out = String::with_capacity(cleaned.len());
+        for (i, word) in cleaned.split_whitespace().enumerate() {
+            if i > 0 {
+                out.push(' ');
+            }
+            let mut chars = word.chars();
+            if let Some(first) = chars.next() {
+                out.extend(first.to_uppercase());
+                out.push_str(chars.as_str());
+            }
+        }
+        if out.is_empty() {
+            category.to_string()
+        } else {
+            out
+        }
+    }
+
     /// Check if SMTP is properly configured.
     pub fn is_smtp_configured(&self) -> bool {
         matches!(self.transport.as_ref(), EmailTransport::Smtp(_))
