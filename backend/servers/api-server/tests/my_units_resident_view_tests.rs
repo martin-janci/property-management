@@ -15,8 +15,8 @@
 #[allow(dead_code)]
 mod common;
 
-use axum::http::{header, Method, Request, StatusCode};
 use axum::body::Body;
+use axum::http::{header, Method, Request, StatusCode};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -105,7 +105,9 @@ async fn resident_sees_own_unit_without_coresident_pii(pool: PgPool) {
     seed_resident(&pool, unit, my_id, "tenant", true).await;
     seed_resident(&pool, unit, other_id, "owner", false).await;
 
-    let resp = app.execute(authed_get("/api/v1/users/me/units", &token)).await;
+    let resp = app
+        .execute(authed_get("/api/v1/users/me/units", &token))
+        .await;
     resp.assert_status(StatusCode::OK);
 
     let body = resp.json_value();
@@ -115,7 +117,10 @@ async fn resident_sees_own_unit_without_coresident_pii(pool: PgPool) {
     let entry = &arr[0];
     assert_eq!(entry["unit"]["id"], serde_json::json!(unit.to_string()));
     assert_eq!(entry["unit"]["designation"], serde_json::json!("3B"));
-    assert_eq!(entry["association"]["residentType"], serde_json::json!("tenant"));
+    assert_eq!(
+        entry["association"]["residentType"],
+        serde_json::json!("tenant")
+    );
     assert_eq!(entry["association"]["isActive"], serde_json::json!(true));
     assert_eq!(entry["building"]["city"], serde_json::json!("Bratislava"));
 
@@ -149,7 +154,9 @@ async fn resident_sees_all_their_units(pool: PgPool) {
     seed_resident(&pool, unit_a, my_id, "owner", true).await;
     seed_resident(&pool, unit_b, my_id, "tenant", false).await;
 
-    let resp = app.execute(authed_get("/api/v1/users/me/units", &token)).await;
+    let resp = app
+        .execute(authed_get("/api/v1/users/me/units", &token))
+        .await;
     resp.assert_status(StatusCode::OK);
     let arr = resp.json_value();
     assert_eq!(arr.as_array().expect("array").len(), 2);
@@ -174,7 +181,9 @@ async fn non_resident_sees_no_units(pool: PgPool) {
     let outsider = TestUser::new();
     let (token, _r) = create_authenticated_user(&app, &outsider).await;
 
-    let resp = app.execute(authed_get("/api/v1/users/me/units", &token)).await;
+    let resp = app
+        .execute(authed_get("/api/v1/users/me/units", &token))
+        .await;
     resp.assert_status(StatusCode::OK);
     assert_eq!(resp.json_value().as_array().expect("array").len(), 0);
 }

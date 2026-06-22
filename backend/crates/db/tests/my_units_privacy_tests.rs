@@ -121,7 +121,10 @@ async fn find_my_units_returns_only_callers_association(pool: PgPool) {
 
     let repo = UnitResidentRepository::new(pool.clone());
 
-    let alice_units = repo.find_my_units(alice).await.expect("alice find_my_units");
+    let alice_units = repo
+        .find_my_units(alice)
+        .await
+        .expect("alice find_my_units");
     assert_eq!(alice_units.len(), 1, "Alice should see exactly her unit");
     let row = &alice_units[0];
     assert_eq!(row.unit_id, unit);
@@ -184,6 +187,10 @@ async fn find_my_units_excludes_ended_residencies(pool: PgPool) {
     let repo = UnitResidentRepository::new(pool.clone());
 
     let units = repo.find_my_units(user).await.expect("find_my_units");
-    assert_eq!(units.len(), 1, "only the active residency should be returned");
+    assert_eq!(
+        units.len(),
+        1,
+        "only the active residency should be returned"
+    );
     assert_eq!(units[0].unit_id, active_unit);
 }
