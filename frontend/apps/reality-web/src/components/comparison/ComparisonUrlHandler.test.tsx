@@ -24,6 +24,13 @@ vi.mock('../../lib/env', () => ({
   getApiBase: () => 'https://api.test',
 }));
 
+// Stub next-intl so the component's localized strings resolve in jsdom
+// without a NextIntlClientProvider. The handler renders t('loading') /
+// t('loadError'); returning the key keeps the i18n wiring under test.
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => `comparison.${key}`,
+}));
+
 import { ComparisonUrlHandler } from './ComparisonUrlHandler';
 
 const mockListing: ListingSummary = {
