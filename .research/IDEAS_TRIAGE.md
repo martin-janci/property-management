@@ -8,6 +8,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
+| 1 | Dispatcher buffer-low fire payload (2026-06-22): claimable=34/72 floor=36 — needs fresh candidate stories | routine-fire-payload 2026-06-22T22:30Z | 2026-06-22 | open |
 | 1 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured | issue #1380 | 2026-06-15 | open |
 | 1 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline | #1331 | 2026-06-13 | open |
 | 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061, #1061 closed | 2026-06-07 | done |

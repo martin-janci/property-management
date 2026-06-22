@@ -45,6 +45,15 @@
       "evidence": "frontend/apps/ppt-web/src/App.tsx: 238 lines across 5 PRs (window 2026-06-16 → 2026-06-22); hotspot_history.runs_seen=3 prior. Same structural pattern as the other two route aggregators; flagged for the periodic refactor PR queue, not actionable now.",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "buffer-low-2026-06-22",
+      "type": "untriaged-issue",
+      "source": "routine-fire-payload 2026-06-22T22:30Z",
+      "score_delta": 1,
+      "evidence": "Dispatcher fire payload: claimable=34/72 floor=36 — local backlog drained (52 open rows, 0 score>=3, 37 action-list rows mostly claimed). Requested refill of coverage/backlog with fresh candidate stories.",
+      "confidence": "high",
+      "candidate_vector": "triage"
     }
   ],
   "goal_checks": [

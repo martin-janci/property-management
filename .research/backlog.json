@@ -4054,6 +4054,29 @@
       "created_at": "2026-06-22",
       "updated_at": "2026-06-22",
       "plan": null
+    },
+    {
+      "id": "triage-buffer-low-2026-06-22",
+      "title": "Dispatcher buffer-low fire payload (2026-06-22): claimable=34/72 floor=36 — needs fresh candidate stories",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "routine-fire-payload 2026-06-22T22:30Z"
+      ],
+      "evidence": [
+        "Dispatcher reported claimable=34 vs floor=36 — local backlog drained (52 open rows in backlog.json, 0 at score>=3, 37 in action-list mostly claimed).",
+        "No backlog items met Phase 3 readiness gate (score>=3 + status=open + concrete files/sources) this run — decay shrank the eligible pool, no merged-PR signals produced fresh score>=3 vectors.",
+        "Operator action: run /ppt-project-management scan to rebuild coverage.json from use-cases/sprint-status (full refill), OR fire routine with text='deep' for a 30-day catch-up sweep, OR hand-triage the 16 follow-up issues (#1662-#1675) into action-list rows."
+      ],
+      "files": [
+        ".research/management/coverage.json",
+        ".research/management/action-list.json"
+      ],
+      "created_at": "2026-06-22",
+      "updated_at": "2026-06-22",
+      "plan": null
     }
   ]
 }
