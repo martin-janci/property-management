@@ -79,7 +79,11 @@ async fn per_user_delete_hides_only_for_deleting_user(pool: PgPool) {
         .list_threads_rls(&pool, bob, org, None, None, None, false)
         .await
         .expect("list bob before");
-    assert_eq!(alice_before.len(), 1, "alice should see the thread initially");
+    assert_eq!(
+        alice_before.len(),
+        1,
+        "alice should see the thread initially"
+    );
     assert_eq!(bob_before.len(), 1, "bob should see the thread initially");
 
     // Alice deletes the thread for herself.
@@ -105,7 +109,10 @@ async fn per_user_delete_hides_only_for_deleting_user(pool: PgPool) {
         0,
         "thread must be hidden from alice after she deletes it"
     );
-    assert_eq!(alice_count, 0, "count must mirror the list filter for alice");
+    assert_eq!(
+        alice_count, 0,
+        "count must mirror the list filter for alice"
+    );
     assert_eq!(
         bob_after.len(),
         1,
@@ -151,7 +158,11 @@ async fn archive_moves_thread_to_archived_tab_per_user(pool: PgPool) {
         .list_threads_rls(&pool, alice, org, None, None, None, true)
         .await
         .expect("alice archived");
-    assert_eq!(alice_inbox.len(), 0, "archived thread must leave alice's inbox");
+    assert_eq!(
+        alice_inbox.len(),
+        0,
+        "archived thread must leave alice's inbox"
+    );
     assert_eq!(
         alice_archived.len(),
         1,

@@ -192,7 +192,11 @@ async fn participant_delete_hides_thread_for_self_only(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(del.status, StatusCode::OK, "alice may delete her own thread");
+    assert_eq!(
+        del.status,
+        StatusCode::OK,
+        "alice may delete her own thread"
+    );
 
     // Alice's thread list no longer contains it.
     let alice_list = app
