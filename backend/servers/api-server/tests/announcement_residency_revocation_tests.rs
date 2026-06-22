@@ -99,8 +99,7 @@ async fn seed_published_announcement(
     target_type: &str,
     target_ids: &[Uuid],
 ) -> Uuid {
-    let target_json =
-        serde_json::json!(target_ids.iter().map(Uuid::to_string).collect::<Vec<_>>());
+    let target_json = serde_json::json!(target_ids.iter().map(Uuid::to_string).collect::<Vec<_>>());
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO announcements
                (organization_id, author_id, title, content, target_type, target_ids,
@@ -135,8 +134,15 @@ async fn published_announcements_revoke_on_move_out(pool: PgPool) {
     seed_resident(&pool, unit, ended, true).await;
 
     seed_published_announcement(&pool, org, manager, "Org Wide", "all", &[]).await;
-    seed_published_announcement(&pool, org, manager, "Building Notice", "building", &[building])
-        .await;
+    seed_published_announcement(
+        &pool,
+        org,
+        manager,
+        "Building Notice",
+        "building",
+        &[building],
+    )
+    .await;
     seed_published_announcement(&pool, org, manager, "Unit Notice", "units", &[unit]).await;
 
     let mut conn = pool.acquire().await.expect("acquire");

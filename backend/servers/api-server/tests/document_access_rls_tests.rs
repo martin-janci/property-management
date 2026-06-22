@@ -328,7 +328,16 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
 
     // Manager-authored unit- and building-scoped documents (the "unit content").
     seed_doc(&pool, org, manager, "Org Wide", "organization", &[], &[]).await;
-    seed_doc(&pool, org, manager, "Building Doc", "building", &[building], &[]).await;
+    seed_doc(
+        &pool,
+        org,
+        manager,
+        "Building Doc",
+        "building",
+        &[building],
+        &[],
+    )
+    .await;
     seed_doc(&pool, org, manager, "Unit Doc", "unit", &[unit], &[]).await;
 
     let mut conn = pool.acquire().await.expect("acquire");
