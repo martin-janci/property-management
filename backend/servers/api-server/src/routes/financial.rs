@@ -1364,7 +1364,10 @@ async fn get_income_statement(
             tracing::error!("Failed to generate income statement: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to generate income statement")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to generate income statement",
+                )),
             )
         })
 }
@@ -1375,7 +1378,9 @@ async fn get_balance_sheet(
     Query(query): Query<BalanceSheetQuery>,
 ) -> Result<Json<db::models::BalanceSheetReport>, (StatusCode, Json<ErrorResponse>)> {
     verify_org_access(&state, auth.user_id, query.organization_id).await?;
-    let as_of = query.as_of.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let as_of = query
+        .as_of
+        .unwrap_or_else(|| chrono::Utc::now().date_naive());
     state
         .financial_repo
         .get_balance_sheet(query.organization_id, as_of)
@@ -1385,7 +1390,10 @@ async fn get_balance_sheet(
             tracing::error!("Failed to generate balance sheet: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to generate balance sheet")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to generate balance sheet",
+                )),
             )
         })
 }
@@ -1405,7 +1413,10 @@ async fn get_cash_flow(
             tracing::error!("Failed to generate cash flow report: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to generate cash flow report")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to generate cash flow report",
+                )),
             )
         })
 }
@@ -1427,8 +1438,7 @@ fn render_income_statement_pdf(report: &db::models::IncomeStatement) -> Result<V
     doc.set_page_decorator(decorator);
 
     doc.push(
-        elements::Paragraph::new("Income Statement")
-            .styled(Style::new().bold().with_font_size(18)),
+        elements::Paragraph::new("Income Statement").styled(Style::new().bold().with_font_size(18)),
     );
     doc.push(elements::Paragraph::new(format!(
         "Period: {} – {}",
@@ -1443,10 +1453,10 @@ fn render_income_statement_pdf(report: &db::models::IncomeStatement) -> Result<V
             line.category, line.amount
         )));
     }
-    doc.push(elements::Paragraph::new(format!(
-        "Total Revenue: {}",
-        report.total_revenue
-    )).styled(Style::new().bold()));
+    doc.push(
+        elements::Paragraph::new(format!("Total Revenue: {}", report.total_revenue))
+            .styled(Style::new().bold()),
+    );
     doc.push(elements::Break::new(1));
 
     doc.push(elements::Paragraph::new("Expenses").styled(Style::new().bold().with_font_size(13)));
@@ -1456,16 +1466,16 @@ fn render_income_statement_pdf(report: &db::models::IncomeStatement) -> Result<V
             line.category, line.amount
         )));
     }
-    doc.push(elements::Paragraph::new(format!(
-        "Total Expenses: {}",
-        report.total_expenses
-    )).styled(Style::new().bold()));
+    doc.push(
+        elements::Paragraph::new(format!("Total Expenses: {}", report.total_expenses))
+            .styled(Style::new().bold()),
+    );
     doc.push(elements::Break::new(1));
 
-    doc.push(elements::Paragraph::new(format!(
-        "Net Income: {}",
-        report.net_income
-    )).styled(Style::new().bold().with_font_size(14)));
+    doc.push(
+        elements::Paragraph::new(format!("Net Income: {}", report.net_income))
+            .styled(Style::new().bold().with_font_size(14)),
+    );
 
     let mut bytes = Vec::new();
     doc.render(&mut bytes)
@@ -1490,10 +1500,12 @@ fn render_balance_sheet_pdf(report: &db::models::BalanceSheetReport) -> Result<V
     doc.set_page_decorator(decorator);
 
     doc.push(
-        elements::Paragraph::new("Balance Sheet")
-            .styled(Style::new().bold().with_font_size(18)),
+        elements::Paragraph::new("Balance Sheet").styled(Style::new().bold().with_font_size(18)),
     );
-    doc.push(elements::Paragraph::new(format!("As of: {}", report.as_of_date)));
+    doc.push(elements::Paragraph::new(format!(
+        "As of: {}",
+        report.as_of_date
+    )));
     doc.push(elements::Break::new(1));
 
     let mut table = elements::TableLayout::new(vec![6, 3, 3]);
@@ -1517,9 +1529,18 @@ fn render_balance_sheet_pdf(report: &db::models::BalanceSheetReport) -> Result<V
     doc.push(table);
     doc.push(elements::Break::new(1));
 
-    doc.push(elements::Paragraph::new(format!("Total Assets: {}", report.total_assets)).styled(Style::new().bold()));
-    doc.push(elements::Paragraph::new(format!("Total Liabilities: {}", report.total_liabilities)).styled(Style::new().bold()));
-    doc.push(elements::Paragraph::new(format!("Net Equity: {}", report.net_equity)).styled(Style::new().bold()));
+    doc.push(
+        elements::Paragraph::new(format!("Total Assets: {}", report.total_assets))
+            .styled(Style::new().bold()),
+    );
+    doc.push(
+        elements::Paragraph::new(format!("Total Liabilities: {}", report.total_liabilities))
+            .styled(Style::new().bold()),
+    );
+    doc.push(
+        elements::Paragraph::new(format!("Net Equity: {}", report.net_equity))
+            .styled(Style::new().bold()),
+    );
 
     let mut bytes = Vec::new();
     doc.render(&mut bytes)
@@ -1560,7 +1581,10 @@ fn render_cash_flow_pdf(report: &db::models::CashFlowReport) -> Result<Vec<u8>, 
             line.category, line.amount
         )));
     }
-    doc.push(elements::Paragraph::new(format!("Total Inflows: {}", report.total_inflows)).styled(Style::new().bold()));
+    doc.push(
+        elements::Paragraph::new(format!("Total Inflows: {}", report.total_inflows))
+            .styled(Style::new().bold()),
+    );
     doc.push(elements::Break::new(1));
 
     doc.push(elements::Paragraph::new("Outflows").styled(Style::new().bold().with_font_size(13)));
@@ -1570,10 +1594,16 @@ fn render_cash_flow_pdf(report: &db::models::CashFlowReport) -> Result<Vec<u8>, 
             line.category, line.amount
         )));
     }
-    doc.push(elements::Paragraph::new(format!("Total Outflows: {}", report.total_outflows)).styled(Style::new().bold()));
+    doc.push(
+        elements::Paragraph::new(format!("Total Outflows: {}", report.total_outflows))
+            .styled(Style::new().bold()),
+    );
     doc.push(elements::Break::new(1));
 
-    doc.push(elements::Paragraph::new(format!("Net Cash Flow: {}", report.net_cash_flow)).styled(Style::new().bold().with_font_size(14)));
+    doc.push(
+        elements::Paragraph::new(format!("Net Cash Flow: {}", report.net_cash_flow))
+            .styled(Style::new().bold().with_font_size(14)),
+    );
 
     let mut bytes = Vec::new();
     doc.render(&mut bytes)
@@ -1587,38 +1617,96 @@ fn render_income_statement_xlsx(report: &db::models::IncomeStatement) -> Result<
 
     let mut workbook = Workbook::new();
     let sheet = workbook.add_worksheet();
-    sheet.set_name("Income Statement").map_err(|e| e.to_string())?;
+    sheet
+        .set_name("Income Statement")
+        .map_err(|e| e.to_string())?;
 
-    sheet.write(0, 0, "Income Statement").map_err(|e| e.to_string())?;
-    sheet.write(1, 0, format!("Period: {} to {}", report.from_date, report.to_date)).map_err(|e| e.to_string())?;
+    sheet
+        .write(0, 0, "Income Statement")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            1,
+            0,
+            format!("Period: {} to {}", report.from_date, report.to_date),
+        )
+        .map_err(|e| e.to_string())?;
 
     let mut row: u32 = 3;
     sheet.write(row, 0, "Revenue").map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.revenue {
-        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 0, line.category.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(
+                row,
+                1,
+                line.amount.to_string().parse::<f64>().unwrap_or(0.0),
+            )
+            .map_err(|e| e.to_string())?;
         row += 1;
     }
-    sheet.write(row, 0, "Total Revenue").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.total_revenue.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Revenue")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report
+                .total_revenue
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     row += 2;
     sheet.write(row, 0, "Expenses").map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.expenses {
-        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 0, line.category.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(
+                row,
+                1,
+                line.amount.to_string().parse::<f64>().unwrap_or(0.0),
+            )
+            .map_err(|e| e.to_string())?;
         row += 1;
     }
-    sheet.write(row, 0, "Total Expenses").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.total_expenses.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Expenses")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report
+                .total_expenses
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     row += 2;
-    sheet.write(row, 0, "Net Income").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.net_income.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Net Income")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report.net_income.to_string().parse::<f64>().unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     workbook.save_to_buffer().map_err(|e| e.to_string())
 }
@@ -1631,8 +1719,12 @@ fn render_balance_sheet_xlsx(report: &db::models::BalanceSheetReport) -> Result<
     let sheet = workbook.add_worksheet();
     sheet.set_name("Balance Sheet").map_err(|e| e.to_string())?;
 
-    sheet.write(0, 0, "Balance Sheet").map_err(|e| e.to_string())?;
-    sheet.write(1, 0, format!("As of: {}", report.as_of_date)).map_err(|e| e.to_string())?;
+    sheet
+        .write(0, 0, "Balance Sheet")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(1, 0, format!("As of: {}", report.as_of_date))
+        .map_err(|e| e.to_string())?;
 
     let mut row: u32 = 3;
     sheet.write(row, 0, "Account").map_err(|e| e.to_string())?;
@@ -1640,20 +1732,62 @@ fn render_balance_sheet_xlsx(report: &db::models::BalanceSheetReport) -> Result<
     sheet.write(row, 2, "Balance").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.accounts {
-        sheet.write(row, 0, line.account_name.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 1, line.account_type.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 2, line.balance.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 0, line.account_name.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 1, line.account_type.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(
+                row,
+                2,
+                line.balance.to_string().parse::<f64>().unwrap_or(0.0),
+            )
+            .map_err(|e| e.to_string())?;
         row += 1;
     }
     row += 1;
-    sheet.write(row, 0, "Total Assets").map_err(|e| e.to_string())?;
-    sheet.write(row, 2, report.total_assets.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Assets")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            2,
+            report
+                .total_assets
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
     row += 1;
-    sheet.write(row, 0, "Total Liabilities").map_err(|e| e.to_string())?;
-    sheet.write(row, 2, report.total_liabilities.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Liabilities")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            2,
+            report
+                .total_liabilities
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
     row += 1;
-    sheet.write(row, 0, "Net Equity").map_err(|e| e.to_string())?;
-    sheet.write(row, 2, report.net_equity.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Net Equity")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            2,
+            report.net_equity.to_string().parse::<f64>().unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     workbook.save_to_buffer().map_err(|e| e.to_string())
 }
@@ -1666,36 +1800,96 @@ fn render_cash_flow_xlsx(report: &db::models::CashFlowReport) -> Result<Vec<u8>,
     let sheet = workbook.add_worksheet();
     sheet.set_name("Cash Flow").map_err(|e| e.to_string())?;
 
-    sheet.write(0, 0, "Cash Flow Statement").map_err(|e| e.to_string())?;
-    sheet.write(1, 0, format!("Period: {} to {}", report.from_date, report.to_date)).map_err(|e| e.to_string())?;
+    sheet
+        .write(0, 0, "Cash Flow Statement")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            1,
+            0,
+            format!("Period: {} to {}", report.from_date, report.to_date),
+        )
+        .map_err(|e| e.to_string())?;
 
     let mut row: u32 = 3;
     sheet.write(row, 0, "Inflows").map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.inflows {
-        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 0, line.category.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(
+                row,
+                1,
+                line.amount.to_string().parse::<f64>().unwrap_or(0.0),
+            )
+            .map_err(|e| e.to_string())?;
         row += 1;
     }
-    sheet.write(row, 0, "Total Inflows").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.total_inflows.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Inflows")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report
+                .total_inflows
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     row += 2;
     sheet.write(row, 0, "Outflows").map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.outflows {
-        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
-        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        sheet
+            .write(row, 0, line.category.as_str())
+            .map_err(|e| e.to_string())?;
+        sheet
+            .write(
+                row,
+                1,
+                line.amount.to_string().parse::<f64>().unwrap_or(0.0),
+            )
+            .map_err(|e| e.to_string())?;
         row += 1;
     }
-    sheet.write(row, 0, "Total Outflows").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.total_outflows.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Total Outflows")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report
+                .total_outflows
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     row += 2;
-    sheet.write(row, 0, "Net Cash Flow").map_err(|e| e.to_string())?;
-    sheet.write(row, 1, report.net_cash_flow.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Net Cash Flow")
+        .map_err(|e| e.to_string())?;
+    sheet
+        .write(
+            row,
+            1,
+            report
+                .net_cash_flow
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
 
     workbook.save_to_buffer().map_err(|e| e.to_string())
 }
@@ -1717,7 +1911,10 @@ async fn export_report(
     if format != "pdf" && format != "xlsx" {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("BAD_REQUEST", "format must be pdf or xlsx")),
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "format must be pdf or xlsx",
+            )),
         ));
     }
 
@@ -1725,46 +1922,170 @@ async fn export_report(
 
     match report.as_str() {
         "income-statement" => {
-            let from = query.from.ok_or_else(|| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new("BAD_REQUEST", "from date required for income-statement"))))?;
+            let from = query.from.ok_or_else(|| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "BAD_REQUEST",
+                        "from date required for income-statement",
+                    )),
+                )
+            })?;
             let to = query.to.unwrap_or(today);
-            let data = state.financial_repo.get_income_statement(query.organization_id, from, to).await
-                .map_err(|e| { tracing::error!("income statement export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load income statement"))) })?;
+            let data = state
+                .financial_repo
+                .get_income_statement(query.organization_id, from, to)
+                .await
+                .map_err(|e| {
+                    tracing::error!("income statement export: {:?}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "DB_ERROR",
+                            "Failed to load income statement",
+                        )),
+                    )
+                })?;
             if format == "pdf" {
-                let bytes = render_income_statement_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"income-statement.pdf\"")];
+                let bytes = render_income_statement_pdf(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("PDF_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (axum::http::header::CONTENT_TYPE, "application/pdf"),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"income-statement.pdf\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             } else {
-                let bytes = render_income_statement_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"income-statement.xlsx\"")];
+                let bytes = render_income_statement_xlsx(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("XLSX_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (
+                        axum::http::header::CONTENT_TYPE,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"income-statement.xlsx\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             }
         }
         "balance-sheet" => {
             let as_of = query.as_of.unwrap_or(today);
-            let data = state.financial_repo.get_balance_sheet(query.organization_id, as_of).await
-                .map_err(|e| { tracing::error!("balance sheet export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load balance sheet"))) })?;
+            let data = state
+                .financial_repo
+                .get_balance_sheet(query.organization_id, as_of)
+                .await
+                .map_err(|e| {
+                    tracing::error!("balance sheet export: {:?}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "DB_ERROR",
+                            "Failed to load balance sheet",
+                        )),
+                    )
+                })?;
             if format == "pdf" {
-                let bytes = render_balance_sheet_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"balance-sheet.pdf\"")];
+                let bytes = render_balance_sheet_pdf(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("PDF_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (axum::http::header::CONTENT_TYPE, "application/pdf"),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"balance-sheet.pdf\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             } else {
-                let bytes = render_balance_sheet_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"balance-sheet.xlsx\"")];
+                let bytes = render_balance_sheet_xlsx(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("XLSX_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (
+                        axum::http::header::CONTENT_TYPE,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"balance-sheet.xlsx\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             }
         }
         "cash-flow" => {
-            let from = query.from.ok_or_else(|| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new("BAD_REQUEST", "from date required for cash-flow"))))?;
+            let from = query.from.ok_or_else(|| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "BAD_REQUEST",
+                        "from date required for cash-flow",
+                    )),
+                )
+            })?;
             let to = query.to.unwrap_or(today);
-            let data = state.financial_repo.get_cash_flow(query.organization_id, from, to).await
-                .map_err(|e| { tracing::error!("cash flow export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load cash flow"))) })?;
+            let data = state
+                .financial_repo
+                .get_cash_flow(query.organization_id, from, to)
+                .await
+                .map_err(|e| {
+                    tracing::error!("cash flow export: {:?}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("DB_ERROR", "Failed to load cash flow")),
+                    )
+                })?;
             if format == "pdf" {
-                let bytes = render_cash_flow_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"cash-flow.pdf\"")];
+                let bytes = render_cash_flow_pdf(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("PDF_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (axum::http::header::CONTENT_TYPE, "application/pdf"),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"cash-flow.pdf\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             } else {
-                let bytes = render_cash_flow_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
-                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"cash-flow.xlsx\"")];
+                let bytes = render_cash_flow_xlsx(&data).map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("XLSX_ERROR", &e)),
+                    )
+                })?;
+                let headers = [
+                    (
+                        axum::http::header::CONTENT_TYPE,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                    (
+                        axum::http::header::CONTENT_DISPOSITION,
+                        "attachment; filename=\"cash-flow.xlsx\"",
+                    ),
+                ];
                 Ok((StatusCode::OK, headers, bytes).into_response())
             }
         }
@@ -1835,8 +2156,14 @@ mod tests {
         let report = IncomeStatement {
             from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
             to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
-            revenue: vec![IncomeStatementLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
-            expenses: vec![IncomeStatementLine { category: "maintenance_fee".into(), amount: Decimal::new(10000, 2) }],
+            revenue: vec![IncomeStatementLine {
+                category: "payment_received".into(),
+                amount: Decimal::new(50000, 2),
+            }],
+            expenses: vec![IncomeStatementLine {
+                category: "maintenance_fee".into(),
+                amount: Decimal::new(10000, 2),
+            }],
             total_revenue: Decimal::new(50000, 2),
             total_expenses: Decimal::new(10000, 2),
             net_income: Decimal::new(40000, 2),
@@ -1874,8 +2201,14 @@ mod tests {
         let report = CashFlowReport {
             from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
             to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
-            inflows: vec![CashFlowLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
-            outflows: vec![CashFlowLine { category: "maintenance_fee".into(), amount: Decimal::new(10000, 2) }],
+            inflows: vec![CashFlowLine {
+                category: "payment_received".into(),
+                amount: Decimal::new(50000, 2),
+            }],
+            outflows: vec![CashFlowLine {
+                category: "maintenance_fee".into(),
+                amount: Decimal::new(10000, 2),
+            }],
             total_inflows: Decimal::new(50000, 2),
             total_outflows: Decimal::new(10000, 2),
             net_cash_flow: Decimal::new(40000, 2),
@@ -1892,7 +2225,10 @@ mod tests {
         let report = IncomeStatement {
             from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
             to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
-            revenue: vec![IncomeStatementLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
+            revenue: vec![IncomeStatementLine {
+                category: "payment_received".into(),
+                amount: Decimal::new(50000, 2),
+            }],
             expenses: vec![],
             total_revenue: Decimal::new(50000, 2),
             total_expenses: Decimal::ZERO,
