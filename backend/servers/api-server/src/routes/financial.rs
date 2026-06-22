@@ -1656,16 +1656,14 @@ fn render_income_statement_xlsx(report: &db::models::IncomeStatement) -> Result<
         .write(
             row,
             1,
-            report
-                .total_revenue
-                .to_string()
-                .parse::<f64>()
-                .unwrap_or(0.0),
+            report.total_revenue.to_string().parse::<f64>().unwrap_or(0.0),
         )
         .map_err(|e| e.to_string())?;
 
     row += 2;
-    sheet.write(row, 0, "Expenses").map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Expenses")
+        .map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.expenses {
@@ -1717,7 +1715,9 @@ fn render_balance_sheet_xlsx(report: &db::models::BalanceSheetReport) -> Result<
 
     let mut workbook = Workbook::new();
     let sheet = workbook.add_worksheet();
-    sheet.set_name("Balance Sheet").map_err(|e| e.to_string())?;
+    sheet
+        .set_name("Balance Sheet")
+        .map_err(|e| e.to_string())?;
 
     sheet
         .write(0, 0, "Balance Sheet")
@@ -1844,7 +1844,9 @@ fn render_cash_flow_xlsx(report: &db::models::CashFlowReport) -> Result<Vec<u8>,
         .map_err(|e| e.to_string())?;
 
     row += 2;
-    sheet.write(row, 0, "Outflows").map_err(|e| e.to_string())?;
+    sheet
+        .write(row, 0, "Outflows")
+        .map_err(|e| e.to_string())?;
     sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
     row += 1;
     for line in &report.outflows {
@@ -1940,10 +1942,7 @@ async fn export_report(
                     tracing::error!("income statement export: {:?}", e);
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "DB_ERROR",
-                            "Failed to load income statement",
-                        )),
+                        Json(ErrorResponse::new("DB_ERROR", "Failed to load income statement")),
                     )
                 })?;
             if format == "pdf" {
@@ -1991,10 +1990,7 @@ async fn export_report(
                     tracing::error!("balance sheet export: {:?}", e);
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "DB_ERROR",
-                            "Failed to load balance sheet",
-                        )),
+                        Json(ErrorResponse::new("DB_ERROR", "Failed to load balance sheet")),
                     )
                 })?;
             if format == "pdf" {
