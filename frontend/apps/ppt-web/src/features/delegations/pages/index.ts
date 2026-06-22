@@ -1,0 +1,1 @@
+export { DelegationsPage } from './DelegationsPage';

@@ -16,6 +16,7 @@ export * from './buildings';
 export * from './community';
 export * from './compliance';
 export * from './critical-notifications';
+export * from './delegation';
 export * from './disputes';
 export * from './documents';
 export * from './ecosystem';
