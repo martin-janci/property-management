@@ -164,6 +164,10 @@ pub fn router() -> Router<AppState> {
         .route("/overdue-invoices", get(get_overdue_invoices))
         // Reports (Story 11.7)
         .route("/reports/ar-aging", get(get_ar_aging_report))
+        .route("/reports/income-statement", get(get_income_statement))
+        .route("/reports/balance-sheet", get(get_balance_sheet))
+        .route("/reports/cash-flow", get(get_cash_flow))
+        .route("/reports/{report}/export", get(export_report))
 }
 
 // ==================== Request/Response Types ====================
@@ -328,6 +332,34 @@ pub struct ARReportQuery {
     pub organization_id: Uuid,
     /// Filter by building
     pub building_id: Option<Uuid>,
+}
+
+/// Income statement / cash flow date-range query.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct DateRangeReportQuery {
+    pub organization_id: Uuid,
+    pub from: NaiveDate,
+    pub to: NaiveDate,
+}
+
+/// Balance sheet as-of query.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct BalanceSheetQuery {
+    pub organization_id: Uuid,
+    pub as_of: Option<NaiveDate>,
+}
+
+/// Export query — wraps either a date range or as_of, plus format.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ExportQuery {
+    pub organization_id: Uuid,
+    /// "pdf" or "xlsx"
+    pub format: String,
+    /// Required for income-statement and cash-flow exports
+    pub from: Option<NaiveDate>,
+    pub to: Option<NaiveDate>,
+    /// Required for balance-sheet export
+    pub as_of: Option<NaiveDate>,
 }
 
 /// Create account with org.
@@ -1315,6 +1347,434 @@ async fn get_ar_aging_report(
         })
 }
 
+// ==================== Financial Statement Handlers (Story 11.7) ====================
+
+async fn get_income_statement(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<DateRangeReportQuery>,
+) -> Result<Json<db::models::IncomeStatement>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    state
+        .financial_repo
+        .get_income_statement(query.organization_id, query.from, query.to)
+        .await
+        .map(Json)
+        .map_err(|e| {
+            tracing::error!("Failed to generate income statement: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to generate income statement")),
+            )
+        })
+}
+
+async fn get_balance_sheet(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<BalanceSheetQuery>,
+) -> Result<Json<db::models::BalanceSheetReport>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let as_of = query.as_of.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    state
+        .financial_repo
+        .get_balance_sheet(query.organization_id, as_of)
+        .await
+        .map(Json)
+        .map_err(|e| {
+            tracing::error!("Failed to generate balance sheet: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to generate balance sheet")),
+            )
+        })
+}
+
+async fn get_cash_flow(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<DateRangeReportQuery>,
+) -> Result<Json<db::models::CashFlowReport>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    state
+        .financial_repo
+        .get_cash_flow(query.organization_id, query.from, query.to)
+        .await
+        .map(Json)
+        .map_err(|e| {
+            tracing::error!("Failed to generate cash flow report: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to generate cash flow report")),
+            )
+        })
+}
+
+/// Render an income statement to PDF bytes using genpdf.
+fn render_income_statement_pdf(report: &db::models::IncomeStatement) -> Result<Vec<u8>, String> {
+    use genpdf::{elements, style::Style, Element};
+
+    let font_family = genpdf::fonts::from_files(
+        "/usr/share/fonts/truetype/liberation",
+        "LiberationSans",
+        None,
+    )
+    .map_err(|e| format!("font load error: {}", e))?;
+    let mut doc = genpdf::Document::new(font_family);
+    doc.set_title("Income Statement");
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(15);
+    doc.set_page_decorator(decorator);
+
+    doc.push(
+        elements::Paragraph::new("Income Statement")
+            .styled(Style::new().bold().with_font_size(18)),
+    );
+    doc.push(elements::Paragraph::new(format!(
+        "Period: {} – {}",
+        report.from_date, report.to_date
+    )));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new("Revenue").styled(Style::new().bold().with_font_size(13)));
+    for line in &report.revenue {
+        doc.push(elements::Paragraph::new(format!(
+            "  {}: {}",
+            line.category, line.amount
+        )));
+    }
+    doc.push(elements::Paragraph::new(format!(
+        "Total Revenue: {}",
+        report.total_revenue
+    )).styled(Style::new().bold()));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new("Expenses").styled(Style::new().bold().with_font_size(13)));
+    for line in &report.expenses {
+        doc.push(elements::Paragraph::new(format!(
+            "  {}: {}",
+            line.category, line.amount
+        )));
+    }
+    doc.push(elements::Paragraph::new(format!(
+        "Total Expenses: {}",
+        report.total_expenses
+    )).styled(Style::new().bold()));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new(format!(
+        "Net Income: {}",
+        report.net_income
+    )).styled(Style::new().bold().with_font_size(14)));
+
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes)
+        .map_err(|e| format!("PDF render error: {}", e))?;
+    Ok(bytes)
+}
+
+/// Render a balance sheet to PDF bytes.
+fn render_balance_sheet_pdf(report: &db::models::BalanceSheetReport) -> Result<Vec<u8>, String> {
+    use genpdf::{elements, style::Style, Element};
+
+    let font_family = genpdf::fonts::from_files(
+        "/usr/share/fonts/truetype/liberation",
+        "LiberationSans",
+        None,
+    )
+    .map_err(|e| format!("font load error: {}", e))?;
+    let mut doc = genpdf::Document::new(font_family);
+    doc.set_title("Balance Sheet");
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(15);
+    doc.set_page_decorator(decorator);
+
+    doc.push(
+        elements::Paragraph::new("Balance Sheet")
+            .styled(Style::new().bold().with_font_size(18)),
+    );
+    doc.push(elements::Paragraph::new(format!("As of: {}", report.as_of_date)));
+    doc.push(elements::Break::new(1));
+
+    let mut table = elements::TableLayout::new(vec![6, 3, 3]);
+    table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
+    table
+        .row()
+        .element(elements::Paragraph::new("Account").styled(Style::new().bold()))
+        .element(elements::Paragraph::new("Type").styled(Style::new().bold()))
+        .element(elements::Paragraph::new("Balance").styled(Style::new().bold()))
+        .push()
+        .map_err(|e| format!("table header: {}", e))?;
+    for line in &report.accounts {
+        table
+            .row()
+            .element(elements::Paragraph::new(line.account_name.clone()))
+            .element(elements::Paragraph::new(line.account_type.clone()))
+            .element(elements::Paragraph::new(line.balance.to_string()))
+            .push()
+            .map_err(|e| format!("table row: {}", e))?;
+    }
+    doc.push(table);
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new(format!("Total Assets: {}", report.total_assets)).styled(Style::new().bold()));
+    doc.push(elements::Paragraph::new(format!("Total Liabilities: {}", report.total_liabilities)).styled(Style::new().bold()));
+    doc.push(elements::Paragraph::new(format!("Net Equity: {}", report.net_equity)).styled(Style::new().bold()));
+
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes)
+        .map_err(|e| format!("PDF render error: {}", e))?;
+    Ok(bytes)
+}
+
+/// Render a cash flow report to PDF bytes.
+fn render_cash_flow_pdf(report: &db::models::CashFlowReport) -> Result<Vec<u8>, String> {
+    use genpdf::{elements, style::Style, Element};
+
+    let font_family = genpdf::fonts::from_files(
+        "/usr/share/fonts/truetype/liberation",
+        "LiberationSans",
+        None,
+    )
+    .map_err(|e| format!("font load error: {}", e))?;
+    let mut doc = genpdf::Document::new(font_family);
+    doc.set_title("Cash Flow Statement");
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(15);
+    doc.set_page_decorator(decorator);
+
+    doc.push(
+        elements::Paragraph::new("Cash Flow Statement")
+            .styled(Style::new().bold().with_font_size(18)),
+    );
+    doc.push(elements::Paragraph::new(format!(
+        "Period: {} – {}",
+        report.from_date, report.to_date
+    )));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new("Inflows").styled(Style::new().bold().with_font_size(13)));
+    for line in &report.inflows {
+        doc.push(elements::Paragraph::new(format!(
+            "  {}: {}",
+            line.category, line.amount
+        )));
+    }
+    doc.push(elements::Paragraph::new(format!("Total Inflows: {}", report.total_inflows)).styled(Style::new().bold()));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new("Outflows").styled(Style::new().bold().with_font_size(13)));
+    for line in &report.outflows {
+        doc.push(elements::Paragraph::new(format!(
+            "  {}: {}",
+            line.category, line.amount
+        )));
+    }
+    doc.push(elements::Paragraph::new(format!("Total Outflows: {}", report.total_outflows)).styled(Style::new().bold()));
+    doc.push(elements::Break::new(1));
+
+    doc.push(elements::Paragraph::new(format!("Net Cash Flow: {}", report.net_cash_flow)).styled(Style::new().bold().with_font_size(14)));
+
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes)
+        .map_err(|e| format!("PDF render error: {}", e))?;
+    Ok(bytes)
+}
+
+/// Render an income statement to xlsx bytes.
+fn render_income_statement_xlsx(report: &db::models::IncomeStatement) -> Result<Vec<u8>, String> {
+    use rust_xlsxwriter::Workbook;
+
+    let mut workbook = Workbook::new();
+    let sheet = workbook.add_worksheet();
+    sheet.set_name("Income Statement").map_err(|e| e.to_string())?;
+
+    sheet.write(0, 0, "Income Statement").map_err(|e| e.to_string())?;
+    sheet.write(1, 0, format!("Period: {} to {}", report.from_date, report.to_date)).map_err(|e| e.to_string())?;
+
+    let mut row: u32 = 3;
+    sheet.write(row, 0, "Revenue").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
+    row += 1;
+    for line in &report.revenue {
+        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        row += 1;
+    }
+    sheet.write(row, 0, "Total Revenue").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.total_revenue.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    row += 2;
+    sheet.write(row, 0, "Expenses").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
+    row += 1;
+    for line in &report.expenses {
+        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        row += 1;
+    }
+    sheet.write(row, 0, "Total Expenses").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.total_expenses.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    row += 2;
+    sheet.write(row, 0, "Net Income").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.net_income.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    workbook.save_to_buffer().map_err(|e| e.to_string())
+}
+
+/// Render a balance sheet to xlsx bytes.
+fn render_balance_sheet_xlsx(report: &db::models::BalanceSheetReport) -> Result<Vec<u8>, String> {
+    use rust_xlsxwriter::Workbook;
+
+    let mut workbook = Workbook::new();
+    let sheet = workbook.add_worksheet();
+    sheet.set_name("Balance Sheet").map_err(|e| e.to_string())?;
+
+    sheet.write(0, 0, "Balance Sheet").map_err(|e| e.to_string())?;
+    sheet.write(1, 0, format!("As of: {}", report.as_of_date)).map_err(|e| e.to_string())?;
+
+    let mut row: u32 = 3;
+    sheet.write(row, 0, "Account").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, "Type").map_err(|e| e.to_string())?;
+    sheet.write(row, 2, "Balance").map_err(|e| e.to_string())?;
+    row += 1;
+    for line in &report.accounts {
+        sheet.write(row, 0, line.account_name.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 1, line.account_type.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 2, line.balance.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        row += 1;
+    }
+    row += 1;
+    sheet.write(row, 0, "Total Assets").map_err(|e| e.to_string())?;
+    sheet.write(row, 2, report.total_assets.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    row += 1;
+    sheet.write(row, 0, "Total Liabilities").map_err(|e| e.to_string())?;
+    sheet.write(row, 2, report.total_liabilities.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+    row += 1;
+    sheet.write(row, 0, "Net Equity").map_err(|e| e.to_string())?;
+    sheet.write(row, 2, report.net_equity.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    workbook.save_to_buffer().map_err(|e| e.to_string())
+}
+
+/// Render a cash flow report to xlsx bytes.
+fn render_cash_flow_xlsx(report: &db::models::CashFlowReport) -> Result<Vec<u8>, String> {
+    use rust_xlsxwriter::Workbook;
+
+    let mut workbook = Workbook::new();
+    let sheet = workbook.add_worksheet();
+    sheet.set_name("Cash Flow").map_err(|e| e.to_string())?;
+
+    sheet.write(0, 0, "Cash Flow Statement").map_err(|e| e.to_string())?;
+    sheet.write(1, 0, format!("Period: {} to {}", report.from_date, report.to_date)).map_err(|e| e.to_string())?;
+
+    let mut row: u32 = 3;
+    sheet.write(row, 0, "Inflows").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
+    row += 1;
+    for line in &report.inflows {
+        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        row += 1;
+    }
+    sheet.write(row, 0, "Total Inflows").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.total_inflows.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    row += 2;
+    sheet.write(row, 0, "Outflows").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, "Amount").map_err(|e| e.to_string())?;
+    row += 1;
+    for line in &report.outflows {
+        sheet.write(row, 0, line.category.as_str()).map_err(|e| e.to_string())?;
+        sheet.write(row, 1, line.amount.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+        row += 1;
+    }
+    sheet.write(row, 0, "Total Outflows").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.total_outflows.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    row += 2;
+    sheet.write(row, 0, "Net Cash Flow").map_err(|e| e.to_string())?;
+    sheet.write(row, 1, report.net_cash_flow.to_string().parse::<f64>().unwrap_or(0.0)).map_err(|e| e.to_string())?;
+
+    workbook.save_to_buffer().map_err(|e| e.to_string())
+}
+
+/// Export a financial report as PDF or xlsx.
+/// Path: GET /financial/reports/{report}/export
+/// `report` is one of: income-statement, balance-sheet, cash-flow
+async fn export_report(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(report): Path<String>,
+    Query(query): Query<ExportQuery>,
+) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+    use axum::response::IntoResponse;
+
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+
+    let format = query.format.to_lowercase();
+    if format != "pdf" && format != "xlsx" {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("BAD_REQUEST", "format must be pdf or xlsx")),
+        ));
+    }
+
+    let today = chrono::Utc::now().date_naive();
+
+    match report.as_str() {
+        "income-statement" => {
+            let from = query.from.ok_or_else(|| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new("BAD_REQUEST", "from date required for income-statement"))))?;
+            let to = query.to.unwrap_or(today);
+            let data = state.financial_repo.get_income_statement(query.organization_id, from, to).await
+                .map_err(|e| { tracing::error!("income statement export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load income statement"))) })?;
+            if format == "pdf" {
+                let bytes = render_income_statement_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"income-statement.pdf\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            } else {
+                let bytes = render_income_statement_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"income-statement.xlsx\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            }
+        }
+        "balance-sheet" => {
+            let as_of = query.as_of.unwrap_or(today);
+            let data = state.financial_repo.get_balance_sheet(query.organization_id, as_of).await
+                .map_err(|e| { tracing::error!("balance sheet export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load balance sheet"))) })?;
+            if format == "pdf" {
+                let bytes = render_balance_sheet_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"balance-sheet.pdf\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            } else {
+                let bytes = render_balance_sheet_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"balance-sheet.xlsx\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            }
+        }
+        "cash-flow" => {
+            let from = query.from.ok_or_else(|| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new("BAD_REQUEST", "from date required for cash-flow"))))?;
+            let to = query.to.unwrap_or(today);
+            let data = state.financial_repo.get_cash_flow(query.organization_id, from, to).await
+                .map_err(|e| { tracing::error!("cash flow export: {:?}", e); (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to load cash flow"))) })?;
+            if format == "pdf" {
+                let bytes = render_cash_flow_pdf(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("PDF_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/pdf"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"cash-flow.pdf\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            } else {
+                let bytes = render_cash_flow_xlsx(&data).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("XLSX_ERROR", &e))))?;
+                let headers = [(axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"cash-flow.xlsx\"")];
+                Ok((StatusCode::OK, headers, bytes).into_response())
+            }
+        }
+        _ => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Unknown report type")),
+        )),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1366,6 +1826,82 @@ mod tests {
             }],
             payments: vec![],
         }
+    }
+
+    #[test]
+    fn render_income_statement_pdf_produces_valid_pdf() {
+        use db::models::{IncomeStatement, IncomeStatementLine};
+        use rust_decimal::Decimal;
+        let report = IncomeStatement {
+            from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            revenue: vec![IncomeStatementLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
+            expenses: vec![IncomeStatementLine { category: "maintenance_fee".into(), amount: Decimal::new(10000, 2) }],
+            total_revenue: Decimal::new(50000, 2),
+            total_expenses: Decimal::new(10000, 2),
+            net_income: Decimal::new(40000, 2),
+        };
+        let bytes = render_income_statement_pdf(&report).expect("render income statement PDF");
+        assert!(bytes.len() > 100);
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
+
+    #[test]
+    fn render_balance_sheet_pdf_produces_valid_pdf() {
+        use db::models::{BalanceSheetLine, BalanceSheetReport};
+        use rust_decimal::Decimal;
+        let report = BalanceSheetReport {
+            as_of_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            accounts: vec![BalanceSheetLine {
+                account_id: uuid::Uuid::new_v4(),
+                account_name: "Operating Account".into(),
+                account_type: "operating".into(),
+                balance: Decimal::new(100000, 2),
+            }],
+            total_assets: Decimal::new(100000, 2),
+            total_liabilities: Decimal::ZERO,
+            net_equity: Decimal::new(100000, 2),
+        };
+        let bytes = render_balance_sheet_pdf(&report).expect("render balance sheet PDF");
+        assert!(bytes.len() > 100);
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
+
+    #[test]
+    fn render_cash_flow_pdf_produces_valid_pdf() {
+        use db::models::{CashFlowLine, CashFlowReport};
+        use rust_decimal::Decimal;
+        let report = CashFlowReport {
+            from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            inflows: vec![CashFlowLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
+            outflows: vec![CashFlowLine { category: "maintenance_fee".into(), amount: Decimal::new(10000, 2) }],
+            total_inflows: Decimal::new(50000, 2),
+            total_outflows: Decimal::new(10000, 2),
+            net_cash_flow: Decimal::new(40000, 2),
+        };
+        let bytes = render_cash_flow_pdf(&report).expect("render cash flow PDF");
+        assert!(bytes.len() > 100);
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
+
+    #[test]
+    fn render_income_statement_xlsx_produces_valid_xlsx() {
+        use db::models::{IncomeStatement, IncomeStatementLine};
+        use rust_decimal::Decimal;
+        let report = IncomeStatement {
+            from_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: chrono::NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            revenue: vec![IncomeStatementLine { category: "payment_received".into(), amount: Decimal::new(50000, 2) }],
+            expenses: vec![],
+            total_revenue: Decimal::new(50000, 2),
+            total_expenses: Decimal::ZERO,
+            net_income: Decimal::new(50000, 2),
+        };
+        let bytes = render_income_statement_xlsx(&report).expect("render xlsx");
+        // xlsx files start with PK (zip)
+        assert!(bytes.len() > 100);
+        assert_eq!(&bytes[..2], b"PK");
     }
 
     #[test]
