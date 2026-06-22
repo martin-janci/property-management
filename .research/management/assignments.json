@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-22T10:19:05Z",
+  "generated": "2026-06-22T10:42:15Z",
   "assignments": [
     {
       "task_id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
@@ -346,18 +346,18 @@
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-22T10:19:05Z",
-      "last_updated": "2026-06-22T10:19:05Z",
-      "status_changed_at": "2026-06-22T10:19:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-22T10:42:15Z",
+      "status_changed_at": "2026-06-22T10:42:15Z",
+      "pr_number": 1683,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1683",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=1683 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=split 3073-line document.rs into document/ submodules (folders,documents,shares,versions,intelligence,internal); pure move, 90 fns preserved; rebased onto current dev; cargo check -p db + clippy -D green; DB tests defer to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
