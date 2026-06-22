@@ -194,9 +194,9 @@ pub use granular_notification::{
     UpdateNotificationScheduleRequest, UpdateRoleDefaultsRequest,
 };
 pub use messaging::{
-    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateThread, Message,
-    MessagePreview, MessageThread, MessageWithSender, MessageWithSenderRow, ParticipantInfo,
-    ThreadWithPreview, ThreadWithPreviewRow, UserBlock,
+    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateMessageAttachment,
+    CreateThread, Message, MessageAttachment, MessagePreview, MessageThread, MessageWithSender,
+    MessageWithSenderRow, ParticipantInfo, ThreadWithPreview, ThreadWithPreviewRow, UserBlock,
 };
 pub use meter::{
     ConsumptionAggregate, ConsumptionComparison, ConsumptionDataPoint, ConsumptionHistoryResponse,

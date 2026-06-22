@@ -71,6 +71,17 @@ export interface MessageWithSender {
   createdAt: string;
 }
 
+/** A file attachment linked to a message (UC-05.9) */
+export interface MessageAttachment {
+  id: string;
+  messageId: string;
+  fileKey: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  createdAt: string;
+}
+
 /** A user block record */
 export interface UserBlock {
   id: string;
@@ -99,6 +110,21 @@ export interface StartThreadRequest {
 /** Request for sending a message */
 export interface SendMessageRequest {
   content: string;
+}
+
+/** Request for a presigned upload URL for a message attachment (UC-05.9) */
+export interface AttachmentUploadRequest {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+}
+
+/** Request to link an already-uploaded S3 object to a message */
+export interface LinkAttachmentRequest {
+  fileKey: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
 }
 
 /** Query params for listing threads */
@@ -154,4 +180,23 @@ export interface BlockedUsersResponse {
 /** Generic success response */
 export interface MessageSuccessResponse {
   message: string;
+}
+
+/** Response carrying a presigned PUT URL plus the S3 key to echo back on link */
+export interface AttachmentUploadUrlResponse {
+  url: string;
+  expiresAt: string;
+  fileKey: string;
+}
+
+/** Response listing a message's attachments */
+export interface MessageAttachmentsResponse {
+  attachments: MessageAttachment[];
+  count: number;
+}
+
+/** Response carrying a presigned download URL for an attachment */
+export interface AttachmentDownloadResponse {
+  url: string;
+  expiresAt: string;
 }
