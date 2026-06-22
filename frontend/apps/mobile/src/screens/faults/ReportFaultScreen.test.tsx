@@ -1,25 +1,27 @@
 /**
- * ReportFaultScreen — unit tests
- * (code-review-mobile-rn-report-fault-fake-submit).
+ * ReportFaultScreen — unit tests.
  *
- * Regression guard for the bug where `handleSubmit` faked the network call
- * with `setTimeout(1500)` and showed a success Alert without ever reaching the
- * backend. These tests assert that submitting actually fires the
- * `POST /api/v1/faults` mutation with the form payload, and that the success
- * Alert only follows a 2xx (mutation `onSuccess`).
+ * Originally a regression guard for the bug where `handleSubmit` faked the
+ * network call (code-review-mobile-rn-report-fault-fake-submit). Extended for
+ * Story 4.1 (gap #970.6): offline fault queue + image-compression. The screen
+ * now creates the fault via `apiRequest` directly so it can fall back to the
+ * persisted offline queue, carrying a Story 2B.7 idempotency key so retries /
+ * replays never duplicate.
  *
  * Covers:
  *   - Renders the building picker from the buildings query.
  *   - The buildings query carries the required `organization_id` and is gated
- *     on the tenant id (the reviewer's blocking finding).
- *   - Submitting a valid form calls the create-fault mutation with the
- *     expected `{ building_id, title, description, category, priority }`.
- *   - Validation blocks submit (no building selected) — mutation NOT called.
- *   - mutation onSuccess fires the success Alert; onError fires the error Alert.
+ *     on the tenant id.
+ *   - Online submit fires `POST /api/v1/faults` with the form payload + an
+ *     idempotency key; success Alert follows a 2xx.
+ *   - Validation blocks submit (no building selected) — no request, no enqueue.
+ *   - Offline submit enqueues the create instead of firing a request.
+ *   - A failed request falls back to the queue, reusing the SAME idempotency
+ *     key it attempted with (no duplicate across the retry).
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { ReportFaultScreen } from './ReportFaultScreen';
 
@@ -27,8 +29,24 @@ import { ReportFaultScreen } from './ReportFaultScreen';
 
 jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
-  useApiMutation: jest.fn(),
   useTenantId: jest.fn(),
+  apiRequest: jest.fn(),
+}));
+
+jest.mock('../../hooks', () => ({
+  useOfflineSupport: jest.fn(),
+}));
+
+const FIXED_KEY = 'idem-test-key';
+jest.mock('../../utils', () => ({
+  generateIdempotencyKey: () => FIXED_KEY,
+  compressImagesIfNeeded: jest.fn(async (uris: string[]) => ({
+    uris,
+    originalBytes: 0,
+    finalBytes: 0,
+    compressed: false,
+  })),
+  bytesToMb: (bytes: number) => String(bytes),
 }));
 
 // Expo native modules touched by the screen — stub so the import graph resolves.
@@ -44,9 +62,11 @@ jest.mock('expo-location', () => ({
   reverseGeocodeAsync: jest.fn(),
 }));
 
-const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
-const mockUseApiMutation = jest.requireMock('../../hooks/useApi').useApiMutation as jest.Mock;
-const mockUseTenantId = jest.requireMock('../../hooks/useApi').useTenantId as jest.Mock;
+const useApiMock = jest.requireMock('../../hooks/useApi');
+const mockUseApiQuery = useApiMock.useApiQuery as jest.Mock;
+const mockUseTenantId = useApiMock.useTenantId as jest.Mock;
+const mockApiRequest = useApiMock.apiRequest as jest.Mock;
+const mockUseOfflineSupport = jest.requireMock('../../hooks').useOfflineSupport as jest.Mock;
 
 // --- Helpers ---
 
@@ -56,6 +76,26 @@ const BUILDINGS = [
   { id: 'b-1', name: 'Lipová Residence', street: 'Lipová 5', city: 'Bratislava' },
   { id: 'b-2', name: 'Cottage 12', street: 'Záhradná 12', city: 'Pezinok' },
 ];
+
+const EXPECTED_PAYLOAD = {
+  building_id: 'b-1',
+  title: 'Leaking pipe',
+  description: 'Water is leaking from the ceiling in the hallway near unit 3.',
+  category: 'plumbing',
+  priority: 'medium',
+  location_description: '3rd floor',
+  idempotency_key: FIXED_KEY,
+};
+
+let addToQueue: jest.Mock;
+
+function setConnectivity(isConnected: boolean) {
+  mockUseOfflineSupport.mockReturnValue({
+    isConnected,
+    isInternetReachable: isConnected,
+    addToQueue,
+  });
+}
 
 function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}) {
   const queryClient = new QueryClient({
@@ -84,19 +124,19 @@ function fillValidForm() {
 // --- Tests ---
 
 describe('ReportFaultScreen', () => {
-  let mutate: jest.Mock;
   let alertSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mutate = jest.fn();
-    mockUseApiMutation.mockReturnValue({ mutate, isPending: false });
+    addToQueue = jest.fn().mockResolvedValue(undefined);
+    mockApiRequest.mockResolvedValue({ id: 'fault-1', message: 'ok' });
     mockUseTenantId.mockReturnValue({ tenantId: TENANT_ID, isLoading: false });
     mockUseApiQuery.mockReturnValue({
       data: { buildings: BUILDINGS },
       isLoading: false,
       error: null,
     });
+    setConnectivity(true);
     alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
 
@@ -110,34 +150,36 @@ describe('ReportFaultScreen', () => {
     expect(screen.getByText('Cottage 12')).toBeTruthy();
   });
 
-  it('fires POST /api/v1/faults with the form payload on submit', () => {
+  it('fires POST /api/v1/faults with the form payload (incl. idempotency key) when online', async () => {
     renderScreen();
     fillValidForm();
     fireEvent.press(screen.getByText('faults.submitButton'));
 
-    expect(mutate).toHaveBeenCalledTimes(1);
-    expect(mutate).toHaveBeenCalledWith(
-      {
-        building_id: 'b-1',
-        title: 'Leaking pipe',
-        description: 'Water is leaking from the ceiling in the hallway near unit 3.',
-        category: 'plumbing',
-        priority: 'medium',
-        location_description: '3rd floor',
-      },
-      expect.any(Object)
-    );
+    await waitFor(() => expect(mockApiRequest).toHaveBeenCalledTimes(1));
+    expect(mockApiRequest).toHaveBeenCalledWith('/api/v1/faults', {
+      method: 'POST',
+      body: EXPECTED_PAYLOAD,
+    });
+    expect(addToQueue).not.toHaveBeenCalled();
   });
 
-  it('targets the /api/v1/faults endpoint with POST', () => {
-    renderScreen();
-    expect(mockUseApiMutation).toHaveBeenCalledWith('/api/v1/faults', 'POST');
+  it('shows the success Alert after a 2xx and does not enqueue', async () => {
+    const onSuccess = jest.fn();
+    renderScreen({ onSuccess });
+    fillValidForm();
+    fireEvent.press(screen.getByText('faults.submitButton'));
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'common.done',
+        'faults.successSubmit',
+        expect.any(Array)
+      )
+    );
+    expect(addToQueue).not.toHaveBeenCalled();
   });
 
   it('queries buildings with the required organization_id and keys the cache on it', () => {
-    // Regression guard for the reviewer finding: `GET /api/v1/buildings`
-    // 400s/403s without `organization_id`, so the picker silently breaks.
-    // The org id is the JWT tenant id surfaced via `useTenantId`.
     renderScreen();
 
     const buildingsCall = mockUseApiQuery.mock.calls.find(
@@ -147,7 +189,6 @@ describe('ReportFaultScreen', () => {
 
     const [queryKey, path] = buildingsCall as [readonly unknown[], string];
     expect(path).toBe(`/api/v1/buildings?organization_id=${TENANT_ID}`);
-    // Cache is keyed on the tenant so switching org refetches.
     expect(queryKey).toContain(TENANT_ID);
   });
 
@@ -161,11 +202,10 @@ describe('ReportFaultScreen', () => {
     expect(buildingsCall).toBeDefined();
     const [, , options] = buildingsCall as [readonly unknown[], string, { enabled?: boolean }];
     expect(options.enabled).toBe(false);
-    // Loading copy is shown while the tenant id is still resolving.
     expect(screen.getByText('faults.loadingBuildings')).toBeTruthy();
   });
 
-  it('does not call the mutation when no building is selected', () => {
+  it('does not submit or enqueue when no building is selected', () => {
     renderScreen();
     fireEvent.changeText(screen.getByPlaceholderText('faults.titlePlaceholder'), 'Leaking pipe');
     fireEvent.changeText(
@@ -176,30 +216,50 @@ describe('ReportFaultScreen', () => {
     fireEvent.press(screen.getByText('Plumbing'));
 
     fireEvent.press(screen.getByText('faults.submitButton'));
-    expect(mutate).not.toHaveBeenCalled();
+    expect(mockApiRequest).not.toHaveBeenCalled();
+    expect(addToQueue).not.toHaveBeenCalled();
     expect(screen.getByText('faults.selectBuilding')).toBeTruthy();
   });
 
-  it('shows the success Alert via the mutation onSuccess callback', () => {
-    const onSuccess = jest.fn();
-    renderScreen({ onSuccess });
+  it('enqueues the create instead of firing a request when offline', async () => {
+    setConnectivity(false);
+    renderScreen();
     fillValidForm();
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    // Offline the button label switches to the "save & sync later" copy.
+    fireEvent.press(screen.getByText('faults.submitButtonOffline'));
 
-    const [, options] = mutate.mock.calls[0];
-    options.onSuccess({ id: 'fault-1', message: 'ok' });
-
-    expect(alertSpy).toHaveBeenCalledWith('common.done', 'faults.successSubmit', expect.any(Array));
+    await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
+    expect(addToQueue).toHaveBeenCalledWith({
+      type: 'CREATE',
+      endpoint: '/api/v1/faults',
+      method: 'POST',
+      body: EXPECTED_PAYLOAD,
+    });
+    expect(mockApiRequest).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'faults.queuedTitle',
+      'faults.queuedMessage',
+      expect.any(Array)
+    );
   });
 
-  it('shows an error Alert via the mutation onError callback', () => {
+  it('falls back to the queue on request failure, reusing the attempted idempotency key', async () => {
+    mockApiRequest.mockRejectedValueOnce(new Error('network down'));
     renderScreen();
     fillValidForm();
     fireEvent.press(screen.getByText('faults.submitButton'));
 
-    const [, options] = mutate.mock.calls[0];
-    options.onError(new Error('Server exploded'));
+    await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
 
-    expect(alertSpy).toHaveBeenCalledWith('common.error', 'Server exploded');
+    const attemptedKey = mockApiRequest.mock.calls[0][1].body.idempotency_key;
+    const queuedKey = addToQueue.mock.calls[0][0].body.idempotency_key;
+    // Same key on the attempt and the queued replay → the idempotent backend
+    // returns the existing fault rather than inserting a duplicate.
+    expect(queuedKey).toBe(attemptedKey);
+    expect(alertSpy).toHaveBeenCalledWith(
+      'faults.queuedTitle',
+      'faults.queuedOnErrorMessage',
+      expect.any(Array)
+    );
   });
 });

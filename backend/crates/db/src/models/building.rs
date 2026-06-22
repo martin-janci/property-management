@@ -1,6 +1,7 @@
 //! Building model (Epic 2B, UC-15).
 
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -27,6 +28,11 @@ pub struct Building {
     pub total_floors: i32,
     pub total_entrances: i32,
 
+    // Geocoded coordinates (Story 3.1 AC3). NULL when geocoding is
+    // unconfigured or the address could not be resolved.
+    pub latitude: Option<Decimal>,
+    pub longitude: Option<Decimal>,
+
     // Flexible JSONB fields
     pub amenities: serde_json::Value,
     pub contacts: serde_json::Value,
@@ -44,6 +50,11 @@ impl Building {
     /// Check if building is active.
     pub fn is_active(&self) -> bool {
         self.status == "active"
+    }
+
+    /// Whether the building has resolved map coordinates.
+    pub fn has_coordinates(&self) -> bool {
+        self.latitude.is_some() && self.longitude.is_some()
     }
 
     /// Get full address as a single string.
@@ -77,6 +88,12 @@ pub struct BuildingSummary {
     pub postal_code: String,
     pub total_floors: i32,
     pub status: String,
+    /// Geocoded latitude (Story 3.1 AC3); null when unresolved.
+    #[sqlx(default)]
+    pub latitude: Option<Decimal>,
+    /// Geocoded longitude (Story 3.1 AC3); null when unresolved.
+    #[sqlx(default)]
+    pub longitude: Option<Decimal>,
     #[sqlx(default)]
     pub unit_count: Option<i64>,
 }
@@ -99,6 +116,12 @@ pub struct CreateBuilding {
     pub total_entrances: i32,
     #[serde(default)]
     pub amenities: Vec<String>,
+    /// Latitude (e.g. from geocoding). Optional; defaults to NULL.
+    #[serde(default)]
+    pub latitude: Option<Decimal>,
+    /// Longitude (e.g. from geocoding). Optional; defaults to NULL.
+    #[serde(default)]
+    pub longitude: Option<Decimal>,
 }
 
 fn default_country() -> String {
@@ -124,6 +147,10 @@ pub struct UpdateBuilding {
     pub amenities: Option<Vec<String>>,
     pub contacts: Option<serde_json::Value>,
     pub settings: Option<serde_json::Value>,
+    /// New latitude (e.g. re-geocoded after an address change).
+    pub latitude: Option<Decimal>,
+    /// New longitude (e.g. re-geocoded after an address change).
+    pub longitude: Option<Decimal>,
 }
 
 /// Building contact information.

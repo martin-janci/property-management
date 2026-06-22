@@ -57,6 +57,7 @@
     "financial": "Financie",
     "community": "Komunita",
     "disputes": "Spory",
+    "leases": "Nájmy",
     "emergency": "Núdzové kontakty",
     "settings": "Nastavenia",
     "profile": "Profil",
@@ -364,6 +365,52 @@
       "empty": "Pre tento dokument nie sú dostupné žiadne verzie.",
       "version": "Verzia {{n}}",
       "current": "Aktuálna"
+    },
+    "esign": {
+      "title": "Elektronický podpis",
+      "send": "Odoslať na podpis",
+      "loading": "Načítavajú sa žiadosti o podpis…",
+      "loadError": "Žiadosti o podpis sa nepodarilo načítať.",
+      "empty": "Tento dokument zatiaľ nebol odoslaný na podpis.",
+      "requestedAt": "Vyžiadané {{date}}",
+      "signedAt": "podpísané {{date}}",
+      "remind": "Poslať pripomienku",
+      "reminding": "Odosiela sa…",
+      "remindSent": "Odoslané pripomienky: {{count}}.",
+      "cancel": "Zrušiť žiadosť",
+      "cancelling": "Ruší sa…",
+      "cancelConfirm": "Zrušiť túto žiadosť o podpis? Podpisovatelia už nebudú môcť podpísať.",
+      "allSigned": "Všetci podpisovatelia odpovedali.",
+      "status": {
+        "pending": "Čaká na podpis",
+        "in_progress": "Prebieha podpisovanie",
+        "completed": "Podpísané",
+        "declined": "Zamietnuté",
+        "expired": "Expirované",
+        "cancelled": "Zrušené"
+      },
+      "signer": {
+        "pending": "Čaká",
+        "sent": "Odoslané",
+        "viewed": "Zobrazené",
+        "signed": "Podpísané",
+        "declined": "Zamietnuté"
+      },
+      "dialog": {
+        "title": "Odoslať dokument na podpis",
+        "signers": "Podpisovatelia",
+        "namePlaceholder": "Celé meno",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Odstrániť podpisovateľa",
+        "addSigner": "+ Pridať podpisovateľa",
+        "signerRequired": "Pridajte aspoň jedného podpisovateľa s menom a platným e-mailom.",
+        "subject": "Predmet (voliteľné)",
+        "subjectPlaceholder": "napr. Zmluva o správe",
+        "message": "Správa pre podpisovateľov (voliteľné)",
+        "messagePlaceholder": "Skontrolujte a podpíšte priložený dokument.",
+        "sending": "Odosiela sa…",
+        "send": "Odoslať na podpis"
+      }
     }
   },
   "disputes": {
@@ -1289,6 +1336,62 @@
     },
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
+  },
+  "documentTemplates": {
+    "title": "Šablóny dokumentov",
+    "subtitle": "Generujte dokumenty z opakovane použiteľných šablón.",
+    "searchPlaceholder": "Hľadať šablóny…",
+    "typeFilter": "Filtrovať podľa typu",
+    "allTypes": "Všetky typy",
+    "loadError": "Šablóny sa nepodarilo načítať.",
+    "types": {
+      "lease": "Nájomná zmluva",
+      "notice": "Oznámenie",
+      "invoice": "Faktúra",
+      "report": "Správa",
+      "minutes": "Zápisnica",
+      "contract": "Zmluva",
+      "custom": "Vlastná"
+    },
+    "categories": {
+      "contracts": "Zmluvy",
+      "invoices": "Faktúry",
+      "reports": "Správy",
+      "manuals": "Príručky",
+      "certificates": "Certifikáty",
+      "other": "Ostatné"
+    },
+    "empty": {
+      "title": "Zatiaľ žiadne šablóny",
+      "body": "Pre túto organizáciu neboli vytvorené žiadne šablóny dokumentov.",
+      "noMatches": "Vašim filtrom nezodpovedajú žiadne šablóny."
+    },
+    "card": {
+      "placeholders": "{{count}} zástupných symbolov",
+      "usage": "použité {{count}}×",
+      "generate": "Generovať"
+    },
+    "generate": {
+      "title": "Generovať zo šablóny „{{name}}“",
+      "contextLegend": "Kontext",
+      "building": "Budova",
+      "unit": "Jednotka",
+      "noContext": "— Žiadna budova —",
+      "noUnit": "— Žiadna jednotka —",
+      "contextHint": "Vyberte budovu alebo jednotku na predvyplnenie zodpovedajúcich zástupných symbolov. Každú hodnotu môžete upraviť.",
+      "placeholdersLegend": "Zástupné symboly",
+      "noPlaceholders": "Táto šablóna nemá žiadne zástupné symboly.",
+      "documentLegend": "Dokument",
+      "docTitle": "Názov",
+      "category": "Kategória",
+      "description": "Popis",
+      "previewLegend": "Náhľad",
+      "missingPlaceholders": "Vyplňte povinné zástupné symboly: {{names}}",
+      "generateError": "Dokument sa nepodarilo vygenerovať. {{message}}",
+      "loadError": "Šablónu sa nepodarilo načítať.",
+      "generating": "Generuje sa…",
+      "submit": "Generovať dokument"
     }
   }
 }

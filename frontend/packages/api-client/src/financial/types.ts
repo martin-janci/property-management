@@ -366,6 +366,77 @@ export interface AccountsReceivableReport {
 }
 
 // ============================================================================
+// FINANCIAL STATEMENT REPORTS (Story 11.7)
+// ============================================================================
+
+export interface IncomeStatementLine {
+  category: string;
+  amount: number;
+}
+
+export interface IncomeStatement {
+  from_date: string;
+  to_date: string;
+  revenue: IncomeStatementLine[];
+  expenses: IncomeStatementLine[];
+  total_revenue: number;
+  total_expenses: number;
+  net_income: number;
+}
+
+export interface BalanceSheetLine {
+  account_id: string;
+  account_name: string;
+  account_type: string;
+  balance: number;
+}
+
+export interface BalanceSheetReport {
+  as_of_date: string;
+  accounts: BalanceSheetLine[];
+  total_assets: number;
+  total_liabilities: number;
+  net_equity: number;
+}
+
+export interface CashFlowLine {
+  category: string;
+  amount: number;
+}
+
+export interface CashFlowReport {
+  from_date: string;
+  to_date: string;
+  inflows: CashFlowLine[];
+  outflows: CashFlowLine[];
+  total_inflows: number;
+  total_outflows: number;
+  net_cash_flow: number;
+}
+
+export interface DateRangeReportParams {
+  organization_id: string;
+  from: string;
+  to: string;
+}
+
+export interface BalanceSheetParams {
+  organization_id: string;
+  as_of?: string;
+}
+
+export type ReportExportFormat = 'pdf' | 'xlsx';
+export type ReportType = 'income-statement' | 'balance-sheet' | 'cash-flow';
+
+export interface ExportReportParams {
+  organization_id: string;
+  format: ReportExportFormat;
+  from?: string;
+  to?: string;
+  as_of?: string;
+}
+
+// ============================================================================
 // QUERY PARAMS
 // ============================================================================
 

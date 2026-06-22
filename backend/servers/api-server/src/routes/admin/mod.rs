@@ -20,6 +20,7 @@ pub mod impersonation;
 pub mod memberships;
 pub mod metrics;
 pub mod mfa;
+pub mod notifications;
 pub mod users;
 pub mod users_lifecycle;
 
@@ -92,6 +93,7 @@ pub fn router() -> Router<AppState> {
         .nest("/impersonation", impersonation::router())
         .nest("/mfa", mfa::router())
         .nest("/metrics", metrics::router())
+        .nest("/notifications", notifications::router())
 }
 
 #[cfg(test)]

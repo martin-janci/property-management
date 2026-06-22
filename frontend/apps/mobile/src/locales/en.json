@@ -127,7 +127,15 @@
     "selectBuilding": "Please select a building",
     "loadingBuildings": "Loading buildings…",
     "noBuildings": "No buildings available",
-    "buildingsLoadError": "Couldn't load your buildings"
+    "buildingsLoadError": "Couldn't load your buildings",
+    "photosCompressedTitle": "Photos compressed",
+    "photosCompressedWarning": "Selected photos exceeded 10 MB ({{original}} MB) and were compressed to {{final}} MB so they upload faster. Image quality may be reduced.",
+    "compressingPhotos": "Optimizing photos…",
+    "queuedTitle": "Saved offline",
+    "queuedMessage": "You're offline. Your report was saved and will sync automatically when you reconnect.",
+    "queuedOnErrorMessage": "We couldn't reach the server. Your report was saved and will sync automatically when the connection is restored.",
+    "offlineSubmitHint": "You're offline — this report will be saved and synced when you reconnect.",
+    "submitButtonOffline": "Save & sync later"
   },
   "news": {
     "title": "News",

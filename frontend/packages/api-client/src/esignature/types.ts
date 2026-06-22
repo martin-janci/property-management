@@ -79,3 +79,23 @@ export interface ListSignatureRequestsResponse {
   signature_requests: SignatureRequest[];
   total: number;
 }
+
+export interface SendReminderBody {
+  /** Specific signer emails to remind; empty/omitted reminds all pending signers. */
+  signer_emails?: string[];
+  message?: string;
+}
+
+export interface SendReminderResponse {
+  reminders_sent: number;
+  message: string;
+}
+
+export interface CancelSignatureRequestBody {
+  reason?: string;
+}
+
+export interface CancelSignatureRequestResponse {
+  signature_request: SignatureRequest;
+  message: string;
+}

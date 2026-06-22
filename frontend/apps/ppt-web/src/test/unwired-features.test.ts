@@ -47,8 +47,8 @@ function routingSurfaceSources(): { file: string; content: string }[] {
 }
 
 describe('Unwired feature registry (PAP-55)', () => {
-  it('lists 11 features', () => {
-    expect(UNWIRED_FEATURES.length).toBe(11);
+  it('lists 10 features', () => {
+    expect(UNWIRED_FEATURES.length).toBe(10);
   });
 
   it('retains the code for every unwired feature (dir exists)', () => {
