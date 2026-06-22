@@ -144,6 +144,10 @@ pub struct BuildingResponse {
     pub total_floors: i32,
     pub total_entrances: i32,
     pub amenities: Vec<String>,
+    /// Geocoded latitude (Story 3.1 AC3); null when unresolved.
+    pub latitude: Option<Decimal>,
+    /// Geocoded longitude (Story 3.1 AC3); null when unresolved.
+    pub longitude: Option<Decimal>,
     pub status: String,
     pub created_at: String,
     pub updated_at: String,
@@ -165,6 +169,8 @@ impl From<Building> for BuildingResponse {
             total_floors: b.total_floors,
             total_entrances: b.total_entrances,
             amenities,
+            latitude: b.latitude,
+            longitude: b.longitude,
             status: b.status,
             created_at: b.created_at.to_rfc3339(),
             updated_at: b.updated_at.to_rfc3339(),
@@ -439,6 +445,21 @@ pub struct BulkImportBuildingsResponse {
     pub results: Vec<BulkImportResult>,
 }
 
+/// Geocode an address on a building write path, never failing the request.
+///
+/// Returns `(None, None)` when geocoding is disabled, finds no match, or errors,
+/// so a missing/flaky provider degrades gracefully (Story 3.1 AC3).
+async fn geocode_address(state: &AppState, address: &str) -> (Option<Decimal>, Option<Decimal>) {
+    match state.geocoding.geocode(address).await {
+        Ok(Some(c)) => (Some(c.latitude), Some(c.longitude)),
+        Ok(None) => (None, None),
+        Err(e) => {
+            tracing::warn!(error = %e, "Geocoding failed; storing building without coordinates");
+            (None, None)
+        }
+    }
+}
+
 // ==================== Building Handlers ====================
 
 /// Create a new building (UC-15.1).
@@ -505,6 +526,14 @@ pub async fn create_building(
         ));
     }
 
+    // Story 3.1 AC3: geocode on write. Degrades gracefully — an unconfigured
+    // provider or a failed lookup simply leaves coordinates NULL.
+    let address = format!(
+        "{}, {} {}, {}",
+        req.street, req.postal_code, req.city, req.country
+    );
+    let (latitude, longitude) = geocode_address(&state, &address).await;
+
     // Create building using RLS-enabled connection
     let create_data = CreateBuilding {
         organization_id: req.organization_id,
@@ -518,6 +547,8 @@ pub async fn create_building(
         total_floors: req.total_floors,
         total_entrances: req.total_entrances,
         amenities: req.amenities,
+        latitude,
+        longitude,
     };
 
     let building = state
@@ -716,6 +747,10 @@ pub async fn bulk_import_buildings(
             total_floors: entry.total_floors,
             total_entrances: entry.total_entrances,
             amenities: entry.amenities,
+            // Bulk import skips live geocoding to avoid N sequential external
+            // calls; coordinates are filled on a later edit/update.
+            latitude: None,
+            longitude: None,
         };
 
         match state
@@ -831,6 +866,33 @@ pub async fn update_building(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateBuildingRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    // Story 3.1 AC3: re-geocode when any address component changes. We load the
+    // current row to fill in unchanged components so the lookup uses the full
+    // effective address. Failure leaves coordinates untouched (graceful).
+    let address_changed = req.street.is_some()
+        || req.city.is_some()
+        || req.postal_code.is_some()
+        || req.country.is_some();
+    let (latitude, longitude) = if address_changed {
+        match state
+            .building_repo
+            .find_by_id_rls(&mut **rls.conn(), id)
+            .await
+        {
+            Ok(Some(current)) => {
+                let street = req.street.clone().unwrap_or(current.street);
+                let city = req.city.clone().unwrap_or(current.city);
+                let postal_code = req.postal_code.clone().unwrap_or(current.postal_code);
+                let country = req.country.clone().unwrap_or(current.country);
+                let address = format!("{}, {} {}, {}", street, postal_code, city, country);
+                geocode_address(&state, &address).await
+            }
+            _ => (None, None),
+        }
+    } else {
+        (None, None)
+    };
+
     let update_data = UpdateBuilding {
         street: req.street,
         city: req.city,
@@ -844,6 +906,8 @@ pub async fn update_building(
         amenities: req.amenities,
         contacts: None,
         settings: None,
+        latitude,
+        longitude,
     };
 
     // RLS policies automatically enforce tenant isolation and access control
