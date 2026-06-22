@@ -39,6 +39,9 @@ pub mod geocoding;
 // Epic 97: Workflow Execution Engine
 pub mod workflow_executor;
 
+// Story 2B.1 (#969 gap 2, BIT-178): event bus retry + exponential backoff
+pub mod event_bus;
+
 // Re-exports
 
 // Story 83.1: Airbnb Integration
@@ -145,6 +148,12 @@ pub use redis::{
     PubSubMessage, PubSubService, RedisClient, RedisConfig, SessionData, SessionStore,
     CACHE_KEY_PREFIX, DEFAULT_CACHE_TTL_SECS, DEFAULT_SESSION_TTL_SECS, PUBSUB_CHANNEL_PREFIX,
     REDIS_URL_ENV, SESSION_KEY_PREFIX,
+};
+
+// Story 2B.1 (#969 gap 2, BIT-178): event bus retry + exponential backoff
+pub use event_bus::{
+    DeadLetter, EventBus, EventHandler, EventHandlerError, ExponentialBackoff, DEFAULT_BASE_DELAY,
+    DEFAULT_MAX_DELAY, DEFAULT_MAX_RETRIES,
 };
 
 // Epic 150: API Ecosystem Expansion
