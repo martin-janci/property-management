@@ -20,6 +20,7 @@ import {
   useNavigationCommands,
 } from './features/command-palette';
 import { AppRoutes } from './routes/AppRoutes';
+import { isManagerRole } from './routes/shared';
 
 /**
  * MFA challenge wrapper (N9).
@@ -102,8 +103,9 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+  const isOperator = isManagerRole(user?.role);
 
   const handleLogout = async () => {
     await logout();
@@ -124,6 +126,11 @@ function AppNavigation() {
       <Link to="/iot">{t('nav.iot', { defaultValue: 'Smart Building' })}</Link>
       <Link to="/iot/alerts">{t('nav.iotAlerts', { defaultValue: 'Sensor Alerts' })}</Link>
       <Link to="/rentals">{t('nav.rentals', { defaultValue: 'Rentals' })}</Link>
+      {isOperator && (
+        <Link to="/notifications/analytics">
+          {t('nav.notificationAnalytics', { defaultValue: 'Notification Analytics' })}
+        </Link>
+      )}
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
       <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>
