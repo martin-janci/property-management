@@ -995,7 +995,19 @@ impl MessagingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let row = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, i64, chrono::DateTime<chrono::Utc>, Uuid)>(
+        let row = sqlx::query_as::<
+            _,
+            (
+                Uuid,
+                Uuid,
+                String,
+                String,
+                String,
+                i64,
+                chrono::DateTime<chrono::Utc>,
+                Uuid,
+            ),
+        >(
             r#"
             SELECT a.id, a.message_id, a.file_key, a.file_name, a.file_type, a.file_size,
                    a.created_at, m.thread_id
@@ -1008,19 +1020,21 @@ impl MessagingRepository {
         .fetch_optional(executor)
         .await?;
 
-        Ok(row.map(|(id, message_id, file_key, file_name, file_type, file_size, created_at, thread_id)| {
-            (
-                MessageAttachment {
-                    id,
-                    message_id,
-                    file_key,
-                    file_name,
-                    file_type,
-                    file_size,
-                    created_at,
-                },
-                thread_id,
-            )
-        }))
+        Ok(row.map(
+            |(id, message_id, file_key, file_name, file_type, file_size, created_at, thread_id)| {
+                (
+                    MessageAttachment {
+                        id,
+                        message_id,
+                        file_key,
+                        file_name,
+                        file_type,
+                        file_size,
+                        created_at,
+                    },
+                    thread_id,
+                )
+            },
+        ))
     }
 }

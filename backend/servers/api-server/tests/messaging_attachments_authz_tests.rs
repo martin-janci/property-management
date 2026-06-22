@@ -220,7 +220,9 @@ async fn download_url_authz_gate(pool: PgPool) {
     let path = format!("/api/v1/messages/threads/{thread}/attachments/{attachment}/download");
 
     // Participant (Alice) clears authz → reaches storage, which is unconfigured.
-    let ok = app.execute(app.session(alice_tok, org1).get(&path).build()).await;
+    let ok = app
+        .execute(app.session(alice_tok, org1).get(&path).build())
+        .await;
     assert_eq!(
         ok.status,
         StatusCode::SERVICE_UNAVAILABLE,
@@ -229,11 +231,20 @@ async fn download_url_authz_gate(pool: PgPool) {
     );
 
     // Same-org non-participant → denied before storage.
-    let denied = app.execute(app.session(carol_tok, org1).get(&path).build()).await;
-    assert_eq!(denied.status, StatusCode::FORBIDDEN, "body: {}", denied.text());
+    let denied = app
+        .execute(app.session(carol_tok, org1).get(&path).build())
+        .await;
+    assert_eq!(
+        denied.status,
+        StatusCode::FORBIDDEN,
+        "body: {}",
+        denied.text()
+    );
 
     // Cross-tenant caller → denied.
-    let cross = app.execute(app.session(dave_tok, org2).get(&path).build()).await;
+    let cross = app
+        .execute(app.session(dave_tok, org2).get(&path).build())
+        .await;
     assert_eq!(
         cross.status,
         StatusCode::FORBIDDEN,
@@ -266,6 +277,8 @@ async fn download_rejects_attachment_thread_mismatch(pool: PgPool) {
 
     // Alice participates in thread_y but the attachment lives in thread_x.
     let path = format!("/api/v1/messages/threads/{thread_y}/attachments/{attachment}/download");
-    let resp = app.execute(app.session(alice_tok, org1).get(&path).build()).await;
+    let resp = app
+        .execute(app.session(alice_tok, org1).get(&path).build())
+        .await;
     assert_eq!(resp.status, StatusCode::NOT_FOUND, "body: {}", resp.text());
 }

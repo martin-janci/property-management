@@ -1232,7 +1232,10 @@ async fn link_message_attachment(
         rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_FILE_KEY", "file_key is required")),
+            Json(ErrorResponse::new(
+                "INVALID_FILE_KEY",
+                "file_key is required",
+            )),
         ));
     }
 
@@ -1428,7 +1431,10 @@ fn validate_attachment_meta(
     if file_name.trim().is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_FILE_NAME", "file_name is required")),
+            Json(ErrorResponse::new(
+                "INVALID_FILE_NAME",
+                "file_name is required",
+            )),
         ));
     }
     if file_size <= 0 {
