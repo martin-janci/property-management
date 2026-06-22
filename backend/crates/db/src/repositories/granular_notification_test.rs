@@ -39,14 +39,12 @@ mod tests {
 
     /// Enable (or disable) the digest preference for a user.
     async fn set_digest_enabled(pool: &sqlx::PgPool, user_id: Uuid, enabled: bool) {
-        sqlx::query(
-            "INSERT INTO notification_schedule (user_id, digest_enabled) VALUES ($1, $2)",
-        )
-        .bind(user_id)
-        .bind(enabled)
-        .execute(pool)
-        .await
-        .unwrap();
+        sqlx::query("INSERT INTO notification_schedule (user_id, digest_enabled) VALUES ($1, $2)")
+            .bind(user_id)
+            .bind(enabled)
+            .execute(pool)
+            .await
+            .unwrap();
     }
 
     /// Insert one notification group for the user.

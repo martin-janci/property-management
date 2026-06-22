@@ -113,7 +113,11 @@ pub struct NotificationDigestWorker {
 
 impl NotificationDigestWorker {
     /// Construct the worker from shared resources.
-    pub fn new(pool: DbPool, email_service: EmailService, config: NotificationDigestConfig) -> Self {
+    pub fn new(
+        pool: DbPool,
+        email_service: EmailService,
+        config: NotificationDigestConfig,
+    ) -> Self {
         let granular_repo = GranularNotificationRepository::new(pool);
         Self {
             granular_repo,
@@ -156,9 +160,7 @@ impl NotificationDigestWorker {
         let inactivity_cutoff = now - chrono::Duration::hours(self.config.inactivity_hours);
 
         let retried = self.retry_unsent(resend_cutoff, now).await;
-        let sent = self
-            .send_new(inactivity_cutoff, resend_cutoff, now)
-            .await;
+        let sent = self.send_new(inactivity_cutoff, resend_cutoff, now).await;
 
         if retried > 0 || sent > 0 {
             tracing::info!(
@@ -278,12 +280,7 @@ impl NotificationDigestWorker {
             let locale = Locale::parse(&c.locale);
             match self
                 .email_service
-                .send_digest_email(
-                    &c.email,
-                    &locale,
-                    c.notification_count,
-                    &c.category_counts,
-                )
+                .send_digest_email(&c.email, &locale, c.notification_count, &c.category_counts)
                 .await
             {
                 Ok(()) => {

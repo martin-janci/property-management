@@ -31,9 +31,8 @@ use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
-    EmailService, JwtService, NotificationDigestConfig, NotificationDigestWorker,
-    PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig, QuietHoursDrainWorker, Scheduler,
-    SchedulerConfig,
+    EmailService, JwtService, NotificationDigestConfig, NotificationDigestWorker, PushFanoutConfig,
+    PushFanoutWorker, QuietHoursDrainConfig, QuietHoursDrainWorker, Scheduler, SchedulerConfig,
 };
 use state::AppState;
 
