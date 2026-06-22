@@ -1,8 +1,8 @@
 [versions]
 # SDK
-compileSdk = "36"
+compileSdk = "37"
 minSdk = "24"
-targetSdk = "36"
+targetSdk = "37"
 
 # Build
 agp = "9.2.1"
@@ -12,7 +12,7 @@ ksp = "2.3.21-2.0.4"
 # Compose
 composeBom = "2026.06.00"
 activityCompose = "1.13.0"
-lifecycleRuntimeCompose = "2.10.0"
+lifecycleRuntimeCompose = "2.11.0"
 navigationCompose = "2.9.8"
 
 # Kotlin Libraries

@@ -195,8 +195,9 @@ fun InquiriesScreen(
                                             .cancelViewing(viewingId)
                                             .fold(
                                                 onSuccess = {
-                                                    viewings =
-                                                        viewings.filter { it.id != viewingId }
+                                                    viewings = viewings.filter {
+                                                        it.id != viewingId
+                                                    }
                                                 },
                                                 onFailure = {
                                                     Log.e(TAG, "Failed to cancel viewing", it)

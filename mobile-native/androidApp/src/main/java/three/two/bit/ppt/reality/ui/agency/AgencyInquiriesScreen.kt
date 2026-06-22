@@ -67,11 +67,10 @@ fun AgencyInquiriesScreen(
                         }
                     inquiries.isEmpty() -> EmptyState()
                     else -> {
-                        val filtered =
-                            inquiries.filter {
-                                statusFilter == null ||
-                                    it.status.equals(statusFilter, ignoreCase = true)
-                            }
+                        val filtered = inquiries.filter {
+                            statusFilter == null ||
+                                it.status.equals(statusFilter, ignoreCase = true)
+                        }
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = 110.dp),
