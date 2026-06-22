@@ -303,9 +303,18 @@ echo "🔍 Checking repository structs holding a raw pool field (FORCE-RLS guard
 
 MIGRATIONS_DIR="$BACKEND_DIR/crates/db/migrations"
 BASELINE_FILE="$SCRIPT_DIR/rls-pool-field-baseline.txt"
+# First-class allowlist of service-role-by-design repos. These are NOT
+# conversion-pending debt: their table RLS policy is a service-role *allowance*
+# (permits the unset-GUC service pool), so the executor pattern is inapplicable
+# and converting them would flip the policy to deny. Kept distinct from the
+# baseline so they are reported as ALLOWED, never "conversion pending", and a
+# PAP-80-style sweep can't mis-classify them. See the file header for the
+# access-model invariant.
+SERVICE_ROLE_ALLOWLIST_FILE="$SCRIPT_DIR/rls-service-role-allowlist.txt"
 
 POOL_FIELD_VIOLATIONS=0
 POOL_FIELD_BASELINED=0
+POOL_FIELD_SERVICE_ROLE=0
 
 if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
     # FORCE-RLS table set, derived from migrations (source of truth). Tables
@@ -328,7 +337,15 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
     if [[ -f "$BASELINE_FILE" ]]; then
         { grep -vE '^[[:space:]]*(#|$)' "$BASELINE_FILE" || true; } | awk '{print $1}' | sort -u > "$TMP_PREFIX/baseline"
     fi
+
+    # Service-role-by-design allowlist (permanent, distinct semantics from the
+    # baseline — see SERVICE_ROLE_ALLOWLIST_FILE comment above).
+    : > "$TMP_PREFIX/service_role"
+    if [[ -f "$SERVICE_ROLE_ALLOWLIST_FILE" ]]; then
+        { grep -vE '^[[:space:]]*(#|$)' "$SERVICE_ROLE_ALLOWLIST_FILE" || true; } | awk '{print $1}' | sort -u > "$TMP_PREFIX/service_role"
+    fi
     : > "$TMP_PREFIX/hit_names"
+    : > "$TMP_PREFIX/service_role_hits"
 
     POOL_FIELD_RE='^[[:space:]]*(pub([[:space:]]*\([^)]*\))?[[:space:]]+)?(pool|db):[[:space:]]*(sqlx::|crate::)?(PgPool|DbPool)'
 
@@ -355,7 +372,18 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
         total_tables=$(wc -l < "$TMP_PREFIX/hit_tables")
         field_line=$(grep -nE "$POOL_FIELD_RE" "$repo_file" | head -1 | cut -d: -f1)
 
-        if grep -qxF "$base" "$TMP_PREFIX/baseline"; then
+        if grep -qxF "$base" "$TMP_PREFIX/service_role"; then
+            # Service-role-by-design: the table RLS policy permits the unset-GUC
+            # service pool. Correct as written; the executor pattern does NOT
+            # apply (a request-scoped user GUC would flip the policy to deny).
+            # Reported as ALLOWED, never "conversion pending".
+            ((POOL_FIELD_SERVICE_ROLE+=1))
+            echo "$base" >> "$TMP_PREFIX/service_role_hits"
+            echo -e "${GREEN}ALLOWED${NC} [$repo_file:${field_line:-?}] (service-role-by-design)"
+            echo "  raw pool field on the off-request service path; table policy permits the"
+            echo "  unset-GUC service pool by design — FORCE-RLS tables ($total_tables): $tables_short"
+            echo ""
+        elif grep -qxF "$base" "$TMP_PREFIX/baseline"; then
             ((POOL_FIELD_BASELINED+=1))
             echo -e "${YELLOW}KNOWN OFFENDER${NC} [$repo_file:${field_line:-?}] (baselined, conversion pending)"
             echo "  raw pool field + 0 set_request_context; FORCE-RLS tables ($total_tables): $tables_short"
@@ -369,7 +397,9 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
             echo "  FORCE-RLS tables touched ($total_tables): $tables_short"
             echo "  → Convert to the executor pattern (take impl Executor / &mut PgConnection"
             echo "    from the RlsConnection extractor) like document.rs / board_meetings.rs,"
-            echo "    or add a baseline entry with a tracking issue."
+            echo "    or add a baseline entry with a tracking issue. If the table policy is a"
+            echo "    service-role allowance (unset-GUC permitted, off-request path), add it to"
+            echo "    $(basename "$SERVICE_ROLE_ALLOWLIST_FILE") instead — see that file's invariant."
             echo ""
         fi
     done
@@ -383,6 +413,23 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
         echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
         echo ""
     done < <(comm -23 "$TMP_PREFIX/baseline" "$TMP_PREFIX/hit_names_sorted")
+
+    # Stale service-role allowlist entries: listed but no longer flagged by the
+    # detector (e.g. the repo was refactored away from a raw pool field). These
+    # are by-design permanent allowances, not a ratchet, so this is purely
+    # informational — it NEVER fails --strict.
+    sort -u "$TMP_PREFIX/service_role_hits" > "$TMP_PREFIX/service_role_hits_sorted"
+    while IFS= read -r stale; do
+        [[ -n "$stale" ]] || continue
+        ((WARNINGS+=1))
+        echo -e "${YELLOW}INFO${NC} service-role allowlist entry '$stale' is no longer flagged by the detector; it can be removed from $(basename "$SERVICE_ROLE_ALLOWLIST_FILE") (informational — does not fail CI)"
+        echo ""
+    done < <(comm -23 "$TMP_PREFIX/service_role" "$TMP_PREFIX/service_role_hits_sorted")
+
+    if [[ $POOL_FIELD_SERVICE_ROLE -gt 0 ]]; then
+        echo -e "${GREEN}✓ $POOL_FIELD_SERVICE_ROLE service-role-by-design repo(s) allowed (policy permits the unset-GUC service pool; not conversion debt)${NC}"
+        echo ""
+    fi
 
     if [[ $POOL_FIELD_VIOLATIONS -eq 0 ]]; then
         if [[ $POOL_FIELD_BASELINED -gt 0 ]]; then

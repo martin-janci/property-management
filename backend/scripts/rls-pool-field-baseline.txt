@@ -17,6 +17,13 @@
 #      GUC flips the policy to deny). Their baseline entry is PERMANENT. See
 #      the dedicated section directly below.
 #
+# This file is conversion-pending debt ONLY. Repos whose table RLS policy is a
+# service-role *allowance* (permits the unset-GUC service pool by design, so the
+# executor pattern is inapplicable and converting them would break access) live
+# in the separate first-class allowlist rls-service-role-allowlist.txt and are
+# reported by the gate as ALLOWED, never "conversion pending". Do NOT add such
+# repos here.
+#
 # One basename per line. Comments after '#'.
 
 # === Class 2: service-role-by-design (PERMANENT — do NOT attempt conversion) ===
@@ -39,9 +46,7 @@ automation.rs
 building.rs
 community.rs
 compliance.rs
-critical_notification.rs
 data_export.rs
-device_push_token.rs
 dispute.rs
 edd.rs
 energy.rs
