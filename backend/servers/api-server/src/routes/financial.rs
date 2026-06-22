@@ -1091,7 +1091,9 @@ async fn initiate_invoice_checkout(
     let cfg = &state.stripe_config;
     // Fail closed: never attempt a checkout without server-side credentials.
     if cfg.secret_key.is_empty() || cfg.success_url.is_empty() || cfg.cancel_url.is_empty() {
-        tracing::error!("Stripe Checkout is not fully configured (secret_key/success_url/cancel_url)");
+        tracing::error!(
+            "Stripe Checkout is not fully configured (secret_key/success_url/cancel_url)"
+        );
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
             Json(ErrorResponse::new(

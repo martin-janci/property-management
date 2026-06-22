@@ -196,8 +196,8 @@ pub fn verify_signature(
     }
 
     // signed_payload = "{timestamp}.{raw_body}"
-    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .map_err(|_| SignatureError::Malformed)?;
+    let mut mac =
+        HmacSha256::new_from_slice(secret.as_bytes()).map_err(|_| SignatureError::Malformed)?;
     mac.update(timestamp.to_string().as_bytes());
     mac.update(b".");
     mac.update(payload);
@@ -207,8 +207,7 @@ pub fn verify_signature(
 
     let matched = v1_sigs.iter().any(|candidate| {
         let candidate = candidate.as_bytes();
-        candidate.len() == expected_bytes.len()
-            && candidate.ct_eq(expected_bytes).unwrap_u8() == 1
+        candidate.len() == expected_bytes.len() && candidate.ct_eq(expected_bytes).unwrap_u8() == 1
     });
 
     if matched {

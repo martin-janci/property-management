@@ -223,7 +223,10 @@ async fn valid_webhook_settles_invoice_and_is_idempotent(pool: PgPool) {
     .expect("load payments");
     assert_eq!(pay_count, 1, "exactly one payment recorded");
     assert_eq!(ext_ref.as_deref(), Some("pi_test_settle_1"));
-    assert!(recorded_by.is_none(), "gateway payment has no internal user");
+    assert!(
+        recorded_by.is_none(),
+        "gateway payment has no internal user"
+    );
 
     // The session is marked completed and linked to the payment.
     let sess_status: String =

@@ -100,7 +100,10 @@ pub fn router() -> Router<AppState> {
         // Gap 83-1: Airbnb inbound webhook
         .route("/airbnb/webhook", post(handle_airbnb_webhook))
         // Story 11.5 (BIT-181): payment-gateway confirmation webhook
-        .route("/webhooks/payments/{provider}", post(handle_payment_webhook))
+        .route(
+            "/webhooks/payments/{provider}",
+            post(handle_payment_webhook),
+        )
 }
 
 // ==================== Outbound Webhook Subscriptions (Story 61.5) ====================
@@ -1496,7 +1499,10 @@ pub async fn handle_payment_webhook(
             tracing::error!("Failed to load payment session: {:?}", e);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to load payment session")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to load payment session",
+                )),
             ));
         }
     };
