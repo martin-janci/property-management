@@ -42,6 +42,9 @@ vi.mock('../components/ClassificationBadge', () => ({
 vi.mock('../components/DocumentSharePanel', () => ({
   DocumentSharePanel: () => null,
 }));
+vi.mock('../components/DocumentSignaturePanel', () => ({
+  DocumentSignaturePanel: () => null,
+}));
 vi.mock('../components/DocumentSummary', () => ({
   DocumentSummary: () => null,
 }));

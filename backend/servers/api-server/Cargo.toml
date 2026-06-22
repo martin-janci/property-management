@@ -28,6 +28,7 @@ api-core = { workspace = true }
 admin-core = { workspace = true }
 db = { workspace = true }
 genpdf = { workspace = true }
+rust_xlsxwriter = { workspace = true }
 integrations = { workspace = true }
 tenant-ops = { workspace = true }
 sqlx = { workspace = true }

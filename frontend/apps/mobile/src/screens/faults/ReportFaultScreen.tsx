@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -16,7 +16,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useApiMutation, useApiQuery, useTenantId } from '../../hooks/useApi';
+import { PendingSyncIndicator } from '../../components/sync';
+import { useOfflineSupport } from '../../hooks';
+import { apiRequest, useApiQuery, useTenantId } from '../../hooks/useApi';
+import { bytesToMb, compressImagesIfNeeded, generateIdempotencyKey } from '../../utils';
 import { colors } from '../shared/screenStyles';
 import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 
@@ -45,6 +48,10 @@ interface CreateFaultVariables {
   category: string;
   priority: string;
   location_description?: string;
+  // Story 2B.7 idempotency key: the backend create dedupes on this, so a
+  // create that is queued offline and replayed (possibly more than once) never
+  // produces a duplicate fault.
+  idempotency_key: string;
 }
 
 /** Response from `POST /api/v1/faults` (mirrors `CreateFaultResponse`). */
@@ -88,7 +95,23 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
   const [location, setLocation] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionNotice, setCompressionNotice] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [queuedOffline, setQueuedOffline] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Connectivity + the persisted offline action queue (AC 4.1). When the
+  // device is offline the create is enqueued and the global sync machinery
+  // (badge in the tab bar + `processQueue` on reconnect) replays it.
+  const { isConnected, isInternetReachable, addToQueue } = useOfflineSupport();
+  const isOffline = !isConnected || isInternetReachable === false;
+
+  // One idempotency key per report attempt, generated lazily and reused across
+  // every retry/replay so the backend returns the existing fault instead of
+  // inserting a duplicate. Kept in a ref (not state) so it survives re-renders
+  // without triggering them.
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   // The api-server requires a `building_id` on every fault. Load the
   // buildings the user belongs to so they can pick which one the fault is for.
@@ -108,14 +131,6 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
   // Show the loading state while we resolve the tenant id too, otherwise the
   // gated-off query would flash the empty/"no buildings" state first.
   const isBuildingsLoading = isTenantLoading || buildingsQuery.isLoading;
-
-  // POST the fault to the api-server. `isPending` drives the submit button's
-  // spinner/disabled state (replacing the old local `isSubmitting` flag).
-  const createMutation = useApiMutation<CreateFaultResult, CreateFaultVariables>(
-    '/api/v1/faults',
-    'POST'
-  );
-  const isSubmitting = createMutation.isPending;
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -179,15 +194,45 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
 
       if (!result.canceled) {
         const newPhotos = result.assets.map((asset: { uri: string }) => asset.uri);
-        setPhotos((prev) => [...prev, ...newPhotos].slice(0, 5));
+        const combined = [...photos, ...newPhotos].slice(0, 5);
+        await applyPhotos(combined);
       }
     } catch (_error) {
       Alert.alert(t('common.error'), t('faults.failedToPickImage'));
     }
   };
 
+  // Set the photo list, compressing first when the selection exceeds 10 MB
+  // total (AC 4.1). Compression is lossy, so the user is warned once a pass
+  // runs; under the limit the originals are kept untouched.
+  const applyPhotos = async (next: string[]) => {
+    setIsCompressing(true);
+    try {
+      const result = await compressImagesIfNeeded(next);
+      setPhotos(result.uris);
+      if (result.compressed) {
+        const notice = t('faults.photosCompressedWarning', {
+          original: bytesToMb(result.originalBytes),
+          final: bytesToMb(result.finalBytes),
+        });
+        setCompressionNotice(notice);
+        Alert.alert(t('faults.photosCompressedTitle'), notice);
+      } else {
+        setCompressionNotice(null);
+      }
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
   const removePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotos((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) {
+        setCompressionNotice(null);
+      }
+      return next;
+    });
   };
 
   const detectLocation = useCallback(async () => {
@@ -216,37 +261,71 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     }
   }, [t]);
 
-  const handleSubmit = () => {
+  // Persist the create to the offline queue for replay on reconnect.
+  const queueForLater = async (payload: CreateFaultVariables, message: string) => {
+    await addToQueue({
+      type: 'CREATE',
+      endpoint: '/api/v1/faults',
+      method: 'POST',
+      body: payload,
+    });
+    setQueuedOffline(true);
+    Alert.alert(t('faults.queuedTitle'), message, [{ text: t('common.ok'), onPress: onSuccess }]);
+  };
+
+  const handleSubmit = async () => {
     if (!validateForm() || !buildingId) {
       return;
     }
 
-    // NOTE: `photos` holds local device URIs. Uploading attachments needs the
-    // presigned-URL pipeline (POST /faults/{id}/attachments), which has no
-    // shared mobile helper yet — tracked as a follow-up. The fault itself is
-    // created here so reports stop silently disappearing.
-    createMutation.mutate(
-      {
-        building_id: buildingId,
-        title: title.trim(),
-        description: description.trim(),
-        category: category ?? 'other',
-        priority,
-        location_description: location.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          // Refresh the faults list so the new report shows on return.
-          queryClient.invalidateQueries({ queryKey: ['faults', 'list'] });
-          Alert.alert(t('common.done'), t('faults.successSubmit'), [
-            { text: t('common.ok'), onPress: onSuccess },
-          ]);
-        },
-        onError: (error) => {
-          Alert.alert(t('common.error'), error.message || t('faults.failedSubmit'));
-        },
+    // Reuse the same key across every retry/replay so the idempotent backend
+    // create never produces a duplicate, even if the request below half-fails
+    // and is later replayed from the queue.
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = generateIdempotencyKey();
+    }
+
+    // NOTE: `photos` holds local device URIs (compressed in-place when over
+    // 10 MB). Uploading attachments needs the presigned-URL pipeline
+    // (POST /faults/{id}/attachments), which has no shared mobile helper yet —
+    // tracked as a follow-up. The fault itself is created/queued here.
+    const payload: CreateFaultVariables = {
+      building_id: buildingId,
+      title: title.trim(),
+      description: description.trim(),
+      category: category ?? 'other',
+      priority,
+      location_description: location.trim() || undefined,
+      idempotency_key: idempotencyKeyRef.current,
+    };
+
+    setIsSubmitting(true);
+    try {
+      // Offline: queue immediately rather than firing a request that will fail.
+      if (isOffline) {
+        await queueForLater(payload, t('faults.queuedMessage'));
+        return;
       }
-    );
+
+      await apiRequest<CreateFaultResult>('/api/v1/faults', { method: 'POST', body: payload });
+      // Refresh the faults list so the new report shows on return.
+      queryClient.invalidateQueries({ queryKey: ['faults', 'list'] });
+      // The key has been consumed; a subsequent report gets a fresh one.
+      idempotencyKeyRef.current = null;
+      Alert.alert(t('common.done'), t('faults.successSubmit'), [
+        { text: t('common.ok'), onPress: onSuccess },
+      ]);
+    } catch (error) {
+      // The request failed mid-flight. We can't tell a dropped connection from
+      // a server error here, so queue for replay: a transient/5xx error retries
+      // on reconnect, and a genuine 4xx is dropped by the queue (it marks 4xx
+      // permanent) instead of looping. The idempotency key guarantees that if
+      // the fault was in fact created, the replay won't duplicate it.
+      await queueForLater(payload, t('faults.queuedOnErrorMessage'));
+      void error;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Category label mapping (these would ideally come from translations)
@@ -454,18 +533,45 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
             )}
           </View>
           <Text style={styles.photoHint}>{t('faults.photosHint', { current: photos.length })}</Text>
+          {isCompressing && (
+            <View style={styles.compressingRow}>
+              <ActivityIndicator size="small" color={colors.accent} />
+              <Text style={styles.compressingText}>{t('faults.compressingPhotos')}</Text>
+            </View>
+          )}
+          {compressionNotice && (
+            <View style={styles.compressionNotice}>
+              <Text style={styles.compressionNoticeIcon}>🗜️</Text>
+              <Text style={styles.compressionNoticeText}>{compressionNotice}</Text>
+            </View>
+          )}
         </View>
+
+        {/* Offline / pending-sync status (AC 4.1) */}
+        {queuedOffline ? (
+          <PendingSyncIndicator status="pending" />
+        ) : isOffline ? (
+          <View style={styles.offlineHint}>
+            <Text style={styles.offlineHintIcon}>📡</Text>
+            <Text style={styles.offlineHintText}>{t('faults.offlineSubmitHint')}</Text>
+          </View>
+        ) : null}
 
         {/* Submit Button */}
         <Pressable
-          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            (isSubmitting || isCompressing) && styles.submitButtonDisabled,
+          ]}
           onPress={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isCompressing}
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.surface} />
           ) : (
-            <Text style={styles.submitButtonText}>{t('faults.submitButton')}</Text>
+            <Text style={styles.submitButtonText}>
+              {isOffline ? t('faults.submitButtonOffline') : t('faults.submitButton')}
+            </Text>
           )}
         </Pressable>
 
@@ -668,6 +774,52 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSubtle,
     marginTop: 6,
+  },
+  compressingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  compressingText: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  compressionNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: colors.warningBg,
+  },
+  compressionNoticeIcon: {
+    fontSize: 16,
+  },
+  compressionNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.warningDark,
+    lineHeight: 18,
+  },
+  offlineHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: colors.warningBg,
+    marginBottom: 8,
+  },
+  offlineHintIcon: {
+    fontSize: 16,
+  },
+  offlineHintText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.warningDark,
+    lineHeight: 18,
   },
   submitButton: {
     backgroundColor: colors.accent,

@@ -15,6 +15,7 @@ import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSharePanel } from '../components/DocumentSharePanel';
+import { DocumentSignaturePanel } from '../components/DocumentSignaturePanel';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
 import { useDocumentDownload } from '../hooks/useDocumentDownload';
@@ -470,6 +471,12 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
         )}
       </div>
 
+      {/* E-signature (Story 7B.3) — initiate signing, signer status, reminders */}
+      <div className="signature-history-section">
+        <h3 className="section-title">{t('documents.esign.title', 'E-signature')}</h3>
+        <DocumentSignaturePanel documentId={doc.id} />
+      </div>
+
       <style>{detailStyles}</style>
     </div>
   );
@@ -715,7 +722,8 @@ const detailStyles = `
     color: var(--ppt-fg-secondary);
   }
 
-  .version-history-section {
+  .version-history-section,
+  .signature-history-section {
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--ppt-border-default);

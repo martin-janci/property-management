@@ -578,3 +578,64 @@ pub struct ARReportTotals {
     pub days_90_plus: Decimal,
     pub total: Decimal,
 }
+
+// ============================================================================
+// Story 11.7 — Financial statement reports
+// ============================================================================
+
+/// Single line item in an income statement (revenue or expense).
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+pub struct IncomeStatementLine {
+    pub category: String,
+    pub amount: Decimal,
+}
+
+/// Income statement for a date range.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct IncomeStatement {
+    pub from_date: NaiveDate,
+    pub to_date: NaiveDate,
+    pub revenue: Vec<IncomeStatementLine>,
+    pub expenses: Vec<IncomeStatementLine>,
+    pub total_revenue: Decimal,
+    pub total_expenses: Decimal,
+    pub net_income: Decimal,
+}
+
+/// One account row in the balance sheet.
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+pub struct BalanceSheetLine {
+    pub account_id: Uuid,
+    pub account_name: String,
+    pub account_type: String,
+    pub balance: Decimal,
+}
+
+/// Balance sheet snapshot as of a date.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct BalanceSheetReport {
+    pub as_of_date: NaiveDate,
+    pub accounts: Vec<BalanceSheetLine>,
+    pub total_assets: Decimal,
+    pub total_liabilities: Decimal,
+    pub net_equity: Decimal,
+}
+
+/// Single line item in a cash flow report.
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+pub struct CashFlowLine {
+    pub category: String,
+    pub amount: Decimal,
+}
+
+/// Cash flow report for a date range.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct CashFlowReport {
+    pub from_date: NaiveDate,
+    pub to_date: NaiveDate,
+    pub inflows: Vec<CashFlowLine>,
+    pub outflows: Vec<CashFlowLine>,
+    pub total_inflows: Decimal,
+    pub total_outflows: Decimal,
+    pub net_cash_flow: Decimal,
+}

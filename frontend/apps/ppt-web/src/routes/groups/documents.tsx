@@ -12,6 +12,7 @@ import {
   ArticleDetailPage,
   DocumentDetailPage,
   DocumentsPage,
+  DocumentTemplatesPage,
   DocumentUploadPage,
   FolderTreePage,
   NewsListPage,
@@ -80,6 +81,14 @@ export function documentRoutes() {
         element={
           <ProtectedRoute>
             <DocumentUploadPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documents/templates"
+        element={
+          <ProtectedRoute>
+            <DocumentTemplatesPage />
           </ProtectedRoute>
         }
       />

@@ -10,9 +10,12 @@ import type {
   CreateBuildingRequest,
   CreateCommonAreaRequest,
   CreateFloorRequest,
+  CreateUnitRequest,
   ListBuildingDocumentsParams,
   ListBuildingsParams,
+  ListUnitsParams,
   UpdateBuildingRequest,
+  UpdateUnitRequest,
   UploadDocumentRequest,
 } from './types';
 
@@ -59,6 +62,10 @@ export const buildingKeys = {
     [...buildingKeys.detail(buildingId), 'common-areas'] as const,
   documents: (buildingId: string, params?: ListBuildingDocumentsParams) =>
     [...buildingKeys.detail(buildingId), 'documents', params] as const,
+  units: (buildingId: string, params?: ListUnitsParams) =>
+    [...buildingKeys.detail(buildingId), 'units', params] as const,
+  unit: (buildingId: string, unitId: string) =>
+    [...buildingKeys.detail(buildingId), 'units', unitId] as const,
 };
 
 /**
@@ -197,6 +204,93 @@ export const createBuildingHooks = (api: BuildingsApi) => ({
         api.uploadDocument(buildingId, data),
       onSuccess: (_, { buildingId }) => {
         queryClient.invalidateQueries({ queryKey: buildingKeys.documents(buildingId) });
+      },
+    });
+  },
+
+  /**
+   * List units in a building (Story 3.2).
+   */
+  useUnits: (buildingId: string, params?: ListUnitsParams, enabled = true) =>
+    useQuery({
+      queryKey: buildingKeys.units(buildingId, params),
+      queryFn: () => api.listUnits(buildingId, params),
+      enabled: enabled && !!buildingId,
+    }),
+
+  /**
+   * Get a single unit by ID (used to populate the edit form).
+   */
+  useUnit: (buildingId: string, unitId: string | undefined, enabled = true) =>
+    useQuery({
+      queryKey: buildingKeys.unit(buildingId, unitId ?? ''),
+      queryFn: () => api.getUnit(buildingId, unitId as string),
+      enabled: enabled && !!buildingId && !!unitId,
+    }),
+
+  /**
+   * Create unit mutation.
+   */
+  useCreateUnit: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ buildingId, data }: { buildingId: string; data: CreateUnitRequest }) =>
+        api.createUnit(buildingId, data),
+      onSuccess: (_, { buildingId }) => {
+        queryClient.invalidateQueries({ queryKey: buildingKeys.units(buildingId) });
+        queryClient.invalidateQueries({ queryKey: buildingKeys.detail(buildingId) });
+      },
+    });
+  },
+
+  /**
+   * Update unit mutation.
+   */
+  useUpdateUnit: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({
+        buildingId,
+        unitId,
+        data,
+      }: {
+        buildingId: string;
+        unitId: string;
+        data: UpdateUnitRequest;
+      }) => api.updateUnit(buildingId, unitId, data),
+      onSuccess: (_, { buildingId, unitId }) => {
+        queryClient.invalidateQueries({ queryKey: buildingKeys.units(buildingId) });
+        queryClient.invalidateQueries({ queryKey: buildingKeys.unit(buildingId, unitId) });
+      },
+    });
+  },
+
+  /**
+   * Archive (soft-delete) unit mutation.
+   */
+  useArchiveUnit: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ buildingId, unitId }: { buildingId: string; unitId: string }) =>
+        api.archiveUnit(buildingId, unitId),
+      onSuccess: (_, { buildingId }) => {
+        queryClient.invalidateQueries({ queryKey: buildingKeys.units(buildingId) });
+        queryClient.invalidateQueries({ queryKey: buildingKeys.detail(buildingId) });
+      },
+    });
+  },
+
+  /**
+   * Restore an archived unit mutation.
+   */
+  useRestoreUnit: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ buildingId, unitId }: { buildingId: string; unitId: string }) =>
+        api.restoreUnit(buildingId, unitId),
+      onSuccess: (_, { buildingId }) => {
+        queryClient.invalidateQueries({ queryKey: buildingKeys.units(buildingId) });
+        queryClient.invalidateQueries({ queryKey: buildingKeys.detail(buildingId) });
       },
     });
   },
