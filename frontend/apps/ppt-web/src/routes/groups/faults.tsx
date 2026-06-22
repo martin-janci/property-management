@@ -18,7 +18,9 @@ import {
   useConfirmFault,
   useCreateFault,
   useDeleteAttachment,
+  useDeleteFault,
   useFault,
+  useFaultStatistics,
   useFaults,
   useReopenFault,
   useResolveFault,
@@ -27,16 +29,26 @@ import {
 } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Route, useNavigate, useParams } from 'react-router-dom';
+import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../components';
 import { useAuth } from '../../contexts';
-import type { FaultDetail, FaultAttachment as UiFaultAttachment } from '../../features/faults';
+import type {
+  FaultDetail,
+  FaultReportFilters,
+  FaultAttachment as UiFaultAttachment,
+} from '../../features/faults';
 import type {
   FaultStatus,
   FaultSummary as UiFaultSummary,
 } from '../../features/faults/components/FaultCard';
 import type { TimelineAction, TimelineEntry } from '../../features/faults/components/FaultTimeline';
-import { CreateFaultPage, EditFaultPage, FaultDetailPage, FaultsPage } from '../lazyRoutes';
+import {
+  CreateFaultPage,
+  EditFaultPage,
+  FaultDetailPage,
+  FaultReportsPage,
+  FaultsPage,
+} from '../lazyRoutes';
 import { isManagerRole } from '../shared';
 
 /**
@@ -197,7 +209,11 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
 /**
  * Route wrapper for faults list page (UC-03, gap-79-1).
  *
- * Wired to useFaults from @ppt/api-client (TanStack Query).
+ * Wired to @ppt/api-client TanStack Query hooks:
+ *   useFaults           — list + pagination + filters (with snake_case→camelCase mapping)
+ *   useDeleteFault      — DELETE /api/v1/faults/:id (new-status faults only)
+ *   useFaultStatistics  — GET /api/v1/faults/statistics (summary bar: total/open/closed)
+ *
  * API FaultSummary uses snake_case and a slightly different status enum;
  * transformApiFaultToUi() bridges the gap to the UI FaultCard type.
  */
@@ -205,9 +221,25 @@ function FaultsPageRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
+  const [searchParams] = useSearchParams();
+  // Seed the initial query from URL params so reports-page drill-down
+  // (`/faults?status=new`) lands on a pre-filtered list. Status/category/
+  // priority use the API enums directly (FaultListQuery is the API shape).
+  const [faultQuery, setFaultQuery] = useState<FaultListQuery>(() => ({
+    page: 1,
+    limit: 10,
+    status: (searchParams.get('status') as FaultListQuery['status']) ?? undefined,
+    category: (searchParams.get('category') as FaultListQuery['category']) ?? undefined,
+    priority: (searchParams.get('priority') as FaultListQuery['priority']) ?? undefined,
+  }));
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
+  const deleteFault = useDeleteFault();
+  // Statistics are building-wide (no building filter at list level yet); fetched
+  // unconditionally so the summary bar is always up-to-date alongside the list.
+  const { data: statsData } = useFaultStatistics();
 
   useEffect(() => {
     if (error) {
@@ -221,6 +253,35 @@ function FaultsPageRoute() {
 
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
+
+  const handleDelete = async (id: string) => {
+    // Deleting a fault is destructive and irreversible — confirm first, matching
+    // the rest of the app's destructive actions (registry/news/accounting, and
+    // FaultDetailPage's own confirm). #1588 F1.
+    if (
+      !window.confirm(
+        t('faults.confirmDelete', {
+          defaultValue: 'Delete this fault? This action cannot be undone.',
+        })
+      )
+    ) {
+      return;
+    }
+    try {
+      await deleteFault.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('faults.deleted', { defaultValue: 'Fault deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('faults.deleteFailed', { defaultValue: 'Failed to delete fault' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
 
   // useCallback so child FaultsPage doesn't re-render on every parent render
   // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
@@ -245,6 +306,17 @@ function FaultsPageRoute() {
     []
   );
 
+  const stats = statsData
+    ? {
+        total_count: statsData.total_count,
+        open_count: statsData.open_count,
+        // Use the API's first-class closed_count rather than re-deriving
+        // total - open, so the figure can't silently break if open/closed
+        // partition semantics change (#1588 F2).
+        closed_count: statsData.closed_count,
+      }
+    : undefined;
+
   return (
     <FaultsPage
       faults={faults}
@@ -254,10 +326,13 @@ function FaultsPageRoute() {
       onRetry={() => {
         void refetch();
       }}
+      onDelete={handleDelete}
+      stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      onNavigateToReports={isManager ? () => navigate('/faults/reports') : undefined}
       onFilterChange={handleFaultsFilterChange}
     />
   );
@@ -441,12 +516,56 @@ function EditFaultPageRoute() {
   );
 }
 
+/**
+ * Fault reports / analytics page (Story 4.7, BIT-186).
+ *
+ * Manager-only — gating mirrors isManagerRole (the page renders an access
+ * notice for non-managers). Owns the building + date-range filter state that
+ * drives useFaultStatistics, and drills down into the faults list.
+ */
+function FaultReportsPageRoute() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
+
+  const [filters, setFilters] = useState<FaultReportFilters>({});
+  const { data: buildingsData } = useBuildings();
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
+
+  const { data, isLoading, error, refetch } = useFaultStatistics(filters);
+
+  const handleDrillDown = (params: { status?: string; category?: string; priority?: string }) => {
+    const search = new URLSearchParams();
+    if (params.status) search.set('status', params.status);
+    if (params.category) search.set('category', params.category);
+    if (params.priority) search.set('priority', params.priority);
+    navigate(`/faults?${search.toString()}`);
+  };
+
+  return (
+    <FaultReportsPage
+      isManager={isManager}
+      stats={isManager ? data : undefined}
+      isLoading={isManager && isLoading}
+      isError={!!error}
+      onRetry={() => {
+        void refetch();
+      }}
+      buildings={buildings}
+      filters={filters}
+      onFiltersChange={setFilters}
+      onDrillDown={handleDrillDown}
+    />
+  );
+}
+
 /** Faults routes (UC-03). */
 export function faultRoutes() {
   return (
     <>
       <Route path="/faults" element={<FaultsPageRoute />} />
       <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+      <Route path="/faults/reports" element={<FaultReportsPageRoute />} />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
       <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
     </>

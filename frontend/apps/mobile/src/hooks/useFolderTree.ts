@@ -12,10 +12,27 @@
  */
 
 import type { UseQueryOptions } from '@tanstack/react-query';
-import type { ApiFolderTreeNode } from '../screens/documents/DocumentsScreen';
 import { useApiQuery } from './useApi';
 
 // ─── API shape ────────────────────────────────────────────────────────────────
+
+/**
+ * Node of `GET /api/v1/documents/folders/tree` (`FolderTreeNode` on the
+ * server). The server nests children under each node; `parent_id` is the id of
+ * the containing folder (null for root-level folders) and `document_count` is
+ * the number of documents directly in the folder.
+ *
+ * Owned here (the folder-tree data layer) and re-exported from
+ * `DocumentsScreen` for existing importers — the hook must not depend on a
+ * screen module.
+ */
+export interface ApiFolderTreeNode {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  document_count: number;
+  children?: ApiFolderTreeNode[] | null;
+}
 
 export interface FolderTreeResponse {
   tree: ApiFolderTreeNode[];

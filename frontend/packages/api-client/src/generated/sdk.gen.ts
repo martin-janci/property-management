@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AnnouncementsApiAcknowledgeData, AnnouncementsApiAcknowledgeResponses, AnnouncementsApiAddAttachmentData, AnnouncementsApiAddAttachmentResponses, AnnouncementsApiArchiveData, AnnouncementsApiArchiveResponses, AnnouncementsApiCreateData, AnnouncementsApiCreateResponses, AnnouncementsApiDeleteAttachmentData, AnnouncementsApiDeleteAttachmentResponses, AnnouncementsApiDeleteData, AnnouncementsApiDeleteResponses, AnnouncementsApiGetData, AnnouncementsApiGetErrors, AnnouncementsApiGetResponses, AnnouncementsApiGetStatisticsData, AnnouncementsApiGetStatisticsResponses, AnnouncementsApiGetUnreadCountData, AnnouncementsApiGetUnreadCountResponses, AnnouncementsApiListAttachmentsData, AnnouncementsApiListAttachmentsResponses, AnnouncementsApiListData, AnnouncementsApiListPublishedData, AnnouncementsApiListPublishedResponses, AnnouncementsApiListResponses, AnnouncementsApiMarkReadData, AnnouncementsApiMarkReadResponses, AnnouncementsApiPinData, AnnouncementsApiPinResponses, AnnouncementsApiPublishData, AnnouncementsApiPublishResponses, AnnouncementsApiScheduleData, AnnouncementsApiScheduleResponses, AnnouncementsApiUpdateData, AnnouncementsApiUpdateResponses, AuthApiChangePasswordData, AuthApiChangePasswordErrors, AuthApiChangePasswordResponses, AuthApiDisable2FaData, AuthApiDisable2FaErrors, AuthApiDisable2FaResponses, AuthApiEnable2FaData, AuthApiEnable2FaErrors, AuthApiEnable2FaResponses, AuthApiGetMeData, AuthApiGetMeErrors, AuthApiGetMeResponses, AuthApiLoginData, AuthApiLoginErrors, AuthApiLoginResponses, AuthApiLogoutData, AuthApiLogoutResponses, AuthApiRefreshData, AuthApiRefreshErrors, AuthApiRefreshResponses, AuthApiRegisterData, AuthApiRegisterErrors, AuthApiRegisterResponses, AuthApiRequestPasswordResetData, AuthApiRequestPasswordResetResponses, AuthApiSetup2FaData, AuthApiSetup2FaErrors, AuthApiSetup2FaResponses, AuthApiUpdateMeData, AuthApiUpdateMeErrors, AuthApiUpdateMeResponses, BuildingsApiCreateCommonAreaData, BuildingsApiCreateCommonAreaErrors, BuildingsApiCreateCommonAreaResponses, BuildingsApiCreateData, BuildingsApiCreateErrors, BuildingsApiCreateFloorData, BuildingsApiCreateFloorErrors, BuildingsApiCreateFloorResponses, BuildingsApiCreateResponses, BuildingsApiDeleteData, BuildingsApiDeleteErrors, BuildingsApiDeleteResponses, BuildingsApiGetData, BuildingsApiGetErrors, BuildingsApiGetResponses, BuildingsApiListCommonAreasData, BuildingsApiListCommonAreasErrors, BuildingsApiListCommonAreasResponses, BuildingsApiListData, BuildingsApiListDocumentsData, BuildingsApiListDocumentsErrors, BuildingsApiListDocumentsResponses, BuildingsApiListErrors, BuildingsApiListFloorsData, BuildingsApiListFloorsErrors, BuildingsApiListFloorsResponses, BuildingsApiListResponses, BuildingsApiUpdateData, BuildingsApiUpdateErrors, BuildingsApiUpdateResponses, BuildingsApiUploadDocumentData, BuildingsApiUploadDocumentErrors, BuildingsApiUploadDocumentResponses, ComplianceApiCancelDeletionData, ComplianceApiCancelDeletionErrors, ComplianceApiCancelDeletionResponses, ComplianceApiDownloadExportData, ComplianceApiDownloadExportErrors, ComplianceApiDownloadExportResponses, ComplianceApiGetAuditLogsData, ComplianceApiGetAuditLogsResponses, ComplianceApiGetConsentsData, ComplianceApiGetConsentsResponses, ComplianceApiGetDeletionStatusData, ComplianceApiGetDeletionStatusErrors, ComplianceApiGetDeletionStatusResponses, ComplianceApiGetExportStatusData, ComplianceApiGetExportStatusErrors, ComplianceApiGetExportStatusResponses, ComplianceApiRequestDeletionData, ComplianceApiRequestDeletionResponses, ComplianceApiRequestExportData, ComplianceApiRequestExportResponses, ComplianceApiUpdateConsentData, ComplianceApiUpdateConsentResponses, ContactsApiListData, ContactsApiListErrors, ContactsApiListResponses, DocumentsApiCreateFolderData, DocumentsApiCreateFolderResponses, DocumentsApiDeleteData, DocumentsApiDeleteResponses, DocumentsApiDownloadData, DocumentsApiDownloadResponses, DocumentsApiGetData, DocumentsApiGetErrors, DocumentsApiGetResponses, DocumentsApiListData, DocumentsApiListFoldersData, DocumentsApiListFoldersResponses, DocumentsApiListResponses, DocumentsApiListVersionsData, DocumentsApiListVersionsResponses, DocumentsApiUpdateData, DocumentsApiUpdateResponses, DocumentsApiUploadData, DocumentsApiUploadResponses, DocumentsApiUploadVersionData, DocumentsApiUploadVersionResponses, FaultsApiAddCommentData, FaultsApiAddCommentResponses, FaultsApiCreateData, FaultsApiCreateResponses, FaultsApiGetData, FaultsApiGetErrors, FaultsApiGetResponses, FaultsApiListCommentsData, FaultsApiListCommentsResponses, FaultsApiListData, FaultsApiListResponses, FaultsApiResolveData, FaultsApiResolveResponses, FaultsApiUpdateData, FaultsApiUpdateResponses, FaultsApiUploadPhotoData, FaultsApiUploadPhotoResponses, InvoicesApiCreateData, InvoicesApiCreateErrors, InvoicesApiCreateResponses, InvoicesApiDeleteData, InvoicesApiDeleteErrors, InvoicesApiDeleteResponses, InvoicesApiGetData, InvoicesApiGetErrors, InvoicesApiGetResponses, InvoicesApiListData, InvoicesApiListErrors, InvoicesApiListItemsData, InvoicesApiListItemsErrors, InvoicesApiListItemsResponses, InvoicesApiListResponses, InvoicesApiUpdateData, InvoicesApiUpdateErrors, InvoicesApiUpdateResponses, ListingsApiConfigurePortalData, ListingsApiConfigurePortalResponses, ListingsApiCreateData, ListingsApiCreateInquiryData, ListingsApiCreateInquiryResponses, ListingsApiCreateResponses, ListingsApiGetData, ListingsApiGetErrors, ListingsApiGetResponses, ListingsApiListData, ListingsApiListInquiriesData, ListingsApiListInquiriesResponses, ListingsApiListPortalsData, ListingsApiListPortalsResponses, ListingsApiListResponses, ListingsApiPublishData, ListingsApiPublishResponses, ListingsApiPublishToPortalData, ListingsApiPublishToPortalResponses, ListingsApiUnpublishData, ListingsApiUnpublishResponses, ListingsApiUpdateData, ListingsApiUpdateInquiryData, ListingsApiUpdateInquiryResponses, ListingsApiUpdateResponses, ListingsApiUploadPhotoData, ListingsApiUploadPhotoResponses, OrganizationsApiCreateData, OrganizationsApiCreateErrors, OrganizationsApiCreateResponses, OrganizationsApiDeleteData, OrganizationsApiDeleteErrors, OrganizationsApiDeleteResponses, OrganizationsApiGetData, OrganizationsApiGetErrors, OrganizationsApiGetResponses, OrganizationsApiGetStatsData, OrganizationsApiGetStatsErrors, OrganizationsApiGetStatsResponses, OrganizationsApiInviteMemberData, OrganizationsApiInviteMemberErrors, OrganizationsApiInviteMemberResponses, OrganizationsApiListData, OrganizationsApiListErrors, OrganizationsApiListMembersData, OrganizationsApiListMembersErrors, OrganizationsApiListMembersResponses, OrganizationsApiListResponses, OrganizationsApiRemoveMemberData, OrganizationsApiRemoveMemberErrors, OrganizationsApiRemoveMemberResponses, OrganizationsApiSwitchTenantData, OrganizationsApiSwitchTenantErrors, OrganizationsApiSwitchTenantResponses, OrganizationsApiUpdateBrandingData, OrganizationsApiUpdateBrandingErrors, OrganizationsApiUpdateBrandingResponses, OrganizationsApiUpdateData, OrganizationsApiUpdateErrors, OrganizationsApiUpdateMemberData, OrganizationsApiUpdateMemberErrors, OrganizationsApiUpdateMemberResponses, OrganizationsApiUpdateResponses, RentalsApiCheckInData, RentalsApiCheckInResponses, RentalsApiCheckOutData, RentalsApiCheckOutResponses, RentalsApiCreateConnectionData, RentalsApiCreateConnectionResponses, RentalsApiCreateReservationData, RentalsApiCreateReservationResponses, RentalsApiGenerateAccessCodeData, RentalsApiGenerateAccessCodeResponses, RentalsApiGetReservationData, RentalsApiGetReservationErrors, RentalsApiGetReservationResponses, RentalsApiListConnectionsData, RentalsApiListConnectionsResponses, RentalsApiListGuestsData, RentalsApiListGuestsResponses, RentalsApiListReservationsData, RentalsApiListReservationsResponses, RentalsApiRegisterGuestData, RentalsApiRegisterGuestResponses, RentalsApiSubmitToAuthoritiesData, RentalsApiSubmitToAuthoritiesResponses, RentalsApiSyncPlatformsData, RentalsApiSyncPlatformsResponses, UnitsApiAddOwnerData, UnitsApiAddOwnerResponses, UnitsApiAddResidentData, UnitsApiAddResidentResponses, UnitsApiCreateData, UnitsApiCreateResponses, UnitsApiGetData, UnitsApiGetErrors, UnitsApiGetResponses, UnitsApiListData, UnitsApiListOwnersData, UnitsApiListOwnersResponses, UnitsApiListResidentsData, UnitsApiListResidentsResponses, UnitsApiListResponses, UnitsApiUpdateData, UnitsApiUpdateResponses, VotingApiCancelData, VotingApiCancelResponses, VotingApiCastVoteData, VotingApiCastVoteResponses, VotingApiCreateData, VotingApiCreateResponses, VotingApiGetData, VotingApiGetErrors, VotingApiGetMyBallotData, VotingApiGetMyBallotErrors, VotingApiGetMyBallotResponses, VotingApiGetResponses, VotingApiGetResultsData, VotingApiGetResultsErrors, VotingApiGetResultsResponses, VotingApiListData, VotingApiListResponses, VotingApiPublishData, VotingApiPublishResponses, VotingApiUpdateData, VotingApiUpdateResponses } from './types.gen';
+import type { AnnouncementsApiAcknowledgeData, AnnouncementsApiAcknowledgeResponses, AnnouncementsApiAddAttachmentData, AnnouncementsApiAddAttachmentResponses, AnnouncementsApiArchiveData, AnnouncementsApiArchiveResponses, AnnouncementsApiCreateData, AnnouncementsApiCreateResponses, AnnouncementsApiDeleteAttachmentData, AnnouncementsApiDeleteAttachmentResponses, AnnouncementsApiDeleteData, AnnouncementsApiDeleteResponses, AnnouncementsApiGetData, AnnouncementsApiGetErrors, AnnouncementsApiGetResponses, AnnouncementsApiGetStatisticsData, AnnouncementsApiGetStatisticsResponses, AnnouncementsApiGetUnreadCountData, AnnouncementsApiGetUnreadCountResponses, AnnouncementsApiListAttachmentsData, AnnouncementsApiListAttachmentsResponses, AnnouncementsApiListData, AnnouncementsApiListPublishedData, AnnouncementsApiListPublishedResponses, AnnouncementsApiListResponses, AnnouncementsApiMarkReadData, AnnouncementsApiMarkReadResponses, AnnouncementsApiPinData, AnnouncementsApiPinResponses, AnnouncementsApiPublishData, AnnouncementsApiPublishResponses, AnnouncementsApiScheduleData, AnnouncementsApiScheduleResponses, AnnouncementsApiUpdateData, AnnouncementsApiUpdateResponses, AuthApiChangePasswordData, AuthApiChangePasswordErrors, AuthApiChangePasswordResponses, AuthApiDisable2FaData, AuthApiDisable2FaErrors, AuthApiDisable2FaResponses, AuthApiEnable2FaData, AuthApiEnable2FaErrors, AuthApiEnable2FaResponses, AuthApiGetMeData, AuthApiGetMeErrors, AuthApiGetMeResponses, AuthApiLoginData, AuthApiLoginErrors, AuthApiLoginResponses, AuthApiLogoutData, AuthApiLogoutResponses, AuthApiRefreshData, AuthApiRefreshErrors, AuthApiRefreshResponses, AuthApiRegisterData, AuthApiRegisterErrors, AuthApiRegisterResponses, AuthApiRequestPasswordResetData, AuthApiRequestPasswordResetResponses, AuthApiSetup2FaData, AuthApiSetup2FaErrors, AuthApiSetup2FaResponses, AuthApiUpdateMeData, AuthApiUpdateMeErrors, AuthApiUpdateMeResponses, BuildingsApiCreateCommonAreaData, BuildingsApiCreateCommonAreaErrors, BuildingsApiCreateCommonAreaResponses, BuildingsApiCreateData, BuildingsApiCreateErrors, BuildingsApiCreateFloorData, BuildingsApiCreateFloorErrors, BuildingsApiCreateFloorResponses, BuildingsApiCreateResponses, BuildingsApiDeleteData, BuildingsApiDeleteErrors, BuildingsApiDeleteResponses, BuildingsApiGetData, BuildingsApiGetErrors, BuildingsApiGetResponses, BuildingsApiListCommonAreasData, BuildingsApiListCommonAreasErrors, BuildingsApiListCommonAreasResponses, BuildingsApiListData, BuildingsApiListDocumentsData, BuildingsApiListDocumentsErrors, BuildingsApiListDocumentsResponses, BuildingsApiListErrors, BuildingsApiListFloorsData, BuildingsApiListFloorsErrors, BuildingsApiListFloorsResponses, BuildingsApiListResponses, BuildingsApiUpdateData, BuildingsApiUpdateErrors, BuildingsApiUpdateResponses, BuildingsApiUploadDocumentData, BuildingsApiUploadDocumentErrors, BuildingsApiUploadDocumentResponses, ComplianceApiCancelDeletionData, ComplianceApiCancelDeletionErrors, ComplianceApiCancelDeletionResponses, ComplianceApiDownloadExportData, ComplianceApiDownloadExportErrors, ComplianceApiDownloadExportResponses, ComplianceApiGetAuditLogsData, ComplianceApiGetAuditLogsResponses, ComplianceApiGetConsentsData, ComplianceApiGetConsentsResponses, ComplianceApiGetDeletionStatusData, ComplianceApiGetDeletionStatusErrors, ComplianceApiGetDeletionStatusResponses, ComplianceApiGetExportStatusData, ComplianceApiGetExportStatusErrors, ComplianceApiGetExportStatusResponses, ComplianceApiRequestDeletionData, ComplianceApiRequestDeletionResponses, ComplianceApiRequestExportData, ComplianceApiRequestExportResponses, ComplianceApiUpdateConsentData, ComplianceApiUpdateConsentResponses, ContactsApiListData, ContactsApiListErrors, ContactsApiListResponses, DocumentsApiCreateFolderData, DocumentsApiCreateFolderResponses, DocumentsApiDeleteData, DocumentsApiDeleteResponses, DocumentsApiDownloadData, DocumentsApiDownloadResponses, DocumentsApiGetData, DocumentsApiGetErrors, DocumentsApiGetResponses, DocumentsApiListData, DocumentsApiListFoldersData, DocumentsApiListFoldersResponses, DocumentsApiListResponses, DocumentsApiListVersionsData, DocumentsApiListVersionsResponses, DocumentsApiUpdateData, DocumentsApiUpdateResponses, DocumentsApiUploadData, DocumentsApiUploadResponses, DocumentsApiUploadVersionData, DocumentsApiUploadVersionResponses, FaultsApiAddCommentData, FaultsApiAddCommentResponses, FaultsApiCreateData, FaultsApiCreateResponses, FaultsApiGetData, FaultsApiGetErrors, FaultsApiGetResponses, FaultsApiListCommentsData, FaultsApiListCommentsResponses, FaultsApiListData, FaultsApiListResponses, FaultsApiResolveData, FaultsApiResolveResponses, FaultsApiUpdateData, FaultsApiUpdateResponses, FaultsApiUploadPhotoData, FaultsApiUploadPhotoResponses, InvoicesApiCreateData, InvoicesApiCreateErrors, InvoicesApiCreateResponses, InvoicesApiDeleteData, InvoicesApiDeleteErrors, InvoicesApiDeleteResponses, InvoicesApiGetData, InvoicesApiGetErrors, InvoicesApiGetResponses, InvoicesApiListData, InvoicesApiListErrors, InvoicesApiListItemsData, InvoicesApiListItemsErrors, InvoicesApiListItemsResponses, InvoicesApiListResponses, InvoicesApiUpdateData, InvoicesApiUpdateErrors, InvoicesApiUpdateResponses, ListingsApiConfigurePortalData, ListingsApiConfigurePortalResponses, ListingsApiCreateData, ListingsApiCreateInquiryData, ListingsApiCreateInquiryResponses, ListingsApiCreateResponses, ListingsApiGetData, ListingsApiGetErrors, ListingsApiGetResponses, ListingsApiListData, ListingsApiListInquiriesData, ListingsApiListInquiriesResponses, ListingsApiListPortalsData, ListingsApiListPortalsResponses, ListingsApiListResponses, ListingsApiPublishData, ListingsApiPublishResponses, ListingsApiPublishToPortalData, ListingsApiPublishToPortalResponses, ListingsApiUnpublishData, ListingsApiUnpublishResponses, ListingsApiUpdateData, ListingsApiUpdateInquiryData, ListingsApiUpdateInquiryResponses, ListingsApiUpdateResponses, ListingsApiUploadPhotoData, ListingsApiUploadPhotoResponses, OrganizationsApiCreateData, OrganizationsApiCreateErrors, OrganizationsApiCreateResponses, OrganizationsApiDeleteData, OrganizationsApiDeleteErrors, OrganizationsApiDeleteResponses, OrganizationsApiGetData, OrganizationsApiGetErrors, OrganizationsApiGetResponses, OrganizationsApiGetStatsData, OrganizationsApiGetStatsErrors, OrganizationsApiGetStatsResponses, OrganizationsApiInviteMemberData, OrganizationsApiInviteMemberErrors, OrganizationsApiInviteMemberResponses, OrganizationsApiListData, OrganizationsApiListErrors, OrganizationsApiListMembersData, OrganizationsApiListMembersErrors, OrganizationsApiListMembersResponses, OrganizationsApiListResponses, OrganizationsApiRemoveMemberData, OrganizationsApiRemoveMemberErrors, OrganizationsApiRemoveMemberResponses, OrganizationsApiSwitchTenantData, OrganizationsApiSwitchTenantErrors, OrganizationsApiSwitchTenantResponses, OrganizationsApiUpdateBrandingData, OrganizationsApiUpdateBrandingErrors, OrganizationsApiUpdateBrandingResponses, OrganizationsApiUpdateData, OrganizationsApiUpdateErrors, OrganizationsApiUpdateMemberData, OrganizationsApiUpdateMemberErrors, OrganizationsApiUpdateMemberResponses, OrganizationsApiUpdateResponses, PaymentMatchesApiConfirmData, PaymentMatchesApiConfirmErrors, PaymentMatchesApiConfirmResponses, PaymentMatchesApiRejectData, PaymentMatchesApiRejectErrors, PaymentMatchesApiRejectResponses, RentalsApiCheckInData, RentalsApiCheckInResponses, RentalsApiCheckOutData, RentalsApiCheckOutResponses, RentalsApiCreateConnectionData, RentalsApiCreateConnectionResponses, RentalsApiCreateReservationData, RentalsApiCreateReservationResponses, RentalsApiGenerateAccessCodeData, RentalsApiGenerateAccessCodeResponses, RentalsApiGetReservationData, RentalsApiGetReservationErrors, RentalsApiGetReservationResponses, RentalsApiListConnectionsData, RentalsApiListConnectionsResponses, RentalsApiListGuestsData, RentalsApiListGuestsResponses, RentalsApiListReservationsData, RentalsApiListReservationsResponses, RentalsApiRegisterGuestData, RentalsApiRegisterGuestResponses, RentalsApiSubmitToAuthoritiesData, RentalsApiSubmitToAuthoritiesResponses, RentalsApiSyncPlatformsData, RentalsApiSyncPlatformsResponses, StatementLinesApiListMatchesData, StatementLinesApiListMatchesErrors, StatementLinesApiListMatchesResponses, StatementsApiListData, StatementsApiListErrors, StatementsApiListLinesData, StatementsApiListLinesErrors, StatementsApiListLinesResponses, StatementsApiListResponses, UnitsApiAddOwnerData, UnitsApiAddOwnerResponses, UnitsApiAddResidentData, UnitsApiAddResidentResponses, UnitsApiCreateData, UnitsApiCreateResponses, UnitsApiGetData, UnitsApiGetErrors, UnitsApiGetResponses, UnitsApiListData, UnitsApiListOwnersData, UnitsApiListOwnersResponses, UnitsApiListResidentsData, UnitsApiListResidentsResponses, UnitsApiListResponses, UnitsApiUpdateData, UnitsApiUpdateResponses, VotingApiCancelData, VotingApiCancelResponses, VotingApiCastVoteData, VotingApiCastVoteResponses, VotingApiCreateData, VotingApiCreateResponses, VotingApiGetData, VotingApiGetErrors, VotingApiGetMyBallotData, VotingApiGetMyBallotErrors, VotingApiGetMyBallotResponses, VotingApiGetResponses, VotingApiGetResultsData, VotingApiGetResultsErrors, VotingApiGetResultsResponses, VotingApiListData, VotingApiListResponses, VotingApiPublishData, VotingApiPublishResponses, VotingApiUpdateData, VotingApiUpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -21,12 +21,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 /**
  * List contacts for current tenant
  */
-export const contactsApiList = <ThrowOnError extends boolean = false>(options: Options<ContactsApiListData, ThrowOnError>): RequestResult<ContactsApiListResponses, ContactsApiListErrors, ThrowOnError> => (options.client ?? client).get<ContactsApiListResponses, ContactsApiListErrors, ThrowOnError>({ url: '/api/v1/accounting/contacts', ...options });
+export const contactsApiList = <ThrowOnError extends boolean = false>(options?: Options<ContactsApiListData, ThrowOnError>): RequestResult<ContactsApiListResponses, ContactsApiListErrors, ThrowOnError> => (options?.client ?? client).get<ContactsApiListResponses, ContactsApiListErrors, ThrowOnError>({ url: '/api/v1/accounting/contacts', ...options });
 
 /**
  * List invoices for current tenant
  */
-export const invoicesApiList = <ThrowOnError extends boolean = false>(options: Options<InvoicesApiListData, ThrowOnError>): RequestResult<InvoicesApiListResponses, InvoicesApiListErrors, ThrowOnError> => (options.client ?? client).get<InvoicesApiListResponses, InvoicesApiListErrors, ThrowOnError>({ url: '/api/v1/accounting/invoices', ...options });
+export const invoicesApiList = <ThrowOnError extends boolean = false>(options?: Options<InvoicesApiListData, ThrowOnError>): RequestResult<InvoicesApiListResponses, InvoicesApiListErrors, ThrowOnError> => (options?.client ?? client).get<InvoicesApiListResponses, InvoicesApiListErrors, ThrowOnError>({ url: '/api/v1/accounting/invoices', ...options });
 
 /**
  * Create new invoice
@@ -68,9 +68,34 @@ export const invoicesApiUpdate = <ThrowOnError extends boolean = false>(options:
 export const invoicesApiListItems = <ThrowOnError extends boolean = false>(options: Options<InvoicesApiListItemsData, ThrowOnError>): RequestResult<InvoicesApiListItemsResponses, InvoicesApiListItemsErrors, ThrowOnError> => (options.client ?? client).get<InvoicesApiListItemsResponses, InvoicesApiListItemsErrors, ThrowOnError>({ url: '/api/v1/accounting/invoices/{id}/items', ...options });
 
 /**
+ * List payment-match suggestions/decisions for a statement line
+ */
+export const statementLinesApiListMatches = <ThrowOnError extends boolean = false>(options: Options<StatementLinesApiListMatchesData, ThrowOnError>): RequestResult<StatementLinesApiListMatchesResponses, StatementLinesApiListMatchesErrors, ThrowOnError> => (options.client ?? client).get<StatementLinesApiListMatchesResponses, StatementLinesApiListMatchesErrors, ThrowOnError>({ url: '/api/v1/accounting/lines/{id}/matches', ...options });
+
+/**
+ * Confirm a payment match (link the statement line to the invoice)
+ */
+export const paymentMatchesApiConfirm = <ThrowOnError extends boolean = false>(options: Options<PaymentMatchesApiConfirmData, ThrowOnError>): RequestResult<PaymentMatchesApiConfirmResponses, PaymentMatchesApiConfirmErrors, ThrowOnError> => (options.client ?? client).post<PaymentMatchesApiConfirmResponses, PaymentMatchesApiConfirmErrors, ThrowOnError>({ url: '/api/v1/accounting/matches/{id}/confirm', ...options });
+
+/**
+ * Reject a payment match
+ */
+export const paymentMatchesApiReject = <ThrowOnError extends boolean = false>(options: Options<PaymentMatchesApiRejectData, ThrowOnError>): RequestResult<PaymentMatchesApiRejectResponses, PaymentMatchesApiRejectErrors, ThrowOnError> => (options.client ?? client).post<PaymentMatchesApiRejectResponses, PaymentMatchesApiRejectErrors, ThrowOnError>({ url: '/api/v1/accounting/matches/{id}/reject', ...options });
+
+/**
+ * List imported bank statements for the current tenant
+ */
+export const statementsApiList = <ThrowOnError extends boolean = false>(options?: Options<StatementsApiListData, ThrowOnError>): RequestResult<StatementsApiListResponses, StatementsApiListErrors, ThrowOnError> => (options?.client ?? client).get<StatementsApiListResponses, StatementsApiListErrors, ThrowOnError>({ url: '/api/v1/accounting/statements', ...options });
+
+/**
+ * List the parsed lines of a bank statement
+ */
+export const statementsApiListLines = <ThrowOnError extends boolean = false>(options: Options<StatementsApiListLinesData, ThrowOnError>): RequestResult<StatementsApiListLinesResponses, StatementsApiListLinesErrors, ThrowOnError> => (options.client ?? client).get<StatementsApiListLinesResponses, StatementsApiListLinesErrors, ThrowOnError>({ url: '/api/v1/accounting/statements/{id}/lines', ...options });
+
+/**
  * List announcements with filters (managers)
  */
-export const announcementsApiList = <ThrowOnError extends boolean = false>(options: Options<AnnouncementsApiListData, ThrowOnError>): RequestResult<AnnouncementsApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<AnnouncementsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements', ...options });
+export const announcementsApiList = <ThrowOnError extends boolean = false>(options?: Options<AnnouncementsApiListData, ThrowOnError>): RequestResult<AnnouncementsApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<AnnouncementsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements', ...options });
 
 /**
  * Create a new announcement
@@ -87,17 +112,17 @@ export const announcementsApiCreate = <ThrowOnError extends boolean = false>(opt
 /**
  * List published announcements (all users)
  */
-export const announcementsApiListPublished = <ThrowOnError extends boolean = false>(options: Options<AnnouncementsApiListPublishedData, ThrowOnError>): RequestResult<AnnouncementsApiListPublishedResponses, unknown, ThrowOnError> => (options.client ?? client).get<AnnouncementsApiListPublishedResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/published', ...options });
+export const announcementsApiListPublished = <ThrowOnError extends boolean = false>(options?: Options<AnnouncementsApiListPublishedData, ThrowOnError>): RequestResult<AnnouncementsApiListPublishedResponses, unknown, ThrowOnError> => (options?.client ?? client).get<AnnouncementsApiListPublishedResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/published', ...options });
 
 /**
  * Get announcement statistics
  */
-export const announcementsApiGetStatistics = <ThrowOnError extends boolean = false>(options: Options<AnnouncementsApiGetStatisticsData, ThrowOnError>): RequestResult<AnnouncementsApiGetStatisticsResponses, unknown, ThrowOnError> => (options.client ?? client).get<AnnouncementsApiGetStatisticsResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/statistics', ...options });
+export const announcementsApiGetStatistics = <ThrowOnError extends boolean = false>(options?: Options<AnnouncementsApiGetStatisticsData, ThrowOnError>): RequestResult<AnnouncementsApiGetStatisticsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<AnnouncementsApiGetStatisticsResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/statistics', ...options });
 
 /**
  * Get unread announcement count
  */
-export const announcementsApiGetUnreadCount = <ThrowOnError extends boolean = false>(options: Options<AnnouncementsApiGetUnreadCountData, ThrowOnError>): RequestResult<AnnouncementsApiGetUnreadCountResponses, unknown, ThrowOnError> => (options.client ?? client).get<AnnouncementsApiGetUnreadCountResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/unread-count', ...options });
+export const announcementsApiGetUnreadCount = <ThrowOnError extends boolean = false>(options?: Options<AnnouncementsApiGetUnreadCountData, ThrowOnError>): RequestResult<AnnouncementsApiGetUnreadCountResponses, unknown, ThrowOnError> => (options?.client ?? client).get<AnnouncementsApiGetUnreadCountResponses, unknown, ThrowOnError>({ url: '/api/v1/announcements/unread-count', ...options });
 
 /**
  * Delete an announcement (draft only)
@@ -202,12 +227,12 @@ export const authApiLogin = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Logout (invalidate tokens)
  */
-export const authApiLogout = <ThrowOnError extends boolean = false>(options: Options<AuthApiLogoutData, ThrowOnError>): RequestResult<AuthApiLogoutResponses, unknown, ThrowOnError> => (options.client ?? client).post<AuthApiLogoutResponses, unknown, ThrowOnError>({ url: '/api/v1/auth/logout', ...options });
+export const authApiLogout = <ThrowOnError extends boolean = false>(options?: Options<AuthApiLogoutData, ThrowOnError>): RequestResult<AuthApiLogoutResponses, unknown, ThrowOnError> => (options?.client ?? client).post<AuthApiLogoutResponses, unknown, ThrowOnError>({ url: '/api/v1/auth/logout', ...options });
 
 /**
  * Get current user profile
  */
-export const authApiGetMe = <ThrowOnError extends boolean = false>(options: Options<AuthApiGetMeData, ThrowOnError>): RequestResult<AuthApiGetMeResponses, AuthApiGetMeErrors, ThrowOnError> => (options.client ?? client).get<AuthApiGetMeResponses, AuthApiGetMeErrors, ThrowOnError>({ url: '/api/v1/auth/me', ...options });
+export const authApiGetMe = <ThrowOnError extends boolean = false>(options?: Options<AuthApiGetMeData, ThrowOnError>): RequestResult<AuthApiGetMeResponses, AuthApiGetMeErrors, ThrowOnError> => (options?.client ?? client).get<AuthApiGetMeResponses, AuthApiGetMeErrors, ThrowOnError>({ url: '/api/v1/auth/me', ...options });
 
 /**
  * Update current user profile
@@ -248,7 +273,7 @@ export const authApiEnable2Fa = <ThrowOnError extends boolean = false>(options: 
 /**
  * Setup 2FA
  */
-export const authApiSetup2Fa = <ThrowOnError extends boolean = false>(options: Options<AuthApiSetup2FaData, ThrowOnError>): RequestResult<AuthApiSetup2FaResponses, AuthApiSetup2FaErrors, ThrowOnError> => (options.client ?? client).post<AuthApiSetup2FaResponses, AuthApiSetup2FaErrors, ThrowOnError>({ url: '/api/v1/auth/me/2fa/setup', ...options });
+export const authApiSetup2Fa = <ThrowOnError extends boolean = false>(options?: Options<AuthApiSetup2FaData, ThrowOnError>): RequestResult<AuthApiSetup2FaResponses, AuthApiSetup2FaErrors, ThrowOnError> => (options?.client ?? client).post<AuthApiSetup2FaResponses, AuthApiSetup2FaErrors, ThrowOnError>({ url: '/api/v1/auth/me/2fa/setup', ...options });
 
 /**
  * Change password
@@ -294,7 +319,7 @@ export const authApiRegister = <ThrowOnError extends boolean = false>(options: O
 /**
  * List buildings
  */
-export const buildingsApiList = <ThrowOnError extends boolean = false>(options: Options<BuildingsApiListData, ThrowOnError>): RequestResult<BuildingsApiListResponses, BuildingsApiListErrors, ThrowOnError> => (options.client ?? client).get<BuildingsApiListResponses, BuildingsApiListErrors, ThrowOnError>({ url: '/api/v1/buildings', ...options });
+export const buildingsApiList = <ThrowOnError extends boolean = false>(options?: Options<BuildingsApiListData, ThrowOnError>): RequestResult<BuildingsApiListResponses, BuildingsApiListErrors, ThrowOnError> => (options?.client ?? client).get<BuildingsApiListResponses, BuildingsApiListErrors, ThrowOnError>({ url: '/api/v1/buildings', ...options });
 
 /**
  * Create new building
@@ -384,12 +409,12 @@ export const buildingsApiCreateFloor = <ThrowOnError extends boolean = false>(op
 /**
  * Get audit logs (admin)
  */
-export const complianceApiGetAuditLogs = <ThrowOnError extends boolean = false>(options: Options<ComplianceApiGetAuditLogsData, ThrowOnError>): RequestResult<ComplianceApiGetAuditLogsResponses, unknown, ThrowOnError> => (options.client ?? client).get<ComplianceApiGetAuditLogsResponses, unknown, ThrowOnError>({ url: '/api/v1/compliance/audit-logs', ...options });
+export const complianceApiGetAuditLogs = <ThrowOnError extends boolean = false>(options?: Options<ComplianceApiGetAuditLogsData, ThrowOnError>): RequestResult<ComplianceApiGetAuditLogsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ComplianceApiGetAuditLogsResponses, unknown, ThrowOnError>({ url: '/api/v1/compliance/audit-logs', ...options });
 
 /**
  * Get current consents
  */
-export const complianceApiGetConsents = <ThrowOnError extends boolean = false>(options: Options<ComplianceApiGetConsentsData, ThrowOnError>): RequestResult<ComplianceApiGetConsentsResponses, unknown, ThrowOnError> => (options.client ?? client).get<ComplianceApiGetConsentsResponses, unknown, ThrowOnError>({ url: '/api/v1/compliance/consents', ...options });
+export const complianceApiGetConsents = <ThrowOnError extends boolean = false>(options?: Options<ComplianceApiGetConsentsData, ThrowOnError>): RequestResult<ComplianceApiGetConsentsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ComplianceApiGetConsentsResponses, unknown, ThrowOnError>({ url: '/api/v1/compliance/consents', ...options });
 
 /**
  * Update consent
@@ -447,7 +472,7 @@ export const complianceApiGetExportStatus = <ThrowOnError extends boolean = fals
  */
 export const complianceApiDownloadExport = <ThrowOnError extends boolean = false>(options: Options<ComplianceApiDownloadExportData, ThrowOnError>): RequestResult<ComplianceApiDownloadExportResponses, ComplianceApiDownloadExportErrors, ThrowOnError> => (options.client ?? client).get<ComplianceApiDownloadExportResponses, ComplianceApiDownloadExportErrors, ThrowOnError>({ url: '/api/v1/compliance/gdpr/export/{id}/download', ...options });
 
-export const documentsApiList = <ThrowOnError extends boolean = false>(options: Options<DocumentsApiListData, ThrowOnError>): RequestResult<DocumentsApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<DocumentsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/documents', ...options });
+export const documentsApiList = <ThrowOnError extends boolean = false>(options?: Options<DocumentsApiListData, ThrowOnError>): RequestResult<DocumentsApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<DocumentsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/documents', ...options });
 
 export const documentsApiUpload = <ThrowOnError extends boolean = false>(options: Options<DocumentsApiUploadData, ThrowOnError>): RequestResult<DocumentsApiUploadResponses, unknown, ThrowOnError> => (options.client ?? client).post<DocumentsApiUploadResponses, unknown, ThrowOnError>({
     url: '/api/v1/documents',
@@ -458,7 +483,7 @@ export const documentsApiUpload = <ThrowOnError extends boolean = false>(options
     }
 });
 
-export const documentsApiListFolders = <ThrowOnError extends boolean = false>(options: Options<DocumentsApiListFoldersData, ThrowOnError>): RequestResult<DocumentsApiListFoldersResponses, unknown, ThrowOnError> => (options.client ?? client).get<DocumentsApiListFoldersResponses, unknown, ThrowOnError>({ url: '/api/v1/documents/folders', ...options });
+export const documentsApiListFolders = <ThrowOnError extends boolean = false>(options?: Options<DocumentsApiListFoldersData, ThrowOnError>): RequestResult<DocumentsApiListFoldersResponses, unknown, ThrowOnError> => (options?.client ?? client).get<DocumentsApiListFoldersResponses, unknown, ThrowOnError>({ url: '/api/v1/documents/folders', ...options });
 
 export const documentsApiCreateFolder = <ThrowOnError extends boolean = false>(options: Options<DocumentsApiCreateFolderData, ThrowOnError>): RequestResult<DocumentsApiCreateFolderResponses, unknown, ThrowOnError> => (options.client ?? client).post<DocumentsApiCreateFolderResponses, unknown, ThrowOnError>({
     url: '/api/v1/documents/folders',
@@ -495,7 +520,7 @@ export const documentsApiUploadVersion = <ThrowOnError extends boolean = false>(
     }
 });
 
-export const faultsApiList = <ThrowOnError extends boolean = false>(options: Options<FaultsApiListData, ThrowOnError>): RequestResult<FaultsApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<FaultsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/faults', ...options });
+export const faultsApiList = <ThrowOnError extends boolean = false>(options?: Options<FaultsApiListData, ThrowOnError>): RequestResult<FaultsApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<FaultsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/faults', ...options });
 
 export const faultsApiCreate = <ThrowOnError extends boolean = false>(options: Options<FaultsApiCreateData, ThrowOnError>): RequestResult<FaultsApiCreateResponses, unknown, ThrowOnError> => (options.client ?? client).post<FaultsApiCreateResponses, unknown, ThrowOnError>({
     url: '/api/v1/faults',
@@ -546,7 +571,7 @@ export const faultsApiResolve = <ThrowOnError extends boolean = false>(options: 
     }
 });
 
-export const listingsApiList = <ThrowOnError extends boolean = false>(options: Options<ListingsApiListData, ThrowOnError>): RequestResult<ListingsApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<ListingsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/listings', ...options });
+export const listingsApiList = <ThrowOnError extends boolean = false>(options?: Options<ListingsApiListData, ThrowOnError>): RequestResult<ListingsApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListingsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/listings', ...options });
 
 export const listingsApiCreate = <ThrowOnError extends boolean = false>(options: Options<ListingsApiCreateData, ThrowOnError>): RequestResult<ListingsApiCreateResponses, unknown, ThrowOnError> => (options.client ?? client).post<ListingsApiCreateResponses, unknown, ThrowOnError>({
     url: '/api/v1/listings',
@@ -566,7 +591,7 @@ export const listingsApiUpdateInquiry = <ThrowOnError extends boolean = false>(o
     }
 });
 
-export const listingsApiListPortals = <ThrowOnError extends boolean = false>(options: Options<ListingsApiListPortalsData, ThrowOnError>): RequestResult<ListingsApiListPortalsResponses, unknown, ThrowOnError> => (options.client ?? client).get<ListingsApiListPortalsResponses, unknown, ThrowOnError>({ url: '/api/v1/listings/portals', ...options });
+export const listingsApiListPortals = <ThrowOnError extends boolean = false>(options?: Options<ListingsApiListPortalsData, ThrowOnError>): RequestResult<ListingsApiListPortalsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListingsApiListPortalsResponses, unknown, ThrowOnError>({ url: '/api/v1/listings/portals', ...options });
 
 export const listingsApiConfigurePortal = <ThrowOnError extends boolean = false>(options: Options<ListingsApiConfigurePortalData, ThrowOnError>): RequestResult<ListingsApiConfigurePortalResponses, unknown, ThrowOnError> => (options.client ?? client).post<ListingsApiConfigurePortalResponses, unknown, ThrowOnError>({
     url: '/api/v1/listings/portals',
@@ -624,7 +649,7 @@ export const listingsApiUnpublish = <ThrowOnError extends boolean = false>(optio
 /**
  * List organizations (Super Admin only)
  */
-export const organizationsApiList = <ThrowOnError extends boolean = false>(options: Options<OrganizationsApiListData, ThrowOnError>): RequestResult<OrganizationsApiListResponses, OrganizationsApiListErrors, ThrowOnError> => (options.client ?? client).get<OrganizationsApiListResponses, OrganizationsApiListErrors, ThrowOnError>({ url: '/api/v1/organizations', ...options });
+export const organizationsApiList = <ThrowOnError extends boolean = false>(options?: Options<OrganizationsApiListData, ThrowOnError>): RequestResult<OrganizationsApiListResponses, OrganizationsApiListErrors, ThrowOnError> => (options?.client ?? client).get<OrganizationsApiListResponses, OrganizationsApiListErrors, ThrowOnError>({ url: '/api/v1/organizations', ...options });
 
 /**
  * Create new organization
@@ -716,7 +741,7 @@ export const organizationsApiUpdateMember = <ThrowOnError extends boolean = fals
  */
 export const organizationsApiGetStats = <ThrowOnError extends boolean = false>(options: Options<OrganizationsApiGetStatsData, ThrowOnError>): RequestResult<OrganizationsApiGetStatsResponses, OrganizationsApiGetStatsErrors, ThrowOnError> => (options.client ?? client).get<OrganizationsApiGetStatsResponses, OrganizationsApiGetStatsErrors, ThrowOnError>({ url: '/api/v1/organizations/{id}/stats', ...options });
 
-export const rentalsApiListConnections = <ThrowOnError extends boolean = false>(options: Options<RentalsApiListConnectionsData, ThrowOnError>): RequestResult<RentalsApiListConnectionsResponses, unknown, ThrowOnError> => (options.client ?? client).get<RentalsApiListConnectionsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/connections', ...options });
+export const rentalsApiListConnections = <ThrowOnError extends boolean = false>(options?: Options<RentalsApiListConnectionsData, ThrowOnError>): RequestResult<RentalsApiListConnectionsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<RentalsApiListConnectionsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/connections', ...options });
 
 export const rentalsApiCreateConnection = <ThrowOnError extends boolean = false>(options: Options<RentalsApiCreateConnectionData, ThrowOnError>): RequestResult<RentalsApiCreateConnectionResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiCreateConnectionResponses, unknown, ThrowOnError>({
     url: '/api/v1/rentals/connections',
@@ -727,7 +752,7 @@ export const rentalsApiCreateConnection = <ThrowOnError extends boolean = false>
     }
 });
 
-export const rentalsApiListGuests = <ThrowOnError extends boolean = false>(options: Options<RentalsApiListGuestsData, ThrowOnError>): RequestResult<RentalsApiListGuestsResponses, unknown, ThrowOnError> => (options.client ?? client).get<RentalsApiListGuestsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/guests', ...options });
+export const rentalsApiListGuests = <ThrowOnError extends boolean = false>(options?: Options<RentalsApiListGuestsData, ThrowOnError>): RequestResult<RentalsApiListGuestsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<RentalsApiListGuestsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/guests', ...options });
 
 export const rentalsApiRegisterGuest = <ThrowOnError extends boolean = false>(options: Options<RentalsApiRegisterGuestData, ThrowOnError>): RequestResult<RentalsApiRegisterGuestResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiRegisterGuestResponses, unknown, ThrowOnError>({
     url: '/api/v1/rentals/guests',
@@ -740,7 +765,7 @@ export const rentalsApiRegisterGuest = <ThrowOnError extends boolean = false>(op
 
 export const rentalsApiSubmitToAuthorities = <ThrowOnError extends boolean = false>(options: Options<RentalsApiSubmitToAuthoritiesData, ThrowOnError>): RequestResult<RentalsApiSubmitToAuthoritiesResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiSubmitToAuthoritiesResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/guests/{id}/submit-to-authorities', ...options });
 
-export const rentalsApiListReservations = <ThrowOnError extends boolean = false>(options: Options<RentalsApiListReservationsData, ThrowOnError>): RequestResult<RentalsApiListReservationsResponses, unknown, ThrowOnError> => (options.client ?? client).get<RentalsApiListReservationsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/reservations', ...options });
+export const rentalsApiListReservations = <ThrowOnError extends boolean = false>(options?: Options<RentalsApiListReservationsData, ThrowOnError>): RequestResult<RentalsApiListReservationsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<RentalsApiListReservationsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/reservations', ...options });
 
 export const rentalsApiCreateReservation = <ThrowOnError extends boolean = false>(options: Options<RentalsApiCreateReservationData, ThrowOnError>): RequestResult<RentalsApiCreateReservationResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiCreateReservationResponses, unknown, ThrowOnError>({
     url: '/api/v1/rentals/reservations',
@@ -759,9 +784,9 @@ export const rentalsApiCheckOut = <ThrowOnError extends boolean = false>(options
 
 export const rentalsApiGenerateAccessCode = <ThrowOnError extends boolean = false>(options: Options<RentalsApiGenerateAccessCodeData, ThrowOnError>): RequestResult<RentalsApiGenerateAccessCodeResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiGenerateAccessCodeResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/reservations/{id}/generate-access-code', ...options });
 
-export const rentalsApiSyncPlatforms = <ThrowOnError extends boolean = false>(options: Options<RentalsApiSyncPlatformsData, ThrowOnError>): RequestResult<RentalsApiSyncPlatformsResponses, unknown, ThrowOnError> => (options.client ?? client).post<RentalsApiSyncPlatformsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/sync', ...options });
+export const rentalsApiSyncPlatforms = <ThrowOnError extends boolean = false>(options?: Options<RentalsApiSyncPlatformsData, ThrowOnError>): RequestResult<RentalsApiSyncPlatformsResponses, unknown, ThrowOnError> => (options?.client ?? client).post<RentalsApiSyncPlatformsResponses, unknown, ThrowOnError>({ url: '/api/v1/rentals/sync', ...options });
 
-export const unitsApiList = <ThrowOnError extends boolean = false>(options: Options<UnitsApiListData, ThrowOnError>): RequestResult<UnitsApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<UnitsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/units', ...options });
+export const unitsApiList = <ThrowOnError extends boolean = false>(options?: Options<UnitsApiListData, ThrowOnError>): RequestResult<UnitsApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<UnitsApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/units', ...options });
 
 export const unitsApiCreate = <ThrowOnError extends boolean = false>(options: Options<UnitsApiCreateData, ThrowOnError>): RequestResult<UnitsApiCreateResponses, unknown, ThrowOnError> => (options.client ?? client).post<UnitsApiCreateResponses, unknown, ThrowOnError>({
     url: '/api/v1/units',
@@ -805,7 +830,7 @@ export const unitsApiAddResident = <ThrowOnError extends boolean = false>(option
     }
 });
 
-export const votingApiList = <ThrowOnError extends boolean = false>(options: Options<VotingApiListData, ThrowOnError>): RequestResult<VotingApiListResponses, unknown, ThrowOnError> => (options.client ?? client).get<VotingApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/votes', ...options });
+export const votingApiList = <ThrowOnError extends boolean = false>(options?: Options<VotingApiListData, ThrowOnError>): RequestResult<VotingApiListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<VotingApiListResponses, unknown, ThrowOnError>({ url: '/api/v1/votes', ...options });
 
 export const votingApiCreate = <ThrowOnError extends boolean = false>(options: Options<VotingApiCreateData, ThrowOnError>): RequestResult<VotingApiCreateResponses, unknown, ThrowOnError> => (options.client ?? client).post<VotingApiCreateResponses, unknown, ThrowOnError>({
     url: '/api/v1/votes',

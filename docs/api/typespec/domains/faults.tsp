@@ -75,8 +75,8 @@ model FaultComment {
 @tag("Faults")
 interface FaultsApi {
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query buildingId?: uuid,
     @query status?: FaultStatus,
@@ -85,8 +85,8 @@ interface FaultsApi {
   ): PaginatedResponse<Fault>;
 
   @post create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       buildingId: uuid;
       unitId?: uuid;
@@ -99,14 +99,14 @@ interface FaultsApi {
   ): { @statusCode statusCode: 201; @body body: Fault; };
 
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Fault | NotFoundError;
 
   @patch @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       title?: string;
@@ -121,28 +121,28 @@ interface FaultsApi {
   ): Fault;
 
   @post @route("/{id}/resolve") resolve(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { resolution: string; actualCost?: Money; }
   ): Fault;
 
   @get @route("/{id}/comments") listComments(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): FaultComment[];
 
   @post @route("/{id}/comments") addComment(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { content: string; isInternal?: boolean; }
   ): { @statusCode statusCode: 201; @body body: FaultComment; };
 
   @post @route("/{id}/photos") uploadPhoto(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { fileContent: string; fileName: string; mimeType: string; }
   ): { @statusCode statusCode: 201; @body body: Attachment; };

@@ -33,6 +33,9 @@ pub mod redis;
 // Epic 64: Advanced AI & LLM Capabilities
 pub mod llm;
 
+// Story 3.1 AC3 (BIT-200): Building geocoding
+pub mod geocoding;
+
 // Epic 97: Workflow Execution Engine
 pub mod workflow_executor;
 
@@ -56,8 +59,9 @@ pub use booking::{
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
     BookingOAuthClient, BookingOAuthConfig, BookingOAuthTokens, BookingProperty,
     BookingReservation, BookingReservationStatus, BookingRoomType, LosRestrictions,
-    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ,
-    OtaReadRS, OtaReservationNotification, PropertyMapping, RateUpdate, RoomTypeMapping,
+    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelRateAmountNotifRQ,
+    OtaHotelRateAmountNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ, OtaReadRS,
+    OtaReservationNotification, PropertyMapping, PushOutcome, RateUpdate, RoomTypeMapping,
     BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
 };
 
@@ -101,6 +105,9 @@ pub use voice_oauth::{
     VoiceOAuthClient, VoiceOAuthConfig, VoiceOAuthError, VoiceOAuthManager, VoiceOAuthTokens,
     VoicePlatform,
 };
+
+// Story 3.1 AC3 (BIT-200): Building geocoding
+pub use geocoding::{Coordinates, GeocodingError, GeocodingProvider, GeocodingService};
 
 // Story 64.1-64.4: LLM Integration
 // Story 97.1-97.4: Enhanced LLM Capabilities

@@ -122,7 +122,20 @@
     "selectCategory": "Please select a category",
     "locationDetected": "Location detected",
     "failedToPickImage": "Failed to pick image",
-    "failedToDetectLocation": "Failed to detect location"
+    "failedToDetectLocation": "Failed to detect location",
+    "buildingLabel": "Building",
+    "selectBuilding": "Please select a building",
+    "loadingBuildings": "Loading buildings…",
+    "noBuildings": "No buildings available",
+    "buildingsLoadError": "Couldn't load your buildings",
+    "photosCompressedTitle": "Photos compressed",
+    "photosCompressedWarning": "Selected photos exceeded 10 MB ({{original}} MB) and were compressed to {{final}} MB so they upload faster. Image quality may be reduced.",
+    "compressingPhotos": "Optimizing photos…",
+    "queuedTitle": "Saved offline",
+    "queuedMessage": "You're offline. Your report was saved and will sync automatically when you reconnect.",
+    "queuedOnErrorMessage": "We couldn't reach the server. Your report was saved and will sync automatically when the connection is restored.",
+    "offlineSubmitHint": "You're offline — this report will be saved and synced when you reconnect.",
+    "submitButtonOffline": "Save & sync later"
   },
   "news": {
     "title": "News",
@@ -203,7 +216,18 @@
       "nameRequired": "Folder name is required",
       "nameTooLong": "Folder name must be 255 characters or less",
       "createButton": "Create Folder",
-      "createError": "Could not create folder"
+      "createError": "Could not create folder",
+      "renameTitle": "Rename Folder",
+      "renameButton": "Save Name",
+      "renameError": "Could not rename folder"
+    },
+    "folderMove": {
+      "title": "Move Folder",
+      "destination": "DESTINATION",
+      "rootLabel": "Root (top level)",
+      "noFolders": "No other folders available",
+      "confirm": "Move Here",
+      "errorTitle": "Could not move folder"
     },
     "move": {
       "title": "Move Document",

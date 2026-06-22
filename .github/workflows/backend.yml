@@ -72,6 +72,14 @@ jobs:
         with:
           workspaces: backend
 
+      # Formatting is enforced here in the REQUIRED `check` job, not only in the
+      # non-blocking `lint` job — so a rustfmt violation blocks merge into dev
+      # instead of landing and needing a fixup PR. This recurred on #1563/#1580
+      # (merged red-`lint` on green `check`) → #1581; tracked as GH #1592.
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --all -- --check
+
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
       # entire life of the repo (every `rg … || true` swallowed exit 127 and
@@ -155,6 +163,18 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+
+      # The voting PDF-report path (routes/voting.rs::render_pdf_report, added
+      # in #1625) loads the LiberationSans TTFs from
+      # `/usr/share/fonts/truetype/liberation` via `genpdf::fonts::from_files`.
+      # GitHub's `ubuntu-latest` image does NOT ship `fonts-liberation`, so the
+      # `voting_report_tests` PDF E2E tests 500 on the render step and the whole
+      # `test` job goes red. Install the package the production code depends on
+      # so the tests exercise the same path they do in prod (issue #1645).
+      - name: Install PDF report fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-liberation
 
       # The GitHub-hosted runner's root disk fills during the link step of
       # `cargo test --workspace` (the large workspace + test binaries), failing

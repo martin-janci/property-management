@@ -277,12 +277,31 @@ pub struct CreateFolderRequest {
     pub parent_id: Option<Uuid>,
 }
 
+/// Deserialize a field as a double `Option` so a handler can tell "absent"
+/// (`None`) apart from "explicitly null" (`Some(None)`) and "set to a value"
+/// (`Some(Some(v))`). Paired with `#[serde(default)]`, which yields `None` when
+/// the key is absent; when present (null OR a value) this runs and wraps the
+/// inner `Option` in `Some`. (#1589)
+fn double_option<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
+}
+
 /// Request for updating a folder.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFolderRequest {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub parent_id: Option<Uuid>,
+    /// New parent folder. Omit to leave unchanged; send `null` to detach the
+    /// folder to the top level; send an id to move it under that folder. The
+    /// double-`Option` lets the handler distinguish absent from explicit-null
+    /// (#1589). The wire shape is unchanged (optional, nullable UUID).
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<Uuid>, nullable)]
+    pub parent_id: Option<Option<Uuid>>,
 }
 
 /// Request for deleting a folder.

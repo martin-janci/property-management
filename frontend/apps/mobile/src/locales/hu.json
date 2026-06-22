@@ -122,7 +122,20 @@
     "selectCategory": "Kerem valasszon kategoriat",
     "locationDetected": "Helyszin eszlelve",
     "failedToPickImage": "Nem sikerult kepet valasztani",
-    "failedToDetectLocation": "Nem sikerult helyszint erzekelni"
+    "failedToDetectLocation": "Nem sikerult helyszint erzekelni",
+    "buildingLabel": "Épület",
+    "selectBuilding": "Válasszon épületet",
+    "loadingBuildings": "Épületek betöltése…",
+    "noBuildings": "Nincs elérhető épület",
+    "buildingsLoadError": "Nem sikerült betölteni az épületeit",
+    "photosCompressedTitle": "Fényképek tömörítve",
+    "photosCompressedWarning": "A kiválasztott fényképek meghaladták a 10 MB-ot ({{original}} MB), ezért {{final}} MB-ra tömörítettük őket a gyorsabb feltöltés érdekében. A képminőség csökkenhet.",
+    "compressingPhotos": "Fényképek optimalizálása…",
+    "queuedTitle": "Offline mentve",
+    "queuedMessage": "Jelenleg offline van. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint újra online lesz.",
+    "queuedOnErrorMessage": "Nem sikerült elérni a kiszolgálót. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint helyreáll a kapcsolat.",
+    "offlineSubmitHint": "Jelenleg offline van — ezt a bejelentést elmentjük, és szinkronizáljuk, amint újra online lesz.",
+    "submitButtonOffline": "Mentés és szinkronizálás később"
   },
   "news": {
     "title": "Hirek",
@@ -175,20 +188,23 @@
       "draftNote": "Ez a dokumentum piszkozat, es csak a szerzo es a kezelok szamara lathato.",
       "archivedNote": "Ez a dokumentum archivalva lett, es mar nem osztjak meg aktivan.",
       "rlsTitle": "Sor szintu biztonsag",
-      "rlsBody": "A dokumentumhoz valo hozzaferést a szerver kenyszeriti ki. A fent latható kozonseg azt tukorozi, ki lathatja azt."
+      "rlsBody": "A dokumentumhoz valo hozzaferést a szerver kenyszeriti ki. A fent láthátó kozonseg azt tukrozi, ki lathatja azt."
     },
     "folder": {
       "newTitle": "Uj mappa",
-      "insideFolder": "A(z) „{{name}}” mappaban",
+      "insideFolder": "A(z) „{{name}}“ mappaban",
       "atRoot": "Gyoker szinten",
       "nameLabel": "Mappa neve",
-      "namePlaceholder": "pl. Szerzodések 2024",
+      "namePlaceholder": "pl. Szerzödések 2024",
       "descriptionLabel": "Leiras (opcionalis)",
       "descriptionPlaceholder": "Ennek a mappanak a rovid leirasa",
       "nameRequired": "Mappa neve kotelezo",
       "nameTooLong": "A mappa neve legfeljebb 255 karakter lehet",
       "createButton": "Mappa letrehozasa",
-      "createError": "A mappat nem sikerult letrehozni"
+      "createError": "A mappat nem sikerult letrehozni",
+      "renameTitle": "Mappa atnevezese",
+      "renameButton": "Nev mentese",
+      "renameError": "A mappa atnevezesekor hiba tortent"
     },
     "move": {
       "title": "Dokumentum athelyezese",
@@ -206,12 +222,20 @@
       "openAction": "Dokumentum megnyitása",
       "downloadAction": "Dokumentum letöltése",
       "fallbackNotice": "Az előnézet nem érhető el ennél a fájltípusnál. Letöltheti helyette.",
-      "errorTitle": "A dokumentum nem tölthetö be",
+      "errorTitle": "A dokumentum nem töltheto be",
       "cannotOpenTitle": "Nem nyitható meg",
       "cannotOpenMessage": "Az eszközön lévö alkalmazások egyike sem tudja megnyitni ezt a fájltípust.",
       "openFailed": "A dokumentum megnyitása nem sikerült.",
       "sharingUnavailableTitle": "A megosztás nem érhető el",
       "shareFailed": "A dokumentum megosztása nem sikerült."
+    },
+    "folderMove": {
+      "title": "Mappa athelyezese",
+      "destination": "CEL",
+      "rootLabel": "Gyoker (legfelso szint)",
+      "noFolders": "Nincsenek mas mappak",
+      "confirm": "Athelyezes ide",
+      "errorTitle": "A mappa athelyezesekor hiba tortent"
     }
   },
   "settings": {
@@ -371,7 +395,7 @@
     "sign": "Dokumentum aláírasa",
     "decline": "Elutasit",
     "confirmSignTitle": "Dokumentum aláírása",
-    "confirmSignMessage": "Alairasával beleegyezik a dokumentum feltételeibe. Ez a muvelet nem vonható vissza.",
+    "confirmSignMessage": "Alairasával beleegyezik a dokumentum feltételeibe. Ez a muvelet nem vonhátó vissza.",
     "confirmDeclineTitle": "Alairas elutasitasa",
     "confirmDeclineMessage": "Biztosan el szeretne utasitani ezt az alairasi kerelmet?",
     "actionComplete": "Kesz",
@@ -399,7 +423,7 @@
     "days": "nap",
     "createShare": "Megosztás létrehozása",
     "shareCreated": "Megosztás létrehozva",
-    "shareCreatedMessage": "A megosztás sikeresen létrejott.",
+    "shareCreatedMessage": "A megosztás sikeresen létrejött.",
     "linkReady": "A nyilvanos link kész. Másold le a megosztáshoz.",
     "copyLink": "Link másolása",
     "copied": "Másolva",
@@ -410,7 +434,7 @@
     "expires": "Lejár",
     "revoke": "Visszavon",
     "revokeTitle": "Megosztás visszavonása",
-    "revokeConfirm": "Biztosan vissza szeretné vonni ezt a megosztást? A cimzett azonnal elveszíti a hozzáférést.",
+    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elveszíti a hozzáférést.",
     "revokeAction": "Visszavon",
     "errorTitle": "Hiba",
     "errorUserIdRequired": "Kerlek add meg a felhasznalo ID-t.",

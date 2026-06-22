@@ -84,7 +84,8 @@
       "!**/public/mockServiceWorker.js",
       "!**/next-env.d.ts",
       "!apps/mobile/ios",
-      "!apps/mobile/android"
+      "!apps/mobile/android",
+      "!apps/mobile/assets/**/*.svg"
     ]
   }
 }

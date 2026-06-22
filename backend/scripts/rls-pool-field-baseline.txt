@@ -33,6 +33,7 @@ listing.rs
 marketplace.rs
 membership.rs
 messaging.rs
+notification_event.rs
 notification_preference.rs
 onboarding.rs
 organization.rs

@@ -86,16 +86,16 @@ enum ResidentType {
 @tag("Units")
 interface UnitsApi {
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query buildingId?: uuid,
     @query status?: UnitStatus
   ): PaginatedResponse<Unit>;
 
   @post create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       buildingId: uuid;
       floorId?: uuid;
@@ -108,40 +108,40 @@ interface UnitsApi {
   ): { @statusCode statusCode: 201; @body body: Unit; };
 
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Unit | NotFoundError;
 
   @patch @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { unitNumber?: string; areaM2?: float64; status?: UnitStatus; }
   ): Unit;
 
   @get @route("/{id}/owners") listOwners(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): UnitOwner[];
 
   @post @route("/{id}/owners") addOwner(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { userId?: uuid; name: string; email?: email; ownershipPercentage: float64; }
   ): { @statusCode statusCode: 201; @body body: UnitOwner; };
 
   @get @route("/{id}/residents") listResidents(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): UnitResident[];
 
   @post @route("/{id}/residents") addResident(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { userId?: uuid; name: string; type: ResidentType; moveInDate?: date; }
   ): { @statusCode statusCode: 201; @body body: UnitResident; };

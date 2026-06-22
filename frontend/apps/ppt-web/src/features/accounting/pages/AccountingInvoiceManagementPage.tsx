@@ -11,63 +11,40 @@ import {
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
-import { useAccountingAuth } from '../hooks/useAccountingAuth';
 
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
-  const auth = useAccountingAuth();
 
+  // Auth (Authorization + X-Tenant-ID) is injected centrally by the api-client
+  // request interceptor (#1522) — no per-call headers / casts needed here.
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ['accounting', 'invoices'],
-    queryFn: () => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiList({
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
-    enabled: !!auth,
+    queryKey: queryKeys.accounting.invoices(),
+    queryFn: () => invoicesApiList(),
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
-    queryKey: ['accounting', 'contacts'],
-    queryFn: () => {
-      if (!auth) throw new Error('Not authenticated');
-      return contactsApiList({
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
-    enabled: !!auth,
+    queryKey: queryKeys.accounting.contacts(),
+    queryFn: () => contactsApiList(),
   });
 
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: AccountingCreateInvoiceRequest) => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiCreate({
-        body: data,
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
+    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setIsCreating(false);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiDelete({
-        path: { id },
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
+    mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
     },
   });
 
@@ -103,7 +80,11 @@ export function AccountingInvoiceManagementPage() {
         <AccountingInvoiceList
           invoices={invoices?.data || []}
           isLoading={isLoading}
-          onViewInvoice={(id) => console.log('View', id)}
+          onViewInvoice={() => {
+            // TODO(#1522): wire invoice-detail navigation once the detail route
+            // exists. Intentionally a no-op (not console.log) so nothing logs in
+            // production.
+          }}
           onDeleteInvoice={(id) => {
             if (confirm('Are you sure you want to delete this invoice?')) {
               deleteMutation.mutate(id);

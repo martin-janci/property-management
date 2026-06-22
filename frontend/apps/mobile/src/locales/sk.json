@@ -122,7 +122,20 @@
     "selectCategory": "Prosim vyberte kategoriu",
     "locationDetected": "Poloha zistena",
     "failedToPickImage": "Nepodarilo sa vybrat obrazok",
-    "failedToDetectLocation": "Nepodarilo sa zistit polohu"
+    "failedToDetectLocation": "Nepodarilo sa zistit polohu",
+    "buildingLabel": "Budova",
+    "selectBuilding": "Vyberte budovu",
+    "loadingBuildings": "Načítavajú sa budovy…",
+    "noBuildings": "Žiadne dostupné budovy",
+    "buildingsLoadError": "Nepodarilo sa načítať vaše budovy",
+    "photosCompressedTitle": "Fotky komprimované",
+    "photosCompressedWarning": "Vybrané fotky presiahli 10 MB ({{original}} MB) a boli komprimované na {{final}} MB, aby sa nahrali rýchlejšie. Kvalita obrázkov môže byť znížená.",
+    "compressingPhotos": "Optimalizujem fotky…",
+    "queuedTitle": "Uložené offline",
+    "queuedMessage": "Ste offline. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",
+    "queuedOnErrorMessage": "Nepodarilo sa spojiť so serverom. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",
+    "offlineSubmitHint": "Ste offline — hlásenie sa uloží a zosynchronizuje po obnovení pripojenia.",
+    "submitButtonOffline": "Uložiť a zosynchronizovať neskôr"
   },
   "news": {
     "title": "Spravy",
@@ -203,7 +216,10 @@
       "nameRequired": "Nazov priecinku je povinny",
       "nameTooLong": "Nazov priecinku musi mat najviac 255 znakov",
       "createButton": "Vytvorit priecinok",
-      "createError": "Priecinok sa nepodarilo vytvorit"
+      "createError": "Priecinok sa nepodarilo vytvorit",
+      "renameTitle": "Premenovat priecinok",
+      "renameButton": "Ulozit nazov",
+      "renameError": "Priecinok sa nepodarilo premenovat"
     },
     "move": {
       "title": "Premiestnit dokument",
@@ -249,6 +265,14 @@
         "correspondence": "Korespondencia",
         "other": "Ine"
       }
+    },
+    "folderMove": {
+      "title": "Presun priecinku",
+      "destination": "CIEL",
+      "rootLabel": "Koren (najvyssia uroven)",
+      "noFolders": "Ziadne ine priecinky nie su k dispozicii",
+      "confirm": "Presun sem",
+      "errorTitle": "Priecinok sa nepodarilo presunout"
     }
   },
   "settings": {

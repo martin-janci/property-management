@@ -37,7 +37,9 @@ use db::{
     },
     DbPool,
 };
-use integrations::{LlmClient, PubSubService, RedisClient, SessionStore, StorageService};
+use integrations::{
+    GeocodingService, LlmClient, PubSubService, RedisClient, SessionStore, StorageService,
+};
 
 /// Airbnb integration configuration loaded once at startup (issue #711).
 ///
@@ -182,6 +184,9 @@ pub struct AppState {
     pub org_member_repo: OrganizationMemberRepository,
     pub role_repo: RoleRepository,
     pub building_repo: BuildingRepository,
+    /// Story 3.1 AC3 (BIT-200): geocodes building addresses on write. Disabled
+    /// (no-op) unless `GEOCODING_PROVIDER` + credentials are configured.
+    pub geocoding: GeocodingService,
     pub unit_repo: UnitRepository,
     pub unit_resident_repo: UnitResidentRepository,
     pub delegation_repo: DelegationRepository,
@@ -369,6 +374,7 @@ impl AppState {
         let org_member_repo = OrganizationMemberRepository::new(db.clone());
         let role_repo = RoleRepository::new(db.clone());
         let building_repo = BuildingRepository::new(db.clone());
+        let geocoding = GeocodingService::from_env();
         let unit_repo = UnitRepository::new(db.clone());
         let unit_resident_repo = UnitResidentRepository::new(db.clone());
         let delegation_repo = DelegationRepository::new(db.clone());
@@ -529,6 +535,7 @@ impl AppState {
             org_member_repo,
             role_repo,
             building_repo,
+            geocoding,
             unit_repo,
             unit_resident_repo,
             delegation_repo,

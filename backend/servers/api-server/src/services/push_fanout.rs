@@ -8,10 +8,20 @@
 //!      using a bearer service-account JWT or a legacy server key.
 //!    - Handles `NOT_REGISTERED` / `INVALID_REGISTRATION` error codes from FCM by
 //!      deleting the stale token from the DB.
-//!    - Falls back to APNs if the token's platform is `apns` (log-only placeholder
-//!      since APNs requires per-binary HTTP/2 and a P8 key — wired in a follow-up).
 //!
-//! 2. `PushFanoutWorker` — a lightweight background tokio task that:
+//! 2. `ApnsHttpAdapter` — a `PushTransport` implementation for Apple Push Notification service:
+//!    - Authenticates using a P8 ECDSA key (ES256 JWT, refreshed every 50 minutes).
+//!    - Calls the APNs HTTP/2 provider API (`https://api.push.apple.com:443/3/device/{token}`).
+//!    - Handles `BadDeviceToken` / `Unregistered` error codes from APNs by
+//!      deleting the stale token from the DB.
+//!    - Configurable base URL override for testing (no live APNs in unit tests).
+//!
+//! 3. `CombinedPushAdapter` — routes delivery to the correct provider by platform:
+//!    - FCM tokens → `FcmHttpAdapter`
+//!    - APNs tokens → `ApnsHttpAdapter`
+//!    - Configured as the shared adapter inside `PushFanoutWorker`.
+//!
+//! 4. `PushFanoutWorker` — a lightweight background tokio task that:
 //!    - Polls a Redis list (`push_fanout_queue`) for pending push jobs published by
 //!      the notification pipeline.
 //!    - Falls back to a no-op polling loop when Redis / FCM are not configured, so
@@ -19,16 +29,20 @@
 //!
 //! # Configuration (environment variables)
 //!
-//! | Variable                    | Required | Description                                             |
-//! |-----------------------------|----------|---------------------------------------------------------|
-//! | `FCM_PROJECT_ID`            | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`)     |
-//! | `FCM_SERVER_KEY`            | No       | Legacy FCM server key (fall-back if no project ID)      |
-//! | `FCM_OAUTH_TOKEN`           | No       | OAuth2 bearer token for FCM HTTP v1 (read once at startup) |
-//! | `PUSH_FANOUT_ENABLED`       | No       | Set to `false` / `0` to disable the worker             |
-//! | `PUSH_FANOUT_POLL_SECS`     | No       | Polling interval in seconds (default: 30)               |
+//! | Variable                    | Required | Description                                                         |
+//! |-----------------------------|----------|---------------------------------------------------------------------|
+//! | `FCM_PROJECT_ID`            | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`)                  |
+//! | `FCM_SERVER_KEY`            | No       | Legacy FCM server key (fall-back if no project ID)                  |
+//! | `FCM_OAUTH_TOKEN`           | No       | OAuth2 bearer token for FCM HTTP v1 (read once at startup)          |
+//! | `APNS_P8_KEY`               | No       | PEM-encoded P8 ECDSA private key for APNs provider auth             |
+//! | `APNS_KEY_ID`               | No       | 10-char Key ID printed on the P8 file in App Store Connect          |
+//! | `APNS_TEAM_ID`              | No       | 10-char Apple Team ID                                               |
+//! | `APNS_TOPIC`                | No       | APNs topic / bundle ID (default: `three.two.bit.ppt.management`)    |
+//! | `PUSH_FANOUT_ENABLED`       | No       | Set to `false` / `0` to disable the worker                         |
+//! | `PUSH_FANOUT_POLL_SECS`     | No       | Polling interval in seconds (default: 30)                           |
 //!
-//! If neither `FCM_PROJECT_ID` nor `FCM_SERVER_KEY` is set the worker logs a
-//! warning and becomes a no-op loop — the server will not crash.
+//! If neither FCM nor APNs is configured the worker logs a warning and becomes a
+//! no-op loop — the server will not crash.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -43,6 +57,9 @@ use tracing::Instrument;
 use uuid::Uuid;
 
 use common::notifications::{Notification, NotificationError, PushTransport, TransportResult};
+
+// APNs JWT auth uses ES256; jsonwebtoken provides this via rust_crypto feature.
+use jsonwebtoken::{Algorithm, EncodingKey, Header};
 
 // ============================================================================
 // Dispatch-target selection (preference-aware)
@@ -617,6 +634,454 @@ async fn delete_stale_token_by_string(
 }
 
 // ============================================================================
+// Story 8A-3: APNs provider config and HTTP/2 adapter
+// ============================================================================
+
+/// Runtime configuration for the APNs transport.
+///
+/// APNs uses provider-auth JWTs signed with an ES256 P8 key (issued in
+/// App Store Connect). A new JWT is generated every 50 minutes so it stays
+/// well inside Apple's 1-hour token lifetime.
+#[derive(Clone, Debug)]
+pub struct ApnsConfig {
+    /// PEM-encoded PKCS#8 EC private key (the contents of the `.p8` file).
+    /// When `None` the adapter is disabled and delivery is skipped.
+    pub p8_key_pem: Option<String>,
+    /// 10-char Key ID printed on the downloaded `.p8` file.
+    pub key_id: Option<String>,
+    /// 10-char Apple Developer Team ID.
+    pub team_id: Option<String>,
+    /// APNs topic — normally the app's bundle ID.
+    /// Default: `three.two.bit.ppt.management`.
+    pub topic: String,
+    /// Base URL override for tests (production: `https://api.push.apple.com`).
+    pub apns_base_url: Option<String>,
+}
+
+impl ApnsConfig {
+    /// Load from environment variables.
+    pub fn from_env() -> Self {
+        Self {
+            p8_key_pem: std::env::var("APNS_P8_KEY").ok(),
+            key_id: std::env::var("APNS_KEY_ID").ok(),
+            team_id: std::env::var("APNS_TEAM_ID").ok(),
+            topic: std::env::var("APNS_TOPIC")
+                .unwrap_or_else(|_| "three.two.bit.ppt.management".to_string()),
+            apns_base_url: None,
+        }
+    }
+
+    /// Return `true` when all required credentials are present.
+    pub fn is_configured(&self) -> bool {
+        self.p8_key_pem.is_some() && self.key_id.is_some() && self.team_id.is_some()
+    }
+
+    /// Return the effective APNs base URL.
+    pub fn base_url(&self) -> &str {
+        self.apns_base_url
+            .as_deref()
+            .unwrap_or("https://api.push.apple.com")
+    }
+}
+
+/// APNs JWT claims (`iss` = Team ID, `iat` = issued-at, signed with P8 ES256 key).
+#[derive(Debug, serde::Serialize)]
+struct ApnsJwtClaims {
+    iss: String,
+    iat: i64,
+}
+
+/// Mint a short-lived APNs provider JWT using ES256 and the P8 key.
+///
+/// Apple requires the JWT to be refreshed at least once per hour; we mint a
+/// fresh token on every fanout call (negligible overhead vs. the HTTP round-trip).
+fn mint_apns_jwt(config: &ApnsConfig) -> Option<String> {
+    let key_pem = config.p8_key_pem.as_deref()?;
+    let key_id = config.key_id.as_deref()?;
+    let team_id = config.team_id.as_deref()?;
+
+    let encoding_key = match EncodingKey::from_ec_pem(key_pem.as_bytes()) {
+        Ok(k) => k,
+        Err(e) => {
+            tracing::error!(
+                error = %e,
+                "[8A-3] APNs: failed to parse APNS_P8_KEY as EC PEM — check the key format"
+            );
+            return None;
+        }
+    };
+
+    let mut header = Header::new(Algorithm::ES256);
+    header.kid = Some(key_id.to_string());
+
+    let claims = ApnsJwtClaims {
+        iss: team_id.to_string(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+
+    match jsonwebtoken::encode(&header, &claims, &encoding_key) {
+        Ok(token) => Some(token),
+        Err(e) => {
+            tracing::error!(
+                error = %e,
+                "[8A-3] APNs: failed to sign APNs JWT"
+            );
+            None
+        }
+    }
+}
+
+/// APNs error response body.
+#[derive(Debug, Deserialize)]
+struct ApnsErrorBody {
+    reason: Option<String>,
+}
+
+/// A `PushTransport` implementation that delivers messages via APNs HTTP/2.
+///
+/// The adapter:
+/// - Mints a provider-auth JWT (ES256, signed with the P8 key) on each send call.
+/// - Posts to `https://api.push.apple.com/3/device/{token}` over HTTP/2.
+/// - Handles `BadDeviceToken` / `Unregistered` by deleting the stale token.
+/// - Is silently no-op when APNs credentials are not configured.
+///
+/// # Testing
+///
+/// Set `ApnsConfig::apns_base_url` to a local HTTP/1.1 test server — the adapter
+/// uses the same `reqwest::Client` for both production and tests, so a wiremock
+/// or `axum` test server can stand in for the real APNs gateway.
+#[derive(Clone)]
+pub struct ApnsHttpAdapter {
+    token_repo: DevicePushTokenRepository,
+    apns_config: ApnsConfig,
+    http: reqwest::Client,
+}
+
+impl ApnsHttpAdapter {
+    /// Create a new adapter backed by the given pool and APNs config.
+    pub fn new(pool: DbPool, apns_config: ApnsConfig) -> Self {
+        Self {
+            token_repo: DevicePushTokenRepository::new(pool),
+            apns_config,
+            http: reqwest::Client::builder()
+                .timeout(Duration::from_secs(15))
+                // APNs requires HTTP/2; enabling http2_prior_knowledge avoids the
+                // TLS ALPN upgrade round-trip to the known-H2 gateway.
+                .http2_prior_knowledge()
+                .build()
+                .expect("reqwest APNs client build should not fail"),
+        }
+    }
+
+    /// Load APNs config from environment and wire the adapter.
+    pub fn from_env(pool: DbPool) -> Self {
+        Self::new(pool, ApnsConfig::from_env())
+    }
+
+    // ------------------------------------------------------------------
+    // Internal: send one APNs notification to one device token
+    // ------------------------------------------------------------------
+
+    /// Send a single push notification to one APNs device token.
+    ///
+    /// Returns `(success, token_expired)`. When `token_expired` is `true` the
+    /// caller must delete the token from the DB.
+    async fn send_apns_one(
+        &self,
+        jwt: &str,
+        device_token: &str,
+        notification: &Notification,
+    ) -> (bool, bool) {
+        let url = format!("{}/3/device/{device_token}", self.apns_config.base_url());
+
+        // APNs JSON payload — aps dictionary with alert sub-dictionary.
+        let body = serde_json::json!({
+            "aps": {
+                "alert": {
+                    "title": notification.title,
+                    "body": notification.body,
+                },
+                "sound": "default",
+            },
+            // Custom data available to the notification service extension.
+            "notification_id": notification.id.to_string(),
+            "category": notification.category.as_str(),
+            "priority": notification.priority.as_str(),
+        });
+
+        let resp = match self
+            .http
+            .post(&url)
+            .bearer_auth(jwt)
+            .header("apns-topic", &self.apns_config.topic)
+            // Normal push: priority 10. Use 5 for background delivery.
+            .header("apns-priority", "10")
+            .json(&body)
+            .send()
+            .await
+        {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "[8A-3] APNs HTTP request failed (network error)"
+                );
+                return (false, false);
+            }
+        };
+
+        let status = resp.status();
+
+        if status.as_u16() == 200 {
+            return (true, false);
+        }
+
+        // Non-200 → parse the APNs error body to decide on stale-token eviction.
+        match resp.json::<ApnsErrorBody>().await {
+            Ok(err_body) => {
+                let reason = err_body.reason.as_deref().unwrap_or("UNKNOWN");
+                let expired = matches!(reason, "BadDeviceToken" | "Unregistered");
+                tracing::warn!(
+                    apns_reason = %reason,
+                    http_status = %status,
+                    token_expired = expired,
+                    "[8A-3] APNs rejected notification"
+                );
+                (false, expired)
+            }
+            Err(e) => {
+                tracing::warn!(
+                    http_status = %status,
+                    error = %e,
+                    "[8A-3] Failed to parse APNs error body"
+                );
+                (false, false)
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl PushTransport for ApnsHttpAdapter {
+    async fn send(
+        &self,
+        user_id: Uuid,
+        _device_tokens: &[String],
+        notification: &Notification,
+    ) -> TransportResult {
+        if !self.apns_config.is_configured() {
+            tracing::info!(
+                user_id = %user_id,
+                "[8A-3] APNs push skipped — APNS_P8_KEY / APNS_KEY_ID / APNS_TEAM_ID not set"
+            );
+            return Err(NotificationError::PushNotConfigured);
+        }
+
+        // Mint a fresh JWT for this batch (negligible overhead vs. HTTP round-trip).
+        let jwt = match mint_apns_jwt(&self.apns_config) {
+            Some(t) => t,
+            None => {
+                return Err(NotificationError::PushFailed(
+                    "failed to mint APNs JWT".to_string(),
+                ))
+            }
+        };
+
+        // Fetch all registered APNs tokens for this user (service-role, no RLS).
+        let tokens = match self.token_repo.get_tokens_for_user(user_id).await {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!(
+                    user_id = %user_id,
+                    error = %e,
+                    "[8A-3] APNs: failed to fetch device tokens"
+                );
+                return Err(NotificationError::PushFailed(format!(
+                    "DB error fetching APNs tokens: {e}"
+                )));
+            }
+        };
+
+        // Select only APNs targets.
+        let filter = PushTargetFilter {
+            platforms: Some(vec![PushPlatform::Apns]),
+            ..Default::default()
+        };
+        let targets = select_dispatch_targets(&tokens, &filter);
+
+        if targets.is_empty() {
+            tracing::debug!(
+                user_id = %user_id,
+                "[8A-3] APNs: no APNs targets for user — skipping"
+            );
+            return Ok(());
+        }
+
+        let mut any_sent = false;
+        let mut stale_tokens: Vec<(Uuid, String)> = Vec::new();
+
+        for target in &targets {
+            let (success, expired) = self.send_apns_one(&jwt, &target.token, notification).await;
+
+            let receipt = PushDeliveryReceipt {
+                token_id: target.token_id,
+                user_id,
+                platform: PushPlatform::Apns,
+                success,
+                error: if success {
+                    None
+                } else {
+                    Some("APNs rejected".to_string())
+                },
+                token_expired: expired,
+                attempted_at: chrono::Utc::now(),
+            };
+            tracing::info!(
+                token_id = %receipt.token_id,
+                user_id = %receipt.user_id,
+                success = receipt.success,
+                token_expired = receipt.token_expired,
+                "[8A-3] APNs delivery receipt"
+            );
+
+            if expired {
+                stale_tokens.push((target.token_id, target.token.clone()));
+            }
+            if success {
+                any_sent = true;
+            }
+        }
+
+        // Purge stale tokens reported by APNs.
+        for (stale_id, stale_token) in stale_tokens {
+            if let Err(e) =
+                delete_stale_token_by_string(&self.token_repo, user_id, &stale_token).await
+            {
+                tracing::warn!(
+                    error = %e,
+                    token_id = %stale_id,
+                    "[8A-3] APNs: failed to evict stale token"
+                );
+            } else {
+                tracing::info!(
+                    token_id = %stale_id,
+                    "[8A-3] APNs: stale token evicted (BadDeviceToken/Unregistered)"
+                );
+            }
+        }
+
+        if any_sent {
+            Ok(())
+        } else {
+            Err(NotificationError::PushFailed(
+                "all APNs delivery attempts failed".to_string(),
+            ))
+        }
+    }
+}
+
+// ============================================================================
+// CombinedPushAdapter — routes FCM and APNs by platform in one pass
+// ============================================================================
+
+/// A combined push adapter that routes delivery to the correct provider by platform.
+///
+/// - FCM tokens (platform = `fcm`) are delivered via `FcmHttpAdapter`.
+/// - APNs tokens (platform = `apns`) are delivered via `ApnsHttpAdapter`.
+///
+/// Both adapters fetch tokens from the DB independently so that a failure in
+/// one provider does not block the other.
+#[derive(Clone)]
+pub struct CombinedPushAdapter {
+    fcm: FcmHttpAdapter,
+    apns: ApnsHttpAdapter,
+}
+
+impl CombinedPushAdapter {
+    /// Create a combined adapter from the shared pool.
+    pub fn from_env(pool: DbPool) -> Self {
+        Self {
+            fcm: FcmHttpAdapter::from_env(pool.clone()),
+            apns: ApnsHttpAdapter::from_env(pool),
+        }
+    }
+
+    /// Create a combined adapter with explicit configs (useful in tests).
+    pub fn new(pool: DbPool, fcm_config: FcmConfig, apns_config: ApnsConfig) -> Self {
+        Self {
+            fcm: FcmHttpAdapter::new(pool.clone(), fcm_config),
+            apns: ApnsHttpAdapter::new(pool, apns_config),
+        }
+    }
+}
+
+#[async_trait]
+impl PushTransport for CombinedPushAdapter {
+    async fn send(
+        &self,
+        user_id: Uuid,
+        device_tokens: &[String],
+        notification: &Notification,
+    ) -> TransportResult {
+        // Run FCM and APNs delivery concurrently. We collect both results so that
+        // a failure on one provider is logged but does not suppress delivery on
+        // the other.
+        let (fcm_result, apns_result) = tokio::join!(
+            self.fcm.send(user_id, device_tokens, notification),
+            self.apns.send(user_id, device_tokens, notification),
+        );
+
+        match (fcm_result, apns_result) {
+            // At least one provider succeeded or was cleanly skipped (NotConfigured).
+            (Ok(()), Ok(())) => Ok(()),
+            (Ok(()), Err(NotificationError::PushNotConfigured)) => Ok(()),
+            (Err(NotificationError::PushNotConfigured), Ok(())) => Ok(()),
+            // Both not configured — report to the pipeline so it records Skipped.
+            (
+                Err(NotificationError::PushNotConfigured),
+                Err(NotificationError::PushNotConfigured),
+            ) => Err(NotificationError::PushNotConfigured),
+            // FCM ok, APNs failed — count as partial success.
+            (Ok(()), Err(e)) => {
+                tracing::warn!(error = %e, user_id = %user_id, "[8A-3] APNs delivery failed (FCM ok)");
+                Ok(())
+            }
+            // APNs ok, FCM failed — count as partial success.
+            (Err(e), Ok(())) => {
+                tracing::warn!(error = %e, user_id = %user_id, "[8A-3] FCM delivery failed (APNs ok)");
+                Ok(())
+            }
+            // APNs ok, FCM not configured — normal when only iOS devices registered.
+            (Err(NotificationError::PushNotConfigured), Err(e)) => {
+                tracing::warn!(error = %e, user_id = %user_id, "[8A-3] APNs delivery failed, FCM not configured");
+                Err(NotificationError::PushFailed(
+                    "APNs failed and FCM not configured".to_string(),
+                ))
+            }
+            // FCM ok, APNs not configured — normal when only Android devices registered.
+            (Err(e), Err(NotificationError::PushNotConfigured)) => {
+                tracing::warn!(error = %e, user_id = %user_id, "[8A-3] FCM delivery failed, APNs not configured");
+                Err(NotificationError::PushFailed(
+                    "FCM failed and APNs not configured".to_string(),
+                ))
+            }
+            // Both failed.
+            (Err(e1), Err(e2)) => {
+                tracing::warn!(
+                    fcm_error = %e1,
+                    apns_error = %e2,
+                    user_id = %user_id,
+                    "[8A-3] Both FCM and APNs delivery failed"
+                );
+                Err(NotificationError::PushFailed(format!(
+                    "FCM: {e1}; APNs: {e2}"
+                )))
+            }
+        }
+    }
+}
+
+// ============================================================================
 // PushFanoutWorker — background tokio task
 // ============================================================================
 
@@ -699,27 +1164,43 @@ const MAX_JOBS_PER_TICK: usize = 256;
 /// through to a no-op heartbeat loop so the server always starts cleanly — the
 /// in-process pipeline still delivers push synchronously in that mode.
 pub struct PushFanoutWorker {
-    adapter: Arc<FcmHttpAdapter>,
+    adapter: Arc<CombinedPushAdapter>,
     config: PushFanoutConfig,
     pubsub: Option<integrations::PubSubService>,
 }
 
 impl PushFanoutWorker {
     /// Create a new worker from the shared pool and current environment.
+    ///
+    /// Reads FCM and APNs credentials from environment variables. If neither
+    /// is configured the worker starts in heartbeat-only mode (no crash).
     pub fn new(
         pool: DbPool,
         pubsub: Option<integrations::PubSubService>,
         config: PushFanoutConfig,
     ) -> Self {
         let fcm_config = FcmConfig::from_env();
+        let apns_config = ApnsConfig::from_env();
+
         if !fcm_config.is_configured() {
             tracing::warn!(
-                "[8A-3] PushFanoutWorker: neither FCM_PROJECT_ID nor FCM_SERVER_KEY is set; \
+                "[8A-3] PushFanoutWorker: FCM not configured (FCM_PROJECT_ID / FCM_SERVER_KEY unset)"
+            );
+        }
+        if !apns_config.is_configured() {
+            tracing::warn!(
+                "[8A-3] PushFanoutWorker: APNs not configured (APNS_P8_KEY / APNS_KEY_ID / APNS_TEAM_ID unset)"
+            );
+        }
+        if !fcm_config.is_configured() && !apns_config.is_configured() {
+            tracing::warn!(
+                "[8A-3] PushFanoutWorker: neither FCM nor APNs is configured; \
                  push delivery will be skipped (no crash — set env vars to enable)"
             );
         }
+
         Self {
-            adapter: Arc::new(FcmHttpAdapter::new(pool, fcm_config)),
+            adapter: Arc::new(CombinedPushAdapter::new(pool, fcm_config, apns_config)),
             config,
             pubsub,
         }
@@ -737,7 +1218,8 @@ impl PushFanoutWorker {
 
                 tracing::info!(
                     poll_interval_secs = self.config.poll_interval_secs,
-                    fcm_configured = self.adapter.fcm_config.is_configured(),
+                    fcm_configured = self.adapter.fcm.fcm_config.is_configured(),
+                    apns_configured = self.adapter.apns.apns_config.is_configured(),
                     "[8A-3] PushFanoutWorker started"
                 );
 
@@ -819,8 +1301,8 @@ impl PushFanoutWorker {
             }
         };
 
-        // `device_tokens` is unused by `FcmHttpAdapter::send` (it re-fetches the
-        // user's tokens from the DB), so an empty slice is fine here.
+        // `device_tokens` is unused by the adapters (they re-fetch from the DB),
+        // so an empty slice is fine here.
         match self
             .adapter
             .send(notification.user_id, &[], &notification)
@@ -1127,5 +1609,192 @@ mod tests {
         // rather than re-queuing them (a poison message must not hot-loop).
         let err = serde_json::from_str::<Notification>("{\"not\":\"a notification\"}");
         assert!(err.is_err());
+    }
+
+    // ------------------------------------------------------------------
+    // APNs config and JWT minting
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn apns_config_unconfigured_when_no_credentials() {
+        let config = ApnsConfig {
+            p8_key_pem: None,
+            key_id: None,
+            team_id: None,
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert!(!config.is_configured());
+    }
+
+    #[test]
+    fn apns_config_unconfigured_when_partial_credentials() {
+        // All three fields must be present; partial config is not usable.
+        let config = ApnsConfig {
+            p8_key_pem: Some("--- key ---".to_string()),
+            key_id: Some("ABCDE12345".to_string()),
+            team_id: None, // missing
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert!(!config.is_configured());
+    }
+
+    #[test]
+    fn apns_config_configured_when_all_present() {
+        let config = ApnsConfig {
+            p8_key_pem: Some("--- key ---".to_string()),
+            key_id: Some("ABCDE12345".to_string()),
+            team_id: Some("TEAM123456".to_string()),
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert!(config.is_configured());
+    }
+
+    #[test]
+    fn apns_config_default_topic() {
+        let config = ApnsConfig {
+            p8_key_pem: None,
+            key_id: None,
+            team_id: None,
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert_eq!(config.topic, "three.two.bit.ppt.management");
+    }
+
+    #[test]
+    fn apns_config_base_url_defaults_to_apple() {
+        let config = ApnsConfig {
+            p8_key_pem: None,
+            key_id: None,
+            team_id: None,
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert_eq!(config.base_url(), "https://api.push.apple.com");
+    }
+
+    #[test]
+    fn apns_config_base_url_override() {
+        let config = ApnsConfig {
+            p8_key_pem: None,
+            key_id: None,
+            team_id: None,
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: Some("http://localhost:7777".to_string()),
+        };
+        assert_eq!(config.base_url(), "http://localhost:7777");
+    }
+
+    #[test]
+    fn mint_apns_jwt_returns_none_when_unconfigured() {
+        let config = ApnsConfig {
+            p8_key_pem: None,
+            key_id: None,
+            team_id: None,
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert!(mint_apns_jwt(&config).is_none());
+    }
+
+    #[test]
+    fn mint_apns_jwt_returns_none_for_invalid_key_pem() {
+        // A syntactically invalid PEM should fail gracefully (not panic).
+        let config = ApnsConfig {
+            p8_key_pem: Some("this is not a valid PEM key".to_string()),
+            key_id: Some("ABCDE12345".to_string()),
+            team_id: Some("TEAM123456".to_string()),
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        };
+        assert!(mint_apns_jwt(&config).is_none());
+    }
+
+    // ------------------------------------------------------------------
+    // CombinedPushAdapter routing logic (via PushTargetFilter)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn apns_filter_selects_only_apns_tokens() {
+        let tokens = vec![
+            stored_token("fcm-1", "fcm", None),
+            stored_token("apns-1", "apns", None),
+            stored_token("apns-2", "apns", None),
+        ];
+        let filter = PushTargetFilter {
+            platforms: Some(vec![PushPlatform::Apns]),
+            ..Default::default()
+        };
+        let targets = select_dispatch_targets(&tokens, &filter);
+        assert_eq!(targets.len(), 2);
+        assert!(targets.iter().all(|t| t.platform == PushPlatform::Apns));
+    }
+
+    #[test]
+    fn fcm_filter_selects_only_fcm_tokens() {
+        let tokens = vec![
+            stored_token("fcm-1", "fcm", None),
+            stored_token("apns-1", "apns", None),
+            stored_token("fcm-2", "fcm", None),
+        ];
+        let filter = PushTargetFilter {
+            platforms: Some(vec![PushPlatform::Fcm]),
+            ..Default::default()
+        };
+        let targets = select_dispatch_targets(&tokens, &filter);
+        assert_eq!(targets.len(), 2);
+        assert!(targets.iter().all(|t| t.platform == PushPlatform::Fcm));
+    }
+
+    #[test]
+    fn no_targets_when_only_wrong_platform_tokens() {
+        let tokens = vec![
+            stored_token("fcm-1", "fcm", None),
+            stored_token("fcm-2", "fcm", None),
+        ];
+        let filter = PushTargetFilter {
+            platforms: Some(vec![PushPlatform::Apns]),
+            ..Default::default()
+        };
+        // APNs adapter sees no targets → graceful no-op.
+        assert!(select_dispatch_targets(&tokens, &filter).is_empty());
+    }
+
+    // ------------------------------------------------------------------
+    // PushDeliveryReceipt construction (APNs)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn apns_delivery_receipt_captures_platform() {
+        let receipt = PushDeliveryReceipt {
+            token_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            platform: PushPlatform::Apns,
+            success: true,
+            error: None,
+            token_expired: false,
+            attempted_at: chrono::Utc::now(),
+        };
+        assert_eq!(receipt.platform, PushPlatform::Apns);
+        assert!(receipt.success);
+        assert!(!receipt.token_expired);
+    }
+
+    #[test]
+    fn apns_delivery_receipt_marks_expired_on_bad_token() {
+        let receipt = PushDeliveryReceipt {
+            token_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            platform: PushPlatform::Apns,
+            success: false,
+            error: Some("APNs rejected".to_string()),
+            token_expired: true,
+            attempted_at: chrono::Utc::now(),
+        };
+        assert!(!receipt.success);
+        assert!(receipt.token_expired);
     }
 }

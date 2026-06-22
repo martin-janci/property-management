@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { deepLinkManager } from '../qrcode';
 import { resolveDeepLinkTarget } from '../services/deepLinkRouting';
 
@@ -24,16 +24,28 @@ export function useDeepLinkRouting(
   onNavigate: (screen: string, params?: Record<string, unknown>) => void,
   isAuthenticated: boolean
 ): void {
+  // Hold the latest `onNavigate` in a ref so the wiring effect can read the
+  // current callback without listing it as a dependency. This keeps the effect
+  // stable: the handler is registered and `initialize()` runs exactly once for
+  // the hook's lifetime, even when the parent passes a fresh `onNavigate`
+  // identity on re-render (avoids duplicate handlers / re-initialisation).
+  const onNavigateRef = useRef(onNavigate);
+  onNavigateRef.current = onNavigate;
+
   useEffect(() => {
     const unsubscribe = deepLinkManager.addHandler((link) => {
       const target = resolveDeepLinkTarget(link);
       if (target) {
-        onNavigate(target.screen, target.params);
+        onNavigateRef.current(target.screen, target.params);
       }
     });
-    void deepLinkManager.initialize();
+    // `initialize()` rejecting must not surface as an unhandled promise
+    // rejection; deep-link cold-start failures are non-fatal for the app.
+    deepLinkManager.initialize().catch((error) => {
+      console.warn('[useDeepLinkRouting] deepLinkManager.initialize() failed', error);
+    });
     return unsubscribe;
-  }, [onNavigate]);
+  }, []);
 
   // Keep the manager's auth gate in sync so auth-required links queued while
   // logged out are dispatched the moment the user authenticates.

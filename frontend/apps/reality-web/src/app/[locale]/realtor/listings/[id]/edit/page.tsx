@@ -10,7 +10,7 @@ import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
 import { Footer, Header } from '@/components/ui';
 import {
-  getListing,
+  getMyListing,
   type ListingDraft,
   type ListingResponse,
   RealtorApiError,
@@ -33,7 +33,7 @@ function EditListingContent() {
     if (!id) return;
     let cancelled = false;
     setIsLoading(true);
-    getListing(id)
+    getMyListing(id)
       .then((value) => {
         if (!cancelled) setListing(value);
       })

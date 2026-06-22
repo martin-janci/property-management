@@ -53,7 +53,10 @@
     "unknown": "Unknown",
     "expand": "Expand",
     "collapse": "Collapse",
-    "unknownError": "An error occurred. Please try again."
+    "unknownError": "An error occurred. Please try again.",
+    "actions": "Actions",
+    "deleting": "Deleting...",
+    "saveChanges": "Save changes"
   },
   "nav": {
     "home": "Home",
@@ -68,6 +71,7 @@
     "financial": "Financial",
     "community": "Community",
     "disputes": "Disputes",
+    "leases": "Leases",
     "outages": "Outages",
     "emergency": "Emergency Contacts",
     "messages": "Messages",
@@ -77,7 +81,8 @@
     "privacy": "Privacy",
     "neighbors": "Neighbors",
     "aiChat": "AI Assistant",
-    "admin": "Admin"
+    "admin": "Admin",
+    "iotAlerts": "Sensor Alerts"
   },
   "auth": {
     "signIn": "Sign In",
@@ -419,6 +424,52 @@
       "empty": "No versions are available for this document.",
       "version": "Version {{n}}",
       "current": "Current"
+    },
+    "esign": {
+      "title": "E-signature",
+      "send": "Send for signature",
+      "loading": "Loading signature requests…",
+      "loadError": "Failed to load signature requests.",
+      "empty": "This document has not been sent for signature yet.",
+      "requestedAt": "Requested {{date}}",
+      "signedAt": "signed {{date}}",
+      "remind": "Send reminder",
+      "reminding": "Sending…",
+      "remindSent": "{{count}} reminder(s) sent.",
+      "cancel": "Cancel request",
+      "cancelling": "Cancelling…",
+      "cancelConfirm": "Cancel this signature request? Signers can no longer sign.",
+      "allSigned": "All signers have responded.",
+      "status": {
+        "pending": "Pending signature",
+        "in_progress": "Signing in progress",
+        "completed": "Signed",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "signer": {
+        "pending": "Pending",
+        "sent": "Sent",
+        "viewed": "Viewed",
+        "signed": "Signed",
+        "declined": "Declined"
+      },
+      "dialog": {
+        "title": "Send document for signature",
+        "signers": "Signers",
+        "namePlaceholder": "Full name",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Remove signer",
+        "addSigner": "+ Add signer",
+        "signerRequired": "Add at least one signer with a name and a valid email.",
+        "subject": "Subject (optional)",
+        "subjectPlaceholder": "e.g. Management contract",
+        "message": "Message to signers (optional)",
+        "messagePlaceholder": "Please review and sign the attached document.",
+        "sending": "Sending…",
+        "send": "Send for signature"
+      }
     }
   },
   "disputes": {
@@ -3438,5 +3489,193 @@
     "title": "Competitive Features",
     "percentComplete": "{{percent}}% Complete",
     "viewAnalysis": "View Analysis"
+  },
+  "iot": {
+    "dashboardTitle": "Smart Building",
+    "dashboardSubtitle": "Sensors, telemetry and alerts across your buildings.",
+    "openDashboard": "Dashboard",
+    "sensorsTitle": "Sensors & Devices",
+    "sensorsSubtitle": "Register and manage the IoT devices across your buildings.",
+    "registerSensor": "Register sensor",
+    "registerSensorTitle": "Register sensor",
+    "registerSensorSubtitle": "Add a new IoT device to a building.",
+    "editSensorTitle": "Edit sensor",
+    "editSensorSubtitle": "Update device configuration.",
+    "selectBuilding": "Select a building",
+    "buildingImmutable": "Building cannot be changed after registration.",
+    "selectDevicePrompt": "Select a device to view its telemetry.",
+    "fieldName": "Name",
+    "fieldType": "Sensor type",
+    "fieldBuilding": "Building",
+    "fieldLocation": "Location",
+    "fieldLocationDescription": "Location description",
+    "fieldConnectionType": "Connection type",
+    "fieldUnit": "Unit of measurement",
+    "fieldInterval": "Reporting interval (s)",
+    "fieldManufacturer": "Manufacturer",
+    "fieldModel": "Model",
+    "fieldSerial": "Serial number",
+    "fieldFirmware": "Firmware version",
+    "fieldStatus": "Status",
+    "colName": "Name",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colLocation": "Location",
+    "colLastReading": "Last reading",
+    "totalDevices": "Total devices",
+    "activeDevices": "Active",
+    "offlineDevices": "Offline",
+    "devices": "Devices",
+    "noDevices": "No devices registered yet.",
+    "telemetry": "Telemetry",
+    "lastReading": "Last reading",
+    "noReadings": "No readings in the selected window.",
+    "time": "Time",
+    "value": "Value",
+    "quality": "Quality",
+    "recentAlerts": "Recent alerts",
+    "unresolvedAlerts": "Open alerts",
+    "noAlerts": "No active alerts. All clear.",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "resolved": "resolved",
+    "triggered": "Triggered",
+    "thresholdBreach": "Threshold breach",
+    "thresholds": "Thresholds",
+    "thresholdsTitle": "Thresholds",
+    "thresholdConfigTitle": "Threshold configuration",
+    "thresholdConfigSubtitle": "Alert rules for {{name}} ({{type}}).",
+    "thresholdConfigSubtitleGeneric": "Configure alert rules for this sensor.",
+    "backToSensors": "Back to sensors",
+    "addThreshold": "Add threshold",
+    "addThresholdTitle": "Add threshold",
+    "editThresholdTitle": "Edit threshold",
+    "thresholdMetric": "Metric",
+    "thresholdMetricPlaceholder": "e.g. temperature (blank = default)",
+    "thresholdComparison": "Comparison",
+    "comparison_gt": "Greater than",
+    "comparison_lt": "Less than",
+    "comparison_range": "Out of range",
+    "thresholdWarning": "Warning",
+    "thresholdWarningLow": "Warning (low)",
+    "thresholdWarningHigh": "Warning (high)",
+    "thresholdCritical": "Critical",
+    "thresholdCriticalLow": "Critical (low)",
+    "thresholdCriticalHigh": "Critical (high)",
+    "thresholdCooldown": "Alert cooldown (minutes)",
+    "thresholdCooldownShort": "Cooldown",
+    "thresholdEnabled": "Enabled",
+    "thresholdNeedsBound": "Set at least one warning or critical value.",
+    "noThresholds": "No thresholds configured yet. Add one or apply a template.",
+    "minutesShort": "{{count}} min",
+    "applyTemplateTitle": "Apply template",
+    "applyTemplateHint": "Create a threshold from a predefined template for this sensor type.",
+    "applyTemplate": "Apply",
+    "applying": "Applying…",
+    "selectTemplate": "Select a template",
+    "noTemplates": "No templates for this sensor type",
+    "templateDefault": "default",
+    "thresholdCreated": "Threshold created",
+    "thresholdCreateFailed": "Failed to create threshold",
+    "thresholdUpdated": "Threshold updated",
+    "thresholdUpdateFailed": "Failed to update threshold",
+    "thresholdDeleteConfirm": "Delete this threshold? This cannot be undone.",
+    "thresholdDeleted": "Threshold deleted",
+    "thresholdDeleteFailed": "Failed to delete threshold",
+    "templateApplied": "Template applied",
+    "templateApplyFailed": "Failed to apply template",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    }
+  },
+  "commandPalette": {
+    "commands": {
+      "goToIotAlerts": "Go to Sensor Alerts"
+    },
+    "descriptions": {
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
+  },
+  "documentTemplates": {
+    "title": "Document Templates",
+    "subtitle": "Generate documents from reusable templates.",
+    "searchPlaceholder": "Search templates…",
+    "typeFilter": "Filter by type",
+    "allTypes": "All types",
+    "loadError": "Failed to load templates.",
+    "types": {
+      "lease": "Lease",
+      "notice": "Notice",
+      "invoice": "Invoice",
+      "report": "Report",
+      "minutes": "Minutes",
+      "contract": "Contract",
+      "custom": "Custom"
+    },
+    "categories": {
+      "contracts": "Contracts",
+      "invoices": "Invoices",
+      "reports": "Reports",
+      "manuals": "Manuals",
+      "certificates": "Certificates",
+      "other": "Other"
+    },
+    "empty": {
+      "title": "No templates yet",
+      "body": "No document templates have been created for this organization.",
+      "noMatches": "No templates match your filters."
+    },
+    "card": {
+      "placeholders": "{{count}} placeholders",
+      "usage": "used {{count}}×",
+      "generate": "Generate"
+    },
+    "generate": {
+      "title": "Generate from “{{name}}”",
+      "contextLegend": "Context",
+      "building": "Building",
+      "unit": "Unit",
+      "noContext": "— No building —",
+      "noUnit": "— No unit —",
+      "contextHint": "Pick a building or unit to pre-fill matching placeholders. You can still edit every value.",
+      "placeholdersLegend": "Placeholders",
+      "noPlaceholders": "This template has no placeholders.",
+      "documentLegend": "Document",
+      "docTitle": "Title",
+      "category": "Category",
+      "description": "Description",
+      "previewLegend": "Preview",
+      "missingPlaceholders": "Please fill in the required placeholders: {{names}}",
+      "generateError": "Failed to generate document. {{message}}",
+      "loadError": "Failed to load the template.",
+      "generating": "Generating…",
+      "submit": "Generate document"
+    }
   }
 }

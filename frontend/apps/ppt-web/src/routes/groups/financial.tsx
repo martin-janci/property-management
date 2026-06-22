@@ -5,7 +5,17 @@
  * Extracted from App.tsx to isolate financial work.
  */
 import type { InvoiceStatus } from '@ppt/api-client';
-import { getARAgingReport, getOverdueInvoices, listInvoices, sendInvoice } from '@ppt/api-client';
+import {
+  allocatePayment,
+  autoMatchPayments,
+  downloadInvoicePdf,
+  getARAgingReport,
+  getOverdueInvoices,
+  listInvoices,
+  listPayments,
+  listUnallocatedPayments,
+  sendInvoice,
+} from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -153,6 +163,28 @@ function InvoiceManagementPageRoute() {
     },
   });
 
+  const handleDownloadPdf = (id: string) => {
+    const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
+    downloadInvoicePdf(id)
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `invoice-${number}.pdf`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => {
+        showToast({
+          type: 'error',
+          title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+          message: err instanceof Error ? err.message : '',
+        });
+      });
+  };
+
   return (
     <InvoiceManagementPage
       invoices={data?.invoices ?? []}
@@ -162,6 +194,7 @@ function InvoiceManagementPageRoute() {
       onNavigateToCreate={() => navigate('/financial/invoices/new')}
       onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
       onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
+      onDownloadPdf={handleDownloadPdf}
       onFilterChange={(params) => {
         setStatusFilter(params.status);
         setPage(params.page);
@@ -171,22 +204,94 @@ function InvoiceManagementPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for payment management (Epic 11/52, #975.5).
+ *
+ * Wires the org-wide payment endpoints (#1628):
+ *   listPayments               — paginated org payments (+ total)
+ *   listUnallocatedPayments    — the reconciliation queue
+ *   listInvoices               — outstanding invoices (matching targets, balance>0)
+ *   allocatePayment            — manual match (onMatch)
+ *   autoMatchPayments          — bulk auto-match (onAutoMatch)
+ *
+ * Metrics are derived client-side: totalReceived = sum of listed payments,
+ * pendingReconciliation = sum of unallocated payments.
+ */
 function PaymentManagementPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const orgId = user?.organizationId ?? '';
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data: paymentsData, isLoading } = useQuery({
+    queryKey: ['financial', 'payments', orgId, page, pageSize],
+    queryFn: () =>
+      listPayments({
+        organization_id: orgId,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      }),
+    enabled: !!orgId,
+  });
+  const { data: unallocatedData } = useQuery({
+    queryKey: ['financial', 'payments', 'unallocated', orgId],
+    queryFn: () => listUnallocatedPayments(orgId),
+    enabled: !!orgId,
+  });
+  const { data: invoicesData } = useQuery({
+    queryKey: ['financial', 'invoices', orgId],
+    queryFn: () => listInvoices({ organization_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const payments = paymentsData?.payments ?? [];
+  const unallocatedPayments = unallocatedData ?? [];
+  const unpaidInvoices = (invoicesData?.invoices ?? []).filter((inv) => (inv.balance_due ?? 0) > 0);
+
+  const totalReceived = payments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const pendingReconciliation = unallocatedPayments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const currency = payments[0]?.currency ?? 'EUR';
+
+  const invalidatePayments = () => {
+    queryClient.invalidateQueries({ queryKey: ['financial', 'payments'] });
+    queryClient.invalidateQueries({ queryKey: ['financial', 'invoices'] });
+  };
+  const matchMutation = useMutation({
+    mutationFn: (vars: { paymentId: string; invoiceId: string; amount: number }) =>
+      allocatePayment(vars.paymentId, {
+        organization_id: orgId,
+        invoice_id: vars.invoiceId,
+        amount: vars.amount,
+      }),
+    onSuccess: invalidatePayments,
+  });
+  const autoMatchMutation = useMutation({
+    mutationFn: () => autoMatchPayments(orgId),
+    onSuccess: invalidatePayments,
+  });
 
   return (
     <PaymentManagementPage
-      payments={[]}
-      total={0}
+      payments={payments}
+      total={paymentsData?.total ?? 0}
       buildings={[]}
-      unallocatedPayments={[]}
-      unpaidInvoices={[]}
-      metrics={{ totalReceived: 0, pendingReconciliation: 0, currency: 'EUR' }}
+      unallocatedPayments={unallocatedPayments}
+      unpaidInvoices={unpaidInvoices}
+      metrics={{ totalReceived, pendingReconciliation, currency }}
+      isLoading={isLoading}
       onNavigateToRecord={() => navigate('/financial/payments/new')}
       onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
-      onMatch={() => {}}
-      onAutoMatch={() => {}}
-      onFilterChange={() => {}}
+      onMatch={(paymentId: string, invoiceId: string, amount: number) =>
+        matchMutation.mutate({ paymentId, invoiceId, amount })
+      }
+      onAutoMatch={() => autoMatchMutation.mutate()}
+      onFilterChange={(params) => {
+        setPage(params.page);
+        setPageSize(params.pageSize);
+      }}
     />
   );
 }

@@ -6,4 +6,5 @@
 export * from './CreateFaultPage';
 export * from './EditFaultPage';
 export * from './FaultDetailPage';
+export * from './FaultReportsPage';
 export * from './FaultsPage';

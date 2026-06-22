@@ -122,7 +122,20 @@
     "selectCategory": "Prosim vyberte kategorii",
     "locationDetected": "Poloha zjistena",
     "failedToPickImage": "Nepodarilo se vybrat obrazek",
-    "failedToDetectLocation": "Nepodarilo se zjistit polohu"
+    "failedToDetectLocation": "Nepodarilo se zjistit polohu",
+    "buildingLabel": "Budova",
+    "selectBuilding": "Vyberte budovu",
+    "loadingBuildings": "Načítají se budovy…",
+    "noBuildings": "Žádné dostupné budovy",
+    "buildingsLoadError": "Nepodařilo se načíst vaše budovy",
+    "photosCompressedTitle": "Fotky komprimovány",
+    "photosCompressedWarning": "Vybrané fotky přesáhly 10 MB ({{original}} MB) a byly komprimovány na {{final}} MB, aby se nahrály rychleji. Kvalita obrázků může být snížena.",
+    "compressingPhotos": "Optimalizuji fotky…",
+    "queuedTitle": "Uloženo offline",
+    "queuedMessage": "Jste offline. Hlášení bylo uloženo a automaticky se synchronizuje po obnovení připojení.",
+    "queuedOnErrorMessage": "Nepodařilo se spojit se serverem. Hlášení bylo uloženo a automaticky se synchronizuje po obnovení připojení.",
+    "offlineSubmitHint": "Jste offline — hlášení se uloží a synchronizuje po obnovení připojení.",
+    "submitButtonOffline": "Uložit a synchronizovat později"
   },
   "news": {
     "title": "Zpravy",
@@ -175,7 +188,7 @@
     },
     "folder": {
       "newTitle": "Nova slozka",
-      "insideFolder": "Ve slozce „{{name}}”",
+      "insideFolder": "Ve slozce „{{name}}“",
       "atRoot": "Na korenove urovni",
       "nameLabel": "Nazev slozky",
       "namePlaceholder": "napr. Smlouvy 2024",
@@ -184,7 +197,10 @@
       "nameRequired": "Nazev slozky je povinny",
       "nameTooLong": "Nazev slozky musi mit nejvyse 255 znaku",
       "createButton": "Vytvorit slozku",
-      "createError": "Slozku se nepodarilo vytvorit"
+      "createError": "Slozku se nepodarilo vytvorit",
+      "renameTitle": "Prejmenovat slozku",
+      "renameButton": "Ulozit nazev",
+      "renameError": "Slozku se nepodarilo prejmenovat"
     },
     "move": {
       "title": "Presunout dokument",
@@ -249,6 +265,14 @@
       "archivedNote": "Tento dokument byl archivovan a jiz neni aktivne sdilet.",
       "rlsTitle": "Zabezpeceni na urovni radku",
       "rlsBody": "Pristup k tomuto dokumentu je vynucen serverem. Zobrazene publikum odrazi kdo jej muze videt."
+    },
+    "folderMove": {
+      "title": "Presunout slozku",
+      "destination": "CIL",
+      "rootLabel": "Koren (nejvyssi uroven)",
+      "noFolders": "Zadne jine slozky nejsou k dispozici",
+      "confirm": "Presunout sem",
+      "errorTitle": "Slozku se nepodarilo presunout"
     }
   },
   "settings": {

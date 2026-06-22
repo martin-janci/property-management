@@ -763,21 +763,10 @@ impl FinancialRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        // Update invoice balance and status
-        sqlx::query(
-            r#"
-            UPDATE invoices
-            SET amount_paid = amount_paid + $2,
-                balance_due = balance_due - $2,
-                updated_at = NOW()
-            WHERE id = $1
-            "#,
-        )
-        .bind(invoice_id)
-        .bind(amount)
-        .execute(&self.pool)
-        .await?;
-
+        // The invoice's amount_paid / balance_due / status are recomputed from the
+        // sum of allocations by the `update_invoice_on_allocation` trigger. A manual
+        // `balance_due = balance_due - amount` update here double-counts the
+        // allocation (the balance goes negative) — so it is intentionally omitted.
         Ok(allocation)
     }
 
@@ -857,6 +846,235 @@ impl FinancialRepository {
         .bind(offset)
         .fetch_all(&self.pool)
         .await
+    }
+
+    // ------------------------------------------------------------------------
+    // Org-wide payment management (Story 11.4 — Payment Management page).
+    //
+    // The page needs an org-scoped view of all payments plus reconciliation
+    // (which payments are still unallocated, allocate one to an invoice, and a
+    // bulk auto-match). Every query is scoped on `organization_id` so a payment
+    // or invoice from another org is never touched.
+    // ------------------------------------------------------------------------
+
+    /// List all payments for an organization, newest first, optionally filtered
+    /// by status (compared as text to avoid enum-encode pitfalls).
+    pub async fn list_payments(
+        &self,
+        organization_id: Uuid,
+        status: Option<String>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Payment>, SqlxError> {
+        sqlx::query_as::<_, Payment>(
+            r#"
+            SELECT * FROM payments
+            WHERE organization_id = $1
+              AND ($2::text IS NULL OR status::text = $2)
+            ORDER BY payment_date DESC, created_at DESC
+            LIMIT $3 OFFSET $4
+            "#,
+        )
+        .bind(organization_id)
+        .bind(&status)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count payments for an organization (matching the same status filter as
+    /// [`list_payments`](Self::list_payments)) so paginated routes can report a
+    /// true total instead of the current page's length.
+    pub async fn count_payments(
+        &self,
+        organization_id: Uuid,
+        status: Option<String>,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM payments
+            WHERE organization_id = $1
+              AND ($2::text IS NULL OR status::text = $2)
+            "#,
+        )
+        .bind(organization_id)
+        .bind(&status)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// List payments that still have an unallocated balance (sum of their
+    /// allocations is less than the payment amount) — the reconciliation queue.
+    pub async fn list_unallocated_payments(
+        &self,
+        organization_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Payment>, SqlxError> {
+        sqlx::query_as::<_, Payment>(
+            r#"
+            SELECT p.*
+            FROM payments p
+            LEFT JOIN payment_allocations pa ON pa.payment_id = p.id
+            WHERE p.organization_id = $1
+            GROUP BY p.id
+            HAVING p.amount - COALESCE(SUM(pa.amount), 0) > 0
+            ORDER BY p.payment_date DESC, p.created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(organization_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Allocate an already-recorded payment to an invoice (the manual "match"
+    /// action). Both the payment and invoice must belong to `organization_id`,
+    /// else `Ok(None)` (the route returns 404 — no cross-org leakage). The
+    /// allocated amount is clamped to both the payment's remaining unallocated
+    /// balance and the invoice's outstanding balance; if nothing can be
+    /// allocated, returns `Ok(None)`.
+    pub async fn allocate_existing_payment(
+        &self,
+        organization_id: Uuid,
+        payment_id: Uuid,
+        invoice_id: Uuid,
+        amount: Option<Decimal>,
+    ) -> Result<Option<PaymentAllocation>, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        let payment = sqlx::query_as::<_, Payment>(
+            "SELECT * FROM payments WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(payment_id)
+        .bind(organization_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let Some(payment) = payment else {
+            return Ok(None);
+        };
+
+        let invoice = sqlx::query_as::<_, Invoice>(
+            "SELECT * FROM invoices WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(invoice_id)
+        .bind(organization_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let Some(invoice) = invoice else {
+            return Ok(None);
+        };
+
+        let allocated: Decimal = sqlx::query_scalar(
+            "SELECT COALESCE(SUM(amount), 0) FROM payment_allocations WHERE payment_id = $1",
+        )
+        .bind(payment_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        let payment_remaining = payment.amount - allocated;
+
+        let requested = amount.unwrap_or(payment_remaining);
+        let to_allocate = requested.min(payment_remaining).min(invoice.balance_due);
+        if to_allocate <= Decimal::ZERO {
+            return Ok(None);
+        }
+
+        // Inserting the allocation is sufficient: the `update_invoice_on_allocation`
+        // trigger recomputes the invoice's amount_paid / balance_due / status from
+        // the sum of allocations. Do NOT also update the invoice here or the
+        // balance is decremented twice.
+        let allocation = sqlx::query_as::<_, PaymentAllocation>(
+            r#"
+            INSERT INTO payment_allocations (payment_id, invoice_id, amount)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+        )
+        .bind(payment_id)
+        .bind(invoice_id)
+        .bind(to_allocate)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(Some(allocation))
+    }
+
+    /// Bulk auto-match: for every payment in the org with an unallocated
+    /// balance, allocate it (oldest-due first) against that unit's outstanding
+    /// invoices — the same oldest-first rule [`record_payment`](Self::record_payment)
+    /// applies at record time. Returns the number of allocations created.
+    pub async fn auto_match_payments(&self, organization_id: Uuid) -> Result<u64, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        let payments = sqlx::query_as::<_, Payment>(
+            r#"
+            SELECT p.*
+            FROM payments p
+            LEFT JOIN payment_allocations pa ON pa.payment_id = p.id
+            WHERE p.organization_id = $1
+            GROUP BY p.id
+            HAVING p.amount - COALESCE(SUM(pa.amount), 0) > 0
+            ORDER BY p.payment_date ASC
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_all(&mut *tx)
+        .await?;
+
+        let mut created: u64 = 0;
+        for payment in payments {
+            let allocated: Decimal = sqlx::query_scalar(
+                "SELECT COALESCE(SUM(amount), 0) FROM payment_allocations WHERE payment_id = $1",
+            )
+            .bind(payment.id)
+            .fetch_one(&mut *tx)
+            .await?;
+            let mut remaining = payment.amount - allocated;
+            if remaining <= Decimal::ZERO {
+                continue;
+            }
+
+            let invoices = sqlx::query_as::<_, Invoice>(
+                r#"
+                SELECT * FROM invoices
+                WHERE unit_id = $1 AND organization_id = $2 AND balance_due > 0
+                ORDER BY due_date ASC, created_at ASC
+                "#,
+            )
+            .bind(payment.unit_id)
+            .bind(organization_id)
+            .fetch_all(&mut *tx)
+            .await?;
+
+            for invoice in invoices {
+                if remaining <= Decimal::ZERO {
+                    break;
+                }
+                let to_allocate = remaining.min(invoice.balance_due);
+                if to_allocate <= Decimal::ZERO {
+                    continue;
+                }
+                // The `update_invoice_on_allocation` trigger updates the invoice
+                // balance/status; inserting the allocation is all that's needed.
+                sqlx::query(
+                    "INSERT INTO payment_allocations (payment_id, invoice_id, amount) VALUES ($1, $2, $3)",
+                )
+                .bind(payment.id)
+                .bind(invoice.id)
+                .bind(to_allocate)
+                .execute(&mut *tx)
+                .await?;
+                remaining -= to_allocate;
+                created += 1;
+            }
+        }
+
+        tx.commit().await?;
+        Ok(created)
     }
 
     // ========================================================================
@@ -1044,6 +1262,186 @@ impl FinancialRepository {
             as_of_date,
             entries,
             totals,
+        })
+    }
+
+    /// Income statement: revenue vs expenses from account_transactions over a date range.
+    pub async fn get_income_statement(
+        &self,
+        org_id: Uuid,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<crate::models::financial::IncomeStatement, SqlxError> {
+        use crate::models::financial::{IncomeStatement, IncomeStatementLine};
+
+        let revenue_rows = sqlx::query_as::<_, IncomeStatementLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'credit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let expense_rows = sqlx::query_as::<_, IncomeStatementLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'debit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_revenue = revenue_rows.iter().map(|r| r.amount).sum();
+        let total_expenses = expense_rows.iter().map(|r| r.amount).sum();
+        let net_income = total_revenue - total_expenses;
+
+        Ok(IncomeStatement {
+            from_date: from,
+            to_date: to,
+            revenue: revenue_rows,
+            expenses: expense_rows,
+            total_revenue,
+            total_expenses,
+            net_income,
+        })
+    }
+
+    /// Balance sheet snapshot: all account balances as of a date.
+    pub async fn get_balance_sheet(
+        &self,
+        org_id: Uuid,
+        as_of: NaiveDate,
+    ) -> Result<crate::models::financial::BalanceSheetReport, SqlxError> {
+        use crate::models::financial::{BalanceSheetLine, BalanceSheetReport};
+
+        let accounts = sqlx::query_as::<_, BalanceSheetLine>(
+            r#"
+            SELECT fa.id AS account_id,
+                   fa.name AS account_name,
+                   fa.account_type::text AS account_type,
+                   fa.opening_balance
+                   + COALESCE(SUM(CASE WHEN at_.transaction_type = 'credit' THEN at_.amount ELSE 0 END), 0)
+                   - COALESCE(SUM(CASE WHEN at_.transaction_type = 'debit'  THEN at_.amount ELSE 0 END), 0)
+                   AS balance
+            FROM financial_accounts fa
+            LEFT JOIN account_transactions at_
+                   ON at_.account_id = fa.id AND at_.transaction_date <= $2
+            WHERE fa.organization_id = $1
+              AND fa.is_active = true
+            GROUP BY fa.id, fa.name, fa.account_type, fa.opening_balance
+            ORDER BY fa.account_type, fa.name
+            "#,
+        )
+        .bind(org_id)
+        .bind(as_of)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_assets: Decimal = accounts
+            .iter()
+            .filter(|a| a.balance > Decimal::ZERO)
+            .map(|a| a.balance)
+            .sum();
+        let total_liabilities: Decimal = accounts
+            .iter()
+            .filter(|a| a.balance < Decimal::ZERO)
+            .map(|a| a.balance.abs())
+            .sum();
+        let net_equity = total_assets - total_liabilities;
+
+        Ok(BalanceSheetReport {
+            as_of_date: as_of,
+            accounts,
+            total_assets,
+            total_liabilities,
+            net_equity,
+        })
+    }
+
+    /// Cash flow report: inflows vs outflows for a date range.
+    pub async fn get_cash_flow(
+        &self,
+        org_id: Uuid,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<crate::models::financial::CashFlowReport, SqlxError> {
+        use crate::models::financial::{CashFlowLine, CashFlowReport};
+
+        let inflow_rows = sqlx::query_as::<_, CashFlowLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'credit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let outflow_rows = sqlx::query_as::<_, CashFlowLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'debit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_inflows = inflow_rows.iter().map(|r| r.amount).sum();
+        let total_outflows = outflow_rows.iter().map(|r| r.amount).sum();
+        let net_cash_flow = total_inflows - total_outflows;
+
+        Ok(CashFlowReport {
+            from_date: from,
+            to_date: to,
+            inflows: inflow_rows,
+            outflows: outflow_rows,
+            total_inflows,
+            total_outflows,
+            net_cash_flow,
         })
     }
 }

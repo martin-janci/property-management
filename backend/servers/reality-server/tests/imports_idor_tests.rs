@@ -4,21 +4,22 @@
 //! # Background
 //!
 //! PR #1297 fixed an IDOR on all 7 by-id handlers in
-//! `reality-server/src/routes/imports.rs` by threading `principal.user_id`
-//! through every repo call (jobs key on `user_id`; feeds key on `agency_id`
-//! which actually stores a user id — pre-existing column-name quirk). The
-//! existing `backend/crates/db/tests/portal_imports_cross_org_idor_tests.rs`
-//! exercises the repo SQL layer, but the IDOR lived in the *handler* (missing
-//! `RequestPrincipal` extractor). A future regression that removes `principal`
-//! from a handler signature would compile, ship, and bypass the repo tests.
+//! `reality-server/src/routes/imports.rs` by threading the principal through
+//! every repo call. Import jobs key on `user_id` (per-user). Feed subscriptions
+//! are agency-scoped (#1584): the handlers resolve the caller's agency from
+//! `reality_agency_members` and scope feeds by `agency_id`, so a feed is shared
+//! across the agency's members and isolated from other agencies. The IDOR lived
+//! in the *handler* (a missing/incorrect principal scope), so these tests drive
+//! the HTTP surface end-to-end.
 //!
 //! These tests drive the HTTP surface end-to-end via a real Axum router with
 //! real HS256 JWTs, asserting:
 //! - User B requesting User A's import job → 404 (not 200 / not 401).
 //! - User A requesting their own import job → 200.
 //! - Unauthenticated request → 401.
-//! - User B requesting User A's feed → 404.
-//! - User A requesting their own feed → 200.
+//! - A feed is shared across its agency's members → 200.
+//! - A member of another agency requesting a feed → 404.
+//! - A caller in no agency listing feeds → 403.
 //!
 //! The test uses `#[sqlx::test]` for an isolated, migrated database (same
 //! harness as every other integration test in this workspace).
@@ -93,18 +94,26 @@ fn mint_token(user_id: Uuid) -> String {
 // ============================================================================
 
 async fn seed_portal_user(pool: &PgPool, tag: &str) -> Uuid {
+    seed_portal_user_with_kind(pool, tag, "platform").await
+}
+
+/// Seed a portal user with an explicit `principal_kind` (`public` | `staff` |
+/// `platform`). `seed_portal_user` delegates here with `platform`; the explicit
+/// form lets a test pin the kind it exercises independently of that default.
+async fn seed_portal_user_with_kind(pool: &PgPool, tag: &str, principal_kind: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'platform')
+        VALUES ($1, 'test_hash', $2, 'active', NOW(), $3)
         RETURNING id
         "#,
     )
     .bind(format!("{tag}@imports-idor.test"))
     .bind(format!("ImportsIDOR {tag}"))
+    .bind(principal_kind)
     .fetch_one(pool)
     .await
-    .unwrap_or_else(|e| panic!("seed_portal_user({tag}): {e}"))
+    .unwrap_or_else(|e| panic!("seed_portal_user_with_kind({tag}, {principal_kind}): {e}"))
 }
 
 async fn seed_import_job(pool: &PgPool, user_id: Uuid) -> Uuid {
@@ -126,11 +135,9 @@ async fn seed_import_job(pool: &PgPool, user_id: Uuid) -> Uuid {
 
 /// Seed a `reality_agencies` row and return its id.
 ///
-/// `feed_subscriptions.agency_id` carries a `REFERENCES reality_agencies(id)` FK
-/// (migration 00063). In production the handler passes `principal.user_id` into
-/// that column — a pre-existing data-model mismatch flagged in GH #1300 finding 2.
-/// Until that column is reconciled, feed tests must seed a real agency row and
-/// use its id as the "owner key" to satisfy the FK.
+/// Feeds are scoped to a real agency (FK `feed_subscriptions.agency_id →
+/// reality_agencies`). The import handlers resolve the caller's agency from
+/// `reality_agency_members` (#1584), so feed tests seed an agency + membership.
 async fn seed_agency(pool: &PgPool, tag: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -162,6 +169,22 @@ async fn seed_feed(pool: &PgPool, agency_id: Uuid) -> Uuid {
         .await
         .expect("seed_feed");
     feed.id
+}
+
+/// Make `user_id` an active member of `agency_id`. Feeds are agency-scoped
+/// (#1584): the import handlers resolve the caller's agency from this table.
+async fn seed_membership(pool: &PgPool, agency_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        r#"
+        INSERT INTO reality_agency_members (agency_id, user_id, role, is_active)
+        VALUES ($1, $2, 'realtor', TRUE)
+        "#,
+    )
+    .bind(agency_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed_membership");
 }
 
 // ============================================================================
@@ -219,6 +242,38 @@ async fn import_job_owner_returns_200(pool: PgPool) {
     );
 }
 
+/// Finding 3 (GH #1584): `PortalPrincipal` admits any authenticated, non-deleted
+/// principal kind — including the highest-privilege `platform` (super-admin)
+/// kind — but yields only `user_id` and applies no kind-based privilege. Pin the
+/// intended behavior explicitly (independently of the kind `seed_portal_user`
+/// happens to use): a `platform`-kind caller is still scoped to its own
+/// `user_id`, so it gets 404 — not 200 — on another user's import job. There is
+/// no admin bypass at this layer.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn import_job_platform_kind_caller_is_still_user_scoped_404(pool: PgPool) {
+    let owner = seed_portal_user(&pool, "job-plat-owner").await;
+    let platform_caller = seed_portal_user_with_kind(&pool, "job-plat-admin", "platform").await;
+    let job_id = seed_import_job(&pool, owner).await;
+
+    let app = imports_router(pool);
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/imports/jobs/{job_id}"))
+        .header(
+            header::AUTHORIZATION,
+            format!("Bearer {}", mint_token(platform_caller)),
+        )
+        .body(Body::empty())
+        .unwrap();
+
+    let status = app.oneshot(req).await.unwrap().status();
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "platform-kind caller must stay user-scoped (no admin bypass), got {status}"
+    );
+}
+
 /// Unauthenticated request → 401.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn import_job_unauthenticated_returns_401(pool: PgPool) {
@@ -244,34 +299,47 @@ async fn import_job_unauthenticated_returns_401(pool: PgPool) {
 // Tests — feed subscriptions
 // ============================================================================
 
-/// Cross-user probe for feeds.
-///
-/// The handler passes `principal.user_id` as the `agency_id` scope key (GH #1300
-/// finding 2 pre-existing mismatch). The FK constraint requires a real
-/// `reality_agencies` row, so we seed two agencies whose UUIDs are also registered
-/// as portal users — meaning only a user whose UUID matches the agency id that owns
-/// the feed will get a 200. Any other user gets 404.
+/// Feeds are agency-scoped and SHARED across the agency's members (#1584): a
+/// feed created for agency A is readable by every active member of A — not just
+/// the user who happened to create it. Two distinct members both get 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn feed_cross_user_returns_404(pool: PgPool) {
-    // Agency A owns the feed; agency B is the attacker.
+async fn feed_is_shared_across_agency_members(pool: PgPool) {
+    let agency_a = seed_agency(&pool, "feed-shared-a").await;
+    let member_1 = seed_portal_user(&pool, "feed-member-1").await;
+    let member_2 = seed_portal_user(&pool, "feed-member-2").await;
+    seed_membership(&pool, agency_a, member_1).await;
+    seed_membership(&pool, agency_a, member_2).await;
+    let feed_id = seed_feed(&pool, agency_a).await;
+
+    let app = imports_router(pool);
+    for member in [member_1, member_2] {
+        let req = Request::builder()
+            .method(Method::GET)
+            .uri(format!("/api/v1/imports/feeds/{feed_id}"))
+            .header(
+                header::AUTHORIZATION,
+                format!("Bearer {}", mint_token(member)),
+            )
+            .body(Body::empty())
+            .unwrap();
+        let status = app.clone().oneshot(req).await.unwrap().status();
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "every active member of the agency must read its feed; got {status}"
+        );
+    }
+}
+
+/// Cross-agency probe: a member of a DIFFERENT agency cannot read agency A's
+/// feed — the handler resolves the caller's own agency, so the by-id lookup is
+/// scoped away → 404.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn feed_non_member_returns_404(pool: PgPool) {
     let agency_a = seed_agency(&pool, "feed-idor-a").await;
     let agency_b = seed_agency(&pool, "feed-idor-b").await;
-
-    // Register the agencies' UUIDs as portal users so RequestPrincipal can
-    // resolve their principal_kind from the users table.
-    sqlx::query(
-        r#"INSERT INTO users (id, email, password_hash, name, status, email_verified_at, principal_kind)
-           VALUES ($1, $2, 'test_hash', 'Feed Agency A', 'active', NOW(), 'public'),
-                  ($3, $4, 'test_hash', 'Feed Agency B', 'active', NOW(), 'public')"#,
-    )
-    .bind(agency_a)
-    .bind(format!("feed-agency-a-{agency_a}@test"))
-    .bind(agency_b)
-    .bind(format!("feed-agency-b-{agency_b}@test"))
-    .execute(&pool)
-    .await
-    .expect("register agency UUIDs as portal users");
-
+    let attacker = seed_portal_user(&pool, "feed-attacker").await;
+    seed_membership(&pool, agency_b, attacker).await; // member of B, not A
     let feed_id = seed_feed(&pool, agency_a).await;
 
     let app = imports_router(pool);
@@ -280,7 +348,7 @@ async fn feed_cross_user_returns_404(pool: PgPool) {
         .uri(format!("/api/v1/imports/feeds/{feed_id}"))
         .header(
             header::AUTHORIZATION,
-            format!("Bearer {}", mint_token(agency_b)),
+            format!("Bearer {}", mint_token(attacker)),
         )
         .body(Body::empty())
         .unwrap();
@@ -289,34 +357,23 @@ async fn feed_cross_user_returns_404(pool: PgPool) {
     assert_eq!(
         status,
         StatusCode::NOT_FOUND,
-        "cross-agency feed IDOR probe must return 404, got {status}"
+        "a member of another agency must not read agency A's feed, got {status}"
     );
 }
 
-/// Happy path: feed owner reads their own feed → 200.
+/// A caller who is a member of no agency cannot own/list feeds → 403 (rather than
+/// silently operating on a bogus user-id-as-agency-id scope).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn feed_owner_returns_200(pool: PgPool) {
-    let agency_a = seed_agency(&pool, "feed-owner-a").await;
-
-    sqlx::query(
-        r#"INSERT INTO users (id, email, password_hash, name, status, email_verified_at, principal_kind)
-           VALUES ($1, $2, 'test_hash', 'Feed Owner A', 'active', NOW(), 'public')"#,
-    )
-    .bind(agency_a)
-    .bind(format!("feed-owner-a-{agency_a}@test"))
-    .execute(&pool)
-    .await
-    .expect("register agency UUID as portal user");
-
-    let feed_id = seed_feed(&pool, agency_a).await;
+async fn feed_caller_without_agency_returns_403(pool: PgPool) {
+    let orphan = seed_portal_user(&pool, "feed-orphan").await; // no membership
 
     let app = imports_router(pool);
     let req = Request::builder()
         .method(Method::GET)
-        .uri(format!("/api/v1/imports/feeds/{feed_id}"))
+        .uri("/api/v1/imports/feeds")
         .header(
             header::AUTHORIZATION,
-            format!("Bearer {}", mint_token(agency_a)),
+            format!("Bearer {}", mint_token(orphan)),
         )
         .body(Body::empty())
         .unwrap();
@@ -324,7 +381,7 @@ async fn feed_owner_returns_200(pool: PgPool) {
     let status = app.oneshot(req).await.unwrap().status();
     assert_eq!(
         status,
-        StatusCode::OK,
-        "feed owner must read own feed with 200, got {status}"
+        StatusCode::FORBIDDEN,
+        "a user in no agency must get 403 listing feeds, got {status}"
     );
 }

@@ -213,3 +213,113 @@ export interface BuildingsPaginatedResponse<T> {
   pageSize: number;
   totalPages: number;
 }
+
+// ============================================
+// Units (Story 3.2 — Unit management UI)
+// ============================================
+//
+// NOTE: Unlike the legacy camelCase `Building`/`Floor`/`CommonArea` types above
+// (Story 81.2), the unit types below use **snake_case** field names to match the
+// JSON the Rust api-server actually serializes. The backend uses serde defaults
+// (no `rename_all`), so the wire format is snake_case and `rust_decimal` is built
+// with the `serde-str` feature — decimals (`size_sqm`, `ownership_share`) cross
+// the wire as strings. These property names match the JSON on the wire, the same
+// convention documented in the `disputes` and `voting` api-client modules.
+
+/** Unit type (matches DB CHECK constraint on `units.unit_type`). */
+export type UnitType = 'apartment' | 'commercial' | 'parking' | 'storage' | 'other';
+
+/** Occupancy status (matches DB CHECK constraint on `units.occupancy_status`). */
+export type UnitOccupancyStatus = 'owner_occupied' | 'rented' | 'vacant' | 'unknown';
+
+/** Unit lifecycle status (matches DB CHECK constraint on `units.status`). */
+export type UnitStatus = 'active' | 'archived';
+
+/** Slim unit shape returned by the list endpoint (`UnitSummary`). */
+export interface UnitSummary {
+  id: string;
+  building_id: string;
+  designation: string;
+  /** Floor number: 0 = ground, negative = basement. */
+  floor: number;
+  unit_type: UnitType;
+  occupancy_status: UnitOccupancyStatus;
+  status: UnitStatus;
+}
+
+/** Full unit shape returned by get/create/update endpoints (`UnitResponse`). */
+export interface Unit {
+  id: string;
+  building_id: string;
+  entrance: string | null;
+  designation: string;
+  /** Floor number: 0 = ground, negative = basement. */
+  floor: number;
+  /** Pre-formatted floor label, e.g. "G", "B1", "3". */
+  floor_display: string;
+  unit_type: UnitType;
+  /** Pre-formatted unit-type label, e.g. "Apartment". */
+  unit_type_display: string;
+  /** Decimal serialized as a string (e.g. "72.50"); null when unset. */
+  size_sqm: string | null;
+  rooms: number | null;
+  /** Decimal serialized as a string (e.g. "100.00"). */
+  ownership_share: string;
+  occupancy_status: UnitOccupancyStatus;
+  description: string | null;
+  notes: string | null;
+  status: UnitStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Paginated units response (`UnitsListResponse`). */
+export interface UnitsListResponse {
+  units: UnitSummary[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+/** List units query parameters. */
+export interface ListUnitsParams {
+  offset?: number;
+  limit?: number;
+  /** Include archived units in the result (defaults to false server-side). */
+  include_archived?: boolean;
+  unit_type?: UnitType;
+  floor?: number;
+}
+
+/** Create unit request body (`CreateUnitRequest`). */
+export interface CreateUnitRequest {
+  /** Unit designation, e.g. "3B", "101". */
+  designation: string;
+  entrance?: string;
+  /** Floor number: 0 = ground, negative = basement (defaults to 0). */
+  floor?: number;
+  /** Defaults to "apartment" server-side. */
+  unit_type?: UnitType;
+  /** Decimal as a string (e.g. "72.50"). */
+  size_sqm?: string;
+  rooms?: number;
+  /** Ownership share 0–100 as a decimal string (defaults to "100.00"). */
+  ownership_share?: string;
+  description?: string;
+}
+
+/** Update unit request body (`UpdateUnitRequest`). All fields optional/partial. */
+export interface UpdateUnitRequest {
+  entrance?: string;
+  designation?: string;
+  floor?: number;
+  unit_type?: UnitType;
+  /** Decimal as a string (e.g. "72.50"). */
+  size_sqm?: string;
+  rooms?: number;
+  /** Ownership share 0–100 as a decimal string. */
+  ownership_share?: string;
+  occupancy_status?: UnitOccupancyStatus;
+  description?: string;
+  notes?: string;
+}

@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
+import { getApiBase } from '../../lib/env';
 
 interface ComparisonUrlHandlerProps {
   sharedIds: string[];
@@ -35,9 +36,13 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
       try {
         // Fetch each listing by ID
         const fetchPromises = sharedIds.slice(0, 4).map(async (id) => {
-          const response = await fetch(`/api/listings/${id}`);
+          // Hit reality-server's canonical listing endpoint via getApiBase()
+          // (the same pattern every other reality-web client fetcher uses).
+          // The previous bare `/api/listings/${id}` targeted a Next.js API
+          // route that does not exist, so every shared comparison URL 404'd.
+          const response = await fetch(`${getApiBase()}/api/v1/listings/${id}`);
           if (!response.ok) {
-            throw new Error(`Failed to load listing ${id}`);
+            throw new Error(`Failed to load listing ${id} (HTTP ${response.status})`);
           }
           return response.json() as Promise<ListingSummary>;
         });

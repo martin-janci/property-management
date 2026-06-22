@@ -9,6 +9,7 @@ pub mod email;
 pub mod feature_service;
 pub mod jwt;
 pub mod notification;
+pub mod notification_digest;
 pub mod notification_pipeline;
 pub mod oauth;
 pub mod push_fanout;
@@ -30,13 +31,17 @@ pub use feature_service::FeatureService;
 pub use jwt::JwtService;
 #[allow(unused_imports)]
 pub use notification::{NotificationService, NotificationServiceConfig};
+pub use notification_digest::{NotificationDigestConfig, NotificationDigestWorker};
 #[allow(unused_imports)]
 pub use notification_pipeline::{
     NotificationPipeline, PipelineConfig, PreferenceRouter, SmtpEmailAdapter,
 };
 pub use oauth::{OAuthService, OAuthServiceError};
 #[allow(unused_imports)]
-pub use push_fanout::{FcmConfig, FcmHttpAdapter, PushFanoutConfig, PushFanoutWorker};
+pub use push_fanout::{
+    ApnsConfig, ApnsHttpAdapter, CombinedPushAdapter, FcmConfig, FcmHttpAdapter, PushFanoutConfig,
+    PushFanoutWorker,
+};
 #[allow(unused_imports)]
 pub use quiet_hours_drain::{QuietHoursDrainConfig, QuietHoursDrainWorker};
 pub use scheduler::{Scheduler, SchedulerConfig};

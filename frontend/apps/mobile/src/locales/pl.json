@@ -122,7 +122,20 @@
     "selectCategory": "Prosze wybrac kategorie",
     "locationDetected": "Lokalizacja wykryta",
     "failedToPickImage": "Nie udalo sie wybrac obrazu",
-    "failedToDetectLocation": "Nie udalo sie wykryc lokalizacji"
+    "failedToDetectLocation": "Nie udalo sie wykryc lokalizacji",
+    "buildingLabel": "Budynek",
+    "selectBuilding": "Wybierz budynek",
+    "loadingBuildings": "Ładowanie budynków…",
+    "noBuildings": "Brak dostępnych budynków",
+    "buildingsLoadError": "Nie udało się wczytać Twoich budynków",
+    "photosCompressedTitle": "Zdjęcia skompresowane",
+    "photosCompressedWarning": "Wybrane zdjęcia przekroczyły 10 MB ({{original}} MB) i zostały skompresowane do {{final}} MB, aby szybciej się przesłały. Jakość obrazu może być niższa.",
+    "compressingPhotos": "Optymalizowanie zdjęć…",
+    "queuedTitle": "Zapisano offline",
+    "queuedMessage": "Jesteś offline. Zgłoszenie zostało zapisane i zsynchronizuje się automatycznie po ponownym połączeniu.",
+    "queuedOnErrorMessage": "Nie udało się połączyć z serwerem. Zgłoszenie zostało zapisane i zsynchronizuje się automatycznie po przywróceniu połączenia.",
+    "offlineSubmitHint": "Jesteś offline — to zgłoszenie zostanie zapisane i zsynchronizowane po ponownym połączeniu.",
+    "submitButtonOffline": "Zapisz i zsynchronizuj później"
   },
   "news": {
     "title": "Aktualnosci",
@@ -179,7 +192,7 @@
     },
     "folder": {
       "newTitle": "Nowy folder",
-      "insideFolder": "W folderze „{{name}}”",
+      "insideFolder": "W folderze „{{name}}“",
       "atRoot": "Na poziomie glownym",
       "nameLabel": "Nazwa folderu",
       "namePlaceholder": "np. Umowy 2024",
@@ -188,7 +201,10 @@
       "nameRequired": "Nazwa folderu jest wymagana",
       "nameTooLong": "Nazwa folderu musi miec co najwyzej 255 znakow",
       "createButton": "Utworz folder",
-      "createError": "Nie udalo sie utworzyc folderu"
+      "createError": "Nie udalo sie utworzyc folderu",
+      "renameTitle": "Zmien nazwe folderu",
+      "renameButton": "Zapisz nazwe",
+      "renameError": "Nie udalo sie zmienic nazwy folderu"
     },
     "move": {
       "title": "Przenies dokument",
@@ -212,6 +228,14 @@
       "openFailed": "Nie udalo sie otworzyc dokumentu.",
       "sharingUnavailableTitle": "Udostepnianie niedostepne",
       "shareFailed": "Nie udalo sie udostepnic dokumentu."
+    },
+    "folderMove": {
+      "title": "Przenes folder",
+      "destination": "CEL",
+      "rootLabel": "Katalog glowny",
+      "noFolders": "Brak innych folderow",
+      "confirm": "Przenes tutaj",
+      "errorTitle": "Nie udalo sie przeniesc folderu"
     }
   },
   "settings": {

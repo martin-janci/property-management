@@ -820,6 +820,50 @@ pub async fn handle_webhook(
         signature_request.clone()
     };
 
+    // Handle voided event (Coverage 84-2): a "voided" provider event means the
+    // envelope was voided by the sender before completion. Map it to
+    // `Cancelled` so the request enters a terminal state and subsequent
+    // duplicate "voided" webhooks hit the idempotency guard above.
+    //
+    // We use the existing `cancel()` repository method; its
+    // `WHERE status IN ('pending','in_progress')` guard makes this naturally
+    // idempotent at the DB level — if somehow the request slipped into another
+    // terminal state between the guard above and this call, `cancel()` returns
+    // RowNotFound, which we treat as a harmless no-op (the request is already
+    // finalized).
+    if event.event_type == "voided" {
+        match state
+            .signature_request_repo
+            .cancel(signature_request.id, Some("Voided by e-signature provider"))
+            .await
+        {
+            Ok(_) => {
+                info!(
+                    provider = %provider,
+                    provider_request_id = %event.provider_request_id,
+                    signature_request_id = %signature_request.id,
+                    "Marked signature request as cancelled due to provider void event"
+                );
+            }
+            Err(e) => {
+                // RowNotFound means the request is already terminal (race with
+                // another path) — safe to ignore; any other error is logged but
+                // we still acknowledge the webhook so the provider stops retrying.
+                warn!(
+                    provider = %provider,
+                    provider_request_id = %event.provider_request_id,
+                    signature_request_id = %signature_request.id,
+                    error = %e,
+                    "Failed to cancel signature request on voided webhook (may already be terminal)"
+                );
+            }
+        }
+        return Ok(Json(WebhookResponse {
+            success: true,
+            message: "Signature request voided".into(),
+        }));
+    }
+
     // Handle completion event: store signed document and notify requester (Stories 84.2, 88.2).
     if event.event_type == "completed" {
         if let Some(signed_url) = &event.signed_document_url {

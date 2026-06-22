@@ -316,6 +316,42 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     );
 }
 
+/// #1585: the manager gate must read the caller's role for the PATH org, not
+/// trust the JWT role / X-Tenant-ID. A user who is a manager in org A but only a
+/// plain member of org B must NOT be able to bind org B's Airbnb integration.
+/// Mirrors `token_exchange_rejects_manager_of_a_different_org` in the booking
+/// suite — the gate is shared (`verify_manager_role_in_org`), but this pins that
+/// the airbnb handler actually invokes it before exchanging.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_manager_of_a_different_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "te-mgr-desync-a").await;
+    let org_b = seed_org(&pool, "te-mgr-desync-b").await;
+    let user_id = seed_user(&pool, "te-mgr-desync@test.local").await;
+    seed_membership(&pool, org_a, user_id, "manager").await; // manager in A
+    seed_membership(&pool, org_b, user_id, "tenant").await; //  plain member in B
+
+    // JWT carries role=manager + tenant_id = A (X-Tenant-ID = A), but the path
+    // org being mutated is B, where the caller is only a plain member.
+    let token = mint_token(user_id, org_a);
+    let uri = format!("/api/v1/integrations/organizations/{org_b}/airbnb/token/exchange");
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_a, // X-Tenant-ID = A (where the caller is a manager)
+            json!({"code": "valid-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "manager of org A must not bind org B's Airbnb integration as a plain member; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
 /// When Airbnb credentials are not configured (empty `AIRBNB_CLIENT_ID`), the
 /// endpoint must return 503 SERVICE_UNAVAILABLE rather than forwarding a bad
 /// request to Airbnb.  This test relies on the fact that no `AIRBNB_CLIENT_ID`
@@ -381,6 +417,31 @@ async fn listings_idor_guard_rejects_non_member(pool: PgPool) {
         resp.status,
         StatusCode::FORBIDDEN,
         "non-member listings request must be 403; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// Manager gate (#1626): a member whose org role is `resident` must be rejected
+/// with 403 even though they pass the membership IDOR check — live Airbnb
+/// listings are manager-level operational data. The role is read from
+/// `organization_members.role_type` for the PATH org, not the JWT (#1525/#1585):
+/// the resident is rejected despite `mint_token` minting a `manager` claim, and
+/// the 403 short-circuits before any Airbnb connection lookup or external call.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn listings_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "ls-resident").await;
+    let user_id = seed_user(&pool, "ls-resident@test.local").await;
+    seed_membership(&pool, org_id, user_id, "resident").await;
+
+    let token = mint_token(user_id, org_id);
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
+    let resp = app.execute(authed_get(&uri, &token)).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "resident member must be 403 (manager-level read); got {}: {}",
         resp.status,
         resp.text()
     );

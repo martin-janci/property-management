@@ -569,7 +569,7 @@ impl RentalRepository {
                 total_amount, currency, platform_fee, cleaning_fee,
                 guest_notes, internal_notes, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            VALUES ($1, $2, $3::rental_platform, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::rental_booking_status)
             RETURNING {}
             "#,
             Self::BOOKING_COLUMNS
@@ -664,21 +664,14 @@ impl RentalRepository {
         // `String`; a bare `SELECT *` fails to decode (42804, FORCE-RLS-masked,
         // PAP-158), so cast both enum columns to text. `platform = $1` keeps the
         // text param comparing against the enum via the column's implicit cast.
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT
-                id, organization_id, unit_id, connection_id,
-                platform::text AS platform, external_booking_id, external_booking_url,
-                guest_name, guest_email, guest_phone, guest_count,
-                check_in, check_out, check_in_time, check_out_time,
-                total_amount, currency, platform_fee, cleaning_fee,
-                status::text AS status, cancelled_at, cancellation_reason,
-                guest_notes, internal_notes, synced_at, raw_data,
-                created_at, updated_at
+            SELECT {}
             FROM rental_bookings
             WHERE platform = $1::rental_platform AND external_booking_id = $2
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(platform)
         .bind(external_id)
         .fetch_optional(&self.pool)
@@ -835,7 +828,7 @@ impl RentalRepository {
         // `text`, so the assignment fails with 42804 (FORCE-RLS-masked, see
         // PAP-158). `RETURNING *` likewise must cast the enum columns to text or
         // the row fails to decode into `RentalBooking`.
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 status = $2::rental_booking_status,
@@ -843,17 +836,10 @@ impl RentalRepository {
                 cancellation_reason = COALESCE($3, cancellation_reason),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $4
-            RETURNING
-                id, organization_id, unit_id, connection_id,
-                platform::text AS platform, external_booking_id, external_booking_url,
-                guest_name, guest_email, guest_phone, guest_count,
-                check_in, check_out, check_in_time, check_out_time,
-                total_amount, currency, platform_fee, cleaning_fee,
-                status::text AS status, cancelled_at, cancellation_reason,
-                guest_notes, internal_notes, synced_at, raw_data,
-                created_at, updated_at
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.status)
         .bind(&data.cancellation_reason)
@@ -2319,6 +2305,36 @@ impl RentalRepository {
         .await?;
 
         Ok(conn)
+    }
+
+    /// List all stored Airbnb connections (linked listings) for an organisation.
+    ///
+    /// Coverage 83-1: this is the DB-backed read of the org's *stored* Airbnb
+    /// connection rows, as opposed to the live-proxied `/airbnb/listings` route
+    /// which calls the Airbnb Partner API through the stored token. It returns
+    /// every `platform = 'airbnb'` row for the org (active or not) so the
+    /// management UI can render the linked-listing list without any external
+    /// network round-trip — including org-level (nil `unit_id`) connections that
+    /// the `units`-joined `get_connections_for_org` summary would drop.
+    ///
+    /// Scoped to `organization_id = $1`; rows are returned newest-first.
+    pub async fn list_airbnb_connections(
+        &self,
+        org_id: Uuid,
+    ) -> Result<Vec<RentalPlatformConnection>, SqlxError> {
+        let connections =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
+            WHERE organization_id = $1 AND platform = 'airbnb'
+            ORDER BY created_at DESC
+            "#
+            )))
+            .bind(org_id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(connections)
     }
 
     /// Record an inbound Airbnb webhook delivery in the dedup ledger.

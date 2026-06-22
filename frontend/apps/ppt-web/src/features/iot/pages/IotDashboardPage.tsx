@@ -24,6 +24,7 @@ export interface IotDashboardPageProps {
   readingsLoading: boolean;
   alerts: SensorAlert[];
   pendingAlertId: string | null;
+  isLive?: boolean;
   onSelectSensor: (id: string) => void;
   onAcknowledgeAlert: (alertId: string) => void;
   onResolveAlert: (alertId: string) => void;
@@ -40,6 +41,7 @@ export function IotDashboardPage({
   readingsLoading,
   alerts,
   pendingAlertId,
+  isLive = false,
   onSelectSensor,
   onAcknowledgeAlert,
   onResolveAlert,
@@ -48,15 +50,23 @@ export function IotDashboardPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          {t('iot.dashboardTitle', { defaultValue: 'Smart Building' })}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {t('iot.dashboardSubtitle', {
-            defaultValue: 'Sensors, telemetry and alerts across your buildings.',
-          })}
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {t('iot.dashboardTitle', { defaultValue: 'Smart Building' })}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {t('iot.dashboardSubtitle', {
+              defaultValue: 'Sensors, telemetry and alerts across your buildings.',
+            })}
+          </p>
+        </div>
+        {isLive && (
+          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+            {t('iot.live', { defaultValue: 'Live' })}
+          </span>
+        )}
       </header>
 
       {/* KPI rollup (FR75) */}

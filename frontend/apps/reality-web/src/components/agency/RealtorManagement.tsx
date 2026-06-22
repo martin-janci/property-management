@@ -566,7 +566,7 @@ export function InviteRealtorModal({
         aria-labelledby="invite-modal-title"
       >
         <div className="modal-header">
-          <h2 id="invite-modal-title">Invite Realtor</h2>
+          <h2 id="invite-modal-title">{t('inviteRealtor')}</h2>
           <button type="button" className="close-button" onClick={onClose} aria-label="Close">
             <svg
               width="24"
@@ -590,57 +590,57 @@ export function InviteRealtorModal({
           )}
 
           <div className="form-group">
-            <label htmlFor="invite-email">Email *</label>
+            <label htmlFor="invite-email">{t('formLabelEmail')}</label>
             <input
               id="invite-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="realtor@example.com"
+              placeholder={t('formPlaceholderEmail')}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="invite-name">Full Name *</label>
+            <label htmlFor="invite-name">{t('formLabelName')}</label>
             <input
               id="invite-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder={t('formPlaceholderName')}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="invite-title">Job Title</label>
+            <label htmlFor="invite-title">{t('formLabelTitle')}</label>
             <input
               id="invite-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Senior Real Estate Agent"
+              placeholder={t('formPlaceholderTitle')}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="invite-message">Personal Message</label>
+            <label htmlFor="invite-message">{t('formLabelMessage')}</label>
             <textarea
               id="invite-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Add a personal message to the invitation..."
+              placeholder={t('formPlaceholderMessage')}
               rows={3}
             />
           </div>
 
           <div className="form-actions">
             <button type="button" className="cancel-button" onClick={onClose}>
-              Cancel
+              {t('buttonCancel')}
             </button>
             <button type="submit" className="submit-button" disabled={inviteRealtor.isPending}>
-              {inviteRealtor.isPending ? 'Sending...' : 'Send Invitation'}
+              {inviteRealtor.isPending ? t('buttonSending') : t('buttonSendInvitation')}
             </button>
           </div>
         </form>

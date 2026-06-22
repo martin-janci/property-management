@@ -91,8 +91,14 @@ export interface ListingDraft {
 
 export interface ListingResponse extends ListingDraft {
   id: string;
-  slug: string;
+  slug?: string | null;
   status: string;
+  isNegotiable?: boolean;
+  isPublished?: boolean;
+  postalCode?: string;
+  country?: string;
+  floor?: number;
+  totalFloors?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -108,8 +114,13 @@ export function getListing(id: string): Promise<ListingResponse> {
   return request<ListingResponse>(`/api/v1/listings/${id}`);
 }
 
+/** Get an owned listing for editing (includes drafts). Requires auth. */
+export function getMyListing(id: string): Promise<ListingResponse> {
+  return request<ListingResponse>(`/api/v1/my/listings/${id}`);
+}
+
 export function updateListing(id: string, data: Partial<ListingDraft>): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/listings/${id}`, {
+  return request<ListingResponse>(`/api/v1/my/listings/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });

@@ -53,6 +53,7 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use sqlx::PgPool;
@@ -568,6 +569,51 @@ async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
     assert_eq!(
         first_viewed, second_viewed,
         "repeat view must preserve the original viewed_at, not overwrite it",
+    );
+}
+
+/// #1593: deterministic guard for the COALESCE half of the #1301 fix. The
+/// sibling test above proves the two views return the *same* timestamp, but only
+/// because two sequential `NOW()` transactions happen to differ — a regression to
+/// plain `NOW()` could in principle pass it if both shared a microsecond. Seed a
+/// known, deliberately-old `viewed_at` and assert a view preserves it exactly:
+/// `COALESCE(viewed_at, NOW())` keeps the old value; a plain `NOW()` would
+/// replace it with a fresh (much later) timestamp — caught regardless of timing.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_preserves_seeded_timestamp(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-seed-ts-org").await;
+    let user = seed_user(&pool, "inv-seed-ts@provider-idor.test").await;
+    let provider = seed_provider(&pool, user, "inv-seed-ts").await;
+    let rfq = seed_rfq(&pool, org, user).await;
+    let invitation = seed_invitation(&pool, rfq, provider).await;
+
+    // Pin a known-old viewed_at; capture the exact stored value to compare back.
+    let seeded: DateTime<Utc> = sqlx::query_scalar(
+        "UPDATE rfq_invitations SET viewed_at = NOW() - INTERVAL '1 hour' \
+         WHERE id = $1 RETURNING viewed_at",
+    )
+    .bind(invitation)
+    .fetch_one(&pool)
+    .await
+    .expect("seed an old viewed_at");
+
+    let token = mint_token(user, "inv-seed-ts@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+    let resp = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "view of an already-viewed invitation must be idempotent (200): {}",
+        resp.text()
+    );
+
+    // COALESCE keeps the seeded timestamp; a regression to plain NOW() would
+    // replace it with a fresh value ~1h later. Compare exactly.
+    assert_eq!(
+        resp.json_value()["viewed_at"],
+        serde_json::json!(seeded),
+        "viewed_at must be the preserved seeded value, not a fresh NOW()"
     );
 }
 

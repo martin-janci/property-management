@@ -37,6 +37,7 @@ use uuid::Uuid;
 
 pub mod equipment;
 pub mod llm;
+pub mod ocr;
 pub mod sessions;
 pub mod voice;
 pub mod workflows;
@@ -45,6 +46,7 @@ pub mod workflows;
 // (`routes::ai::ai_chat_router()` etc. in `lib.rs`) keep working unchanged.
 pub use equipment::equipment_router;
 pub use llm::llm_router;
+pub use ocr::ocr_router;
 pub use sessions::{ai_chat_router, sentiment_router};
 pub use workflows::workflow_router;
 

@@ -12,6 +12,7 @@ import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { ListingDetailContent, ListingNotFound } from '@/components/listings';
+import { buildListingJsonLd } from './jsonLd';
 import { buildListingMetadata } from './metadata';
 
 function inferApiBaseFromHost(host: string): string | null {
@@ -96,35 +97,11 @@ export default async function ListingDetailPage({ params }: PageProps) {
     return <ListingNotFound />;
   }
 
-  // JSON-LD structured data
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'RealEstateListing',
-    name: listing.title,
-    description: listing.description,
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/listings/${listing.slug}`,
-    image: listing.photos.map((p) => p.url),
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: listing.address.street,
-      addressLocality: listing.address.city,
-      addressRegion: listing.address.district,
-      postalCode: listing.address.postalCode,
-      addressCountry: listing.address.country,
-    },
-    offers: {
-      '@type': 'Offer',
-      price: listing.price,
-      priceCurrency: listing.currency,
-      availability: listing.status === 'active' ? 'InStock' : 'OutOfStock',
-    },
-    numberOfRooms: listing.rooms,
-    floorSize: {
-      '@type': 'QuantitativeValue',
-      value: listing.area,
-      unitCode: 'MTK',
-    },
-  };
+  // JSON-LD structured data, built defensively: a partial/malformed 200 body
+  // is truthy but may be missing nested fields (address/photos), which would
+  // crash SSR if dereferenced directly. buildListingJsonLd returns null in
+  // that case and ListingDetailContent skips the <script> tag.
+  const jsonLd = buildListingJsonLd(listing) ?? undefined;
 
   return <ListingDetailContent listing={listing} jsonLd={jsonLd} />;
 }

@@ -236,7 +236,11 @@ impl DocumentRepository {
             SET
                 name = COALESCE($2, name),
                 description = COALESCE($3, description),
-                parent_id = COALESCE($4, parent_id),
+                -- parent_id is tri-state (#1589): $4 = "the field was provided",
+                -- $5 = the new value (NULL detaches to root). A plain
+                -- COALESCE($5, parent_id) could never set NULL, so a move to
+                -- root was silently ignored.
+                parent_id = CASE WHEN $4 THEN $5 ELSE parent_id END,
                 updated_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
@@ -245,7 +249,8 @@ impl DocumentRepository {
         .bind(id)
         .bind(&data.name)
         .bind(&data.description)
-        .bind(data.parent_id)
+        .bind(data.parent_id.is_some())
+        .bind(data.parent_id.flatten())
         .fetch_one(executor)
         .await
     }

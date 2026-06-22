@@ -21,6 +21,7 @@
     "submit:android": "eas submit --platform android --profile production",
     "build:ios:staging": "eas build --platform ios --profile staging",
     "build:ios:production": "eas build --platform ios --profile production",
+    "build:mobile": "./scripts/build-mobile.sh",
     "submit:ios": "eas submit --platform ios --profile production"
   },
   "dependencies": {
@@ -35,21 +36,22 @@
     "expo-device": "~56.0.4",
     "expo-document-picker": "~13.1.6",
     "expo-file-system": "~55.0.19",
+    "expo-image-manipulator": "~56.0.19",
     "expo-image-picker": "~56.0.18",
     "expo-local-authentication": "~55.0.13",
     "expo-localization": "^56.0.6",
     "expo-location": "~56.0.18",
     "expo-notifications": "~55.0.22",
-    "expo-secure-store": "~55.0.14",
+    "expo-secure-store": "~56.0.4",
     "expo-sharing": "~55.0.20",
     "expo-status-bar": "~56.0.4",
-    "i18next": "^25.7.3",
+    "i18next": "^26.3.1",
     "react": "^19.2.7",
     "react-i18next": "^17.0.8",
     "react-native": "0.86.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
+    "@babel/core": "^8.0.1",
     "@babel/plugin-transform-flow-strip-types": "^7.29.7",
     "@expo/config-plugins": "~55.0.10",
     "@expo/metro-config": "~55.0.22",

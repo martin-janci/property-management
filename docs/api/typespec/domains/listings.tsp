@@ -137,8 +137,8 @@ model PortalConfig {
 @tag("Real Estate Listings")
 interface ListingsApi {
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query type?: ListingType,
     @query status?: ListingStatus,
@@ -147,8 +147,8 @@ interface ListingsApi {
   ): PaginatedResponse<Listing>;
 
   @post create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       unitId: uuid;
       type: ListingType;
@@ -161,73 +161,73 @@ interface ListingsApi {
   ): { @statusCode statusCode: 201; @body body: Listing; };
 
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Listing | NotFoundError;
 
   @patch @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { title?: string; description?: string; price?: Money; features?: ListingFeatures; }
   ): Listing;
 
   @post @route("/{id}/publish") publish(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Listing;
 
   @post @route("/{id}/unpublish") unpublish(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Listing;
 
   @post @route("/{id}/photos") uploadPhoto(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { fileContent: string; fileName: string; mimeType: string; }
   ): { @statusCode statusCode: 201; @body body: Attachment; };
 
   @post @route("/{id}/publish-to-portal") publishToPortal(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { portalId: uuid; }
   ): PortalListing;
 
   @get @route("/{id}/inquiries") listInquiries(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     ...PaginationQuery
   ): PaginatedResponse<Inquiry>;
 
   @post @route("/{id}/inquiries") createInquiry(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { name: string; email: email; phone?: phoneNumber; message: string; source?: InquirySource; }
   ): { @statusCode statusCode: 201; @body body: Inquiry; };
 
   @patch @route("/inquiries/{id}") updateInquiry(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { status?: InquiryStatus; scheduledViewingAt?: dateTime; notes?: string; }
   ): Inquiry;
 
   @get @route("/portals") listPortals(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid
   ): PortalConfig[];
 
   @post @route("/portals") configurePortal(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: { portalName: string; apiEndpoint: url; apiKey: string; autoPublish?: boolean; }
   ): { @statusCode statusCode: 201; @body body: PortalConfig; };
 }
