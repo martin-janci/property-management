@@ -208,6 +208,9 @@ export const CreateFaultPage = lazy(() =>
 export const EditFaultPage = lazy(() =>
   import('../features/faults').then((m) => ({ default: m.EditFaultPage }))
 );
+export const FaultReportsPage = lazy(() =>
+  import('../features/faults').then((m) => ({ default: m.FaultReportsPage }))
+);
 
 // Community feature (Epic 42)
 export const FeedPage = lazy(() =>
