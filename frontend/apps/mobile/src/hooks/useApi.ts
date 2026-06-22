@@ -58,8 +58,18 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-/** Pull the tenant id from the current access token, or null if missing. */
-async function getTenantId(): Promise<string | null> {
+/**
+ * Pull the tenant id from the current access token, or null if missing.
+ *
+ * Exported because several tenant-scoped api-server list routes
+ * (`GET /api/v1/buildings`, `GET /api/v1/leases`, …) require the
+ * organization id as an explicit `organization_id` query param *in addition*
+ * to the `X-Tenant-ID` header — and the server rejects the request unless
+ * the two match the authenticated tenant. The org id is the same value as
+ * the JWT `tenant_id` claim, so screens read it via `useTenantId()` and feed
+ * it into the query path. See the `list_buildings` / `list_leases` handlers.
+ */
+export async function getTenantId(): Promise<string | null> {
   const token = await getAccessToken();
   if (!token) return null;
   const claims = decodeJwtPayload(token);
@@ -134,6 +144,22 @@ export function useApiQuery<T>(
     queryKey,
     queryFn: ({ signal }) => apiRequest<T>(path, { method: 'GET' }, { signal }),
     ...options,
+  });
+}
+
+/**
+ * Resolve the current tenant (organization) id from the stored JWT.
+ *
+ * Returns the standard TanStack Query surface so screens can gate an
+ * org-scoped list query on the id being available (`enabled: !!tenantId`).
+ * Cached indefinitely — the id only changes on login/logout, both of which
+ * replace the token and remount the authenticated tree.
+ */
+export function useTenantId() {
+  return useQuery<string | null, Error>({
+    queryKey: ['auth', 'tenant-id'],
+    queryFn: () => getTenantId(),
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
