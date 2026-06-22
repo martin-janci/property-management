@@ -33,9 +33,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use db::{
-    models::{CreateHeldNotification, HeldNotification, Locale, User},
+    models::{CreateHeldNotification, HeldNotification, Locale, NewNotificationEvent, User},
     repositories::{
-        GranularNotificationRepository, NotificationPreferenceRepository, UserRepository,
+        GranularNotificationRepository, NotificationEventRepository,
+        NotificationPreferenceRepository, UserRepository,
     },
     DbPool,
 };
@@ -342,6 +343,25 @@ impl Default for PipelineConfig {
 ///
 /// Wires together preference routing (2b-2), transport adapters (2b-4), and
 /// delivery tracking (2b-3) into a single `dispatch` entry point (2b-5).
+/// Map the pipeline's in-memory `DeliveryRecord`s into persistable analytics
+/// events (Story 2B-C.3 / #969-4). The `DeliveryStatus` display form
+/// (`sent`/`failed`/`skipped`/`pending`) is exactly the `event` value the
+/// `notification_events` table accepts. `occurred_at` prefers the confirmed
+/// `delivered_at` and falls back to the attempt time.
+fn records_to_events(records: &[DeliveryRecord]) -> Vec<NewNotificationEvent> {
+    records
+        .iter()
+        .map(|r| NewNotificationEvent {
+            notification_id: r.notification_id,
+            user_id: r.user_id,
+            channel: r.channel.as_str().to_string(),
+            event: r.status.to_string(),
+            error_message: r.error_message.clone(),
+            occurred_at: r.delivered_at.unwrap_or(r.attempted_at),
+        })
+        .collect()
+}
+
 #[derive(Clone)]
 pub struct NotificationPipeline {
     config: PipelineConfig,
@@ -352,6 +372,9 @@ pub struct NotificationPipeline {
     in_app_adapter: Arc<dyn InAppTransport>,
     /// Story 8B.3 / #980: read quiet-hours schedules and persist held pushes.
     granular_repo: GranularNotificationRepository,
+    /// Story 2B-C.3 / #969-4: append delivery records for analytics,
+    /// asynchronously off the dispatch path.
+    events_repo: NotificationEventRepository,
 }
 
 impl NotificationPipeline {
@@ -365,6 +388,7 @@ impl NotificationPipeline {
         let user_repo = UserRepository::new(pool.clone());
         let notification_pref_repo = NotificationPreferenceRepository::new(pool.clone());
         let granular_repo = GranularNotificationRepository::new(pool.clone());
+        let events_repo = NotificationEventRepository::new(pool.clone());
 
         let preference_router =
             PreferenceRouter::new(notification_pref_repo, granular_repo.clone());
@@ -387,6 +411,7 @@ impl NotificationPipeline {
             push_adapter,
             in_app_adapter,
             granular_repo,
+            events_repo,
         }
     }
 
@@ -575,6 +600,24 @@ impl NotificationPipeline {
             failed = result.failed,
             "[Epic 2B] Notification dispatch complete"
         );
+
+        // Story 2B-C.3 (#969-4): persist delivery records for analytics. This is
+        // strictly off the dispatch path — we spawn a detached task so a slow or
+        // failing write can never delay or fail delivery, and we log (never
+        // propagate) any error. Records are cloned out before the result is
+        // returned to the caller so nothing is dropped on the success path.
+        let events = records_to_events(&result.records);
+        if !events.is_empty() {
+            let repo = self.events_repo.clone();
+            tokio::spawn(async move {
+                if let Err(e) = repo.insert_events(&events).await {
+                    tracing::warn!(
+                        error = %e,
+                        "[Epic 2B] Failed to persist notification delivery events"
+                    );
+                }
+            });
+        }
 
         Ok(result)
     }

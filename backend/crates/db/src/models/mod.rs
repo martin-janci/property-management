@@ -211,6 +211,8 @@ pub use notification_preference::{
     NotificationPreferenceResponse, NotificationPreferencesResponse,
     UpdateNotificationPreferenceRequest,
 };
+pub mod notification_event;
+pub use notification_event::{ChannelEventCounts, NewNotificationEvent, NotificationEvent};
 pub use oauth::{
     AuthorizeRequest, ConsentPageData, CreateAccessToken, CreateAuthorizationCode,
     CreateOAuthClient, CreateRefreshToken as CreateOAuthRefreshToken, CreateUserOAuthGrant,
