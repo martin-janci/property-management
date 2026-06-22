@@ -21,6 +21,7 @@ pub mod fault;
 pub mod feature_flag;
 pub mod financial;
 pub mod granular_notification;
+pub mod granular_notification_test;
 pub mod health_monitoring;
 pub mod help;
 pub mod membership;
@@ -99,7 +100,9 @@ pub use feature_flag::{
     FeatureFlagRepository, FeatureFlagWithCount, FeatureFlagWithOverrides, ResolvedFeatureFlag,
 };
 pub use financial::FinancialRepository;
-pub use granular_notification::GranularNotificationRepository;
+pub use granular_notification::{
+    GranularNotificationRepository, InactiveDigestCandidate, PendingDigestEmail,
+};
 pub use health_monitoring::{
     CurrentMetric, HealthDashboard, HealthMonitoringRepository, MetricDataPoint, MetricHistory,
     MetricStats, MetricStatus,
