@@ -37,6 +37,7 @@ import { Route, useNavigate, useParams } from 'react-router-dom';
 import { AuthRequiredGate, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
+import { useIotWebSocket } from '../../features/iot';
 import {
   IotAlertsPage,
   IotDashboardPage,
@@ -65,6 +66,8 @@ function orNull(value: string): string | null {
 /**
  * Route wrapper for the IoT dashboard (Epic 14 / FR71-75).
  * Manages sensor selection and wires the IoT API hooks.
+ * Real-time readings from the BIT-145 WS channel are merged with the
+ * REST-polled snapshot so the telemetry chart updates as readings arrive.
  */
 function IotDashboardPageRoute() {
   const { user } = useAuth();
@@ -77,6 +80,8 @@ function IotDashboardPageRoute() {
     { limit: 50 }
   );
 
+  const { liveReadings, isConnected } = useIotWebSocket(selectedSensorId);
+
   const acknowledgeAlert = useAcknowledgeSensorAlert();
   const resolveAlert = useResolveSensorAlert();
 
@@ -85,6 +90,14 @@ function IotDashboardPageRoute() {
     () => sensors.find((s) => s.id === selectedSensorId) ?? null,
     [sensors, selectedSensorId]
   );
+
+  const mergedReadings = useMemo(() => {
+    const polled = readingsData?.readings ?? [];
+    if (liveReadings.length === 0) return polled;
+    const seen = new Set(polled.map((r) => r.id));
+    const fresh = liveReadings.filter((r) => !seen.has(r.id));
+    return [...fresh, ...polled].slice(0, 100);
+  }, [liveReadings, readingsData]);
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -104,10 +117,11 @@ function IotDashboardPageRoute() {
       sensorsLoading={sensorsLoading}
       selectedSensorId={selectedSensorId}
       selectedSensor={selectedSensor}
-      readings={readingsData?.readings ?? []}
+      readings={mergedReadings}
       readingsLoading={readingsLoading && !!selectedSensorId}
       alerts={dashboard?.recent_alerts ?? []}
       pendingAlertId={pendingAlertId}
+      isLive={isConnected}
       onSelectSensor={setSelectedSensorId}
       onAcknowledgeAlert={(alertId) => acknowledgeAlert.mutate(alertId)}
       onResolveAlert={(alertId) => resolveAlert.mutate({ alertId })}
