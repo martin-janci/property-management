@@ -1,0 +1,164 @@
+{
+  "date": "2026-06-22",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-22",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Last run 2026-06-16T03:25Z; this run 2026-06-22T~03:25Z → ~6d 4h lag. Above 36h threshold AND above 3d stale_routine_alert threshold.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+      "type": "churn-hotspot",
+      "source": "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+      "score_delta": 1,
+      "evidence": "5 commits since 2026-06-16T03:25Z touched this file (IoT route splits + payment-matching relocation; excludes lockfiles).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-iot-tsx",
+      "type": "churn-hotspot",
+      "source": "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+      "score_delta": 1,
+      "evidence": "4 commits since 2026-06-16T03:25Z touched this file (IoT epic 14.3/FR71/FR74/BIT-147/BIT-148).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-22",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-06-16T03:25Z is 6d old; cloud routine likely paused or its trigger broke. Dispatcher state on planning branch (.research/management/assignments.json) appears to be ticking separately based on dispatcher commits #1543+.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs && head -1 == # 2026-06-22",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advances vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-counted non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap≤8 + decay on aged-open items",
+      "observed": "0 cap viol, 0 decay viol",
+      "expected": "0/0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial annotation",
+      "observed": "0 new plans → vacuously true",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each meets all 15 sections",
+      "observed": "0 new plans",
+      "expected": "0–2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan on staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists phases-that-failed honestly",
+      "observed": "Phase 1.5+1.6 explicitly skipped (not failed)",
+      "expected": "honest"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "7 ≥ 7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix ≤1/1/1; idempotent",
+      "observed": "0 actions",
+      "expected": "≤"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar this run"
+}

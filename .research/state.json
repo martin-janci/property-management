@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-22T03:25:00Z",
+  "last_run_ms": 8000,
+  "last_pr_seen": 1682,
+  "last_issue_seen": 1680,
+  "last_commit_sha": "182738ea",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -263,14 +263,14 @@
       "recent_churn": 133
     },
     "backend/crates/db/src/repositories/reality_portal.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 87
+      "runs_seen": 2,
+      "last_seen": "2026-06-22",
+      "recent_churn": 3
     },
     "backend/servers/api-server/src/routes/iot.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 681
+      "runs_seen": 2,
+      "last_seen": "2026-06-22",
+      "recent_churn": 3
     },
     "backend/servers/api-server/src/routes/reserve_funds.rs": {
       "runs_seen": 1,
@@ -321,6 +321,16 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-22",
+      "recent_churn": 5
+    },
+    "frontend/apps/ppt-web/src/routes/groups/iot.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-22",
+      "recent_churn": 4
     }
   },
   "seen_signals": [
@@ -553,7 +563,11 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-22",
+    "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+    "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-iot-tsx",
+    "stale-routine-alert-2026-06-22"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +581,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 175,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
