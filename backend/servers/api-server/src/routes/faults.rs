@@ -4,8 +4,11 @@ use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
 use axum::{
+    body::Body,
     extract::{Path, Query, State},
     http::StatusCode,
+    middleware::Next,
+    response::Response,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -295,7 +298,7 @@ pub struct StatisticsQuery {
 pub fn router() -> Router<AppState> {
     Router::new()
         // CRUD
-        .route("/", post(create_fault))
+        .route("/", post(create_fault).route_layer(axum::middleware::from_fn(create_fault_idempotency)))
         .route("/", get(list_faults))
         .route("/my", get(list_my_faults))
         .route("/{id}", get(get_fault))
@@ -322,6 +325,14 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/suggest", post(get_ai_suggestion))
         // Statistics
         .route("/statistics", get(get_statistics))
+}
+
+async fn create_fault_idempotency(
+    State(state): State<AppState>,
+    request: axum::http::Request<Body>,
+    next: Next,
+) -> Response {
+    api_core::middleware::handle_idempotent_request(state.db.clone(), request, next).await
 }
 
 // ============================================================================
