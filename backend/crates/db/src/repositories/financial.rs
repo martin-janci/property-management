@@ -1511,19 +1511,20 @@ mod tests {
         let days_before = 7i64;
         let cutoff = today + Duration::days(days_before);
 
+        // The reminder window predicate: due strictly after today, on or before cutoff.
+        let in_reminder_window = |due| due > today && due <= cutoff;
+
         // Due tomorrow — inside window.
-        let due_tomorrow = today + Duration::days(1);
-        assert!(due_tomorrow > today && due_tomorrow <= cutoff);
+        assert!(in_reminder_window(today + Duration::days(1)));
 
         // Due exactly at cutoff — inside window.
-        assert!(cutoff > today && cutoff <= cutoff);
+        assert!(in_reminder_window(cutoff));
 
         // Due today — excluded (already due, not upcoming).
-        assert!(!(today > today));
+        assert!(!in_reminder_window(today));
 
         // Due 8 days out — outside window.
-        let due_outside = today + Duration::days(8);
-        assert!(!(due_outside > today && due_outside <= cutoff));
+        assert!(!in_reminder_window(today + Duration::days(8)));
     }
 
     /// Verify the overdue grace-period predicate: invoices with due_date
@@ -1532,21 +1533,21 @@ mod tests {
     fn test_overdue_grace_period_predicate() {
         let today = Utc::now().date_naive();
 
+        // The overdue predicate: due strictly before the grace cutoff transitions.
+        let is_overdue = |due, grace_cutoff| due < grace_cutoff;
+
         // Grace period = 0: any invoice past due (due_date < today) transitions.
         let grace_cutoff_0 = today - Duration::days(0);
-        let due_yesterday = today - Duration::days(1);
-        assert!(due_yesterday < grace_cutoff_0);
+        assert!(is_overdue(today - Duration::days(1), grace_cutoff_0));
 
         // Due today is NOT included (strict less-than).
-        assert!(!(today < grace_cutoff_0));
+        assert!(!is_overdue(today, grace_cutoff_0));
 
         // Grace period = 3: invoice overdue by 2 days stays pending.
         let grace_cutoff_3 = today - Duration::days(3);
-        let due_2_days_ago = today - Duration::days(2);
-        assert!(!(due_2_days_ago < grace_cutoff_3));
+        assert!(!is_overdue(today - Duration::days(2), grace_cutoff_3));
 
         // Invoice overdue by 4 days transitions.
-        let due_4_days_ago = today - Duration::days(4);
-        assert!(due_4_days_ago < grace_cutoff_3);
+        assert!(is_overdue(today - Duration::days(4), grace_cutoff_3));
     }
 }
