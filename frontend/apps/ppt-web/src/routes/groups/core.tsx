@@ -94,6 +94,7 @@ export function Home() {
           { to: '/documents', titleKey: 'nav.documents' },
           { to: '/news', titleKey: 'nav.news' },
           { to: '/disputes', titleKey: 'nav.disputes' },
+          { to: '/leases', titleKey: 'nav.leases' },
           { to: '/outages', titleKey: 'nav.outages' },
           { to: '/emergency', titleKey: 'nav.emergency' },
           { to: '/settings/accessibility', titleKey: 'nav.accessibility' },
