@@ -77,29 +77,48 @@ function onlyBaseAssetsPresent() {
   mockIconExistsPredicate = (s: string) => !(s.includes('-dev') || s.includes('-staging'));
 }
 
+/** Both icon slots (top-level launcher + Android adaptive foreground). */
+function iconSlots(cfg: ExpoConfig): { launcher?: string; adaptive?: string } {
+  return { launcher: cfg.icon, adaptive: cfg.android?.adaptiveIcon?.foregroundImage };
+}
+
+/**
+ * Assert the launcher icon and Android adaptive foreground each reference the
+ * expected badged basenames.
+ */
+function expectBadgedIcons(cfg: ExpoConfig, launcherBasename: string, adaptiveBasename: string) {
+  const { launcher, adaptive } = iconSlots(cfg);
+  expect(launcher).toContain(launcherBasename);
+  expect(adaptive).toContain(adaptiveBasename);
+}
+
+/**
+ * Assert both icon slots resolve to the un-badged production assets and carry
+ * none of the given badge suffixes (e.g. `-dev`, `-staging`).
+ */
+function expectUnbadgedIcons(cfg: ExpoConfig, ...absentSuffixes: string[]) {
+  const { launcher, adaptive } = iconSlots(cfg);
+  expect(launcher).toContain('icon.png');
+  expect(adaptive).toContain('adaptive-icon.png');
+  for (const suffix of absentSuffixes) {
+    expect(launcher).not.toContain(suffix);
+    expect(adaptive).not.toContain(suffix);
+  }
+}
+
 describe('per-environment launcher icon (badged variant present)', () => {
   beforeEach(allAssetsPresent);
 
   it('uses the DEV-badged icon for development', () => {
-    const cfg = loadConfig('development');
-    expect(cfg.icon).toContain('icon-dev.png');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).toContain('adaptive-icon-dev.png');
+    expectBadgedIcons(loadConfig('development'), 'icon-dev.png', 'adaptive-icon-dev.png');
   });
 
   it('uses the STG-badged icon for staging', () => {
-    const cfg = loadConfig('staging');
-    expect(cfg.icon).toContain('icon-staging.png');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).toContain('adaptive-icon-staging.png');
+    expectBadgedIcons(loadConfig('staging'), 'icon-staging.png', 'adaptive-icon-staging.png');
   });
 
   it('uses the un-badged icon for production', () => {
-    const cfg = loadConfig('production');
-    expect(cfg.icon).toContain('icon.png');
-    expect(cfg.icon).not.toContain('-dev');
-    expect(cfg.icon).not.toContain('-staging');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).toContain('adaptive-icon.png');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).not.toContain('-dev');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).not.toContain('-staging');
+    expectUnbadgedIcons(loadConfig('production'), '-dev', '-staging');
   });
 });
 
@@ -107,18 +126,10 @@ describe('fallback when badged variant is missing', () => {
   beforeEach(onlyBaseAssetsPresent);
 
   it('falls back to the un-badged production icon for development', () => {
-    const cfg = loadConfig('development');
-    expect(cfg.icon).toContain('icon.png');
-    expect(cfg.icon).not.toContain('-dev');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).toContain('adaptive-icon.png');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).not.toContain('-dev');
+    expectUnbadgedIcons(loadConfig('development'), '-dev');
   });
 
   it('falls back to the un-badged production icon for staging', () => {
-    const cfg = loadConfig('staging');
-    expect(cfg.icon).toContain('icon.png');
-    expect(cfg.icon).not.toContain('-staging');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).toContain('adaptive-icon.png');
-    expect(cfg.android?.adaptiveIcon?.foregroundImage).not.toContain('-staging');
+    expectUnbadgedIcons(loadConfig('staging'), '-staging');
   });
 });
