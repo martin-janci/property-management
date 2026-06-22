@@ -138,10 +138,8 @@ pub struct MyUnitRow {
     pub designation: String,
     pub floor: i32,
     pub unit_type: String,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
     pub size_sqm: Option<rust_decimal::Decimal>,
     pub rooms: Option<i32>,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
     pub ownership_share: rust_decimal::Decimal,
     pub occupancy_status: String,
     pub description: Option<String>,
