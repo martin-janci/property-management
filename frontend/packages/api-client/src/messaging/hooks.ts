@@ -107,6 +107,46 @@ export const createMessagingHooks = (api: MessagingApi) => ({
   },
 
   /**
+   * Delete a thread for the current user only (per-user soft hide; BIT-182).
+   */
+  useDeleteThread: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (threadId: string) => api.deleteThread(threadId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: messagingKeys.threads() });
+        queryClient.invalidateQueries({ queryKey: messagingKeys.unreadCount() });
+      },
+    });
+  },
+
+  /**
+   * Archive a thread for the current user only (BIT-182).
+   */
+  useArchiveThread: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (threadId: string) => api.archiveThread(threadId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: messagingKeys.threads() });
+      },
+    });
+  },
+
+  /**
+   * Un-archive a thread for the current user only (BIT-182).
+   */
+  useUnarchiveThread: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (threadId: string) => api.unarchiveThread(threadId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: messagingKeys.threads() });
+      },
+    });
+  },
+
+  /**
    * Block user mutation
    */
   useBlockUser: () => {

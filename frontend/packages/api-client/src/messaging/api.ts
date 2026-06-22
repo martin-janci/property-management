@@ -49,6 +49,7 @@ export const createMessagingApi = (config: ApiConfig) => {
       if (params?.limit) searchParams.set('limit', params.limit.toString());
       if (params?.offset) searchParams.set('offset', params.offset.toString());
       if (params?.search) searchParams.set('search', params.search);
+      if (params?.archived) searchParams.set('archived', 'true');
 
       const url = searchParams.toString()
         ? `${baseUrl}/threads?${searchParams}`
@@ -115,6 +116,42 @@ export const createMessagingApi = (config: ApiConfig) => {
      */
     deleteMessage: async (threadId: string, messageId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/messages/${messageId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Delete a thread for the current user only (per-user soft hide; BIT-182).
+     *
+     * The shared thread and the other participant's copy are untouched — a
+     * later inbound message un-hides it.
+     */
+    deleteThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Archive a thread for the current user only (BIT-182).
+     */
+    archiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
+        method: 'POST',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Un-archive a thread for the current user only (BIT-182).
+     */
+    unarchiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
         method: 'DELETE',
         headers,
       });
