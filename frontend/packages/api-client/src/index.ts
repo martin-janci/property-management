@@ -48,6 +48,7 @@ export * from './outages';
 export * from './packages';
 export * from './registry';
 export * from './reports';
+export * from './templates';
 export * from './voting';
 export * from './workflow-automation';
 

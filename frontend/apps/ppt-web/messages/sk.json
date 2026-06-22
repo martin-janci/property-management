@@ -1337,5 +1337,61 @@
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
     }
+  },
+  "documentTemplates": {
+    "title": "Šablóny dokumentov",
+    "subtitle": "Generujte dokumenty z opakovane použiteľných šablón.",
+    "searchPlaceholder": "Hľadať šablóny…",
+    "typeFilter": "Filtrovať podľa typu",
+    "allTypes": "Všetky typy",
+    "loadError": "Šablóny sa nepodarilo načítať.",
+    "types": {
+      "lease": "Nájomná zmluva",
+      "notice": "Oznámenie",
+      "invoice": "Faktúra",
+      "report": "Správa",
+      "minutes": "Zápisnica",
+      "contract": "Zmluva",
+      "custom": "Vlastná"
+    },
+    "categories": {
+      "contracts": "Zmluvy",
+      "invoices": "Faktúry",
+      "reports": "Správy",
+      "manuals": "Príručky",
+      "certificates": "Certifikáty",
+      "other": "Ostatné"
+    },
+    "empty": {
+      "title": "Zatiaľ žiadne šablóny",
+      "body": "Pre túto organizáciu neboli vytvorené žiadne šablóny dokumentov.",
+      "noMatches": "Vašim filtrom nezodpovedajú žiadne šablóny."
+    },
+    "card": {
+      "placeholders": "{{count}} zástupných symbolov",
+      "usage": "použité {{count}}×",
+      "generate": "Generovať"
+    },
+    "generate": {
+      "title": "Generovať zo šablóny „{{name}}“",
+      "contextLegend": "Kontext",
+      "building": "Budova",
+      "unit": "Jednotka",
+      "noContext": "— Žiadna budova —",
+      "noUnit": "— Žiadna jednotka —",
+      "contextHint": "Vyberte budovu alebo jednotku na predvyplnenie zodpovedajúcich zástupných symbolov. Každú hodnotu môžete upraviť.",
+      "placeholdersLegend": "Zástupné symboly",
+      "noPlaceholders": "Táto šablóna nemá žiadne zástupné symboly.",
+      "documentLegend": "Dokument",
+      "docTitle": "Názov",
+      "category": "Kategória",
+      "description": "Popis",
+      "previewLegend": "Náhľad",
+      "missingPlaceholders": "Vyplňte povinné zástupné symboly: {{names}}",
+      "generateError": "Dokument sa nepodarilo vygenerovať. {{message}}",
+      "loadError": "Šablónu sa nepodarilo načítať.",
+      "generating": "Generuje sa…",
+      "submit": "Generovať dokument"
+    }
   }
 }

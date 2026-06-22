@@ -1335,5 +1335,61 @@
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
     }
+  },
+  "documentTemplates": {
+    "title": "Šablony dokumentů",
+    "subtitle": "Generujte dokumenty z opakovaně použitelných šablon.",
+    "searchPlaceholder": "Hledat šablony…",
+    "typeFilter": "Filtrovat podle typu",
+    "allTypes": "Všechny typy",
+    "loadError": "Šablony se nepodařilo načíst.",
+    "types": {
+      "lease": "Nájemní smlouva",
+      "notice": "Oznámení",
+      "invoice": "Faktura",
+      "report": "Zpráva",
+      "minutes": "Zápis",
+      "contract": "Smlouva",
+      "custom": "Vlastní"
+    },
+    "categories": {
+      "contracts": "Smlouvy",
+      "invoices": "Faktury",
+      "reports": "Zprávy",
+      "manuals": "Příručky",
+      "certificates": "Certifikáty",
+      "other": "Ostatní"
+    },
+    "empty": {
+      "title": "Zatím žádné šablony",
+      "body": "Pro tuto organizaci nebyly vytvořeny žádné šablony dokumentů.",
+      "noMatches": "Vašim filtrům neodpovídají žádné šablony."
+    },
+    "card": {
+      "placeholders": "{{count}} zástupných symbolů",
+      "usage": "použito {{count}}×",
+      "generate": "Generovat"
+    },
+    "generate": {
+      "title": "Generovat ze šablony „{{name}}“",
+      "contextLegend": "Kontext",
+      "building": "Budova",
+      "unit": "Jednotka",
+      "noContext": "— Žádná budova —",
+      "noUnit": "— Žádná jednotka —",
+      "contextHint": "Vyberte budovu nebo jednotku pro předvyplnění odpovídajících zástupných symbolů. Každou hodnotu můžete upravit.",
+      "placeholdersLegend": "Zástupné symboly",
+      "noPlaceholders": "Tato šablona nemá žádné zástupné symboly.",
+      "documentLegend": "Dokument",
+      "docTitle": "Název",
+      "category": "Kategorie",
+      "description": "Popis",
+      "previewLegend": "Náhled",
+      "missingPlaceholders": "Vyplňte povinné zástupné symboly: {{names}}",
+      "generateError": "Dokument se nepodařilo vygenerovat. {{message}}",
+      "loadError": "Šablonu se nepodařilo načíst.",
+      "generating": "Generuje se…",
+      "submit": "Generovat dokument"
+    }
   }
 }
