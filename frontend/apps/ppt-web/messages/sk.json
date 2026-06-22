@@ -1439,5 +1439,10 @@
       "under_repair": "V oprave",
       "decommissioned": "Vyradené"
     }
+  },
+  "messaging": {
+    "errors": {
+      "downloadFailed": "Prílohu sa nepodarilo stiahnuť"
+    }
   }
 }
