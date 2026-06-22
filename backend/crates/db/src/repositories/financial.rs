@@ -1165,13 +1165,43 @@ impl FinancialRepository {
     /// The `update_invoice_on_allocation` trigger recomputes the invoice's
     /// `amount_paid`/`balance_due`/`status`, so a fully-covered invoice
     /// transitions to `paid` automatically.
+    ///
+    /// **Idempotency is enforced atomically**: the first statement in the tx
+    /// is a conditional `UPDATE … WHERE status <> 'completed'` that claims the
+    /// session row. Stripe is at-least-once and does not serialize deliveries,
+    /// so two concurrent duplicates can both pass a pre-tx status read; the
+    /// conditional UPDATE row-locks the session, so the loser observes
+    /// `rows_affected() == 0` and returns `Ok(None)` (a safe no-op) instead of
+    /// inserting a second payment + allocation. Returns `Ok(Some(payment))`
+    /// for the delivery that actually settles.
     pub async fn settle_invoice_from_gateway(
         &self,
         session: &OnlinePaymentSession,
         invoice: &Invoice,
         gateway_reference: &str,
-    ) -> Result<Payment, SqlxError> {
+    ) -> Result<Option<Payment>, SqlxError> {
         let mut tx = self.pool.begin().await?;
+
+        // Atomic idempotency claim. Only the first concurrent delivery flips
+        // the row from a non-`completed` state; the conditional predicate
+        // row-locks the session so duplicates serialize behind this tx and
+        // then no-op. Bail before touching `payments` if we lost the race.
+        let claim = sqlx::query(
+            r#"
+            UPDATE online_payment_sessions
+            SET status = 'completed', updated_at = NOW()
+            WHERE id = $1 AND status <> 'completed'
+            "#,
+        )
+        .bind(session.id)
+        .execute(&mut *tx)
+        .await?;
+
+        if claim.rows_affected() == 0 {
+            // Another delivery already settled this session — safe no-op.
+            tx.rollback().await?;
+            return Ok(None);
+        }
 
         let payment = sqlx::query_as::<_, Payment>(
             r#"
@@ -1205,10 +1235,12 @@ impl FinancialRepository {
         .execute(&mut *tx)
         .await?;
 
+        // Status was already set to 'completed' by the atomic claim above; here
+        // we only link the freshly-recorded payment back to the session.
         sqlx::query(
             r#"
             UPDATE online_payment_sessions
-            SET status = 'completed', payment_id = $2, updated_at = NOW()
+            SET payment_id = $2, updated_at = NOW()
             WHERE id = $1
             "#,
         )
@@ -1218,7 +1250,7 @@ impl FinancialRepository {
         .await?;
 
         tx.commit().await?;
-        Ok(payment)
+        Ok(Some(payment))
     }
 
     // ========================================================================

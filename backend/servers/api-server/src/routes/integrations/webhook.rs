@@ -1536,7 +1536,7 @@ pub async fn handle_payment_webhook(
         .clone()
         .unwrap_or_else(|| session.session_id.clone());
 
-    state
+    let settled = state
         .financial_repo
         .settle_invoice_from_gateway(&session, &invoice, &gateway_ref)
         .await
@@ -1548,11 +1548,19 @@ pub async fn handle_payment_webhook(
             )
         })?;
 
-    tracing::info!(
-        invoice_id = %invoice.id,
-        session_id = %session.session_id,
-        "Invoice settled from Stripe Checkout webhook"
-    );
+    match settled {
+        Some(_) => tracing::info!(
+            invoice_id = %invoice.id,
+            session_id = %session.session_id,
+            "Invoice settled from Stripe Checkout webhook"
+        ),
+        // The atomic idempotency claim found the session already settled by a
+        // concurrent delivery. Ack so Stripe stops retrying; no double-credit.
+        None => tracing::info!(
+            session_id = %session.session_id,
+            "Stripe webhook duplicate: session already settled, no-op"
+        ),
+    }
 
     Ok(StatusCode::OK)
 }

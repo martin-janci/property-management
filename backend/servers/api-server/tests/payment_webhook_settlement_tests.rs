@@ -260,3 +260,99 @@ async fn valid_webhook_settles_invoice_and_is_idempotent(pool: PgPool) {
     std::env::remove_var(SECRET_ENV);
     assert_eq!(pay_count2, 1, "replay must not double-settle");
 }
+
+/// Concurrent-replay (the race the sequential test above cannot catch):
+/// Stripe is at-least-once and does not serialize deliveries, so two duplicate
+/// `checkout.session.completed` events can BOTH read the session as not-yet
+/// `completed` before either commits. The pre-tx status read in the handler is
+/// a TOCTOU window; the security property is enforced at the DB level by the
+/// atomic claim inside `settle_invoice_from_gateway`. We exercise that claim
+/// directly — two settlements racing on the same pending session snapshot must
+/// produce exactly ONE payment + allocation (no double-credit), and the loser
+/// must return `Ok(None)`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn concurrent_settlement_does_not_double_credit(pool: PgPool) {
+    use db::repositories::FinancialRepository;
+
+    let provider_session_id = "cs_test_concurrent_1";
+    let (invoice_id, _session_pk) = seed_invoice_with_session(
+        &pool,
+        "concurrent",
+        provider_session_id,
+        Decimal::new(10000, 2),
+    )
+    .await;
+
+    let repo = FinancialRepository::new(pool.clone());
+
+    // Both "deliveries" load the SAME pending snapshot — emulating two
+    // duplicates that each passed the handler's pre-tx status read.
+    let session = repo
+        .get_payment_session_by_provider_id(provider_session_id)
+        .await
+        .expect("load session")
+        .expect("session exists");
+    let invoice = repo
+        .get_invoice(invoice_id)
+        .await
+        .expect("load invoice")
+        .expect("invoice exists");
+    assert_eq!(session.status, "pending", "precondition: not yet settled");
+
+    let task1 = {
+        let (repo, session, invoice) = (repo.clone(), session.clone(), invoice.clone());
+        tokio::spawn(async move {
+            repo.settle_invoice_from_gateway(&session, &invoice, "pi_concurrent_1")
+                .await
+        })
+    };
+    let task2 = {
+        let (repo, session, invoice) = (repo.clone(), session.clone(), invoice.clone());
+        tokio::spawn(async move {
+            repo.settle_invoice_from_gateway(&session, &invoice, "pi_concurrent_1")
+                .await
+        })
+    };
+
+    let r1 = task1.await.expect("join task1").expect("settle task1 ok");
+    let r2 = task2.await.expect("join task2").expect("settle task2 ok");
+
+    // Exactly one delivery settles (Some), the other no-ops (None).
+    assert!(
+        r1.is_some() ^ r2.is_some(),
+        "exactly one of the two concurrent deliveries must settle; got {:?} / {:?}",
+        r1.is_some(),
+        r2.is_some(),
+    );
+
+    // The DB-level invariant: one payment, one allocation, invoice paid once.
+    let pay_count: i64 = sqlx::query_scalar(
+        "SELECT count(*)::int8 FROM payments \
+         WHERE unit_id = (SELECT unit_id FROM invoices WHERE id = $1)",
+    )
+    .bind(invoice_id)
+    .fetch_one(&pool)
+    .await
+    .expect("count payments");
+    assert_eq!(
+        pay_count, 1,
+        "concurrent duplicate deliveries must record exactly one payment"
+    );
+
+    let alloc_count: i64 =
+        sqlx::query_scalar("SELECT count(*)::int8 FROM payment_allocations WHERE invoice_id = $1")
+            .bind(invoice_id)
+            .fetch_one(&pool)
+            .await
+            .expect("count allocations");
+    assert_eq!(alloc_count, 1, "exactly one allocation");
+
+    let (status, balance): (String, Decimal) =
+        sqlx::query_as("SELECT status::text, balance_due FROM invoices WHERE id = $1")
+            .bind(invoice_id)
+            .fetch_one(&pool)
+            .await
+            .expect("load invoice");
+    assert_eq!(status, "paid", "invoice settled exactly once");
+    assert_eq!(balance, Decimal::ZERO, "balance cleared, not over-credited");
+}
