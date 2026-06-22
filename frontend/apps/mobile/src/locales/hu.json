@@ -180,14 +180,14 @@
       "draftNote": "Ez a dokumentum piszkozat, es csak a szerzo es a kezelok szamara lathato.",
       "archivedNote": "Ez a dokumentum archivalva lett, es mar nem osztjak meg aktivan.",
       "rlsTitle": "Sor szintu biztonsag",
-      "rlsBody": "A dokumentumhoz valo hozzaférést a szerver kenyszeriti ki. A fent láthátó kozonseg azt tukrozi, ki lathatja azt."
+      "rlsBody": "A dokumentumhoz valo hozzaferést a szerver kenyszeriti ki. A fent láthátó kozonseg azt tukrozi, ki lathatja azt."
     },
     "folder": {
       "newTitle": "Uj mappa",
       "insideFolder": "A(z) „{{name}}“ mappaban",
       "atRoot": "Gyoker szinten",
       "nameLabel": "Mappa neve",
-      "namePlaceholder": "pl. Szerződések 2024",
+      "namePlaceholder": "pl. Szerzödések 2024",
       "descriptionLabel": "Leiras (opcionalis)",
       "descriptionPlaceholder": "Ennek a mappanak a rovid leirasa",
       "nameRequired": "Mappa neve kotelezo",
