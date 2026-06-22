@@ -7,17 +7,16 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
+import { getApiBase } from '../../lib/env';
 
 interface ComparisonUrlHandlerProps {
   sharedIds: string[];
 }
 
 export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
-  const t = useTranslations('comparison');
   const { listings, addToComparison } = useComparison();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +34,13 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
       try {
         // Fetch each listing by ID
         const fetchPromises = sharedIds.slice(0, 4).map(async (id) => {
-          const response = await fetch(`/api/listings/${id}`);
+          // Hit reality-server's canonical listing endpoint via getApiBase()
+          // (the same pattern every other reality-web client fetcher uses).
+          // The previous bare `/api/listings/${id}` targeted a Next.js API
+          // route that does not exist, so every shared comparison URL 404'd.
+          const response = await fetch(`${getApiBase()}/api/v1/listings/${id}`);
           if (!response.ok) {
-            throw new Error(`Failed to load listing ${id}`);
+            throw new Error(`Failed to load listing ${id} (HTTP ${response.status})`);
           }
           return response.json() as Promise<ListingSummary>;
         });
@@ -51,7 +54,7 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
           }
         }
       } catch (err) {
-        setError(t('loadError'));
+        setError('Failed to load shared comparison. Some properties may no longer be available.');
         console.error('Error loading shared listings:', err);
       } finally {
         setLoading(false);
@@ -59,13 +62,13 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
     };
 
     loadSharedListings();
-  }, [sharedIds, listings.length, addToComparison, t]);
+  }, [sharedIds, listings.length, addToComparison]);
 
   if (loading) {
     return (
       <div className="loading-shared">
         <div className="spinner" />
-        <p>{t('loading')}</p>
+        <p>Loading shared comparison...</p>
         <style jsx>{`
           .loading-shared {
             display: flex;
