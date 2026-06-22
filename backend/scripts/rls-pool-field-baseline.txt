@@ -33,6 +33,12 @@ listing.rs
 marketplace.rs
 membership.rs
 messaging.rs
+# --- #1710 / Story 2B-C.3 (gap #969-4): notification delivery-event analytics.
+# service-role-or-super-admin RLS by design (migration 00188), same convention
+# as device_push_token.rs / critical_notification.rs above — end-user GUC
+# connections are denied at the DB. Baselined, not converted (no per-request
+# user context on the spawned analytics path). ---
+notification_event.rs
 notification_preference.rs
 onboarding.rs
 organization.rs
