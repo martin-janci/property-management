@@ -1,4 +1,4 @@
--- Migration: 00187_create_notification_events
+-- Migration: 00188_create_notification_events
 -- Epic 2B, Story 2B-C.3 (gap-sweep #969 gap 4): notification delivery tracking
 -- & analytics.
 --
