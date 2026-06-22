@@ -45,6 +45,7 @@ export * from './oauth-grants';
 export * from './onboarding';
 export * from './outages';
 export * from './packages';
+export * from './person-months';
 export * from './registry';
 export * from './reports';
 export * from './templates';

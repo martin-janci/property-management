@@ -28,6 +28,7 @@ import { messagingRoutes } from './groups/messaging';
 import { meterRoutes } from './groups/meters';
 import { neighborRoutes } from './groups/neighbors';
 import { outageRoutes } from './groups/outages';
+import { personMonthRoutes } from './groups/person-months';
 import { rentalRoutes } from './groups/rentals';
 import { reportRoutes } from './groups/reports';
 import { votingRoutes } from './groups/voting';
@@ -51,6 +52,7 @@ export function AppRoutes() {
       {accountingRoutes()}
       {rentalRoutes()}
       {meterRoutes()}
+      {personMonthRoutes()}
       {leaseRoutes()}
       {votingRoutes()}
       {aiDashboardRoutes()}
