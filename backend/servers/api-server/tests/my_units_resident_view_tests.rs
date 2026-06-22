@@ -62,7 +62,7 @@ async fn seed_unit(pool: &PgPool, building_id: Uuid, designation: &str) -> Uuid 
 async fn seed_resident(pool: &PgPool, unit_id: Uuid, user_id: Uuid, rtype: &str, primary: bool) {
     sqlx::query(
         "INSERT INTO unit_residents (unit_id, user_id, resident_type, is_primary) \
-         VALUES ($1, $2, $3, $4)",
+         VALUES ($1, $2, $3::resident_type, $4)",
     )
     .bind(unit_id)
     .bind(user_id)
