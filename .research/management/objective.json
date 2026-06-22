@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "verify-dispute-filing-flow-ac-coverage-frontend",
-  "selected_at": "2026-06-21T18:20:13Z",
+  "epic_prefix": "code-review-mobile-rn-screens-mock-data",
+  "selected_at": "2026-06-22T06:09:58Z",
   "last_action": "repick",
-  "reason": "prior target 'feat-mobile-env-config-info-plist-keys-mobile' exhausted; closest-to-done is 'verify-dispute-filing-flow-ac-coverage-frontend' (open=1 claimable=1)",
+  "reason": "prior target 'verify-dispute-filing-flow-ac-coverage-frontend' exhausted; closest-to-done is 'code-review-mobile-rn-screens-mock-data' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
