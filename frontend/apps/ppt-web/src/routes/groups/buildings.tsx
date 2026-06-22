@@ -14,6 +14,7 @@ import {
   EditFacilityPage,
   FacilitiesPage,
   MyBookingsPage,
+  MyUnitPage,
   PendingBookingsPage,
 } from '../lazyRoutes';
 
@@ -54,6 +55,16 @@ export function buildingRoutes() {
         element={
           <ProtectedRoute>
             <BuildingDetailPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      {/* Resident "My Unit" view (Epic 3, Story 3.6) — gap-sweep.
+        Self-resolves the caller's units via useMyUnits(); no params. */}
+      <Route
+        path="/my-unit"
+        element={
+          <ProtectedRoute>
+            <MyUnitPage />
           </ProtectedRoute>
         }
       />
