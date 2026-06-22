@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-22T03:14:45Z",
   "sprint": null,
   "version": null,
   "scan_kind": "upkeep",
@@ -371,7 +371,7 @@
       ],
       "gaps": [],
       "status_note": "advanced partial->done (frontend integration PR #441 + e2e PR #473 both merged)",
-      "last_checked": "2026-05-27",
+      "last_checked": "2026-06-22",
       "recheck_note": "Rotating coverage re-check 2026-05-27 (epic-9, cursor idx 3): no new MFA churn this window; gap-10b-3-health-ui-mfa-fix (open) is an admin-health MFA-modal wiring item, not a 9-1 regression. Remains done."
     },
     {

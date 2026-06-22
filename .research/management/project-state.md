@@ -1,6 +1,19 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-06-22 — daily PM rotation (Scrum Master + pm-security; light catch-up after 6-day routine lag). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a, wrap)._
+
+## pm-security read (2026-06-22, after 26d gap)
+
+Several authz hardenings shipped in the 6-day catch-up window — pattern: the team is closing manager-only / cross-tenant gates one at a time, with reasonable test discipline but the `[FIX-NO-TEST]` cluster on `dev` indicates the gating is incomplete.
+
+- **PR #1606 `feat(accounting): manager-only role gate for list_contacts (PAP-281)`** — closed the last accounting handler that lacked the `!is_super_admin && !has_role(Manager)` gate. PII payload (name/email/phone/address/IBAN/ICO/DIC). Merged with **unchecked** real-PG test box → tracked as `unchecked-todo-pr-1606` (score 3, security). The pattern of `- [x] cargo check --tests` passing while `- [ ]` real-PG integration goes uncovered is a recurring failure mode.
+- **PR #1639 / #1635** — `[FIX-NO-TEST]` manager-gate Airbnb linked-listing reads (closes #1626). Authz hardening, no new test file in diff per scan — verify whether the gate has a regression test before claiming PAP-coverage.
+- **PR #1602 / #1601** — `[FIX-NO-TEST]` MFA rate-limiter + OTA manager-gate from `TenantRole`. Same shape.
+- **PR #1632** — `[FIX-NO-TEST]` scope portal-import feeds per-agency (closes #1584). Multi-tenant boundary; landed alongside the **closed-unmerged #1636** (reality-server portal-import authz dedup) — verify nothing dropped between the variants.
+
+**Recommendation (action-list candidate):** open a coverage sweep that verifies every recent `manager-gate` PR has at least one `*_authz_tests.rs` integration test pointing at the gated handler. The PAP-* series is collapsing the surface but the proof-of-coverage is lagging.
+
+## (Prior 2026-06-16 content follows)
 
 ## Executive summary
 

@@ -1,0 +1,227 @@
+{
+  "generated": "2026-06-22T03:15:50Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-22",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "routine has not run in 6d 0h (since 2026-06-16T03:25Z) — cloud scheduler likely stalled; stale_routine_alert also triggered (lag >= 3d)"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": [
+        "PR #1606 (feat(accounting): manager-only role gate for list_contacts PAP-281) merged 2026-06-20 with body containing unchecked test box: `- [ ] cargo test -p api-server accounting_contacts_authz against real PG (CI backend.yml)`",
+        "Security vector: PII handler — contacts hold name, email, phone, address, IBAN, ICO/DIC; gate previously missing on list_contacts only"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #1628 #1631 #1648",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "financial.rs touched in 3 PRs in the 6-day window: #1628 (invoice PDF), #1631 (decimal coerce + Authorization header), #1648 (payment management). ~437 added lines combined. First hotspot entry."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #1641 #1646 #1652",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "lazyRoutes.tsx touched in 3 PRs in the 6-day window: #1641 (Sentiment+Predictive dashboards Epic 13), #1646 (IoT sensor register/edit), #1652 (IoT alerts FR74). lazy() registration table — expected churn on new-route additions but worth tracking as instability proxy."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #1560 #1577",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "cumulative re-emit (G4 carve-out): already in seen_signals from 2026-06-12; 2 commits in this window (~463 LoC); score_delta=0; repeated-churn handles the actual bump"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "PRs #1560 #1577",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "runs_seen 1→2 across 2026-06-12 / 2026-06-22 windows. Booking.com OTA hot zone (post_ota_with_retry + retry tests + push fanout couplings). Stacks +1 on the existing item."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "confidence": "high",
+      "evidence": [
+        "PR #1647 (IoT sensor register+edit, BIT-147) closed 2026-06-21 unmerged. Functional outcome shipped via PRs #1646 + #1653 (split path)."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "confidence": "high",
+      "evidence": [
+        "PR #1636 (reality-server portal-import authz dedup) closed 2026-06-21 unmerged. IDOR already fixed via PR #1297; cross-tenant regression tests via #1603/#1620."
+      ]
+    },
+    {
+      "id": "dep-update-noise-cluster-2026-06-22",
+      "type": "dep-update-noise",
+      "source": "PRs #1566 #1569 #1570 #1571 #1572 #1573 #1574 #1575 #1576 (merged) + #1567 #1568 (open)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "9 merged + 2 open dependabot PRs in window. No lockfile-drift sub-shape detected (consumer manifests in lockstep). Logged-only, no backlog item."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-22.md && head -1 == '# 2026-06-22'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 and decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "0 new plans this run",
+      "expected": "<=2 with annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; each has 15 sections",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in diff (excl baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regenerated from backlog.json",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed; no cursor freeze required",
+      "observed": "Phase 1-6 all completed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plan deletions this run",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count staged >= HEAD",
+      "observed": "7>=7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regenerated from backlog.json filtered",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <=3, cap respected, idempotent",
+      "observed": "0 actions this run",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid, pm_cursor + coverage_cursor advanced",
+      "observed": "pm 5->6, coverage 12->0, epics=13",
+      "expected": "GC7 pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token leaked",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
