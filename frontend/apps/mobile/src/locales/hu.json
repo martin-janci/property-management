@@ -122,7 +122,12 @@
     "selectCategory": "Kerem valasszon kategoriat",
     "locationDetected": "Helyszin eszlelve",
     "failedToPickImage": "Nem sikerult kepet valasztani",
-    "failedToDetectLocation": "Nem sikerult helyszint erzekelni"
+    "failedToDetectLocation": "Nem sikerult helyszint erzekelni",
+    "buildingLabel": "Épület",
+    "selectBuilding": "Válasszon épületet",
+    "loadingBuildings": "Épületek betöltése…",
+    "noBuildings": "Nincs elérhető épület",
+    "buildingsLoadError": "Nem sikerült betölteni az épületeit"
   },
   "news": {
     "title": "Hirek",
@@ -208,7 +213,7 @@
       "updated": "Frissítve",
       "openAction": "Dokumentum megnyitása",
       "downloadAction": "Dokumentum letöltése",
-      "fallbackNotice": "Az előnézet nem érhető el ennél a fájltípusnál. Letöltheti helyette.",
+      "fallbackNotice": "Az előnézet nem érhető el eznél a fájltípusnál. Letöltheti helyette.",
       "errorTitle": "A dokumentum nem töltheto be",
       "cannotOpenTitle": "Nem nyitható meg",
       "cannotOpenMessage": "Az eszközön lévö alkalmazások egyike sem tudja megnyitni ezt a fájltípust.",
@@ -421,7 +426,7 @@
     "expires": "Lejár",
     "revoke": "Visszavon",
     "revokeTitle": "Megosztás visszavonása",
-    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elvesziti a hozzáférést.",
+    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elveszti a hozzáférést.",
     "revokeAction": "Visszavon",
     "errorTitle": "Hiba",
     "errorUserIdRequired": "Kerlek add meg a felhasznalo ID-t.",
