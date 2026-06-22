@@ -249,6 +249,12 @@ impl Scheduler {
             tracing::error!("Failed to send signature reminders: {}", e);
             self.increment_errors();
         }
+
+        // Story 12.2: Send meter reading reminders to residents before window closes
+        if let Err(e) = self.send_meter_reminders().await {
+            tracing::error!("Failed to send meter reading reminders: {}", e);
+            self.increment_errors();
+        }
     }
 
     // ========================================================================
@@ -992,6 +998,113 @@ impl Scheduler {
         if total_reminders > 0 {
             let mut metrics = self.metrics.lock().unwrap();
             metrics.signature_reminders_sent += total_reminders;
+        }
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Story 12.2: Meter Reading Reminders
+    // ========================================================================
+
+    /// Notify residents whose building has a submission window closing soon and
+    /// who have not yet submitted a reading for any unit-linked meter in that
+    /// window's building.
+    async fn send_meter_reminders(&self) -> Result<(), sqlx::Error> {
+        let windows = self
+            .meter_repo
+            .find_windows_closing_soon(self.config.meter_reminder_days_before)
+            .await?;
+
+        if windows.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = windows.len(),
+            reminder_window_days = self.config.meter_reminder_days_before,
+            "Processing meter submission windows approaching close for reminders"
+        );
+
+        let mut total_reminders = 0u64;
+
+        for window in &windows {
+            // Fetch active unit meters for the building.
+            let meters_page = match self
+                .meter_repo
+                .list_meters_for_building(window.building_id, 500, 0)
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => {
+                    tracing::error!(
+                        building_id = %window.building_id,
+                        error = %e,
+                        "Failed to list meters for building — skipping window"
+                    );
+                    continue;
+                }
+            };
+
+            let due_date = window
+                .submission_end
+                .and_hms_opt(23, 59, 59)
+                .map(|ndt| chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(ndt, chrono::Utc))
+                .unwrap_or_else(chrono::Utc::now);
+
+            for meter in meters_page.meters.iter().filter(|m| m.unit_id.is_some()) {
+                let unit_id = match meter.unit_id {
+                    Some(id) => id,
+                    None => continue,
+                };
+
+                let residents = match self.unit_resident_repo.find_by_unit(unit_id).await {
+                    Ok(r) => r,
+                    Err(e) => {
+                        tracing::error!(
+                            unit_id = %unit_id,
+                            error = %e,
+                            "Failed to fetch residents for unit — skipping"
+                        );
+                        continue;
+                    }
+                };
+
+                for resident in &residents {
+                    match self
+                        .notification_service
+                        .notify_meter_reading_due(
+                            resident.user_id,
+                            meter.id,
+                            &meter.meter_number,
+                            due_date,
+                        )
+                        .await
+                    {
+                        Ok(()) => {
+                            total_reminders += 1;
+                            tracing::info!(
+                                meter_id = %meter.id,
+                                user_id = %resident.user_id,
+                                "Sent meter reading due notification"
+                            );
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                meter_id = %meter.id,
+                                user_id = %resident.user_id,
+                                error = %e,
+                                "Failed to send meter reading due notification"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        if total_reminders > 0 {
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.meter_reminders_sent += total_reminders;
         }
 
         Ok(())
