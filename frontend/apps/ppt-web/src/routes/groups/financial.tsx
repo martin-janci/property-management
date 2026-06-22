@@ -4,12 +4,16 @@
  * Owns the financial route-wrapper components and the `<Route>` table fragment.
  * Extracted from App.tsx to isolate financial work.
  */
-import type { InvoiceStatus } from '@ppt/api-client';
+import type { InvoiceStatus, ReportExportFormat, ReportType } from '@ppt/api-client';
 import {
   allocatePayment,
   autoMatchPayments,
   downloadInvoicePdf,
+  exportReport,
   getARAgingReport,
+  getBalanceSheet,
+  getCashFlowReport,
+  getIncomeStatement,
   getOverdueInvoices,
   listInvoices,
   listPayments,
@@ -25,9 +29,27 @@ import { useAuth } from '../../contexts';
 import {
   BudgetManagementPage,
   FinancialDashboardPage,
+  FinancialReportsPage,
   InvoiceManagementPage,
   PaymentManagementPage,
 } from '../lazyRoutes';
+
+/** Trigger a browser download for a fetched report blob. */
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
+/** YYYY-MM-DD for a Date (local-safe via the same slice the date filters use). */
+function isoDate(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
 
 /**
  * Route wrapper for financial dashboard (Epic 52, #975.1).
@@ -163,26 +185,35 @@ function InvoiceManagementPageRoute() {
     },
   });
 
-  const handleDownloadPdf = (id: string) => {
-    const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
-    downloadInvoicePdf(id)
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `invoice-${number}.pdf`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
-      })
-      .catch((err) => {
-        showToast({
-          type: 'error',
-          title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
-          message: err instanceof Error ? err.message : '',
-        });
+  // Route the PDF download through a TanStack mutation (mirrors sendInvoiceMutation)
+  // so we get an in-flight `isPending` + `variables` (the invoice id) for free.
+  // This drives the per-row loading affordance and the double-click guard below.
+  const downloadPdfMutation = useMutation({
+    mutationFn: (id: string) => downloadInvoicePdf(id),
+    onSuccess: (blob, id) => {
+      const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `invoice-${number}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+        message: err instanceof Error ? err.message : '',
       });
+    },
+  });
+
+  const handleDownloadPdf = (id: string) => {
+    // Double-click guard: ignore new clicks while any download is in flight.
+    if (downloadPdfMutation.isPending) return;
+    downloadPdfMutation.mutate(id);
   };
 
   return (
@@ -195,6 +226,9 @@ function InvoiceManagementPageRoute() {
       onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
       onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
       onDownloadPdf={handleDownloadPdf}
+      downloadingPdfId={
+        downloadPdfMutation.isPending ? (downloadPdfMutation.variables ?? null) : null
+      }
       onFilterChange={(params) => {
         setStatusFilter(params.status);
         setPage(params.page);
@@ -313,6 +347,101 @@ function BudgetManagementPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for financial statement reports (Epic 11, Story 11.7).
+ *
+ * Wires the three statement endpoints via TanStack Query, fetching only the
+ * report for the active tab:
+ *   getIncomeStatement({ organization_id, from, to })
+ *   getBalanceSheet({ organization_id, as_of })
+ *   getCashFlowReport({ organization_id, from, to })
+ *
+ * Export buttons call exportReport(report, { format, ... }) and stream the
+ * returned PDF / xlsx blob to a browser download. Date defaults are year-to-date
+ * for the range reports and today for the balance sheet's as-of.
+ */
+function FinancialReportsPageRoute() {
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const orgId = user?.organizationId ?? '';
+
+  const now = new Date();
+  const todayStr = isoDate(now);
+  const yearStartStr = isoDate(new Date(now.getFullYear(), 0, 1));
+
+  const [activeTab, setActiveTab] = useState<ReportType>('income-statement');
+  const [fromDate, setFromDate] = useState(yearStartStr);
+  const [toDate, setToDate] = useState(todayStr);
+  const [asOfDate, setAsOfDate] = useState(todayStr);
+  const [exportingFormat, setExportingFormat] = useState<ReportExportFormat | null>(null);
+
+  const rangeReady = !!orgId && !!fromDate && !!toDate;
+
+  const incomeQuery = useQuery({
+    queryKey: ['financial', 'income-statement', orgId, fromDate, toDate],
+    queryFn: () => getIncomeStatement({ organization_id: orgId, from: fromDate, to: toDate }),
+    enabled: rangeReady && activeTab === 'income-statement',
+  });
+  const balanceQuery = useQuery({
+    queryKey: ['financial', 'balance-sheet', orgId, asOfDate],
+    queryFn: () => getBalanceSheet({ organization_id: orgId, as_of: asOfDate }),
+    enabled: !!orgId && !!asOfDate && activeTab === 'balance-sheet',
+  });
+  const cashFlowQuery = useQuery({
+    queryKey: ['financial', 'cash-flow', orgId, fromDate, toDate],
+    queryFn: () => getCashFlowReport({ organization_id: orgId, from: fromDate, to: toDate }),
+    enabled: rangeReady && activeTab === 'cash-flow',
+  });
+
+  const activeQuery =
+    activeTab === 'income-statement'
+      ? incomeQuery
+      : activeTab === 'balance-sheet'
+        ? balanceQuery
+        : cashFlowQuery;
+
+  const handleExport = (format: ReportExportFormat) => {
+    if (!orgId) return;
+    setExportingFormat(format);
+    const params =
+      activeTab === 'balance-sheet'
+        ? { organization_id: orgId, format, as_of: asOfDate }
+        : { organization_id: orgId, format, from: fromDate, to: toDate };
+    const ext = format === 'pdf' ? 'pdf' : 'xlsx';
+    exportReport(activeTab, params)
+      .then((blob) => downloadBlob(blob, `${activeTab}.${ext}`))
+      .catch((err) => {
+        showToast({
+          type: 'error',
+          title: t('financial.reports.exportFailed', { defaultValue: 'Export failed' }),
+          message: err instanceof Error ? err.message : '',
+        });
+      })
+      .finally(() => setExportingFormat(null));
+  };
+
+  return (
+    <FinancialReportsPage
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      fromDate={fromDate}
+      toDate={toDate}
+      onFromDateChange={setFromDate}
+      onToDateChange={setToDate}
+      asOfDate={asOfDate}
+      onAsOfDateChange={setAsOfDate}
+      incomeStatement={incomeQuery.data}
+      balanceSheet={balanceQuery.data}
+      cashFlow={cashFlowQuery.data}
+      isLoading={activeQuery.isLoading && activeQuery.fetchStatus !== 'idle'}
+      error={activeQuery.error instanceof Error ? activeQuery.error.message : null}
+      onExport={handleExport}
+      exportingFormat={exportingFormat}
+    />
+  );
+}
+
 /** Financial routes (Epic 52). */
 export function financialRoutes() {
   return (
@@ -321,6 +450,7 @@ export function financialRoutes() {
       <Route path="/financial/invoices" element={<InvoiceManagementPageRoute />} />
       <Route path="/financial/payments" element={<PaymentManagementPageRoute />} />
       <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
+      <Route path="/financial/reports" element={<FinancialReportsPageRoute />} />
     </>
   );
 }

@@ -36,6 +36,7 @@ pub mod listings;
 pub mod messaging;
 pub mod meters;
 pub mod mfa;
+pub mod my_units;
 pub mod neighbors;
 pub mod notification_preferences;
 pub mod push_tokens;
