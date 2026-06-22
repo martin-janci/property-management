@@ -83,12 +83,38 @@ pub struct MessageSuccessResponse {
 // ============================================================================
 
 /// Request for starting a new thread.
+///
+/// Supports both the original single-recipient direct-message shape
+/// (`recipient_id`) and N-party group conversations (`recipient_ids`,
+/// UC-05.8 / [BIT-183]). When both are supplied they are merged. After
+/// de-duplication and removing the caller, at least one recipient must remain.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct StartThreadRequest {
-    /// The user ID to start a conversation with.
-    pub recipient_id: Uuid,
+    /// Recipient user IDs for an N-party (group) conversation. Preferred field.
+    #[serde(default)]
+    pub recipient_ids: Vec<Uuid>,
+    /// Back-compat single recipient (Story 6.5 direct messaging). Merged into
+    /// `recipient_ids` when present.
+    #[serde(default)]
+    pub recipient_id: Option<Uuid>,
     /// Optional initial message.
     pub initial_message: Option<String>,
+}
+
+impl StartThreadRequest {
+    /// Collect the distinct recipient ids: the legacy `recipient_id` merged
+    /// with `recipient_ids`, excluding the caller. Returns a sorted, de-duped
+    /// vec; an empty result means "no valid recipient".
+    fn resolved_recipients(&self, caller: Uuid) -> Vec<Uuid> {
+        let mut ids: Vec<Uuid> = self.recipient_ids.clone();
+        if let Some(rid) = self.recipient_id {
+            ids.push(rid);
+        }
+        ids.retain(|id| *id != caller);
+        ids.sort();
+        ids.dedup();
+        ids
+    }
 }
 
 /// Request for sending a message.
@@ -224,23 +250,29 @@ async fn start_thread(
     let user_id = rls.user_id();
     let tenant_id = rls.tenant_id();
 
-    // Can't message yourself
-    if body.recipient_id == user_id {
+    // Resolve the recipient set (N-party, UC-05.8): merge `recipient_id` +
+    // `recipient_ids`, drop the caller, de-dupe. Must leave >= 1 recipient.
+    let recipients = body.resolved_recipients(user_id);
+    if recipients.is_empty() {
         rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
                 "INVALID_RECIPIENT",
-                "Cannot start a conversation with yourself",
+                "Cannot start a conversation without a valid recipient",
             )),
         ));
     }
 
-    // Security: Verify recipient is in same organization (Critical 1.1 / 2.3 fix)
-    let recipient_org: Option<(Uuid,)> =
-        sqlx::query_as("SELECT organization_id FROM users WHERE id = $1")
-            .bind(body.recipient_id)
-            .fetch_optional(&mut **rls.conn())
+    // Security: every recipient must exist and be an active member of the
+    // caller's tenant (cross-tenant IDOR guard — Critical 1.1 / 2.3, generalized
+    // to N participants for [BIT-183]). NB: there is no `users.organization_id`
+    // column; tenant membership lives in `organization_members`, which is also
+    // what `RequestPrincipal`/`ValidatedTenantExtractor` authorize against.
+    let existing: Vec<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM users WHERE id = ANY($1) AND deleted_at IS NULL")
+            .bind(&recipients)
+            .fetch_all(&mut **rls.conn())
             .await
             .map_err(|e| {
                 (
@@ -249,51 +281,76 @@ async fn start_thread(
                 )
             })?;
 
-    match recipient_org {
-        None => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("USER_NOT_FOUND", "Recipient not found")),
-            ));
-        }
-        Some((org_id,)) if org_id != tenant_id => {
-            rls.release().await;
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(ErrorResponse::new(
-                    "CROSS_ORG_DENIED",
-                    "Cannot message users from different organizations",
-                )),
-            ));
-        }
-        _ => {} // Same org, continue
+    if existing.len() != recipients.len() {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("USER_NOT_FOUND", "Recipient not found")),
+        ));
     }
 
-    let repo = MessagingRepository::new(state.db.clone());
+    let same_tenant: Vec<(Uuid,)> = sqlx::query_as(
+        r#"
+        SELECT user_id FROM organization_members
+        WHERE organization_id = $1
+          AND user_id = ANY($2)
+          AND status = 'active'
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&recipients)
+    .fetch_all(&mut **rls.conn())
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        )
+    })?;
 
-    // Check if either user has blocked the other
-    let is_blocked = repo
-        .is_blocked_rls(&mut **rls.conn(), user_id, body.recipient_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to check block status: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if is_blocked {
+    if same_tenant.len() != recipients.len() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "USER_BLOCKED",
-                "Cannot message this user",
+                "CROSS_ORG_DENIED",
+                "Cannot message users from different organizations",
             )),
         ));
     }
+
+    let repo = MessagingRepository::new(state.db.clone());
+
+    // No participant may have blocked (or be blocked by) the caller.
+    for &rid in &recipients {
+        let is_blocked = repo
+            .is_blocked_rls(&mut **rls.conn(), user_id, rid)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to check block status: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+
+        if is_blocked {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "USER_BLOCKED",
+                    "Cannot message this user",
+                )),
+            ));
+        }
+    }
+
+    // Build the full participant list (caller + recipients). The repository
+    // sorts the ids so the canonical thread is deduped by the unique
+    // (organization_id, participant_ids) constraint regardless of N.
+    let mut participant_ids = recipients.clone();
+    participant_ids.push(user_id);
 
     // Get or create thread
     let thread = repo
@@ -301,7 +358,7 @@ async fn start_thread(
             &mut **rls.conn(),
             CreateThread {
                 organization_id: tenant_id,
-                participant_ids: vec![user_id, body.recipient_id],
+                participant_ids,
             },
         )
         .await
@@ -344,14 +401,12 @@ async fn start_thread(
                 )
             })?;
 
-        // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
-        dispatch_new_message_event(
-            state.pubsub_service.as_ref(),
-            body.recipient_id,
-            &initial,
-            user_id,
-        )
-        .await;
+        // Realtime fanout: notify every other participant's WebSocket channel
+        // (Epic 2B / 8A.3), generalized to N recipients for [BIT-183].
+        for &rid in &recipients {
+            dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &initial, user_id)
+                .await;
+        }
     }
 
     // Get messages and other participant info
