@@ -1,0 +1,268 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25Z \u2014 7d 18h ago (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713: revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213) \u2014 delegations re-add reverted to reconcile with BIT-213 retirement"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat",
+      "score_delta": 0,
+      "evidence": [
+        "3308 lines churned in window 2026-06-16 \u2192 2026-06-23 (largely refactor split this run)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat",
+      "score_delta": 0,
+      "evidence": [
+        "2691 lines churned in window 2026-06-16 \u2192 2026-06-23 (largely refactor split this run)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat",
+      "score_delta": 0,
+      "evidence": [
+        "2051 lines churned in window 2026-06-16 \u2192 2026-06-23 (largely refactor split this run)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 closed without merge: fix(ppt-web): add Leases nav link + home tile (#977)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed without merge: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev fro"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed without merge: fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS basel"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed without merge: feat(epic-3): story 3.2 - unit management UI (BIT-188)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed without merge: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no high-confidence allowlist matches this catch-up run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 brief grep #date",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative carve-out check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq scores within cap; decay applied",
+      "observed": "no score > 8; 6 decayed -1, 9 dropped via decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 N/A",
+      "observed": "no new plans",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans (0)",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no failed phases",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan slugs still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count vs HEAD",
+      "observed": "now=11 head=7",
+      "expected": "now\u2265head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline check",
+      "observed": "true; 0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 no-op",
+      "observed": "pm_cursor unchanged (5)",
+      "expected": "N/A when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
