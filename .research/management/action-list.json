@@ -122,11 +122,18 @@
       "action": "PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
@@ -144,11 +151,18 @@
       "action": "Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/−27 in PR #1293 PAP-171; second touch in 24h)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -381,11 +395,18 @@
       "action": "PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "screen-map-drift-pr-1418-ppt",
@@ -414,11 +435,18 @@
       "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1681,
+        "merged_at": "2026-06-22T16:33:10Z",
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
@@ -436,29 +464,43 @@
       "action": "PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "gap-81-1-report-schedule-cron-column",
       "action": "Report schedule editing round-trips cron through overloaded `time` field — add dedicated cron_expression column (migration+repo+route) (coverage 81-1; issue #616)",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-23 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-23 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-23T10:16:25Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-23T10:16:25Z"
+      }
     },
     {
       "id": "gap-79-1-wire-announcements-faults-api-hooks",
       "action": "ppt-web AnnouncementsPage + FaultsPage not fully wired to live @ppt/api-client hooks — complete list/create/update data wiring (coverage 79-1)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-23 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
