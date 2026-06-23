@@ -1,0 +1,152 @@
+{
+  "generated_at": "2026-06-23T11:55:00Z",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine clock",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 7d 8h (last_run_iso=2026-06-16T03:25:00Z)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713-delegations",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)",
+        "delegation feature was re-added via #1690 then immediately reverted per BIT-213 retirement decision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-23.md",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "no >8; 15 items decayed/dropped",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans had adversarial pass",
+      "observed": "n/a \u2014 0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans this run",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths only .research/",
+      "observed": "0 non-.research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (no failed phases)",
+      "observed": "no phase failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no plans deleted",
+      "expected": "all retained"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "\u2265HEAD",
+      "expected": "\u2265HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (\u22641 PR + \u22641 issue + \u22641 comment)",
+      "observed": "0 actions",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "pm 5\u21926, cov 12\u21920; action-list+risks valid",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar this run (no high-confidence allowlist signal: revert/lag are score-0 informational; no screen-map-drift, fixme, lockfile-bump, or stalled-review eligible)"
+}
