@@ -43,6 +43,7 @@ const MESSAGE_PREVIEW_LEN: usize = 120;
 
 /// Response for thread list.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ThreadListResponse {
     pub threads: Vec<ThreadWithPreview>,
     pub count: usize,
@@ -51,6 +52,7 @@ pub struct ThreadListResponse {
 
 /// Response for thread detail with messages.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ThreadDetailResponse {
     pub thread: MessageThread,
     pub other_participant: ParticipantInfo,
@@ -60,6 +62,7 @@ pub struct ThreadDetailResponse {
 
 /// Response for message creation.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SendMessageResponse {
     pub message: String,
     pub sent_message: Message,
@@ -67,12 +70,14 @@ pub struct SendMessageResponse {
 
 /// Response for unread count.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct UnreadMessagesResponse {
     pub unread_count: i64,
 }
 
 /// Response for blocked users list.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockedUsersResponse {
     pub blocked_users: Vec<BlockWithUserInfo>,
     pub count: usize,
@@ -80,6 +85,7 @@ pub struct BlockedUsersResponse {
 
 /// Generic success response.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageSuccessResponse {
     pub message: String,
 }
@@ -95,6 +101,7 @@ pub struct MessageSuccessResponse {
 /// UC-05.8 / [BIT-183]). When both are supplied they are merged. After
 /// de-duplication and removing the caller, at least one recipient must remain.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct StartThreadRequest {
     /// Recipient user IDs for an N-party (group) conversation. Preferred field.
     #[serde(default)]
@@ -125,6 +132,7 @@ impl StartThreadRequest {
 
 /// Request for sending a message.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SendMessageRequest {
     pub content: String,
 }
