@@ -1266,5 +1266,48 @@
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
     }
+  },
+  "sentiment": {
+    "pageTitle": "Nastroje najemców",
+    "pageSubtitle": "Trendy nastrojów i alerty z komunikacji najemców generowane przez AI.",
+    "orgAvg": "Śr. org. (30 dni)",
+    "totalTrends": "Punkty danych",
+    "openAlerts": "Otwarte alerty",
+    "totalAlerts": "Łączna liczba alertów",
+    "trendTitle": "Trend nastrojów (30 dni)",
+    "notEnoughData": "Za mało danych, aby narysować trend.",
+    "alertsTitle": "Alerty nastrojów",
+    "noAlerts": "Brak aktywnych alertów.",
+    "acknowledge": "Potwierdź",
+    "acknowledged": "Potwierdzono",
+    "alertMeta": "Wynik {{score}} · próg {{threshold}} · {{date}}",
+    "alertType": {
+      "spike_negative": "Negatywny skok",
+      "sustained_decline": "Utrzymujący się spadek",
+      "anomaly": "Anomalia"
+    }
+  },
+  "predictive": {
+    "pageTitle": "Konserwacja predykcyjna",
+    "pageSubtitle": "Monitorowanie stanu urządzeń i prognozy awarii oparte na AI.",
+    "totalEquipment": "Łączna liczba urządzeń",
+    "needsMaintenance": "Wymaga konserwacji",
+    "highRisk": "Otwarte o wysokim ryzyku",
+    "totalPredictions": "Łączna liczba prognoz",
+    "equipmentTitle": "Urządzenia",
+    "noEquipment": "Nie znaleziono urządzeń.",
+    "predictionsTitle": "Prognozy konserwacji",
+    "noPredictions": "Brak prognoz o wysokim ryzyku.",
+    "acknowledge": "Potwierdź",
+    "acknowledged": "Potwierdzono",
+    "riskBadge": "Ryzyko {{pct}}%",
+    "failureEta": "Awaria ~{{date}}",
+    "confidenceMeta": "Pewność {{pct}}% · {{date}}",
+    "equipmentStatus": {
+      "operational": "Sprawne",
+      "needs_maintenance": "Wymaga konserwacji",
+      "under_repair": "W naprawie",
+      "decommissioned": "Wycofane"
+    }
   }
 }

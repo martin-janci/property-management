@@ -2,21 +2,14 @@
  * Predictive Maintenance Hooks (Epic 13, Story 13.3)
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getApiClient } from '../../../lib/api';
 import type { Equipment, EquipmentQuery, MaintenancePrediction, PredictionsQuery } from '../types';
 
-const EQUIPMENT_API = '/api/v1/ai/equipment';
-
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(err.message || `HTTP ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
+// Path is relative to the api-client baseURL (`/api/v1`). Routing through
+// `getApiClient()` ensures the shared axios interceptors apply: Bearer-token
+// injection, ErrorResponse → ApiError transformation, 401 → onUnauthorized,
+// and transient 5xx/429 retry with backoff.
+const EQUIPMENT_API = '/ai/equipment';
 
 export const predictiveKeys = {
   all: ['predictive-maintenance'] as const,
@@ -36,7 +29,12 @@ export function useEquipmentList(query?: EquipmentQuery) {
 
   return useQuery({
     queryKey: predictiveKeys.equipment(query),
-    queryFn: () => apiFetch<{ equipment: Equipment[] }>(`${EQUIPMENT_API}${qs ? `?${qs}` : ''}`),
+    queryFn: async () => {
+      const res = await getApiClient().get<{ equipment: Equipment[] }>(
+        `${EQUIPMENT_API}${qs ? `?${qs}` : ''}`
+      );
+      return res.data;
+    },
     staleTime: 60 * 1000,
   });
 }
@@ -48,10 +46,12 @@ export function useMaintenancePredictions(query?: PredictionsQuery) {
 
   return useQuery({
     queryKey: predictiveKeys.predictions(query),
-    queryFn: () =>
-      apiFetch<{ predictions: MaintenancePrediction[] }>(
+    queryFn: async () => {
+      const res = await getApiClient().get<{ predictions: MaintenancePrediction[] }>(
         `${EQUIPMENT_API}/predictions${qs ? `?${qs}` : ''}`
-      ),
+      );
+      return res.data;
+    },
     staleTime: 60 * 1000,
   });
 }
@@ -59,10 +59,12 @@ export function useMaintenancePredictions(query?: PredictionsQuery) {
 export function useNeedingMaintenance(daysAhead = 30) {
   return useQuery({
     queryKey: predictiveKeys.needingMaintenance(),
-    queryFn: () =>
-      apiFetch<{ equipment: Equipment[] }>(
+    queryFn: async () => {
+      const res = await getApiClient().get<{ equipment: Equipment[] }>(
         `${EQUIPMENT_API}/needing-maintenance?days_ahead=${daysAhead}`
-      ),
+      );
+      return res.data;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -70,11 +72,13 @@ export function useNeedingMaintenance(daysAhead = 30) {
 export function useAcknowledgeMaintenancePrediction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (predictionId: string) =>
-      apiFetch<MaintenancePrediction>(`${EQUIPMENT_API}/predictions/${predictionId}/acknowledge`, {
-        method: 'POST',
-        body: JSON.stringify({}),
-      }),
+    mutationFn: async (predictionId: string) => {
+      const res = await getApiClient().post<MaintenancePrediction>(
+        `${EQUIPMENT_API}/predictions/${predictionId}/acknowledge`,
+        {}
+      );
+      return res.data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: predictiveKeys.all });
     },

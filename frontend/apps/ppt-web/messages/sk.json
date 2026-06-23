@@ -1396,5 +1396,48 @@
       "generating": "Generuje sa…",
       "submit": "Generovať dokument"
     }
+  },
+  "sentiment": {
+    "pageTitle": "Nálada nájomníkov",
+    "pageSubtitle": "Trendy nálady a upozornenia z komunikácie nájomníkov získané pomocou AI.",
+    "orgAvg": "Priemer org. (30 d)",
+    "totalTrends": "Dátové body",
+    "openAlerts": "Otvorené upozornenia",
+    "totalAlerts": "Celkový počet upozornení",
+    "trendTitle": "Trend nálady (30 dní)",
+    "notEnoughData": "Nedostatok údajov na vykreslenie trendu.",
+    "alertsTitle": "Upozornenia na náladu",
+    "noAlerts": "Žiadne aktívne upozornenia.",
+    "acknowledge": "Potvrdiť",
+    "acknowledged": "Potvrdené",
+    "alertMeta": "Skóre {{score}} · prah {{threshold}} · {{date}}",
+    "alertType": {
+      "spike_negative": "Negatívny výkyv",
+      "sustained_decline": "Pretrvávajúci pokles",
+      "anomaly": "Anomália"
+    }
+  },
+  "predictive": {
+    "pageTitle": "Prediktívna údržba",
+    "pageSubtitle": "Monitorovanie stavu zariadení a predpovede porúch pomocou AI.",
+    "totalEquipment": "Celkový počet zariadení",
+    "needsMaintenance": "Vyžaduje údržbu",
+    "highRisk": "Otvorené s vysokým rizikom",
+    "totalPredictions": "Celkový počet predpovedí",
+    "equipmentTitle": "Zariadenia",
+    "noEquipment": "Nenašli sa žiadne zariadenia.",
+    "predictionsTitle": "Predpovede údržby",
+    "noPredictions": "Žiadne predpovede s vysokým rizikom.",
+    "acknowledge": "Potvrdiť",
+    "acknowledged": "Potvrdené",
+    "riskBadge": "Riziko {{pct}} %",
+    "failureEta": "Porucha ~{{date}}",
+    "confidenceMeta": "Spoľahlivosť {{pct}} % · {{date}}",
+    "equipmentStatus": {
+      "operational": "Funkčné",
+      "needs_maintenance": "Vyžaduje údržbu",
+      "under_repair": "V oprave",
+      "decommissioned": "Vyradené"
+    }
   }
 }

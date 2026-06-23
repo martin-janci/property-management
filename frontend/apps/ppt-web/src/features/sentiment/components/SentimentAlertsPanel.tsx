@@ -2,10 +2,11 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SentimentAlert } from '../types';
 
-const ALERT_TYPE_LABELS: Record<string, string> = {
-  spike_negative: 'Negative spike',
-  sustained_decline: 'Sustained decline',
-  anomaly: 'Anomaly',
+/** Known alert-type enum values, mapped to translation keys under `sentiment.alertType.*`. */
+const ALERT_TYPE_KEYS: Record<string, string> = {
+  spike_negative: 'sentiment.alertType.spike_negative',
+  sustained_decline: 'sentiment.alertType.sustained_decline',
+  anomaly: 'sentiment.alertType.anomaly',
 };
 
 interface SentimentAlertsPanelProps {
@@ -45,12 +46,17 @@ export function SentimentAlertsPanel({
             <li key={alert.id} className="flex items-center justify-between gap-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-gray-900">
-                  {ALERT_TYPE_LABELS[alert.alertType] ?? alert.alertType}
+                  {ALERT_TYPE_KEYS[alert.alertType]
+                    ? t(ALERT_TYPE_KEYS[alert.alertType])
+                    : alert.alertType}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Score {alert.currentSentiment.toFixed(2)} · threshold{' '}
-                  {alert.thresholdBreached.toFixed(2)} ·{' '}
-                  {new Date(alert.createdAt).toLocaleDateString()}
+                  {t('sentiment.alertMeta', {
+                    defaultValue: 'Score {{score}} · threshold {{threshold}} · {{date}}',
+                    score: alert.currentSentiment.toFixed(2),
+                    threshold: alert.thresholdBreached.toFixed(2),
+                    date: new Date(alert.createdAt).toLocaleDateString(),
+                  })}
                 </p>
               </div>
               {!alert.acknowledged && (
