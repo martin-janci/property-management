@@ -1,0 +1,249 @@
+{
+  "date": "2026-06-23",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-06-16T03:25Z is 7d 12h old"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-23",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25Z is 7d old; cloud routine may be paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16: backend/crates/db/src/repositories/document.rs (3073 lines)",
+      "score_delta": 0,
+      "evidence": [
+        "2026-06-23 churn: 3073 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/crates/db/src/repositories/document.rs] runs_seen=1 \u2192 now 2",
+      "score_delta": 1,
+      "evidence": [
+        "2026-06-23 churn=3073 lines (was 2940 last seen 2026-06-10)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16: backend/crates/db/src/repositories/rental.rs (2939 lines)",
+      "score_delta": 1,
+      "evidence": [
+        "2026-06-23 churn: 2939 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16: backend/crates/integrations/src/booking/mod.rs (2818 lines)",
+      "score_delta": 1,
+      "evidence": [
+        "2026-06-23 churn: 2818 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed unmerged 2026-06-23T06:14:41Z: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev fro"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed unmerged 2026-06-22T21:04:53Z: fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS basel"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed unmerged 2026-06-22T16:50:15Z: feat(epic-3): story 3.2 - unit management UI (BIT-188)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed unmerged 2026-06-22T13:48:09Z: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-23.md && head -1 == # 2026-06-23",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counting on non-cumulative signal types",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 & decay applied",
+      "observed": "all caps OK; 6 decayed, 9 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2192 no adversarial pass required",
+      "observed": "no new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths in staged diff",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed this run",
+      "observed": "phases failed: none",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan still in plans/ or _archive/",
+      "observed": "all 9 prior plans present (4 moved to archive this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "archive grew (+4)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "auto_fix_actions: []",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 no-op",
+      "observed": "pm_cursor unchanged; management artifacts still valid",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
