@@ -1,0 +1,193 @@
+{
+  "date": "2026-06-23",
+  "lag_hours": 174,
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "7-day-lag catchup: Phase 5 not run (no eligible candidate would be auto-fixed; manual resolutions claimed the queue)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "174h (7.25d) since last run \u2014 exceeds 36h threshold; cron likely paused.",
+      "confidence": "high",
+      "candidate_vector": "lag_warning"
+    },
+    {
+      "id": "stale-routine-2026-06-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-06-16, 7d old; cloud routine may be paused. Check separately.",
+      "confidence": "high",
+      "candidate_vector": "lag_warning"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts #1690 (delegations FE re-add) \u2014 gap-sweep silently overturned board decision PAP-33/51/55 (BIT-213). Root cause: dispatcher/automation re-admitted retired surface w/o BIT-213 check.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-23",
+      "score_delta": 1,
+      "evidence": "2939 LOC changed in backend/crates/db/src/repositories/rental.rs across the 7-day window (rental_booking expansion + guest-id + Booking.com hardening).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-23",
+      "score_delta": 1,
+      "evidence": "2818 LOC churn in backend/crates/integrations/src/booking/mod.rs after the ota_xml split (PR #1693) + Booking.com OTA rate-availability work.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "commit log 2026-06-16..2026-06-23",
+      "score_delta": 1,
+      "evidence": "3073 LOC churn in backend/crates/db/src/repositories/document.rs in this window \u2014 repeated hotspot (runs_seen=2). Open PR #1683 proposes module split; not yet merged.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-23",
+      "score_delta": 0,
+      "evidence": "3073 LOC churn again this run (cumulative re-emit, no score added).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-23.md && header matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup honored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 and decay applied",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "Decay applied per script; 9 items dropped to 0, 6 decayed -1."
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; trivially passes",
+      "observed": "0 new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, all sections present",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secrets/private-hosts on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "render backlog.md and diff vs staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure cursors honor",
+      "observed": "no failed phases (1.5/1.6 deliberately skipped, cursors not advanced)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans from prior run still present in plans/ or plans/_archive/",
+      "observed": "all carry-over plans present",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7=7",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "render IDEAS_TRIAGE.md and diff vs staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps respected (no auto-fix this run)",
+      "observed": "0 actions",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (lag catchup) \u2192 gate is no-op",
+      "observed": "phase skipped; pm_cursor unchanged",
+      "expected": "no-op when phase skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
