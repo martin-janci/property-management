@@ -1172,6 +1172,7 @@ impl Scheduler {
                 .and_then(|dt| dt.and_local_timezone(chrono::Utc).single())
                 .unwrap_or_else(chrono::Utc::now);
 
+            let mut sent_for_invoice = 0u64;
             for user_id in &user_ids {
                 match self
                     .notification_service
@@ -1180,6 +1181,7 @@ impl Scheduler {
                 {
                     Ok(()) => {
                         total_sent += 1;
+                        sent_for_invoice += 1;
                         tracing::info!(
                             invoice_id = %invoice.id,
                             user_id = %user_id,
@@ -1194,6 +1196,24 @@ impl Scheduler {
                             "Failed to send payment reminder notification"
                         );
                     }
+                }
+            }
+
+            // Persistent dedup (#1790): once at least one reminder for this
+            // invoice has gone out, stamp it so the next ~60s tick skips it for
+            // 24h instead of re-spamming the unit. A fully-failed invoice is
+            // left unstamped so it is retried on the next tick.
+            if sent_for_invoice > 0 {
+                if let Err(e) = self
+                    .financial_repo
+                    .mark_payment_reminder_sent(invoice.id)
+                    .await
+                {
+                    tracing::warn!(
+                        invoice_id = %invoice.id,
+                        error = %e,
+                        "Failed to stamp last_payment_reminder_at — next tick may resend"
+                    );
                 }
             }
         }

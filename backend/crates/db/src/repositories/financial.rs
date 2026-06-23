@@ -1566,6 +1566,10 @@ impl FinancialRepository {
               AND due_date > $1
               AND due_date <= $2
               AND balance_due > 0
+              -- Persistent dedup (#1790): skip invoices reminded within the last
+              -- 24h so a 60s scheduler tick can't re-spam the whole window.
+              AND (last_payment_reminder_at IS NULL
+                   OR last_payment_reminder_at < NOW() - INTERVAL '24 hours')
             ORDER BY due_date ASC
             "#,
         )
@@ -1573,6 +1577,17 @@ impl FinancialRepository {
         .bind(cutoff)
         .fetch_all(&self.pool)
         .await
+    }
+
+    /// Stamp `last_payment_reminder_at = NOW()` for an invoice after a reminder
+    /// has been dispatched, so subsequent scheduler ticks skip it for the dedup
+    /// window (#1790). Mirrors the signature-reminder `touch_signer_reminder`.
+    pub async fn mark_payment_reminder_sent(&self, invoice_id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query("UPDATE invoices SET last_payment_reminder_at = NOW() WHERE id = $1")
+            .bind(invoice_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     /// Atomically transitions all `sent` or `partial` invoices whose
