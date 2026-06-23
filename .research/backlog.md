@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-23 16:20 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-23 16:24 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -86,6 +86,7 @@
 | 1 | dx | `closed-not-merged-pr-1727` | PR #1727 closed unmerged 2026-06-22T21:04:53Z: fix(ci): unblock backend gate — organizations fmt + notification_event RLS basel | open | 2026-06-23 |  |
 | 1 | dx | `closed-not-merged-pr-1698` | PR #1698 closed unmerged 2026-06-22T16:50:15Z: feat(epic-3): story 3.2 - unit management UI (BIT-188) | open | 2026-06-23 |  |
 | 1 | dx | `closed-not-merged-pr-1634` | PR #1634 closed unmerged 2026-06-22T13:48:09Z: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100 | open | 2026-06-23 |  |
+| 1 | dx | `dx-buffer-low-2026-06-23` | Dispatcher buffer drained: claimable=15/72, 0 promotable — research-rubric vs sprint-throughput mismatch | needs-human-judgement | 2026-06-23 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-922-ppt` | Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-forms-rs` | Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs` | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | open | 2026-06-16 |  |

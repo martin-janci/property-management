@@ -122,6 +122,19 @@
       ],
       "confidence": "high",
       "candidate_vector": "dx"
+    },
+    {
+      "id": "buffer-low-2026-06-23",
+      "type": "buffer-low",
+      "source": "dispatcher fire payload",
+      "score_delta": 0,
+      "evidence": [
+        "dispatcher fire payload 2026-06-23: claimable=15/72 \u2014 backlog fully drained, 0 promotable; coverage rubric needed",
+        "verified: 2 score=3 ready items (security-llm-doc-idor, bug-ios-searchview-uncompilable) already have plans + are in dispatcher pipeline",
+        "verified: no score=3 open items without plans; no score=2 items match security fast-track (none are vector=security)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
     }
   ],
   "auto_fix_actions": [],
@@ -136,7 +149,7 @@
     {
       "goal": "G2",
       "passed": true,
-      "command": "state changed vs HEAD",
+      "command": "state changed vs HEAD (seen_signals +1, last_run_iso +)",
       "observed": "true",
       "expected": "true"
     },
@@ -150,7 +163,7 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "no double-counting on non-cumulative signal types",
+      "command": "no double-counting (buffer-low signal is +0 score_delta)",
       "observed": "true",
       "expected": "true"
     },
@@ -158,7 +171,7 @@
       "goal": "G5",
       "passed": true,
       "command": "score<=8 & decay applied",
-      "observed": "all caps OK; 6 decayed, 9 dropped",
+      "observed": "all caps OK",
       "expected": "true"
     },
     {
@@ -207,14 +220,14 @@
       "goal": "G12",
       "passed": true,
       "command": "every prior plan still in plans/ or _archive/",
-      "observed": "all 9 prior plans present (4 moved to archive this run)",
+      "observed": "no new archive moves this rerun; all prior plans intact",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
       "command": "archive only grows",
-      "observed": "archive grew (+4)",
+      "observed": "archive count unchanged (\u2265 HEAD)",
       "expected": "true"
     },
     {
@@ -235,7 +248,7 @@
       "goal": "G16",
       "passed": true,
       "command": "Phase 1.6 skipped \u2192 no-op",
-      "observed": "pm_cursor unchanged; management artifacts still valid",
+      "observed": "pm_cursor unchanged from prior run",
       "expected": "no-op"
     },
     {
