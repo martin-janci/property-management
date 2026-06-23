@@ -706,8 +706,10 @@ was a hidden contributor to the GC3 overshoot too). The cascade is the
 idempotent `gc1-reconcile.sh` and drains the two ACTIONABLE GC1 violations:
 
 ```bash
-# (1) archive-terminal leak → auto-close (open gap item whose exact task_id is
-#     already merged/done in the archive; same leak as reclaim-of-already-merged-task-id).
+# (1) archive-terminal leak → auto-close any OPEN action-list item (ANY id shape,
+#     not just gap-*: code-review-*, test-gap-*, screen-map-*, churn-hotspot-*, …)
+#     whose exact task_id is terminal in the archive — merged/done → done,
+#     failed → dropped (issue #1747, #1739; same leak as reclaim-of-already-merged-task-id).
 # (2) stem orphan → emit to gc1-orphan-triage.md for a coverage author (NOT closed:
 #     these are real stories missing from coverage.json — relink, never prune).
 # Legitimate open follow-ups under a done story (exact task not merged) are left alone.
@@ -717,10 +719,11 @@ bash .research/gc1-reconcile.sh --apply
 This is bounded and self-describing: every closed row gets a `gc1_closed`
 stamp (merged PR + date), every orphan lands in the triage doc — **never a
 silent prune of live work**. Include `action-list.json` (and the triage doc)
-in the Phase 6 commit when the cascade closed any row. Matching is by the
-`<epic>-<story>` stem, identical to `goal-check.sh` GC1 — the stem, not the
-descriptive slug, is the stable join key (the slug mismatch is what made GC1
-false-flag ~95 live items as orphans before this fix). Going forward GC1 stays
+in the Phase 6 commit when the cascade closed any row. The leak pass (1)
+matches on the **exact task_id** against the archive (any id shape); the orphan
+pass (2) matches by the `<epic>-<story>` stem, identical to `goal-check.sh` GC1
+— the stem, not the descriptive slug, is the stable join key (the slug mismatch
+is what made GC1 false-flag ~95 live items as orphans before this fix). Going forward GC1 stays
 green run-to-run because the leak is drained here every cycle; once the orphan
 triage backlog reaches 0 (coverage authored for the missing stems), flip GC1 to
 a hard Phase 6 gate (`hard=true`) the same way GC2 is enforced today.
@@ -1047,6 +1050,22 @@ TERMINAL_IDS=$(jq -r '.assignments[]
   .research/management/assignments-archive.json \
   | sort -u)
 
+# ARCHIVED_IDS = ALL archived/terminal ids, INCLUDING failed (issue #1739 #3).
+# The claim self-exclusion below must reject ANY id already in the archive,
+# not just merged/done — a previously-FAILED task_id otherwise passes the
+# filter, gets claimed, then trips the cross-file duplicate self-test (T4) at
+# the Phase 6 gate (the row exists in the archive as `failed`). Distinct from
+# TERMINAL_IDS, which feeds dependency satisfaction (`claimable`): a failed dep
+# must NOT count as satisfied, so failed ids stay OUT of TERMINAL_IDS and only
+# join the self-exclusion set here. A failed task that should be retried must
+# use a suffixed id (e.g. `<id>-retry`), per the stem/suffix convention.
+ARCHIVED_IDS=$(jq -r '.assignments[]
+                     | select(.status=="merged" or .status=="done" or .status=="failed")
+                     | .task_id' \
+  .research/management/assignments.json \
+  .research/management/assignments-archive.json \
+  | sort -u)
+
 # PR 5/5 — stem-aware active check, parallel to the terminal check.
 # active_stems and quarantined_stems both block re-claim under a
 # suffix-variant slug; quarantined deserves explicit attention because
@@ -1058,10 +1077,10 @@ active_stems = {stem(r.task_id) for r in assignments
 candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
-              and c.id not in TERMINAL_IDS                  # exact-id terminal check
-              and stem(c.id) not in {stem(t) for t in TERMINAL_IDS}   # stem-aware terminal check
+              and c.id not in ARCHIVED_IDS                  # exact-id archive check (incl. failed — issue #1739 #3)
+              and stem(c.id) not in {stem(t) for t in ARCHIVED_IDS}   # stem-aware archive check (incl. failed)
               and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5)
-              and claimable(c, TERMINAL_IDS)]
+              and claimable(c, TERMINAL_IDS)]               # dep satisfaction: merged/done only (failed deps unsatisfied)
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
 
@@ -1084,7 +1103,8 @@ predicate. Only `depends_on` is.
 claim any task_id that appears in either `assignments.json` (active) OR
 `assignments-archive.json` (terminal). Reusing a task_id from the archive
 would resurrect a merged/failed task with a fresh `claimed_at` — a bug.
-The `c.id not in terminal_ids` check above enforces this.
+The `c.id not in ARCHIVED_IDS` check above enforces this (ARCHIVED_IDS
+includes `failed`, so previously-failed ids are also refused — issue #1739 #3).
 
 **Same-epic burst-claim guard (NEW — item #2):**
 
@@ -1192,18 +1212,73 @@ improvements.
 
    Log: `Dup-skip: <candidate.id> reason=file-overlap with=<other_id> shared=<count>:<first-3-paths>`.
 
-The three guards form a defense-in-depth ladder: (1) catches collisions
+4. **Computed-branch collision (reason code: `branch-collision`; issue
+   #1747, #1739).** Even with the hash-suffixed branch name above, never
+   claim a candidate whose **computed branch** equals a branch that is
+   already active or recently merged — that would force-push over a live or
+   just-landed PR. This is the guard the old stem-only ladder lacked: it
+   compares the *exact computed branch string*, not a stem, so it catches
+   the truncation-collision class directly. Build the blocked-branch set
+   once per run from (a) every `in-progress`/`review` row's `branch` in
+   `assignments.json`, (b) open `auto-impl/*` PR head refs, and (c)
+   recently-merged `auto-impl/*` PR head refs (last 14 days):
+
+   ```bash
+   # (a) active rows + (b) open auto-impl/ PR heads + (c) recently-merged heads
+   jq -r '.assignments[] | select(.status=="in-progress" or .status=="review")
+            | .branch // empty' .research/management/assignments.json > /tmp/blocked-branches.txt
+   gh pr list --state open --limit 100 --search 'head:auto-impl/' \
+     --json headRefName -q '.[].headRefName' >> /tmp/blocked-branches.txt
+   gh pr list --state merged --limit 100 --search 'head:auto-impl/ merged:>='"$(date -u -d '14 days ago' +%F)" \
+     --json headRefName -q '.[].headRefName' >> /tmp/blocked-branches.txt
+   sort -u /tmp/blocked-branches.txt -o /tmp/blocked-branches.txt
+   ```
+
+   Hit predicate: `compute_branch(candidate.id)` (the exact string from the
+   branch-computation block below) appears in `/tmp/blocked-branches.txt`.
+
+   Log: `Dup-skip: <candidate.id> reason=branch-collision branch=<branch> conflicts_with=<active-row|PR>`.
+
+The four guards form a defense-in-depth ladder: (1) catches collisions
 across runs, (2) catches collisions within the same run, (3) catches
 semantically-equivalent slugs whose stems differ but whose plans land on
-the same files. Every skip writes a structured row that Phase 8 aggregates
-to detect systemic drift (e.g. repeated `open-assignment` skips on the
-same epic signal a planner bug, not a claim-time issue).
+the same files, (4) catches the exact-computed-branch collision class
+(truncated-prefix families) before it can force-push over a live or
+recently-merged branch. Every skip writes a structured row that Phase 8
+aggregates to detect systemic drift (e.g. repeated `open-assignment` skips
+on the same epic signal a planner bug, not a claim-time issue).
 
-Implementation note: all three guards rely on `stem(...)`. Define it once
-at the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
+Implementation note: guards 1–3 rely on `stem(...)`; guard 4 relies on
+`compute_branch(...)` (defined in the branch-computation block below).
+Define each once at the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
 `free_slots` (≤ `DISPATCHER_CLAIM_CAP` per run × 2 calls) — at most `2 × DISPATCHER_CLAIM_CAP` (default 12) extra `gh` invocations.
 
-For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
+**Branch computation (collision-safe — issue #1747, #1739).**
+For each picked task, compute the branch as the 40-char kebab prefix **plus a
+short hash of the FULL `task_id`**, so distinct ids that share a 40-char prefix
+get distinct branches:
+
+```bash
+# Stable, collision-safe branch name for a task_id.
+# The 40-char kebab prefix keeps the branch human-readable; the 8-char sha1 of
+# the FULL id disambiguates whole task families that share that prefix (e.g.
+# churn-hotspot-backend-servers-api-server-* — 10+ ids that all truncate to
+# auto-impl/churn-hotspot-backend-servers-api-server and used to collapse to ONE
+# branch, capping the family to one in-flight item at a time).
+compute_branch() {
+  local id="$1"
+  local kebab; kebab=$(printf '%s' "$id" \
+    | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//; s/-$//')
+  local slug="${kebab:0:40}"; slug="${slug%-}"   # trim a dangling hyphen
+  local h; h=$(printf '%s' "$id" | sha1sum | cut -c1-8)
+  printf 'auto-impl/%s-%s' "$slug" "$h"
+}
+branch="$(compute_branch "$task_id")"
+```
+
+The hash suffix only affects **new** claims — in-flight branches keep their
+existing names (no orphaning of live PRs #1683/#1718 etc.). Two distinct ids
+can no longer share a branch unless they sha1-collide on the full id.
 
 **Branch-prefix guard (ingestion contract — issue #573):**
 Before appending any row to `assignments.json`, assert that `branch` starts
