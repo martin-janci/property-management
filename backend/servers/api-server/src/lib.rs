@@ -470,6 +470,7 @@ pub fn create_router(state: AppState) -> Router {
                 .allow_credentials(true)
                 .max_age(std::time::Duration::from_secs(3600)),
         )
+        .layer(Extension(state.clone()))
         // Application state
         .with_state(state)
 }

@@ -25,6 +25,8 @@ tracing = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
 # Phase 5.5: per-tenant rate limiting (defense leak #15) and metering (#19)
 governor = "0.10"
 metrics = { workspace = true }
