@@ -12,7 +12,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import { getMyListing, RealtorApiError, updateListing } from '@/lib/realtor-api';
+import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
@@ -89,6 +89,8 @@ const EMPTY_FORM: ListingEditFormData = {
   propertyType: 'apartment',
   address: '',
   city: '',
+  postalCode: '',
+  country: '',
   area: '',
   rooms: '',
   floor: '',
@@ -127,6 +129,8 @@ function EditWizardContent() {
             (listing.propertyType as ListingEditFormData['propertyType']) ?? 'apartment',
           address: listing.street ?? '',
           city: listing.city ?? '',
+          postalCode: listing.postalCode ?? '',
+          country: listing.country ?? '',
           area: listing.area ?? '',
           rooms: listing.rooms ?? '',
           floor: listing.floor ?? '',
@@ -138,7 +142,16 @@ function EditWizardContent() {
           price: listing.price ?? '',
           currency: listing.currency ?? 'EUR',
           priceNegotiable: listing.isNegotiable ?? false,
-          status: (listing.status as ListingEditFormData['status']) ?? 'draft',
+          // Backend lifecycle statuses (`active`/`paused`/…) → the form's
+          // 3-state control; unknown values fall back to `draft`.
+          status:
+            listing.status === 'active'
+              ? 'active'
+              : listing.status === 'draft'
+                ? 'draft'
+                : listing.status === 'paused'
+                  ? 'inactive'
+                  : 'draft',
         });
       })
       .catch((err) => {
@@ -153,6 +166,12 @@ function EditWizardContent() {
     setSaving(true);
     setSaveError(null);
     try {
+      const floor = typeof form.floor === 'number' ? form.floor : Number(form.floor) || undefined;
+      // Map the form's owner-intent status onto a backend-permitted lifecycle
+      // value. Publishing (`active`) is moderation-gated server-side, so we omit
+      // `status` in that case rather than send a value the API would reject.
+      const status: ListingDraft['status'] | undefined =
+        form.status === 'inactive' ? 'paused' : form.status === 'draft' ? 'draft' : undefined;
       await updateListing(listingId, {
         title: form.description?.slice(0, 80) || `${form.propertyType} ${form.city}`,
         description: form.description,
@@ -162,8 +181,13 @@ function EditWizardContent() {
         currency: form.currency,
         street: form.address,
         city: form.city,
+        postalCode: form.postalCode || undefined,
+        country: form.country || undefined,
         area: typeof form.area === 'number' ? form.area : Number(form.area) || undefined,
         rooms: typeof form.rooms === 'number' ? form.rooms : Number(form.rooms) || undefined,
+        floor,
+        isNegotiable: form.priceNegotiable,
+        ...(status ? { status } : {}),
       });
       setSaved(true);
     } catch (err) {

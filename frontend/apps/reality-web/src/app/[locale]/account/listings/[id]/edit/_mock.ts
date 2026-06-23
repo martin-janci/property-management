@@ -25,6 +25,8 @@ export interface ListingEditFormData {
   propertyType: PropertyType;
   address: string;
   city: string;
+  postalCode: string;
+  country: string;
   area: number | '';
   rooms: number | '';
   floor: number | '';
@@ -52,6 +54,8 @@ export const MOCK_LISTING_DATA: ListingEditFormData = {
   propertyType: 'apartment',
   address: 'Pribinova 25',
   city: 'Bratislava',
+  postalCode: '81109',
+  country: 'SK',
   area: 72,
   rooms: 3,
   floor: 4,
