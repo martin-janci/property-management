@@ -1,0 +1,143 @@
+/* Global styles for the Accounting Portal public surface.
+   All visual values come from the @ppt/ui-kit design tokens — no one-off
+   colors/spacings here. */
+@import "@ppt/ui-kit/tokens.css";
+
+:root {
+  --ppt-font-family:
+    var(--ppt-font-inter, "Inter"), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--ppt-font-family);
+  background-color: var(--ppt-neutral-0);
+  color: var(--ppt-fg-secondary, #374151);
+  line-height: var(--ppt-line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Honour reduced-motion: turn off smooth scroll + transitions for users who ask. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shared page container — content-driven max width from the token. */
+.container {
+  width: 100%;
+  max-width: var(--ppt-content-max, 1280px);
+  margin: 0 auto;
+  padding-inline: var(--ppt-space-6);
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: var(--ppt-space-4);
+  }
+}
+
+/* Visually-hidden utility for skip-link + a11y labels. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Button-style links (CTAs are <a>, not <button>, so they render in RSC
+   and remain crawlable). Mirrors the ui-kit Button token vocabulary. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ppt-space-2);
+  font-family: inherit;
+  font-weight: var(--ppt-font-weight-semibold);
+  border-radius: var(--ppt-radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--ppt-color-primary);
+  outline-offset: 2px;
+}
+.btn-md {
+  font-size: var(--ppt-font-size-sm);
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+}
+.btn-lg {
+  font-size: var(--ppt-font-size-base);
+  padding: var(--ppt-space-3) var(--ppt-space-6);
+}
+.btn-primary {
+  background: var(--ppt-color-primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--ppt-color-primary-hover);
+}
+.btn-secondary {
+  background: var(--ppt-neutral-0);
+  color: var(--ppt-neutral-800, #1f2937);
+  border-color: var(--ppt-neutral-300);
+}
+.btn-secondary:hover {
+  border-color: var(--ppt-neutral-400);
+  background: var(--ppt-neutral-50);
+}
+.btn-white {
+  background: #fff;
+  color: var(--ppt-color-primary-dark);
+}
+.btn-white:hover {
+  background: var(--ppt-brand-50);
+}
+
+/* Skip link becomes visible on focus (keyboard users). */
+.skip-link {
+  position: absolute;
+  left: var(--ppt-space-4);
+  top: -3rem;
+  z-index: 100;
+  background: var(--ppt-color-primary);
+  color: #fff;
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+  border-radius: var(--ppt-radius-md);
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: var(--ppt-space-4);
+}
