@@ -193,6 +193,36 @@ pub struct CreateMessage {
 }
 
 // ============================================================================
+// MESSAGE ATTACHMENT MODELS (UC-05.9 / BIT-184)
+// ============================================================================
+
+/// An S3-backed file attachment linked to a message.
+///
+/// Mirrors `AnnouncementAttachment`: the row stores file metadata and the S3
+/// object key; presigned upload/download URLs are minted on demand by the
+/// route layer and are never persisted.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct MessageAttachment {
+    pub id: Uuid,
+    pub message_id: Uuid,
+    pub file_key: String,
+    pub file_name: String,
+    pub file_type: String,
+    pub file_size: i64,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Request to link an uploaded S3 object to a message.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateMessageAttachment {
+    pub message_id: Uuid,
+    pub file_key: String,
+    pub file_name: String,
+    pub file_type: String,
+    pub file_size: i64,
+}
+
+// ============================================================================
 // USER BLOCK MODELS
 // ============================================================================
 

@@ -147,6 +147,14 @@ pub struct ConflictCheckResponse {
 ///   to an invalid `BookingLimit` attribute in `OTA_HotelAvailNotifRQ`, which
 ///   Booking.com rejects. This mirrors the `available_count >= 0` guard from
 ///   PR #607.
+/// * **Non-negative rate** — a negative `base_rate` serialises to an invalid
+///   `AmountAfterTax` attribute in `OTA_HotelRateAmountNotifRQ` and is a
+///   money-correctness footgun, so it is rejected fast with a 400 (symmetric
+///   to the availability guard).
+/// * **Well-formed currency** — `currency` is carried verbatim into the
+///   `CurrencyCode` XML attribute, so a structurally invalid code (not a
+///   3-letter ASCII-uppercase ISO-4217-shaped code) is rejected fast with a
+///   400 instead of producing a document Booking.com rejects.
 ///
 /// On failure, returns `(error_code, human_message)` so the caller can build
 /// a `400` [`ErrorResponse`]. On success, returns `Ok(())`.
@@ -163,6 +171,25 @@ fn validate_listing_push(request: &ListingPushRequest) -> Result<(), (&'static s
         return Err((
             "INVALID_AVAILABLE_COUNT",
             "available_count must be non-negative",
+        ));
+    }
+
+    if request
+        .rates
+        .iter()
+        .any(|r| r.base_rate < rust_decimal::Decimal::ZERO)
+    {
+        return Err(("INVALID_RATE", "base_rate must be non-negative"));
+    }
+
+    if request
+        .rates
+        .iter()
+        .any(|r| r.currency.len() != 3 || !r.currency.chars().all(|ch| ch.is_ascii_uppercase()))
+    {
+        return Err((
+            "INVALID_CURRENCY",
+            "currency must be a 3-letter ASCII-uppercase code",
         ));
     }
 
@@ -901,6 +928,22 @@ mod tests {
         req.availability[1].available_count = -1;
         let err = validate_listing_push(&req).unwrap_err();
         assert_eq!(err.0, "INVALID_AVAILABLE_COUNT");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_negative_base_rate() {
+        let mut req = make_request(0, 2);
+        req.rates[1].base_rate = rust_decimal::Decimal::new(-1, 0);
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_RATE");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_invalid_currency() {
+        let mut req = make_request(0, 2);
+        req.rates[1].currency = "eur".to_string();
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_CURRENCY");
     }
 
     #[test]

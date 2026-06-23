@@ -6,6 +6,8 @@
  */
 import { useState } from 'react';
 import { Route } from 'react-router-dom';
+import { AuthRequiredGate } from '../../components';
+import { useAuth } from '../../contexts';
 import {
   useAcknowledgeMaintenancePrediction,
   useEquipmentList,
@@ -22,12 +24,17 @@ import { PredictiveMaintenancePage, SentimentDashboardPage } from '../lazyRoutes
 // ── Sentiment ──────────────────────────────────────────────────────────────
 
 function SentimentDashboardRoute() {
+  const { user } = useAuth();
   const { data: dashboard, isLoading: dashboardLoading } = useSentimentDashboard();
   const { data: trends, isLoading: trendsLoading } = useSentimentTrends({ limit: 60 });
   const { data: alerts, isLoading: alertsLoading } = useSentimentAlerts(false);
   const acknowledge = useAcknowledgeSentimentAlert();
 
   const pendingAcknowledgeId = acknowledge.isPending ? (acknowledge.variables ?? null) : null;
+
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
 
   return (
     <SentimentDashboardPage
@@ -46,6 +53,7 @@ function SentimentDashboardRoute() {
 // ── Predictive Maintenance ─────────────────────────────────────────────────
 
 function PredictiveMaintenanceRoute() {
+  const { user } = useAuth();
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null);
 
   const { data: equipmentData, isLoading: equipmentLoading } = useEquipmentList();
@@ -56,6 +64,10 @@ function PredictiveMaintenanceRoute() {
   const acknowledge = useAcknowledgeMaintenancePrediction();
 
   const pendingAcknowledgeId = acknowledge.isPending ? (acknowledge.variables ?? null) : null;
+
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
 
   return (
     <PredictiveMaintenancePage

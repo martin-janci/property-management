@@ -23,6 +23,7 @@ COPY frontend/packages/sitemap/package.json ./packages/sitemap/
 COPY frontend/packages/dev-panel/package.json ./packages/dev-panel/
 COPY frontend/packages/vite-plugin-ppt-worktree/package.json ./packages/vite-plugin-ppt-worktree/
 COPY frontend/packages/admin-ui/package.json ./packages/admin-ui/
+COPY frontend/packages/e2e/package.json ./packages/e2e/
 COPY frontend/apps/ppt-web/package.json ./apps/ppt-web/
 
 RUN pnpm install
