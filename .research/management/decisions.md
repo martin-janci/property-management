@@ -85,3 +85,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## 2026-06-23
+
+- [ ] 2026-06-23 (pm-scrum-master): Test-hardening batch #480-#487 (open 4+ weeks): formally defer to security-hardening sprint or block all dependent story promotions until closed?
+- [ ] 2026-06-23 (pm-scrum-master): sprint-status.yaml predates Dec 2025; replace as authority with coverage.json, or refresh in place?
+- [ ] 2026-06-23 (pm-scrum-master): 56 open from-merged-review issues: all must close before next release cut, or non-security items carry forward as fast-follows?
+- [ ] 2026-06-23 (pm-scrum-master): Draft PR #1754 admin-web stale 404/501 fallbacks: approve and merge or close?
+- [ ] 2026-06-23 (pm-security): WS token transport: short-lived ticket exchange (eliminates JWT-in-URL log risk) vs proxy-layer redaction (faster but ongoing ops discipline)
+- [ ] 2026-06-23 (pm-security): OAuth story promotion gate: close #481/#487 vs formally defer before 10a-1/10a-3 done

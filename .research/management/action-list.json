@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "generated": "2026-06-23T10:30:00Z",
   "items": [
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
@@ -36,7 +37,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
-      "action": "Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06-10 03:05Z→18:30Z)",
+      "action": "Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06-10 03:05Z\u219218:30Z)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -47,7 +48,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
-      "action": "Churn hotspot: 2856 lines changed in backend/crates/db/src/repositories/subscription.rs (window 2026-06-10 03:05Z→18:30Z)",
+      "action": "Churn hotspot: 2856 lines changed in backend/crates/db/src/repositories/subscription.rs (window 2026-06-10 03:05Z\u219218:30Z)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -58,7 +59,7 @@
     },
     {
       "id": "closed-not-merged-pr-1274",
-      "action": "PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed",
+      "action": "PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged \u2014 superseded by #1313 after auto-rebase fix landed",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -69,7 +70,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -80,7 +81,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/−27 in PR #1293 PAP-171; second touch in 24h)",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/\u221227 in PR #1293 PAP-171; second touch in 24h)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -91,7 +92,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/\u221228 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -146,7 +147,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -157,7 +158,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -168,7 +169,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -212,7 +213,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
-      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage)",
+      "action": "booking_oauth_csrf_tests.rs hotspot \u2014 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -223,7 +224,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
-      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage)",
+      "action": "booking_oauth_routes_tests.rs hotspot \u2014 381-line NEW test file (PR #1393 OAuth routes coverage)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -234,7 +235,7 @@
     },
     {
       "id": "closed-not-merged-pr-1425",
-      "action": "PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394",
+      "action": "PR #1425 (GH #1377 document presigned-URL tests) closed unmerged \u2014 superseded by merged #1394",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -245,7 +246,7 @@
     },
     {
       "id": "code-review-mobile-rn-screens-mock-data",
-      "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
+      "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays \u2014 no API wiring",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -256,7 +257,7 @@
     },
     {
       "id": "dx-stalled-review-pr-1179",
-      "action": "PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision",
+      "action": "PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) \u2014 stalled at 7d, no reviewDecision",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -267,7 +268,7 @@
     },
     {
       "id": "gap-81-1-report-schedule-cron-column",
-      "action": "Report schedule editing round-trips cron through overloaded `time` field — add dedicated cron_expression column (migration+repo+route) (coverage 81-1; issue #616)",
+      "action": "Report schedule editing round-trips cron through overloaded `time` field \u2014 add dedicated cron_expression column (migration+repo+route) (coverage 81-1; issue #616)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -286,6 +287,140 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "pm-scrum-master-triage-56-open-from-merged-review-follow-ups-1758-1793-start",
+      "action": "Triage 56 open from-merged-review follow-ups (#1758-#1793); start with security-labeled #1791 attachment IDOR, #1786 sensor WS authz tests, #1791 attachment IDOR, #1783 PII audit-logging, #1785 Stripe Checkout hardening",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-scrum-master-close-or-formally-defer-test-hardening-batch-480-487-481-oau",
+      "action": "Close or formally defer test-hardening batch #480-#487 \u2014 #481 OAuth refresh-token revocation bypass and #480 WS JWT in access logs gate 10a-1, 10a-3, 8a-3 promotions",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-scrum-master-complete-epic-6-partial-stories-6-2-6-3-6-4-wire-remaining-m",
+      "action": "Complete Epic 6 partial stories 6-2/6-3/6-4 \u2014 wire remaining mobile UI gaps and flip sprint-status to done once issue #486 resolves",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "Issue #486 closed",
+      "depends_on": [
+        "UNRESOLVED:Issue #486 closed"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-scrum-master-complete-epic-80-partials-80-2-5-step-wizard-i18n-and-80-3-p",
+      "action": "Complete Epic 80 partials 80-2 (5-step wizard + i18n) and 80-3 (party submissions endpoints wiring) to close MVP epic",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-scrum-master-update-sprint-status-yaml-to-reflect-actual-state-epics-7a-8",
+      "action": "Update sprint-status.yaml to reflect actual state (epics 7a/8a/10b stories done; add 11/14/18/22 epic blocks) \u2014 stale YAML is misdirecting planning",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-scrum-master-resolve-dispatcher-cron-env-issue-1680-unblocks-automated-co",
+      "action": "Resolve dispatcher cron env issue #1680 \u2014 unblocks automated coverage scans + Tier-2 refill",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-security-close-481-verify-revoked-at-is-null-predicate-in-oauthreposi",
+      "action": "Close #481: verify revoked_at IS NULL predicate in OAuthRepository::find_refresh_token_by_hash, gate 10a-1/10a-3 on green CI",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-security-resolve-480-move-ws-auth-off-query-string-to-ticket-pattern-",
+      "action": "Resolve #480: move WS auth off query-string to ticket pattern OR add structured-log redaction for ws routes",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-security-add-sensor-ws-authz-tests-rs-covering-non-member-expired-jwt",
+      "action": "Add sensor_ws_authz_tests.rs covering non-member, expired-JWT, cross-org rejects before story 14.3 done",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-security-extend-messaging-attachments-authz-tests-with-n-party-cross-",
+      "action": "Extend messaging_attachments_authz_tests with N-party cross-thread same-org case; audit thread-participant check in download handler",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "pm-security-add-pii-audit-log-records-actor-guest-id-document-type-ts-no",
+      "action": "Add PII audit-log records (actor, guest_id, document_type, ts; no bytes/PII) on guest OCR upload + extract before Stage B provider wires in",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-23"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-support-data-access-is-privacy-security-sensitive-confirm-re",
+      "action": "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security) (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-23 (buffer-refill)"
     }
   ]
 }

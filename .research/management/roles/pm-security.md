@@ -1,62 +1,108 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-23
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
-
-## Summary
-
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
-
-## next_actions
-
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
-
-## risks
-
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
-
-## open_questions
-
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
-
-## decisions_needed
-
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+```json
+{
+  "focus_areas": [
+    "Test-hardening batch #480-#487 (legacy)",
+    "Messaging epic 22 attachment IDOR (#1791)",
+    "Sensor WS authz coverage (#1786)",
+    "Guest OCR PII audit logging (#1783)",
+    "OAuth refresh-token revocation (#481)"
+  ],
+  "findings": [
+    {
+      "area": "OAuth refresh-token revocation",
+      "observation": "Regression test exists in oauth_refresh_token_tests.rs but production query coverage not re-confirmed; story gate still open for 10a-1/10a-3",
+      "severity": "high",
+      "evidence": "issue #481, backend/crates/db/tests/oauth_refresh_token_tests.rs"
+    },
+    {
+      "area": "WebSocket JWT logging",
+      "observation": "Notification + sensor WS still accept ?token=<jwt>; reverse proxies log query strings by default",
+      "severity": "high",
+      "evidence": "issue #480, sensor_ws_handler comment 'Never log params.token'"
+    },
+    {
+      "area": "Sensor WS authz coverage",
+      "observation": "Membership check is in iot.rs::sensor_ws_handler but no integration test file; refactor regression risk",
+      "severity": "high",
+      "evidence": "issue #1786, routes/iot.rs"
+    },
+    {
+      "area": "N-party attachment IDOR",
+      "observation": "messaging_attachments_authz_tests covers participant/cross-tenant but not >2-party cross-thread same-org IDOR",
+      "severity": "high",
+      "evidence": "issue #1791, routes/messaging.rs"
+    },
+    {
+      "area": "Guest OCR PII audit",
+      "observation": "Stage A stub today but audit-logging hooks absent at the seam; Stage B will flow real PII through unlogged path",
+      "severity": "medium",
+      "evidence": "issue #1783, id_ocr.rs"
+    }
+  ],
+  "next_actions": [
+    {
+      "action": "Close #481: verify revoked_at IS NULL predicate in OAuthRepository::find_refresh_token_by_hash, gate 10a-1/10a-3 on green CI",
+      "priority": "high",
+      "dependency": "none"
+    },
+    {
+      "action": "Resolve #480: move WS auth off query-string to ticket pattern OR add structured-log redaction for ws routes",
+      "priority": "high",
+      "dependency": "none"
+    },
+    {
+      "action": "Add sensor_ws_authz_tests.rs covering non-member, expired-JWT, cross-org rejects before story 14.3 done",
+      "priority": "high",
+      "dependency": "none"
+    },
+    {
+      "action": "Extend messaging_attachments_authz_tests with N-party cross-thread same-org case; audit thread-participant check in download handler",
+      "priority": "high",
+      "dependency": "none"
+    },
+    {
+      "action": "Add PII audit-log records (actor, guest_id, document_type, ts; no bytes/PII) on guest OCR upload + extract before Stage B provider wires in",
+      "priority": "medium",
+      "dependency": "none"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "OAuth refresh-token revocation bypass (#481) \u2014 revoked tokens exchangeable, RFC 9700 violation with account-takeover potential",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Confirm production query has revoked_at IS NULL; CI must run regression"
+    },
+    {
+      "risk": "WS JWT in query string (#480) leaks via reverse-proxy access logs",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Ticket exchange before WS upgrade OR proxy/middleware redaction"
+    },
+    {
+      "risk": "N-party attachment IDOR (#1791): download handler may check org not thread participant",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Audit link_message_attachment + download handler; add cross-thread test"
+    },
+    {
+      "risk": "Sensor WS authz untested (#1786): future refactor silently drops membership guard",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Add CI test gate before 14.3 done"
+    },
+    {
+      "risk": "MFA brute-force test gap (#487): nested mod common may silently omit test binary",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Fix module structure, add rate-limit tests, confirm CI binary runs"
+    }
+  ],
+  "decisions_needed": [
+    "WS token transport: short-lived ticket exchange (eliminates JWT-in-URL log risk) vs proxy-layer redaction (faster but ongoing ops discipline)",
+    "OAuth story promotion gate: close #481/#487 vs formally defer before 10a-1/10a-3 done"
+  ]
+}
+```

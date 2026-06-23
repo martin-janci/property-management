@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-23T20:37:49Z",
+  "run_lag_hours": 185,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine has not run since 2026-06-16T03:25:00Z \u2014 7d 17h since last run; cloud cron may have been paused"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-23",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 7d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch \u2014 check that separately."
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "type": "churn-hotspot",
+      "source": "commits since 4829015b on dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn this run: 1230 LOC across 5 commits \u2014 top-3 by commit count"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "commits since 4829015b on dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn this run: 968 LOC across 5 commits \u2014 top-3 by commit count"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-delegations-pages-delegationspage-tsx",
+      "type": "churn-hotspot",
+      "source": "commits since 4829015b on dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn this run: 886 LOC across 2 commits \u2014 top-3 by commit count"
+    },
+    {
+      "id": "code-review-api-handlers-financial-assign-fee-cross-tenant",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-handlers 2026-06-23",
+      "candidate_vector": "security",
+      "score_delta": 3,
+      "confidence": "medium",
+      "evidence": "backend/servers/api-server/src/routes/financial.rs:693 \u2014 assign_unit_fee verifies caller membership in payload.organization_id but never checks unit_id / fee_schedule_id belong to that org; repo INSERT (financial.rs:317) trusts unit_id directly, enabling cross-tenant fee assignment.",
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-financial-get-unit-fees-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-handlers 2026-06-23",
+      "candidate_vector": "security",
+      "score_delta": 3,
+      "confidence": "medium",
+      "evidence": "backend/servers/api-server/src/routes/financial.rs:669 \u2014 get_unit_fees only checks caller membership in query.organization_id; repo (financial.rs:350) queries unit_fees by unit_id alone (no org join, unlike list_unit_invoices:1048), leaking another tenant's fee data on foreign unit_id.",
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-messaging-nparty-block-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-handlers 2026-06-23",
+      "candidate_vector": "bug",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": "backend/servers/api-server/src/routes/messaging.rs:937 \u2014 send_message infers other_user_id = participants.find(!= caller) assuming 2-party thread, but start_thread:336 now creates N-party threads (BIT-183); only one recipient's block status is checked, so blocked participants in N>2 threads still receive messages.",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    }
+  ],
+  "completed_resolutions": [
+    {
+      "id": "bug-ios-searchview-uncompilable",
+      "kind": "code-fix-verified"
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-fake-submit",
+      "kind": "code-fix-verified"
+    },
+    {
+      "id": "code-review-reality-web-listing-page-ssr-crash",
+      "kind": "code-fix-verified"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-untranslated",
+      "kind": "code-fix-verified"
+    },
+    {
+      "id": "code-review-reality-web-share-comparison-404",
+      "kind": "code-fix-verified"
+    },
+    {
+      "id": "security-llm-doc-idor",
+      "kind": "code-fix-verified (PR #766/#816)"
+    },
+    {
+      "id": "security-realtors-mark-inquiry-read-idor",
+      "kind": "code-fix-verified (PR #519)"
+    },
+    {
+      "id": "test-gap-inquiry-idor-regression",
+      "kind": "tests-added-verified (PR #497)"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "kind": "split-into-submodules (PR #1700)"
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "kind": "split-into-submodules (PR #1700)"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "kind": "split-into-per-story-submodules (PR #1708)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "kind": "split-into-submodules (PR #1683)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+      "kind": "list() sort SQL dedupe (PR #1781)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "kind": "dedupe-inline-RLS-setup (PR #1719)"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "kind": "extract-icon-assertion-helpers (PR #1718)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "kind": "split-ota_xml-into-submodule (PR #1693)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-23.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted non-cumulative signals",
+      "observed": "true",
+      "expected": "true (all 9 signal ids are new \u2014 none in prior seen_signals)"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no scores > 8; decay applied",
+      "observed": "true; decay applied to 15 items (6 -1, 9 dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation in brief",
+      "observed": "brief Plans promoted has 'adversarial pass: passed' on plans/security-financial-rs-cross-tenant-idor-cluster.md",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + structure intact",
+      "observed": "1 new plan; 4 metadata fields + 11 headings present + Files paths exist on disk + Mode declared",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hosts in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0 (regen matches staged)",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty in brief",
+      "observed": "no failed phases this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans don't vanish",
+      "observed": "8 prior-run plans archived (not deleted); 1 (p0-10) still active",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "13 archived >= 7 at HEAD",
+      "expected": "0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0 (IDEAS_TRIAGE.md regen matches staged)",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[] (no candidate met certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advance",
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor=6 in [0,7]; coverage_cursor=0 in [0,13); pm advanced 5->6 + cc advanced 12->0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
