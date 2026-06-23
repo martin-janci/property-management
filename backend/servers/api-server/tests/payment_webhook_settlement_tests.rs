@@ -213,8 +213,11 @@ async fn valid_webhook_settles_invoice_and_is_idempotent(pool: PgPool) {
     assert_eq!(balance, Decimal::ZERO, "balance should be cleared");
 
     // A payment was recorded with the gateway reference and no internal user.
-    let (pay_count, ext_ref, recorded_by): (i64, Option<String>, Option<Uuid>) = sqlx::query_as(
-        "SELECT count(*)::int8, max(external_reference), max(recorded_by) \
+    // `count(recorded_by)` counts only non-null values (Postgres has no
+    // `max(uuid)` aggregate), so 0 confirms the single payment has a NULL
+    // `recorded_by` — the payer is the gateway, not an internal user.
+    let (pay_count, ext_ref, recorded_by_count): (i64, Option<String>, i64) = sqlx::query_as(
+        "SELECT count(*)::int8, max(external_reference), count(recorded_by)::int8 \
          FROM payments WHERE unit_id = (SELECT unit_id FROM invoices WHERE id = $1)",
     )
     .bind(invoice_id)
@@ -223,9 +226,9 @@ async fn valid_webhook_settles_invoice_and_is_idempotent(pool: PgPool) {
     .expect("load payments");
     assert_eq!(pay_count, 1, "exactly one payment recorded");
     assert_eq!(ext_ref.as_deref(), Some("pi_test_settle_1"));
-    assert!(
-        recorded_by.is_none(),
-        "gateway payment has no internal user"
+    assert_eq!(
+        recorded_by_count, 0,
+        "gateway payment has no internal user (recorded_by NULL)"
     );
 
     // The session is marked completed and linked to the payment.
