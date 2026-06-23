@@ -1,0 +1,180 @@
+{
+  "date": "2026-06-23",
+  "trigger_text": "",
+  "lag_hours": 180,
+  "lag_days": 7,
+  "merged_pr_count": 240,
+  "merged_pr_range": "#1440–#1778",
+  "stale_routine_alert": "state.json last_run_iso=2026-06-16T03:25:00Z was 7d 12h old; cloud routine cron likely paused/skipped. Dispatcher (planning branch) kept advancing independently.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine internal",
+      "score_delta": 0,
+      "evidence": "routine has not run in 7d 12h (last_run_iso=2026-06-16T03:25:00Z); raised stale_routine_alert (3d+ threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts PR #1690 (DelegationsPage + /delegations route + nav + @ppt/api-client/src/delegation module). PR #1690 merged 2026-06-22 16:39, ~16 min before BIT-198 CEO ruling (16:55) that delegation stays retired. Backend delegation (used by voting flow) intact. Process gap: no merge-gate against retired-feature reintroduction.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/features/delegations/",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/delegations.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "frontend/packages/api-client/src/delegation/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PR file churn 2026-06-16..2026-06-23 (#1440–#1778)",
+      "score_delta": 1,
+      "evidence": "13 merged-PR file touches this run on frontend/apps/ppt-web/src/routes/lazyRoutes.tsx (route aggregator; co-changes with every new route)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR file churn 2026-06-16..2026-06-23 (#1440–#1778)",
+      "score_delta": 1,
+      "evidence": "10 merged-PR file touches this run on backend/crates/db/src/repositories/rental.rs (rental/booking repo; OTA + manager-gating work)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR file churn 2026-06-16..2026-06-23 (#1440–#1778)",
+      "score_delta": 1,
+      "evidence": "10 merged-PR file touches this run on backend/crates/db/src/models/mod.rs (model aggregator; co-changes with new tables)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/mod.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "merged-PR file churn 2026-06-16..2026-06-23 (cumulative re-emit)",
+      "score_delta": 0,
+      "evidence": "7 more merged-PR file touches this run on backend/crates/db/src/repositories/document.rs (hotspot_history runs_seen now 2 → 3). Cumulative type; no score applied per dedup rule. Re-emits onto existing churn-hotspot item.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 fix(iot): remove duplicate JWT-trusting sensor WS channel — touched frontend/apps/ppt-web/src/routes/** without updating docs/screens/ppt/*.md. Heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "evidence": "PR #1733 fix(ppt-web): add loading state + double-click guard to invoice PDF download — touched ppt-web routes without docs/screens/ppt/* update. Heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1713-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1713",
+      "score_delta": 2,
+      "evidence": "PR #1713 revert(delegations) touched frontend/apps/ppt-web/src/routes/lazyRoutes.tsx + AppRoutes.tsx without docs/screens/ppt/* update. Partner signal of revert-pr-1713. Heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": "PR #1746 fix(portal-listings): validate enums/status + ownership IDOR tests + FE field wiring — touched frontend/apps/reality-web/src/app/** without docs/screens/reality/* update. Heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/",
+        "docs/screens/reality/"
+      ]
+    }
+  ],
+  "drift_signals_suppressed": "16 PPT + 5 Reality additional screen-map drifts in the 7-day catch-up window were not emitted to avoid backlog flood; top-4 most recent were chosen. Heuristic-only — many would be false positives (route-internal changes that don't alter screen surface).",
+  "resolutions_done": [
+    {"item": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs", "pr": 1708},
+    {"item": "refactor-churn-hotspot-mobile-announcements", "pr": 1543},
+    {"item": "refactor-churn-hotspot-mobile-announcements-test", "pr": 1543},
+    {"item": "churn-hotspot-backend-crates-integrations-src-booking-rs", "pr": 1693},
+    {"item": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs", "pr": 1719},
+    {"item": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts", "pr": 1718},
+    {"item": "code-review-api-core-osrng-expect", "pr": 1684},
+    {"item": "repeated-churn-backend-servers-api-server-src-routes-forms-rs", "pr": 1700},
+    {"item": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs", "pr": 1700},
+    {"item": "screen-map-drift-pr-1418-ppt", "pr": 1660},
+    {"item": "code-review-mobile-rn-screens-mock-data", "pr": 1681},
+    {"item": "code-review-mobile-rn-deeplink-init-unhandled", "pr": 1661},
+    {"item": "code-review-reality-web-realtor-mgmt-untranslated", "pr": 1678, "note": "ready->done, plan archived"},
+    {"item": "code-review-reality-web-listing-page-ssr-crash", "pr": 1677, "note": "ready->done, plan archived"},
+    {"item": "code-review-reality-web-share-comparison-404", "pr": 1676, "note": "ready->done, plan archived"},
+    {"item": "code-review-mobile-rn-report-fault-fake-submit", "pr": 1679, "note": "ready->done, plan archived"}
+  ],
+  "phase_1_5_skipped_reason": "7-day lag-recovery scope; deferred to next run. Next segment: ppt-web-core (oldest unreviewed at 2026-06-05).",
+  "phase_1_6_skipped_reason": "Dispatcher's PM artifacts refreshed today via PR #1778 (deep coverage scan). pm_cursor + coverage_cursor untouched this run.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched Phase 5 certainty bar (confidence=high + score>=3 + allowlist)",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-06-23.md && head -1 == '# 2026-06-23'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "any cursor or stats changed vs HEAD", "observed": "last_pr_seen 1439->1778, last_issue_seen 1437->1777, last_commit_sha advanced, seen_signals 230->240, hotspot_history 62->65, stats.runs 40->41", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)'", "observed": "no duplicates", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "non-cumulative re-emits with score_delta!=0", "observed": "none (only repeated-churn re-emit; that type is in cumulative allowlist)", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "no score > 8 AND decay applied to old open items", "observed": "max score=6 (test-gap-inquiry-idor-regression, done); 13 open items decayed -1 (7 -> dropped)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans this run -> n/a", "observed": "0 new plans", "expected": "n/a"},
+    {"goal": "G7", "passed": true, "command": "<=2 new plans, all gates met", "observed": "0 new plans", "expected": "<=2"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "to-verify-pre-commit", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "no secrets / private-hostname literals / internal-IP ranges in staged diff", "observed": "to-verify-pre-commit", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md regen-from-json", "observed": "regenerated this run", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "no phase reported failure; brief has no Phases-that-failed entries", "observed": "Phases that failed: none", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "every prior plan still in plans/ or plans/_archive/", "observed": "4 plans moved ready->done plans/->plans/_archive/; 5 plans remain in plans/", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count >= HEAD archive count", "observed": "HEAD=6, this run=10 (+4)", "expected": ">=0"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen-from-json", "observed": "regenerated this run", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline (cap, idempotency, certainty, verify-all)", "observed": "Phase 5 not entered; auto_fix_actions=[]", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid OR Phase 1.6 skipped", "observed": "Phase 1.6 skipped this run; G16 is no-op", "expected": "n/a"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token value in added lines", "observed": "to-verify-pre-commit", "expected": "0"}
+  ]
+}
