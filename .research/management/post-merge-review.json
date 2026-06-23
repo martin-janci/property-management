@@ -1,9 +1,121 @@
 {
-  "generated": "2026-06-20T22:14:49Z",
+  "generated": "2026-06-23T10:20:47Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-06-23T10:20:47Z",
+      "prs_scanned": 15,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 1753,
+          "issue": 1758,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "env preflight checks presence only; JWT_SECRET/ESIGN_TOKEN_SECRET length floors enforced later -> short-but-present secret passes preflight then panics deep in init (partial recurrence of #951)"
+        },
+        {
+          "pr": 1750,
+          "issue": 1760,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "HIGH: introduced 2nd migration 00192 (rental_guest_id_documents) ~12min after #1688 took the 00192 slot -> dup version breaks dev (recurring class, also bit 00187/#1724); needs renumber + CI dup-version guard. +med PII-retrieval authz, low MIME-trust & post-buffer size cap"
+        },
+        {
+          "pr": 1746,
+          "issue": 1762,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "backend IDOR + enum/status guards correct; FE status round-trip downgrades sold/rented/archived to draft (medium)"
+        },
+        {
+          "pr": 1744,
+          "issue": 1761,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "auth unify behavior-preserving (sig/alg/exp/token-type gate reproduced, all callers migrated); low: dropped #1675 finding-3 kind=?kind forensic-signal loss in principal.rs warn logs"
+        },
+        {
+          "pr": 1743,
+          "issue": 1759,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "currency guard structural not ISO-4217 whitelist (XXX/ZZZ pass); reuse common::types::Currency enum; no mixed-currency or rate scale/upper-bound guard. Money is Decimal (good)"
+        },
+        {
+          "pr": 1741,
+          "issue": 1766,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "fix clean for scope; adjacent gap: persisted rental booking/guest PII reads (list_bookings/get_booking/get_booking_with_guests/get_guest) still resident-readable, not manager-gated"
+        },
+        {
+          "pr": 1737,
+          "issue": 1763,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "insecure WS channel fully removed (file+module+route+extractor, 0 refs); DB membership check + 403 on connect, no resubscribe bypass; only gap: missing non-member-403 integration test (IG3)"
+        },
+        {
+          "pr": 1726,
+          "issue": 1764,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "strong Stripe PR; non-blocking hardening: session idempotency-key + webhook amount cross-check (med), role-gate + event-id dedup (low)"
+        },
+        {
+          "pr": 1716,
+          "issue": 1765,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "backoff/caps/give-up correct + tested; gaps: no jitter (thundering herd) + head-of-line blocking on retry; durability rightly deferred"
+        },
+        {
+          "pr": 1715,
+          "issue": 1767,
+          "findings": 4,
+          "specialist": "react-native",
+          "note": "shape correct (queue persist+replay, body-key dedup, compression w/ fallback); follow-ups: queue race/no-flush-guard, FIFO+offline-edit id-linkage, concurrent compression passes, EXIF test gap"
+        },
+        {
+          "pr": 1709,
+          "issue": 1769,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "reminder double-send (no durable dedup); UTC-vs-CURRENT_DATE overdue boundary; tautological tests (no IG3/no-double-send); cross-org raw-pool claim misleading; missing composite index"
+        },
+        {
+          "pr": 1703,
+          "issue": 1772,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "OCR stub honest & scope ok; new OCR handlers unauthenticated (skip RlsConnection deny-all, no global auth mw); meter-reminder docstring/dedup drift; ignores id_ocr.rs trait-seam; no tests"
+        },
+        {
+          "pr": 1702,
+          "issue": 1770,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "client-supplied file_key not bound to issued upload key -> presigned-download IDOR; MIME not re-validated on link; size untrusted. Participant/tenant/sender authz solid + tested; migration 00191 no collision"
+        },
+        {
+          "pr": 1696,
+          "issue": 1771,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "unread-count read path ignores per-participant soft-delete (badge leak, high); new-msg-to-archived stays archived (low); pre-existing dup 00192 (low). Core archive/scoping/authz/upserts/FORCE-RLS correct"
+        },
+        {
+          "pr": 1689,
+          "issue": 1773,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "send_message + messages.read_at not generalized for N-party (single other_user_id -> event/block/unhide reach one participant, unread under-reports); creation path & 00189 migration sound"
+        }
+      ]
+    },
     {
       "run_at": "2026-06-20T22:14:49Z",
       "prs_scanned": 12,
