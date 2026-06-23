@@ -1175,6 +1175,8 @@
     "acknowledge": "Nyugtázás",
     "resolve": "Megoldás",
     "resolved": "megoldva",
+    "acknowledgeFailed": "A riasztás nyugtázása sikertelen",
+    "resolveFailed": "A riasztás megoldása sikertelen",
     "triggered": "Kiváltva",
     "thresholdBreach": "Küszöbérték túllépése",
     "thresholds": "Küszöbértékek",
@@ -1230,6 +1232,7 @@
       "subtitle": "Küszöbérték-túllépések az épületeiben.",
       "backToDashboard": "Vissza az áttekintéshez",
       "empty": "Egyetlen riasztás sem felel meg ezeknek a szűrőknek. Minden rendben.",
+      "loadError": "A riasztások betöltése sikertelen. Kérjük, próbálja újra.",
       "filter": {
         "allStates": "Minden állapot",
         "allSeverities": "Minden súlyosság"

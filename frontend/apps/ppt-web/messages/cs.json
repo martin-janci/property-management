@@ -1253,6 +1253,8 @@
     "acknowledge": "Potvrdit",
     "resolve": "Vyřešit",
     "resolved": "vyřešeno",
+    "acknowledgeFailed": "Potvrzení upozornění selhalo",
+    "resolveFailed": "Vyřešení upozornění selhalo",
     "triggered": "Spuštěno",
     "thresholdBreach": "Překročení prahu",
     "thresholds": "Prahy",
@@ -1308,6 +1310,7 @@
       "subtitle": "Překročení prahů napříč vašimi budovami.",
       "backToDashboard": "Zpět na přehled",
       "empty": "Žádná upozornění neodpovídají těmto filtrům. Vše v pořádku.",
+      "loadError": "Nepodařilo se načíst upozornění. Zkuste to znovu.",
       "filter": {
         "allStates": "Všechny stavy",
         "allSeverities": "Všechny závažnosti"

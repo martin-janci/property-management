@@ -3543,6 +3543,8 @@
     "acknowledge": "Acknowledge",
     "resolve": "Resolve",
     "resolved": "resolved",
+    "acknowledgeFailed": "Failed to acknowledge alert",
+    "resolveFailed": "Failed to resolve alert",
     "triggered": "Triggered",
     "thresholdBreach": "Threshold breach",
     "thresholds": "Thresholds",
@@ -3598,6 +3600,7 @@
       "subtitle": "Threshold breaches across your buildings.",
       "backToDashboard": "Back to dashboard",
       "empty": "No alerts match these filters. All clear.",
+      "loadError": "Failed to load alerts. Please try again.",
       "filter": {
         "allStates": "All states",
         "allSeverities": "All severities"

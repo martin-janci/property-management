@@ -24,6 +24,10 @@ export interface IotAlertsPageProps {
   /** sensor_id → display name, for resolving the sensor column. */
   sensorNames: Record<string, string>;
   isLoading: boolean;
+  /** True when the alerts source query failed; renders an error panel. */
+  isError?: boolean;
+  /** Retry handler for the error panel (re-runs the alerts source query). */
+  onRetry?: () => void;
   pendingAlertId: string | null;
   filterSeverity: string;
   filterState: AlertStateFilter;
@@ -56,6 +60,8 @@ export function IotAlertsPage({
   alerts,
   sensorNames,
   isLoading,
+  isError = false,
+  onRetry,
   pendingAlertId,
   filterSeverity,
   filterState,
@@ -141,6 +147,23 @@ export function IotAlertsPage({
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+          </div>
+        ) : isError ? (
+          <div className="px-4 py-16 text-center" role="alert">
+            <p className="text-sm font-medium text-red-600">
+              {t('iot.alerts.loadError', {
+                defaultValue: 'Failed to load alerts. Please try again.',
+              })}
+            </p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-3 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {t('common.retry', { defaultValue: 'Retry' })}
+              </button>
+            )}
           </div>
         ) : visibleAlerts.length === 0 ? (
           <div className="px-4 py-16 text-center">
