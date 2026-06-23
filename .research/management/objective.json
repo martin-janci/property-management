@@ -1,1 +1,11 @@
-{"schema_version":1,"epic_prefix":"test-gap-hotfix-no-test-pr-1292-mfa-rls","selected_at":"2026-06-22T08:08:30Z","last_action":"repick","reason":"prior target 'code-review-mobile-rn-screens-mock-data' exhausted; closest-to-done is 'test-gap-hotfix-no-test-pr-1292-mfa-rls' (open=1 claimable=1)","stats_at_selection":{"open":1,"claimable":1}}
+{
+  "schema_version": 1,
+  "epic_prefix": "gap-79",
+  "selected_at": "2026-06-23T04:25:23Z",
+  "last_action": "repick",
+  "reason": "prior target 'test-gap-hotfix-no-test-pr-1292-mfa-rls' exhausted; closest-to-done is 'gap-79' (open=1 claimable=1)",
+  "stats_at_selection": {
+    "open": 1,
+    "claimable": 1
+  }
+}

@@ -1437,5 +1437,10 @@
       "under_repair": "V opravě",
       "decommissioned": "Vyřazeno"
     }
+  },
+  "messaging": {
+    "errors": {
+      "downloadFailed": "Přílohu se nepodařilo stáhnout"
+    }
   }
 }

@@ -1309,5 +1309,10 @@
       "under_repair": "W naprawie",
       "decommissioned": "Wycofane"
     }
+  },
+  "messaging": {
+    "errors": {
+      "downloadFailed": "Nie udało się pobrać załącznika"
+    }
   }
 }

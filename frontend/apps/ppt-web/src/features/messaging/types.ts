@@ -12,6 +12,19 @@ export interface MessageAttachment {
   url: string;
 }
 
+/**
+ * A file selected in the composer but not yet uploaded.
+ *
+ * Carries the underlying `File` so its bytes can be uploaded to S3 via the
+ * presigned-URL flow on send (UC-05.9). `previewUrl` is a local blob URL used
+ * only for image thumbnails in the composer and must be revoked when removed.
+ */
+export interface PendingAttachment {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
 export interface MessageThreadParticipant {
   id: string;
   userId: string;
@@ -65,7 +78,7 @@ export interface CreateThreadRequest {
 
 export interface SendMessageRequest {
   content: string;
-  attachments?: MessageAttachment[];
+  attachments?: PendingAttachment[];
   replyToId?: string;
 }
 

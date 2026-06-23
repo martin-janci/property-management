@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{extract::DefaultBodyLimit, http, routing::get};
+use axum::{extract::DefaultBodyLimit, http, routing::get, Extension};
 use http::HeaderValue;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -40,6 +40,11 @@ use state::AppState;
 // binary) and `lib.rs::create_router` (tests) build the same admin-core
 // dependency chain via these helpers so they cannot drift.
 use api_server::{attach_admin_extensions, build_admin_extensions, route_table};
+
+// Boot-time preflight for required production env vars (issue #951 recurrence
+// guard). Binary-local — it gates on `RUST_ENV` and fails fast before heavy
+// init, so it lives next to `main` rather than in the shared library crate.
+mod preflight;
 
 /// Default CORS allowed origins for api-server.
 /// Includes development origins and production domains.
@@ -241,6 +246,7 @@ fn apply_middleware(
         ))
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
         .layer(cors_layer())
+        .layer(Extension(state.clone()))
         // Application state
         .with_state(state)
 }
@@ -416,6 +422,16 @@ struct ApiDoc;
 async fn main() -> anyhow::Result<()> {
     // Load .env file if present
     dotenvy::dotenv().ok();
+
+    // Recurrence guard for #951: fail fast if a required production secret is
+    // missing, listing ALL of them at once, BEFORE any heavy init (DB pool,
+    // migrations, server bind). In development this is a no-op — the per-var
+    // dev fallbacks below apply. Outside development a missing var returns an
+    // Err that propagates out of `main`, exiting non-zero before the server can
+    // boot half-broken.
+    if let Err(message) = preflight::run() {
+        return Err(anyhow::anyhow!("{message}"));
+    }
 
     // Initialize observability (Epic 95)
     // This sets up OpenTelemetry tracing, Sentry error tracking, and Prometheus metrics

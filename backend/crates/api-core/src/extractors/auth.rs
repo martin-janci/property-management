@@ -85,6 +85,95 @@ fn jwt_verifier() -> Result<&'static JwtVerifier, &'static str> {
     }
 }
 
+/// Trait implemented by every claims shape that carries the access-token
+/// discriminator, so [`verify_access_token`] can apply the shared
+/// `token_type` gate without owning a single concrete claims struct.
+///
+/// The two live callers deliberately differ in their `token_type` *shape*:
+///
+///   * `auth.rs`'s [`Claims`] makes it a **required** `String` — a token that
+///     omits the claim fails to deserialize (the safe direction), so the gate
+///     never even sees a missing value.
+///   * `principal.rs`'s `PrincipalClaims` makes it `Option<String>` and is
+///     **legacy-tolerant** — a token minted before the discriminator existed
+///     omits the claim and is treated as access.
+///
+/// That difference is captured by the combination of this trait's return type
+/// and the [`TokenTypePolicy`] passed to [`verify_access_token`], so the
+/// security-critical decode + gate lives in exactly one place (GH #1675).
+pub trait AccessTokenClaims {
+    /// The `token_type` claim, if present. `None` means the claim was absent
+    /// (only reachable for `Option`-shaped claims; a required `String` claim
+    /// fails to deserialize before reaching here).
+    fn token_type(&self) -> Option<&str>;
+}
+
+impl AccessTokenClaims for Claims {
+    fn token_type(&self) -> Option<&str> {
+        Some(self.token_type.as_str())
+    }
+}
+
+/// How strictly the shared verifier treats the `token_type` discriminator.
+///
+/// This is the single explicit policy flag the two historical copies of the
+/// validation path differed on — folded here so the decode + gate has ONE
+/// implementation (GH #1675). Both policies reject an *explicit* non-`access`
+/// value identically; they differ only on an absent claim:
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TokenTypePolicy {
+    /// A missing `token_type` is rejected. (`auth.rs` semantics — though in
+    /// practice [`Claims`] makes the field a required `String`, so a missing
+    /// claim already fails deserialization upstream of the gate.)
+    Required,
+    /// A missing `token_type` is treated as `access`. (`principal.rs`
+    /// semantics — backward-compat for legacy tokens minted before the
+    /// discriminator existed.)
+    LegacyTolerant,
+}
+
+/// Shared access-token verifier (GH #1675).
+///
+/// Owns the security-critical sequence that used to be copy-pasted across
+/// `auth.rs` (the `validate_access_token*` family + the `AuthUser` extractor)
+/// and `principal.rs` (`decode_bearer_subject`): `jsonwebtoken::decode` with
+/// the caller-supplied [`DecodingKey`] + [`Validation`] (so `exp`/`nbf` and the
+/// signature are enforced), followed by the `token_type` access-gate.
+///
+/// The caller supplies its own key + `Validation` so each path keeps its exact
+/// historical behavior — notably `auth.rs` uses the cached `JWT_VERIFIER`
+/// (`leeway = 30`) while `principal.rs` uses a fresh `Validation::default()`
+/// (`leeway = 0`); unifying those would *loosen* or *tighten* one path, which
+/// this refactor must not do. The strictness difference on a *missing*
+/// `token_type` is captured by [`TokenTypePolicy`].
+///
+/// Returns the decoded claims on success so each caller can read the
+/// additional fields it needs (`email`/`name`/`role` for `auth.rs`, `kind` for
+/// `principal.rs`) from the same single decode.
+pub fn verify_access_token<C>(
+    token: &str,
+    key: &DecodingKey,
+    validation: &Validation,
+    policy: TokenTypePolicy,
+) -> Result<C, &'static str>
+where
+    C: AccessTokenClaims + serde::de::DeserializeOwned,
+{
+    let token_data = decode::<C>(token, key, validation).map_err(|_| "Invalid or expired token")?;
+    let claims = token_data.claims;
+    match claims.token_type() {
+        Some("access") => Ok(claims),
+        // An explicit non-access discriminator (e.g. a refresh token) is
+        // rejected by BOTH policies — this is the RUST-002 / #822 gate.
+        Some(_) => Err("Invalid token type for this endpoint"),
+        // A missing discriminator: rejected only under `Required`.
+        None => match policy {
+            TokenTypePolicy::Required => Err("Invalid token type for this endpoint"),
+            TokenTypePolicy::LegacyTolerant => Ok(claims),
+        },
+    }
+}
+
 /// Validate a raw JWT access token and return the subject (user ID).
 ///
 /// Reuses the shared `JWT_VERIFIER` so the HMAC key is loaded and cached once,
@@ -105,12 +194,12 @@ pub fn validate_access_token(token: &str) -> Result<Uuid, &'static str> {
 /// access token has expired.
 pub fn validate_access_token_with_exp(token: &str) -> Result<(Uuid, i64), &'static str> {
     let verifier = jwt_verifier()?;
-    let token_data = decode::<Claims>(token, &verifier.key, &verifier.validation)
-        .map_err(|_| "Invalid or expired token")?;
-    let claims = token_data.claims;
-    if claims.token_type != "access" {
-        return Err("Invalid token type for this endpoint");
-    }
+    let claims: Claims = verify_access_token(
+        token,
+        &verifier.key,
+        &verifier.validation,
+        TokenTypePolicy::Required,
+    )?;
     Ok((claims.sub, claims.exp))
 }
 
@@ -163,22 +252,20 @@ where
             )
         })?;
 
-        let token_data = decode::<Claims>(token, &verifier.key, &verifier.validation)
-            .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
-
-        let claims = token_data.claims;
-
-        // P0-03: enforce token-type discriminator. Refresh tokens issued
-        // by JwtService also pass signature+exp validation, but they must
-        // not be accepted as access tokens. Pre-Phase-2 this check was
-        // missing and any refresh token could authenticate to any
-        // access-token-bearing endpoint.
-        if claims.token_type != "access" {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "Invalid token type for this endpoint",
-            ));
-        }
+        // Decode + enforce the token-type discriminator via the shared
+        // verifier (GH #1675). P0-03: refresh tokens issued by JwtService also
+        // pass signature+exp validation, but must not be accepted as access
+        // tokens. `Required` policy mirrors the historical `auth.rs` behavior
+        // exactly (the `Claims` shape already makes `token_type` mandatory).
+        // The shared verifier returns `&'static str`; map it to this
+        // extractor's `(StatusCode, &'static str)` rejection unchanged.
+        let claims: Claims = verify_access_token(
+            token,
+            &verifier.key,
+            &verifier.validation,
+            TokenTypePolicy::Required,
+        )
+        .map_err(|msg| (StatusCode::UNAUTHORIZED, msg))?;
 
         // Store user_id and role in extensions for TenantExtractor
         parts.extensions.insert(claims.sub);

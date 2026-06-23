@@ -820,3 +820,36 @@ pub struct PlatformSyncStatus {
     pub last_sync_at: Option<DateTime<Utc>>,
     pub sync_errors_count: i64,
 }
+
+// ============================================
+// Guest ID Documents (Story 18.2, #1687)
+// ============================================
+
+/// A stored guest ID-document blob + (optional) OCR extraction result.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct RentalGuestIdDocument {
+    pub id: Uuid,
+    pub guest_id: Uuid,
+    pub organization_id: Uuid,
+    /// S3-compatible storage key for the uploaded document bytes.
+    pub file_key: String,
+    /// MIME type captured at upload time.
+    pub mime: String,
+    /// User who uploaded the document (NULL if the user was later removed).
+    pub uploaded_by: Option<Uuid>,
+    /// Best-effort OCR extraction (`GuestIdExtraction` JSON). `None` until the
+    /// extract endpoint runs against a configured provider (Stage B).
+    pub extraction_json: Option<serde_json::Value>,
+    /// When the extraction was produced. `None` until extracted.
+    pub extracted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Insert payload for a new guest ID document.
+#[derive(Debug, Clone)]
+pub struct CreateGuestIdDocument {
+    pub guest_id: Uuid,
+    pub file_key: String,
+    pub mime: String,
+    pub uploaded_by: Option<Uuid>,
+}

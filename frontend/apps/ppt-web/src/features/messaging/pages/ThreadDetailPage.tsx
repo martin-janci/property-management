@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateSeparator, MessageBubble } from '../components/MessageBubble';
 import { MessageInput } from '../components/MessageInput';
-import type { Message, MessageAttachment, SendMessageRequest, ThreadWithMessages } from '../types';
+import type { Message, PendingAttachment, SendMessageRequest, ThreadWithMessages } from '../types';
 
 interface ThreadDetailPageProps {
   thread: ThreadWithMessages;
@@ -81,7 +81,7 @@ export function ThreadDetailPage({
 
   const handleSendMessage = (
     content: string,
-    attachments?: MessageAttachment[],
+    attachments?: PendingAttachment[],
     replyToId?: string
   ) => {
     onSendMessage({ content, attachments, replyToId });

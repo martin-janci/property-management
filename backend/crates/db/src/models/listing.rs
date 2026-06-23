@@ -59,7 +59,10 @@ pub struct Listing {
     pub title: String,
     pub description: Option<String>,
     pub property_type: String,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // NULLable NUMERIC: decode natively as `Option<Decimal>`. A `try_from`
+    // attribute here forces a non-null decode and panics with
+    // `UnexpectedNullError` whenever the column is NULL (e.g. a portal listing
+    // created without an area), so it must not be used on optional columns.
     pub size_sqm: Option<Decimal>,
     pub rooms: Option<i32>,
     pub bathrooms: Option<i32>,
@@ -72,10 +75,8 @@ pub struct Listing {
     pub postal_code: String,
     pub country: String,
 
-    // Location coordinates (optional)
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // Location coordinates (optional) — NULLable, decode natively (no try_from).
     pub latitude: Option<Decimal>,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
     pub longitude: Option<Decimal>,
 
     // Pricing
@@ -151,7 +152,7 @@ pub struct ListingSummary {
     #[sqlx(try_from = "rust_decimal::Decimal")]
     pub price: Decimal,
     pub currency: String,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // NULLable NUMERIC — decode natively (no try_from; see `Listing::size_sqm`).
     pub size_sqm: Option<Decimal>,
     pub rooms: Option<i32>,
     pub city: String,
