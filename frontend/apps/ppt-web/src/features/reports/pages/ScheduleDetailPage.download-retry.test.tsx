@@ -184,6 +184,62 @@ describe('ScheduleDetailPage — presigned download + retry path (81.2)', () => 
     expect(document.querySelector(`a[download="${completedExecution.fileName}"]`)).toBeNull();
   });
 
+  it('does not trigger an anchor click (and leaves no leaked node) when the presigned URL is empty', async () => {
+    // Backend hands back a 200 with a blank `url` (e.g. storage key not yet
+    // materialised). The hook must treat this as a failure rather than clicking
+    // an anchor with href="" — which would navigate to the current page.
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      okJson({
+        url: '',
+        fileName: completedExecution.fileName,
+        expiresAt: '2026-06-01T09:00:00Z',
+        contentType: 'application/pdf',
+      })
+    );
+
+    render(
+      <Wrapper client={newClient()}>
+        <Harness executions={[completedExecution]} />
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /download report/i }));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    expect(clickSpy).not.toHaveBeenCalled();
+    // No detached anchor leaked into the DOM.
+    expect(document.querySelector(`a[download="${completedExecution.fileName}"]`)).toBeNull();
+  });
+
+  it('cleans up the temporary anchor even when the click() throws', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      okJson({
+        url: PRESIGNED_URL,
+        fileName: completedExecution.fileName,
+        expiresAt: '2026-06-01T09:00:00Z',
+        contentType: 'application/pdf',
+      })
+    );
+    // Simulate a browser/jsdom click that throws — the hook's try/finally must
+    // still remove the appended anchor from <body>.
+    clickSpy.mockImplementation(() => {
+      throw new Error('click boom');
+    });
+
+    render(
+      <Wrapper client={newClient()}>
+        <Harness executions={[completedExecution]} />
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /download report/i }));
+
+    await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(document.querySelector(`a[download="${completedExecution.fileName}"]`)).toBeNull()
+    );
+  });
+
   it('does not trigger an anchor click when the presigned-URL request fails', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(errJson(403, { message: 'Forbidden' }));
 
