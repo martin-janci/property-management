@@ -144,13 +144,25 @@ export function useDownloadReport() {
     mutationFn: async (executionId: string) => {
       const { url, fileName } = await getReportExecutionDownloadUrl(executionId);
 
-      // Trigger browser download
+      // Guard against a malformed/empty presigned URL: an empty href would
+      // navigate the anchor to the current page instead of downloading the
+      // report, so treat it as a failure the caller's onError can surface.
+      if (!url) {
+        throw new Error('Download URL is missing from the server response');
+      }
+
+      // Trigger browser download. Use try/finally so the temporary anchor is
+      // always removed from the DOM, even if click() throws (otherwise a thrown
+      // click leaks a detached <a> node into <body>).
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        link.click();
+      } finally {
+        document.body.removeChild(link);
+      }
 
       return { url, fileName };
     },
