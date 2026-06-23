@@ -1,0 +1,208 @@
+{
+  "signals": [
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 'revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)' — undoes #1690 which had just wired delegations into ppt-web (BIT-189, Story 3.4).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "type": "churn-hotspot",
+      "source": "git-log 7d window 2026-06-16→2026-06-23",
+      "score_delta": 1,
+      "evidence": "3688 lines changed in 7-day window in frontend/apps/ppt-web/messages/en.json (i18n catalogue; expected to grow with new feature namespaces)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 7d window 2026-06-16→2026-06-23",
+      "score_delta": 0,
+      "evidence": "3073 lines changed (re-emit — cumulative type, no score delta; already in seen_signals). PR #1683 (open draft) proposes submodule split.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 7d window 2026-06-16→2026-06-23",
+      "score_delta": 1,
+      "evidence": "2837 lines changed in 7-day window in backend/crates/db/src/repositories/rental.rs (volatile rental repo; similar shape to document.rs)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 (iot sensor WS channel dedupe) touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/*.md (heuristic best-effort detection)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "evidence": "PR #1696 (BIT-182 messaging archive) touched frontend/apps/ppt-web/src/routes/groups/messaging.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "evidence": "PR #1733 (invoice PDF loading state) touched frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": "PR #1690 (delegations Story 3.4) touched App.tsx + AppRoutes.tsx + routes/groups/delegations.tsx without updating docs/screens/ppt/*.md (later reverted by PR #1713 — drift now stale)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 7d (last_run_iso=2026-06-16T03:25:00Z). Exceeds 36h lag threshold and 3d stale-routine alert. Cloud routine scheduler may be paused or broken.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-23.md && head -1 ...",
+      "observed": "will pass after brief is written",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "cursors advanced (last_pr_seen 1439→1745, last_issue_seen 1437→1739, last_commit_sha 4829015b→d459a4d15ccd)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emitted with score_delta != 0",
+      "observed": "document-rs re-emit has score_delta=0; other re-emits are churn-hotspot (cumulative allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "15 items decayed, no scores > 8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans this run",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans ≤ 2",
+      "observed": "0 new plans",
+      "expected": "true (vacuously)"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "to be verified post-stage",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan on staged diff",
+      "observed": "to be verified post-stage",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md == staged",
+      "observed": "regenerated by script",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted this run",
+      "observed": "no plans modified",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count unchanged",
+      "observed": "no archive changes",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md == staged",
+      "observed": "regenerated by script",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap",
+      "observed": "0 actions (Phase 5 skipped — no high-confidence allowlist match this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a — Phase 1.6 skipped this run",
+      "observed": "skipped (catch-up run; pm_cursor + coverage_cursor unchanged)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal in diff",
+      "observed": "to be verified post-stage",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate (no signal met confidence=high + score>=3 + allowlist match this run)"
+}
