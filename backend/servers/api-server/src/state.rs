@@ -2,6 +2,7 @@
 
 use std::time::Instant;
 
+use crate::services::id_ocr::{default_id_document_ocr, SharedIdDocumentOcr};
 use crate::services::{
     AccountingService, AuthService, EmailService, JwtService, NotificationPipeline, OAuthService,
     PipelineConfig, TotpService,
@@ -379,6 +380,11 @@ pub struct AppState {
     pub pref_event_recorder: Option<PreferenceEventRecorder>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
+    /// Epic 18 / Story 18.2 (#1687): provider-agnostic guest ID-document OCR
+    /// seam. Defaults to the not-configured stub (`501 OCR_NOT_CONFIGURED`);
+    /// a real Vision-capable provider is wired here in Stage B without any
+    /// route changes.
+    pub id_document_ocr: SharedIdDocumentOcr,
     /// Phase 1: Host-resolution cache shared with `host_tenant_middleware`.
     /// Holds the SAME `Arc` the middleware uses, so domain-management handlers
     /// can invalidate entries (e.g. after a domain is verified).
@@ -677,6 +683,9 @@ impl AppState {
             pref_event_recorder: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
+            // Story 18.2 (#1687): default guest ID-document OCR = not-configured
+            // stub; replaced with a real provider in Stage B.
+            id_document_ocr: default_id_document_ocr(),
             // Phase 1: shared host-resolution cache
             tenant_resolution_cache,
             // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
@@ -728,6 +737,15 @@ impl AppState {
     /// Call this after creating the AppState if S3 is configured.
     pub fn with_storage(mut self, storage_service: StorageService) -> Self {
         self.storage_service = Some(storage_service);
+        self
+    }
+
+    /// Install a custom guest ID-document OCR provider (Story 18.2, #1687).
+    ///
+    /// Production wires the not-configured stub by default; Stage B swaps in a
+    /// real Vision-capable provider here, and tests can inject a fake.
+    pub fn with_id_document_ocr(mut self, ocr: SharedIdDocumentOcr) -> Self {
+        self.id_document_ocr = ocr;
         self
     }
 }

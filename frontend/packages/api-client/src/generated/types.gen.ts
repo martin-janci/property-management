@@ -1623,6 +1623,54 @@ export type OrganizationsSubscriptionTier = 'free' | 'starter' | 'professional' 
 export type RentalsDocumentType = 'passport' | 'id_card' | 'drivers_license' | 'other';
 
 /**
+ * Stored guest ID-document blob plus optional OCR extraction (Story 18.2, #1687)
+ */
+export type RentalsGuestIdDocument = {
+    id: SharedUuid;
+    guestId: SharedUuid;
+    organizationId: SharedUuid;
+    /**
+     * S3-compatible storage key for the uploaded document bytes
+     */
+    fileKey: string;
+    /**
+     * MIME type captured at upload time
+     */
+    mime: string;
+    /**
+     * User who uploaded the document
+     */
+    uploadedBy?: SharedUuid;
+    /**
+     * Best-effort OCR extraction result; null until extracted (Stage B)
+     */
+    extractionJson?: RentalsGuestIdExtraction;
+    /**
+     * When the extraction was produced; null until extracted
+     */
+    extractedAt?: SharedDateTime;
+    createdAt: SharedDateTime;
+};
+
+/**
+ * Best-effort OCR extraction from a guest ID document. Manager confirms; never auto-applied (Story 18.2, #1687)
+ */
+export type RentalsGuestIdExtraction = {
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    idType?: string;
+    idNumber?: string;
+    idIssuingCountry?: string;
+    idExpiryDate?: string;
+    /**
+     * Provider confidence 0.0..=1.0 when reported
+     */
+    confidence?: number;
+};
+
+/**
  * Guest registration for police/authorities
  */
 export type RentalsGuestRegistration = {
@@ -5933,6 +5981,81 @@ export type RentalsApiRegisterGuestResponses = {
 };
 
 export type RentalsApiRegisterGuestResponse = RentalsApiRegisterGuestResponses[keyof RentalsApiRegisterGuestResponses];
+
+export type RentalsApiUploadGuestIdDocumentData = {
+    body: {
+        /**
+         * The ID-document file part (PNG, JPEG, or PDF)
+         */
+        file: Blob | File;
+    };
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/rentals/guests/{id}/id-document';
+};
+
+export type RentalsApiUploadGuestIdDocumentErrors = {
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type RentalsApiUploadGuestIdDocumentError = RentalsApiUploadGuestIdDocumentErrors[keyof RentalsApiUploadGuestIdDocumentErrors];
+
+export type RentalsApiUploadGuestIdDocumentResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: RentalsGuestIdDocument;
+};
+
+export type RentalsApiUploadGuestIdDocumentResponse = RentalsApiUploadGuestIdDocumentResponses[keyof RentalsApiUploadGuestIdDocumentResponses];
+
+export type RentalsApiExtractGuestIdDocumentData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/rentals/guests/{id}/id-document/extract';
+};
+
+export type RentalsApiExtractGuestIdDocumentErrors = {
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type RentalsApiExtractGuestIdDocumentError = RentalsApiExtractGuestIdDocumentErrors[keyof RentalsApiExtractGuestIdDocumentErrors];
+
+export type RentalsApiExtractGuestIdDocumentResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: RentalsGuestIdExtraction;
+};
+
+export type RentalsApiExtractGuestIdDocumentResponse = RentalsApiExtractGuestIdDocumentResponses[keyof RentalsApiExtractGuestIdDocumentResponses];
 
 export type RentalsApiSubmitToAuthoritiesData = {
     body?: never;
