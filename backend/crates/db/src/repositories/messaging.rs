@@ -25,9 +25,9 @@
 //! ```
 
 use crate::models::messaging::{
-    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateThread, Message,
-    MessageThread, MessageWithSender, MessageWithSenderRow, ThreadWithPreview,
-    ThreadWithPreviewRow, UserBlock,
+    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateMessageAttachment,
+    CreateThread, Message, MessageAttachment, MessageThread, MessageWithSender,
+    MessageWithSenderRow, ThreadWithPreview, ThreadWithPreviewRow, UserBlock,
 };
 use crate::DbPool;
 use sqlx::{Error as SqlxError, Executor, Postgres};
@@ -1076,5 +1076,119 @@ impl MessagingRepository {
     )]
     pub async fn count_blocked_users(&self, blocker_id: Uuid) -> Result<i64, SqlxError> {
         self.count_blocked_users_rls(&self.pool, blocker_id).await
+    }
+
+    // ------------------------------------------------------------------------
+    // MESSAGE ATTACHMENT OPERATIONS (RLS) — UC-05.9 / BIT-184
+    // ------------------------------------------------------------------------
+
+    /// Link an uploaded S3 object to a message.
+    ///
+    /// The caller is responsible for verifying (in the handler) that the
+    /// message belongs to a thread the caller participates in and that the
+    /// caller is the message sender. RLS (`message_attachments_participant_isolation`)
+    /// is the defense-in-depth backstop.
+    pub async fn add_attachment_rls<'e, E>(
+        &self,
+        executor: E,
+        data: CreateMessageAttachment,
+    ) -> Result<MessageAttachment, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let attachment = sqlx::query_as::<_, MessageAttachment>(
+            r#"
+            INSERT INTO message_attachments (message_id, file_key, file_name, file_type, file_size)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            "#,
+        )
+        .bind(data.message_id)
+        .bind(&data.file_key)
+        .bind(&data.file_name)
+        .bind(&data.file_type)
+        .bind(data.file_size)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(attachment)
+    }
+
+    /// List attachments for a single message, oldest first.
+    pub async fn get_message_attachments_rls<'e, E>(
+        &self,
+        executor: E,
+        message_id: Uuid,
+    ) -> Result<Vec<MessageAttachment>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let attachments = sqlx::query_as::<_, MessageAttachment>(
+            r#"
+            SELECT * FROM message_attachments
+            WHERE message_id = $1
+            ORDER BY created_at ASC
+            "#,
+        )
+        .bind(message_id)
+        .fetch_all(executor)
+        .await?;
+
+        Ok(attachments)
+    }
+
+    /// Fetch a single attachment by id together with its owning thread id, so a
+    /// download handler can re-verify thread participation/tenant before minting
+    /// a presigned URL. Returns `None` when the attachment does not exist (or is
+    /// invisible under RLS).
+    pub async fn get_attachment_with_thread_rls<'e, E>(
+        &self,
+        executor: E,
+        attachment_id: Uuid,
+    ) -> Result<Option<(MessageAttachment, Uuid)>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let row = sqlx::query_as::<
+            _,
+            (
+                Uuid,
+                Uuid,
+                String,
+                String,
+                String,
+                i64,
+                chrono::DateTime<chrono::Utc>,
+                Uuid,
+            ),
+        >(
+            r#"
+            SELECT a.id, a.message_id, a.file_key, a.file_name, a.file_type, a.file_size,
+                   a.created_at, m.thread_id
+            FROM message_attachments a
+            JOIN messages m ON m.id = a.message_id
+            WHERE a.id = $1
+            "#,
+        )
+        .bind(attachment_id)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(row.map(
+            |(id, message_id, file_key, file_name, file_type, file_size, created_at, thread_id)| {
+                (
+                    MessageAttachment {
+                        id,
+                        message_id,
+                        file_key,
+                        file_name,
+                        file_type,
+                        file_size,
+                        created_at,
+                    },
+                    thread_id,
+                )
+            },
+        ))
     }
 }
