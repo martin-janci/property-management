@@ -12,7 +12,7 @@ use std::sync::{
 
 use axum::{
     body::Body,
-    extract::State,
+    extract::{Extension, State},
     http::{Request, StatusCode},
     middleware::{from_fn, Next},
     response::Response,
@@ -38,7 +38,7 @@ impl TenantMembershipProvider for TestState {
 }
 
 async fn demo_idempotency(
-    State(state): State<TestState>,
+    Extension(state): Extension<TestState>,
     request: Request<Body>,
     next: Next,
 ) -> Response {
@@ -64,6 +64,7 @@ fn build_app(pool: db::DbPool, hits: Arc<AtomicUsize>) -> Router {
             "/demo",
             post(demo_handler).route_layer(from_fn(demo_idempotency)),
         )
+        .layer(Extension(state.clone()))
         .with_state(state)
 }
 

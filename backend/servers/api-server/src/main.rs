@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{extract::DefaultBodyLimit, http, routing::get};
+use axum::{extract::DefaultBodyLimit, http, routing::get, Extension};
 use http::HeaderValue;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -241,6 +241,7 @@ fn apply_middleware(
         ))
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
         .layer(cors_layer())
+        .layer(Extension(state.clone()))
         // Application state
         .with_state(state)
 }

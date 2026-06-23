@@ -5,7 +5,7 @@ use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
 use axum::{
     body::Body,
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     middleware::Next,
     response::Response,
@@ -331,7 +331,7 @@ pub fn router() -> Router<AppState> {
 }
 
 async fn create_fault_idempotency(
-    State(state): State<AppState>,
+    Extension(state): Extension<AppState>,
     request: axum::http::Request<Body>,
     next: Next,
 ) -> Response {
