@@ -1,0 +1,491 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine has not run in 172h (7d) since 2026-06-16T03:25Z \u2014 cloud cron may have stalled; this run catches up by processing 233 merged PRs in one pass"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #1713 'revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)' \u2014 intentional cleanup, not root-cause regression",
+        "Reverts feat PR #1690 (Story 3.4 \u2014 wired delegations into ppt-web). #1690 brought delegations route + page + api-client back; #1713 removes them per BIT-213 retirement decision"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/delegations.tsx",
+        "frontend/apps/ppt-web/src/features/delegations/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis window 2026-06-16 \u2192 2026-06-23",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs \u2014 1640 lines across 6 PRs (Story 11.7 income statement + balance sheet + cash flow + PDF/xlsx export + #1723 rustfmt fix-up + #1733 invoice-PDF loading state) \u2014 NEW hotspot this run, runs_seen=1"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis window 2026-06-16 \u2192 2026-06-23",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa.rs \u2014 2691 lines in single PR \u2014 cumulative re-emit (hotspot_history shows runs_seen=1, last_seen 2026-06-10)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis window 2026-06-16 \u2192 2026-06-23",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/forms.rs \u2014 2046 lines across 1 PR (#1737 IoT JWT-trusting channel removal + form-side ripple) \u2014 cumulative re-emit (runs_seen was 2 before this run \u2192 bump to 3)"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "forms.rs hotspot recurring (runs_seen=2 before this run \u2192 3 after) \u2014 instability proxy persists"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1749 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)' \u2014 closed without merge. Superseded by PR #1748 \u2014 typecheck fix landed via different path"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1727 'fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS baseline' \u2014 closed without merge. Superseded \u2014 fix-forward path used instead"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1698 'feat(epic-3): story 3.2 - unit management UI (BIT-188)' \u2014 closed without merge. Closed unmerged \u2014 story carried over to a different branch"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1746 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + _mock.ts (reality) without updating docs/screens/reality/*.md. Title: 'fix(portal-listings): validate enums/status + ownership IDOR tests + FE field wiring (#1671)'. Heuristic: review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1737 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx (ppt) without updating docs/screens/ppt/*.md. Title: 'fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler (#1668)'. Heuristic: review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1733 touched frontend/apps/ppt-web/src/routes/groups/financial.tsx (ppt) without updating docs/screens/ppt/*.md. Title: 'fix(ppt-web): add loading state + double-click guard to invoice PDF download (#1673)'. Heuristic: review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1641 touched frontend/apps/ppt-web/src/routes/AppRoutes.tsx + ai-dashboards.tsx + lazyRoutes.tsx (ppt) without updating docs/screens/ppt/*.md. Title: 'feat(ppt-web): Sentiment & Predictive Maintenance dashboards (Epic 13, Story 13.2/13.3) \u2014 docs followed in PR #1736'. Heuristic: review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1696 touched frontend/apps/ppt-web/src/routes/groups/messaging.tsx (ppt) without updating docs/screens/ppt/*.md. Title: 'messaging route change without docs/screens/ppt/*.md update'. Heuristic: review candidate."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1743-booking-listing-validation",
+      "type": "hotfix-no-test",
+      "source": "PR #1743",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1743 'fix(integrations): validate base_rate + currency in Booking.com listing push (#1664)' \u2014 touched backend/crates/integrations/src/booking/ with no test diff. Field-validation fix shipped without an integration test for the rejection path."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1737-iot-jwt-trusting-channel",
+      "type": "hotfix-no-test",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1737 'fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler (#1668)' \u2014 touched backend/servers/api-server/src/routes/iot.rs + forms.rs with no test diff. Security-adjacent: deleted a JWT-only-trusting WS channel; merged without an explicit regression test pinning that the JWT-only path is gone."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1639-airbnb-manager-gate",
+      "type": "hotfix-no-test",
+      "source": "PR #1639",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1639 'fix(api-server): manager-gate Airbnb linked-listing config reads (closes #1626)' \u2014 touched backend/servers/api-server/src/routes/ with no test diff. Authz fix (manager-only) merged without explicit handler-level role-gate regression test."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1561-portal-principal-admit",
+      "type": "hotfix-no-test",
+      "source": "PR #1561",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1561 'fix(reality-server): admit public agencies on imports via PortalPrincipal (closes #1300)' \u2014 touched backend/servers/reality-server/src/ with no test diff. Auth-shape fix on the imports route shipped without an explicit PortalPrincipal admission regression test."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1539-oauth-public-client-secret",
+      "type": "hotfix-no-test",
+      "source": "PR #1539",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1539 'fix(oauth): reject public client supplying a client_secret with invalid_client' \u2014 touched backend/servers/api-server/src/routes/oauth.rs with no test diff. OAuth spec-conformance fix without a regression test pinning the invalid_client response."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1485-booking-timeout-retry",
+      "type": "hotfix-no-test",
+      "source": "PR #1485",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1485 'fix(integrations): Booking.com client timeout + Retry-After + RateLimited (BIT-110, GH #1338)' \u2014 touched backend/crates/integrations/src/booking/ with no test diff. Resilience fix (timeout + Retry-After) shipped without a retry/timeout regression test."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1576 \u2014 dependabot (i18next 25\u219226) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1575 \u2014 dependabot (@babel/core 7\u21928) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1574 \u2014 dependabot (cargo-minor-patch) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1573 \u2014 dependabot (@types/node 20\u219225) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1572 \u2014 dependabot (expo-secure-store 55\u219256) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1571 \u2014 dependabot (npm-minor-patch group) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1570 \u2014 dependabot (mikepenz/action-junit-report 5\u21926) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1569 \u2014 dependabot (dtolnay/rust-toolchain 1.94\u21921.100) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1568 \u2014 dependabot (tower-http 0.6\u21920.7) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1567 \u2014 dependabot (gradle-minor-patch) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1566 \u2014 dependabot (compose-bom 2026.05\u21922026.06) \u2014 informational only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR #1449",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #1449 \u2014 dependabot (npm-minor-patch 25-update group) \u2014 informational only"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signal",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "decay applied to >14d items",
+      "observed": "0 stale untouched",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans get adversarial annotation",
+      "observed": "no new plans",
+      "expected": "trivially pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged diff",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in added lines",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases marked failed",
+      "observed": "none",
+      "expected": "trivially pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 >= 7",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps respected",
+      "observed": "0 actions",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged \u2192 no-op",
+      "observed": "pm_cursor=5 (unchanged)",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

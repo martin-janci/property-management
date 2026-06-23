@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-23T08:30:00Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 1753,
+  "last_issue_seen": 1747,
+  "last_commit_sha": "4267f3c0",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -248,8 +248,8 @@
       "recent_churn": 2856
     },
     "backend/servers/api-server/src/routes/aml_dsa.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-10",
+      "runs_seen": 2,
+      "last_seen": "2026-06-23",
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
@@ -283,9 +283,9 @@
       "recent_churn": 334
     },
     "backend/servers/api-server/src/routes/forms.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-06-16",
-      "recent_churn": 334
+      "runs_seen": 3,
+      "last_seen": "2026-06-23",
+      "recent_churn": 2046
     },
     "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs": {
       "runs_seen": 1,
@@ -321,6 +321,11 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/api-server/src/routes/financial.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-23",
+      "recent_churn": 1640
     }
   },
   "seen_signals": [
@@ -553,7 +558,36 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-23",
+    "revert-pr-1713",
+    "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+    "closed-not-merged-pr-1749",
+    "closed-not-merged-pr-1727",
+    "closed-not-merged-pr-1698",
+    "screen-map-drift-pr-1746-reality",
+    "screen-map-drift-pr-1737-ppt",
+    "screen-map-drift-pr-1733-ppt",
+    "screen-map-drift-pr-1641-ppt",
+    "screen-map-drift-pr-1696-ppt",
+    "hotfix-no-test-pr-1743-booking-listing-validation",
+    "hotfix-no-test-pr-1737-iot-jwt-trusting-channel",
+    "hotfix-no-test-pr-1639-airbnb-manager-gate",
+    "hotfix-no-test-pr-1561-portal-principal-admit",
+    "hotfix-no-test-pr-1539-oauth-public-client-secret",
+    "hotfix-no-test-pr-1485-booking-timeout-retry",
+    "dep-update-noise-pr-1576",
+    "dep-update-noise-pr-1575",
+    "dep-update-noise-pr-1574",
+    "dep-update-noise-pr-1573",
+    "dep-update-noise-pr-1572",
+    "dep-update-noise-pr-1571",
+    "dep-update-noise-pr-1570",
+    "dep-update-noise-pr-1569",
+    "dep-update-noise-pr-1568",
+    "dep-update-noise-pr-1567",
+    "dep-update-noise-pr-1566",
+    "dep-update-noise-pr-1449"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +601,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 189,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
