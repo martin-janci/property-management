@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-06-23T12:23:46Z",
+  "archived_at": "2026-06-23T12:28:33Z",
   "items": [
     {
       "id": "bug-esignature-webhook-idempotency-guard",
@@ -1046,6 +1046,18 @@
         "merged_at": "2026-06-04T00:08:01Z",
         "at": "2026-06-04T04:05:05Z"
       }
+    },
+    {
+      "id": "gap-79-1-wire-announcements-faults-api-hooks",
+      "action": "ppt-web AnnouncementsPage + FaultsPage not fully wired to live @ppt/api-client hooks — complete list/create/update data wiring (coverage 79-1)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-23 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "already-shipped PR #1555/#1610 (verified green, zero diff) 2026-06-23T12:28:33Z"
     },
     {
       "id": "gap-7a-1-mobile-document-upload",
