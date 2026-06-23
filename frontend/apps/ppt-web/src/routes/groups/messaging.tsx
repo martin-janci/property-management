@@ -15,7 +15,9 @@ import type { CreateThreadRequest, SendMessageRequest } from '../../features/mes
 import {
   toApiSendMessageRequest,
   toStartThreadRequest,
+  useArchiveThread,
   useDeleteMessage,
+  useDeleteThread,
   useMarkThreadRead,
   useMessageRecipients,
   useSendMessage,
@@ -34,6 +36,7 @@ function MessagesPageRoute() {
     limit: number;
     offset: number;
     search?: string;
+    archived?: boolean;
   }>({
     limit: 20,
     offset: 0,
@@ -42,6 +45,47 @@ function MessagesPageRoute() {
   const { threads, total, isLoading: threadsLoading } = useThreads(msgQueryParams);
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.unreadCount ?? 0;
+
+  const deleteThread = useDeleteThread();
+  const archiveThread = useArchiveThread();
+
+  // Per-user delete / archive operate on one thread at a time (BIT-182); the
+  // bulk-select UI hands us the selected ids, so fan out and surface a single
+  // toast for the batch. The mutation hooks invalidate the thread list on
+  // success.
+  const handleDeleteThreads = async (threadIds: string[]) => {
+    try {
+      await Promise.all(threadIds.map((id) => deleteThread.mutateAsync(id)));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('messaging.deleteSuccess', 'Conversations deleted'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.deleteFailed', 'Failed to delete conversations'),
+      });
+    }
+  };
+
+  const handleArchiveThreads = async (threadIds: string[]) => {
+    try {
+      await Promise.all(threadIds.map((id) => archiveThread.mutateAsync(id)));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('messaging.archiveSuccess', 'Conversations archived'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.archiveFailed', 'Failed to archive conversations'),
+      });
+    }
+  };
 
   return (
     <MessagesPage
@@ -56,16 +100,11 @@ function MessagesPageRoute() {
           limit: params.pageSize ?? 20,
           offset: ((params.page ?? 1) - 1) * (params.pageSize ?? 20),
           search: params.search,
+          archived: params.filter === 'archived',
         });
       }}
-      onDeleteThreads={() => {
-        // Thread deletion is not yet supported by the API
-        showToast({
-          type: 'error',
-          title: t('common.error'),
-          message: t('messaging.deleteNotSupported', 'Deleting threads is not yet supported'),
-        });
-      }}
+      onDeleteThreads={handleDeleteThreads}
+      onArchiveThreads={handleArchiveThreads}
     />
   );
 }

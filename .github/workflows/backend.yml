@@ -1,6 +1,30 @@
 name: Backend
 # PAP-250: retrigger after stuck queue slot
 
+# MIXED-PR DETERMINISM (#1672)
+# ---------------------------
+# `check` and `test` are REQUIRED status-check contexts on `dev` branch
+# protection. They must be produced by EXACTLY ONE workflow so the merge gate
+# is never resolved by a race between two same-named runs.
+#
+# Previously this workflow was path-filtered to `backend/**`, and a sibling
+# `backend-skip.yml` (path-complement) emitted its own trivially-green `check`
+# /`test` jobs for pure-frontend PRs. On a MIXED PR (backend + frontend files)
+# BOTH workflows fired and both reported `check`/`test` on the same SHA; which
+# run "won" depended on completion order — the ~1s no-op could report green
+# while the real backend jobs were still queued, letting a backend change land
+# behind a stub (the #1672 spoofed-green race).
+#
+# The fix: this workflow now ALWAYS runs on `pull_request` (no `paths:` filter),
+# so it is the SOLE producer of `check` and `test`. A first `changes` job
+# detects whether any backend path changed:
+#   - backend touched     -> the real, heavy `check`/`test` steps run.
+#   - no backend touched   -> a trivially-green no-op runs INSIDE the same
+#                             `check`/`test` job (same context name), satisfying
+#                             branch protection for pure-frontend PRs.
+# One producer per required context name = no race, on any PR shape.
+# `backend-skip.yml` is therefore removed.
+
 on:
   push:
     paths:
@@ -10,10 +34,11 @@ on:
       # CI and the PR sits without a status. (ppt-pr-followup hit this
       # while landing the dev-team review TEST-105 fix.)
       - '.github/workflows/backend.yml'
+  # NO `paths:` filter on pull_request — this workflow must run on EVERY PR so it
+  # is the single deterministic producer of the required `check`/`test` contexts
+  # (#1672). The `changes` job below decides whether the heavy steps actually run
+  # or a no-op satisfies the gate.
   pull_request:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
   # Weekly security tests (Story 80.1)
   schedule:
     - cron: '0 3 * * 0'  # Every Sunday at 3am UTC
@@ -28,8 +53,44 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings"
 
+# A newer push to the PR branch makes an in-flight run obsolete — cancel it so
+# the required contexts always reflect the PR's current tip and we don't pay for
+# stale full-workspace test runs.
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Single source of truth for "did this PR touch the backend?". Every other job
+  # keys off `needs.changes.outputs.backend`. On push/schedule/workflow_dispatch
+  # there is no PR diff to inspect, so we force backend=true and run the full
+  # suite (matches the pre-#1672 behaviour where those events always ran).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect backend changes
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backend.yml'
+
+      # Non-PR events (push to backend/**, weekly schedule, manual dispatch)
+      # always exercise the full suite — there is no diff to filter against.
+      - name: Force backend=true for non-PR events
+        if: github.event_name != 'pull_request'
+        run: echo "backend=true" >> "$GITHUB_OUTPUT"
+
   lint:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -58,16 +119,31 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+  # REQUIRED context `check`. Always runs (so the required status is always
+  # produced exactly once — #1672). When no backend paths changed it short-
+  # circuits to a no-op; otherwise it runs the real, heavy steps. Every real
+  # step is gated on `needs.changes.outputs.backend == 'true'`, and the no-op is
+  # gated on its inverse — the JOB itself always runs and reports the `check`
+  # context regardless.
   check:
+    needs: changes
     runs-on: ubuntu-latest
 
     steps:
+      - name: Required check satisfied (no backend paths changed)
+        if: needs.changes.outputs.backend != 'true'
+        run: |
+          echo "Pure-frontend PR — no backend/** changes; backend 'check' job not required to run."
+
       - uses: actions/checkout@v6
+        if: needs.changes.outputs.backend == 'true'
 
       - name: Install Rust
+        if: needs.changes.outputs.backend == 'true'
         uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
+        if: needs.changes.outputs.backend == 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
@@ -77,6 +153,7 @@ jobs:
       # instead of landing and needing a fixup PR. This recurred on #1563/#1580
       # (merged red-`lint` on green `check`) → #1581; tracked as GH #1592.
       - name: Check formatting
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         run: cargo fmt --all -- --check
 
@@ -86,13 +163,16 @@ jobs:
       # the script printed green; 68 handler-side raw-pool violations merged
       # behind it — PAP-68).
       - name: Install ripgrep (required by RLS enforcement check)
+        if: needs.changes.outputs.backend == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
 
       - name: RLS Enforcement Check
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         run: ./scripts/check-rls-enforcement.sh --strict
 
       - name: WebSocket Tenant Enforcement Check
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         run: ./scripts/check-ws-tenant-enforcement.sh --strict
 
@@ -104,6 +184,7 @@ jobs:
       # violations produce informational output rather than blocking CI -- add
       # --strict once the backlog items are resolved.
       - name: Discarded Principal Lint
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         run: ./scripts/lints/check-discarded-principal.sh
 
@@ -111,18 +192,24 @@ jobs:
       # Docker (available on GitHub-hosted runners), applies all migrations,
       # and fails if any tenant-scoped table lacks a CREATE POLICY.
       - name: RLS Policy Coverage Check
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         run: ./scripts/check-rls-coverage.sh --strict
 
       - name: Check
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         env:
           SQLX_OFFLINE: true
         run: cargo check --workspace
 
+  # REQUIRED context `test`. Same always-run-and-conditionally-no-op shape as
+  # `check` (#1672). It still `needs: check` so on a backend PR it only runs
+  # after `check` passes; `changes` is pulled in transitively but listed
+  # explicitly because the step-level `if`s reference its output.
   test:
     runs-on: ubuntu-latest
-    needs: check
+    needs: [changes, check]
 
     services:
       postgres:
@@ -154,12 +241,20 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Required check satisfied (no backend paths changed)
+        if: needs.changes.outputs.backend != 'true'
+        run: |
+          echo "Pure-frontend PR — no backend/** changes; backend 'test' job not required to run."
+
       - uses: actions/checkout@v6
+        if: needs.changes.outputs.backend == 'true'
 
       - name: Install Rust
+        if: needs.changes.outputs.backend == 'true'
         uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
+        if: needs.changes.outputs.backend == 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
@@ -172,6 +267,7 @@ jobs:
       # `test` job goes red. Install the package the production code depends on
       # so the tests exercise the same path they do in prod (issue #1645).
       - name: Install PDF report fonts
+        if: needs.changes.outputs.backend == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-liberation
@@ -181,6 +277,7 @@ jobs:
       # with "No space left on device". Reclaim the preinstalled toolchains we
       # don't use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
       - name: Free disk space
+        if: needs.changes.outputs.backend == 'true'
         run: |
           echo "Disk before cleanup:"; df -h /
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
@@ -189,6 +286,7 @@ jobs:
           echo "Disk after cleanup:"; df -h /
 
       - name: Run tests
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
@@ -208,6 +306,7 @@ jobs:
       # instance; `--include-ignored` opts it in without un-ignoring it
       # in source — local runs without REDIS_URL still skip it.
       - name: Run ignored WS+Redis integration tests
+        if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
@@ -217,7 +316,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [changes, test]
+    if: needs.changes.outputs.backend == 'true'
 
     steps:
       - uses: actions/checkout@v6
@@ -257,9 +357,10 @@ jobs:
   # Quick RLS smoke test on every PR - catches basic tenant isolation issues
   rls-smoke-test:
     runs-on: ubuntu-latest
-    needs: check
-    # Run on all PRs (fast test, ~30s)
-    if: github.event_name == 'pull_request'
+    needs: [changes, check]
+    # Run on backend PRs (fast test, ~30s). Not a required context, so it skips
+    # cleanly on pure-frontend PRs (#1672).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
 
     services:
       postgres:
@@ -347,7 +448,11 @@ jobs:
   # to ensure security verification runs even on cosmetic failures (PAP-247).
   security-tests:
     runs-on: ubuntu-latest
-    needs: check
+    needs: [changes, check]
+    # Not a required context; skips cleanly on pure-frontend PRs (#1672). The
+    # `changes` job forces backend=true on the weekly schedule / dispatch, so
+    # the penetration suite still runs on those events.
+    if: needs.changes.outputs.backend == 'true'
     # TEST-105 (dev-team review 2026-05-23): previously gated to the
     # weekly schedule + opt-in title flags, which gave a Monday→Friday
     # tenant-isolation regression a ~6-day exposure window. The
@@ -470,8 +575,9 @@ jobs:
   # `cargo sqlx prepare`, the offline cache drift is caught here.
   sqlx-migrations:
     runs-on: ubuntu-latest
-    needs: check
-    if: github.event_name == 'pull_request'
+    needs: [changes, check]
+    # Not a required context; skips cleanly on pure-frontend PRs (#1672).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
 
     services:
       postgres:
@@ -528,6 +634,9 @@ jobs:
 
   cargo-deny:
     runs-on: ubuntu-latest
+    needs: changes
+    # Not a required context; skips cleanly on pure-frontend PRs (#1672).
+    if: needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@v6
       - name: cargo deny check

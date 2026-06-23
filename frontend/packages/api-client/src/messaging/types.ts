@@ -107,6 +107,12 @@ export interface ListThreadsParams {
   offset?: number;
   /** Free-text search over thread participants / last message */
   search?: string;
+  /**
+   * When `true`, return only the current user's archived threads; otherwise
+   * the default inbox (non-archived). Soft-deleted threads are excluded from
+   * both. (BIT-182)
+   */
+  archived?: boolean;
 }
 
 /** Query params for listing messages */

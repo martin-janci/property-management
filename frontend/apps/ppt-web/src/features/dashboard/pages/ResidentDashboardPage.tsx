@@ -7,6 +7,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { ActionQueue } from '../components/ActionQueue';
 import type { ActionButton, ActionItem } from '../hooks/useActionQueue';
 import './ResidentDashboardPage.css';
@@ -34,6 +35,12 @@ export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPagePro
           <p className="resident-page__banner-subtitle">{t('dashboard.completeIn60Seconds')}</p>
         </div>
       </div>
+
+      <nav className="resident-page__quick-links">
+        <Link to="/my-unit" className="resident-page__quick-link">
+          {t('dashboard.viewMyUnit', 'View my unit')}
+        </Link>
+      </nav>
 
       <ActionQueue userRole="resident" onItemAction={onItemAction} />
 

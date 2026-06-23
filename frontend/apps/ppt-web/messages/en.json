@@ -1373,6 +1373,10 @@
     "deleteConversationsConfirm": "Are you sure you want to delete {{count}} conversation(s)? This action cannot be undone.",
     "archiveConversationsTitle": "Archive Conversations",
     "archiveConversationsConfirm": "Are you sure you want to archive {{count}} conversation(s)?",
+    "deleteSuccess": "Conversations deleted",
+    "deleteFailed": "Failed to delete conversations",
+    "archiveSuccess": "Conversations archived",
+    "archiveFailed": "Failed to archive conversations",
     "errors": {
       "recipientRequired": "Please select at least one recipient",
       "messageRequired": "Please enter a message",

@@ -130,6 +130,10 @@ pub struct ListThreadsQuery {
     pub offset: Option<i64>,
     /// Optional case-insensitive filter on the other participant's name.
     pub search: Option<String>,
+    /// When `true`, return only threads the current user has archived; when
+    /// absent/`false`, return the default inbox (non-archived). Soft-deleted
+    /// threads are excluded from both. (BIT-182)
+    pub archived: Option<bool>,
 }
 
 /// Query for listing messages.
@@ -150,6 +154,11 @@ pub fn router() -> Router<AppState> {
         .route("/threads", get(list_threads))
         .route("/threads", post(start_thread))
         .route("/threads/{id}", get(get_thread))
+        // Per-user soft delete (hide for me only) — BIT-182.
+        .route("/threads/{id}", delete(delete_thread))
+        // Per-user archive toggle — BIT-182.
+        .route("/threads/{id}/archive", post(archive_thread))
+        .route("/threads/{id}/archive", delete(unarchive_thread))
         .route("/threads/{id}/messages", post(send_message))
         .route(
             "/threads/{id}/messages/{message_id}",
@@ -190,6 +199,7 @@ async fn list_threads(
 
     // Treat an empty/whitespace-only search string as no filter.
     let search = normalize_thread_search(query.search.as_deref());
+    let archived = query.archived.unwrap_or(false);
 
     let threads = repo
         .list_threads_rls(
@@ -199,6 +209,7 @@ async fn list_threads(
             query.limit,
             query.offset,
             search,
+            archived,
         )
         .await
         .map_err(|e| {
@@ -210,7 +221,7 @@ async fn list_threads(
         })?;
 
     let total = repo
-        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search)
+        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search, archived)
         .await
         .map_err(|e| {
             tracing::error!("Failed to count threads: {:?}", e);
@@ -401,6 +412,15 @@ async fn start_thread(
                 )
             })?;
 
+        // A new inbound message un-hides the thread for any participant who had
+        // previously soft-deleted it (BIT-182), generalized to N recipients for
+        // [BIT-183]. Best-effort.
+        for &rid in &recipients {
+            let _ = repo
+                .unhide_thread_for_user(&mut **rls.conn(), thread.id, rid)
+                .await;
+        }
+
         // Realtime fanout: notify every other participant's WebSocket channel
         // (Epic 2B / 8A.3), generalized to N recipients for [BIT-183].
         for &rid in &recipients {
@@ -545,6 +565,200 @@ async fn get_thread(
         other_participant,
         messages,
         message_count,
+    }))
+}
+
+/// Load a thread and authorize the caller for a per-participant state change.
+///
+/// The thread must exist, belong to the caller's tenant, and the caller must be
+/// a participant — the exact gate `get_thread` applies (see :434-456). Used by
+/// the per-user delete + archive handlers (BIT-182). On `Err`, the caller is
+/// responsible for releasing the RLS connection.
+async fn authorize_thread_participant(
+    repo: &MessagingRepository,
+    rls: &mut RlsConnection,
+    thread_id: Uuid,
+) -> Result<MessageThread, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    let thread = repo
+        .get_thread_rls(&mut **rls.conn(), thread_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Thread not found")),
+            )
+        })?;
+
+    // Security: thread must belong to the caller's tenant (Critical 1.1 fix).
+    if thread.organization_id != tenant_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Access denied to this thread",
+            )),
+        ));
+    }
+
+    if !thread.participant_ids.contains(&user_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_PARTICIPANT",
+                "You are not a participant in this thread",
+            )),
+        ));
+    }
+
+    Ok(thread)
+}
+
+/// Delete a thread for the current user only (per-user soft hide).
+///
+/// This hides the thread from the caller's list without destroying the shared
+/// thread, its messages, or the other participant's copy. A later inbound
+/// message un-hides it. (BIT-182, UC-05.7)
+#[utoipa::path(
+    delete,
+    path = "/api/v1/messages/threads/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread hidden for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn delete_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.hide_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to hide thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation deleted".to_string(),
+    }))
+}
+
+/// Archive a thread for the current user only.
+///
+/// Moves the thread into the caller's "Archived" tab without affecting the
+/// other participant. (BIT-182, UC-05.11)
+#[utoipa::path(
+    post,
+    path = "/api/v1/messages/threads/{id}/archive",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread archived for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn archive_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.archive_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to archive thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation archived".to_string(),
+    }))
+}
+
+/// Un-archive a thread for the current user only (back to the default inbox).
+/// (BIT-182, UC-05.11)
+#[utoipa::path(
+    delete,
+    path = "/api/v1/messages/threads/{id}/archive",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread un-archived for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn unarchive_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.unarchive_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to un-archive thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation un-archived".to_string(),
     }))
 }
 
@@ -694,6 +908,13 @@ async fn send_message(
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
         })?;
+
+    // A new inbound message un-hides the thread for the recipient if they had
+    // previously soft-deleted it (BIT-182). Best-effort: a failure here must not
+    // fail an otherwise-successful send.
+    let _ = repo
+        .unhide_thread_for_user(&mut **rls.conn(), id, other_user_id)
+        .await;
 
     rls.release().await;
 

@@ -612,6 +612,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(7),
+        overdue_grace_period_days: std::env::var("OVERDUE_GRACE_PERIOD_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0),
         signature_reminder_days_before: std::env::var("SIGNATURE_REMINDER_DAYS")
             .ok()
             .and_then(|v| v.parse().ok())
