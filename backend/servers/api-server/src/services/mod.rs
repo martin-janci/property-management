@@ -7,6 +7,7 @@ pub mod auth_policy;
 pub mod document_generation;
 pub mod email;
 pub mod feature_service;
+pub mod id_ocr;
 pub mod jwt;
 pub mod notification;
 pub mod notification_digest;

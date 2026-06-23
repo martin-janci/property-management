@@ -13,14 +13,13 @@ import { useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { CreateThreadRequest, SendMessageRequest } from '../../features/messaging';
 import {
-  toApiSendMessageRequest,
   toStartThreadRequest,
   useArchiveThread,
   useDeleteMessage,
   useDeleteThread,
   useMarkThreadRead,
   useMessageRecipients,
-  useSendMessage,
+  useSendMessageWithAttachments,
   useStartThread,
   useThread,
   useThreads,
@@ -165,7 +164,7 @@ function ThreadDetailPageRoute() {
   const { t } = useTranslation();
 
   const { thread, isLoading: threadLoading } = useThread(threadId ?? '', !!threadId);
-  const sendMessage = useSendMessage();
+  const sendMessage = useSendMessageWithAttachments();
   const markRead = useMarkThreadRead();
   const deleteMessage = useDeleteMessage();
 
@@ -175,7 +174,7 @@ function ThreadDetailPageRoute() {
 
   const handleThreadSendMessage = async (data: SendMessageRequest) => {
     try {
-      await sendMessage.mutateAsync({ threadId, data: toApiSendMessageRequest(data) });
+      await sendMessage.mutateAsync({ threadId, data });
     } catch {
       showToast({
         type: 'error',

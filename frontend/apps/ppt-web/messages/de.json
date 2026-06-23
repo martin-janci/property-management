@@ -1330,5 +1330,10 @@
       "under_repair": "In Reparatur",
       "decommissioned": "Außer Betrieb"
     }
+  },
+  "messaging": {
+    "errors": {
+      "downloadFailed": "Anhang konnte nicht heruntergeladen werden"
+    }
   }
 }

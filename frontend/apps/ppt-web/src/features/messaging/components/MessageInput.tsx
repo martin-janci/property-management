@@ -4,13 +4,13 @@
  * Input field for composing and sending messages with attachment support.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Message, MessageAttachment } from '../types';
+import type { Message, MessageAttachment, PendingAttachment } from '../types';
 import { AttachmentPreview } from './AttachmentPreview';
 
 interface MessageInputProps {
-  onSendMessage: (content: string, attachments?: MessageAttachment[], replyToId?: string) => void;
+  onSendMessage: (content: string, attachments?: PendingAttachment[], replyToId?: string) => void;
   isSubmitting?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -18,9 +18,11 @@ interface MessageInputProps {
   onCancelReply?: () => void;
 }
 
-// Maximum file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-// Allowed file types
+// Maximum attachment size: 25 MiB. Mirrors the backend `MAX_ATTACHMENT_SIZE_BYTES`
+// (UC-05.9) so the client rejects oversize files before requesting an upload URL.
+export const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024;
+// Allowed file types — kept in sync with the backend storage allow-list
+// (`ALLOWED_MIME_TYPES` in integrations/storage.rs).
 const ALLOWED_TYPES = [
   'image/jpeg',
   'image/png',
@@ -32,6 +34,7 @@ const ALLOWED_TYPES = [
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain',
+  'text/csv',
 ];
 
 export function MessageInput({
@@ -44,10 +47,34 @@ export function MessageInput({
 }: MessageInputProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
-  const [attachments, setAttachments] = useState<MessageAttachment[]>([]);
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Mirror the current pending attachments so the unmount cleanup can revoke
+  // their blob URLs without re-subscribing the effect on every change.
+  const attachmentsRef = useRef<PendingAttachment[]>([]);
+  attachmentsRef.current = attachments;
+
+  // Revoke any outstanding image preview blob URLs on unmount to avoid leaks.
+  useEffect(() => {
+    return () => {
+      for (const attachment of attachmentsRef.current) {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      }
+    };
+  }, []);
+
+  // Derive display-only metadata for the composer preview from the pending files.
+  const previewAttachments: MessageAttachment[] = attachments.map((a) => ({
+    id: a.id,
+    name: a.file.name,
+    type: a.file.type,
+    size: a.file.size,
+    url: a.previewUrl,
+  }));
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
@@ -62,6 +89,13 @@ export function MessageInput({
     e.preventDefault();
     if ((content.trim() || attachments.length > 0) && !isSubmitting && !disabled) {
       onSendMessage(content.trim(), attachments.length > 0 ? attachments : undefined, replyTo?.id);
+      // The handed-off File objects keep the bytes; the local preview blob URLs
+      // are no longer needed once the composer clears.
+      for (const attachment of attachments) {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      }
       setContent('');
       setAttachments([]);
       setAttachmentError(null);
@@ -90,13 +124,13 @@ export function MessageInput({
     if (!files || files.length === 0) return;
 
     setAttachmentError(null);
-    const newAttachments: MessageAttachment[] = [];
+    const newAttachments: PendingAttachment[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
       // Check file size
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
         setAttachmentError(t('messaging.errors.fileTooLarge', { name: file.name }));
         continue;
       }
@@ -107,17 +141,13 @@ export function MessageInput({
         continue;
       }
 
-      // Create a temporary attachment object
-      // In a real app, this would upload the file and get a URL back
-      const attachment: MessageAttachment = {
-        id: `temp-${Date.now()}-${i}`,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: URL.createObjectURL(file),
-      };
-
-      newAttachments.push(attachment);
+      // Hold on to the real File so its bytes can be uploaded on send. Only
+      // image files get a blob preview URL (used for the composer thumbnail).
+      newAttachments.push({
+        id: `pending-${Date.now()}-${i}`,
+        file,
+        previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+      });
     }
 
     setAttachments((prev) => [...prev, ...newAttachments]);
@@ -131,8 +161,8 @@ export function MessageInput({
   const handleRemoveAttachment = (attachmentId: string) => {
     setAttachments((prev) => {
       const attachment = prev.find((a) => a.id === attachmentId);
-      if (attachment?.url.startsWith('blob:')) {
-        URL.revokeObjectURL(attachment.url);
+      if (attachment?.previewUrl) {
+        URL.revokeObjectURL(attachment.previewUrl);
       }
       return prev.filter((a) => a.id !== attachmentId);
     });
@@ -193,7 +223,7 @@ export function MessageInput({
       {attachments.length > 0 && (
         <div className="px-4 pt-3">
           <AttachmentPreview
-            attachments={attachments}
+            attachments={previewAttachments}
             onRemove={handleRemoveAttachment}
             isEditable
           />
