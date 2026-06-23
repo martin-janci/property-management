@@ -276,48 +276,23 @@ interface MergeCollision {
 // ---------------------------------------------------------------------------
 
 async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary> {
-  // TODO(backend): GET /api/v1/admin/metrics/summary — endpoint not yet implemented.
-  // Stub fallback with zeros until backend provides this endpoint.
-  const STUB: MetricsSummary = {
-    tenantsActive: 0,
-    operatorsOnline: 1,
-    pendingMerges: 0,
-    highRisk24h: 0,
-  };
-
-  if (!token) return STUB;
-
-  try {
-    const resp = await fetch('/api/v1/admin/metrics/summary', {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
-    });
-    if (!resp.ok) {
-      console.warn(
-        '[Dashboard] GET /api/v1/admin/metrics/summary returned',
-        resp.status,
-        '— falling back to stub metrics. TODO: implement this endpoint in api-server.'
-      );
-      return STUB;
-    }
-    // Backend now serializes camelCase (MetricsSummary has
-    // `#[serde(rename_all = "camelCase")]`). Coerce each field through
-    // `Number()` so missing / null values fall back to 0 instead of NaN.
-    const raw = (await resp.json()) as Partial<MetricsSummary>;
-    return {
-      tenantsActive: Number(raw.tenantsActive ?? 0),
-      operatorsOnline: Number(raw.operatorsOnline ?? 0),
-      pendingMerges: Number(raw.pendingMerges ?? 0),
-      highRisk24h: Number(raw.highRisk24h ?? 0),
-    };
-  } catch (err) {
-    console.warn(
-      '[Dashboard] GET /api/v1/admin/metrics/summary failed:',
-      err,
-      '— falling back to stub metrics. TODO: implement this endpoint in api-server.'
-    );
-    return STUB;
+  const resp = await fetch('/api/v1/admin/metrics/summary', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',
+  });
+  if (!resp.ok) {
+    throw new Error(`HTTP ${resp.status}`);
   }
+  // Backend serializes camelCase (MetricsSummary has
+  // `#[serde(rename_all = "camelCase")]`). Coerce each field through
+  // `Number()` so missing / null values fall back to 0 instead of NaN.
+  const raw = (await resp.json()) as Partial<MetricsSummary>;
+  return {
+    tenantsActive: Number(raw.tenantsActive ?? 0),
+    operatorsOnline: Number(raw.operatorsOnline ?? 0),
+    pendingMerges: Number(raw.pendingMerges ?? 0),
+    highRisk24h: Number(raw.highRisk24h ?? 0),
+  };
 }
 
 async function fetchHighRiskEvents(token: string | null): Promise<AuditEvent[]> {
