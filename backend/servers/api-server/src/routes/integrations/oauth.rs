@@ -565,7 +565,7 @@ pub struct AirbnbReservationsResponse {
     params(OrgIdPath, AirbnbReservationsQuery),
     responses(
         (status = 200, description = "Airbnb reservations — `{reservations: [...], count: N}`"),
-        (status = 403, description = "Caller is not a member of the organisation"),
+        (status = 403, description = "Caller is not a member of the organisation, or lacks a manager-level role in it"),
         (status = 404, description = "No Airbnb connection found"),
         (status = 502, description = "Airbnb API error")
     ),
@@ -586,6 +586,13 @@ pub async fn list_airbnb_reservations(
     );
 
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate (issue #1667, follow-up to #1626/#1635): live Airbnb
+    // reservation data carries guest PII (names, check-in/check-out dates,
+    // booking/listing IDs) — a plain `resident` member must not be able to
+    // enumerate it via this live proxy, for parity with `/airbnb/listings`
+    // (#1635) and `/airbnb/connections` (#1639). Role is read from the caller's
+    // membership of the PATH org (#1525/#1585), not the JWT.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     use super::token_rotation::TokenRotationOutcome;
 

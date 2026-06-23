@@ -148,6 +148,8 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/organizations", routes::organizations::router())
         // Buildings routes
         .nest("/api/v1/buildings", routes::buildings::router())
+        // Resident-facing "My Unit" view (Epic 3, Story 3.6)
+        .nest("/api/v1/users/me/units", routes::my_units::router())
         // Delegations routes
         .nest("/api/v1/delegations", routes::delegations::router())
         // Facilities routes
@@ -252,10 +254,8 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/ai/workflows", routes::ai::workflow_router())
         .nest("/api/v1/ai/llm", routes::ai::llm_router())
         .nest("/api/v1/ai/ocr", routes::ai::ocr_router())
-        // IoT routes
+        // IoT routes — REST + realtime sensor WS (`GET /api/v1/iot/sensors/ws`)
         .nest("/api/v1/iot/sensors", routes::iot::sensor_router())
-        // IoT WebSocket real-time sensor readings (Epic 14, Story 14.3)
-        .nest("/api/v1/iot", routes::ws_sensor::router())
         // Agency routes
         .nest("/api/v1/agencies", routes::agencies::router())
         // Lease routes

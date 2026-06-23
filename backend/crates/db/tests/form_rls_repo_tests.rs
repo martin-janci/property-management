@@ -167,32 +167,21 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         seed_form_with_status(&pool, org_a, user_a, "Published Form A", "published").await;
 
     // --- NOSUPERUSER NOBYPASSRLS role so FORCE actually binds ---
-    let role = format!("ppt_rls_form_{}", Uuid::new_v4().simple());
-    for stmt in [
-        format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
-        format!(
-            "GRANT SELECT, INSERT, UPDATE, DELETE ON \
-             forms, form_fields, form_submissions, form_downloads TO \"{role}\""
-        ),
-        format!(
-            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), \
-             get_current_org_not_deleted() TO \"{role}\""
-        ),
-        format!("GRANT SELECT ON organizations TO \"{role}\""),
-        // `FormRepository::list` LEFT JOINs `users` to surface `created_by_name`,
-        // so the NOSUPERUSER RLS role needs SELECT on `users` or the join trips
-        // Postgres 42501 (permission denied on `users`).
-        format!("GRANT SELECT ON users TO \"{role}\""),
-        // `get_submission` LEFT JOINs `units` (un.designation) and `buildings`
-        // (b.name) for the submission detail view, so the role likewise needs
-        // SELECT on both or the join trips 42501 (permission denied on `units`).
-        format!("GRANT SELECT ON units, buildings TO \"{role}\""),
-    ] {
-        sqlx::query(sqlx::AssertSqlSafe(stmt))
-            .execute(&pool)
-            .await
-            .expect("grant setup");
-    }
+    // Reuses the shared `create_rls_role` helper for the common CREATE + grant
+    // set (forms/form_fields/form_submissions/form_downloads + the RLS
+    // functions + organizations + users), then adds the extra grants this test
+    // alone needs:
+    //
+    //   `get_submission` LEFT JOINs `units` (un.designation) and `buildings`
+    //   (b.name) for the submission detail view, so the role likewise needs
+    //   SELECT on both or the join trips 42501 (permission denied on `units`).
+    let role = create_rls_role(&pool).await;
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "GRANT SELECT ON units, buildings TO \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .expect("grant setup");
 
     // ====================================================================
     // (1) DENY-ALL: role bound, NO context set.

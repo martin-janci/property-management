@@ -16,6 +16,7 @@ pub mod push_fanout;
 pub mod quiet_hours;
 pub mod quiet_hours_drain;
 pub mod scheduler;
+pub mod stripe;
 pub mod syndication;
 pub mod totp;
 pub mod voice_commands;

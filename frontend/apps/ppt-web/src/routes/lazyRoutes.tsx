@@ -250,6 +250,10 @@ export const PaymentManagementPage = lazy(() =>
 export const BudgetManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.BudgetManagementPage }))
 );
+// Story 11.7 - Financial statement reports (income statement / balance sheet / cash flow)
+export const FinancialReportsPage = lazy(() =>
+  import('../features/financial').then((m) => ({ default: m.FinancialReportsPage }))
+);
 
 // --- Accounting ---
 
@@ -276,6 +280,11 @@ export const BuildingsPage = lazy(() =>
 );
 export const BuildingDetailPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingDetailPage }))
+);
+
+// Resident "My Unit" view (Epic 3, Story 3.6) — gap-sweep
+export const MyUnitPage = lazy(() =>
+  import('../features/my-unit').then((m) => ({ default: m.MyUnitPage }))
 );
 
 // Facilities & bookings feature (Epic 3, Story 3.7) — API-wired, now routed (gap-sweep)

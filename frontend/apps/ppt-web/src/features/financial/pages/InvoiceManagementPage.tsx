@@ -23,6 +23,8 @@ export interface InvoiceManagementPageProps {
   onNavigateToDetail: (invoiceId: string) => void;
   onSendInvoice: (invoiceId: string) => void;
   onDownloadPdf?: (invoiceId: string) => void;
+  /** Id of the invoice whose PDF is currently downloading (drives the busy/disabled state). */
+  downloadingPdfId?: string | null;
   onFilterChange: (params: {
     page: number;
     pageSize: number;
@@ -41,6 +43,7 @@ export function InvoiceManagementPage({
   onNavigateToDetail,
   onSendInvoice,
   onDownloadPdf,
+  downloadingPdfId,
   onFilterChange,
 }: InvoiceManagementPageProps) {
   const { t } = useTranslation();
@@ -138,6 +141,7 @@ export function InvoiceManagementPage({
           onViewInvoice={onNavigateToDetail}
           onSendInvoice={onSendInvoice}
           onDownloadPdf={onDownloadPdf}
+          downloadingPdfId={downloadingPdfId}
           onStatusFilter={handleStatusFilter}
           onSearch={handleSearch}
         />

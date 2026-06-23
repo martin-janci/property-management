@@ -1151,6 +1151,108 @@ impl FinancialRepository {
         .await
     }
 
+    /// Settle an invoice from a confirmed online-gateway payment (Story 11.5).
+    ///
+    /// Runs in one transaction so a webhook delivery either fully settles or
+    /// not at all:
+    ///   1. inserts a `payments` row (`payment_method = 'online'`,
+    ///      `recorded_by = NULL` — the payer is the gateway, not an internal
+    ///      user; `external_reference` = the gateway transaction id),
+    ///   2. allocates it to `invoice` (capped at the invoice's `balance_due`),
+    ///   3. links the payment back to the originating `online_payment_sessions`
+    ///      row and marks the session `completed`.
+    ///
+    /// The `update_invoice_on_allocation` trigger recomputes the invoice's
+    /// `amount_paid`/`balance_due`/`status`, so a fully-covered invoice
+    /// transitions to `paid` automatically.
+    ///
+    /// **Idempotency is enforced atomically**: the first statement in the tx
+    /// is a conditional `UPDATE … WHERE status <> 'completed'` that claims the
+    /// session row. Stripe is at-least-once and does not serialize deliveries,
+    /// so two concurrent duplicates can both pass a pre-tx status read; the
+    /// conditional UPDATE row-locks the session, so the loser observes
+    /// `rows_affected() == 0` and returns `Ok(None)` (a safe no-op) instead of
+    /// inserting a second payment + allocation. Returns `Ok(Some(payment))`
+    /// for the delivery that actually settles.
+    pub async fn settle_invoice_from_gateway(
+        &self,
+        session: &OnlinePaymentSession,
+        invoice: &Invoice,
+        gateway_reference: &str,
+    ) -> Result<Option<Payment>, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        // Atomic idempotency claim. Only the first concurrent delivery flips
+        // the row from a non-`completed` state; the conditional predicate
+        // row-locks the session so duplicates serialize behind this tx and
+        // then no-op. Bail before touching `payments` if we lost the race.
+        let claim = sqlx::query(
+            r#"
+            UPDATE online_payment_sessions
+            SET status = 'completed', updated_at = NOW()
+            WHERE id = $1 AND status <> 'completed'
+            "#,
+        )
+        .bind(session.id)
+        .execute(&mut *tx)
+        .await?;
+
+        if claim.rows_affected() == 0 {
+            // Another delivery already settled this session — safe no-op.
+            tx.rollback().await?;
+            return Ok(None);
+        }
+
+        let payment = sqlx::query_as::<_, Payment>(
+            r#"
+            INSERT INTO payments (
+                organization_id, unit_id, amount, currency, payment_method,
+                status, reference, external_reference, recorded_by
+            )
+            VALUES ($1, $2, $3, $4, 'online', 'completed', $5, $6, NULL)
+            RETURNING *
+            "#,
+        )
+        .bind(session.organization_id)
+        .bind(invoice.unit_id)
+        .bind(session.amount)
+        .bind(&session.currency)
+        .bind(&session.session_id)
+        .bind(gateway_reference)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let allocation_amount = session.amount.min(invoice.balance_due);
+        sqlx::query(
+            r#"
+            INSERT INTO payment_allocations (payment_id, invoice_id, amount)
+            VALUES ($1, $2, $3)
+            "#,
+        )
+        .bind(payment.id)
+        .bind(invoice.id)
+        .bind(allocation_amount)
+        .execute(&mut *tx)
+        .await?;
+
+        // Status was already set to 'completed' by the atomic claim above; here
+        // we only link the freshly-recorded payment back to the session.
+        sqlx::query(
+            r#"
+            UPDATE online_payment_sessions
+            SET payment_id = $2, updated_at = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(session.id)
+        .bind(payment.id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(Some(payment))
+    }
+
     // ========================================================================
     // REMINDERS (Story 11.6)
     // ========================================================================
@@ -1443,5 +1545,111 @@ impl FinancialRepository {
             total_outflows,
             net_cash_flow,
         })
+    }
+
+    // ========================================================================
+    // Story 11.6: Scheduler payment reminder & overdue transition helpers
+    // ========================================================================
+
+    /// Find all `sent` invoices with `due_date` within the next `days` days,
+    /// across all organizations. Used by the scheduler reminder tick.
+    pub async fn find_invoices_due_for_reminder(
+        &self,
+        days: i64,
+    ) -> Result<Vec<Invoice>, SqlxError> {
+        let today = Utc::now().date_naive();
+        let cutoff = today + chrono::Duration::days(days);
+        sqlx::query_as::<_, Invoice>(
+            r#"
+            SELECT * FROM invoices
+            WHERE status = 'sent'
+              AND due_date > $1
+              AND due_date <= $2
+              AND balance_due > 0
+            ORDER BY due_date ASC
+            "#,
+        )
+        .bind(today)
+        .bind(cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Atomically transitions all `sent` or `partial` invoices whose
+    /// `due_date` is strictly before `CURRENT_DATE - grace_period_days` to
+    /// status `overdue`. Returns the transitioned invoices so callers can
+    /// fire escalation notifications. Safe to call repeatedly (idempotent on
+    /// already-overdue rows).
+    pub async fn transition_invoices_to_overdue(
+        &self,
+        grace_period_days: i64,
+    ) -> Result<Vec<Invoice>, SqlxError> {
+        let grace_cutoff = Utc::now().date_naive() - chrono::Duration::days(grace_period_days);
+        sqlx::query_as::<_, Invoice>(
+            r#"
+            UPDATE invoices
+            SET status = 'overdue', updated_at = NOW()
+            WHERE status IN ('sent', 'partial')
+              AND due_date < $1
+              AND balance_due > 0
+            RETURNING *
+            "#,
+        )
+        .bind(grace_cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{Duration, Utc};
+
+    /// Verify the reminder window predicate: invoices due strictly after today
+    /// and on or before today + N days qualify for a reminder.
+    #[test]
+    fn test_reminder_window_predicate() {
+        let today = Utc::now().date_naive();
+        let days_before = 7i64;
+        let cutoff = today + Duration::days(days_before);
+
+        // The reminder window predicate: due strictly after today, on or before cutoff.
+        let in_reminder_window = |due| due > today && due <= cutoff;
+
+        // Due tomorrow — inside window.
+        assert!(in_reminder_window(today + Duration::days(1)));
+
+        // Due exactly at cutoff — inside window.
+        assert!(in_reminder_window(cutoff));
+
+        // Due today — excluded (already due, not upcoming).
+        assert!(!in_reminder_window(today));
+
+        // Due 8 days out — outside window.
+        assert!(!in_reminder_window(today + Duration::days(8)));
+    }
+
+    /// Verify the overdue grace-period predicate: invoices with due_date
+    /// strictly before today - grace_period_days should be transitioned.
+    #[test]
+    fn test_overdue_grace_period_predicate() {
+        let today = Utc::now().date_naive();
+
+        // The overdue predicate: due strictly before the grace cutoff transitions.
+        let is_overdue = |due, grace_cutoff| due < grace_cutoff;
+
+        // Grace period = 0: any invoice past due (due_date < today) transitions.
+        let grace_cutoff_0 = today - Duration::days(0);
+        assert!(is_overdue(today - Duration::days(1), grace_cutoff_0));
+
+        // Due today is NOT included (strict less-than).
+        assert!(!is_overdue(today, grace_cutoff_0));
+
+        // Grace period = 3: invoice overdue by 2 days stays pending.
+        let grace_cutoff_3 = today - Duration::days(3);
+        assert!(!is_overdue(today - Duration::days(2), grace_cutoff_3));
+
+        // Invoice overdue by 4 days transitions.
+        assert!(is_overdue(today - Duration::days(4), grace_cutoff_3));
     }
 }

@@ -194,10 +194,9 @@ fun FavoritesScreen(
                                             .removeFavorite(listingId)
                                             .fold(
                                                 onSuccess = {
-                                                    favorites =
-                                                        favorites.filter {
-                                                            it.listingId != listingId
-                                                        }
+                                                    favorites = favorites.filter {
+                                                        it.listingId != listingId
+                                                    }
                                                 },
                                                 onFailure = {
                                                     Log.e(TAG, "Failed to remove favorite", it)
@@ -218,10 +217,9 @@ fun FavoritesScreen(
                                             .toggleSearchAlert(id, enabled)
                                             .fold(
                                                 onSuccess = { updated ->
-                                                    savedSearches =
-                                                        savedSearches.map {
-                                                            if (it.id == id) updated else it
-                                                        }
+                                                    savedSearches = savedSearches.map {
+                                                        if (it.id == id) updated else it
+                                                    }
                                                 },
                                                 onFailure = { errorMessage = friendlyError(it) },
                                             )
@@ -233,8 +231,9 @@ fun FavoritesScreen(
                                             .deleteSavedSearch(id)
                                             .fold(
                                                 onSuccess = {
-                                                    savedSearches =
-                                                        savedSearches.filter { it.id != id }
+                                                    savedSearches = savedSearches.filter {
+                                                        it.id != id
+                                                    }
                                                 },
                                                 onFailure = { errorMessage = friendlyError(it) },
                                             )

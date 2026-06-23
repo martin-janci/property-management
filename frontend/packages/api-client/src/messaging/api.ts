@@ -6,9 +6,15 @@
 
 import type { ApiConfig } from '../index';
 import type {
+  AttachmentDownloadResponse,
+  AttachmentUploadRequest,
+  AttachmentUploadUrlResponse,
   BlockedUsersResponse,
+  LinkAttachmentRequest,
   ListMessagesParams,
   ListThreadsParams,
+  MessageAttachment,
+  MessageAttachmentsResponse,
   MessageSuccessResponse,
   SendMessageRequest,
   SendMessageResponse,
@@ -49,6 +55,7 @@ export const createMessagingApi = (config: ApiConfig) => {
       if (params?.limit) searchParams.set('limit', params.limit.toString());
       if (params?.offset) searchParams.set('offset', params.offset.toString());
       if (params?.search) searchParams.set('search', params.search);
+      if (params?.archived) searchParams.set('archived', 'true');
 
       const url = searchParams.toString()
         ? `${baseUrl}/threads?${searchParams}`
@@ -118,6 +125,110 @@ export const createMessagingApi = (config: ApiConfig) => {
         method: 'DELETE',
         headers,
       });
+      return handleResponse(response);
+    },
+
+    /**
+     * Delete a thread for the current user only (per-user soft hide; BIT-182).
+     *
+     * The shared thread and the other participant's copy are untouched — a
+     * later inbound message un-hides it.
+     */
+    deleteThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Archive a thread for the current user only (BIT-182).
+     */
+    archiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
+        method: 'POST',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Un-archive a thread for the current user only (BIT-182).
+     */
+    unarchiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
+        method: 'DELETE',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    // ========================================================================
+    // Attachment Operations (UC-05.9)
+    // ========================================================================
+
+    /**
+     * Request a presigned S3 PUT URL for uploading an attachment to a thread.
+     * The returned `fileKey` must be echoed back to `linkMessageAttachment`
+     * after the bytes have been uploaded directly to S3.
+     */
+    requestAttachmentUploadUrl: async (
+      threadId: string,
+      data: AttachmentUploadRequest
+    ): Promise<AttachmentUploadUrlResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/attachments/upload-url`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Link a previously-uploaded S3 object to a message you sent.
+     */
+    linkMessageAttachment: async (
+      threadId: string,
+      messageId: string,
+      data: LinkAttachmentRequest
+    ): Promise<MessageAttachment> => {
+      const response = await fetch(
+        `${baseUrl}/threads/${threadId}/messages/${messageId}/attachments`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }
+      );
+      return handleResponse(response);
+    },
+
+    /**
+     * List the attachments linked to a message (thread participants only).
+     */
+    listMessageAttachments: async (
+      threadId: string,
+      messageId: string
+    ): Promise<MessageAttachmentsResponse> => {
+      const response = await fetch(
+        `${baseUrl}/threads/${threadId}/messages/${messageId}/attachments`,
+        { headers }
+      );
+      return handleResponse(response);
+    },
+
+    /**
+     * Get a short-lived presigned download URL for an attachment.
+     */
+    getAttachmentDownloadUrl: async (
+      threadId: string,
+      attachmentId: string
+    ): Promise<AttachmentDownloadResponse> => {
+      const response = await fetch(
+        `${baseUrl}/threads/${threadId}/attachments/${attachmentId}/download`,
+        { headers }
+      );
       return handleResponse(response);
     },
 

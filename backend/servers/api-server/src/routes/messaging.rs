@@ -8,10 +8,11 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
-    BlockWithUserInfo, CreateBlock, CreateMessage, CreateThread, Message, MessageThread,
-    MessageWithSender, ParticipantInfo, ThreadWithPreview,
+    BlockWithUserInfo, CreateBlock, CreateMessage, CreateMessageAttachment, CreateThread, Message,
+    MessageAttachment, MessageThread, MessageWithSender, ParticipantInfo, ThreadWithPreview,
 };
 use db::repositories::MessagingRepository;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,11 @@ use uuid::Uuid;
 
 /// Maximum allowed message content length (characters).
 const MAX_MESSAGE_LENGTH: usize = 10_000;
+
+/// Maximum allowed message attachment size in bytes (25 MiB). Matches the
+/// generous-but-bounded ceiling used for document uploads; the presigned PUT is
+/// still content-type validated by the storage layer.
+const MAX_ATTACHMENT_SIZE_BYTES: i64 = 25 * 1024 * 1024;
 
 /// Maximum length of the message preview embedded in the realtime WebSocket
 /// event (characters). Keeps the pub/sub payload small; full content is
@@ -83,18 +89,88 @@ pub struct MessageSuccessResponse {
 // ============================================================================
 
 /// Request for starting a new thread.
+///
+/// Supports both the original single-recipient direct-message shape
+/// (`recipient_id`) and N-party group conversations (`recipient_ids`,
+/// UC-05.8 / [BIT-183]). When both are supplied they are merged. After
+/// de-duplication and removing the caller, at least one recipient must remain.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct StartThreadRequest {
-    /// The user ID to start a conversation with.
-    pub recipient_id: Uuid,
+    /// Recipient user IDs for an N-party (group) conversation. Preferred field.
+    #[serde(default)]
+    pub recipient_ids: Vec<Uuid>,
+    /// Back-compat single recipient (Story 6.5 direct messaging). Merged into
+    /// `recipient_ids` when present.
+    #[serde(default)]
+    pub recipient_id: Option<Uuid>,
     /// Optional initial message.
     pub initial_message: Option<String>,
+}
+
+impl StartThreadRequest {
+    /// Collect the distinct recipient ids: the legacy `recipient_id` merged
+    /// with `recipient_ids`, excluding the caller. Returns a sorted, de-duped
+    /// vec; an empty result means "no valid recipient".
+    fn resolved_recipients(&self, caller: Uuid) -> Vec<Uuid> {
+        let mut ids: Vec<Uuid> = self.recipient_ids.clone();
+        if let Some(rid) = self.recipient_id {
+            ids.push(rid);
+        }
+        ids.retain(|id| *id != caller);
+        ids.sort();
+        ids.dedup();
+        ids
+    }
 }
 
 /// Request for sending a message.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SendMessageRequest {
     pub content: String,
+}
+
+/// Request for a presigned upload URL for a message attachment (UC-05.9).
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AttachmentUploadRequest {
+    /// Original filename (used for Content-Disposition on download).
+    pub file_name: String,
+    /// MIME type; validated against the storage allow-list.
+    pub file_type: String,
+    /// File size in bytes; must be within `MAX_ATTACHMENT_SIZE_BYTES`.
+    pub file_size: i64,
+}
+
+/// Response carrying a presigned PUT URL plus the S3 key the client must echo
+/// back when linking the uploaded object to a message.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AttachmentUploadUrlResponse {
+    pub url: String,
+    pub expires_at: DateTime<Utc>,
+    pub file_key: String,
+}
+
+/// Request to link an already-uploaded S3 object to a message.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LinkAttachmentRequest {
+    /// The `file_key` returned by the upload-url endpoint.
+    pub file_key: String,
+    pub file_name: String,
+    pub file_type: String,
+    pub file_size: i64,
+}
+
+/// Response listing a message's attachments.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MessageAttachmentsResponse {
+    pub attachments: Vec<MessageAttachment>,
+    pub count: usize,
+}
+
+/// Response carrying a presigned download URL for an attachment.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AttachmentDownloadResponse {
+    pub url: String,
+    pub expires_at: DateTime<Utc>,
 }
 
 /// Query for listing threads.
@@ -104,6 +180,10 @@ pub struct ListThreadsQuery {
     pub offset: Option<i64>,
     /// Optional case-insensitive filter on the other participant's name.
     pub search: Option<String>,
+    /// When `true`, return only threads the current user has archived; when
+    /// absent/`false`, return the default inbox (non-archived). Soft-deleted
+    /// threads are excluded from both. (BIT-182)
+    pub archived: Option<bool>,
 }
 
 /// Query for listing messages.
@@ -124,10 +204,32 @@ pub fn router() -> Router<AppState> {
         .route("/threads", get(list_threads))
         .route("/threads", post(start_thread))
         .route("/threads/{id}", get(get_thread))
+        // Per-user soft delete (hide for me only) — BIT-182.
+        .route("/threads/{id}", delete(delete_thread))
+        // Per-user archive toggle — BIT-182.
+        .route("/threads/{id}/archive", post(archive_thread))
+        .route("/threads/{id}/archive", delete(unarchive_thread))
         .route("/threads/{id}/messages", post(send_message))
         .route(
             "/threads/{id}/messages/{message_id}",
             delete(delete_message),
+        )
+        // Attachment endpoints (UC-05.9 / BIT-184)
+        .route(
+            "/threads/{id}/attachments/upload-url",
+            post(request_attachment_upload_url),
+        )
+        .route(
+            "/threads/{id}/messages/{message_id}/attachments",
+            post(link_message_attachment),
+        )
+        .route(
+            "/threads/{id}/messages/{message_id}/attachments",
+            get(list_message_attachments),
+        )
+        .route(
+            "/threads/{id}/attachments/{attachment_id}/download",
+            get(get_attachment_download_url),
         )
         .route("/threads/{id}/read", post(mark_thread_read))
         // Block endpoints
@@ -164,6 +266,7 @@ async fn list_threads(
 
     // Treat an empty/whitespace-only search string as no filter.
     let search = normalize_thread_search(query.search.as_deref());
+    let archived = query.archived.unwrap_or(false);
 
     let threads = repo
         .list_threads_rls(
@@ -173,6 +276,7 @@ async fn list_threads(
             query.limit,
             query.offset,
             search,
+            archived,
         )
         .await
         .map_err(|e| {
@@ -184,7 +288,7 @@ async fn list_threads(
         })?;
 
     let total = repo
-        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search)
+        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search, archived)
         .await
         .map_err(|e| {
             tracing::error!("Failed to count threads: {:?}", e);
@@ -224,23 +328,29 @@ async fn start_thread(
     let user_id = rls.user_id();
     let tenant_id = rls.tenant_id();
 
-    // Can't message yourself
-    if body.recipient_id == user_id {
+    // Resolve the recipient set (N-party, UC-05.8): merge `recipient_id` +
+    // `recipient_ids`, drop the caller, de-dupe. Must leave >= 1 recipient.
+    let recipients = body.resolved_recipients(user_id);
+    if recipients.is_empty() {
         rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
                 "INVALID_RECIPIENT",
-                "Cannot start a conversation with yourself",
+                "Cannot start a conversation without a valid recipient",
             )),
         ));
     }
 
-    // Security: Verify recipient is in same organization (Critical 1.1 / 2.3 fix)
-    let recipient_org: Option<(Uuid,)> =
-        sqlx::query_as("SELECT organization_id FROM users WHERE id = $1")
-            .bind(body.recipient_id)
-            .fetch_optional(&mut **rls.conn())
+    // Security: every recipient must exist and be an active member of the
+    // caller's tenant (cross-tenant IDOR guard — Critical 1.1 / 2.3, generalized
+    // to N participants for [BIT-183]). NB: there is no `users.organization_id`
+    // column; tenant membership lives in `organization_members`, which is also
+    // what `RequestPrincipal`/`ValidatedTenantExtractor` authorize against.
+    let existing: Vec<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM users WHERE id = ANY($1) AND deleted_at IS NULL")
+            .bind(&recipients)
+            .fetch_all(&mut **rls.conn())
             .await
             .map_err(|e| {
                 (
@@ -249,51 +359,76 @@ async fn start_thread(
                 )
             })?;
 
-    match recipient_org {
-        None => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("USER_NOT_FOUND", "Recipient not found")),
-            ));
-        }
-        Some((org_id,)) if org_id != tenant_id => {
-            rls.release().await;
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(ErrorResponse::new(
-                    "CROSS_ORG_DENIED",
-                    "Cannot message users from different organizations",
-                )),
-            ));
-        }
-        _ => {} // Same org, continue
+    if existing.len() != recipients.len() {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("USER_NOT_FOUND", "Recipient not found")),
+        ));
     }
 
-    let repo = MessagingRepository::new(state.db.clone());
+    let same_tenant: Vec<(Uuid,)> = sqlx::query_as(
+        r#"
+        SELECT user_id FROM organization_members
+        WHERE organization_id = $1
+          AND user_id = ANY($2)
+          AND status = 'active'
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&recipients)
+    .fetch_all(&mut **rls.conn())
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        )
+    })?;
 
-    // Check if either user has blocked the other
-    let is_blocked = repo
-        .is_blocked_rls(&mut **rls.conn(), user_id, body.recipient_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to check block status: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if is_blocked {
+    if same_tenant.len() != recipients.len() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "USER_BLOCKED",
-                "Cannot message this user",
+                "CROSS_ORG_DENIED",
+                "Cannot message users from different organizations",
             )),
         ));
     }
+
+    let repo = MessagingRepository::new(state.db.clone());
+
+    // No participant may have blocked (or be blocked by) the caller.
+    for &rid in &recipients {
+        let is_blocked = repo
+            .is_blocked_rls(&mut **rls.conn(), user_id, rid)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to check block status: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+
+        if is_blocked {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "USER_BLOCKED",
+                    "Cannot message this user",
+                )),
+            ));
+        }
+    }
+
+    // Build the full participant list (caller + recipients). The repository
+    // sorts the ids so the canonical thread is deduped by the unique
+    // (organization_id, participant_ids) constraint regardless of N.
+    let mut participant_ids = recipients.clone();
+    participant_ids.push(user_id);
 
     // Get or create thread
     let thread = repo
@@ -301,7 +436,7 @@ async fn start_thread(
             &mut **rls.conn(),
             CreateThread {
                 organization_id: tenant_id,
-                participant_ids: vec![user_id, body.recipient_id],
+                participant_ids,
             },
         )
         .await
@@ -344,14 +479,20 @@ async fn start_thread(
                 )
             })?;
 
-        // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
-        dispatch_new_message_event(
-            state.pubsub_service.as_ref(),
-            body.recipient_id,
-            &initial,
-            user_id,
-        )
-        .await;
+        // A new inbound message un-hides the thread for any participant who had
+        // previously soft-deleted it (BIT-182), generalized to N recipients for
+        // [BIT-183]. Best-effort.
+        for &rid in &recipients {
+            let _ = repo
+                .unhide_thread_for_user(&mut **rls.conn(), thread.id, rid)
+                .await;
+        }
+
+        // Realtime fanout: notify every other participant's WebSocket channel
+        // (Epic 2B / 8A.3), generalized to N recipients for [BIT-183].
+        for &rid in &recipients {
+            dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &initial, user_id).await;
+        }
     }
 
     // Get messages and other participant info
@@ -491,6 +632,200 @@ async fn get_thread(
         other_participant,
         messages,
         message_count,
+    }))
+}
+
+/// Load a thread and authorize the caller for a per-participant state change.
+///
+/// The thread must exist, belong to the caller's tenant, and the caller must be
+/// a participant — the exact gate `get_thread` applies (see :434-456). Used by
+/// the per-user delete + archive handlers (BIT-182). On `Err`, the caller is
+/// responsible for releasing the RLS connection.
+async fn authorize_thread_participant(
+    repo: &MessagingRepository,
+    rls: &mut RlsConnection,
+    thread_id: Uuid,
+) -> Result<MessageThread, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    let thread = repo
+        .get_thread_rls(&mut **rls.conn(), thread_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Thread not found")),
+            )
+        })?;
+
+    // Security: thread must belong to the caller's tenant (Critical 1.1 fix).
+    if thread.organization_id != tenant_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Access denied to this thread",
+            )),
+        ));
+    }
+
+    if !thread.participant_ids.contains(&user_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_PARTICIPANT",
+                "You are not a participant in this thread",
+            )),
+        ));
+    }
+
+    Ok(thread)
+}
+
+/// Delete a thread for the current user only (per-user soft hide).
+///
+/// This hides the thread from the caller's list without destroying the shared
+/// thread, its messages, or the other participant's copy. A later inbound
+/// message un-hides it. (BIT-182, UC-05.7)
+#[utoipa::path(
+    delete,
+    path = "/api/v1/messages/threads/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread hidden for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn delete_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.hide_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to hide thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation deleted".to_string(),
+    }))
+}
+
+/// Archive a thread for the current user only.
+///
+/// Moves the thread into the caller's "Archived" tab without affecting the
+/// other participant. (BIT-182, UC-05.11)
+#[utoipa::path(
+    post,
+    path = "/api/v1/messages/threads/{id}/archive",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread archived for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn archive_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.archive_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to archive thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation archived".to_string(),
+    }))
+}
+
+/// Un-archive a thread for the current user only (back to the default inbox).
+/// (BIT-182, UC-05.11)
+#[utoipa::path(
+    delete,
+    path = "/api/v1/messages/threads/{id}/archive",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+    ),
+    responses(
+        (status = 200, description = "Thread un-archived for the current user", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn unarchive_thread(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+
+    if let Err(e) = authorize_thread_participant(&repo, &mut rls, id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    repo.unarchive_thread_for_user(&mut **rls.conn(), id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to un-archive thread for user: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Conversation un-archived".to_string(),
     }))
 }
 
@@ -640,6 +975,13 @@ async fn send_message(
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
         })?;
+
+    // A new inbound message un-hides the thread for the recipient if they had
+    // previously soft-deleted it (BIT-182). Best-effort: a failure here must not
+    // fail an otherwise-successful send.
+    let _ = repo
+        .unhide_thread_for_user(&mut **rls.conn(), id, other_user_id)
+        .await;
 
     rls.release().await;
 
@@ -1039,8 +1381,495 @@ async fn get_unread_count(
 }
 
 // ============================================================================
+// Attachment Handlers (UC-05.9 / BIT-184)
+// ============================================================================
+
+/// Request a presigned S3 PUT URL for uploading a message attachment.
+///
+/// Authz: caller must be a participant of a thread in their own tenant. The
+/// returned `file_key` is opaque and scoped under the thread; the client uploads
+/// the bytes directly to S3, then links the object via
+/// [`link_message_attachment`].
+#[utoipa::path(
+    post,
+    path = "/api/v1/messages/threads/{id}/attachments/upload-url",
+    params(("id" = Uuid, Path, description = "Thread ID")),
+    request_body = AttachmentUploadRequest,
+    responses(
+        (status = 200, description = "Presigned upload URL", body = AttachmentUploadUrlResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread not found", body = ErrorResponse),
+        (status = 503, description = "Storage not configured", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn request_attachment_upload_url(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+    Json(body): Json<AttachmentUploadRequest>,
+) -> Result<Json<AttachmentUploadUrlResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    if let Err(e) = validate_attachment_meta(&body.file_name, body.file_size) {
+        rls.release().await;
+        return Err(e);
+    }
+
+    let repo = MessagingRepository::new(state.db.clone());
+    // Authz first: thread must exist, belong to the tenant, and the caller must
+    // be a participant. This gate runs before any storage interaction so a
+    // non-participant / cross-tenant caller is rejected even when S3 is down.
+    require_thread_participant(&repo, &mut rls, id, user_id, tenant_id).await?;
+
+    // Opaque key scoped under the thread; the original filename is preserved in
+    // the DB row, not the key, so it can't smuggle path separators into S3.
+    let file_key = format!("messages/{id}/{}", Uuid::new_v4());
+
+    let storage = match state.storage_service.as_ref() {
+        Some(s) => s,
+        None => {
+            rls.release().await;
+            return Err(storage_unavailable());
+        }
+    };
+
+    let presigned = storage
+        .generate_upload_url(&file_key, &body.file_type, None)
+        .await
+        .map_err(|e| {
+            // Content-type rejections are a client error; everything else is a
+            // transient storage failure.
+            let msg = e.to_string();
+            if msg.to_lowercase().contains("content type") {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new("INVALID_CONTENT_TYPE", msg)),
+                )
+            } else {
+                tracing::error!(error = %e, "Failed to generate attachment upload URL");
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "STORAGE_ERROR",
+                        "Unable to generate upload URL. Please try again later.",
+                    )),
+                )
+            }
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(AttachmentUploadUrlResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+        file_key,
+    }))
+}
+
+/// Link a previously-uploaded S3 object to a message.
+///
+/// Authz: the thread must belong to the caller's tenant, the caller must be a
+/// participant, the message must belong to the thread, and the caller must be
+/// the message's sender (you can only attach to your own messages).
+#[utoipa::path(
+    post,
+    path = "/api/v1/messages/threads/{id}/messages/{message_id}/attachments",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+        ("message_id" = Uuid, Path, description = "Message ID"),
+    ),
+    request_body = LinkAttachmentRequest,
+    responses(
+        (status = 201, description = "Attachment linked", body = MessageAttachment),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 403, description = "Not a participant or not the sender", body = ErrorResponse),
+        (status = 404, description = "Thread or message not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn link_message_attachment(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path((id, message_id)): Path<(Uuid, Uuid)>,
+    Json(body): Json<LinkAttachmentRequest>,
+) -> Result<(StatusCode, Json<MessageAttachment>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    if let Err(e) = validate_attachment_meta(&body.file_name, body.file_size) {
+        rls.release().await;
+        return Err(e);
+    }
+    if body.file_key.trim().is_empty() {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_KEY",
+                "file_key is required",
+            )),
+        ));
+    }
+
+    let repo = MessagingRepository::new(state.db.clone());
+    require_thread_participant(&repo, &mut rls, id, user_id, tenant_id).await?;
+    require_owned_message_in_thread(&mut rls, message_id, id, user_id).await?;
+
+    let attachment = repo
+        .add_attachment_rls(
+            &mut **rls.conn(),
+            CreateMessageAttachment {
+                message_id,
+                file_key: body.file_key,
+                file_name: body.file_name,
+                file_type: body.file_type,
+                file_size: body.file_size,
+            },
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to link message attachment");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok((StatusCode::CREATED, Json(attachment)))
+}
+
+/// List the attachments linked to a message (thread participants only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/messages/threads/{id}/messages/{message_id}/attachments",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+        ("message_id" = Uuid, Path, description = "Message ID"),
+    ),
+    responses(
+        (status = 200, description = "Attachments", body = MessageAttachmentsResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread or message not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn list_message_attachments(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path((id, message_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<MessageAttachmentsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    let repo = MessagingRepository::new(state.db.clone());
+    require_thread_participant(&repo, &mut rls, id, user_id, tenant_id).await?;
+    // Any participant can read attachments, so we only assert thread membership
+    // of the message (not sender ownership).
+    require_message_in_thread(&mut rls, message_id, id).await?;
+
+    let attachments = repo
+        .get_message_attachments_rls(&mut **rls.conn(), message_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageAttachmentsResponse {
+        count: attachments.len(),
+        attachments,
+    }))
+}
+
+/// Mint a short-lived presigned download URL for an attachment.
+///
+/// Authz: the thread (from the path) must belong to the caller's tenant, the
+/// caller must be a participant, and the attachment must belong to that thread.
+/// A cross-tenant or non-participant caller is rejected before any S3 call.
+#[utoipa::path(
+    get,
+    path = "/api/v1/messages/threads/{id}/attachments/{attachment_id}/download",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+        ("attachment_id" = Uuid, Path, description = "Attachment ID"),
+    ),
+    responses(
+        (status = 200, description = "Download URL", body = AttachmentDownloadResponse),
+        (status = 403, description = "Not a participant", body = ErrorResponse),
+        (status = 404, description = "Thread or attachment not found", body = ErrorResponse),
+        (status = 503, description = "Storage not configured", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+async fn get_attachment_download_url(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path((id, attachment_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<AttachmentDownloadResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    let repo = MessagingRepository::new(state.db.clone());
+    require_thread_participant(&repo, &mut rls, id, user_id, tenant_id).await?;
+
+    let found = repo
+        .get_attachment_with_thread_rls(&mut **rls.conn(), attachment_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    let (attachment, attachment_thread_id) = found.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+        )
+    })?;
+
+    // The attachment must belong to the thread named in the path. This stops a
+    // participant of thread A from reading thread B's attachment by id.
+    if attachment_thread_id != id {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+        ));
+    }
+
+    let storage = match state.storage_service.as_ref() {
+        Some(s) => s,
+        None => {
+            rls.release().await;
+            return Err(storage_unavailable());
+        }
+    };
+
+    let presigned = storage
+        .generate_download_url(
+            &attachment.file_key,
+            &attachment.file_name,
+            &attachment.file_type,
+            Some(storage.download_ttl_secs()),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, file_key = %attachment.file_key, "Failed to generate attachment download URL");
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "STORAGE_ERROR",
+                    "Unable to generate download URL. Please try again later.",
+                )),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(AttachmentDownloadResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
+
+/// Standard 503 when the S3 storage service is not wired up.
+fn storage_unavailable() -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(ErrorResponse::new(
+            "STORAGE_NOT_CONFIGURED",
+            "Attachment storage is not configured. Please contact support.",
+        )),
+    )
+}
+
+/// Validate the client-supplied filename and size for an attachment.
+fn validate_attachment_meta(
+    file_name: &str,
+    file_size: i64,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if file_name.trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_NAME",
+                "file_name is required",
+            )),
+        ));
+    }
+    if file_size <= 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_SIZE",
+                "file_size must be greater than zero",
+            )),
+        ));
+    }
+    if file_size > MAX_ATTACHMENT_SIZE_BYTES {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "FILE_TOO_LARGE",
+                format!(
+                    "Attachment cannot exceed {} bytes",
+                    MAX_ATTACHMENT_SIZE_BYTES
+                ),
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Load a thread and assert the caller is a same-tenant participant.
+///
+/// Mirrors the inline tenant + participant guard used by the message handlers:
+/// 404 when the thread does not exist, 403 when it belongs to another tenant or
+/// the caller is not a participant.
+async fn require_thread_participant(
+    repo: &MessagingRepository,
+    rls: &mut RlsConnection,
+    thread_id: Uuid,
+    user_id: Uuid,
+    tenant_id: Uuid,
+) -> Result<MessageThread, (StatusCode, Json<ErrorResponse>)> {
+    let thread = repo
+        .get_thread_rls(&mut **rls.conn(), thread_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    let thread = match thread {
+        Some(t) => t,
+        None => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Thread not found")),
+            ));
+        }
+    };
+
+    if thread.organization_id != tenant_id {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Access denied to this thread",
+            )),
+        ));
+    }
+
+    if !thread.participant_ids.contains(&user_id) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_PARTICIPANT",
+                "You are not a participant in this thread",
+            )),
+        ));
+    }
+
+    Ok(thread)
+}
+
+/// Assert a message exists and belongs to the given thread (404 otherwise).
+async fn require_message_in_thread(
+    rls: &mut RlsConnection,
+    message_id: Uuid,
+    thread_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let row: Option<(Uuid,)> = sqlx::query_as("SELECT thread_id FROM messages WHERE id = $1")
+        .bind(message_id)
+        .fetch_optional(&mut **rls.conn())
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    match row {
+        Some((msg_thread_id,)) if msg_thread_id == thread_id => Ok(()),
+        _ => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+            ))
+        }
+    }
+}
+
+/// Assert a message belongs to the thread AND was sent by the caller (403/404).
+async fn require_owned_message_in_thread(
+    rls: &mut RlsConnection,
+    message_id: Uuid,
+    thread_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let row: Option<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT thread_id, sender_id FROM messages WHERE id = $1")
+            .bind(message_id)
+            .fetch_optional(&mut **rls.conn())
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+
+    let (msg_thread_id, msg_sender_id) = row.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+        )
+    })?;
+
+    if msg_thread_id != thread_id {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+        ));
+    }
+
+    if msg_sender_id != user_id {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You can only attach files to your own messages",
+            )),
+        ));
+    }
+
+    Ok(())
+}
 
 /// Normalize the optional thread-list `search` query parameter into the
 /// `Option<&str>` filter passed to the messaging repository.

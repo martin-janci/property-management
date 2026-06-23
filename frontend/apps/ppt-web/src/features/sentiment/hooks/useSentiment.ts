@@ -4,6 +4,7 @@
  * TanStack Query hooks for the sentiment API.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getApiClient } from '../../../lib/api';
 import type {
   SentimentAlert,
   SentimentDashboard,
@@ -13,19 +14,11 @@ import type {
   UpdateSentimentThresholdsRequest,
 } from '../types';
 
-const API_BASE = '/api/v1/ai/sentiment';
-
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(err.message || `HTTP ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
+// Path is relative to the api-client baseURL (`/api/v1`). Routing through
+// `getApiClient()` ensures the shared axios interceptors apply: Bearer-token
+// injection, ErrorResponse → ApiError transformation, 401 → onUnauthorized,
+// and transient 5xx/429 retry with backoff.
+const API_BASE = '/ai/sentiment';
 
 export const sentimentKeys = {
   all: ['sentiment'] as const,
@@ -38,7 +31,10 @@ export const sentimentKeys = {
 export function useSentimentDashboard() {
   return useQuery({
     queryKey: sentimentKeys.dashboard(),
-    queryFn: () => apiFetch<SentimentDashboard>(`${API_BASE}/dashboard`),
+    queryFn: async () => {
+      const res = await getApiClient().get<SentimentDashboard>(`${API_BASE}/dashboard`);
+      return res.data;
+    },
     staleTime: 60 * 1000,
   });
 }
@@ -53,10 +49,12 @@ export function useSentimentTrends(query?: SentimentTrendQuery) {
 
   return useQuery({
     queryKey: sentimentKeys.trends(query),
-    queryFn: () =>
-      apiFetch<{ trends: SentimentTrend[] }>(`${API_BASE}/trends${qs ? `?${qs}` : ''}`).then(
-        (r) => r.trends
-      ),
+    queryFn: async () => {
+      const res = await getApiClient().get<{ trends: SentimentTrend[] }>(
+        `${API_BASE}/trends${qs ? `?${qs}` : ''}`
+      );
+      return res.data.trends;
+    },
     staleTime: 60 * 1000,
   });
 }
@@ -67,10 +65,12 @@ export function useSentimentAlerts(acknowledged?: boolean) {
 
   return useQuery({
     queryKey: sentimentKeys.alerts(acknowledged),
-    queryFn: () =>
-      apiFetch<{ alerts: SentimentAlert[] }>(
+    queryFn: async () => {
+      const res = await getApiClient().get<{ alerts: SentimentAlert[] }>(
         `${API_BASE}/alerts${params.toString() ? `?${params}` : ''}`
-      ).then((r) => r.alerts),
+      );
+      return res.data.alerts;
+    },
     staleTime: 30 * 1000,
   });
 }
@@ -78,7 +78,10 @@ export function useSentimentAlerts(acknowledged?: boolean) {
 export function useSentimentThresholds() {
   return useQuery({
     queryKey: sentimentKeys.thresholds(),
-    queryFn: () => apiFetch<SentimentThresholds>(`${API_BASE}/thresholds`),
+    queryFn: async () => {
+      const res = await getApiClient().get<SentimentThresholds>(`${API_BASE}/thresholds`);
+      return res.data;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -86,8 +89,12 @@ export function useSentimentThresholds() {
 export function useAcknowledgeSentimentAlert() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (alertId: string) =>
-      apiFetch<SentimentAlert>(`${API_BASE}/alerts/${alertId}/acknowledge`, { method: 'POST' }),
+    mutationFn: async (alertId: string) => {
+      const res = await getApiClient().post<SentimentAlert>(
+        `${API_BASE}/alerts/${alertId}/acknowledge`
+      );
+      return res.data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sentimentKeys.all });
     },
@@ -97,11 +104,10 @@ export function useAcknowledgeSentimentAlert() {
 export function useUpdateSentimentThresholds() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (req: UpdateSentimentThresholdsRequest) =>
-      apiFetch<SentimentThresholds>(`${API_BASE}/thresholds`, {
-        method: 'PUT',
-        body: JSON.stringify(req),
-      }),
+    mutationFn: async (req: UpdateSentimentThresholdsRequest) => {
+      const res = await getApiClient().put<SentimentThresholds>(`${API_BASE}/thresholds`, req);
+      return res.data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sentimentKeys.thresholds() });
     },
