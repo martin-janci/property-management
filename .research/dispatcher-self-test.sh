@@ -672,6 +672,31 @@ for spec in "${T27_SPECS[@]}"; do
 done
 echo
 
+# --- T28: no OPEN action-list item is already terminal in the archive -------
+# (issue #1747, #1739) The gc1-reconcile.sh archive-terminal pass closes any
+# OPEN action-list item whose exact id is terminal (merged/done/failed) in
+# assignments-archive.json. If any survive, they inflate the claimable pool
+# and the claim predicate can near-re-claim already-merged work (only T4 caught
+# it before). Advisory (warn, not fail) because gc1-reconcile.sh --apply is
+# self-healing on the next Phase 2.6 — but it surfaces the leak every run.
+echo "T28 no OPEN action-list item is terminal in the archive (issue #1747/#1739; advisory)"
+if [ -f "$ACTION_LIST" ] && [ -f "$ASSIGN_ARCHIVE" ]; then
+  LEAK28=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile arc "$ASSIGN_ARCHIVE" '
+    ($arc[0].assignments
+      | map(select(.status=="merged" or .status=="done" or .status=="failed"))
+      | map(.task_id) | unique) as $term
+    | [ $al[0].items[] | select(.status=="open") | select(.id as $i | $term | index($i)) | .id ]')
+  N28=$(jq 'length' <<<"$LEAK28")
+  if [ "$N28" = "0" ]; then note "no open action-list item is terminal in the archive"
+  else
+    warn "$N28 open action-list item(s) already terminal in archive — run: bash .research/gc1-reconcile.sh --apply"
+    jq -r '.[] | "    \(.)"' <<<"$LEAK28" >&2
+  fi
+else
+  printf '  skip  %s or %s not found\n' "$ACTION_LIST" "$ASSIGN_ARCHIVE"
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
