@@ -193,7 +193,7 @@ impl AccountingRepository {
         executor: E,
         id: Uuid,
         data: UpdateInvoice,
-    ) -> Result<Invoice, sqlx::Error>
+    ) -> Result<Option<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -227,7 +227,7 @@ impl AccountingRepository {
         .bind(data.status)
         .bind(data.paid_amount)
         .bind(id)
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await
     }
 
@@ -477,7 +477,7 @@ impl AccountingRepository {
         executor: E,
         id: Uuid,
         paid_amount_delta: Decimal,
-    ) -> Result<Invoice, sqlx::Error>
+    ) -> Result<Option<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -498,7 +498,7 @@ impl AccountingRepository {
         )
         .bind(paid_amount_delta)
         .bind(id)
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await
     }
 }

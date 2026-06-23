@@ -233,7 +233,10 @@ impl AccountingService {
         self.repo
             .update_invoice_payment_status_rls(&mut *executor, p_match.invoice_id, line.amount)
             .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+            .map_err(|e| AppError::Database(e.to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Invoice {} not found", p_match.invoice_id))
+            })?;
 
         Ok(())
     }

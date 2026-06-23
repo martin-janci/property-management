@@ -330,7 +330,8 @@ pub async fn update_invoice(
         .map_err(|e| {
             tracing::error!("Failed to update invoice {}: {}", id, e);
             StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
 
     rls.release().await;
     Ok(Json(invoice))
