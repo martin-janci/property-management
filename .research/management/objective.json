@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-81",
-  "selected_at": "2026-06-23T12:22:14Z",
+  "epic_prefix": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+  "selected_at": "2026-06-23T16:09:51Z",
   "last_action": "repick",
-  "reason": "prior target 'gap-79' exhausted; closest-to-done is 'gap-81' (open=2 claimable=1)",
+  "reason": "prior target 'gap-81' exhausted; closest-to-done is 'churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs' (open=1 claimable=1)",
   "stats_at_selection": {
-    "open": 2,
+    "open": 1,
     "claimable": 1
   }
 }

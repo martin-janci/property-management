@@ -269,12 +269,19 @@ async fn download_rejects_attachment_thread_mismatch(pool: PgPool) {
     let bob_id = user_id(&pool, &bob.email).await;
     seed_membership(&pool, org1, bob_id, "resident").await;
 
-    // Thread X (alice+bob) holds the attachment; thread Y (alice+bob) does not.
+    let carol = TestUser::new();
+    let (_carol_tok, _rc) = create_authenticated_user(&app, &carol).await;
+    let carol_id = user_id(&pool, &carol.email).await;
+    seed_membership(&pool, org1, carol_id, "resident").await;
+
+    // Thread X (alice+bob) holds the attachment; thread Y (alice+carol) does not.
+    // The two threads must have distinct participant sets to satisfy the
+    // (organization_id, participant_ids) UNIQUE constraint added in 00189.
     let thread_x = insert_thread(&pool, org1, &[alice_id, bob_id]).await;
     let msg_x = insert_message(&pool, thread_x, alice_id, "x").await;
     let attachment = insert_attachment(&pool, msg_x).await;
 
-    let thread_y = insert_thread(&pool, org1, &[alice_id, bob_id]).await;
+    let thread_y = insert_thread(&pool, org1, &[alice_id, carol_id]).await;
 
     // Alice participates in thread_y but the attachment lives in thread_x.
     let path = format!("/api/v1/messages/threads/{thread_y}/attachments/{attachment}/download");

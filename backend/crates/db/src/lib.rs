@@ -80,6 +80,46 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::migrate::MigrateE
 /// Embedded migrator. Use as `#[sqlx::test(migrator = "db::MIGRATOR")]` from
 /// integration tests in other crates so they get the same migration set as
 /// the production binary.
+///
+/// # Getting the full schema into a `#[sqlx::test]` (test-author guide)
+///
+/// `#[sqlx::test]` creates a **fresh, empty, uniquely-named database per test
+/// function** and only applies migrations when a migrator is supplied. There
+/// are two supported idioms, and they apply the *same* migration set — pick by
+/// what the test needs:
+///
+/// 1. **Schema-full tests** (touch any table — register a user, seed an org,
+///    etc.) — attach the migrator. Either form works and is equivalent:
+///    - `#[sqlx::test(migrator = "db::MIGRATOR")]` — the macro emits
+///      `args.migrator(&db::MIGRATOR)`, and sqlx runs `MIGRATOR.run_direct(..)`
+///      during per-test DB setup. This is the default idiom (~100 api-server
+///      test binaries use it).
+///    - bare `#[sqlx::test]` + `db::run_migrations(&pool).await` as the first
+///      line of the test body — runs `MIGRATOR.run(pool)` (the *production*
+///      path: idempotent + advisory-locked). Equivalent schema, and turns any
+///      migration failure into a loud, attributable panic *inside* the test.
+///      Use this when you want the production migration entrypoint exercised,
+///      or to keep a binary uniform with schema-less tests (see below).
+///
+/// 2. **Schema-less tests** (auth-rejection / smoke tests that assert
+///    401/400/404 *before* any DB query) — bare `#[sqlx::test]` with **no**
+///    migrator. The macro's `InferredPath` looks for a `./migrations` dir
+///    relative to the *test crate* (`servers/api-server/migrations`), which
+///    does not exist, so no migrator is attached and the test runs against an
+///    empty database. This is correct and intended for these tests.
+///
+/// ## Gotcha: don't mix the two idioms ad-hoc in one body
+///
+/// A bare `#[sqlx::test]` whose body *does* hit a table without first calling
+/// `db::run_migrations(&pool)` will fail with `relation "..." does not exist`
+/// (the DB is empty). This bit the voting PDF-report tests (#1656/#1665): they
+/// were authored bare alongside schema-less auth tests in `voting_tests.rs`.
+/// The macro expands each test fn independently, so a `migrator = ` test is
+/// never silently disabled by a sibling schema-less test — but a bare
+/// schema-full test *will* see an empty DB. The fix was to call
+/// `db::run_migrations(&pool)` explicitly (idiom 1, second form). If you ever
+/// see an unexplained missing-relation 500 in a `#[sqlx::test]`, check that the
+/// failing test actually attaches a migrator by one of the two idioms above.
 pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
 /// Create database connection pool.
