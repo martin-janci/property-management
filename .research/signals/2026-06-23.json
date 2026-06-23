@@ -1,0 +1,172 @@
+{
+  "generated": "2026-06-23T18:13:00Z",
+  "trigger_text": "",
+  "lag_hours": 182,
+  "lag_days": 7,
+  "phases_failed": [
+    "phase-1-gh-pr-list",
+    "phase-1-gh-issue-list",
+    "phase-1-gh-issue-update-sweep",
+    "phase-1-gh-pr-diff",
+    "phase-1.5-code-review-skill",
+    "phase-1.6-pm-rotation"
+  ],
+  "phase_failure_reason": "GitHub API access disabled for this Claude Code session ('GitHub access is not enabled for this session. An org admin must connect the Claude GitHub App for this organization.', HTTP 403). Phase 1 falls back to local git only; Phase 1.5/1.6 skipped to keep state honest (both depend on PR/issue data they cannot fetch).",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-23",
+      "type": "lag_warning",
+      "source": ".research/state.json",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 7d 182h since last_run_iso=2026-06-16T03:25:00Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-23",
+      "type": "stale_routine_alert",
+      "source": ".research/state.json",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 7d old; cloud routine may be paused or broken (GitHub API access disabled for the session)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "phase-1-github-blocked-2026-06-23",
+      "type": "routine_degraded",
+      "source": "gh api /repos/...",
+      "score_delta": 0,
+      "evidence": [
+        "gh api returned: 'GitHub access is not enabled for this session. An org admin must connect the Claude GitHub App for this organization.' (HTTP 403). Phase 1 PR/issue/diff observation skipped; only local-git commit log accessible."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-23.md && head -1 == '# 2026-06-23'",
+      "observed": "will be created",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare staged state.json to HEAD",
+      "observed": "last_commit_sha + seen_signals.length + last_run_iso advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta!=0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay verification",
+      "observed": "cap_ok=True decay_ok=True",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "ok"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "deferred to commit-time check",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostname grep on staged diff",
+      "observed": "deferred",
+      "expected": "0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token grep on staged added lines",
+      "observed": "deferred",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md against fresh regen",
+      "observed": "regenerated this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md against fresh regen",
+      "observed": "regenerated this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases listed in brief; corresponding cursors held",
+      "observed": "last_pr_seen + last_issue_seen unchanged from HEAD",
+      "expected": "honest"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs still in plans/ or plans/_archive/",
+      "observed": "no plan changes this run",
+      "expected": "convergent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls _archive | wc -l ≥ git ls-tree HEAD _archive",
+      "observed": "unchanged",
+      "expected": "monotone"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions == [] (no candidate this run)",
+      "observed": "0 actions",
+      "expected": "≤3 with discipline"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 not run this run; gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    }
+  ]
+}
