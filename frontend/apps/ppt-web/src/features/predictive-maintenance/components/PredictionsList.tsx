@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { MaintenancePrediction } from '../types';
 
 function RiskBadge({ score }: { score: number }): JSX.Element {
+  const { t } = useTranslation();
   const pct = Math.round(score * 100);
   const cls =
     pct >= 75
@@ -11,7 +12,9 @@ function RiskBadge({ score }: { score: number }): JSX.Element {
         ? 'bg-orange-100 text-orange-700'
         : 'bg-yellow-100 text-yellow-700';
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{pct}% risk</span>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+      {t('predictive.riskBadge', { defaultValue: '{{pct}}% risk', pct })}
+    </span>
   );
 }
 
@@ -55,14 +58,20 @@ export function PredictionsList({
                   <RiskBadge score={p.riskScore} />
                   {p.predictedFailureDate && (
                     <span className="text-xs text-gray-500">
-                      Failure ~{new Date(p.predictedFailureDate).toLocaleDateString()}
+                      {t('predictive.failureEta', {
+                        defaultValue: 'Failure ~{{date}}',
+                        date: new Date(p.predictedFailureDate).toLocaleDateString(),
+                      })}
                     </span>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-gray-700">{p.recommendation}</p>
                 <p className="text-xs text-gray-400">
-                  Confidence {Math.round(p.confidence * 100)}% ·{' '}
-                  {new Date(p.createdAt).toLocaleDateString()}
+                  {t('predictive.confidenceMeta', {
+                    defaultValue: 'Confidence {{pct}}% · {{date}}',
+                    pct: Math.round(p.confidence * 100),
+                    date: new Date(p.createdAt).toLocaleDateString(),
+                  })}
                 </p>
               </div>
               {!p.acknowledged ? (

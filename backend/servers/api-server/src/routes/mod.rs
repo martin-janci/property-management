@@ -36,6 +36,7 @@ pub mod listings;
 pub mod messaging;
 pub mod meters;
 pub mod mfa;
+pub mod my_units;
 pub mod neighbors;
 pub mod notification_preferences;
 pub mod push_tokens;
@@ -54,8 +55,6 @@ pub mod vendors;
 pub mod voting;
 pub mod work_orders;
 pub mod ws_notifications;
-// Epic 14, Story 14.3 — WebSocket real-time sensor reading channel
-pub mod ws_sensor;
 
 // Epic 23: Emergency Management
 pub mod emergency;

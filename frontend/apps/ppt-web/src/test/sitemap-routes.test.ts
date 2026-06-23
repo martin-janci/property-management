@@ -43,7 +43,7 @@ describe('PPT-Web Route Definitions', () => {
     });
 
     it('should have correct route count', () => {
-      expect(sitemap.routes[app].length).toBe(14);
+      expect(sitemap.routes[app].length).toBe(16);
     });
   });
 

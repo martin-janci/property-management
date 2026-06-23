@@ -3,13 +3,38 @@
 # RLS-bypass on BYPASSRLS/superuser pools). Detected by
 # check-rls-enforcement.sh (PAP-68 pool-field detector).
 #
-# Every entry here is PRE-EXISTING debt pending conversion to the executor
-# pattern (see document.rs / board_meetings.rs precedent). Baselined entries
-# WARN instead of failing --strict; any repo NOT listed here that regresses
-# to the pattern fails CI. When a repo is converted, REMOVE its line (the
-# script warns on stale entries).
+# Entries fall into TWO classes (both WARN instead of failing --strict; any
+# repo NOT listed here that regresses to the pattern fails CI):
+#
+#   1. Conversion-pending debt — repos that SHOULD move to the executor
+#      pattern (see document.rs / board_meetings.rs precedent). When such a
+#      repo is converted, REMOVE its line (the script warns on stale entries).
+#
+#   2. Service-role-by-design tables — repos whose table RLS policy is a
+#      service-role *allowance* (USING: user GUC unset OR is_super_admin),
+#      written/read entirely off the request path. The executor pattern does
+#      NOT apply and converting them would BREAK access (a request-scoped user
+#      GUC flips the policy to deny). Their baseline entry is PERMANENT. See
+#      the dedicated section directly below.
+#
+# This file is conversion-pending debt ONLY. Repos whose table RLS policy is a
+# service-role *allowance* (permits the unset-GUC service pool by design, so the
+# executor pattern is inapplicable and converting them would break access) live
+# in the separate first-class allowlist rls-service-role-allowlist.txt and are
+# reported by the gate as ALLOWED, never "conversion pending". Do NOT add such
+# repos here.
 #
 # One basename per line. Comments after '#'.
+
+# === Class 2: service-role-by-design (PERMANENT — do NOT attempt conversion) ===
+# These tables use a service-role-allowance RLS policy (permits the unset-GUC
+# service pool, denies a regular user GUC) and are written/read off the request
+# path, mirroring the audit_logs convention. There is no RlsConnection to take
+# an executor from, so the executor pattern is inapplicable by construction.
+notification_event.rs   # BIT-227 / migration 00188: detached-spawn analytics writes + admin-analytics read; policy permits unset-GUC service pool, denies user GUC
+# Note: device_push_token.rs and critical_notification.rs (migrations 00157/00177,
+# the convention 00188 mirrors) are the same class; they sit under PAP-80 tracking
+# below and can be reclassified here when that sweep is reconciled.
 
 # --- PAP-80 sweep: conversion PRs in flight ---
 
@@ -21,9 +46,7 @@ automation.rs
 building.rs
 community.rs
 compliance.rs
-critical_notification.rs
 data_export.rs
-device_push_token.rs
 dispute.rs
 edd.rs
 energy.rs
@@ -33,7 +56,6 @@ listing.rs
 marketplace.rs
 membership.rs
 messaging.rs
-notification_event.rs
 notification_preference.rs
 onboarding.rs
 organization.rs

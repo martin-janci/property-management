@@ -1,7 +1,8 @@
 //! Unit resident repository (Epic 3, Story 3.3).
 
 use crate::models::unit_resident::{
-    CreateUnitResident, UnitResident, UnitResidentSummary, UnitResidentWithUser, UpdateUnitResident,
+    CreateUnitResident, MyUnitRow, UnitResident, UnitResidentSummary, UnitResidentWithUser,
+    UpdateUnitResident,
 };
 use crate::DbPool;
 use chrono::NaiveDate;
@@ -152,6 +153,56 @@ impl UnitResidentRepository {
         .await?;
 
         Ok(residents)
+    }
+
+    /// Resolve the authenticated user's active units for the resident-facing
+    /// "My Unit" view (Story 3.6).
+    ///
+    /// Returns one row per active (`end_date IS NULL`) association the user has,
+    /// joined to the unit and its building's address. Filtered strictly by
+    /// `user_id`, so a caller can only ever see units they are a resident of —
+    /// and the projection deliberately omits other residents/owners and the
+    /// manager-internal unit `notes`, so no other tenant's PII is exposed.
+    pub async fn find_my_units(&self, user_id: Uuid) -> Result<Vec<MyUnitRow>, SqlxError> {
+        let rows = sqlx::query_as::<_, MyUnitRow>(
+            r#"
+            SELECT
+                ur.id                AS resident_id,
+                ur.resident_type::text AS resident_type,
+                ur.is_primary,
+                ur.start_date,
+                ur.end_date,
+                ur.receives_notifications,
+                ur.receives_mail,
+                u.id                 AS unit_id,
+                u.building_id,
+                u.entrance,
+                u.designation,
+                u.floor,
+                u.unit_type,
+                u.size_sqm,
+                u.rooms,
+                u.ownership_share,
+                u.occupancy_status,
+                u.description,
+                u.status             AS unit_status,
+                b.name               AS building_name,
+                b.street             AS building_street,
+                b.city               AS building_city,
+                b.postal_code        AS building_postal_code
+            FROM unit_residents ur
+            INNER JOIN units u ON u.id = ur.unit_id
+            INNER JOIN buildings b ON b.id = u.building_id
+            WHERE ur.user_id = $1
+              AND ur.end_date IS NULL
+            ORDER BY ur.is_primary DESC, b.street, u.designation
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
     }
 
     /// Update a resident.

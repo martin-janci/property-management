@@ -139,50 +139,48 @@ fun SearchScreen(
         // duplicate) double-appending via mergePage. Setting it here closes that window. (#1533)
         isLoading = true
 
-        searchJob[0] =
-            scope.launch {
-                errorMessage = null
+        searchJob[0] = scope.launch {
+            errorMessage = null
 
-                val request =
-                    SearchState.buildSearchRequest(
-                        query = searchQuery,
-                        type = selectedType,
-                        category = selectedCategory,
-                        minPrice = minPrice,
-                        maxPrice = maxPrice,
-                        minRooms = minRooms,
-                        sort = selectedSort,
-                        page = page,
-                        nearLat = nearLat,
-                        nearLng = nearLng,
-                        radiusKm = radiusKm,
-                    )
-                val result = repository.searchListings(request)
-
-                // Discard responses that no longer belong to the latest search generation —
-                // this is what prevents an out-of-order older response from winning.
-                if (
-                    !SearchState.shouldApplyResponse(
-                        responseGeneration = generation,
-                        currentGeneration = searchGeneration[0].toLong(),
-                    )
-                ) {
-                    return@launch
-                }
-
-                result.fold(
-                    onSuccess = { response ->
-                        searchResults =
-                            SearchState.mergePage(searchResults, response.listings, page)
-                        totalResults = response.total
-                        currentPage = page
-                    },
-                    onFailure = {
-                        errorMessage = if (it.isNetworkError()) networkErrorMsg else searchFailedMsg
-                    },
+            val request =
+                SearchState.buildSearchRequest(
+                    query = searchQuery,
+                    type = selectedType,
+                    category = selectedCategory,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    minRooms = minRooms,
+                    sort = selectedSort,
+                    page = page,
+                    nearLat = nearLat,
+                    nearLng = nearLng,
+                    radiusKm = radiusKm,
                 )
-                isLoading = false
+            val result = repository.searchListings(request)
+
+            // Discard responses that no longer belong to the latest search generation —
+            // this is what prevents an out-of-order older response from winning.
+            if (
+                !SearchState.shouldApplyResponse(
+                    responseGeneration = generation,
+                    currentGeneration = searchGeneration[0].toLong(),
+                )
+            ) {
+                return@launch
             }
+
+            result.fold(
+                onSuccess = { response ->
+                    searchResults = SearchState.mergePage(searchResults, response.listings, page)
+                    totalResults = response.total
+                    currentPage = page
+                },
+                onFailure = {
+                    errorMessage = if (it.isNetworkError()) networkErrorMsg else searchFailedMsg
+                },
+            )
+            isLoading = false
+        }
     }
 
     LaunchedEffect(Unit) { performSearch() }

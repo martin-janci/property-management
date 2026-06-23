@@ -24,6 +24,14 @@ export * from './esignature';
 export * from './facilities';
 export * from './faults';
 export * from './financial';
+// Resolve the name collision between the analytics reports module (Epic 81) and
+// the financial statement reports module (Story 11.7), which both export
+// `ReportType` and `exportReport`. The financial Story 11.7 symbols are the
+// canonical barrel names (actively consumed by the financial Reports screen);
+// an explicit re-export takes precedence over the two ambiguous `export *`s.
+// The Epic 81 analytics counterparts are preserved here under distinct names so
+// nothing is silently dropped from the public surface.
+export { exportReport, type ReportType } from './financial';
 export * from './forms';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
@@ -37,6 +45,7 @@ export * from './messaging';
 export * from './meters';
 export * from './mfa';
 export * from './migration';
+export * from './my-units';
 export * from './neighbors';
 export * from './news';
 export * from './notification-preferences';
@@ -48,6 +57,10 @@ export * from './packages';
 export * from './person-months';
 export * from './registry';
 export * from './reports';
+export {
+  exportReport as exportAnalyticsReport,
+  type ReportType as AnalyticsReportType,
+} from './reports';
 export * from './templates';
 export * from './voting';
 export * from './workflow-automation';

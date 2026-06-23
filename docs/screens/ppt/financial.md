@@ -11,7 +11,9 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints: []
-relatedScreens: []
+relatedScreens:
+  - id: ppt/financial-reports
+    rel: child
 sharedComponents: []
 diagrams: []
 useCases: []

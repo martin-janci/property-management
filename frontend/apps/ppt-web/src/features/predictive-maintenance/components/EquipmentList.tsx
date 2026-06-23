@@ -55,7 +55,9 @@ export function EquipmentList({
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[e.status] ?? 'bg-gray-100 text-gray-600'}`}
                   >
-                    {e.status.replace(/_/g, ' ')}
+                    {t(`predictive.equipmentStatus.${e.status}`, {
+                      defaultValue: e.status.replace(/_/g, ' '),
+                    })}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-gray-500">{e.category}</p>

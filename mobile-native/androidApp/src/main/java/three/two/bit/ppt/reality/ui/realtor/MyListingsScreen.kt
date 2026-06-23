@@ -107,8 +107,9 @@ fun MyListingsScreen(
                         }
                     listings.isEmpty() -> EmptyState()
                     else -> {
-                        val filtered =
-                            listings.filter { statusFilter == null || it.status == statusFilter }
+                        val filtered = listings.filter {
+                            statusFilter == null || it.status == statusFilter
+                        }
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding =
