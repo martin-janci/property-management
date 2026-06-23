@@ -82,7 +82,10 @@ function IotDashboardPageRoute() {
     { limit: 50 }
   );
 
-  const { liveReadings, isConnected } = useIotWebSocket(selectedSensorId);
+  const { liveReadings, isConnected } = useIotWebSocket(
+    selectedSensorId,
+    user?.organizationId ?? null
+  );
 
   const acknowledgeAlert = useAcknowledgeSensorAlert();
   const resolveAlert = useResolveSensorAlert();
