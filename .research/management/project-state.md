@@ -63,8 +63,10 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **pm-devops** (rotation idx 4, last 2026-05-27, 20d stale): 6 new next_actions appended to `action-list.json`; 4 new risks appended to `risks.json`; 3 new decisions in `decisions.md`. Full role JSON in `.research/management/roles/pm-devops.md`. Headline: dev-CI discipline failure (#1437) + EAS workflow files now present but unverified + pre-push gate local-only.
 - **pm-scrum-master** (always-on): produced the delivery synthesis above; headline = `dev` red blocks all backend CI; pm-qa coverage flood mostly cleared 18 follow-up issues from 2026-06-14; mobile location-filter slice complete.
 
-## Coverage upkeep
+## Coverage (deep scan — 2026-06-23)
 
-- **epic-8a (rotation idx 11) refreshed** in `coverage.json`:
-  - `8a-3-notification-preference-sync`: added evidence `PR #1395 added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice`; removed gap `backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)`; updated notes to reflect publish-leg tests cleared. Status stays `partial` (mobile-push FCM/APNs leg still the only open gap before promotion).
-- Next epic to refresh: **epic-9** (coverage_cursor idx 12).
+- **`coverage.json` fully regenerated** (`scan_kind=deep`) — supersedes the `scan_kind=upkeep` note in the header above and the rotating per-epic upkeep cursor (was "next: epic-9"; all epics are now freshly classified). All 13 epics with story files rescanned in parallel → **49 stories: 37 done · 12 partial · 0 not-started**. Full ranked plan in `roadmap.md`.
+- **Dominant signal — promotion lag, not missing code:** ~8 stories (6-1…6-5, 79-1, 10b-5, 10b-7) are code-complete with merged PRs but stuck at sprint-status `ready-for-dev`/`review`; they need reconciliation + sign-off, not new implementation.
+- **Genuinely unfinished slices:** 84-5 pgvector RAG retrieval/query service (migration only), 80-3 mediation party-submission endpoints (unwired), 80-2 dispute redesign 5-step wizard + i18n, 6-3/6-4 mobile comments/pinned UI, 79-1/79-2 e2e (79-2 security-sensitive: SSO/JWT/cookie).
+- **Systemic screen-map drift:** 0 of ~120 screen-maps populate frontmatter `epics:` → epic→screen linkage impossible; this manufactures the 29 "orphan" screens (really out-of-scan-scope: 13 of 25 epics). Backfilling `epics:` is the single highest-leverage fix. Also: 2 orphan epics (epic-85 env/build, epic-8a NotificationSettingsPage), 4 missing UC links (UC-10/29/33/40).
+- **Top coverage actions** — *secondary to the #1437 dev-red incident in "What's next" above*: (1) reconcile 79-2 auth-flow → done with pm-security SSO/JWT/cookie sign-off; (2) reconcile 10b-5 support-data-access → done with retention/access-audit check; (3) finish & promote announcements 6-1/6-2/6-5; (4) complete 79-1 e2e verification; (5) backfill screen-map `epics:` frontmatter.
