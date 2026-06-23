@@ -57,67 +57,6 @@
       "depends_on": []
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
-      "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | dev-reconcile 2026-06-23T04:25:23Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "dev_reconciled": {
-        "reason": "landed-on-dev",
-        "commit": "41115f67b98f53a9a62eb018f3aa1ff325896f3b",
-        "subject": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs: split aml_dsa route file into per-story submodules (#1708)",
-        "at": "2026-06-23T04:25:23Z"
-      }
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] AI llm/sessions + integrations sync + subscriptions RLS migration (PR #1287, PAP-169) shipped without a new regression test",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test for the public-connection routing",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixed in PR #1287",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "closed-not-merged-pr-1274",
       "action": "PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed",
       "owner_role": "pm-devops",
@@ -195,17 +134,6 @@
       "depends_on": []
     },
     {
-      "id": "triage-issue-1331",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Issue #1331 (no labels, OPEN): Backend test job red/hanging on dev base — blocks the entire backend merge pipeline",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "dx-stalled-review-pr-988",
       "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision",
       "owner_role": "pm-frontend",
@@ -250,53 +178,9 @@
       "depends_on": []
     },
     {
-      "id": "code-review-reality-web-share-comparison-404",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-reality-web-listing-page-ssr-crash",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-reality-web-realtor-mgmt-untranslated",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "triage-issue-1380",
       "action": "Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured",
       "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
-      "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
-      "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
@@ -327,17 +211,6 @@
       "depends_on": []
     },
     {
-      "id": "code-review-api-core-osrng-expect",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
       "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage)",
       "owner_role": "pm-backend",
@@ -360,23 +233,6 @@
       "depends_on": []
     },
     {
-      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
-      "action": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | dev-reconcile 2026-06-23T04:25:23Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "dev_reconciled": {
-        "reason": "landed-on-dev",
-        "commit": "13fb2c28b8ec0745cf6910fbb02215308bca1f5d",
-        "subject": "repeated-churn-backend-servers-api-server-src-routes-forms-rs: split forms.rs into cohesive submodules (#1700)",
-        "at": "2026-06-23T04:25:23Z"
-      }
-    },
-    {
       "id": "closed-not-merged-pr-1425",
       "action": "PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394",
       "owner_role": "pm-devops",
@@ -388,44 +244,11 @@
       "depends_on": []
     },
     {
-      "id": "screen-map-drift-pr-1418-ppt",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-mobile-rn-report-fault-fake-submit",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "code-review-mobile-rn-screens-mock-data",
       "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-mobile-rn-deeplink-init-unhandled",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
