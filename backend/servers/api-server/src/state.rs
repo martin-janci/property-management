@@ -107,6 +107,45 @@ impl BookingOAuthAppConfig {
     }
 }
 
+/// Stripe Checkout integration configuration loaded once at startup
+/// (Story 11.5, [BIT-181]). Mirrors [`AirbnbAppConfig`]: secrets are read from
+/// the environment at boot, never accepted from a request body, and an empty
+/// `secret_key`/`webhook_secret` fails closed at the handler.
+///
+/// We use Stripe **hosted Checkout** (SAQ-A): raw card data never touches our
+/// servers — the server only creates a Checkout Session and confirms the
+/// webhook. So we hold the API secret key (server→Stripe) and the webhook
+/// signing secret (Stripe→server), plus the redirect URLs the payer returns to.
+#[derive(Debug, Clone, Default)]
+pub struct StripeAppConfig {
+    /// `STRIPE_SECRET_KEY` — server-side API key used to create Checkout
+    /// Sessions. Required to initiate a checkout; empty ⇒ `503 NOT_CONFIGURED`.
+    pub secret_key: String,
+    /// `STRIPE_WEBHOOK_SECRET` — signing secret for inbound webhook signature
+    /// verification (`Stripe-Signature` header). Required to accept a webhook;
+    /// empty ⇒ the receiver fails closed with `503 NOT_CONFIGURED`.
+    pub webhook_secret: String,
+    /// `STRIPE_SUCCESS_URL` — where Stripe redirects the payer on success.
+    /// `{CHECKOUT_SESSION_ID}` is substituted by Stripe.
+    pub success_url: String,
+    /// `STRIPE_CANCEL_URL` — where Stripe redirects the payer on cancel.
+    pub cancel_url: String,
+}
+
+impl StripeAppConfig {
+    /// Load from the standard env vars. Empty strings are preserved so the
+    /// handlers can emit `NOT_CONFIGURED` for missing values — matching the
+    /// fail-closed contract of the other integration configs.
+    pub fn from_env() -> Self {
+        Self {
+            secret_key: std::env::var("STRIPE_SECRET_KEY").unwrap_or_default(),
+            webhook_secret: std::env::var("STRIPE_WEBHOOK_SECRET").unwrap_or_default(),
+            success_url: std::env::var("STRIPE_SUCCESS_URL").unwrap_or_default(),
+            cancel_url: std::env::var("STRIPE_CANCEL_URL").unwrap_or_default(),
+        }
+    }
+}
+
 /// A single realtime preference-sync event captured by a
 /// [`PreferenceEventRecorder`] (issue #1376).
 ///
@@ -356,6 +395,10 @@ pub struct AppState {
     /// Booking.com OAuth integration configuration loaded once at startup
     /// (Coverage 83-2). Handlers fail closed when `client_id.is_empty()`.
     pub booking_config: BookingOAuthAppConfig,
+    /// Stripe Checkout configuration loaded once at startup (Story 11.5,
+    /// [BIT-181]). Handlers fail closed when `secret_key`/`webhook_secret`
+    /// are empty.
+    pub stripe_config: StripeAppConfig,
 }
 
 impl AppState {
@@ -643,6 +686,8 @@ impl AppState {
             airbnb_config: AirbnbAppConfig::from_env(),
             // Coverage 83-2: Booking.com OAuth env vars cached at startup.
             booking_config: BookingOAuthAppConfig::from_env(),
+            // Story 11.5 (BIT-181): Stripe Checkout env vars cached at startup.
+            stripe_config: StripeAppConfig::from_env(),
         }
     }
 

@@ -13,8 +13,8 @@ use axum::{
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use db::models::{
-    CreateFeeSchedule, CreateFinancialAccount, CreateInvoice, CreateTransaction, InvoiceStatus,
-    Payment, PaymentAllocation, RecordPayment,
+    CreateFeeSchedule, CreateFinancialAccount, CreateInvoice, CreateTransaction,
+    InitiatePaymentResponse, InvoiceStatus, Payment, PaymentAllocation, RecordPayment,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
@@ -148,6 +148,8 @@ pub fn router() -> Router<AppState> {
         .route("/invoices/{id}", get(get_invoice))
         .route("/invoices/{id}/send", post(send_invoice))
         .route("/invoices/{id}/pdf", get(get_invoice_pdf))
+        // Online payment / gateway checkout (Story 11.5, BIT-181)
+        .route("/invoices/{id}/checkout", post(initiate_invoice_checkout))
         .route("/units/{unit_id}/invoices", get(list_unit_invoices))
         // Payments (Story 11.4)
         .route("/payments", post(record_payment))
@@ -1071,6 +1073,122 @@ async fn record_payment(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to record payment")),
             )
         })
+}
+
+/// Initiate a hosted Stripe Checkout for an invoice (Story 11.5, BIT-181).
+///
+/// Tenant isolation: the invoice is loaded by id, then the caller's membership
+/// of the invoice's organization is verified — a foreign invoice id returns
+/// `404` (so cross-tenant probing cannot distinguish missing from forbidden).
+/// Returns the hosted `checkout_url` the client redirects the payer to; the
+/// invoice is only marked paid once the signed `checkout.session.completed`
+/// webhook is received.
+async fn initiate_invoice_checkout(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(invoice_id): Path<Uuid>,
+) -> Result<Json<InitiatePaymentResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let cfg = &state.stripe_config;
+    // Fail closed: never attempt a checkout without server-side credentials.
+    if cfg.secret_key.is_empty() || cfg.success_url.is_empty() || cfg.cancel_url.is_empty() {
+        tracing::error!(
+            "Stripe Checkout is not fully configured (secret_key/success_url/cancel_url)"
+        );
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Online payments are not configured",
+            )),
+        ));
+    }
+
+    let invoice = state
+        .financial_repo
+        .get_invoice(invoice_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load invoice")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(&state, auth.user_id, invoice.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+        ));
+    }
+
+    // Nothing to collect — don't open a gateway session for a settled invoice.
+    if invoice.balance_due <= Decimal::ZERO {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "ALREADY_SETTLED",
+                "Invoice has no outstanding balance",
+            )),
+        ));
+    }
+
+    let created = crate::services::stripe::create_checkout_session(
+        &cfg.secret_key,
+        &cfg.success_url,
+        &cfg.cancel_url,
+        &invoice.id.to_string(),
+        &invoice.organization_id.to_string(),
+        &invoice.invoice_number,
+        invoice.balance_due,
+        &invoice.currency,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "Stripe checkout session creation failed");
+        (
+            StatusCode::BAD_GATEWAY,
+            Json(ErrorResponse::new(
+                "GATEWAY_ERROR",
+                "Failed to create payment session",
+            )),
+        )
+    })?;
+
+    let session = state
+        .financial_repo
+        .create_payment_session(
+            invoice.organization_id,
+            invoice.id,
+            "stripe",
+            &created.id,
+            &created.url,
+            invoice.balance_due,
+            &invoice.currency,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to persist payment session: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to record payment session",
+                )),
+            )
+        })?;
+
+    Ok(Json(InitiatePaymentResponse {
+        session_id: session.id,
+        checkout_url: created.url,
+        expires_at: session.expires_at.unwrap_or(session.created_at),
+    }))
 }
 
 async fn get_payment(
