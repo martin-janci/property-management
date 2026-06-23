@@ -202,6 +202,7 @@ pub struct CreateMessage {
 /// object key; presigned upload/download URLs are minted on demand by the
 /// route layer and are never persisted.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageAttachment {
     pub id: Uuid,
     pub message_id: Uuid,
