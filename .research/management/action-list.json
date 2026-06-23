@@ -277,17 +277,6 @@
       "depends_on": []
     },
     {
-      "id": "gap-79-1-wire-announcements-faults-api-hooks",
-      "action": "ppt-web AnnouncementsPage + FaultsPage not fully wired to live @ppt/api-client hooks — complete list/create/update data wiring (coverage 79-1)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-23 (coverage partial-story gaps; conservative)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "gap-81-2-report-execution-history-download-verify",
       "action": "Report execution-history: verify+harden presigned-download + retry end-to-end (coverage 81-2)",
       "owner_role": "pm-frontend",

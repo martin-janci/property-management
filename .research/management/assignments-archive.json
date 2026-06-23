@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-23T12:23:46Z",
+  "archived_at": "2026-06-23T12:28:33Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -3652,6 +3652,28 @@
       "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-79-1-wire-announcements-faults-api-hooks",
+      "branch": "auto-impl/gap-79-1-wire-announcements-faults-api-h-0c273873",
+      "status": "failed",
+      "claimed_at": "2026-06-23T12:22:14Z",
+      "last_updated": "2026-06-23T12:28:33Z",
+      "status_changed_at": "2026-06-23T12:28:33Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ppt-frontend",
+      "implementer_summary": "pr=none status=done specialist=ppt-frontend scope_drift=false code_reuse_warn=already-shipped note=gap-79-1 wiring already merged in dev (PR #1555/#1610); verify green (typecheck+biome+29 vitest), zero diff vs origin/dev, no PR opened [resolved-noop -> failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
