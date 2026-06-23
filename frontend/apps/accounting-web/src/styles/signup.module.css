@@ -1,0 +1,124 @@
+/* Signup surface styles. Tokens only. */
+
+.wrap {
+  min-height: calc(100vh - 4rem);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Left: the form column. */
+.formCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ppt-space-12) var(--ppt-space-6);
+}
+.formInner {
+  width: 100%;
+  max-width: 26rem;
+}
+.title {
+  font-size: var(--ppt-font-size-2xl);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-neutral-900);
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  margin-top: var(--ppt-space-2);
+  font-size: var(--ppt-font-size-base);
+  color: var(--ppt-neutral-500);
+  line-height: var(--ppt-line-height-relaxed);
+}
+.form {
+  margin-top: var(--ppt-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-5);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.countryRow {
+  display: flex;
+  gap: var(--ppt-space-3);
+}
+.consent {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-neutral-500);
+  line-height: var(--ppt-line-height-relaxed);
+}
+.submitWrap {
+  margin-top: var(--ppt-space-2);
+}
+.altAuth {
+  margin-top: var(--ppt-space-6);
+  text-align: center;
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-500);
+}
+.altAuthLink {
+  color: var(--ppt-color-primary);
+  font-weight: var(--ppt-font-weight-semibold);
+}
+.notice {
+  margin-top: var(--ppt-space-5);
+}
+
+/* Right: a reassurance / benefits panel (brand gradient). */
+.asideCol {
+  background: linear-gradient(160deg, var(--ppt-brand-700) 0%, var(--ppt-brand-900) 100%);
+  color: #fff;
+  padding: var(--ppt-space-12) var(--ppt-space-10);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.asideBrand {
+  font-size: var(--ppt-font-size-xl);
+  font-weight: var(--ppt-font-weight-bold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  margin-bottom: var(--ppt-space-8);
+}
+.asideHeading {
+  font-size: var(--ppt-font-size-2xl);
+  font-weight: var(--ppt-font-weight-bold);
+  line-height: var(--ppt-line-height-tight);
+  letter-spacing: -0.02em;
+  max-width: 20rem;
+}
+.benefitList {
+  list-style: none;
+  margin-top: var(--ppt-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-4);
+}
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+  font-size: var(--ppt-font-size-base);
+  color: var(--ppt-brand-100);
+}
+.benefitCheck {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--ppt-radius-full);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+@media (max-width: 880px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+  .asideCol {
+    display: none;
+  }
+}

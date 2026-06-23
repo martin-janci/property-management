@@ -23,6 +23,49 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  apps/accounting-web:
+    dependencies:
+      '@ppt/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@ppt/ui-kit':
+        specifier: workspace:*
+        version: link:../../packages/ui-kit
+      '@tanstack/react-query':
+        specifier: ^5.101.0
+        version: 5.101.0(react@19.2.0)
+      next:
+        specifier: ^16.2.7
+        version: 16.2.9(@playwright/test@1.61.0)(react-dom@19.2.0)(react@19.2.0)
+      next-intl:
+        specifier: ^4.13.0
+        version: 4.13.0(next@16.2.9)(react@19.2.0)(typescript@5.9.3)
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: 19.2.0
+        version: 19.2.0(react@19.2.0)
+    devDependencies:
+      '@ppt/dev-panel':
+        specifier: workspace:*
+        version: link:../../packages/dev-panel
+      '@ppt/vite-plugin-worktree':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-ppt-worktree
+      '@types/node':
+        specifier: ^25.0.5
+        version: 25.9.3
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
   apps/admin-web:
     dependencies:
       '@ppt/admin-ui':

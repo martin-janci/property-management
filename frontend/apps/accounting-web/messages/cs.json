@@ -1,0 +1,182 @@
+{
+  "_meta": {
+    "status": "CMO-FINAL marketing copy (PAP-312) — reviewed and signed off by CMO for cs/sk message-market fit and honest framing. Two values remain board decisions, NOT copy edits: (1) brand name, injected from i18n/config.ts BRAND_NAME (placeholder 'Fakto'); (2) pricing.plans[].price amounts + the free/Standard/Team tier split — illustrative pending board pricing decision (PAP-303 open decision). Key structure is the contract; swap strings, keep keys.",
+    "brandNote": "Brand name is injected from i18n/config.ts BRAND_NAME (placeholder 'Fakto') — do not hard-code it here."
+  },
+  "nav": {
+    "features": "Funkce",
+    "pricing": "Ceník",
+    "login": "Přihlásit se",
+    "signup": "Vyzkoušet zdarma",
+    "skipToContent": "Přeskočit na obsah",
+    "openMenu": "Otevřít menu"
+  },
+  "hero": {
+    "badge": "Fakturace a účetnictví pro živnostníky a malé firmy",
+    "title": "Vystavte fakturu za pár minut. Mějte přehled o penězích.",
+    "subtitle": "Vystavujte faktury, evidujte kontakty a párujte platby z banky — vše na jednom místě, v češtině a slovenštině. Bez papírování, bez stresu.",
+    "ctaPrimary": "Začít zdarma",
+    "ctaSecondary": "Prohlédnout funkce",
+    "trust": "Bez platební karty · Nastavení do 2 minut · Zrušíte kdykoli"
+  },
+  "features": {
+    "title": "Vše, co potřebujete k fakturaci",
+    "subtitle": "Od první faktury po sesouhlasení s bankou — nástroje, které vám ušetří čas každý týden.",
+    "items": [
+      {
+        "title": "Faktury na pár kliknutí",
+        "body": "Vystavte a odešlete profesionální fakturu ve formátu PDF za méně než minutu. Položky, DPH (CZ i SK) a splatnost hlídá za vás."
+      },
+      {
+        "title": "Adresář kontaktů",
+        "body": "Evidujte odběratele i dodavatele na jednom místě. Při fakturaci se údaje doplní samy."
+      },
+      {
+        "title": "Párování plateb",
+        "body": "Nahrajte bankovní výpis a my k němu napárujeme faktury. Hned víte, kdo zaplatil a kdo dluží."
+      },
+      {
+        "title": "Přehled nezaplacených",
+        "body": "Dashboard ukáže, kolik vám dluží zákazníci a které faktury jsou po splatnosti."
+      },
+      {
+        "title": "Export dat",
+        "body": "Stáhněte si faktury a přehledy v CSV pro účetní nebo pro vlastní evidenci."
+      },
+      {
+        "title": "Bezpečně a v souladu",
+        "body": "Vaše data jsou oddělená od ostatních firem a šifrovaná. Připraveno na e-fakturaci podle EN 16931."
+      }
+    ]
+  },
+  "steps": {
+    "title": "Začněte ve třech krocích",
+    "items": [
+      {
+        "title": "Založte si účet",
+        "body": "Zaregistrujte se e-mailem. Žádná instalace, žádná platební karta."
+      },
+      {
+        "title": "Vystavte fakturu",
+        "body": "Vyplňte odběratele a položky. My spočítáme DPH a vygenerujeme PDF."
+      },
+      {
+        "title": "Sledujte platby",
+        "body": "Nahrajte výpis z banky a uvidíte, co je zaplaceno a co po splatnosti."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "Jednoduchý ceník",
+    "subtitle": "Začněte zdarma. Plaťte, až když porostete. Ceny jsou orientační — finální ceník dodá obchodní tým.",
+    "perMonth": "/ měsíc",
+    "mostPopular": "Nejoblíbenější",
+    "plans": [
+      {
+        "name": "Start",
+        "price": "0 €",
+        "tagline": "Pro začínající živnostníky",
+        "features": ["Až 5 faktur měsíčně", "Adresář kontaktů", "Export do CSV"],
+        "cta": "Začít zdarma"
+      },
+      {
+        "name": "Standard",
+        "price": "9 €",
+        "tagline": "Pro rostoucí podnikání",
+        "features": [
+          "Neomezené faktury",
+          "Párování plateb z banky",
+          "Přehled nezaplacených",
+          "Prioritní podpora"
+        ],
+        "cta": "Vyzkoušet 14 dní zdarma"
+      },
+      {
+        "name": "Tým",
+        "price": "19 €",
+        "tagline": "Pro firmy a účetní",
+        "features": [
+          "Vše ze Standardu",
+          "Více uživatelů",
+          "Exporty pro účetní",
+          "Pokročilá oprávnění"
+        ],
+        "cta": "Kontaktovat nás"
+      }
+    ],
+    "note": "Ceny jsou bez DPH a slouží jako ukázka. Konečný ceník bude potvrzen před spuštěním."
+  },
+  "cta": {
+    "title": "Vyzkoušejte to ještě dnes",
+    "subtitle": "Vystavte první fakturu za pár minut. Zdarma a bez závazků.",
+    "button": "Začít zdarma"
+  },
+  "footer": {
+    "tagline": "Fakturace a účetnictví, které vám rozumí.",
+    "productHeading": "Produkt",
+    "companyHeading": "Společnost",
+    "legalHeading": "Právní",
+    "links": {
+      "features": "Funkce",
+      "pricing": "Ceník",
+      "signup": "Registrace",
+      "login": "Přihlášení",
+      "about": "O nás",
+      "contact": "Kontakt",
+      "terms": "Obchodní podmínky",
+      "privacy": "Ochrana soukromí"
+    },
+    "rights": "Všechna práva vyhrazena.",
+    "placeholderNote": "Produkt ve vývoji — název a doména jsou prozatím dočasné."
+  },
+  "signup": {
+    "title": "Vytvořte si účet",
+    "subtitle": "Začněte fakturovat zdarma. Stačí pár údajů.",
+    "fields": {
+      "companyLabel": "Název firmy nebo jméno",
+      "companyPlaceholder": "Např. Jan Novák – IČO 12345678",
+      "nameLabel": "Vaše jméno",
+      "namePlaceholder": "Jan Novák",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vas@email.cz",
+      "passwordLabel": "Heslo",
+      "passwordPlaceholder": "Alespoň 8 znaků",
+      "countryLabel": "Země",
+      "countryCz": "Česko",
+      "countrySk": "Slovensko"
+    },
+    "consent": "Registrací souhlasíte s obchodními podmínkami a zpracováním osobních údajů.",
+    "submit": "Vytvořit účet zdarma",
+    "haveAccount": "Už máte účet?",
+    "login": "Přihlaste se",
+    "validation": {
+      "companyRequired": "Vyplňte název firmy nebo jméno.",
+      "emailRequired": "Vyplňte e-mail.",
+      "emailInvalid": "Zadejte platný e-mail.",
+      "passwordShort": "Heslo musí mít alespoň 8 znaků."
+    },
+    "comingSoon": "Registrace bude brzy spuštěna. Děkujeme za zájem — vaše údaje zatím neukládáme.",
+    "benefitsTitle": "Proč začít hned",
+    "benefits": [
+      "Nastavení do 2 minut",
+      "Bez platební karty",
+      "Čeština i slovenština",
+      "Zrušíte kdykoli"
+    ]
+  },
+  "metadata": {
+    "home": {
+      "title": "Fakturace a účetnictví pro živnostníky a malé firmy",
+      "description": "Vystavujte faktury, evidujte kontakty a párujte platby z banky. Jednoduché online fakturování v češtině a slovenštině. Začněte zdarma."
+    },
+    "signup": {
+      "title": "Registrace zdarma",
+      "description": "Vytvořte si účet a vystavte první fakturu za pár minut. Bez platební karty, zrušíte kdykoli."
+    }
+  },
+  "localeSwitcher": {
+    "label": "Jazyk",
+    "cs": "Čeština",
+    "sk": "Slovenčina"
+  }
+}
