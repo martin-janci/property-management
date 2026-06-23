@@ -24,7 +24,7 @@
 | 2 | test-gap | `test-gap-screen-map-drift-pr-1641-ppt` | Screen-map drift: PR #1641 touched ppt-web routes without docs/screens/ppt/*.md update | open | 2026-06-23 |  |
 | 2 | test-gap | `test-gap-screen-map-drift-pr-1696-ppt` | Screen-map drift: PR #1696 touched ppt-web routes without docs/screens/ppt/*.md update | open | 2026-06-23 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1743-booking-listing-validation` | Hotfix without test: PR #pr (1743 booking listing validation) | open | 2026-06-23 |  |
-| 2 | test-gap | `test-gap-hotfix-no-test-pr-1737-iot-jwt-trusting-channel` | Hotfix without test: PR #pr (1737 iot jwt trusting channel) | open | 2026-06-23 |  |
+| 2 | security | `security-iot-sensor-ws-jwt-channel-regression` | Add regression test for IoT sensor-WS JWT-bypass after PR #1737 (security fast-track) | ready | 2026-06-23 | [plan](plans/test-gap-iot-sensor-ws-jwt-channel-regression.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1639-airbnb-manager-gate` | Hotfix without test: PR #pr (1639 airbnb manager gate) | open | 2026-06-23 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1561-portal-principal-admit` | Hotfix without test: PR #pr (1561 portal principal admit) | open | 2026-06-23 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1539-oauth-public-client-secret` | Hotfix without test: PR #pr (1539 oauth public client secret) | open | 2026-06-23 |  |

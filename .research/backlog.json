@@ -4199,24 +4199,25 @@
       "plan": null
     },
     {
-      "id": "test-gap-hotfix-no-test-pr-1737-iot-jwt-trusting-channel",
-      "title": "Hotfix without test: PR #pr (1737 iot jwt trusting channel)",
-      "vector": "test-gap",
+      "id": "security-iot-sensor-ws-jwt-channel-regression",
+      "title": "Add regression test for IoT sensor-WS JWT-bypass after PR #1737 (security fast-track)",
+      "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "PR #1737"
       ],
       "evidence": [
-        "PR #1737 'fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler (#1668)' \u2014 touched backend/servers/api-server/src/routes/iot.rs + forms.rs with no test diff. Security-adjacent: deleted a JWT-only-trusting WS channel; merged without an explicit regression test pinning that the JWT-only path is gone."
+        "PR #1737 'fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler (#1668)' \u2014 touched backend/servers/api-server/src/routes/iot.rs + forms.rs with no test diff. Security-adjacent: deleted a JWT-only-trusting WS channel; merged without an explicit regression test pinning that the JWT-only path is gone.",
+        "reclassified from test-gap \u2192 security: removal of JWT-only-trusting WS channel is a security-boundary regression; promoted via security fast-track (score=2, confidence=high, vector=security)"
       ],
       "files": [
         "backend/"
       ],
       "created_at": "2026-06-23",
       "updated_at": "2026-06-23",
-      "plan": null
+      "plan": "plans/test-gap-iot-sensor-ws-jwt-channel-regression.md"
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1639-airbnb-manager-gate",
