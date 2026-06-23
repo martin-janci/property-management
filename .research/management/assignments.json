@@ -66,6 +66,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-d467ac04",
+      "status": "in-progress",
+      "claimed_at": "2026-06-23T16:14:08Z",
+      "last_updated": "2026-06-23T16:14:08Z",
+      "status_changed_at": "2026-06-23T16:14:08Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
