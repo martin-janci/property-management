@@ -25,6 +25,59 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", patch(update_listing))
 }
 
+// ============================================================================
+// Enum allow-lists (mirror the inline comments in migration 00049_create_listings)
+// ============================================================================
+
+/// Allowed `property_type` values (`listings.property_type`).
+const ALLOWED_PROPERTY_TYPES: &[&str] = &[
+    "apartment",
+    "house",
+    "commercial",
+    "land",
+    "parking",
+    "storage",
+    "other",
+];
+
+/// Allowed `transaction_type` values (`listings.transaction_type`).
+const ALLOWED_TRANSACTION_TYPES: &[&str] = &["sale", "rent"];
+
+/// Allowed `currency` values (`listings.currency`).
+const ALLOWED_CURRENCIES: &[&str] = &["EUR", "CZK"];
+
+/// Statuses an owner may set directly via create/update.
+///
+/// Public visibility is gated by `is_published` (set only through the
+/// moderation path — see migration 00186), so an owner must not be able to
+/// flip a listing into the publicly-visible `active` state, nor into any
+/// `published`/`approved`-style moderated state. They may only move a listing
+/// between its own draft/paused/sold/rented/archived lifecycle states.
+const ALLOWED_OWNER_STATUSES: &[&str] = &["draft", "paused", "sold", "rented", "archived"];
+
+/// Validate an optional enum-like field against an allow-list.
+///
+/// `None` (field omitted) always passes. An unknown value yields a
+/// `400 Bad Request` with a deterministic message.
+fn validate_enum(
+    field: &str,
+    value: Option<&str>,
+    allowed: &[&str],
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if let Some(v) = value {
+        if !allowed.contains(&v) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "Invalid {field}: '{v}'. Allowed values: {}",
+                    allowed.join(", ")
+                ),
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Request body for creating a portal listing.
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -140,6 +193,20 @@ pub async fn create_listing(
     Json(body): Json<CreatePortalListingRequest>,
 ) -> Result<(axum::http::StatusCode, Json<PortalListingResponse>), (axum::http::StatusCode, String)>
 {
+    // Reject unknown enum-like values before hitting the DB (free-text columns
+    // have no CHECK constraint — see migration 00049).
+    validate_enum(
+        "propertyType",
+        Some(body.property_type.as_str()),
+        ALLOWED_PROPERTY_TYPES,
+    )?;
+    validate_enum(
+        "transactionType",
+        Some(body.transaction_type.as_str()),
+        ALLOWED_TRANSACTION_TYPES,
+    )?;
+    validate_enum("currency", body.currency.as_deref(), ALLOWED_CURRENCIES)?;
+
     let listing = state
         .reality_portal_repo
         .create_portal_listing(
@@ -232,6 +299,23 @@ pub async fn update_listing(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdatePortalListingRequest>,
 ) -> Result<Json<PortalListingResponse>, (axum::http::StatusCode, String)> {
+    // Reject unknown enum-like values (free-text columns, no DB CHECK).
+    validate_enum(
+        "propertyType",
+        body.property_type.as_deref(),
+        ALLOWED_PROPERTY_TYPES,
+    )?;
+    validate_enum(
+        "transactionType",
+        body.transaction_type.as_deref(),
+        ALLOWED_TRANSACTION_TYPES,
+    )?;
+    validate_enum("currency", body.currency.as_deref(), ALLOWED_CURRENCIES)?;
+    // Owners may only move a listing between its own lifecycle states; flipping
+    // into the publicly-visible `active`/`published`/`approved` states is a
+    // privileged transition reserved for the moderation path.
+    validate_enum("status", body.status.as_deref(), ALLOWED_OWNER_STATUSES)?;
+
     let listing = state
         .reality_portal_repo
         .update_portal_listing(

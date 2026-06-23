@@ -20,6 +20,7 @@
 //!    the resolved org (membership case) or `None` (platform-host case for
 //!    a platform principal).
 
+use crate::extractors::auth::{verify_access_token, AccessTokenClaims, TokenTypePolicy};
 use crate::extractors::tenant::TenantMembershipProvider;
 use crate::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
@@ -28,7 +29,7 @@ use axum::{
 };
 use db::models::PrincipalKind;
 use db::repositories::MembershipRepository;
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -60,7 +61,16 @@ pub struct PrincipalClaims {
     pub token_type: Option<String>,
 }
 
-/// Shared bearer-token decode for the request extractors (GH #1584 finding 4).
+impl AccessTokenClaims for PrincipalClaims {
+    fn token_type(&self) -> Option<&str> {
+        // `None` => claim absent (legacy token, treated as access under the
+        // `LegacyTolerant` policy below). `Some(_)` => explicit value, gated.
+        self.token_type.as_deref()
+    }
+}
+
+/// Shared bearer-token decode for the request extractors (GH #1584 finding 4,
+/// GH #1675).
 ///
 /// Both [`RequestPrincipal`] and [`PortalPrincipal`] authenticate a request the
 /// same way: pull the bearer token, decode it with the default HS256 validation
@@ -69,6 +79,15 @@ pub struct PrincipalClaims {
 /// single place means a future change (enforcing `aud`/`iss`, a new token
 /// discriminator, a key rotation) cannot be applied to one extractor and
 /// silently missed on the other.
+///
+/// The decode + `token_type` gate themselves now live in the workspace-shared
+/// [`verify_access_token`] (GH #1675), which `auth.rs`'s `validate_access_token*`
+/// family also delegates to. This function keeps its historical, legacy-tolerant
+/// behavior **exactly**: a fresh `Validation::default()` (leeway 0, unlike
+/// `auth.rs`'s cached `leeway = 30` verifier), the `JWT_SECRET` read on every
+/// call, and the `TokenTypePolicy::LegacyTolerant` policy (a missing
+/// `token_type` is treated as access). Only the bearer-header parse and the
+/// observability `warn!` are kept here.
 fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static str)> {
     let auth_header = parts
         .headers
@@ -91,33 +110,28 @@ fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static st
 
     // We deliberately use the default `Validation` (HS256, exp+nbf checked).
     // We do NOT enforce any audience/issuer here — those are issuance concerns
-    // that a future hardening pass can layer on (in this one place).
-    let token_data = decode::<PrincipalClaims>(
+    // that a future hardening pass can layer on (in `verify_access_token`).
+    //
+    // `LegacyTolerant`: a token that omits `token_type` is treated as access
+    // for backward-compat; an explicit non-access value is denied so a refresh
+    // token cannot be replayed against an access-only route (mirrors `auth.rs`
+    // RUST-002). The decode + gate run inside the shared verifier.
+    let claims: PrincipalClaims = verify_access_token(
         token,
         &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
+        TokenTypePolicy::LegacyTolerant,
     )
-    .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
-
-    // Reject refresh tokens (and any other non-access discriminator) BEFORE
-    // touching the DB. A token that omits `token_type` is treated as access for
-    // backward-compat; an explicit non-access value is denied so a refresh token
-    // cannot be replayed against an access-only route (mirrors `auth.rs`
-    // RUST-002).
-    if let Some(token_type) = token_data.claims.token_type.as_deref() {
-        if token_type != "access" {
-            tracing::warn!(
-                token_type = %token_type,
-                "principal: rejected non-access token on access-only route"
-            );
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "Invalid token type for this endpoint",
-            ));
+    .map_err(|msg| {
+        // Preserve the prior observability signal: a rejected non-access token
+        // is `warn!`-logged before the request is denied.
+        if msg == "Invalid token type for this endpoint" {
+            tracing::warn!("principal: rejected non-access token on access-only route");
         }
-    }
+        (StatusCode::UNAUTHORIZED, msg)
+    })?;
 
-    Ok(token_data.claims.sub)
+    Ok(claims.sub)
 }
 
 /// Re-derive `principal_kind` from the trusted `users` table (GH #1584 finding 4).
