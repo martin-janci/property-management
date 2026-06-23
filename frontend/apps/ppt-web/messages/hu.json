@@ -1303,5 +1303,10 @@
       "under_repair": "Javítás alatt",
       "decommissioned": "Kivonva"
     }
+  },
+  "messaging": {
+    "errors": {
+      "downloadFailed": "A melléklet letöltése nem sikerült"
+    }
   }
 }

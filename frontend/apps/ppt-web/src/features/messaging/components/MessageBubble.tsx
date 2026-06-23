@@ -7,7 +7,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Message } from '../types';
-import { AttachmentPreviewInline } from './AttachmentPreview';
+import { MessageAttachments } from './MessageAttachments';
 
 interface MessageBubbleProps {
   message: Message;
@@ -158,10 +158,12 @@ export function MessageBubble({
           >
             <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
 
-            {/* Attachments */}
-            {message.attachments && message.attachments.length > 0 && (
-              <AttachmentPreviewInline attachments={message.attachments} />
-            )}
+            {/* Attachments (resolved lazily from the API, UC-05.9) */}
+            <MessageAttachments
+              threadId={message.threadId}
+              messageId={message.id}
+              isCurrentUser={isCurrentUser}
+            />
           </div>
 
           {/* Context menu button (visible on hover) */}

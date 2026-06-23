@@ -20,11 +20,12 @@ import {
   getToken,
   messagingKeys,
 } from '@ppt/api-client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type {
   Message,
   MessageThread,
+  PendingAttachment,
   RecipientOption,
   SendMessageRequest,
   ThreadWithMessages,
@@ -211,6 +212,121 @@ export function useStartThread() {
 export function useSendMessage() {
   const hooks = useMessagingApi();
   return hooks.useSendMessage();
+}
+
+/** Query-key helper for a message's attachment list (UC-05.9). */
+export const attachmentKeys = {
+  list: (threadId: string, messageId: string) =>
+    [...messagingKeys.all, 'attachments', threadId, messageId] as const,
+};
+
+/**
+ * Upload one pending attachment's bytes to S3 and link it to a sent message.
+ *
+ * Per UC-05.9 the flow is: request a presigned PUT URL → upload the bytes
+ * directly to storage → echo the returned `fileKey` back via `linkMessageAttachment`.
+ */
+async function uploadAndLinkAttachment(
+  api: ReturnType<typeof getMessagingApi>,
+  threadId: string,
+  messageId: string,
+  pending: PendingAttachment
+): Promise<void> {
+  const { file } = pending;
+  const meta = { fileName: file.name, fileType: file.type, fileSize: file.size };
+
+  const { url, fileKey } = await api.requestAttachmentUploadUrl(threadId, meta);
+
+  const putResponse = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  });
+  if (!putResponse.ok) {
+    throw new Error(`Failed to upload attachment "${file.name}" (${putResponse.status})`);
+  }
+
+  await api.linkMessageAttachment(threadId, messageId, { fileKey, ...meta });
+}
+
+/**
+ * Send a message and, if present, upload + link each attachment (UC-05.9).
+ *
+ * Extracted from the mutation so the multi-step ordering can be unit-tested
+ * without React. The message is sent first to obtain its id, then attachments
+ * are uploaded + linked sequentially so the first failure surfaces clearly.
+ */
+export async function performSendWithAttachments(
+  api: ReturnType<typeof getMessagingApi>,
+  threadId: string,
+  data: SendMessageRequest
+) {
+  const sendResponse = await api.sendMessage(threadId, { content: data.content });
+  const messageId = sendResponse.sentMessage.id;
+
+  for (const pending of data.attachments ?? []) {
+    await uploadAndLinkAttachment(api, threadId, messageId, pending);
+  }
+
+  return sendResponse;
+}
+
+/**
+ * Mutation to send a message with optional attachments (UC-05.9).
+ *
+ * Orchestrates the multi-step flow: send the message, then for each attachment
+ * upload the bytes to a presigned S3 URL and link the resulting object to the
+ * newly-created message. Falls back to a plain send when there are no
+ * attachments. Invalidates the thread detail + thread list on success so the
+ * new message and its attachments render.
+ */
+export function useSendMessageWithAttachments() {
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getMessagingApi(token), [token]);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ threadId, data }: { threadId: string; data: SendMessageRequest }) =>
+      performSendWithAttachments(api, threadId, data),
+    onSuccess: (_data, { threadId }) => {
+      queryClient.invalidateQueries({ queryKey: messagingKeys.threadDetail(threadId) });
+      queryClient.invalidateQueries({ queryKey: messagingKeys.threads() });
+    },
+  });
+}
+
+/**
+ * Query the attachments linked to a message (UC-05.9).
+ *
+ * The message list endpoint does not embed attachments, so each rendered
+ * message resolves its own attachments lazily. Results are cached by React
+ * Query, so repeated renders of the same message do not refetch.
+ */
+export function useMessageAttachments(threadId: string, messageId: string, enabled = true) {
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getMessagingApi(token), [token]);
+
+  return useQuery({
+    queryKey: attachmentKeys.list(threadId, messageId),
+    queryFn: () => api.listMessageAttachments(threadId, messageId),
+    enabled: enabled && !!threadId && !!messageId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Returns a function that resolves a short-lived presigned download URL for an
+ * attachment, used to trigger the actual download on click (UC-05.9).
+ */
+export function useAttachmentDownload() {
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getMessagingApi(token), [token]);
+
+  return useMemo(
+    () => (threadId: string, attachmentId: string) =>
+      api.getAttachmentDownloadUrl(threadId, attachmentId),
+    [api]
+  );
 }
 
 /**

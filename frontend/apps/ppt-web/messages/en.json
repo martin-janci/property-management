@@ -1385,8 +1385,9 @@
       "failedToCreate": "Failed to create conversation",
       "failedToBlock": "Failed to block user",
       "failedToUnblock": "Failed to unblock user",
-      "fileTooLarge": "File \"{{name}}\" is too large. Maximum size is 10MB.",
-      "invalidFileType": "File \"{{name}}\" has an unsupported file type."
+      "fileTooLarge": "File \"{{name}}\" is too large. Maximum size is 25MB.",
+      "invalidFileType": "File \"{{name}}\" has an unsupported file type.",
+      "downloadFailed": "Failed to download attachment"
     }
   },
   "meters": {
