@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "status": "PLACEHOLDER copy — provisional. Final marketing copy to be supplied by CMO (PAP-312). The key structure is the contract; swap the strings, keep the keys.",
+    "status": "CMO-FINAL marketing copy (PAP-312) — reviewed and signed off by CMO for cs/sk message-market fit and honest framing. Two values remain board decisions, NOT copy edits: (1) brand name, injected from i18n/config.ts BRAND_NAME (placeholder 'Fakto'); (2) pricing.plans[].price amounts + the free/Standard/Team tier split — illustrative pending board pricing decision (PAP-303 open decision). Key structure is the contract; swap strings, keep keys.",
     "brandNote": "Brand name is injected from i18n/config.ts BRAND_NAME (placeholder 'Fakto') — do not hard-code it here."
   },
   "nav": {
@@ -13,7 +13,7 @@
   },
   "hero": {
     "badge": "Fakturace a účetnictví pro živnostníky a malé firmy",
-    "title": "Fakturujte za pár vteřin. Mějte přehled o penězích.",
+    "title": "Vystavte fakturu za pár minut. Mějte přehled o penězích.",
     "subtitle": "Vystavujte faktury, evidujte kontakty a párujte platby z banky — vše na jednom místě, v češtině a slovenštině. Bez papírování, bez stresu.",
     "ctaPrimary": "Začít zdarma",
     "ctaSecondary": "Prohlédnout funkce",
