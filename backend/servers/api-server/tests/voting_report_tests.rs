@@ -3,23 +3,25 @@
 //! These exercise the full PDF-report flow (register → seed building/vote →
 //! `GET /report.pdf`), so every test needs the complete schema.
 //!
-//! As originally written (in #1625) inside `voting_tests.rs`, these used
-//! `#[sqlx::test(migrator = "db::MIGRATOR")]`, but on `dev` they failed
-//! deterministically: register 500'd with `relation "users" does not exist`,
-//! i.e. the macro-supplied migrator never applied the schema for this binary
-//! (the failing binary returned in ~3s, far too fast for the 185-file
-//! migrator to have run). The identical attribute applies the schema in 600+
-//! other usages, so the trigger is binary-specific and could not be pinned
-//! without a local Rust run (none available — mercury offload).
+//! As originally written (in #1625) inside `voting_tests.rs`, these failed
+//! deterministically on `dev`: register 500'd with `relation "users" does not
+//! exist`. Root cause (pinned in #1665): the report tests were authored as a
+//! **bare `#[sqlx::test]`** (no `migrator = ...`), so sqlx 0.9 created an empty
+//! per-test database and attached no migrator — the schema was never applied.
+//! (`#[sqlx::test]`'s inferred-path discovery looks for a `migrations/` dir in
+//! *this* crate, which doesn't exist.) The earlier "mysterious binary-specific
+//! macro no-op" theory was wrong: the macro expands each test fn independently,
+//! so a `migrator = "db::MIGRATOR"` test is never disabled by a schema-less
+//! sibling. See the test-author guide on `db::MIGRATOR` for the full mechanism.
 //!
-//! Rather than depend on the macro doing the right thing here, we run the
-//! migrations **explicitly** on the per-test pool via `db::run_migrations`
-//! (the exact production path; idempotent + advisory-locked). This guarantees
-//! the schema regardless of the macro behaviour, and turns any migration
-//! failure into a loud, attributable panic instead of a downstream
-//! `users does not exist`. Kept in a dedicated binary to isolate the heavy
-//! schema-full E2E flow from `voting_tests.rs`'s schema-less auth tests.
-//! (BIT-158)
+//! We keep the bare `#[sqlx::test]` and run the migrations **explicitly** on
+//! the per-test pool via `db::run_migrations` (the exact production path;
+//! idempotent + advisory-locked). This is one of the two canonical schema-full
+//! idioms (the other being `#[sqlx::test(migrator = "db::MIGRATOR")]`); both
+//! apply the same migration set. The explicit form turns any migration failure
+//! into a loud, attributable panic instead of a downstream `users does not
+//! exist`. Kept in a dedicated binary to isolate the heavy schema-full E2E flow
+//! from `voting_tests.rs`'s schema-less auth tests. (BIT-158, #1665)
 
 #[allow(dead_code)]
 mod common;
