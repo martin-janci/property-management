@@ -489,7 +489,10 @@ impl AccountingRepository {
                 status = CASE
                     WHEN paid_amount + $1 >= total_amount THEN 'paid'
                     WHEN paid_amount + $1 > 0 THEN 'partially_paid'
-                    ELSE status
+                    -- PAP-325: a negative delta (unapplying a confirmed match)
+                    -- can drive paid_amount back to 0; revert to 'issued' rather
+                    -- than leaving a stale 'paid'/'partially_paid' status.
+                    ELSE 'issued'
                 END,
                 updated_at = NOW()
             WHERE id = $2
