@@ -100,8 +100,8 @@ async fn start_group_thread_creates_three_party_thread(pool: PgPool) {
 
     let token = mint_token(alice, "grp3-alice@msg.test");
     let body = json!({
-        "recipient_ids": [bob, carol],
-        "initial_message": "Hello group",
+        "recipientIds": [bob, carol],
+        "initialMessage": "Hello group",
     });
     let resp = app
         .execute(
@@ -115,9 +115,9 @@ async fn start_group_thread_creates_three_party_thread(pool: PgPool) {
 
     resp.assert_status(StatusCode::OK);
     let v = resp.json_value();
-    let participants = v["thread"]["participant_ids"]
+    let participants = v["thread"]["participantIds"]
         .as_array()
-        .expect("participant_ids array");
+        .expect("participantIds array");
     assert_eq!(
         participants.len(),
         3,
@@ -145,7 +145,7 @@ async fn start_thread_back_compat_single_recipient(pool: PgPool) {
     seed_membership(&pool, org, bob, "resident").await;
 
     let token = mint_token(alice, "compat-alice@msg.test");
-    let body = json!({ "recipient_id": bob });
+    let body = json!({ "recipientId": bob });
     let resp = app
         .execute(
             app.post("/api/v1/messages/threads")
@@ -158,9 +158,9 @@ async fn start_thread_back_compat_single_recipient(pool: PgPool) {
 
     resp.assert_status(StatusCode::OK);
     let v = resp.json_value();
-    let participants = v["thread"]["participant_ids"]
+    let participants = v["thread"]["participantIds"]
         .as_array()
-        .expect("participant_ids array");
+        .expect("participantIds array");
     assert_eq!(
         participants.len(),
         2,
@@ -187,7 +187,7 @@ async fn start_group_thread_with_cross_org_recipient_is_rejected(pool: PgPool) {
 
     let token = mint_token(alice, "xorg-alice@msg.test");
     // Alice (org A) tries to pull a foreign-tenant user (Mallory) into a thread.
-    let body = json!({ "recipient_ids": [bob, mallory] });
+    let body = json!({ "recipientIds": [bob, mallory] });
     let resp = app
         .execute(
             app.post("/api/v1/messages/threads")
@@ -230,7 +230,7 @@ async fn start_group_thread_with_blocked_recipient_is_rejected(pool: PgPool) {
     seed_block(&pool, org, carol, alice).await;
 
     let token = mint_token(alice, "blk-alice@msg.test");
-    let body = json!({ "recipient_ids": [bob, carol] });
+    let body = json!({ "recipientIds": [bob, carol] });
     let resp = app
         .execute(
             app.post("/api/v1/messages/threads")

@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 /// A conversation thread between two users
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageThread {
     pub id: Uuid,
     pub organization_id: Uuid,
@@ -25,6 +26,7 @@ pub struct MessageThread {
 
 /// Thread with preview info for list display
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ThreadWithPreview {
     pub id: Uuid,
     pub organization_id: Uuid,
@@ -90,6 +92,7 @@ impl ThreadWithPreviewRow {
 
 /// Basic participant info for display
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ParticipantInfo {
     pub id: Uuid,
     pub first_name: String,
@@ -99,6 +102,7 @@ pub struct ParticipantInfo {
 
 /// Message preview for thread list
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessagePreview {
     pub id: Uuid,
     /// Truncated content (first 100 chars)
@@ -110,6 +114,7 @@ pub struct MessagePreview {
 
 /// Request to create a new thread
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateThread {
     pub organization_id: Uuid,
     pub participant_ids: Vec<Uuid>,
@@ -121,6 +126,7 @@ pub struct CreateThread {
 
 /// An individual message within a thread
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct Message {
     pub id: Uuid,
     pub thread_id: Uuid,
@@ -135,6 +141,7 @@ pub struct Message {
 
 /// Message with sender info for display
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageWithSender {
     pub id: Uuid,
     pub thread_id: Uuid,
@@ -186,6 +193,7 @@ impl From<MessageWithSenderRow> for MessageWithSender {
 
 /// Request to create a new message
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateMessage {
     pub thread_id: Uuid,
     pub sender_id: Uuid,
@@ -202,6 +210,7 @@ pub struct CreateMessage {
 /// object key; presigned upload/download URLs are minted on demand by the
 /// route layer and are never persisted.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageAttachment {
     pub id: Uuid,
     pub message_id: Uuid,
@@ -214,6 +223,7 @@ pub struct MessageAttachment {
 
 /// Request to link an uploaded S3 object to a message.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateMessageAttachment {
     pub message_id: Uuid,
     pub file_key: String,
@@ -228,6 +238,7 @@ pub struct CreateMessageAttachment {
 
 /// A user block record
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct UserBlock {
     pub id: Uuid,
     pub blocker_id: Uuid,
@@ -239,6 +250,7 @@ pub struct UserBlock {
 
 /// Block with blocked user info for display
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockWithUserInfo {
     pub id: Uuid,
     pub blocked_user: ParticipantInfo,
@@ -275,6 +287,7 @@ impl From<BlockWithUserInfoRow> for BlockWithUserInfo {
 
 /// Request to create a block
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateBlock {
     pub blocker_id: Uuid,
     pub blocked_id: Uuid,

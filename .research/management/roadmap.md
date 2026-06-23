@@ -1,45 +1,59 @@
-# PPT Project Roadmap (Deep Scan)
+# PPT Roadmap
 
-_Generated: 2026-05-29 (PM rotation: pm-scrum-master + pm-integration) · supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
-
-_Upkeep 2026-05-29: 11 PRs merged this window (#717–#730) + late-merges below the prior #709 cursor (#597/#657/#659/#685/#695/#706). App-code slice small: #718 iOS gesture/sheet/SSO-CSRF-tests, #719 gap-84-2 e-signature signerParties (resolves all 6 PR#513 follow-ups), #720 gap-10b-3 admin-health MFA test coverage, #724 gap-10a-4 OAuth scope picker. 84-2 e-signature moved not-started → partial. Rotating epic re-checked: **epic-81** (coverage_cursor idx 6 → 7/epic-82) — #643 closed report-schedule RBAC #614 + tenant-scope #624; remaining 81 gap is the missing cron_expression column (#616) + exec-history download/retry e2e. New security finding from the api-core Rust review: cross-tenant IDOR in the Epic-64 LLM-document handlers (`security-llm-doc-idor`, promoted). Coverage `scan_kind=upkeep` — no fresh screens cross-check this run._
+_Generated 2026-06-23T10:02:02Z · scan_kind=deep · supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
 
 ## State of the project
 
-- **Story coverage: 27 done / 22 partial / 0 not-started (49 total).** 2 of 13 epics fully done (epic-8a, epic-9); epic-10b complete in coverage (7/7). 84-2 e-signature email advanced not-started → partial (#719).
-- **Candidates: 22 partial** — mostly mobile + reports backend. **10 of 22 candidates are mobile** — mobile remains the most-behind platform.
-- **Biggest gaps:**
-  1. Mobile slices for mvp document/notification stories (7a-2 folder mobile, 7a-4 mobile preview, 8a-3 FCM/APNs push) — backend + web shipped, mobile lags.
-  2. Epic 81 reports: cron_expression column missing (#616) blocks 81-1; exec-history download/retry e2e for 81-2. (RBAC/tenant-scope #614/#624 now closed by #643.)
-  3. SwiftUI Reality Portal (epic-82, all phase4) — 5 stories `partial`, no screen-maps; drafts #639/#641/#705 in flight.
-- **Screen coverage:** coverage `scan_kind=upkeep` (no fresh screens cross-check this run); epic-82 remains the only orphan-epic (no reality-mobile `docs/screens/` maps). 0 new orphan epics · 0 new orphan screens this upkeep.
+- **Stories:** 49 scanned across 13 epics — **37 done · 12 partial · 0 not-started**.
+- **Partial work by platform:** backend 9 · ppt-web 9 · mobile 4 · frontend 2
+- **Screen coverage:** 14 stories without screen-map · 2 orphan epics · 29 orphan screens · 4 missing UC links.
+
+**Top 3 gaps:**
+1. **Promotion lag, not missing code** — ~8 stories (6-1…6-5, 79-1, 10b-5, 10b-7) are code-complete (backend+web, often mobile) with merged PRs but stuck at sprint-status `ready-for-dev`/`review`. They inflate the `partial` count; most need a status reconciliation + final sign-off, not new implementation.
+2. **Genuinely unfinished slices** — 84-5 pgvector RAG (migration only, no retrieval/query service); 80-3 mediation party-submission endpoints unwired; 80-2 dispute redesign 5-step wizard + i18n keys; 6-3/6-4 missing mobile comments/pinned UI; 79-1/79-2 e2e verification (79-2 is security-sensitive: SSO/JWT/cookie).
+3. **Systemic screen-map drift** — 0 of ~120 screen-maps populate the frontmatter `epics:` field, so epic→screen linkage is impossible; this manufactures most of the 29 "orphan" screens. Backfilling `epics:` is the single highest-leverage fix.
 
 ## Ranked plan
 
 ### mvp
-
-- [high] Land `security-llm-doc-idor` — owner: pm-security/pm-backend — why: state-mutating cross-tenant IDOR (publish/list/get LLM-document handlers in ai.rs); promoted plan this run.
-- [high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647) — owner: pm-security — why: unblocks Epic 81 authz promotion.
-- [high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test) — owner: pm-security — why: closes the maintenance IDOR vector.
-- [high] Implement/confirm POST `/api/v1/documents/upload` + 81 backend pause/resume/executions-download routes — owner: pm-backend — why: 7a-1/81-1/81-2 not promotable until backend lands.
-- [medium] Land 6-2/6-3/6-4 announcement web UI out of draft (#474→#475→#479 order) — owner: pm-frontend — why: backend + pipeline live; only web UI gates closure.
-- [medium] Finish 7a-2 folder mobile slice + 7a-4 mobile preview — owner: pm-frontend — why: web+backend done & tested (#636); mobile is the only open gap.
-- [high] Implement 8a-3 mobile OS push (FCM/APNs) — owner: pm-backend — why: WS leg confirmed (#597); mobile-push is the only remaining leg.
-- [medium] Sync sprint-status.yaml to coverage reality (10b done, 8a-3 WS done) — owner: pm-scrum-master — why: stale tracked status risks duplicated work / mis-reporting.
-
-### phase2
-
-- [high] Add report_schedules.cron_expression column (SQLx migration) + rewrite update_schedule to the documented UPDATE — owner: pm-backend — why: cron edits currently round-trip through the overloaded `time` field (backlog bug-report-schedule-update-no-sql / #616); gates 81-1.
-- [medium] Verify 81-2 execution-history download/retry end-to-end — owner: pm-frontend — why: `report_executions` table + API landed (#611); confirm presigned download + retry.
-- [high] Audit + decide sqlx 0.8→0.9 (Dependabot PR #666) before merge — owner: pm-backend — why: workspace-wide query!/migrate breakage risk.
-
-### phase4
-
-- [low] SwiftUI Reality Portal epic-82 (home/search, listing-detail, inquiries) — owner: pm-frontend — why: phase4 partials; drafts #639/#641/#705 in flight; no screen-maps.
-- [low] Airbnb/Booking.com channel sync backends (83-1/83-2) — owner: pm-backend — why: models only, no OAuth/OTA transport; add Airbnb webhook event_id dedup (backlog bug-webhook-airbnb-dup-sync-jobs).
+- [high] Reconcile sprint-status to done — 79-2-authentication-flow Authentication Flow Implementation — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done; infra-dep:auth
+- [high] coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining) (79-2-authentication-flow Authentication Flow Implementation) — owner: pm-frontend — why: security/privacy sign-off
+- [high] security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off (79-2-authentication-flow Authentication Flow Implementation) — owner: pm-frontend — why: security/privacy sign-off
+- [high] Reconcile sprint-status to done — 10b-5-support-data-access Support Data Access — owner: pm-security — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [high] support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security) (10b-5-support-data-access Support Data Access) — owner: pm-security — why: security/privacy sign-off
+- [high] Reconcile sprint-status to done — 6-1-announcement-creation-targeting Announcement Creation & Targeting — owner: pm-backend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [high] announcements.md screen buildStatus=in-progress, not shipped (6-1-announcement-creation-targeting Announcement Creation & Targeting) — owner: pm-backend — why: unfinished implementation · mobile most-behind
+- [high] Reconcile sprint-status to done — 6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [high] announcements.md screen buildStatus=in-progress (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment) — owner: pm-frontend — why: unfinished implementation · mobile most-behind
+- [high] Reconcile sprint-status to done — 6-5-direct-messaging Direct Messaging — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [high] Reconcile sprint-status to done — 79-1-api-client-integration API Client Integration for Core Features — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [high] coverage gap noted full feature-integration / e2e verification incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features) — owner: pm-frontend — why: unfinished implementation
+- [high] Reconcile sprint-status to done — 10b-7-contextual-help-documentation Contextual Help & Documentation — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [medium] Reconcile sprint-status to done — 6-3-announcement-comments-discussion Announcement Comments & Discussion — owner: pm-backend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [medium] announcements.md screen buildStatus still in-progress (not shipped) (6-3-announcement-comments-discussion Announcement Comments & Discussion) — owner: pm-backend — why: unfinished implementation
+- [medium] No mobile comments UI observed (6-3-announcement-comments-discussion Announcement Comments & Discussion) — owner: pm-backend — why: mobile slice
+- [medium] Reconcile sprint-status to done — 6-4-pinned-announcements Pinned Announcements — owner: pm-backend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [medium] No mobile pinned-band UI observed (6-4-pinned-announcements Pinned Announcements) — owner: pm-backend — why: mobile slice
+- [medium] announcements.md screen buildStatus in-progress (6-4-pinned-announcements Pinned Announcements) — owner: pm-backend — why: unfinished implementation
+- [medium] Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live (80-2-dispute-filing-flow Dispute Filing Flow) — owner: pm-frontend — why: unfinished implementation
+- [medium] Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue)) (80-2-dispute-filing-flow Dispute Filing Flow) — owner: pm-frontend — why: unfinished implementation
+- [medium] Reconcile sprint-status to done — 80-3-mediation-resolution Mediation and Resolution — owner: pm-frontend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [medium] Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map) (80-3-mediation-resolution Mediation and Resolution) — owner: pm-frontend — why: unfinished implementation
 
 #### Screen-map drift
+- [medium] Backfill frontmatter `epics:` across ~120 screen-maps (0/120 populated) — restores epic→screen linkage — owner: pm-frontend — why: systemic: epic→screen first-match path currently impossible; root cause of orphan noise
+- [medium] Add screen-map for orphan epic epic-85 OR mark no-UI — owner: pm-frontend — why: env/build-config epic — likely legitimately no UI surface; document the decision
+- [medium] Add screen-map for orphan epic epic-8a (NotificationSettingsPage) — owner: pm-frontend — why: 8a-1 builds a ppt-web NotificationSettingsPage with no screen-map
+- [low] Reconcile 29 unmapped screen-maps via epics-backfill (NOT removals) — owner: pm-frontend — why: false-positive class: out-of-scan-scope (13/25 epics) + empty `epics:`; resolved by backfill task above
+- [medium] Link UC UC-10 to a screen-map — owner: pm-frontend — why: UC referenced in story files but in no screen-map's use-cases
+- [medium] Link UC UC-29 to a screen-map — owner: pm-frontend — why: UC referenced in story files but in no screen-map's use-cases
+- [medium] Link UC UC-33 to a screen-map — owner: pm-frontend — why: UC referenced in story files but in no screen-map's use-cases
+- [medium] Link UC UC-40 to a screen-map — owner: pm-frontend — why: UC referenced in story files but in no screen-map's use-cases
 
-- [low] Add screen-map(s) for orphan epic epic-82 (reality-mobile) — owner: pm-frontend — why: SwiftUI screens have no `docs/screens/` entries.
+### phase3
+- [medium] Reconcile sprint-status to done — 84-5-pgvector-rag pgvector RAG Migration — owner: pm-backend — why: code/PRs landed but sprint-status=ready-for-dev/review; reconcile to done
+- [medium] RAG retrieval/query service (embedding generation + similarity search) not implemented — migration only (84-5-pgvector-rag pgvector RAG Migration) — owner: pm-backend — why: unfinished implementation
+- [medium] Vector path is conditional/optional (JSONB fallback) rather than a hard pgvector dependency (84-5-pgvector-rag pgvector RAG Migration) — owner: pm-backend — why: unfinished implementation
 
-Buffer: 135/36 open · 0 candidates ranked but unqueued (action-list already well above buffer; merge-only this run)
+---
+Buffer: 54/36 open · 34 candidates ranked but unqueued (buffer over-full → slots_to_fill=0, no refill)

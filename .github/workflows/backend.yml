@@ -157,6 +157,16 @@ jobs:
         working-directory: backend
         run: cargo fmt --all -- --check
 
+      # Fails the build if two SQLx migrations share a numeric version prefix
+      # within the same migrations directory. A collision (e.g. #1688 + #1750
+      # both grabbing version 192) makes `sqlx migrate run` die on
+      # `_sqlx_migrations_pkey` and breaks `#[sqlx::test]` setups. Pure shell,
+      # no toolchain needed, so it runs early.
+      - name: Migration Version Collision Check
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: ./scripts/check-migration-versions.sh
+
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
       # entire life of the repo (every `rg … || true` swallowed exit 127 and
