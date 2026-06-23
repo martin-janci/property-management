@@ -12,7 +12,7 @@ functionality only — **no dependency on, or integration with, any specific pro
 | [`architecture.md`](architecture.md) | Backend topology decision — separate **`accounting-server` (`:8082`)** sharing `common`/`api-core`/`db` core with `api-server`, like `reality-server`. |
 | [`epics.md`](epics.md) | 17 epics (`EPIC-ACC-01..17`) with business value, actors, stories→UC, dependencies, risks + epic↔UC map. |
 | [`use-cases.md`](use-cases.md) | ~140 use cases (`UC-ACC-XX.Y`, Actor + Description) across 16 categories, with actor hierarchy. |
-| [`stories/EPIC-ACC-05-sales-invoicing.md`](stories/EPIC-ACC-05-sales-invoicing.md) | Worked exemplar: 13 build-ready stories with Given/When/Then covering the flagship epic. |
+| [`stories/`](stories/) | Build-ready Given/When/Then stories for the **full MVP**: ACC-01, -02, -03, -04, -05 (13), -16, -17. |
 
 ## Traceability
 
@@ -41,8 +41,9 @@ advanced manufacturing/logistics, and any tie to the analyzed source product.
 
 ## Status / next steps
 
-- [x] Use-case catalog · [x] Epics catalog · [x] PRD · [x] Architecture (separate `accounting-server`) · [x] Stories for ACC-05 (exemplar)
+- [x] Use-case catalog · [x] Epics catalog · [x] PRD · [x] Architecture (separate `accounting-server`)
+- [x] **Stories for the full MVP** — ACC-01, -02, -03, -04, -05, -16, -17 (Given/When/Then)
 - [x] mef-BIT Paperclip hand-off brief → [`mef-agent-brief.md`](mef-agent-brief.md)
 - [ ] **Create the epic in mef-BIT Paperclip** (drive a `mefistos` session — needs claude-fleet + mef reachable)
-- [ ] Stories for remaining MVP epics (ACC-01, -02, -03, -04, -16, -17)
+- [ ] Stories for P2/P3 epics (ACC-06..15) — same template
 - [ ] Promote into `docs/` (or the `@ppt/accounting-web` repo) once direction is confirmed
