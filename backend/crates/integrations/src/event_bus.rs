@@ -189,11 +189,51 @@ impl EventBus {
     {
         let mut rx = self.pubsub.subscribe(channel).await?;
         let backoff = self.backoff;
+        let channel_name = channel.to_string();
         let (dlq_tx, dlq_rx) = broadcast::channel::<DeadLetter>(100);
 
         tokio::spawn(async move {
-            while let Ok(message) = rx.recv().await {
-                dispatch_with_retry(&handler, &message, backoff, &dlq_tx).await;
+            loop {
+                match rx.recv().await {
+                    Ok(message) => {
+                        dispatch_with_retry(&handler, &message, backoff, &dlq_tx).await;
+                    }
+                    // SECURITY/RELIABILITY (#1792): a `while let Ok(..)` exits on
+                    // BOTH `Lagged` and `Closed`, so the first broadcast-buffer
+                    // overflow silently and permanently terminated the
+                    // subscription — defeating the at-least-once guarantee with
+                    // no log, no dead-letter, no recovery. Handle `Lagged`
+                    // explicitly: surface it loudly + as a synthetic dead-letter
+                    // for monitoring, then KEEP the subscription alive.
+                    Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                        tracing::error!(
+                            channel = %channel_name,
+                            skipped,
+                            "Event subscription lagged; broadcast buffer overflowed and \
+                             dropped messages (at-least-once violated for the gap)"
+                        );
+                        let _ = dlq_tx.send(DeadLetter {
+                            message: PubSubMessage::new(
+                                &channel_name,
+                                "event_bus.lagged",
+                                serde_json::json!({ "skipped_messages": skipped }),
+                            ),
+                            attempts: 0,
+                            last_error: format!(
+                                "subscription lagged: {skipped} message(s) dropped by \
+                                 broadcast buffer overflow"
+                            ),
+                        });
+                        continue;
+                    }
+                    Err(broadcast::error::RecvError::Closed) => {
+                        tracing::debug!(
+                            channel = %channel_name,
+                            "Event subscription channel closed; subscriber task exiting"
+                        );
+                        break;
+                    }
+                }
             }
         });
 
