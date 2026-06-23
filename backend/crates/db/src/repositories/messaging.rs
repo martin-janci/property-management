@@ -65,16 +65,19 @@ impl MessagingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        // Ensure exactly 2 participants
-        if data.participant_ids.len() != 2 {
+        // Require at least 2 participants. N-party group conversations
+        // (UC-05.8 / BIT-183) allow more than 2.
+        if data.participant_ids.len() < 2 {
             return Err(SqlxError::Protocol(
-                "Thread must have exactly 2 participants".to_string(),
+                "Thread must have at least 2 participants".to_string(),
             ));
         }
 
-        // Sort participant IDs for consistent lookup
+        // Sort + de-dupe participant IDs so the canonical thread is uniquely
+        // keyed by (organization_id, participant_ids) for any N.
         let mut sorted_ids = data.participant_ids.clone();
         sorted_ids.sort();
+        sorted_ids.dedup();
 
         // Note: For RLS version, we combine check and insert using ON CONFLICT
         // to avoid needing multiple executor calls
