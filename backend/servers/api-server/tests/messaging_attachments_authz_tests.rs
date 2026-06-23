@@ -100,10 +100,10 @@ async fn link_then_list_attachment(pool: PgPool) {
             "/api/v1/messages/threads/{thread}/messages/{msg}/attachments"
         ))
         .json(json!({
-            "file_key": format!("messages/{thread}/obj"),
-            "file_name": "lease.pdf",
-            "file_type": "application/pdf",
-            "file_size": 4096
+            "fileKey": format!("messages/{thread}/obj"),
+            "fileName": "lease.pdf",
+            "fileType": "application/pdf",
+            "fileSize": 4096
         }))
         .build();
     app.execute(link).await.assert_status(StatusCode::CREATED);
@@ -119,7 +119,7 @@ async fn link_then_list_attachment(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
     assert_eq!(body["count"], json!(1), "body: {body}");
-    assert_eq!(body["attachments"][0]["file_name"], json!("lease.pdf"));
+    assert_eq!(body["attachments"][0]["fileName"], json!("lease.pdf"));
 }
 
 /// Only the message sender may attach a file to it — another participant cannot.
@@ -146,10 +146,10 @@ async fn non_sender_cannot_link_attachment(pool: PgPool) {
             "/api/v1/messages/threads/{thread}/messages/{msg}/attachments"
         ))
         .json(json!({
-            "file_key": "messages/x/y",
-            "file_name": "evil.pdf",
-            "file_type": "application/pdf",
-            "file_size": 10
+            "fileKey": "messages/x/y",
+            "fileName": "evil.pdf",
+            "fileType": "application/pdf",
+            "fileSize": 10
         }))
         .build();
     app.execute(link).await.assert_status(StatusCode::FORBIDDEN);

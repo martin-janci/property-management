@@ -131,6 +131,7 @@ pub struct SendMessageRequest {
 
 /// Request for a presigned upload URL for a message attachment (UC-05.9).
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AttachmentUploadRequest {
     /// Original filename (used for Content-Disposition on download).
     pub file_name: String,
@@ -143,6 +144,7 @@ pub struct AttachmentUploadRequest {
 /// Response carrying a presigned PUT URL plus the S3 key the client must echo
 /// back when linking the uploaded object to a message.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AttachmentUploadUrlResponse {
     pub url: String,
     pub expires_at: DateTime<Utc>,
@@ -151,6 +153,7 @@ pub struct AttachmentUploadUrlResponse {
 
 /// Request to link an already-uploaded S3 object to a message.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LinkAttachmentRequest {
     /// The `file_key` returned by the upload-url endpoint.
     pub file_key: String,
@@ -161,6 +164,7 @@ pub struct LinkAttachmentRequest {
 
 /// Response listing a message's attachments.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageAttachmentsResponse {
     pub attachments: Vec<MessageAttachment>,
     pub count: usize,
@@ -168,6 +172,7 @@ pub struct MessageAttachmentsResponse {
 
 /// Response carrying a presigned download URL for an attachment.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AttachmentDownloadResponse {
     pub url: String,
     pub expires_at: DateTime<Utc>,
