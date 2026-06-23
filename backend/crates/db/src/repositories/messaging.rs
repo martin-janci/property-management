@@ -555,11 +555,19 @@ impl MessagingRepository {
             SELECT COUNT(*)
             FROM messages m
             JOIN message_threads t ON t.id = m.thread_id
+            -- Per-participant view state (BIT-182, #1771): exclude threads this
+            -- user soft-deleted or archived, matching the default inbox in
+            -- list_threads_rls. A missing row means default (neither), so the
+            -- LEFT JOIN + IS NULL checks keep those threads counted.
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
               AND m.sender_id != $1
               AND m.read_at IS NULL
               AND m.deleted_at IS NULL
+              AND tps.deleted_at IS NULL
+              AND tps.archived_at IS NULL
             "#,
         )
         .bind(user_id)

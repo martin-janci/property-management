@@ -933,41 +933,51 @@ async fn send_message(
         ));
     }
 
-    // Check if blocked
-    let other_user_id = thread
+    // Recipients = every participant except the sender. For a 2-party direct
+    // thread this is a single user; for an N-party group thread (UC-05.8) it is
+    // all the others. The previous code only ever looked at the FIRST other
+    // participant, so in a group thread the rest were never block-checked, never
+    // un-hidden, and never notified in realtime (#1773).
+    let recipients: Vec<Uuid> = thread
         .participant_ids
         .iter()
-        .find(|&&uid| uid != user_id)
         .copied()
-        .ok_or_else(|| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INVALID_THREAD",
-                    "Thread has invalid participants",
-                )),
-            )
-        })?;
-
-    let is_blocked = repo
-        .is_blocked_rls(&mut **rls.conn(), user_id, other_user_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if is_blocked {
+        .filter(|&uid| uid != user_id)
+        .collect();
+    if recipients.is_empty() {
         rls.release().await;
         return Err((
-            StatusCode::FORBIDDEN,
+            StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new(
-                "USER_BLOCKED",
-                "Cannot message this user",
+                "INVALID_THREAD",
+                "Thread has invalid participants",
             )),
         ));
+    }
+
+    // Block gate: reject the send if the sender is blocked with ANY recipient,
+    // mirroring start_thread. For a 2-party thread this is exactly the previous
+    // single-user check; for a group it now also covers the other members.
+    for &rid in &recipients {
+        let is_blocked = repo
+            .is_blocked_rls(&mut **rls.conn(), user_id, rid)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+        if is_blocked {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "USER_BLOCKED",
+                    "Cannot message this conversation",
+                )),
+            ));
+        }
     }
 
     // Send message
@@ -989,23 +999,22 @@ async fn send_message(
             )
         })?;
 
-    // A new inbound message un-hides the thread for the recipient if they had
+    // A new inbound message un-hides the thread for every recipient who had
     // previously soft-deleted it (BIT-182). Best-effort: a failure here must not
     // fail an otherwise-successful send.
-    let _ = repo
-        .unhide_thread_for_user(&mut **rls.conn(), id, other_user_id)
-        .await;
+    for &rid in &recipients {
+        let _ = repo
+            .unhide_thread_for_user(&mut **rls.conn(), id, rid)
+            .await;
+    }
 
     rls.release().await;
 
-    // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
-    dispatch_new_message_event(
-        state.pubsub_service.as_ref(),
-        other_user_id,
-        &message,
-        user_id,
-    )
-    .await;
+    // Realtime fanout: notify EVERY recipient's WebSocket channel
+    // (Epic 2B / 8A.3), not just the first other participant.
+    for &rid in &recipients {
+        dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &message, user_id).await;
+    }
 
     Ok(Json(SendMessageResponse {
         message: "Message sent successfully".to_string(),
