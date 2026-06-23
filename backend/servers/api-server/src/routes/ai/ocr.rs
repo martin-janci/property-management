@@ -11,6 +11,7 @@
 //! instead of silently receiving a 404.
 
 use crate::state::AppState;
+use api_core::extractors::TenantExtractor;
 use axum::{http::StatusCode, routing::post, Json, Router};
 use axum_extra::extract::Multipart;
 use common::errors::ErrorResponse;
@@ -87,6 +88,10 @@ pub fn ocr_router() -> Router<AppState> {
     tag = "AI OCR"
 )]
 async fn process_meter_reading(
+    // SECURITY: this endpoint accepts an uploaded image and must not be open to
+    // anonymous callers (unbounded upload / DoS surface). `TenantExtractor`
+    // validates the JWT + tenant context before the body is read.
+    TenantExtractor(_tenant): TenantExtractor,
     mut multipart: Multipart,
 ) -> Result<Json<OcrProcessResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Consume the multipart fields to avoid connection issues.
@@ -117,7 +122,12 @@ async fn process_meter_reading(
     ),
     tag = "AI OCR"
 )]
-async fn submit_correction(Json(_body): Json<OcrCorrectionRequest>) -> StatusCode {
+async fn submit_correction(
+    // SECURITY: require an authenticated tenant before accepting feedback so the
+    // endpoint cannot be driven by anonymous callers.
+    TenantExtractor(_tenant): TenantExtractor,
+    Json(_body): Json<OcrCorrectionRequest>,
+) -> StatusCode {
     // Accepted and discarded until a training-data sink is wired.
     tracing::debug!("Received OCR correction feedback (sink not yet connected)");
     StatusCode::OK

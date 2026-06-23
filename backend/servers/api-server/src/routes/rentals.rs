@@ -436,6 +436,10 @@ pub async fn list_bookings(
     TenantExtractor(tenant): TenantExtractor,
     Query(query): Query<BookingListQuery>,
 ) -> Result<Json<BookingsResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): rental booking/guest PII is manager-only. A plain org
+    // member (e.g. a resident) must not enumerate it — gate before any read,
+    // matching the manager predicate already enforced on the ID-document seam.
+    require_manager_in_org_msg(&state, tenant.tenant_id, tenant.user_id).await?;
     let (bookings, total) = state
         .rental_repo
         .list_bookings(tenant.tenant_id, query.clone())
@@ -522,6 +526,8 @@ pub async fn get_booking(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): manager-only PII read (see list_bookings).
+    require_manager_in_org_msg(&state, tenant.tenant_id, tenant.user_id).await?;
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's booking PII by guessing a UUID.
     let booking = state
@@ -641,6 +647,8 @@ pub async fn get_booking_with_guests(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingWithGuests>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): manager-only PII read (see list_bookings).
+    require_manager_in_org_msg(&state, tenant.tenant_id, tenant.user_id).await?;
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's booking + guest PII by guessing a UUID.
     let result = state
@@ -891,6 +899,8 @@ pub async fn get_guest(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): manager-only PII read (see list_bookings).
+    require_manager_in_org_msg(&state, tenant.tenant_id, tenant.user_id).await?;
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's guest PII by guessing a UUID.
     let guest = state
@@ -1036,6 +1046,20 @@ async fn require_manager_in_org(
         ));
     }
     Ok(())
+}
+
+/// `(StatusCode, String)`-error variant of [`require_manager_in_org`] for the
+/// rental booking/guest read handlers that use the plain-string error shape.
+/// Keeps the canonical manager predicate while matching those handlers' `Err`
+/// type so the gate can be applied with `?`.
+async fn require_manager_in_org_msg(
+    state: &AppState,
+    org_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    require_manager_in_org(state, org_id, user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))
 }
 
 /// Map a multipart read error to a structured response, preserving the
