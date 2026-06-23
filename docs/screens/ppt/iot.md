@@ -78,8 +78,13 @@ alongside the dashboard's inline `AlertsPanel`.
 - **Loading**: per-query spinners (dashboard rollup, sensor list, alert list).
 - **Saving**: ack/resolve and sensor CRUD buttons disable while their mutation
   is pending.
-- **Error**: mutation failures surface as toasts. `apiStatus: partial` until the
-  IoT backend is verified end-to-end.
+- **Error**: ack/resolve and sensor CRUD mutation failures surface as error
+  toasts (`iot.acknowledgeFailed` / `iot.resolveFailed` / the CRUD failure keys)
+  from the `routes/groups/iot.tsx` wrappers. The alerts page additionally renders
+  a distinct error panel with a Retry affordance when its source query
+  (`useIotDashboard`) fails (`iot.alerts.loadError` + `common.retry`), so a hard
+  load failure is not misreported as the "All clear" empty state. `apiStatus:
+  partial` until the IoT backend is verified end-to-end.
 
 ## Notes
 
@@ -94,3 +99,7 @@ alongside the dashboard's inline `AlertsPanel`.
 ## Agent Log
 - 2026-06-21 — FrontendEngineer: created the IoT module map with the standalone
   alerts page increment (BIT-149, Epic 14 / FR74).
+- 2026-06-23 — agent: surfaced ack/resolve mutation failures as toasts on the
+  alerts + dashboard wrappers and added a distinct `isError` panel with Retry to
+  `IotAlertsPage` (issue #1669); reconciled the States > Error section. Deferred:
+  the dedicated cross-sensor alerts list endpoint + `recent_alerts` source limit.

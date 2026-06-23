@@ -70,7 +70,9 @@ function orNull(value: string): string | null {
  * REST-polled snapshot so the telemetry chart updates as readings arrive.
  */
 function IotDashboardPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
 
   const { data: dashboard, isLoading: dashboardLoading } = useIotDashboard();
@@ -109,6 +111,30 @@ function IotDashboardPageRoute() {
       ? (resolveAlert.variables?.alertId ?? null)
       : null;
 
+  const handleAcknowledgeAlert = async (alertId: string) => {
+    try {
+      await acknowledgeAlert.mutateAsync(alertId);
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
+  const handleResolveAlert = async (alertId: string) => {
+    try {
+      await resolveAlert.mutateAsync({ alertId });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
   return (
     <IotDashboardPage
       dashboard={dashboard}
@@ -123,8 +149,8 @@ function IotDashboardPageRoute() {
       pendingAlertId={pendingAlertId}
       isLive={isConnected}
       onSelectSensor={setSelectedSensorId}
-      onAcknowledgeAlert={(alertId) => acknowledgeAlert.mutate(alertId)}
-      onResolveAlert={(alertId) => resolveAlert.mutate({ alertId })}
+      onAcknowledgeAlert={handleAcknowledgeAlert}
+      onResolveAlert={handleResolveAlert}
     />
   );
 }
@@ -329,12 +355,19 @@ function EditSensorPageRoute() {
  * come from `useSensors()` so the table can label each alert's sensor.
  */
 function IotAlertsPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [filterSeverity, setFilterSeverity] = useState('');
   const [filterState, setFilterState] = useState<AlertStateFilter>('');
 
-  const { data: dashboard, isLoading: dashboardLoading } = useIotDashboard();
+  const {
+    data: dashboard,
+    isLoading: dashboardLoading,
+    isError: dashboardError,
+    refetch: refetchDashboard,
+  } = useIotDashboard();
   const { data: sensorsData } = useSensors();
 
   const acknowledgeAlert = useAcknowledgeSensorAlert();
@@ -358,18 +391,44 @@ function IotAlertsPageRoute() {
       ? (resolveAlert.variables?.alertId ?? null)
       : null;
 
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      await acknowledgeAlert.mutateAsync(alertId);
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
+  const handleResolve = async (alertId: string) => {
+    try {
+      await resolveAlert.mutateAsync({ alertId });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
   return (
     <IotAlertsPage
       alerts={dashboard?.recent_alerts ?? []}
       sensorNames={sensorNames}
       isLoading={dashboardLoading}
+      isError={dashboardError}
+      onRetry={() => refetchDashboard()}
       pendingAlertId={pendingAlertId}
       filterSeverity={filterSeverity}
       filterState={filterState}
       onFilterSeverityChange={setFilterSeverity}
       onFilterStateChange={setFilterState}
-      onAcknowledge={(alertId) => acknowledgeAlert.mutate(alertId)}
-      onResolve={(alertId) => resolveAlert.mutate({ alertId })}
+      onAcknowledge={handleAcknowledge}
+      onResolve={handleResolve}
       onBackToDashboard={() => navigate('/iot')}
     />
   );

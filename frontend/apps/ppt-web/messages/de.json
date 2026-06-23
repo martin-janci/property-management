@@ -1202,6 +1202,8 @@
     "acknowledge": "Bestätigen",
     "resolve": "Lösen",
     "resolved": "gelöst",
+    "acknowledgeFailed": "Bestätigen der Warnung fehlgeschlagen",
+    "resolveFailed": "Lösen der Warnung fehlgeschlagen",
     "triggered": "Ausgelöst",
     "thresholdBreach": "Schwellenwertüberschreitung",
     "thresholds": "Schwellenwerte",
@@ -1257,6 +1259,7 @@
       "subtitle": "Schwellenwertüberschreitungen in Ihren Gebäuden.",
       "backToDashboard": "Zurück zur Übersicht",
       "empty": "Keine Warnungen entsprechen diesen Filtern. Alles in Ordnung.",
+      "loadError": "Warnungen konnten nicht geladen werden. Bitte erneut versuchen.",
       "filter": {
         "allStates": "Alle Status",
         "allSeverities": "Alle Schweregrade"

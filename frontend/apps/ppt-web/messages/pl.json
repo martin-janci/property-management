@@ -1181,6 +1181,8 @@
     "acknowledge": "Potwierdź",
     "resolve": "Rozwiąż",
     "resolved": "rozwiązano",
+    "acknowledgeFailed": "Nie udało się potwierdzić alertu",
+    "resolveFailed": "Nie udało się rozwiązać alertu",
     "triggered": "Wyzwolono",
     "thresholdBreach": "Przekroczenie progu",
     "thresholds": "Progi",
@@ -1236,6 +1238,7 @@
       "subtitle": "Przekroczenia progów w Twoich budynkach.",
       "backToDashboard": "Powrót do pulpitu",
       "empty": "Żadne alerty nie pasują do tych filtrów. Wszystko w porządku.",
+      "loadError": "Nie udało się załadować alertów. Spróbuj ponownie.",
       "filter": {
         "allStates": "Wszystkie stany",
         "allSeverities": "Wszystkie poziomy ważności"
