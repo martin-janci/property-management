@@ -144,8 +144,10 @@ interface RentalsApi {
     @header("Authorization") token?: string,
     @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
-    @header contentType: "multipart/form-data",
-    @body body: bytes,
+    @multipartBody body: {
+      @doc("The ID-document file part (PNG, JPEG, or PDF)")
+      file: HttpPart<File>;
+    },
   ): {
     @statusCode statusCode: 201;
     @body body: GuestIdDocument;

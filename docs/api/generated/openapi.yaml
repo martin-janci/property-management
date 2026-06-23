@@ -4579,6 +4579,104 @@ paths:
                 - documentNumber
                 - arrivalDate
                 - departureDate
+  /api/v1/rentals/guests/{id}/id-document:
+    post:
+      operationId: RentalsApi_uploadGuestIdDocument
+      description: 'Upload a guest ID document (multipart `file`). Manager-only. (Story 18.2, #1687)'
+      parameters:
+        - name: Authorization
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rentals.GuestIdDocument'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Short-term Rentals
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The ID-document file part (PNG, JPEG, or PDF)
+              required:
+                - file
+            encoding:
+              file:
+                contentType: '*/*'
+  /api/v1/rentals/guests/{id}/id-document/extract:
+    post:
+      operationId: RentalsApi_extractGuestIdDocument
+      description: "Run OCR over the guest's latest ID document. Returns 501 until a provider is configured (Stage B). Manager-only. (Story 18.2, #1687)"
+      parameters:
+        - name: Authorization
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rentals.GuestIdExtraction'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Short-term Rentals
   /api/v1/rentals/guests/{id}/submit-to-authorities:
     post:
       operationId: RentalsApi_submitToAuthorities
@@ -7964,6 +8062,67 @@ components:
         - id_card
         - drivers_license
         - other
+    Rentals.GuestIdDocument:
+      type: object
+      required:
+        - id
+        - guestId
+        - organizationId
+        - fileKey
+        - mime
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        guestId:
+          $ref: '#/components/schemas/Shared.uuid'
+        organizationId:
+          $ref: '#/components/schemas/Shared.uuid'
+        fileKey:
+          type: string
+          description: S3-compatible storage key for the uploaded document bytes
+        mime:
+          type: string
+          description: MIME type captured at upload time
+        uploadedBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: User who uploaded the document
+        extractionJson:
+          allOf:
+            - $ref: '#/components/schemas/Rentals.GuestIdExtraction'
+          description: Best-effort OCR extraction result; null until extracted (Stage B)
+        extractedAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: When the extraction was produced; null until extracted
+        createdAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+      description: 'Stored guest ID-document blob plus optional OCR extraction (Story 18.2, #1687)'
+    Rentals.GuestIdExtraction:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+        nationality:
+          type: string
+        idType:
+          type: string
+        idNumber:
+          type: string
+        idIssuingCountry:
+          type: string
+        idExpiryDate:
+          type: string
+        confidence:
+          type: number
+          format: double
+          description: Provider confidence 0.0..=1.0 when reported
+      description: 'Best-effort OCR extraction from a guest ID document. Manager confirms; never auto-applied (Story 18.2, #1687)'
     Rentals.GuestRegistration:
       type: object
       required:
