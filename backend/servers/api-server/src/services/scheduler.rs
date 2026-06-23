@@ -1075,6 +1075,11 @@ impl Scheduler {
                 })
                 .unwrap_or_else(chrono::Utc::now);
 
+            // Dedup per window (#1777): a resident on multiple unit-linked meters
+            // in the same building window must receive ONE reading reminder, not
+            // one per meter.
+            let mut notified = std::collections::HashSet::new();
+
             for meter in meters_page.meters.iter().filter(|m| m.unit_id.is_some()) {
                 let unit_id = match meter.unit_id {
                     Some(id) => id,
@@ -1094,6 +1099,11 @@ impl Scheduler {
                 };
 
                 for resident in &residents {
+                    // Skip residents already reminded for an earlier meter in
+                    // this window (#1777).
+                    if !notified.insert(resident.user_id) {
+                        continue;
+                    }
                     match self
                         .notification_service
                         .notify_meter_reading_due(
