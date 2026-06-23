@@ -117,6 +117,14 @@ impl MessagingRepository {
     }
 
     /// List threads for a user with preview info with RLS context.
+    ///
+    /// Per-participant state (BIT-182): threads the current user has soft-deleted
+    /// (`thread_participant_state.deleted_at` set) are always excluded. When
+    /// `archived` is `false` only non-archived threads are returned (the default
+    /// inbox); when `true` only the user's archived threads are returned (the
+    /// "Archived" tab). A thread with no `thread_participant_state` row defaults
+    /// to visible + non-archived.
+    #[allow(clippy::too_many_arguments)]
     pub async fn list_threads_rls<'e, E>(
         &self,
         executor: E,
@@ -125,6 +133,7 @@ impl MessagingRepository {
         limit: Option<i64>,
         offset: Option<i64>,
         search: Option<&str>,
+        archived: bool,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -184,9 +193,16 @@ impl MessagingRepository {
             ) u
             LEFT JOIN thread_messages tm ON tm.thread_id = t.id
             LEFT JOIN unread_counts uc ON uc.thread_id = t.id
+            -- Per-participant view state for the current user (BIT-182).
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
               AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
+              -- Never show threads this user soft-deleted for themselves.
+              AND tps.deleted_at IS NULL
+              -- Archived tab vs default inbox.
+              AND $6 = (tps.archived_at IS NOT NULL)
             ORDER BY t.last_message_at DESC NULLS LAST, t.created_at DESC
             LIMIT $4 OFFSET $5
             "#,
@@ -196,6 +212,7 @@ impl MessagingRepository {
         .bind(search)
         .bind(limit)
         .bind(offset)
+        .bind(archived)
         .fetch_all(executor)
         .await?;
 
@@ -208,12 +225,17 @@ impl MessagingRepository {
     }
 
     /// Count threads for a user with RLS context.
+    ///
+    /// Applies the same per-participant filters as [`list_threads_rls`]:
+    /// soft-deleted threads are excluded and `archived` selects the archived
+    /// tab vs the default inbox.
     pub async fn count_threads_rls<'e, E>(
         &self,
         executor: E,
         user_id: Uuid,
         organization_id: Uuid,
         search: Option<&str>,
+        archived: bool,
     ) -> Result<i64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -228,14 +250,19 @@ impl MessagingRepository {
                 WHERE id = ANY(t.participant_ids) AND id != $1
                 LIMIT 1
             ) u
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
               AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
+              AND tps.deleted_at IS NULL
+              AND $4 = (tps.archived_at IS NOT NULL)
             "#,
         )
         .bind(user_id)
         .bind(organization_id)
         .bind(search)
+        .bind(archived)
         .fetch_one(executor)
         .await?;
 
@@ -265,6 +292,125 @@ impl MessagingRepository {
         .await?;
 
         Ok(is_participant)
+    }
+
+    // ------------------------------------------------------------------------
+    // PER-PARTICIPANT THREAD STATE OPERATIONS (RLS) — BIT-182
+    //
+    // Archive + per-user soft-delete live in `thread_participant_state`, keyed
+    // by (thread_id, user_id). All four mutations are scoped to the *current*
+    // user's own row, so one participant changing their view never touches the
+    // other participant's copy of the thread. The caller must already have
+    // verified participation + tenant (mirror `get_thread` in routes/messaging).
+    // ------------------------------------------------------------------------
+
+    /// Soft-hide a thread for a single user (per-user delete).
+    ///
+    /// Upserts the user's `thread_participant_state` row with `deleted_at = NOW()`.
+    /// The shared thread, its messages, and the other participant's view are
+    /// untouched. Re-deleting an already-hidden thread is idempotent.
+    pub async fn hide_thread_for_user<'e, E>(
+        &self,
+        executor: E,
+        thread_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            INSERT INTO thread_participant_state (thread_id, user_id, deleted_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (thread_id, user_id)
+            DO UPDATE SET deleted_at = NOW(), updated_at = NOW()
+            "#,
+        )
+        .bind(thread_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Un-hide a thread for a single user (clear a previous per-user delete).
+    ///
+    /// Called when a new inbound message arrives so a thread the user had
+    /// deleted re-appears in their list. No-op when no row / not deleted.
+    pub async fn unhide_thread_for_user<'e, E>(
+        &self,
+        executor: E,
+        thread_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE thread_participant_state
+            SET deleted_at = NULL, updated_at = NOW()
+            WHERE thread_id = $1 AND user_id = $2 AND deleted_at IS NOT NULL
+            "#,
+        )
+        .bind(thread_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Archive a thread for a single user (moves it to their archived tab).
+    pub async fn archive_thread_for_user<'e, E>(
+        &self,
+        executor: E,
+        thread_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            INSERT INTO thread_participant_state (thread_id, user_id, archived_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (thread_id, user_id)
+            DO UPDATE SET archived_at = NOW(), updated_at = NOW()
+            "#,
+        )
+        .bind(thread_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Un-archive a thread for a single user (back to the default inbox).
+    pub async fn unarchive_thread_for_user<'e, E>(
+        &self,
+        executor: E,
+        thread_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE thread_participant_state
+            SET archived_at = NULL, updated_at = NOW()
+            WHERE thread_id = $1 AND user_id = $2 AND archived_at IS NOT NULL
+            "#,
+        )
+        .bind(thread_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+
+        Ok(())
     }
 
     // ------------------------------------------------------------------------
@@ -703,8 +849,16 @@ impl MessagingRepository {
         limit: Option<i64>,
         offset: Option<i64>,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError> {
-        self.list_threads_rls(&self.pool, user_id, organization_id, limit, offset, None)
-            .await
+        self.list_threads_rls(
+            &self.pool,
+            user_id,
+            organization_id,
+            limit,
+            offset,
+            None,
+            false,
+        )
+        .await
     }
 
     /// Count threads for a user.
@@ -719,7 +873,7 @@ impl MessagingRepository {
         user_id: Uuid,
         organization_id: Uuid,
     ) -> Result<i64, SqlxError> {
-        self.count_threads_rls(&self.pool, user_id, organization_id, None)
+        self.count_threads_rls(&self.pool, user_id, organization_id, None, false)
             .await
     }
 

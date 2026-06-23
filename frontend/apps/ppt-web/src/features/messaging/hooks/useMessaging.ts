@@ -243,6 +243,32 @@ export function useDeleteMessage() {
   });
 }
 
+/**
+ * Mutation to delete a thread for the current user only (per-user soft hide;
+ * BIT-182, UC-05.7). The shared thread and the other participant's copy are
+ * untouched. Invalidation of the thread list is handled by the api-client hook.
+ */
+export function useDeleteThread() {
+  const hooks = useMessagingApi();
+  return hooks.useDeleteThread();
+}
+
+/**
+ * Mutation to archive a thread for the current user only (BIT-182, UC-05.11).
+ */
+export function useArchiveThread() {
+  const hooks = useMessagingApi();
+  return hooks.useArchiveThread();
+}
+
+/**
+ * Mutation to un-archive a thread for the current user only (BIT-182).
+ */
+export function useUnarchiveThread() {
+  const hooks = useMessagingApi();
+  return hooks.useUnarchiveThread();
+}
+
 // ---------------------------------------------------------------------------
 // Recipients (for NewMessagePage) — sourced from neighbors API
 // ---------------------------------------------------------------------------
