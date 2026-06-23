@@ -2,25 +2,37 @@
 //!
 //! Routes for Airbnb/Booking.com integration, guest registration, and authority reports.
 
+use crate::services::id_ocr::{GuestIdExtraction, IdOcrError};
 use crate::state::AppState;
 use api_core::extractors::TenantExtractor;
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
+use axum_extra::extract::Multipart;
 use chrono::NaiveDate;
+use common::errors::ErrorResponse;
+use common::tenant::TenantRole;
 use db::models::{
     BookingListQuery, BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent,
-    ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateICalFeed,
-    CreatePlatformConnection, GenerateReport, ICalFeed, PlatformConnectionDetail,
-    PlatformConnectionSummary, PlatformSyncStatus, RentalBooking, RentalGuest, RentalGuestReport,
-    RentalPlatformConnection, RentalStatistics, ReportPreview, ReportSummary, UpdateBooking,
-    UpdateBookingStatus, UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
+    ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateGuestIdDocument,
+    CreateICalFeed, CreatePlatformConnection, GenerateReport, ICalFeed, PlatformConnectionDetail,
+    PlatformConnectionSummary, PlatformSyncStatus, RentalBooking, RentalGuest,
+    RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection, RentalStatistics,
+    ReportPreview, ReportSummary, UpdateBooking, UpdateBookingStatus, UpdateGuest, UpdateICalFeed,
+    UpdatePlatformConnection,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+/// Maximum accepted ID-document size: ~10 MiB (#1687).
+const MAX_ID_DOC_SIZE: usize = 10 * 1024 * 1024;
+
+/// MIME allowlist for ID-document uploads (#1687).
+const ALLOWED_ID_DOC_MIME: &[&str] = &["image/png", "image/jpeg", "application/pdf"];
 
 /// Create rentals router.
 pub fn router() -> Router<AppState> {
@@ -71,6 +83,12 @@ pub fn router() -> Router<AppState> {
         .route("/guests/{id}", put(update_guest))
         .route("/guests/{id}", delete(delete_guest))
         .route("/guests/{id}/register", post(register_guest))
+        // ID-document upload + OCR extract (Story 18.2, #1687)
+        .route("/guests/{id}/id-document", post(upload_guest_id_document))
+        .route(
+            "/guests/{id}/id-document/extract",
+            post(extract_guest_id_document),
+        )
         .route("/checkin-reminders", get(get_checkin_reminders))
         // Reports (Story 18.4)
         .route("/reports", get(list_reports))
@@ -972,6 +990,345 @@ pub async fn delete_guest(
     }
 
     Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+// ============================================================================
+// Guest ID-document upload + OCR extract (Story 18.2, #1687)
+// ============================================================================
+
+/// Manager-role gate for guest ID-document endpoints (#1687).
+///
+/// Mirrors `integrations::sync::verify_manager_role_in_org` (which is
+/// `pub(super)` to its module, so it cannot be reused here): the manager
+/// decision is derived from the canonical `TenantRole::is_manager` predicate so
+/// this authz gate cannot silently drift. Returns `403 FORBIDDEN` for
+/// non-managers (and `500` on a lookup failure).
+async fn require_manager_in_org(
+    state: &AppState,
+    org_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up org role for ID-document manager gate");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .map(|role| role.is_manager())
+        .unwrap_or(false);
+
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager-level access required for this organization",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Upload a guest ID document (multipart `file`).
+///
+/// Stores the bytes in S3 (best-effort — skipped when storage is unconfigured,
+/// mirroring `documents/core.rs::upload_document`), records a
+/// `rental_guest_id_documents` row, and sets the guest's `id_document_url` so
+/// the existing registration UI can link to it. Manager-only (#1687).
+#[utoipa::path(
+    post,
+    path = "/api/v1/rentals/guests/{id}/id-document",
+    tag = "Rentals",
+    params(("id" = Uuid, Path, description = "Guest ID")),
+    request_body(content = String, content_type = "multipart/form-data"),
+    responses(
+        (status = 201, description = "Document uploaded", body = RentalGuestIdDocument),
+        (status = 400, description = "Bad request / unsupported file type", body = ErrorResponse),
+        (status = 403, description = "Manager access required", body = ErrorResponse),
+        (status = 404, description = "Guest not found", body = ErrorResponse),
+        (status = 413, description = "File too large", body = ErrorResponse),
+    )
+)]
+pub async fn upload_guest_id_document(
+    State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
+    Path(id): Path<Uuid>,
+    mut multipart: Multipart,
+) -> Result<(StatusCode, Json<RentalGuestIdDocument>), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = tenant.tenant_id;
+    require_manager_in_org(&state, org_id, tenant.user_id).await?;
+
+    // SECURITY (#804/#1687): scope the guest lookup to the caller's org so a
+    // cross-tenant guest id returns 404 (not 403) and never leaks existence.
+    let guest = state
+        .rental_repo
+        .find_guest_for_org(org_id, id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to look up guest: {e}"),
+                )),
+            )
+        })?;
+    if guest.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Guest not found")),
+        ));
+    }
+
+    // --- Parse the `file` part ---
+    let mut file_bytes: Option<Vec<u8>> = None;
+    let mut file_name: Option<String> = None;
+    let mut mime_type: Option<String> = None;
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        tracing::warn!(error = %e, "Failed to read multipart field");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                format!("Failed to read multipart field: {e}"),
+            )),
+        )
+    })? {
+        if field.name() == Some("file") {
+            file_name = field.file_name().map(|s| s.to_string());
+            mime_type = field.content_type().map(|ct| ct.to_string());
+            let data = field.bytes().await.map_err(|e| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "BAD_REQUEST",
+                        format!("Failed to read file data: {e}"),
+                    )),
+                )
+            })?;
+            file_bytes = Some(data.to_vec());
+        } else {
+            // Drain unknown fields so the parser can advance.
+            let _ = field.bytes().await;
+        }
+    }
+
+    let bytes = file_bytes.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "Missing 'file' field in multipart body",
+            )),
+        )
+    })?;
+
+    let file_name = file_name.unwrap_or_else(|| "id-document".to_string());
+    let resolved_mime =
+        mime_type.unwrap_or_else(|| integrations::get_content_type(&file_name).to_string());
+
+    // --- Validate MIME allowlist ---
+    if !ALLOWED_ID_DOC_MIME.contains(&resolved_mime.as_str()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "UNSUPPORTED_FILE_TYPE",
+                format!("File type '{resolved_mime}' is not supported. Allowed: PNG, JPEG, PDF"),
+            )),
+        ));
+    }
+
+    // --- Validate size cap ---
+    if bytes.len() > MAX_ID_DOC_SIZE {
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(ErrorResponse::new(
+                "FILE_TOO_LARGE",
+                format!("File exceeds maximum size of {MAX_ID_DOC_SIZE} bytes (10 MiB)"),
+            )),
+        ));
+    }
+
+    // --- Build the storage key + best-effort S3 upload ---
+    let file_key = format!(
+        "id-documents/{}",
+        integrations::generate_storage_key(org_id, &file_name)
+    );
+    if let Some(ref storage_service) = state.storage_service {
+        if storage_service.has_s3_client() {
+            storage_service
+                .upload(&file_key, bytes, &resolved_mime)
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = %e, file_key = %file_key, "Failed to upload ID document to S3");
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "STORAGE_ERROR",
+                            "Failed to upload file to storage. Please try again.",
+                        )),
+                    )
+                })?;
+        } else {
+            tracing::warn!(file_key = %file_key, "Storage service present but S3 client not initialised — skipping S3 upload");
+        }
+    } else {
+        tracing::warn!(file_key = %file_key, "No storage service configured — skipping S3 upload");
+    }
+
+    // --- Record the document row ---
+    let doc = state
+        .rental_repo
+        .create_guest_id_document(
+            org_id,
+            CreateGuestIdDocument {
+                guest_id: id,
+                file_key: file_key.clone(),
+                mime: resolved_mime,
+                uploaded_by: Some(tenant.user_id),
+            },
+        )
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to record ID document: {e}"),
+                )),
+            )
+        })?;
+
+    // --- Point the guest record at the uploaded document ---
+    let update = UpdateGuest {
+        id_document_url: Some(file_key),
+        ..Default::default()
+    };
+    state
+        .rental_repo
+        .update_guest_for_org(org_id, id, update)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to link document to guest: {e}"),
+                )),
+            )
+        })?;
+
+    Ok((StatusCode::CREATED, Json(doc)))
+}
+
+/// Run OCR over a guest's most-recently-uploaded ID document (#1687).
+///
+/// Returns the extracted fields for the manager to confirm — the result is
+/// **never** auto-applied to the guest record (the manager edits via
+/// `PUT /api/v1/rentals/guests/{id}`). Stage A wires only the not-configured
+/// stub, so this degrades to `501 OCR_NOT_CONFIGURED` (mirroring
+/// `routes/ai/ocr.rs`) until a real provider is wired in Stage B. Manager-only.
+#[utoipa::path(
+    post,
+    path = "/api/v1/rentals/guests/{id}/id-document/extract",
+    tag = "Rentals",
+    params(("id" = Uuid, Path, description = "Guest ID")),
+    responses(
+        (status = 200, description = "OCR extraction result", body = GuestIdExtraction),
+        (status = 403, description = "Manager access required", body = ErrorResponse),
+        (status = 404, description = "No ID document on file", body = ErrorResponse),
+        (status = 501, description = "OCR provider not configured", body = ErrorResponse),
+    )
+)]
+pub async fn extract_guest_id_document(
+    State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
+    Path(id): Path<Uuid>,
+) -> Result<Json<GuestIdExtraction>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = tenant.tenant_id;
+    require_manager_in_org(&state, org_id, tenant.user_id).await?;
+
+    // SECURITY (#1687): org-scoped lookup; a cross-tenant guest (or one with no
+    // uploaded document) returns 404 and never reveals existence.
+    let doc = state
+        .rental_repo
+        .latest_guest_id_document_for_org(org_id, id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to look up ID document: {e}"),
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No ID document on file for this guest",
+                )),
+            )
+        })?;
+
+    // Fetch the bytes back from storage when available; the stub provider does
+    // not read them, so an empty slice is fine when storage is unconfigured.
+    let bytes: Vec<u8> = match &state.storage_service {
+        Some(s) if s.has_s3_client() => s
+            .download(&doc.file_key)
+            .await
+            .map(|(data, _content_type)| data)
+            .unwrap_or_default(),
+        _ => Vec::new(),
+    };
+
+    match state.id_document_ocr.extract(&bytes, &doc.mime).await {
+        Ok(extraction) => {
+            // Persist the extraction for audit / prefill, but do NOT mutate the
+            // guest record — the manager confirms the values.
+            if let Ok(json) = serde_json::to_value(&extraction) {
+                let _ = state
+                    .rental_repo
+                    .set_guest_id_document_extraction(org_id, doc.id, json)
+                    .await;
+            }
+            Ok(Json(extraction))
+        }
+        Err(IdOcrError::NotConfigured) => Err((
+            StatusCode::NOT_IMPLEMENTED,
+            Json(ErrorResponse::new(
+                "OCR_NOT_CONFIGURED",
+                "ID-document OCR extraction is not yet configured. \
+                 Please enter the guest details manually until this feature is enabled.",
+            )),
+        )),
+        Err(IdOcrError::InvalidDocument(msg)) => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new("INVALID_DOCUMENT", msg)),
+        )),
+        Err(IdOcrError::Provider(msg)) => {
+            tracing::error!(error = %msg, "ID-document OCR provider error");
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "OCR_PROVIDER_ERROR",
+                    "OCR provider failed. Please try again later.",
+                )),
+            ))
+        }
+    }
 }
 
 /// Register guest.
