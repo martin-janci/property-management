@@ -1038,6 +1038,34 @@ async fn require_manager_in_org(
     Ok(())
 }
 
+/// Map a multipart read error to a structured response, preserving the
+/// underlying status so a body/length-limit overflow surfaces as `413` (not a
+/// flat `400`). axum-extra sets `413 PAYLOAD_TOO_LARGE` on its
+/// `MultipartError` when the request/field exceeds the configured body limit.
+fn map_multipart_err(
+    e: axum_extra::extract::multipart::MultipartError,
+) -> (StatusCode, Json<ErrorResponse>) {
+    let status = e.status();
+    tracing::warn!(error = %e, %status, "Failed to read multipart field");
+    if status == StatusCode::PAYLOAD_TOO_LARGE {
+        (
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(ErrorResponse::new(
+                "FILE_TOO_LARGE",
+                "Uploaded file is too large.",
+            )),
+        )
+    } else {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                format!("Failed to read multipart field: {e}"),
+            )),
+        )
+    }
+}
+
 /// Upload a guest ID document (multipart `file`).
 ///
 /// Stores the bytes in S3 (best-effort — skipped when storage is unconfigured,
@@ -1094,28 +1122,11 @@ pub async fn upload_guest_id_document(
     let mut file_name: Option<String> = None;
     let mut mime_type: Option<String> = None;
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| {
-        tracing::warn!(error = %e, "Failed to read multipart field");
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "BAD_REQUEST",
-                format!("Failed to read multipart field: {e}"),
-            )),
-        )
-    })? {
+    while let Some(field) = multipart.next_field().await.map_err(map_multipart_err)? {
         if field.name() == Some("file") {
             file_name = field.file_name().map(|s| s.to_string());
             mime_type = field.content_type().map(|ct| ct.to_string());
-            let data = field.bytes().await.map_err(|e| {
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse::new(
-                        "BAD_REQUEST",
-                        format!("Failed to read file data: {e}"),
-                    )),
-                )
-            })?;
+            let data = field.bytes().await.map_err(map_multipart_err)?;
             file_bytes = Some(data.to_vec());
         } else {
             // Drain unknown fields so the parser can advance.
