@@ -85,8 +85,19 @@ export interface ListingDraft {
   city: string;
   street?: string;
   postalCode?: string;
+  country?: string;
   area?: number;
   rooms?: number;
+  floor?: number;
+  /**
+   * Owner-settable lifecycle status. Publishing (`active`) is moderation-gated
+   * server-side: owners may only set the non-public lifecycle states
+   * `draft` | `paused` | `sold` | `rented` | `archived` (the server returns 400
+   * for anything else). Typed as `string` because the response can also surface
+   * the moderated `active` state.
+   */
+  status?: string;
+  isNegotiable?: boolean;
 }
 
 export interface ListingResponse extends ListingDraft {
