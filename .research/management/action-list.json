@@ -371,6 +371,282 @@
         "subject": "gap-81-2-report-execution-history-download-verify: harden report presigned-download path (#1779)",
         "at": "2026-06-24T00:14:14Z"
       }
+    },
+    {
+      "id": "gap-10b-5-support-data-access-sprint-status-still-ready-for-dev-though-code-prs-",
+      "action": "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-support-data-access-is-privacy-security-sensitive-",
+      "action": "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security) (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-no-screen-map-orphan-epic",
+      "action": "no screen-map (orphan epic) (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-coverage-json-here-still-partial-gap-79-2-auth-cal",
+      "action": "coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining) (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-security-sensitive-sso-jwt-cookie-path-note-for-pm",
+      "action": "security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-1-announcement-creation-targeting-sprint-status-still-review-not-flipped-to-done-ver",
+      "action": "sprint-status still 'review' (not flipped to done) — verification/sign-off pending (6-1-announcement-creation-targeting Announcement Creation & Targeting)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-1-announcement-creation-targeting-announcements-md-screen-buildstatus-in-progress-no",
+      "action": "announcements.md screen buildStatus=in-progress, not shipped (6-1-announcement-creation-targeting Announcement Creation & Targeting)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-sprint-status-ready-for-dev-code-is-ahead-of-label",
+      "action": "sprint-status ready-for-dev — code is ahead of label but story not marked done (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-announcements-md-screen-buildstatus-in-progress",
+      "action": "announcements.md screen buildStatus=in-progress (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-5-direct-messaging-sprint-status-ready-for-dev-code-is-well-ahead-of-",
+      "action": "sprint-status ready-for-dev — code is well ahead of the label but story not marked done (6-5-direct-messaging Direct Messaging)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-coverage-json-last-checked-2026-05-23-still-marks-",
+      "action": "coverage.json (last_checked 2026-05-23) still marks partial; promote commits not present on this worktree HEAD (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-coverage-gap-noted-full-feature-integration-e2e-ve",
+      "action": "coverage gap noted full feature-integration / e2e verification incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-story-markdown-frontmatter-stale-status-pending",
+      "action": "story markdown frontmatter stale ('Status: pending') (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-no-screen-map-orphan-epic",
+      "action": "no screen-map (orphan epic) (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-10b-7-contextual-help-documentation-sprint-status-still-ready-for-dev-though-backend-w",
+      "action": "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done (10b-7-contextual-help-documentation Contextual Help & Documentation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-sprint-status-ready-for-dev-not-marked-done",
+      "action": "sprint-status ready-for-dev — not marked done (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-announcements-md-screen-buildstatus-still-in-progr",
+      "action": "announcements.md screen buildStatus still in-progress (not shipped) (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-no-mobile-comments-ui-observed",
+      "action": "No mobile comments UI observed (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-sprint-status-ready-for-dev-not-marked-done",
+      "action": "sprint-status ready-for-dev — not marked done (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-no-mobile-pinned-band-ui-observed",
+      "action": "No mobile pinned-band UI observed (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-announcements-md-screen-buildstatus-in-progress",
+      "action": "announcements.md screen buildStatus in-progress (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-story-markdown-frontmatter-stale-status-pending",
+      "action": "story markdown frontmatter stale ('Status: pending') (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-redesigned-5-step-wizard-redesignstatus-in-progres",
+      "action": "Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-localized-disputes-draft-i18n-keys-for-6-message-b",
+      "action": "Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue)) (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
+    },
+    {
+      "id": "gap-80-3-mediation-resolution-party-submissions-endpoints-unwired-apistatus-stay",
+      "action": "Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map) (80-3-mediation-resolution Mediation and Resolution)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-24"
     }
-  ]
+  ],
+  "generated": "2026-06-24T14:35:00Z"
 }
