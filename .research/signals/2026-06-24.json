@@ -1,0 +1,286 @@
+{
+  "date": "2026-06-24",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16 03:25 UTC \u2014 192h (~8d) ago. >36h triggers lag_warning; >3d also triggers stale_routine_alert. Cloud cron likely paused.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".research/state.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since='2026-06-16' (origin/dev, 3 commits touched)",
+      "score_delta": 1,
+      "evidence": "Touched by PRs #1750 (epic-18 guest-ID-doc OCR seam), #1756 (camelCase wire contract attachments BIT-238), #1768 (camelCase serde wire contract BIT-239). File is 2064 LOC \u2014 future split candidate.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since='2026-06-16' (origin/dev, 3 commits touched)",
+      "score_delta": 1,
+      "evidence": "Touched by PRs #1750, #1756, #1768 \u2014 all messaging-domain wire-contract / model evolution.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-messaging-attachments-authz-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since='2026-06-16' (origin/dev, 3 commits touched)",
+      "score_delta": 1,
+      "evidence": "Touched by PRs #1750, #1755 (migration dup-version fix), #1756 \u2014 test churn tracks the messaging wire-contract refactors (healthy).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/messaging_attachments_authz_tests.rs"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts delegation frontend re-add (#1690) \u2014 reconciles with retirement-of-delegations decision (BIT-213).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 2,
+      "evidence": "PR body has unchecked `- [ ] cargo test -p api-server accounting_contacts` after merge \u2014 CI may have actually run it; verify on next pass. PR title: feat(accounting): manager-only role gate for list_contacts (PAP-281)",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "PR body has unchecked CI checkboxes (`- [ ] cargo fmt --all -- --check` etc) after merge \u2014 purely formatting; passed CI by virtue of merge. PR title: fix(financial): rustfmt compliance for financial reports routes",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 closed without merge \u2014 'fix(ppt-web): add Leases nav link + home tile (#977)'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 closed without merge \u2014 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev)'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 closed without merge \u2014 'fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS basel'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 closed without merge \u2014 'feat(epic-3): story 3.2 - unit management UI (BIT-188)'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": "PR #1634 closed without merge \u2014 '[PM #1627] saved-search alerts list: signal truncation past LIMIT 100'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "PR #1647 closed without merge \u2014 'feat(iot): sensor register + edit + standalone list [BIT-147]'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "PR #1636 closed without merge \u2014 'fix(reality-server): reconcile portal import authz + dedup principal extractor'. Likely superseded by a follow-up or dispatcher-rebased branch.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-2026-06-24",
+      "type": "dep-update-noise",
+      "source": "11 dependabot PRs merged (#1566-#1576 batch on 2026-06-17)",
+      "score_delta": 0,
+      "evidence": "Batch dependabot grouping: compose-bom, gradle, tower-http, rust-toolchain, junit, npm minor, expo-secure-store, @types/node, cargo-minor, @babel/core, i18next. All merged 2026-06-17.",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-24.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced (cursors, signals, hotspots)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap=8, decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; vacuous pass",
+      "observed": "0 new plans",
+      "expected": "\u22642 new plans w/ adversarial pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans; cap satisfied vacuously",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "checked at commit time",
+      "expected": "only .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hosts",
+      "observed": "checked at commit time",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "matches",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed",
+      "observed": "no failures",
+      "expected": "phase-failure honesty"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in place",
+      "observed": "no plans deleted",
+      "expected": "every prior plan present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "unchanged",
+      "expected": "monotonic"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "matches",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions",
+      "expected": "\u22643 actions, \u22641 of each type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 no-op gate",
+      "observed": "skipped",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "checked at commit time",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (no high-confidence allowlist signal with score\u22653 this run)"
+}
