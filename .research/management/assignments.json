@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T10:16:05Z",
+  "generated": "2026-06-24T10:21:29Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
@@ -246,18 +246,18 @@
     {
       "task_id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-d0d8ffb0",
-      "status": "in-progress",
+      "status": "failed",
       "claimed_at": "2026-06-24T10:16:05Z",
-      "last_updated": "2026-06-24T10:16:05Z",
-      "status_changed_at": "2026-06-24T10:16:05Z",
+      "last_updated": "2026-06-24T10:21:29Z",
+      "status_changed_at": "2026-06-24T10:21:29Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=239-line cohesive single-concern IDOR suite; safe split needs helper dup or hot common/mod.rs edit (96 files) — no value-positive refactor",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
