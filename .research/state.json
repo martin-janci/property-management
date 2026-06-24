@@ -608,7 +608,8 @@
     "code-review-ppt-web-core-ws-token-rotation",
     "code-review-ppt-web-core-auth-init-no-user-restore",
     "lag-warning-2026-06-24",
-    "stale-routine-alert-2026-06-24"
+    "stale-routine-alert-2026-06-24",
+    "buffer-low-2026-06-24"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -624,7 +625,7 @@
   "stats": {
     "runs": 41,
     "vectors_created": 226,
-    "plans_created": 12,
+    "plans_created": 14,
     "quiet_days": 1,
     "auto_fix_count": 0
   },

@@ -634,9 +634,32 @@
       "evidence": [
         "state.json last_run_iso=2026-06-16T03:25Z is 8d old; cloud routine may be paused. Dispatcher state lives on planning branch \u2014 check separately."
       ]
+    },
+    {
+      "id": "buffer-low-2026-06-24",
+      "type": "buffer-low",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dispatcher signaled claimable=15/72 (deep-starvation: only status-reconciliation gaps left); refined backlog \u2192 2 plans promoted from Phase 1.5 ppt-web-core findings"
+      ]
     }
   ],
   "auto_fix_actions": [],
   "auto_fix_skipped_reason": null,
-  "goal_checks": []
+  "goal_checks": [],
+  "promoted_this_run": [
+    {
+      "id": "code-review-ppt-web-core-useWebSocket-stale-handler",
+      "plan": "plans/code-review-ppt-web-core-useWebSocket-stale-handler.md",
+      "adversarial_pass": "passed"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-rotation",
+      "plan": "plans/code-review-ppt-web-core-ws-token-rotation.md",
+      "adversarial_pass": "passed"
+    }
+  ]
 }

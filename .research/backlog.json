@@ -4865,20 +4865,23 @@
       "id": "code-review-ppt-web-core-useWebSocket-stale-handler",
       "title": "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 \u2014 useEffect early-returns when handlerRef.current is und",
       "vector": "bug",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
       "sources": [
         "rotating-expert-review"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 \u2014 useEffect early-returns when handlerRef.current is undefined but only depends on [eventType, subscribe]; if the caller initially passes handler=undefined and later supplies one, the effect never re-runs and no subscription is ever created \u2014 silent realtime stall.",
-        "Comparable hook useWebSocketSubscriptions(line 142-159) uses eventTypesKey to force re-subscription, but the single-handler hook has no equivalent guard; suggestion: bail when handler is undefined and add `handler != null` to the dep tuple (or accept the function and inline ref-write inside the effect)."
+        "Comparable hook useWebSocketSubscriptions(line 142-159) uses eventTypesKey to force re-subscription, but the single-handler hook has no equivalent guard; suggestion: bail when handler is undefined and add `handler != null` to the dep tuple (or accept the function and inline ref-write inside the effect).",
+        "promotion: code path verified by reading cited line numbers on disk; reachability confirmed"
       ],
-      "files": [],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
       "created_at": "2026-06-24",
       "updated_at": "2026-06-24",
-      "plan": null,
+      "plan": "plans/code-review-ppt-web-core-useWebSocket-stale-handler.md",
       "segment": "ppt-web-core",
       "expert": "frontend"
     },
@@ -4886,20 +4889,24 @@
       "id": "code-review-ppt-web-core-ws-token-rotation",
       "title": "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 \u2014 effect calls service.connect() on auth.acces",
       "vector": "bug",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
       "sources": [
         "rotating-expert-review"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 \u2014 effect calls service.connect() on auth.accessToken change, but WebSocketService.connect() (lib/websocket.ts:291-294) returns early when socket.readyState === OPEN, so the live socket keeps its old JWT after a refresh.",
-        "The api-server only validates the token at handshake (token query param in buildWebSocketUrl, lib/websocket.ts:88-96); when the original JWT expires the server-side session is dropped but the client thinks it's still connected. Fix: when the token changes while connected, call disconnect()+connect() (mirroring the manual reconnect() path on line 324-330)."
+        "The api-server only validates the token at handshake (token query param in buildWebSocketUrl, lib/websocket.ts:88-96); when the original JWT expires the server-side session is dropped but the client thinks it's still connected. Fix: when the token changes while connected, call disconnect()+connect() (mirroring the manual reconnect() path on line 324-330).",
+        "promotion: code path verified by reading cited line numbers on disk; reachability confirmed"
       ],
-      "files": [],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
       "created_at": "2026-06-24",
       "updated_at": "2026-06-24",
-      "plan": null,
+      "plan": "plans/code-review-ppt-web-core-ws-token-rotation.md",
       "segment": "ppt-web-core",
       "expert": "frontend"
     },

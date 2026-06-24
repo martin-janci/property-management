@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-24 12:27 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-24 12:36 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -8,6 +8,8 @@
 | 3 | bug | `bug-revert-pr-1713` | Revert from PR #1713 | open | 2026-06-24 |  |
 | 3 | security | `security-unchecked-todo-pr-1606` | Unchecked Todo from PR #1606 | open | 2026-06-24 |  |
 | 3 | security | `security-unchecked-todo-pr-1484` | Unchecked Todo from PR #1484 | open | 2026-06-24 |  |
+| 3 | bug | `code-review-ppt-web-core-useWebSocket-stale-handler` | frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — useEffect early-returns when handlerRef.current is und | ready | 2026-06-24 | [plan](plans/code-review-ppt-web-core-useWebSocket-stale-handler.md) |
+| 3 | bug | `code-review-ppt-web-core-ws-token-rotation` | frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 — effect calls service.connect() on auth.acces | ready | 2026-06-24 | [plan](plans/code-review-ppt-web-core-ws-token-rotation.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend  | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -65,8 +67,6 @@
 | 2 | bug | `test-gap-hotfix-no-test-pr-1472` | Hotfix No Test from PR #1472 | open | 2026-06-24 |  |
 | 2 | bug | `test-gap-hotfix-no-test-pr-1457` | Hotfix No Test from PR #1457 | open | 2026-06-24 |  |
 | 2 | refactor | `refactor-unchecked-todo-pr-1442` | Unchecked Todo from PR #1442 | open | 2026-06-24 |  |
-| 2 | bug | `code-review-ppt-web-core-useWebSocket-stale-handler` | frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — useEffect early-returns when handlerRef.current is und | open | 2026-06-24 |  |
-| 2 | bug | `code-review-ppt-web-core-ws-token-rotation` | frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 — effect calls service.connect() on auth.acces | open | 2026-06-24 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id | done | 2026-06-16 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file  | open | 2026-06-16 |  |
 | 2 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcod | open | 2026-06-16 |  |
