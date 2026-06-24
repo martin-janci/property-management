@@ -349,49 +349,69 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
 
     POOL_FIELD_RE='^[[:space:]]*(pub([[:space:]]*\([^)]*\))?[[:space:]]+)?(pool|db):[[:space:]]*(sqlx::|crate::)?(PgPool|DbPool)'
 
-    for repo_file in "$REPO_DIR"/*.rs; do
-        [[ -f "$repo_file" ]] || continue
-        base=$(basename "$repo_file")
-        case "$base" in mod.rs|*_test.rs|*_tests.rs) continue ;; esac
+    # scan_pool_unit <baseline-key> <display-path> <src-file>...
+    # Evaluates the four pool-field conditions over the AGGREGATE of the given
+    # source file(s) and classifies the unit against the service-role / baseline
+    # lists using <baseline-key>. For a top-level repo file the unit is a single
+    # file keyed by its basename (unchanged behaviour). For a split repo module
+    # (a directory containing mod.rs) the unit is ALL of the directory's .rs
+    # files aggregated together and keyed as "<dir>/mod.rs" — the pool field
+    # declaration (mod.rs), the &self.pool query sites and the SQL (submodules)
+    # are spread across files, so only the aggregate satisfies all conditions.
+    scan_pool_unit() {
+        local key="$1" display="$2"; shift 2
+        local -a srcs=("$@")
 
-        # Strip line comments so doc-prose about pools/tables can't false-positive.
-        grep -vE '^[[:space:]]*//' "$repo_file" > "$TMP_PREFIX/code" || true
+        # Aggregate the unit's code with line comments stripped so doc-prose
+        # about pools/tables can't false-positive.
+        : > "$TMP_PREFIX/code"
+        local sf
+        for sf in "${srcs[@]}"; do
+            grep -vE '^[[:space:]]*//' "$sf" >> "$TMP_PREFIX/code" || true
+        done
 
-        grep -qE "$POOL_FIELD_RE" "$TMP_PREFIX/code" || continue
-        grep -qE '&self\.(pool|db)\b' "$TMP_PREFIX/code" || continue
-        grep -q 'set_request_context' "$TMP_PREFIX/code" && continue
+        grep -qE "$POOL_FIELD_RE" "$TMP_PREFIX/code" || return 0
+        grep -qE '&self\.(pool|db)\b' "$TMP_PREFIX/code" || return 0
+        grep -q 'set_request_context' "$TMP_PREFIX/code" && return 0
 
-        # Tables this file's SQL touches, intersected with the FORCE-RLS set.
+        # Tables this unit's SQL touches, intersected with the FORCE-RLS set.
         grep -ohiE '\b(from|join|into|update)[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "$TMP_PREFIX/code" \
             | awk '{print tolower($2)}' | sort -u > "$TMP_PREFIX/touched" || true
         comm -12 "$TMP_PREFIX/touched" "$TMP_PREFIX/force_final" > "$TMP_PREFIX/hit_tables"
-        [[ -s "$TMP_PREFIX/hit_tables" ]] || continue
+        [[ -s "$TMP_PREFIX/hit_tables" ]] || return 0
 
-        echo "$base" >> "$TMP_PREFIX/hit_names"
+        echo "$key" >> "$TMP_PREFIX/hit_names"
+        local tables_short total_tables field_file field_line
         tables_short=$(head -5 "$TMP_PREFIX/hit_tables" | paste -sd, -)
         total_tables=$(wc -l < "$TMP_PREFIX/hit_tables")
-        field_line=$(grep -nE "$POOL_FIELD_RE" "$repo_file" | head -1 | cut -d: -f1)
+        # Point the [path:line] at wherever the pool field is actually declared.
+        field_file=""
+        for sf in "${srcs[@]}"; do
+            if grep -qE "$POOL_FIELD_RE" "$sf"; then field_file="$sf"; break; fi
+        done
+        field_line=$(grep -nE "$POOL_FIELD_RE" "${field_file:-${srcs[0]}}" | head -1 | cut -d: -f1)
+        local loc="$display:${field_line:-?}"
 
-        if grep -qxF "$base" "$TMP_PREFIX/service_role"; then
+        if grep -qxF "$key" "$TMP_PREFIX/service_role"; then
             # Service-role-by-design: the table RLS policy permits the unset-GUC
             # service pool. Correct as written; the executor pattern does NOT
             # apply (a request-scoped user GUC would flip the policy to deny).
             # Reported as ALLOWED, never "conversion pending".
             ((POOL_FIELD_SERVICE_ROLE+=1))
-            echo "$base" >> "$TMP_PREFIX/service_role_hits"
-            echo -e "${GREEN}ALLOWED${NC} [$repo_file:${field_line:-?}] (service-role-by-design)"
+            echo "$key" >> "$TMP_PREFIX/service_role_hits"
+            echo -e "${GREEN}ALLOWED${NC} [$loc] (service-role-by-design)"
             echo "  raw pool field on the off-request service path; table policy permits the"
             echo "  unset-GUC service pool by design — FORCE-RLS tables ($total_tables): $tables_short"
             echo ""
-        elif grep -qxF "$base" "$TMP_PREFIX/baseline"; then
+        elif grep -qxF "$key" "$TMP_PREFIX/baseline"; then
             ((POOL_FIELD_BASELINED+=1))
-            echo -e "${YELLOW}KNOWN OFFENDER${NC} [$repo_file:${field_line:-?}] (baselined, conversion pending)"
+            echo -e "${YELLOW}KNOWN OFFENDER${NC} [$loc] (baselined, conversion pending)"
             echo "  raw pool field + 0 set_request_context; FORCE-RLS tables ($total_tables): $tables_short"
             echo ""
         else
             ((POOL_FIELD_VIOLATIONS+=1))
             ((VIOLATIONS+=1))
-            echo -e "${RED}VIOLATION${NC} [$repo_file:${field_line:-?}]"
+            echo -e "${RED}VIOLATION${NC} [$loc]"
             echo "  Repository holds a raw pool field and queries FORCE-RLS tables"
             echo "  with zero set_request_context calls → deny-all under FORCE RLS"
             echo "  FORCE-RLS tables touched ($total_tables): $tables_short"
@@ -402,6 +422,34 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
             echo "    $(basename "$SERVICE_ROLE_ALLOWLIST_FILE") instead — see that file's invariant."
             echo ""
         fi
+    }
+
+    # Top-level repo files: one file per unit, keyed by basename (unchanged).
+    for repo_file in "$REPO_DIR"/*.rs; do
+        [[ -f "$repo_file" ]] || continue
+        base=$(basename "$repo_file")
+        case "$base" in mod.rs|*_test.rs|*_tests.rs) continue ;; esac
+        scan_pool_unit "$base" "$repo_file" "$repo_file"
+    done
+
+    # Split repo modules: a directory holding mod.rs is one repository whose
+    # pool field, query sites and SQL are spread across its files. Scan the
+    # directory as a single aggregate unit, keyed "<dir>/mod.rs", so a moved
+    # pool field stays covered (it would otherwise escape: mod.rs alone has the
+    # field but no SQL, and the submodules have SQL but no field). Test
+    # submodules are excluded from the aggregate so test fixtures can't taint it.
+    for repo_mod in "$REPO_DIR"/*/mod.rs; do
+        [[ -f "$repo_mod" ]] || continue
+        mod_dir=$(dirname "$repo_mod")
+        dir_name=$(basename "$mod_dir")
+        unit_files=()
+        for f in "$mod_dir"/*.rs; do
+            [[ -f "$f" ]] || continue
+            case "$(basename "$f")" in *_test.rs|*_tests.rs|tests.rs) continue ;; esac
+            unit_files+=("$f")
+        done
+        [[ ${#unit_files[@]} -gt 0 ]] || continue
+        scan_pool_unit "$dir_name/mod.rs" "$repo_mod" "${unit_files[@]}"
     done
 
     # Stale baseline entries: listed but no longer flagged — tighten the ratchet.

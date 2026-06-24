@@ -64,7 +64,7 @@ owner_analytics.rs
 platform_admin.rs
 portal.rs
 portfolio_performance.rs
-reality_portal.rs
+reality_portal/mod.rs   # split into reality_portal/ module; pool field in mod.rs, queries in submodules — aggregate-scanned by the dir-unit detector
 rental.rs
 report_schedule.rs
 role.rs
