@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-81",
-  "selected_at": "2026-06-24T00:11:04Z",
+  "epic_prefix": "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+  "selected_at": "2026-06-24T02:18:30Z",
   "last_action": "repick",
-  "reason": "prior target 'churn-hotspot-backend-crates-db-src-repositories-sensor-rs' exhausted; closest-to-done is 'gap-81' (open=2 claimable=1)",
+  "reason": "prior target 'churn-hotspot-backend-servers-api-server-src-routes-forms-rs' exhausted; closest-to-done is 'churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs' (open=1 claimable=1)",
   "stats_at_selection": {
-    "open": 2,
+    "open": 1,
     "claimable": 1
   }
 }
