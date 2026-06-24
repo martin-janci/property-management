@@ -1,0 +1,215 @@
+{
+  "date": "2026-06-24",
+  "run_iso": "2026-06-24T10:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "routine cursor",
+      "score_delta": 0,
+      "evidence": "routine has not run since 2026-06-16T03:25:00Z (8d 198h lag)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-24",
+      "type": "stale_routine_alert",
+      "source": "routine cursor",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 8d old; cloud routine may be paused. Dispatcher is still ticking on its own branch.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2939 lines changed in backend/crates/db/src/repositories/rental.rs since last run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2818 lines changed in backend/crates/integrations/src/booking/mod.rs since last run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2718 lines changed in backend/servers/api-server/tests/oauth_integration_tests.rs since last run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen >= 2",
+      "score_delta": 1,
+      "evidence": "oauth_integration_tests.rs flagged this run (3rd consecutive; previous: 378 lines on 2026-06-02). Test instability proxy.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "dependabot bumped tower-http 0.6.11 -> 0.7.0 in /backend (axum group); merged",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 'fix(ppt-web): add Leases nav link + home tile (#977)' closed without merge on 2026-06-23",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck' closed unmerged 2026-06-23 (superseded by #1748 which fixed root cause)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-24.md && head -1 grep ^# 2026-06-24$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors+stats advanced",
+      "observed": "last_pr_seen 1439->1820, hotspot_history +3, seen_signals +9",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "182 unique / 182 total",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id already in prior seen_signals",
+      "observed": "all 9 new ids absent from prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay applied",
+      "observed": "max score=6 (within cap 8); 6 items decayed -1; 9 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans \u2192 no adversarial-pass annotation required",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all readiness gates",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only contains only .research/",
+      "observed": "verified pre-commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames in staged diff",
+      "observed": "verified pre-commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed cursor-non-advance",
+      "observed": "Phases 1.5 + 1.6 explicitly skipped (catch-up mode); cursors not advanced for those",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no prior-run plans removed",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "6 archived files unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill-switch, caps, idempotency)",
+      "observed": "0 auto-fix actions this run (no candidate met certainty bar after lag/catch-up)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (skipped \u2014 Phase 1.6 not run)",
+      "observed": "Phase 1.6 skipped (catch-up mode); pm_cursor.next_index=5 unchanged; gate is a no-op when skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "verified pre-commit",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (verify-all not available in cloud routine sandbox; no signal met confidence=high + score>=3 + allowlist)",
+  "notes": {
+    "phase_1_5": "skipped (catch-up mode after 8d lag; dispatcher's separate review loop covered backend churn during the gap)",
+    "phase_1_6": "skipped (catch-up mode; management artifacts under .research/management/ are fresh from the dispatcher run on 2026-06-23; pm_cursor unchanged)",
+    "phase_5": "no candidate"
+  }
+}

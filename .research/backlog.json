@@ -266,7 +266,7 @@
       "title": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
@@ -274,14 +274,15 @@
       "evidence": [
         "DeepLinkRouter.kt:103-114 queryParam returns substring after '=' with no percent-decoding",
         "MainActivity.kt:84 uses android.net.Uri.getQueryParameter which DOES URL-decode — Android and shared/iOS paths produce different token strings for the same deep link",
-        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with the wrong string"
+        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with the wrong string",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -289,7 +290,7 @@
       "title": "SearchScreen stale-response race — overlapping searches can clobber newer results",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06",
@@ -298,13 +299,14 @@
       "evidence": [
         "SearchScreen.kt:111-142 — performSearch() launches a coroutine on rememberCoroutineScope() with no Job tracking or cancellation",
         "SearchScreen.kt:144/150/205/214/242 — initial load, debounce, FilterSheet apply/reset, RoomsChipStrip onSelect all fire performSearch() with no overlap guard",
-        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response can clobber newer one (no request-token / sequence guard)"
+        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response can clobber newer one (no request-token / sequence guard)",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -773,20 +775,21 @@
       "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1085"
       ],
       "evidence": [
-        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
+        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -794,20 +797,21 @@
       "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1100"
       ],
       "evidence": [
-        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
+        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -940,20 +944,21 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
       ],
       "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "backend/servers/api-server/src/main.rs",
         "backend/crates/api-core/src/middleware/security_headers.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1010,20 +1015,21 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
         "issue #953"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up",
+        "decayed: no new signals in 14d (-1 on 2026-06-24)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1417,18 +1423,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-07"
+        "local git numstat since 2026-06-07",
+        "PR #1798"
       ],
       "evidence": [
-        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "resolved: file split into routes/emergency/ module via PR #1798"
       ],
       "files": [
         "backend/servers/api-server/src/routes/emergency.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1437,18 +1445,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-07"
+        "local git numstat since 2026-06-07",
+        "PR #1813"
       ],
       "evidence": [
-        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "resolved: file split into routes/vendors/ module via PR #1813"
       ],
       "files": [
         "backend/servers/api-server/src/routes/vendors.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1457,18 +1467,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-07"
+        "local git numstat since 2026-06-07",
+        "PR #1800"
       ],
       "evidence": [
-        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "resolved: file split into module via PR #1800"
       ],
       "files": [
         "backend/servers/api-server/src/routes/enhanced_tenant_screening.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1477,18 +1489,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-10T03:05:00Z"
+        "local git numstat since 2026-06-10T03:05:00Z",
+        "PR #1683"
       ],
       "evidence": [
-        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening",
+        "resolved: file split into repositories/document/ module via PR #1683"
       ],
       "files": [
         "backend/crates/db/src/repositories/document.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1497,19 +1511,21 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "local git numstat since 2026-06-10T03:05:00Z",
-        "PR #1246"
+        "PR #1246",
+        "PR #1796"
       ],
       "evidence": [
-        "2856 lines changed in backend/crates/db/src/repositories/subscription.rs (incremental window 2026-06-10 03:05Z→18:30Z); driven by PR #1246 (PAP-112) RLS-context routing for subscription repo"
+        "2856 lines changed in backend/crates/db/src/repositories/subscription.rs (incremental window 2026-06-10 03:05Z→18:30Z); driven by PR #1246 (PAP-112) RLS-context routing for subscription repo",
+        "resolved: file split into repositories/subscription/ module via PR #1796"
       ],
       "files": [
         "backend/crates/db/src/repositories/subscription.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1518,20 +1534,22 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "local git numstat since 2026-06-10T03:05:00Z",
         "PR #1193",
-        "PR #1203"
+        "PR #1203",
+        "split-merge"
       ],
       "evidence": [
-        "2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (incremental window 2026-06-10 03:05Z→18:30Z); culmination of the PAP-36/PAP-47 AML-DSA hardening chain — multiple cross-tenant IDOR fixes landed in this window"
+        "2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (incremental window 2026-06-10 03:05Z→18:30Z); culmination of the PAP-36/PAP-47 AML-DSA hardening chain — multiple cross-tenant IDOR fixes landed in this window",
+        "resolved: file split into routes/aml_dsa/ module (aml.rs, dsa.rs, edd.rs)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/aml_dsa.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1670,21 +1688,22 @@
       "title": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1151"
       ],
       "evidence": [
         "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
-        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)"
+        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         ".research/gc1-reconcile.sh",
         ".research/management/action-list.json"
       ],
       "created_at": "2026-06-07",
-      "updated_at": "2026-06-07",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1692,20 +1711,21 @@
       "title": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1121"
       ],
       "evidence": [
         "+1279 LOC churn 2026-06-05..2026-06-06 (PR #1121 gap-82-4-reality-mobile-listing-detail-favorites)",
-        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)"
+        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1713,20 +1733,21 @@
       "title": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1125"
       ],
       "evidence": [
         "+1293 LOC churn 2026-06-05..2026-06-06 (PR #1125 gap-82-3-reality-mobile-search-filters)",
-        "instability proxy; the stale-response race finding lives in the same file"
+        "instability proxy; the stale-response race finding lives in the same file",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -1734,22 +1755,23 @@
       "title": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
       ],
       "evidence": [
         "MainActivity.kt:76-109 handleDeepLink reimplements scheme/host dispatch with android.net.Uri",
         "MainActivity.kt:113-121 a second Android-only DeepLinkTarget sealed class lacks Sso — adding a new shared target silently no-ops on Android until both classes are updated",
-        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it"
+        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -2207,8 +2229,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2216,13 +2238,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -2230,8 +2253,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2239,13 +2262,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -2253,21 +2277,22 @@
       "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1081",
         "PR #1082"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -2297,8 +2322,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2331,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -2321,17 +2347,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: no new signals in 14d — dropped on 2026-06-24"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-24",
       "plan": null
     },
     {
@@ -3944,6 +3971,126 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "title": "churn hotspot: rental repository (2939 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git churn since 2026-06-16"
+      ],
+      "evidence": [
+        "2939 lines changed in backend/crates/db/src/repositories/rental.rs since last run"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "title": "churn hotspot: Booking.com integrations module (2818 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git churn since 2026-06-16"
+      ],
+      "evidence": [
+        "2818 lines changed in backend/crates/integrations/src/booking/mod.rs since last run"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "title": "repeated churn: oauth_integration_tests.rs (test instability proxy)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen >= 2"
+      ],
+      "evidence": [
+        "2718 lines changed (3rd consecutive run flagged; previous: 378 on 2026-06-02)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "title": "churn hotspot: oauth_integration_tests.rs (2718 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git churn since 2026-06-16"
+      ],
+      "evidence": [
+        "2718 lines changed in backend/servers/api-server/tests/oauth_integration_tests.rs since last run"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "title": "closed-unmerged: PR #1720 — leases nav follow-up needed",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1720"
+      ],
+      "evidence": [
+        "PR #1720 'fix(ppt-web): add Leases nav link + home tile (#977)' closed without merge on 2026-06-23"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "title": "closed-unmerged: PR #1749 superseded by #1748",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1749"
+      ],
+      "evidence": [
+        "PR #1749 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck' closed unmerged 2026-06-23 (superseded by #1748)"
+      ],
+      "files": [
+        "frontend/apps/mobile/tsconfig.json"
+      ],
+      "created_at": "2026-06-24",
+      "updated_at": "2026-06-24",
       "plan": null
     }
   ]
