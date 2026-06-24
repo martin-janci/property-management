@@ -1,11 +1,24 @@
 # Action list
 
-_Last regenerated: 2026-06-24 16:12 UTC. Source: `.research/management/action-list.json` (37 items, 21 open, 2 in-progress)._
+_Last regenerated: 2026-06-24 16:55 UTC. Source: `.research/management/action-list.json` (50 items, 34 open, 2 in-progress)._
 
 | Status | Prio | Owner | ID | Action |
 |---|---|---|---|---|
 | in-progress | low | pm-backend | `churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs` | Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) |
 | in-progress | low | pm-backend | `churn-hotspot-backend-crates-integrations-src-booking-rs` | Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry) |
+| open | high | pm-security | `gap-10b-5-support-data-access-no-screen-map-orphan-epic` | no screen-map (orphan epic) (10b-5-support-data-access Support Data Access) |
+| open | high | pm-security | `gap-10b-5-support-data-access-sprint-status-still-ready-for-dev-though-code-prs-` | sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done (10b-5-support-data-access Support Data Access) |
+| open | high | pm-security | `gap-10b-5-support-data-access-support-data-access-is-privacy-security-sensitive-` | support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security) (10b-5-support-data-access Support Data Access) |
+| open | high | pm-frontend | `gap-10b-7-contextual-help-documentation-sprint-status-still-ready-for-dev-cd029e` | sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done (10b-7-contextual-help-documentation Contextual Help & Documentation) |
+| open | high | pm-backend | `gap-6-1-announcement-creation-targeting-announcements-md-screen-buildstat-5a0b1e` | announcements.md screen buildStatus=in-progress, not shipped (6-1-announcement-creation-targeting Announcement Creation & Targeting) |
+| open | high | pm-backend | `gap-6-1-announcement-creation-targeting-sprint-status-still-review-not-fl-f995a4` | sprint-status still 'review' (not flipped to done) — verification/sign-off pending (6-1-announcement-creation-targeting Announcement Creation & Targeting) |
+| open | high | pm-frontend | `gap-6-2-announcement-viewing-acknowledgment-announcements-md-screen-build-15f42e` | announcements.md screen buildStatus=in-progress (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment) |
+| open | high | pm-frontend | `gap-6-2-announcement-viewing-acknowledgment-sprint-status-ready-for-dev-c-268492` | sprint-status ready-for-dev — code is ahead of label but story not marked done (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment) |
+| open | high | pm-frontend | `gap-6-5-direct-messaging-sprint-status-ready-for-dev-code-is-well-ahead-of-` | sprint-status ready-for-dev — code is well ahead of the label but story not marked done (6-5-direct-messaging Direct Messaging) |
+| open | high | pm-frontend | `gap-79-1-api-client-integration-coverage-gap-noted-full-feature-integrati-091c66` | coverage gap noted full feature-integration / e2e verification incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features) |
+| open | high | pm-frontend | `gap-79-1-api-client-integration-coverage-json-last-checked-2026-05-23-sti-227f35` | coverage.json (last_checked 2026-05-23) still marks partial; promote commits not present on this worktree HEAD (79-1-api-client-integration API Client Integration for Core Features) |
+| open | high | pm-frontend | `gap-79-1-api-client-integration-no-screen-map-orphan-epic` | no screen-map (orphan epic) (79-1-api-client-integration API Client Integration for Core Features) |
+| open | high | pm-frontend | `gap-79-1-api-client-integration-story-markdown-frontmatter-stale-status-pending` | story markdown frontmatter stale ('Status: pending') (79-1-api-client-integration API Client Integration for Core Features) |
 | open | high | pm-tech-lead | `pm-scrum-master-rebase-pr-1814-form-rs-conflict` | Rebase and merge PR #1814 (form.rs split): real modify/delete conflict against dev post-#1781; needs manual rebase of the form/ split onto current form.rs head |
 | open | high | pm-devops | `pm-scrum-master-restore-cloud-cron` | Restore cloud routine cron schedule; routine ran 8 days late (last 2026-06-16 → today 2026-06-24). Add a stale-alert gate that fires after 3 days without a routine commit |
 | open | high | pm-scrum-master | `pm-scrum-master-sprint-status-reconcile-epic-6-7a` | Reconcile sprint-status.yaml with coverage.json: promote 7A-1/-2/-3 (done), 6-5 (verify done), 6-2/6-3/6-4 (partial) — labels at least 1 cycle stale across most Epic 7A and half of Epic 6 |
