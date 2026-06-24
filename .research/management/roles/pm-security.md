@@ -1,62 +1,66 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-24
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+## Headline
 
-## Summary
+Three high-severity surfaces landed this window (Stripe Checkout, idempotency-key middleware, accounting payment-match) with no recorded security review. Cross-tenant IDOR class continues to surface in monolith routes; mitigation is the refactor program, which is now active.
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+## Findings
 
-## next_actions
+### pm-security-stripe-checkout-no-review [high]
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+**Finding:** Story 11.5 Stripe Checkout (#1726) is live but has no pm-security review record in .research/management/post-merge-review.json. Stripe webhooks + checkout-session creation + payment-reminder dispatch (#1709) all introduce signed-payload verification + amount-tampering surfaces that need explicit threat-model sign-off.
 
-## risks
+**Evidence:** PR #1726 (Story 11.5), #1709 (payment-reminders), #1716 (event-bus retry can re-emit payment events).
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+### pm-security-idempotency-key-replay [high]
 
-## open_questions
+**Finding:** Idempotency-key middleware #1688 mediates payment + state-mutating writes but its key-scope, TTL, and replay-after-failure semantics aren't documented. A too-wide scope (e.g. per-tenant instead of per-principal+route) lets one user replay another's request; too-narrow leaves payment double-write risk.
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+**Evidence:** PR #1688 idempotency-key middleware merged; no integration test referenced.
 
-## decisions_needed
+### pm-security-acc-payment-match-state-machine [high]
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+**Finding:** Accounting payment-match state machine (#1811) executes outside the api-server tenant context. If accounting-server reads/writes the shared DB without RLS connection, cross-tenant payment misallocation is possible at the new boundary.
+
+**Evidence:** PR #1811 (accounting payment-match), #1808 (accounting-web), #1817 (TypeSpec spec).
+
+### pm-security-ocr-endpoint-input-validation [medium]
+
+**Finding:** OCR endpoint #1750 accepts arbitrary uploaded documents and likely shells out to a parser/external API. Needs explicit MIME/size guards, SSRF guard if it fetches signed URLs, and PII/log scrubbing on the parsed text path.
+
+**Evidence:** PR #1750 OCR endpoint.
+
+### pm-security-message-attachments-mime-confusion [medium]
+
+**Finding:** Message attachments (#1702 backend, #1712 UI) introduce a new file-upload surface separate from documents. If MIME validation diverges from documents/core.rs allow-list, attackers can use messaging as an upload bypass for blocked types.
+
+**Evidence:** PR #1702 + #1712 message attachments.
+
+### pm-security-iot-realtime-authz [medium]
+
+**Finding:** Real-time IoT dashboard (#1685) + IoT alert error feedback (#1740) likely push device-state events over WebSocket. WS authz must use the post-#480 token-not-in-query pattern and tenant-scope filter every fan-out event — broadcasting across tenants is the classic IoT-dashboard failure mode.
+
+**Evidence:** PR #1685, #1740. risks.json carries pm-qa-jwt-token-in-ws-logs open (#480) — same WS plumbing.
+
+### pm-security-residual-audit-hash-debug [low]
+
+**Finding:** Residual P1-04 from PR #435 (Debug-format audit-hash) still open in risks.json. None of the 95 merged PRs touch it.
+
+**Evidence:** risks.json pm-security-audit-hash-debug-format-p1-04 status=open since 2026-05-25.
+
+## Next actions
+
+- [high] Threat-model + post-merge security pass on Stripe Checkout #1726 (webhook signature verification, amount tampering, session-id leakage)
+- [high] Document idempotency-key scope/TTL/replay contract for middleware #1688; add integration test pinning scope = per-principal+route+body-hash
+- [high] Verify accounting-server uses the RLS-aware DB connection (or equivalent) before #1821 umbrella merges; cross-tenant payment-match regression test
+- [medium] Audit message-attachments MIME allow-list parity vs documents/core.rs; consolidate to one shared validator
+- [medium] Audit IoT WebSocket fan-out for tenant-scoped filtering + token-not-in-query (re-use post-#480 pattern)
+- [low] Close residual P1-04 Debug-format audit-hash from PR #435
+
+## Risks
+
+- **Stripe Checkout webhook signature bypass — if STRIPE_WEBHOOK_SECRET is missing/empty in env, the verifier may silently accept unsigned payloads (common pattern)** (medium/high) — Fail-closed assertion at boot: server refuses to start if STRIPE_WEBHOOK_SECRET empty in prod profile; integration test with tampered signature returns 400
+- **Accounting-server tenant boundary leak — new server reading shared DB without RLS lets one tenant's payment match overwrite another's ledger** (medium/high) — Mandate RLS connection in accounting-server DB layer; add cross-tenant payment-match regression test before #1821 merges
+- **Idempotency-key scope mis-configuration leads to either replay-attack window or payment double-write (depending on direction of error)** (medium/high) — Document the contract; pair test fixtures (one for replay, one for double-write); deny merge of payment routes that don't opt-in
+- **Message-attachments upload becomes a MIME-bypass vector for the document allow-list** (medium/medium) — Single shared validator; CI grep that flags any handler accepting multipart without calling the validator
+- **IoT WS broadcast cross-tenant leak — IoT alert events fan out to subscribers without tenant_id filter** (low/high) — Subscriber registration includes tenant_id; fan-out predicate asserts match; regression test with two-tenant fixture

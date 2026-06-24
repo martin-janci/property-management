@@ -1,0 +1,253 @@
+{
+  "date": "2026-06-24",
+  "generated": "2026-06-24T22:49:38Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "Routine has not run in 8d 19h (last_run_iso=2026-06-16T03:25:00Z, now=2026-06-24T22:42:12Z). Cloud cron likely paused; dispatcher still ticking on separate loop (commit b8d8ceff at 22:25Z today)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverts PR #1690 (re-added delegation frontend). Per #1713 body: 'delegation frontend stays retired. Re-wired standalone delegation feature into ppt-web' \u2014 original gap was contradicted at the architectural level (delegation feature retired upstream)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed unmerged 2026-06-22/23. Superseded by #1748 (mobile icon tsc fix landed via different path)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed unmerged 2026-06-22/23. Superseded by #1728 + #1729 (RLS baseline + service-role allowlist split)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 closed unmerged 2026-06-22/23. Superseded by #1694 (Leases sidebar nav landed via the canonical route-wiring PR)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed unmerged 2026-06-22/23. Superseded by #1695 (unit management UI shipped via #1695 BIT193 instead of BIT-188)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed unmerged 2026-06-22/23. Superseded by #1779? \u2014 closes #1627 saved-search alerts truncation; check if rolled into #1779 gap-81-2 hardening"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot bump merged (PR #1567)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot bump merged (PR #1568)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-ppt-web-core-authcontext-no-exp-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396-414 \u2014 initializeAuth() trusts any stored access token without verifying the JWT exp claim. The decodeJwtPayload() helper at L219 exists; one-line exp check would fix it. Symptom: expired stale tokens loaded as authenticated, first API call 401s, silent logout \u2014 'logged in then bounced' UX."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-pm-units-raw-fetch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:74-91 \u2014 useBuildingUnits() bypasses @ppt/api-client with a raw fetch('/api/v1/units?buildingId=...') that has no Authorization bearer + no X-Tenant-ID. Will 401 against the protected /units endpoint."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core",
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists + first-line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scoring",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation",
+      "observed": "matched",
+      "expected": "matched"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, all required sections present, Mode declared, files exist",
+      "observed": "1 plan, sections+mode+files OK",
+      "expected": "\u22642 + sections OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phases that failed: none \u2014 matches",
+      "expected": "no false positives"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans in plans/ OR _archive/",
+      "observed": "all converged",
+      "expected": "all converged"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "13 \u2265 7",
+      "expected": "now \u2265 HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "length=0",
+      "expected": "\u2264 caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "PM 5\u21926, CC 12\u21920, artifacts valid",
+      "expected": "advanced + valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

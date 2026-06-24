@@ -85,3 +85,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+
+## 2026-06-24 — Decisions surfaced
+
+- Epic ACC architecture: is accounting-server a permanent third server (alongside api-server + reality-server), or a transitional extraction? Affects deployment, auth, and shared-DB strategy.
+- Post-merge follow-up policy: auto-issues now dominate the issue tracker (76/84). Should they auto-close after N days without owner, or auto-block merge of the originating module?
+- Migration-number allocation: linear counter (current) vs date-based vs reserved-range-per-workstream — collisions are now a weekly event.
