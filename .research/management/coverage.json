@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-23T09:59:19Z",
-  "scan_kind": "deep",
+  "generated": "2026-06-24T16:12:00Z",
+  "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
@@ -21,7 +21,7 @@
         "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)"
       ],
       "gaps": [
-        "sprint-status still 'review' (not flipped to done) — verification/sign-off pending",
+        "sprint-status still 'review' (not flipped to done) \u2014 verification/sign-off pending",
         "announcements.md screen buildStatus=in-progress, not shipped"
       ],
       "epic": "epic-6",
@@ -66,7 +66,7 @@
         "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — code is ahead of label but story not marked done",
+        "sprint-status ready-for-dev \u2014 code is ahead of label but story not marked done",
         "announcements.md screen buildStatus=in-progress"
       ],
       "epic": "epic-6",
@@ -93,12 +93,12 @@
       "owner_role": "pm-backend",
       "evidence": [
         "sprint-status: 6-3-announcement-comments-discussion: ready-for-dev -> partial",
-        "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' — list/create/delete on /{id}/comments)",
+        "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' \u2014 list/create/delete on /{id}/comments)",
         "ppt-web: features/announcements/components/AnnouncementComments.tsx (+CSS); useAnnouncementComments hooks wired in ViewAnnouncementPageInner",
         "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — not marked done",
+        "sprint-status ready-for-dev \u2014 not marked done",
         "announcements.md screen buildStatus still in-progress (not shipped)",
         "No mobile comments UI observed"
       ],
@@ -130,7 +130,7 @@
         "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — not marked done",
+        "sprint-status ready-for-dev \u2014 not marked done",
         "No mobile pinned-band UI observed",
         "announcements.md screen buildStatus in-progress"
       ],
@@ -164,7 +164,7 @@
         "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — code is well ahead of the label but story not marked done"
+        "sprint-status ready-for-dev \u2014 code is well ahead of the label but story not marked done"
       ],
       "epic": "epic-6",
       "last_checked": "2026-06-23",
@@ -203,9 +203,9 @@
       "owner_role": "pm-security",
       "evidence": [
         "sprint-status: 6-6-neighbor-information: done",
-        "Backend: routes/neighbors.rs (list_neighbors, GET/PUT /users/me/privacy, PrivacySettings/ProfileVisibility — privacy-aware)",
+        "Backend: routes/neighbors.rs (list_neighbors, GET/PUT /users/me/privacy, PrivacySettings/ProfileVisibility \u2014 privacy-aware)",
         "mobile: screens/neighbors/NeighborsScreen + index + test",
-        "Privacy/visibility model present (NeighborView, PrivacySettings, ProfileVisibility) — security-sensitive, note for pm-security"
+        "Privacy/visibility model present (NeighborView, PrivacySettings, ProfileVisibility) \u2014 security-sensitive, note for pm-security"
       ],
       "gaps": [],
       "epic": "epic-6",
@@ -239,7 +239,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-24",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
@@ -279,7 +279,7 @@
       "id": "79-2-authentication-flow",
       "title": "Authentication Flow Implementation",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
@@ -289,15 +289,15 @@
         "coverage.json id=79-2: status=partial, confidence=high (AuthContext login/logout/refresh, JWT + @ppt/api-client, ProtectedRoute.tsx auth gates)",
         "Code present: ppt-web/src/pages/AuthCallbackPage.tsx, LoginPage.tsx, components/ProtectedRoute.tsx (+ tests), AuthRequiredGate.tsx",
         "Merged work: PRs #568/#609 SSO /auth/callback wiring, #642 cookie-Path reconciliation with tests; commits d0cd098a4/556c513ce add SSO callback + token-refresh integration tests",
-        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD"
+        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD",
+        "resolved: PR #1822 merged 2026-06-24 \u2014 reality-web SSO /auth/callback e2e integration tests (8 cases) close gap-79-2-auth-callback-e2e"
       ],
       "gaps": [
-        "coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining)",
         "story markdown frontmatter stale ('Status: pending')",
-        "security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off"
+        "security-sensitive (SSO/JWT/cookie Path) \u2014 note for pm-security on final sign-off"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-24",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -458,7 +458,7 @@
         "Backend: PUT /{id}/access (update_document_access) in core.rs; document_access_test.rs, integration/document_access_tests.rs, db/documents_rls_cross_tenant_tests.rs (RLS enforced)",
         "Frontend: mobile DocumentPermissionsScreen.tsx; ppt-web access controls in documents feature",
         "Merged PRs #1311 verify-permission-based-document-access-promote-v2, #1427 document_access RLS text[] binding fix",
-        "Security-sensitive (RLS/tenant access) — note for pm-security; sprint-status=ready-for-dev (stale)"
+        "Security-sensitive (RLS/tenant access) \u2014 note for pm-security; sprint-status=ready-for-dev (stale)"
       ],
       "gaps": [],
       "epic": "epic-7a",
@@ -530,10 +530,10 @@
         "Backend: routes/documents/shares.rs full surface (list/create/revoke shares, GET /shared/{token}, POST /shared/{token}/access); tests/document_share_access_tests.rs",
         "Frontend: ppt-web DocumentSharePanel.tsx; mobile DocumentShareSheet.tsx + documentShare.ts",
         "Merged PRs #445 mobile share UI, #1184 enforce RLS on public share, #1036 honor membership expiry in share",
-        "sprint-status flags a UX/validation issue (window.confirm + no UUID validation) — minor follow-up, not blocking; classified done with that caveat"
+        "sprint-status flags a UX/validation issue (window.confirm + no UUID validation) \u2014 minor follow-up, not blocking; classified done with that caveat"
       ],
       "gaps": [
-        "Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input — non-blocking polish item"
+        "Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input \u2014 non-blocking polish item"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-06-23",
@@ -592,7 +592,7 @@
         "Merged PRs: #530 (filing UI), #1359 (AC-4 draft auto-save), #1544 (draft autosave coverage), #1075/#1048 (AC coverage tests)"
       ],
       "gaps": [
-        "Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live",
+        "Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live",
         "Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))"
       ],
       "epic": "epic-80",
@@ -626,12 +626,12 @@
       "evidence": [
         "sprint-status.yaml: `80-3-mediation-resolution: partial` (authoritative)",
         "Code present: MediationPage.tsx, MediationWorkspacePage.tsx, MediationResolutionForm.tsx, MediationSessionsPanel.tsx, ResolutionCard.tsx, MediationAssignDialog.tsx + tests; hooks useAssignMediator/useResolveDispute/useEscalateDispute wired (PR #514 added /resolve + escalations backend)",
-        "docs/screens/ppt/dispute-detail.md buildStatus: shipped but apiStatus: partial — party submissions endpoints remain unwired",
+        "docs/screens/ppt/dispute-detail.md buildStatus: shipped but apiStatus: partial \u2014 party submissions endpoints remain unwired",
         "Merged PRs: #514 (mediation-api /resolve), #1029 (mediation error state), #1128 (mediation spinner dedupe); sprint-status note: route wiring resolved 2026-05-25"
       ],
       "gaps": [
         "Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map)",
-        "Mediation-resolution flow not promoted to done in sprint-status — story remains partial pending submissions integration"
+        "Mediation-resolution flow not promoted to done in sprint-status \u2014 story remains partial pending submissions integration"
       ],
       "epic": "epic-80",
       "last_checked": "2026-06-23",
@@ -695,7 +695,7 @@
       ],
       "gaps": [
         "sprint-status.yaml has no 81-2 key (only epic-80 keys present); classification driven by code+screen+PR consensus",
-        "Screen apiStatus: partial — download/retry flow had a test-gap follow-up (d1785e5fb)"
+        "Screen apiStatus: partial \u2014 download/retry flow had a test-gap follow-up (d1785e5fb)"
       ],
       "epic": "epic-81",
       "last_checked": "2026-06-23",
@@ -963,7 +963,7 @@
         "Backend route registered in lib.rs: /api/v1/webhooks/portals -> routes::portal_webhooks::router(); portal_webhooks.rs (28KB) with reality_portal/sreality/bezrealitky view+inquiry webhooks and HMAC-SHA256 signature verification (verify_webhook_signature, require_portal_webhook_verification)",
         "Additional inbound portal receivers in integrations/webhook.rs (portal/listing-site webhooks, public no-auth) with PortalInquiryWebhook/PortalViewWebhook models",
         "Merged PRs: #874 (fail closed on unverified portal webhooks), #1052 (HTTP-level portal webhook tests)",
-        "Security-sensitive (HMAC verification, fail-closed) — flag for pm-security review"
+        "Security-sensitive (HMAC verification, fail-closed) \u2014 flag for pm-security review"
       ],
       "gaps": [
         "Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect"
@@ -1115,13 +1115,13 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "backend/crates/db/migrations/00081_create_pgvector.sql labeled 'Story 103.5: pgvector migration for RAG (Retrieval Augmented Generation)' — internal Epic 103 numbering matches the storage.rs Epic 103 label for this epic",
+        "backend/crates/db/migrations/00081_create_pgvector.sql labeled 'Story 103.5: pgvector migration for RAG (Retrieval Augmented Generation)' \u2014 internal Epic 103 numbering matches the storage.rs Epic 103 label for this epic",
         "Migration enables pgvector extension conditionally and adds vector column/index only if extension is available",
         "Graceful-degradation design: keeps a JSONB embedding fallback column 'when pgvector is not available', migration still succeeds without vector setup",
         "No application-layer RAG retrieval surfaced (no embedding-write/cosine-search service or query handler found in routes/repositories)"
       ],
       "gaps": [
-        "RAG retrieval/query service (embedding generation + similarity search) not implemented — migration only",
+        "RAG retrieval/query service (embedding generation + similarity search) not implemented \u2014 migration only",
         "Vector path is conditional/optional (JSONB fallback) rather than a hard pgvector dependency",
         "No sprint-status entry and no test exercising vector similarity search",
         "no screen-map (orphan epic)"
@@ -1171,7 +1171,7 @@
         "Merged PRs #93/#97 + dedicated commit a1c9d9e74 'feat(epic-85): story 85.2'; story file says Status: pending and epic-85 not in sprint-status, but code+PRs agree implemented"
       ],
       "gaps": [
-        "AC-5 automated build scripts not found under mobile-native (no build*.sh located) — verify CLI build automation exists",
+        "AC-5 automated build scripts not found under mobile-native (no build*.sh located) \u2014 verify CLI build automation exists",
         "Story markdown still Status: pending (stale vs. merged code)",
         "no screen-map (orphan epic)"
       ],
@@ -1463,7 +1463,7 @@
         "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)"
       ],
       "gaps": [
-        "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done",
+        "sprint-status still ready-for-dev though code+PRs landed \u2014 needs status reconciliation to done",
         "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security)",
         "no screen-map (orphan epic)"
       ],
@@ -1515,7 +1515,7 @@
         "merged PR #844 (gap-10b-7 contextual help handler regression tests)"
       ],
       "gaps": [
-        "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done"
+        "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed \u2014 needs reconciliation to done"
       ],
       "epic": "epic-10b",
       "last_checked": "2026-06-23",

@@ -85,3 +85,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+## 2026-06-24
+- [ ] Declare PR #1797 (unauthenticated OCR endpoints + rental PII) a release blocker requiring merge before any rental Epic story is promoted to done — owner: pm-security / Engineering Lead
+- [ ] Confirm whether issue #481 (OAuth revocation bypass) blocks the Sprint 10A OAuth stories from shipping to staging, or whether a feature-flag can gate OAuth externally until the fix lands — owner: Engineering Lead
+- [ ] Agree on a minimum-entropy floor for JWT_SECRET and ESIGN_TOKEN_SECRET in the preflight check (#1758) — what bit-length threshold is acceptable? — owner: rust-backend / pm-security
+- [ ] Close or explicitly defer test-hardening-batch items #480 and #481 (security-high) — deadline needed before any OAuth stories ship to staging — owner: pm-security
+- [ ] Assign sprint slot and owner role for Epic ACC (PR #1821, :8082 standalone server) before further implementation lands — owner: pm-scrum-master + product stakeholder
+- [ ] Decide whether the 31 open untriaged issues (#1758–#1793) require this-sprint triage or batch into next sprint planning — owner: pm-scrum-master
+- [ ] Confirm story 79-2-authentication-flow is now 'done' given PR #1822 merged and coverage.json now reflects it — owner: pm-frontend

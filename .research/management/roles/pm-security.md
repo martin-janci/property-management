@@ -1,62 +1,36 @@
-# pm-security — 2026-05-27
-
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+# pm-security — 2026-06-24
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Eight open test-hardening issues (#480–#487) gate four in-progress stories; two are security-high: **#480** (WebSocket JWT-in-query-param logging) and **#481** (OAuth refresh-token revocation bypass — RFC 9700). Seven draft PRs hardening PII / payment / IDOR / channel-validation remain unmerged from the last 8 days. A residual cross-tenant IDOR on `ai.rs list_listing_descriptions` (backlog item `security-llm-doc-idor`, status: ready) still has no merged fix.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+1. **HIGH** — Merge or close PR #1797 (OCR endpoints unauthenticated + manager-gate on persistent rental/guest PII reads) before any rental-flow story ships to prod. *dep: rust-backend*.
+2. **HIGH** — Resolve issue #481 (OAuth refresh-token revocation bypass): fix revocation query (`revoked_at IS NULL` restored in token repo) and add RFC 9700 regression test.
+3. **HIGH** — Resolve issue #480 (WebSocket auth token in query-param logged + session not re-validated after JWT expiry): strip token from access-log path and add expiry re-check.
+4. **HIGH** — Merge PR #1799 (msg attachment IDOR — bind file_key to thread + MIME validation) and PR #1823 (rental guest ID-doc PII audit + content-sniff + manager-gate parity).
+5. **MEDIUM** — Fix residual cross-tenant read IDOR: `ai.rs list_listing_descriptions` (routes/ai.rs:2666-2685) still discards `_principal`. See backlog `security-llm-doc-idor`.
+6. **MEDIUM** — Resolve issue #1758 (preflight presence-check misses length floors for JWT_SECRET / ESIGN_TOKEN_SECRET, from PR #1753) and #1782 (third `JwtService` token-verification copy left unmigrated by PR #1744; lost `token_type` field in logs).
 
-## risks
+## Risks (added today)
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **HIGH × HIGH** — OAuth refresh-token revocation bypass (#481). Block stories 10A-1 / 10A-3 from shipping until #481 closes.
+- **MED × HIGH** — Seven security-flavored draft PRs in flight simultaneously — merge sequencing risk; partial fixes may ship. Prioritize #1797 + #1799 first.
+- **MED × HIGH** — WS JWT in access log (#480) — bearer tokens persisted in plaintext. Confirm log pipeline doesn't persist query strings to external sinks meanwhile.
+- **MED × MED** — `ProtectedRoute` role fallback uses `tenants[0]` for multi-tenant users (#482) — wrong perms on React SPA. Server-side authz is the real gate but client UI is misleading.
+- **MED × MED** — Announcements/Faults wiring uses direct `getToken()` bypassing axios interceptor (#486) — silent token-refresh failures produce unauthenticated requests with no error surfaced.
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Has PR #1797 been reviewed by a backend security engineer, or is it still author-only?
+- Issue #1782 references a third `JwtService` verification copy that wasn't migrated by PR #1744 — which file/module, and is it reachable on authenticated paths in production?
+- Issues #1786 / #1763 ask for authz regression tests on the sensor WS DB-checked path after PR #1737 — have these tests been authored yet?
+- `security-llm-doc-idor` (status: ready) has a plan but no linked open PR — assigned owner?
+- PR #1806 switches `booking_channel` manager-gate from JWT role claim to DB-backed check — applied to all booking_channel read paths or only write?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Declare PR #1797 a release blocker for any rental Epic story promotion.
+- Confirm whether #481 blocks Sprint 10A OAuth stories from staging, or whether a feature flag can gate OAuth externally until the fix lands.
+- Agree on a minimum-entropy floor for JWT_SECRET / ESIGN_TOKEN_SECRET in the preflight check (#1758).
