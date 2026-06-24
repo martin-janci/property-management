@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "79-2-authentication-flow",
-  "selected_at": "2026-06-24T12:14:50Z",
+  "epic_prefix": "10b-5-support-data-access",
+  "selected_at": "2026-06-24T22:20:52Z",
   "last_action": "repick",
-  "reason": "prior target 'churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs' exhausted; closest-to-done is '79-2-authentication-flow' (open=1 claimable=1)",
+  "reason": "prior target '79-2-authentication-flow' exhausted; closest-to-done is '10b-5-support-data-access' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
