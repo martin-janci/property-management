@@ -1,0 +1,82 @@
+{
+  "run_iso": "2026-06-24T06:35:00Z",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z; now 2026-06-24T06:35Z — 8d 3h gap (>36h threshold; >3d also triggers stale_routine_alert)."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-06-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-1 line-count churn since 2026-06-16: 2939 added+deleted lines across 2 commits (PR #1745 large-add + PR #1750 epic-18 guest ID-document). File still extant (2939-line monolith)."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-06-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-2 line-count churn: 2818 lines in 1 commit (PR #1745). Heir to the just-resolved booking-rs hotspot after PR #1693 split — re-emerging in mod.rs aggregator."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-06-16, hotspot_history.oauth_integration_tests",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "Top-3 line-count churn: 2718 lines in 1 commit (PR #1744 auth unify access-token). hotspot_history.runs_seen advances to 3 (last_seen 2026-06-02 → 2026-06-24)."
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746 file list",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1746 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_mock.ts} without updating any docs/screens/reality/*.md. Heuristic caveat: change is FE field-wiring + IDOR tests, not a screen surface restructure."
+    },
+    {
+      "id": "code-review-ppt-web-core-2026-06-24-no-findings",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 ppt-web-core rotating review",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Rotating expert review of ppt-web-core (oldest unreviewed, 19d stale) returned 3 candidate findings; all 3 rejected by adversarial readiness pass (useNetworkStatusEffect ref-sync misread as leak; AuthContext.login try/finally misread as silent-swallow; decodeJwtPayload JSON.parse misread as outside catch). Net code-review findings this run: 0. Cursor advances regardless."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-06-24.md && head -1 | grep ^# 2026-06-24", "observed": "match", "expected": "match" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD", "observed": "true (last_pr_seen 1439→1818, last_issue_seen 1437→1793, last_commit_sha 4829015b→a19b382d, seen_signals 230→236, hotspot_history +3, pm_cursor.next_index 5→6, coverage_cursor.next_index 12→0)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique-by-id on backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq cross-check signals[] vs prev seen_signals (cumulative allowlist applied)", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap (no score>8) + decay applied (7 items -1, 9 items dropped)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — vacuous pass", "observed": "0 new plans", "expected": "every new plan has 'adversarial pass: …'" },
+    { "goal": "G7", "passed": true, "command": "git diff --cached --diff-filter=A -- .research/plans/ excluding _archive", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached pattern grep for secrets/hostnames", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md /tmp/backlog.regen.md", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' line", "observed": "none", "expected": "consistent with cursors" },
+    { "goal": "G12", "passed": true, "command": "for each prior plan slug check active or archive", "observed": "all 9 present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "git ls-files _archive count vs HEAD count", "observed": "HEAD 7, now 11", "expected": "now >= HEAD" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions length + idempotency + caps", "observed": "0 actions (no candidate)", "expected": "<=3 total, <=1 per category, no signal_id reused from auto_fix_history" },
+    { "goal": "G16", "passed": true, "command": "jq -e .items on action-list/risks + project-state non-empty + pm_cursor in 0..7 + GC7", "observed": "EPICS=13 CC_NOW=0 CC_HEAD=12 PM_NOW=6 PM_HEAD=5 — all valid", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached added-lines telegram token pattern grep", "observed": "0", "expected": "0" }
+  ]
+}
