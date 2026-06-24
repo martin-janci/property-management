@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-16 03:25 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-24 02:30 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -15,13 +15,10 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on r | #952, PR #1144, issue #952 closed | 2026-06-07 | done |
 | 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769, PR #1141, issue #769 closed | 2026-06-07 | done |
 | 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildin | #789, PR #1142, issue #789 closed | 2026-06-07 | done |
-| 1 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work  | #1151 | 2026-06-07 | open |
 | 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749, issue #749 closed | 2026-06-06 | done |
 | 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755, issue #755 closed | 2026-06-06 | done |
 | 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764, issue #764 closed | 2026-06-06 | done |
 | 1 | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | #765, issue #765 closed | 2026-06-06 | done |
-| 1 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-03 | open |
-| 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK | #951 | 2026-06-03 | open |
 | 1 | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | #751, #942 | 2026-06-02 | done |
 | 1 | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | #752, #929 | 2026-06-02 | done |
 | 1 | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | #756, #934 | 2026-06-02 | done |
@@ -59,6 +56,9 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | #836, PR #866 | 2026-05-31 | done |
 | 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | #845, PR #862 | 2026-05-31 | done |
 | 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | #849, PR #869 | 2026-05-31 | done |
+| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work  | #1151 | 2026-06-24 | dropped |
+| 0 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-24 | dropped |
+| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK | #951 | 2026-06-24 | dropped |
 | 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
 
 ## Status legend
