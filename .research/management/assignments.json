@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T12:18:00Z",
+  "generated": "2026-06-24T12:30:38Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
@@ -268,18 +268,18 @@
     {
       "task_id": "79-2-authentication-flow",
       "branch": "auto-impl/79-2-authentication-flow-fa29d132",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-24T12:18:00Z",
-      "last_updated": "2026-06-24T12:18:00Z",
-      "status_changed_at": "2026-06-24T12:18:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-24T12:30:38Z",
+      "status_changed_at": "2026-06-24T12:30:38Z",
+      "pr_number": 1822,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1822",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=1822 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=added reality-web SSO /auth/callback integration test (8 cases); IG3 verified via weakened-guard; vitest+typecheck+biome green; ppt-web side already covered on dev",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
