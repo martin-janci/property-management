@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T06:30:13Z",
+  "generated": "2026-06-24T10:16:05Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
@@ -236,6 +236,28 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-d0d8ffb0",
+      "status": "in-progress",
+      "claimed_at": "2026-06-24T10:16:05Z",
+      "last_updated": "2026-06-24T10:16:05Z",
+      "status_changed_at": "2026-06-24T10:16:05Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
