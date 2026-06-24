@@ -1028,9 +1028,15 @@ impl Scheduler {
     // Story 12.2: Meter Reading Reminders
     // ========================================================================
 
-    /// Notify residents whose building has a submission window closing soon and
-    /// who have not yet submitted a reading for any unit-linked meter in that
-    /// window's building.
+    /// Notify residents of units that have a unit-linked meter in a building
+    /// whose submission window is closing soon.
+    ///
+    /// NOTE (#1772): this does **not** filter out residents who have already
+    /// submitted a reading for the window — every resident of a unit with a
+    /// unit-linked meter is notified while the window is within
+    /// `meter_reminder_days_before`. An "already submitted" skip (and
+    /// per-resident-per-window dedup, tracked in #1777) are deliberate
+    /// follow-ups, not yet implemented here.
     async fn send_meter_reminders(&self) -> Result<(), sqlx::Error> {
         let windows = self
             .meter_repo
