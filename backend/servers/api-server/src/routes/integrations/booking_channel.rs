@@ -18,9 +18,11 @@ use axum::{
     Json, Router,
 };
 use chrono::NaiveDate;
+use db::models::multi_currency::SupportedCurrency;
 use db::models::BookingListQuery;
 use integrations::{AvailabilityUpdate, BookingClient, PushOutcome, RateUpdate};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -39,6 +41,15 @@ use common::TenantRole;
 /// `install.rs` push endpoints (issue #572) — applied here to the unified
 /// gap-83-2 OTA push surface, which had no such guard.
 pub const MAX_BATCH_SIZE: usize = 500;
+
+/// Maximum accepted `base_rate` for a single rate entry.
+///
+/// An absurdly large amount serialises unchanged into the OTA
+/// `AmountAfterTax` attribute. `1_000_000.00` (one million, 2 dp) is far above
+/// any realistic nightly rate while still rejecting obvious garbage/overflow
+/// values before they reach Booking.com.
+pub const MAX_RATE: rust_decimal::Decimal =
+    rust_decimal::Decimal::from_parts(100_000_000, 0, 0, false, 2);
 
 // ============================================================
 // Types
@@ -151,10 +162,17 @@ pub struct ConflictCheckResponse {
 ///   `AmountAfterTax` attribute in `OTA_HotelRateAmountNotifRQ` and is a
 ///   money-correctness footgun, so it is rejected fast with a 400 (symmetric
 ///   to the availability guard).
-/// * **Well-formed currency** — `currency` is carried verbatim into the
-///   `CurrencyCode` XML attribute, so a structurally invalid code (not a
-///   3-letter ASCII-uppercase ISO-4217-shaped code) is rejected fast with a
+/// * **Sane rate magnitude/scale** — `base_rate` must not exceed [`MAX_RATE`]
+///   and must have at most 2 fractional digits; both feed the OTA
+///   `AmountAfterTax` attribute, which expects realistic 2-decimal money.
+/// * **Supported currency** — `currency` is carried verbatim into the
+///   `CurrencyCode` XML attribute, so it must be a supported ISO-4217 code from
+///   the shared [`SupportedCurrency`] allowlist (in canonical uppercase form).
+///   A well-formed-but-unsupported code (e.g. `"ZZZ"`) is rejected fast with a
 ///   400 instead of producing a document Booking.com rejects.
+/// * **Single currency per batch** — every rate in one push must share the same
+///   currency, because a single `OTA_HotelRateAmountNotifRQ` is single-currency
+///   per property; a mixed batch is rejected.
 ///
 /// On failure, returns `(error_code, human_message)` so the caller can build
 /// a `400` [`ErrorResponse`]. On success, returns `Ok(())`.
@@ -182,15 +200,48 @@ fn validate_listing_push(request: &ListingPushRequest) -> Result<(), (&'static s
         return Err(("INVALID_RATE", "base_rate must be non-negative"));
     }
 
+    // Reject implausibly large amounts or amounts with more than 2 fractional
+    // digits: both serialise straight into the OTA `AmountAfterTax` attribute,
+    // which expects a sane, 2-decimal money value.
     if request
         .rates
         .iter()
-        .any(|r| r.currency.len() != 3 || !r.currency.chars().all(|ch| ch.is_ascii_uppercase()))
+        .any(|r| r.base_rate > MAX_RATE || r.base_rate.scale() > 2)
     {
         return Err((
-            "INVALID_CURRENCY",
-            "currency must be a 3-letter ASCII-uppercase code",
+            "INVALID_RATE",
+            "base_rate must be at most 1000000.00 with no more than 2 decimal places",
         ));
+    }
+
+    // Validate the currency against the shared ISO-4217 allowlist
+    // (`SupportedCurrency`) rather than mere letter-shape. A structurally
+    // well-formed but unsupported code (e.g. "ZZZ") would otherwise be carried
+    // verbatim into the `CurrencyCode` XML attribute and rejected by
+    // Booking.com. The code must already be in canonical uppercase form because
+    // it is forwarded unchanged to the OTA payload, so we reject a code that
+    // parses only after case-folding (e.g. "eur").
+    if request.rates.iter().any(|r| {
+        SupportedCurrency::from_str(&r.currency)
+            .map(|c| c.to_string() != r.currency)
+            .unwrap_or(true)
+    }) {
+        return Err((
+            "INVALID_CURRENCY",
+            "currency must be a supported ISO-4217 code",
+        ));
+    }
+
+    // A single OTA_HotelRateAmountNotifRQ is single-currency per property, so a
+    // batch that mixes currencies (e.g. one EUR, one USD) is a silent footgun —
+    // reject it instead of pushing an ambiguous payload.
+    if let Some(first) = request.rates.first() {
+        if request.rates.iter().any(|r| r.currency != first.currency) {
+            return Err((
+                "INVALID_CURRENCY",
+                "all rates in a push must share one currency",
+            ));
+        }
     }
 
     Ok(())
@@ -944,6 +995,69 @@ mod tests {
         req.rates[1].currency = "eur".to_string();
         let err = validate_listing_push(&req).unwrap_err();
         assert_eq!(err.0, "INVALID_CURRENCY");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_unknown_currency() {
+        // IG3: a structurally well-formed but unsupported code ("ZZZ") passed
+        // the old `len()==3 && all-uppercase` structural guard and was carried
+        // verbatim into the OTA `CurrencyCode` attribute. The `SupportedCurrency`
+        // allowlist now rejects it. Fails on pre-fix `dev`, passes after.
+        let mut req = make_request(0, 2);
+        req.rates[1].currency = "ZZZ".to_string();
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_CURRENCY");
+    }
+
+    #[test]
+    fn test_validate_listing_push_zero_base_rate_is_valid() {
+        // Positive path mirroring `zero_available_count_is_valid`: a zero
+        // `base_rate` with a valid "EUR" currency stays Ok, so future
+        // over-tightening of the rate/currency guards is caught.
+        let mut req = make_request(0, 2);
+        req.rates[0].base_rate = rust_decimal::Decimal::ZERO;
+        req.rates[1].base_rate = rust_decimal::Decimal::ZERO;
+        assert!(validate_listing_push(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_listing_push_accepts_supported_non_eur_currency() {
+        // CHF is in the `SupportedCurrency` allowlist (but NOT in the narrower
+        // `common::types::Currency` set) — it must be accepted.
+        let mut req = make_request(0, 2);
+        req.rates[0].currency = "CHF".to_string();
+        req.rates[1].currency = "CHF".to_string();
+        assert!(validate_listing_push(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_mixed_currency() {
+        // A single OTA push is single-currency per property; a EUR+USD batch is
+        // a silent footgun and must be rejected.
+        let mut req = make_request(0, 2);
+        req.rates[0].currency = "EUR".to_string();
+        req.rates[1].currency = "USD".to_string();
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_CURRENCY");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_over_cap_base_rate() {
+        // An absurd magnitude above MAX_RATE (1_000_000.00) is rejected before
+        // it serialises into `AmountAfterTax`.
+        let mut req = make_request(0, 1);
+        req.rates[0].base_rate = MAX_RATE + rust_decimal::Decimal::new(1, 2);
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_RATE");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_excessive_scale_base_rate() {
+        // More than 2 fractional digits is rejected (OTA money is 2-decimal).
+        let mut req = make_request(0, 1);
+        req.rates[0].base_rate = rust_decimal::Decimal::new(10123, 3); // 10.123
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_RATE");
     }
 
     #[test]
