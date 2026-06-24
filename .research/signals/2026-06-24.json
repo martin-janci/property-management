@@ -1,0 +1,246 @@
+{
+  "date": "2026-06-24",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "lag_hours": 202,
+  "merged_pr_count": 95,
+  "merged_pr_range": [
+    1567,
+    1817
+  ],
+  "open_pr_touched_count": 21,
+  "closed_unmerged_count": 5,
+  "issues_count": 100,
+  "max_issue_seen": 1793,
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "routine clock",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso=2026-06-16T03:25:00Z → 202h (8d) since last run; cloud cron skipped many days"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverts delegation frontend that was re-added in #1690 — title 'revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)'"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched backend/servers/api-server/src/routes/messaging.rs across PRs #1756 #1768 (camelCase wire flips) + ongoing messaging work"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/main.rs",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16",
+      "score_delta": 0,
+      "evidence": [
+        "already-seen signal — recent_churn=3 commits this run; runs_seen=2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/main.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2",
+      "score_delta": 1,
+      "evidence": [
+        "main.rs touched 3 commits this run (PRs touching route registration); runs_seen=2 with recent_churn cumulative"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched backend/crates/db/src/models/messaging.rs across messaging wire-contract + N-party work"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump gradle-minor-patch group in /mobile-native (2 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump tower-http 0.6.11 → 0.7.0 in /backend axum group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-block-user-cross-tenant",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs:1272-1298 — block_user accepts user_id_to_block from path without verifying the target belongs to caller tenant_id; INSERT goes through with organization_id=caller_tenant but blocked_id can belong to any tenant (asymmetric with start_thread:383-400 which validates recipients are in-tenant)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no dup non-cumulative signal id with non-zero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "every open item with prev.updated_at<=today-14 lost ≥1 or moved to dropped",
+      "observed": "no violations",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan annotated `adversarial pass:` in brief",
+      "observed": "1/1 plan annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; metadata + 11 headings + Mode + capability + files-exist",
+      "observed": "1 plan, all checks pass",
+      "expected": "all checks pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research/ files staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret pattern in staged diff (excl. baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists no failed phases",
+      "observed": "Phases that failed: none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still in plans/ or _archive/",
+      "observed": "13/13 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= count at HEAD",
+      "observed": "11 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions, kill switch off",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor in 0..7 + GC7 cursor liveness",
+      "observed": "PM 5→6, CC 12→0 (13 epics)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff (excl. baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

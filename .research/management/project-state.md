@@ -1,7 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
-
+_Generated: 2026-06-24 — daily PM rotation (Scrum Master + pm-security; routine upkeep — light pass after 8-day cloud-cron lag). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a)._
 ## Executive summary
 
 - **`dev` backend is RED (issue #1437, critical).** PR #1426 merged despite breaking compile; ALL backend CI gates are now broken on `dev` until #1435 or #1436 lands. This is the **second dev-red incident in 14 days** (cf. #1332 unblocked 2026-06-14 via #1379) and exposes a structural gap: `backend.yml` runs on PR but not on push, so a merge that conflicts with `main`/peer PRs can break compile silently after-the-fact. pm-devops is filing this as the headline blocker.
@@ -70,3 +69,13 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **Genuinely unfinished slices:** 84-5 pgvector RAG retrieval/query service (migration only), 80-3 mediation party-submission endpoints (unwired), 80-2 dispute redesign 5-step wizard + i18n, 6-3/6-4 mobile comments/pinned UI, 79-1/79-2 e2e (79-2 security-sensitive: SSO/JWT/cookie).
 - **Systemic screen-map drift:** 0 of ~120 screen-maps populate frontmatter `epics:` → epic→screen linkage impossible; this manufactures the 29 "orphan" screens (really out-of-scan-scope: 13 of 25 epics). Backfilling `epics:` is the single highest-leverage fix. Also: 2 orphan epics (epic-85 env/build, epic-8a NotificationSettingsPage), 4 missing UC links (UC-10/29/33/40).
 - **Top coverage actions** — *secondary to the #1437 dev-red incident in "What's next" above*: (1) reconcile 79-2 auth-flow → done with pm-security SSO/JWT/cookie sign-off; (2) reconcile 10b-5 support-data-access → done with retention/access-audit check; (3) finish & promote announcements 6-1/6-2/6-5; (4) complete 79-1 e2e verification; (5) backfill screen-map `epics:` frontmatter.
+
+## Run notes 2026-06-24 (upkeep)
+
+This was a catch-up pass after the cloud cron skipped ≈ 8 days (last run 2026-06-16T03:25Z). 95 PRs merged in the window (range #1567–#1817). Key delivery surface:
+- Messaging hardening flood (camelCase wire flips #1756 #1768; IDOR/PII guards in #1799, #1797, #1802 still open) — `routes/messaging.rs` is the top churn file of the window.
+- Refactor wave: 8 churn-hotspot route/repository splits landed (#1683 #1693 #1700 #1708 #1718 #1719 #1796 #1798 #1800 #1810 #1816); 17 backlog hotspot rows resolved as a result.
+- Rust dependabot bump landed: tower-http 0.6.11 → 0.7.0 (#1568) — no observed regression in this window.
+- **Security finding promoted this run:** `code-review-api-handlers-block-user-cross-tenant` — `block_user`/`unblock_user` lack the same cross-tenant `organization_members` gate that `start_thread` enforces. Plan at `.research/plans/code-review-api-handlers-block-user-cross-tenant.md`. Security fast-track (vector=security, confidence=high, score=3).
+
+No pm-security agent was spawned this upkeep run (token budget); the finding above is the surrogate signal from the rotating expert review.
