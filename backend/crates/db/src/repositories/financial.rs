@@ -1551,20 +1551,28 @@ impl FinancialRepository {
     // Story 11.6: Scheduler payment reminder & overdue transition helpers
     // ========================================================================
 
-    /// Find all `sent` invoices with `due_date` within the next `days` days,
-    /// across all organizations. Used by the scheduler reminder tick.
+    /// Find all `sent` or `partial` invoices with `due_date` within the next
+    /// `days` days, across all organizations. Used by the scheduler reminder
+    /// tick.
+    ///
+    /// The due/overdue boundary is computed with SQL `CURRENT_DATE`
+    /// (`make_interval`) rather than `Utc::now()` in Rust so it agrees with the
+    /// `update_invoice_payment_status` trigger (migration 00040), which also
+    /// keys off `CURRENT_DATE`. This avoids a CET/CEST tenant flipping
+    /// due/overdue a day early or late when process TZ and DB TZ differ
+    /// (#1769 finding 2). `partial` invoices are included so partially-paid
+    /// invoices get an upcoming-due warning before the overdue escalation
+    /// (which already covers `partial`) (#1790 finding 2).
     pub async fn find_invoices_due_for_reminder(
         &self,
         days: i64,
     ) -> Result<Vec<Invoice>, SqlxError> {
-        let today = Utc::now().date_naive();
-        let cutoff = today + chrono::Duration::days(days);
         sqlx::query_as::<_, Invoice>(
             r#"
             SELECT * FROM invoices
-            WHERE status = 'sent'
-              AND due_date > $1
-              AND due_date <= $2
+            WHERE status IN ('sent', 'partial')
+              AND due_date > CURRENT_DATE
+              AND due_date <= CURRENT_DATE + make_interval(days => $1)
               AND balance_due > 0
               -- Persistent dedup (#1790): skip invoices reminded within the last
               -- 24h so a 60s scheduler tick can't re-spam the whole window.
@@ -1573,8 +1581,7 @@ impl FinancialRepository {
             ORDER BY due_date ASC
             "#,
         )
-        .bind(today)
-        .bind(cutoff)
+        .bind(days as i32)
         .fetch_all(&self.pool)
         .await
     }
@@ -1599,18 +1606,22 @@ impl FinancialRepository {
         &self,
         grace_period_days: i64,
     ) -> Result<Vec<Invoice>, SqlxError> {
-        let grace_cutoff = Utc::now().date_naive() - chrono::Duration::days(grace_period_days);
+        // Drive the cutoff off SQL `CURRENT_DATE` (matching the
+        // `update_invoice_payment_status` trigger in migration 00040) instead of
+        // `Utc::now().date_naive()`, so the scheduler and the trigger share one
+        // definition of "overdue" regardless of process vs DB timezone (#1769
+        // finding 2).
         sqlx::query_as::<_, Invoice>(
             r#"
             UPDATE invoices
             SET status = 'overdue', updated_at = NOW()
             WHERE status IN ('sent', 'partial')
-              AND due_date < $1
+              AND due_date < CURRENT_DATE - make_interval(days => $1)
               AND balance_due > 0
             RETURNING *
             "#,
         )
-        .bind(grace_cutoff)
+        .bind(grace_period_days as i32)
         .fetch_all(&self.pool)
         .await
     }
