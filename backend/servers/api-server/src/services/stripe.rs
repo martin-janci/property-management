@@ -65,13 +65,39 @@ pub struct CreatedCheckoutSession {
     pub url: String,
 }
 
+/// The number of minor units in one major unit of `currency`, per Stripe's
+/// currency table. Most currencies are two-decimal (×100), but a handful are
+/// zero-decimal (charged as whole units, ×1) or three-decimal (×1000). Using a
+/// flat ×100 would charge a JPY invoice 100× and a KWD invoice 0.1×.
+///
+/// The match is on the uppercase ISO-4217 code; unknown codes default to the
+/// two-decimal majority. Lists mirror Stripe's documented zero-decimal and
+/// three-decimal currency sets.
+pub fn minor_unit_factor(currency: &str) -> i64 {
+    match currency.to_uppercase().as_str() {
+        // Zero-decimal currencies — the amount is already in the smallest unit.
+        "BIF" | "CLP" | "DJF" | "GNF" | "JPY" | "KMF" | "KRW" | "MGA" | "PYG" | "RWF" | "UGX"
+        | "VND" | "VUV" | "XAF" | "XOF" | "XPF" => 1,
+        // Three-decimal currencies.
+        "BHD" | "IQD" | "JOD" | "KWD" | "LYD" | "OMR" | "TND" => 1000,
+        // Two-decimal majority (EUR, USD, GBP, …).
+        _ => 100,
+    }
+}
+
 /// Create a Stripe Checkout Session for `amount` (in `currency`) tied to an
 /// invoice. `amount` is the invoice currency amount (e.g. 12.34 EUR); Stripe
-/// expects the smallest currency unit (cents), so we multiply by 100.
+/// expects the smallest currency unit, so we scale by the per-currency factor
+/// from [`minor_unit_factor`] (×100 for two-decimal currencies, ×1 for
+/// zero-decimal, ×1000 for three-decimal).
 ///
 /// `client_reference_id`/`metadata.invoice_id` carry our invoice id so the
 /// webhook (and any manual reconciliation) can correlate the session back to
 /// the invoice without trusting client input.
+///
+/// The request carries an `Idempotency-Key` derived from `invoice_id` so a
+/// retried/double-submitted checkout for the same invoice does not mint
+/// duplicate Stripe sessions.
 #[allow(clippy::too_many_arguments)]
 pub async fn create_checkout_session(
     secret_key: &str,
@@ -87,8 +113,11 @@ pub async fn create_checkout_session(
         return Err(CheckoutError::NotConfigured);
     }
 
-    // Smallest currency unit (cents). Round to avoid sub-cent fractions.
-    let unit_amount = (amount * Decimal::from(100))
+    // Smallest currency unit. Scale by the per-currency factor (×100 for most,
+    // ×1 zero-decimal, ×1000 three-decimal) and round to avoid sub-unit
+    // fractions.
+    let factor = minor_unit_factor(currency);
+    let unit_amount = (amount * Decimal::from(factor))
         .round()
         .to_i64()
         .ok_or_else(|| CheckoutError::Decode("amount out of range".to_string()))?;
@@ -120,6 +149,10 @@ pub async fn create_checkout_session(
     let resp = client
         .post(format!("{}/v1/checkout/sessions", api_base()))
         .bearer_auth(secret_key)
+        // Idempotency-Key so a retried/double-submitted checkout for the same
+        // invoice reuses the existing Stripe session instead of minting a new
+        // one (Stripe replays the original response for a matching key).
+        .header("Idempotency-Key", format!("checkout-{invoice_id}"))
         .form(&form)
         .send()
         .await
@@ -243,6 +276,15 @@ pub struct StripeCheckoutObject {
     /// The PaymentIntent id (`pi_...`), used as the gateway reference.
     #[serde(default)]
     pub payment_intent: Option<String>,
+    /// Total Stripe actually collected, in the smallest currency unit. Used as
+    /// a defensive cross-check against our stored session amount before
+    /// settling. Absent on older/partial payloads, so it is optional.
+    #[serde(default)]
+    pub amount_total: Option<i64>,
+    /// Lowercase ISO-4217 currency Stripe collected in. Cross-checked against
+    /// the stored session currency. Optional for back-compat.
+    #[serde(default)]
+    pub currency: Option<String>,
 }
 
 /// Parse a Stripe event from a raw (already signature-verified) body.
@@ -335,12 +377,60 @@ mod tests {
     fn parse_checkout_completed_event() {
         let body = br#"{
             "type":"checkout.session.completed",
-            "data":{"object":{"id":"cs_test_123","payment_status":"paid","payment_intent":"pi_abc"}}
+            "data":{"object":{"id":"cs_test_123","payment_status":"paid","payment_intent":"pi_abc","amount_total":10000,"currency":"eur"}}
         }"#;
         let ev = parse_event(body).unwrap();
         assert_eq!(ev.event_type, "checkout.session.completed");
         assert_eq!(ev.data.object.id, "cs_test_123");
         assert_eq!(ev.data.object.payment_status.as_deref(), Some("paid"));
         assert_eq!(ev.data.object.payment_intent.as_deref(), Some("pi_abc"));
+        assert_eq!(ev.data.object.amount_total, Some(10000));
+        assert_eq!(ev.data.object.currency.as_deref(), Some("eur"));
+    }
+
+    #[test]
+    fn parse_event_without_amount_fields_is_back_compat() {
+        // Payloads that omit amount_total/currency must still parse (the fields
+        // are optional and default to None) so settlement stays unchanged.
+        let body = br#"{
+            "type":"checkout.session.completed",
+            "data":{"object":{"id":"cs_test_456","payment_status":"paid"}}
+        }"#;
+        let ev = parse_event(body).unwrap();
+        assert_eq!(ev.data.object.amount_total, None);
+        assert_eq!(ev.data.object.currency, None);
+    }
+
+    #[test]
+    fn minor_unit_factor_two_decimal_default() {
+        // The two-decimal majority and unknown codes both scale by 100.
+        assert_eq!(minor_unit_factor("EUR"), 100);
+        assert_eq!(minor_unit_factor("USD"), 100);
+        assert_eq!(minor_unit_factor("GBP"), 100);
+        assert_eq!(minor_unit_factor("ZZZ"), 100);
+    }
+
+    #[test]
+    fn minor_unit_factor_zero_decimal() {
+        // Zero-decimal currencies are charged as whole units (×1) — a flat ×100
+        // would overcharge a JPY invoice 100×.
+        assert_eq!(minor_unit_factor("JPY"), 1);
+        assert_eq!(minor_unit_factor("KRW"), 1);
+        assert_eq!(minor_unit_factor("HUF"), 100); // HUF is two-decimal on Stripe.
+        assert_eq!(minor_unit_factor("VND"), 1);
+    }
+
+    #[test]
+    fn minor_unit_factor_three_decimal() {
+        assert_eq!(minor_unit_factor("KWD"), 1000);
+        assert_eq!(minor_unit_factor("BHD"), 1000);
+        assert_eq!(minor_unit_factor("TND"), 1000);
+    }
+
+    #[test]
+    fn minor_unit_factor_is_case_insensitive() {
+        assert_eq!(minor_unit_factor("jpy"), 1);
+        assert_eq!(minor_unit_factor("kwd"), 1000);
+        assert_eq!(minor_unit_factor("eur"), 100);
     }
 }

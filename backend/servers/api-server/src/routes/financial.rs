@@ -1121,6 +1121,10 @@ async fn initiate_invoice_checkout(
             )
         })?;
 
+    // Authorization is org-membership only by design: initiating a checkout
+    // merely produces a hosted payment URL for an invoice the member can
+    // already see, so any member may self-pay (or pay on behalf of the org).
+    // This is intentionally laxer than role-gated financial mutations.
     if !is_member_or_not_found(&state, auth.user_id, invoice.organization_id).await? {
         return Err((
             StatusCode::NOT_FOUND,

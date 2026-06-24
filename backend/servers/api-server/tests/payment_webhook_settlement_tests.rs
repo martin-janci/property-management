@@ -264,6 +264,173 @@ async fn valid_webhook_settles_invoice_and_is_idempotent(pool: PgPool) {
     assert_eq!(pay_count2, 1, "replay must not double-settle");
 }
 
+/// Defense-in-depth: a correctly-SIGNED `checkout.session.completed` whose
+/// `amount_total` disagrees with our stored session amount must NOT settle the
+/// invoice. The handler acks (`200`) so Stripe stops retrying the mismatched
+/// event, but records no payment and leaves the invoice unpaid.
+///
+/// On code that ignores `amount_total` this FAILS (it would settle); after the
+/// cross-check it PASSES.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_amount_mismatch_does_not_settle(pool: PgPool) {
+    let _guard = ENV_LOCK.lock().await;
+    let secret = "whsec_mismatch";
+    std::env::set_var(SECRET_ENV, secret);
+
+    // Stored session is for 100.00 EUR (10000 minor units).
+    let provider_session_id = "cs_test_mismatch_1";
+    let (invoice_id, session_pk) = seed_invoice_with_session(
+        &pool,
+        "mismatch",
+        provider_session_id,
+        Decimal::new(10000, 2),
+    )
+    .await;
+
+    let app = TestApp::new(pool.clone()).await;
+
+    // Stripe reports collecting only 5.00 EUR (500 minor units) — a mismatch.
+    let body = serde_json::json!({
+        "type": "checkout.session.completed",
+        "data": { "object": {
+            "id": provider_session_id,
+            "payment_status": "paid",
+            "payment_intent": "pi_test_mismatch_1",
+            "amount_total": 500,
+            "currency": "eur"
+        }}
+    });
+    let raw = body.to_string();
+    let ts = chrono::Utc::now().timestamp();
+    let header = sign(secret, ts, raw.as_bytes());
+
+    let resp = app
+        .execute(
+            app.post(WEBHOOK_URI)
+                .header(SIG_HEADER, &header)
+                .json(body)
+                .build(),
+        )
+        .await;
+    // Acked so Stripe stops retrying, but nothing was settled.
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "mismatched amount should be acked; body: {}",
+        resp.text()
+    );
+
+    // Invoice is untouched: still sent, full balance outstanding.
+    let (status, balance): (String, Decimal) =
+        sqlx::query_as("SELECT status::text, balance_due FROM invoices WHERE id = $1")
+            .bind(invoice_id)
+            .fetch_one(&pool)
+            .await
+            .expect("load invoice");
+    assert_eq!(
+        status, "sent",
+        "invoice must NOT be settled on amount mismatch"
+    );
+    assert_eq!(
+        balance,
+        Decimal::new(10000, 2),
+        "balance must be unchanged on amount mismatch"
+    );
+
+    // No payment was recorded.
+    let pay_count: i64 = sqlx::query_scalar(
+        "SELECT count(*)::int8 FROM payments \
+         WHERE unit_id = (SELECT unit_id FROM invoices WHERE id = $1)",
+    )
+    .bind(invoice_id)
+    .fetch_one(&pool)
+    .await
+    .expect("count payments");
+    assert_eq!(
+        pay_count, 0,
+        "no payment may be recorded on amount mismatch"
+    );
+
+    // The session stays pending (not completed).
+    let sess_status: String =
+        sqlx::query_scalar("SELECT status FROM online_payment_sessions WHERE id = $1")
+            .bind(session_pk)
+            .fetch_one(&pool)
+            .await
+            .expect("load session");
+
+    std::env::remove_var(SECRET_ENV);
+    assert_eq!(
+        sess_status, "pending",
+        "session must stay pending on amount mismatch"
+    );
+}
+
+/// Positive control for the cross-check: when `amount_total`/`currency` match
+/// the stored session, settlement proceeds exactly as without the fields.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_matching_amount_total_settles(pool: PgPool) {
+    let _guard = ENV_LOCK.lock().await;
+    let secret = "whsec_match";
+    std::env::set_var(SECRET_ENV, secret);
+
+    let provider_session_id = "cs_test_match_1";
+    let (invoice_id, session_pk) =
+        seed_invoice_with_session(&pool, "match", provider_session_id, Decimal::new(10000, 2))
+            .await;
+
+    let app = TestApp::new(pool.clone()).await;
+
+    // amount_total = 10000 minor units == 100.00 EUR stored amount.
+    let body = serde_json::json!({
+        "type": "checkout.session.completed",
+        "data": { "object": {
+            "id": provider_session_id,
+            "payment_status": "paid",
+            "payment_intent": "pi_test_match_1",
+            "amount_total": 10000,
+            "currency": "eur"
+        }}
+    });
+    let raw = body.to_string();
+    let ts = chrono::Utc::now().timestamp();
+    let header = sign(secret, ts, raw.as_bytes());
+
+    let resp = app
+        .execute(
+            app.post(WEBHOOK_URI)
+                .header(SIG_HEADER, &header)
+                .json(body)
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "matching webhook should be accepted; body: {}",
+        resp.text()
+    );
+
+    let (status, balance): (String, Decimal) =
+        sqlx::query_as("SELECT status::text, balance_due FROM invoices WHERE id = $1")
+            .bind(invoice_id)
+            .fetch_one(&pool)
+            .await
+            .expect("load invoice");
+    assert_eq!(status, "paid", "matching amount must settle the invoice");
+    assert_eq!(balance, Decimal::ZERO, "balance should be cleared");
+
+    let sess_status: String =
+        sqlx::query_scalar("SELECT status FROM online_payment_sessions WHERE id = $1")
+            .bind(session_pk)
+            .fetch_one(&pool)
+            .await
+            .expect("load session");
+
+    std::env::remove_var(SECRET_ENV);
+    assert_eq!(sess_status, "completed", "session marked completed");
+}
+
 /// Concurrent-replay (the race the sequential test above cannot catch):
 /// Stripe is at-least-once and does not serialize deliveries, so two duplicate
 /// `checkout.session.completed` events can BOTH read the session as not-yet
