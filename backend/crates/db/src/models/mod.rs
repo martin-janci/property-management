@@ -1,6 +1,12 @@
 //! Database models.
 
 pub mod accounting;
+// ACC Invoicing/Accounting MVP — Foundation-owned model files (EPIC-ACC-02/03/04/05/16).
+pub mod acc_catalog;
+pub mod acc_config;
+pub mod acc_contacts_ext;
+pub mod acc_invoicing_ext;
+pub mod acc_platform;
 pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
@@ -114,6 +120,16 @@ pub use accounting_provider::{
     AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
     AccountingProviderSyncCursor,
 };
+
+// ACC Invoicing/Accounting MVP — re-exports (EPIC-ACC-02/03/04/05/16).
+pub use acc_catalog::{AccCatalogItem, AccItemCategory, AccPriceLevel};
+pub use acc_config::{
+    AccBankAccount, AccCompanySettings, AccDocumentTemplate, AccEmailTemplate, AccNumberingSeries,
+    AccUnit, AccVatRate,
+};
+pub use acc_contacts_ext::{AccContactAddress, AccContactExt, AccContactTag};
+pub use acc_invoicing_ext::{AccAttachment, AccDocType, AccDocumentLink, AccInvoiceExt};
+pub use acc_platform::{AccAuditLog, AccShareLink, AccTag, AccTwoFactor};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,

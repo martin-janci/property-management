@@ -3,6 +3,54 @@
 version = 4
 
 [[package]]
+name = "accounting-core"
+version = "0.3.218"
+dependencies = [
+ "chrono",
+ "common",
+ "db",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "accounting-server"
+version = "0.3.218"
+dependencies = [
+ "accounting-core",
+ "anyhow",
+ "api-core",
+ "axum",
+ "chrono",
+ "common",
+ "db",
+ "dotenvy",
+ "metrics 0.24.6",
+ "metrics-exporter-prometheus",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry_sdk",
+ "rust_decimal",
+ "sentry",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tower",
+ "tower-http 0.7.0",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "actix-codec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -349,11 +397,13 @@ dependencies = [
  "common",
  "db",
  "governor",
+ "hex",
  "integrations",
  "jsonwebtoken",
  "metrics 0.24.6",
  "serde",
  "serde_json",
+ "sha2 0.11.0",
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
