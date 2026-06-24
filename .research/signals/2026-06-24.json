@@ -1,0 +1,224 @@
+{
+  "date": "2026-06-24",
+  "since": "2026-06-16T03:25:00Z",
+  "until": "2026-06-24T03:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Routine has not run in 8d 0h (last_run_iso=2026-06-16T03:25:00Z, now=2026-06-24T03:30:00Z). Dispatcher loop has continued processing during this gap; this routine commit is catch-up.",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "res-churn-hotspot-emergency-rs-pr1798",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1798",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "emergency.rs split into sub-module dir",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-vendors-rs-pr1813",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1813",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "vendors.rs split into sub-module dir",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-ets-rs-pr1800",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1800",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "enhanced_tenant_screening.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-document-rs-pr1683",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1683",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "document.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-subscription-rs-pr1796",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1796",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "subscription.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-aml-dsa-rs-pr1708",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1708",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "aml_dsa.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-booking-rs-pr1693",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1693",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "booking/ota_xml split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-sensor-rs-pr1810",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1810",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "sensor.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-forms-rs-pr1700-a",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1700",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "forms.rs split",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-forms-rs-pr1700-b",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1700",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "forms.rs split (repeated-churn variant)",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-form-rls-tests-pr1719",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1719",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "form_rls_repo_tests dedup helpers",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-mobile-icon-test-pr1718",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1718",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "mobile icon-test helpers",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-mobile-announcements-pr1543",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1543",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "AnnouncementsScreen TZ=UTC",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-churn-hotspot-mobile-announcements-test-pr1543",
+      "type": "churn-hotspot-resolution",
+      "source": "PR #1543",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "AnnouncementsScreen test TZ=UTC",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-code-review-osrng-expect-pr1684",
+      "type": "code-review-resolution",
+      "source": "PR #1684",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "crypto.rs CSPRNG failure propagated",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-plan-share-comparison-404-pr1676",
+      "type": "plan-shipped",
+      "source": "PR #1676",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "ComparisonUrlHandler routed to /listings/comparison/share",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-plan-listing-page-ssr-crash-pr1677",
+      "type": "plan-shipped",
+      "source": "PR #1677",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "listing detail JSON-LD null-safe",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-plan-realtor-mgmt-untranslated-pr1678",
+      "type": "plan-shipped",
+      "source": "PR #1678",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Invite Realtor modal localized",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-plan-report-fault-fake-submit-pr1679",
+      "type": "plan-shipped",
+      "source": "PR #1679",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "ReportFaultScreen wired to POST",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "res-mock-data-wire-pr1681",
+      "type": "code-review-resolution",
+      "source": "PR #1681",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Buildings/Leases wired to api",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-24.md ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq '.auto_fix_actions | length <= 3 ...'",
+      "observed": "true",
+      "expected": "true"
+    }
+  ],
+  "notes": {
+    "skipped_phases": [
+      "1.5 (catch-up; cursor still advanced for ppt-web-core)",
+      "1.6 (catch-up; pm_cursor untouched, G16 no-op)"
+    ],
+    "degraded": [
+      "churn-hotspot detection (commit-list endpoint omitted `files`; ranked from PR titles only)",
+      "screen-map drift detection (same reason)"
+    ]
+  }
+}
