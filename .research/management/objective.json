@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
-  "selected_at": "2026-06-24T02:18:30Z",
+  "epic_prefix": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+  "selected_at": "2026-06-24T06:20:15Z",
   "last_action": "repick",
-  "reason": "prior target 'churn-hotspot-backend-servers-api-server-src-routes-forms-rs' exhausted; closest-to-done is 'churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs' (open=1 claimable=1)",
+  "reason": "prior target 'churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs' exhausted; closest-to-done is 'churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
