@@ -1,0 +1,642 @@
+{
+  "generated": "2026-06-24T12:28:00Z",
+  "run_kind": "incremental (8d lag catch-up)",
+  "phase1_meta": {
+    "total_candidates": 92,
+    "emitted_after_cap": 50,
+    "deduped_against_seen": 0,
+    "skipped_this_run": [
+      "churn-hotspot (cost-prohibitive across 254 PRs)",
+      "risky-churn (requires per-PR file lists)",
+      "screen-map-drift (requires per-PR file lists across 254 PRs)",
+      "screen-map-orphan (skipped with drift)"
+    ]
+  },
+  "phase15_meta": {
+    "segment_reviewed": "ppt-web-core",
+    "selection_reason": "oldest-unreviewed",
+    "experts_used": [
+      "frontend"
+    ],
+    "findings_count": 3
+  },
+  "signals": [
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 3,
+      "candidate_vector": "security",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1723 body has unchecked `- [ ]` todo"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "PR #1713 body says Reverts #N"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "candidate_vector": "security",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1606 body has unchecked `- [ ]` todo"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1484",
+      "type": "unchecked-todo",
+      "source": "PR #1484",
+      "score_delta": 3,
+      "candidate_vector": "security",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1484 body has unchecked `- [ ]` todo"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1809",
+      "type": "hotfix-no-test",
+      "source": "PR #1809",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1809 is a fix/hotfix with no mention of tests: fix(accounting): PAP-321 F1/F2 \u2014 404-not-500 + skip-serializing provider secrets"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1755",
+      "type": "hotfix-no-test",
+      "source": "PR #1755",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1755 is a fix/hotfix with no mention of tests: fix(db): resolve duplicate migration version 192 (idempotency vs guest-id) + add dup-version CI guar"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1756",
+      "type": "hotfix-no-test",
+      "source": "PR #1756",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1756 is a fix/hotfix with no mention of tests: fix(messaging): camelCase wire contract for attachment api (UC-05.9, BIT-238)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1751",
+      "type": "hotfix-no-test",
+      "source": "PR #1751",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1751 is a fix/hotfix with no mention of tests: fix(dispatcher): archive-terminal reconciler pass + unique branch names/collision guard (#1747, #173"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1741",
+      "type": "hotfix-no-test",
+      "source": "PR #1741",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1741 is a fix/hotfix with no mention of tests: fix(api-server): require manager role to list Airbnb reservations \u2014 guest PII (#1667)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1743",
+      "type": "hotfix-no-test",
+      "source": "PR #1743",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1743 is a fix/hotfix with no mention of tests: fix(integrations): validate base_rate + currency in Booking.com listing push (#1664)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1736",
+      "type": "hotfix-no-test",
+      "source": "PR #1736",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1736 is a fix/hotfix with no mention of tests: fix(ppt-web): route AI dashboards through api-client + i18n/screen-map/sitemap (#1674)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1737",
+      "type": "hotfix-no-test",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1737 is a fix/hotfix with no mention of tests: fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler (#1668)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1742",
+      "type": "hotfix-no-test",
+      "source": "PR #1742",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1742 is a fix/hotfix with no mention of tests: fix(docker): copy @ppt/e2e package.json into frontend deps stage"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1740",
+      "type": "hotfix-no-test",
+      "source": "PR #1740",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1740 is a fix/hotfix with no mention of tests: fix(ppt-web): surface IoT alert mutation errors + add alerts error state (#1669)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1730",
+      "type": "hotfix-no-test",
+      "source": "PR #1730",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1730 is a fix/hotfix with no mention of tests: fix(frontend): restore exec bit on build-mobile.sh (#1662)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1732",
+      "type": "hotfix-no-test",
+      "source": "PR #1732",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1732 is a fix/hotfix with no mention of tests: fix(ppt-web): translate iot.* namespace into all locales (#1666)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1733",
+      "type": "hotfix-no-test",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1733 is a fix/hotfix with no mention of tests: fix(ppt-web): add loading state + double-click guard to invoice PDF download (#1673)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1724",
+      "type": "hotfix-no-test",
+      "source": "PR #1724",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1724 is a fix/hotfix with no mention of tests: fix(db): resolve duplicate migration version 00187 (BIT-223)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1635",
+      "type": "hotfix-no-test",
+      "source": "PR #1635",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1635 is a fix/hotfix with no mention of tests: fix(integrations): manager-gate Airbnb linked-listing reads (#1626)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1639",
+      "type": "hotfix-no-test",
+      "source": "PR #1639",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1639 is a fix/hotfix with no mention of tests: fix(api-server): manager-gate Airbnb linked-listing config reads (closes #1626)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1632",
+      "type": "hotfix-no-test",
+      "source": "PR #1632",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1632 is a fix/hotfix with no mention of tests: fix(reality-server): scope portal import feeds per-agency, not per-user (closes #1584)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1631",
+      "type": "hotfix-no-test",
+      "source": "PR #1631",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1631 is a fix/hotfix with no mention of tests: fix(api-client): coerce financial decimal strings to numbers (#975)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1629",
+      "type": "hotfix-no-test",
+      "source": "PR #1629",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1629 is a fix/hotfix with no mention of tests: fix(api-client): send auth from the financial client (#975)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1621",
+      "type": "hotfix-no-test",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1621 is a fix/hotfix with no mention of tests: fix(ppt-web): relocate payment-matching to ppt-web with correct api-server auth (closes #1521)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1619",
+      "type": "hotfix-no-test",
+      "source": "PR #1619",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1619 is a fix/hotfix with no mention of tests: fix(mobile-native): close infinite-scroll in-flight double-fetch race + pin transition (closes #1533"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1613",
+      "type": "hotfix-no-test",
+      "source": "PR #1613",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1613 is a fix/hotfix with no mention of tests: fix(documents): allow detaching a folder to root via PUT parent_id=null (closes #1589)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1610",
+      "type": "hotfix-no-test",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1610 is a fix/hotfix with no mention of tests: fix(faults): confirm delete + use closed_count + refresh stats on delete (closes #1588)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1602",
+      "type": "hotfix-no-test",
+      "source": "PR #1602",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1602 is a fix/hotfix with no mention of tests: fix(api-server): MFA recovery limiter \u2014 evict stale entries + dedicated audit action (closes #1583)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1598",
+      "type": "hotfix-no-test",
+      "source": "PR #1598",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1598 is a fix/hotfix with no mention of tests: fix(db): board_meetings lists use u.name, not nonexistent u.full_name (closes #1586)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1597",
+      "type": "hotfix-no-test",
+      "source": "PR #1597",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1597 is a fix/hotfix with no mention of tests: fix(db): round invoice lines once so header totals equal sum of stored items (#1522)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1580",
+      "type": "hotfix-no-test",
+      "source": "PR #1580",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1580 is a fix/hotfix with no mention of tests: fix(api-server): rate-limit MFA recovery-code verify endpoint (closes #1523)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1552",
+      "type": "hotfix-no-test",
+      "source": "PR #1552",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1552 is a fix/hotfix with no mention of tests: fix(api-server): gate OTA token-exchange on manager role of the path org (closes #1525)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1551",
+      "type": "hotfix-no-test",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1551 is a fix/hotfix with no mention of tests: fix(db): cast document_category in count_accessible_rls filter (closes #1528)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1545",
+      "type": "hotfix-no-test",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1545 is a fix/hotfix with no mention of tests: fix(reality-web): unbreak production build \u2014 /accounting QueryClient prerender + favorites pl/hu i18"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1536",
+      "type": "hotfix-no-test",
+      "source": "PR #1536",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1536 is a fix/hotfix with no mention of tests: fix(mobile-native): remove unused import failing spotless on dev (post-#1447)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1512",
+      "type": "hotfix-no-test",
+      "source": "PR #1512",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1512 is a fix/hotfix with no mention of tests: fix(api-server): clippy fixes in accounting routes (post-#1454)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1492",
+      "type": "hotfix-no-test",
+      "source": "PR #1492",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1492 is a fix/hotfix with no mention of tests: fix(db): cast remaining rental enum readers \u2014 GUEST/CALENDAR_BLOCK/ICAL_FEED_COLUMNS (BIT-118)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1486",
+      "type": "hotfix-no-test",
+      "source": "PR #1486",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1486 is a fix/hotfix with no mention of tests: fix(db): explicit platform::text cast in 4 rental_platform_connections readers (BIT-113, GH #1363)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1473",
+      "type": "hotfix-no-test",
+      "source": "PR #1473",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1473 is a fix/hotfix with no mention of tests: fix(api-server): BIT-85 cross-tenant OAuth upsert hazard + manager gate (#1405)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1489",
+      "type": "hotfix-no-test",
+      "source": "PR #1489",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1489 is a fix/hotfix with no mention of tests: fix(db): decode nullable rental_bookings fees natively (closes #1422)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1491",
+      "type": "hotfix-no-test",
+      "source": "PR #1491",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1491 is a fix/hotfix with no mention of tests: fix(marketplace): make mark_invitation_viewed idempotent (closes #1301)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1485",
+      "type": "hotfix-no-test",
+      "source": "PR #1485",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1485 is a fix/hotfix with no mention of tests: fix(integrations): Booking.com client timeout + Retry-After + RateLimited (BIT-110, GH #1338)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1483",
+      "type": "hotfix-no-test",
+      "source": "PR #1483",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1483 is a fix/hotfix with no mention of tests: fix(research): correct dispatcher Tier-2 kick payload + anthropic-version header (closes #1151)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1465",
+      "type": "hotfix-no-test",
+      "source": "PR #1465",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1465 is a fix/hotfix with no mention of tests: fix(mobile-native): iOS stale-response guard, staging deep-link host, orphaned plist, xcconfig drift"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1463",
+      "type": "hotfix-no-test",
+      "source": "PR #1463",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1463 is a fix/hotfix with no mention of tests: fix(api-server): resolve building/unit scope in document download/preview gate (GH #1413)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1472",
+      "type": "hotfix-no-test",
+      "source": "PR #1472",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1472 is a fix/hotfix with no mention of tests: fix(api-server): encrypt Booking.com connect credentials at rest (#1362)"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1457",
+      "type": "hotfix-no-test",
+      "source": "PR #1457",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1457 is a fix/hotfix with no mention of tests: fix(api-server): org-scope create_appeal/add_evidence/add_comment writes (BIT-75, #1342/#1339)"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1442",
+      "type": "unchecked-todo",
+      "source": "PR #1442",
+      "score_delta": 2,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1442 body has unchecked `- [ ]` todo"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1720 closed without merge: fix(ppt-web): add Leases nav link + home tile (#977)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "PR #1749 closed without merge: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-useWebSocket-stale-handler",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 \u2014 useEffect early-returns when handlerRef.current is undefined but only depends on [eventType, subscribe]; if the caller initially passes handler=undefined and later supplies one, the effect never re-runs and no subscription is ever created \u2014 silent realtime stall.",
+        "Comparable hook useWebSocketSubscriptions(line 142-159) uses eventTypesKey to force re-subscription, but the single-handler hook has no equivalent guard; suggestion: bail when handler is undefined and add `handler != null` to the dep tuple (or accept the function and inline ref-write inside the effect)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-rotation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 \u2014 effect calls service.connect() on auth.accessToken change, but WebSocketService.connect() (lib/websocket.ts:291-294) returns early when socket.readyState === OPEN, so the live socket keeps its old JWT after a refresh.",
+        "The api-server only validates the token at handshake (token query param in buildWebSocketUrl, lib/websocket.ts:88-96); when the original JWT expires the server-side session is dropped but the client thinks it's still connected. Fix: when the token changes while connected, call disconnect()+connect() (mirroring the manual reconnect() path on line 324-330)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-no-user-restore",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389-424 \u2014 initializeAuth: when storedUser is null but refreshTokenValue is present (e.g. user-key purged or USER_KEY write failed earlier), the code successfully refreshes both tokens but the `if (storedUser) setUser(storedUser)` branch at line 408 never fires, so the session ends with valid tokens in storage but isAuthenticated=false.",
+        "Consequence: user is silently logged-out despite a working refresh-token, and TanStack Query caches are not seeded. Fix options: (a) fetch /me after refresh to repopulate user, or (b) clear tokens when storedUser is missing so the next visit forces a fresh login."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine has not run for 8d 8h since last_run_iso=2026-06-16T03:25Z"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-06-24",
+      "type": "stale_routine_alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25Z is 8d old; cloud routine may be paused. Dispatcher state lives on planning branch \u2014 check separately."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": []
+}

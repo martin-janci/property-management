@@ -1,9 +1,13 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-16 03:25 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-24 12:27 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | security | `security-unchecked-todo-pr-1723` | Unchecked Todo from PR #1723 | open | 2026-06-24 |  |
+| 3 | bug | `bug-revert-pr-1713` | Revert from PR #1713 | open | 2026-06-24 |  |
+| 3 | security | `security-unchecked-todo-pr-1606` | Unchecked Todo from PR #1606 | open | 2026-06-24 |  |
+| 3 | security | `security-unchecked-todo-pr-1484` | Unchecked Todo from PR #1484 | open | 2026-06-24 |  |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend  | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -17,6 +21,52 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1809` | Hotfix No Test from PR #1809 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1755` | Hotfix No Test from PR #1755 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1756` | Hotfix No Test from PR #1756 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1751` | Hotfix No Test from PR #1751 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1741` | Hotfix No Test from PR #1741 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1743` | Hotfix No Test from PR #1743 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1736` | Hotfix No Test from PR #1736 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1737` | Hotfix No Test from PR #1737 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1742` | Hotfix No Test from PR #1742 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1740` | Hotfix No Test from PR #1740 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1730` | Hotfix No Test from PR #1730 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1732` | Hotfix No Test from PR #1732 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1733` | Hotfix No Test from PR #1733 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1724` | Hotfix No Test from PR #1724 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1635` | Hotfix No Test from PR #1635 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1639` | Hotfix No Test from PR #1639 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1632` | Hotfix No Test from PR #1632 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1631` | Hotfix No Test from PR #1631 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1629` | Hotfix No Test from PR #1629 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1621` | Hotfix No Test from PR #1621 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1619` | Hotfix No Test from PR #1619 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1613` | Hotfix No Test from PR #1613 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1610` | Hotfix No Test from PR #1610 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1602` | Hotfix No Test from PR #1602 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1598` | Hotfix No Test from PR #1598 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1597` | Hotfix No Test from PR #1597 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1580` | Hotfix No Test from PR #1580 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1552` | Hotfix No Test from PR #1552 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1551` | Hotfix No Test from PR #1551 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1545` | Hotfix No Test from PR #1545 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1536` | Hotfix No Test from PR #1536 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1512` | Hotfix No Test from PR #1512 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1492` | Hotfix No Test from PR #1492 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1486` | Hotfix No Test from PR #1486 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1473` | Hotfix No Test from PR #1473 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1489` | Hotfix No Test from PR #1489 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1491` | Hotfix No Test from PR #1491 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1485` | Hotfix No Test from PR #1485 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1483` | Hotfix No Test from PR #1483 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1465` | Hotfix No Test from PR #1465 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1463` | Hotfix No Test from PR #1463 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1472` | Hotfix No Test from PR #1472 | open | 2026-06-24 |  |
+| 2 | bug | `test-gap-hotfix-no-test-pr-1457` | Hotfix No Test from PR #1457 | open | 2026-06-24 |  |
+| 2 | refactor | `refactor-unchecked-todo-pr-1442` | Unchecked Todo from PR #1442 | open | 2026-06-24 |  |
+| 2 | bug | `code-review-ppt-web-core-useWebSocket-stale-handler` | frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — useEffect early-returns when handlerRef.current is und | open | 2026-06-24 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-token-rotation` | frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 — effect calls service.connect() on auth.acces | open | 2026-06-24 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id | done | 2026-06-16 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file  | open | 2026-06-16 |  |
 | 2 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcod | open | 2026-06-16 |  |
@@ -27,8 +77,6 @@
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1289-api-ecosystem` | api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test | open | 2026-06-11 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-1292-mfa-rls` | mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixe | open | 2026-06-11 |  |
 | 2 | test-gap | `unchecked-todo-pr-1196` | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO  | dropped | 2026-06-10 |  |
-| 2 | bug | `code-review-mobile-native-kmp-deeplink-token-not-url-decoded` | DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platfor | open | 2026-06-06 |  |
-| 2 | bug | `code-review-mobile-native-kmp-search-stale-response-race` | SearchScreen stale-response race — overlapping searches can clobber newer results | open | 2026-06-06 |  |
 | 2 | dx | `dx-push-fanout-blpop-drain` | PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op | done | 2026-06-06 |  |
 | 2 | refactor | `refactor-ai-rs-module-split` | ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs | done | 2026-06-06 |  |
 | 2 | refactor | `refactor-announcements-rs-hot` | announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work) | done | 2026-06-06 |  |
@@ -47,17 +95,13 @@
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail` | Mobile RN dev-review tail (#943) shipped without test coverage | done | 2026-06-05 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-990-frontend-gap-sweep` | Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test | done | 2026-06-05 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-992-mobile-doc-detail` | Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path | done | 2026-06-05 |  |
-| 2 | test-gap | `test-gap-screen-map-drift-pr-1085-reality` | Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update | open | 2026-06-05 |  |
-| 2 | test-gap | `test-gap-screen-map-drift-pr-1100-ppt` | Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc updat | open | 2026-06-05 |  |
 | 2 | test-gap | `test-gap-screen-map-drift-pr-839-ppt` | Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update | done | 2026-06-05 |  |
 | 2 | refactor | `refactor-ppt-web-untranslated-strings` | ppt-web status/auth components hardcode English in an otherwise i18n'd app | done | 2026-06-04 |  |
 | 2 | bug | `bug-mediation-page-no-error-state` | MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure | done | 2026-06-03 |  |
 | 2 | bug | `bug-mobile-voting-unsafe-cast` | Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape | done | 2026-06-03 |  |
 | 2 | bug | `bug-reality-web-realtor-invite-silent-error` | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | done | 2026-06-03 |  |
-| 2 | bug | `bug-risky-churn-pr-963-api-main-rs` | Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test | open | 2026-06-03 |  |
 | 2 | bug | `bug-webhook-airbnb-dup-sync-jobs` | Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs | done | 2026-06-03 |  |
 | 2 | dx | `dx-documentsbrowse-folder-preselect` | DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id) | done | 2026-06-03 |  |
-| 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | open | 2026-06-03 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-963-security-headers` | API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP | done | 2026-06-03 |  |
 | 2 | test-gap | `test-gap-router-set-parity-tests` | api-server main.rs vs lib.rs::create_router diverge silently (5 routes unreachable in prod, no test asserts pa | done | 2026-06-01 |  |
 | 2 | bug | `bug-report-schedule-update-no-sql` | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_ex | done | 2026-05-30 |  |
@@ -72,6 +116,9 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-closed-not-merged-pr-1720` | Closed Not Merged Pr from PR #1720 | open | 2026-06-24 |  |
+| 1 | refactor | `refactor-closed-not-merged-pr-1749` | Closed Not Merged Pr from PR #1749 | open | 2026-06-24 |  |
+| 1 | bug | `code-review-ppt-web-core-auth-init-no-user-restore` | frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389-424 — initializeAuth: when storedUser is null but refre | open | 2026-06-24 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-922-ppt` | Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt up | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-forms-rs` | Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2 | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs` | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | open | 2026-06-16 |  |
@@ -108,10 +155,8 @@
 | 1 | triage | `triage-issue-952` | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality ape | done | 2026-06-07 |  |
 | 1 | triage | `triage-issue-769` | Issue #769 (no labels, OPEN): Current dev review: Deploy server | done | 2026-06-07 |  |
 | 1 | triage | `triage-issue-789` | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | done | 2026-06-07 |  |
-| 1 | triage | `triage-issue-1151` | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despit | open | 2026-06-07 |  |
-| 1 | refactor | `churn-hotspot-mobile-native-listing-detail-kt` | Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle) | open | 2026-06-06 |  |
-| 1 | refactor | `churn-hotspot-mobile-native-search-screen-kt` | Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters) | open | 2026-06-06 |  |
-| 1 | refactor | `code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router` | MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap | open | 2026-06-06 |  |
+| 1 | bug | `code-review-mobile-native-kmp-deeplink-token-not-url-decoded` | DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platfor | open | 2026-06-06 |  |
+| 1 | bug | `code-review-mobile-native-kmp-search-stale-response-race` | SearchScreen stale-response race — overlapping searches can clobber newer results | open | 2026-06-06 |  |
 | 1 | dx | `dx-nginx-template-churn-2026-06-03` | docker/nginx admin-web + ppt-web templates churned twice this run (security headers + redirects) | done | 2026-06-06 |  |
 | 1 | refactor | `refactor-ai-rs-hot` | ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split | done | 2026-06-06 |  |
 | 1 | refactor | `refactor-auth-refresh-spec-churn-2026-06-04` | ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage) | done | 2026-06-06 |  |
@@ -130,14 +175,13 @@
 | 1 | triage | `triage-issue-755` | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | done | 2026-06-06 |  |
 | 1 | triage | `triage-issue-764` | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | done | 2026-06-06 |  |
 | 1 | triage | `triage-issue-765` | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | done | 2026-06-06 |  |
+| 1 | test-gap | `test-gap-screen-map-drift-pr-1085-reality` | Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update | open | 2026-06-05 |  |
+| 1 | test-gap | `test-gap-screen-map-drift-pr-1100-ppt` | Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc updat | open | 2026-06-05 |  |
 | 1 | bug | `bug-mobile-voting-hardcoded-locale` | Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize | done | 2026-06-05 |  |
 | 1 | bug | `bug-reality-web-listing-metadata-ssr-throw` | Reality-web listing generateMetadata can throw during SSR on malformed 200 body | done | 2026-06-05 |  |
-| 1 | refactor | `refactor-churn-hotspot-mobile-announcements` | Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy | open | 2026-06-05 |  |
-| 1 | refactor | `refactor-churn-hotspot-mobile-announcements-test` | Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy | open | 2026-06-05 |  |
-| 1 | refactor | `refactor-churn-hotspot-mobile-documents` | Churn hotspot: DocumentsScreen.tsx — 3 PRs this run | open | 2026-06-05 |  |
+| 1 | bug | `bug-risky-churn-pr-963-api-main-rs` | Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test | open | 2026-06-03 |  |
+| 1 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | open | 2026-06-03 |  |
 | 1 | security | `security-pkce-oauth-authcode-pr-908-closed` | PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — veri | done | 2026-06-03 |  |
-| 1 | triage | `triage-dispatcher-mcp-push-large-file-issue-1014` | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | open | 2026-06-03 |  |
-| 1 | triage | `triage-issue-951` | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET no | open | 2026-06-03 |  |
 | 1 | triage | `triage-issue-751` | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | done | 2026-06-02 |  |
 | 1 | triage | `triage-issue-752` | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | done | 2026-06-02 |  |
 | 1 | triage | `triage-issue-756` | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | done | 2026-06-02 |  |
@@ -177,5 +221,14 @@
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (orig | done | 2026-05-31 |  |
 | 0 | refactor | `refactor-oauth-integration-tests-hot` | Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs | dropped | 2026-06-16 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
+| 0 | triage | `triage-issue-1151` | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despit | dropped | 2026-06-07 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
+| 0 | refactor | `churn-hotspot-mobile-native-listing-detail-kt` | Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle) | dropped | 2026-06-06 |  |
+| 0 | refactor | `churn-hotspot-mobile-native-search-screen-kt` | Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters) | dropped | 2026-06-06 |  |
+| 0 | refactor | `code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router` | MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap | dropped | 2026-06-06 |  |
+| 0 | refactor | `refactor-churn-hotspot-mobile-announcements` | Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy | dropped | 2026-06-05 |  |
+| 0 | refactor | `refactor-churn-hotspot-mobile-announcements-test` | Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy | dropped | 2026-06-05 |  |
+| 0 | refactor | `refactor-churn-hotspot-mobile-documents` | Churn hotspot: DocumentsScreen.tsx — 3 PRs this run | dropped | 2026-06-05 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dropped | 2026-06-04 |  |
+| 0 | triage | `triage-dispatcher-mcp-push-large-file-issue-1014` | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | dropped | 2026-06-03 |  |
+| 0 | triage | `triage-issue-951` | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET no | dropped | 2026-06-03 |  |
