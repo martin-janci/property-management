@@ -43,10 +43,68 @@ use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
 };
+use chrono::{Duration, Utc};
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
+
+// Must match `TestConfig::default().jwt_secret` (see
+// `airbnb_connections_routes_tests.rs`, which uses the same constant). Lets the
+// manager-gate tests mint a JWT whose `role` claim deliberately *disagrees* with
+// the caller's DB `role_type`, proving the gate reads the DB, not the token.
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+
+/// Mirror of `api_core::extractors::auth::Claims`.
+#[derive(Serialize)]
+struct AccessClaims {
+    sub: Uuid,
+    exp: i64,
+    iat: i64,
+    token_type: String,
+    tenant_id: Option<Uuid>,
+    role: Option<String>,
+    email: String,
+    name: String,
+}
+
+/// Mint an access token whose `role` claim is `manager` (the JWT-claim role the
+/// pre-#1787 handlers trusted), regardless of the caller's real DB membership.
+fn mint_manager_claim_token(user_id: Uuid, tenant_id: Uuid) -> String {
+    let now = Utc::now();
+    let claims = AccessClaims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(tenant_id),
+        role: Some("manager".to_string()),
+        email: "booking-gate-test@test.local".to_string(),
+        name: "Booking Gate Test".to_string(),
+    };
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint access token")
+}
+
+async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at)
+        VALUES ($1, 'hash', 'Booking Gate User', 'active', NOW())
+        RETURNING id
+        "#,
+    )
+    .bind(email)
+    .fetch_one(pool)
+    .await
+    .expect("seed user")
+}
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -199,5 +257,106 @@ async fn member_passes_org_access_guard(pool: PgPool) {
     assert_eq!(
         json["connected"], false,
         "expected connected=false for an org with no Airbnb connection"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Test 3 — Booking.com manager gate reads the DB role, not the JWT claim
+// ---------------------------------------------------------------------------
+//
+// #1787: `get_booking_conflicts` and `push_booking_listing`
+// (`routes/integrations/booking_channel.rs`) previously authorized off the JWT
+// `role`/`tenant_id` claim with a hand-rolled `matches!(role, …)`. A user who is
+// only a `resident` in the path org — but carries a `manager` role claim in
+// their token — would have been admitted. After the fix both handlers run
+// `verify_org_access` + `verify_manager_role_in_org`, which read
+// `organization_members.role_type` for the PATH org, so the resident is rejected
+// with `403` despite the `manager` JWT claim.
+//
+// These tests mint a token whose `role` claim is `manager` while the DB
+// membership is `resident`: on the pre-#1787 (JWT-claim) code they would PASS the
+// gate (200 / 404), so the assertion FAILS; on the DB-backed code they return
+// `403`, so the assertion PASSES — the IG3 failing-on-old-code property.
+
+/// `GET /booking/conflicts`: a `resident` member is rejected with `403` even
+/// though the JWT carries a `manager` role claim (gate reads the DB role).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn booking_conflicts_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "booking-resident").await;
+    let user_id = seed_user(&pool, "booking-conflicts-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking/conflicts");
+    let response = app
+        .execute(authed_req(Method::GET, &uri, &token, None))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "#1787: a resident member must be 403 on booking/conflicts despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// `POST /booking/listing-push` (the byte-identical write gate): a `resident`
+/// member is rejected with `403` despite a `manager` JWT claim. The gate fires
+/// before payload validation, so a minimal body still 403s.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn booking_listing_push_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "booking-push-resident").await;
+    let user_id = seed_user(&pool, "booking-push-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking/listing-push");
+    let body = serde_json::json!({
+        "unit_id": Uuid::new_v4(),
+        "room_type_id": "RT-1",
+        "availability": [],
+        "rates": [],
+    });
+    let response = app
+        .execute(authed_req(Method::POST, &uri, &token, Some(body)))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "#1787: a resident member must be 403 on booking/listing-push despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// No-lockout sanity: a `manager` DB member passes the gate on
+/// `GET /booking/conflicts` (NOT `403`). With no Booking.com connection the
+/// handler returns `404`, so we assert only that the manager gate does not block.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn booking_conflicts_manager_member_passes_gate(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "booking-manager").await;
+    let user_id = seed_user(&pool, "booking-conflicts-manager@test.local").await;
+    seed_membership(&pool, org_x, user_id, "manager").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking/conflicts");
+    let response = app
+        .execute(authed_req(Method::GET, &uri, &token, None))
+        .await;
+
+    assert_ne!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "#1787: a legitimate manager member must NOT be blocked by the manager gate; got {}: {}",
+        response.status,
+        response.text()
     );
 }
