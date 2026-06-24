@@ -1,0 +1,97 @@
+{
+  "date": "2026-06-24",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "lag_hours": 188,
+  "lag_days": 7,
+  "summary": {
+    "merged_prs_count": 276,
+    "merged_prs_range": "#1440-#1810",
+    "open_prs_touched": 13,
+    "closed_unmerged_prs": 33,
+    "new_issues_count": 31,
+    "non_merge_commits_count": 50,
+    "head_sha": "15c189a3ef7e6fa25b112ef45818f4ea9e26d0d4",
+    "head_short": "15c189a"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 7d 188h — lag exceeds 36h threshold",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-24",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last advanced 7 days ago; cloud routine may be paused/broken — surfaced for operator",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "revert(delegations): remove re-added delegation surface — merged 2026-06-22; delegation surface was re-added and then reverted again — root cause needs capture",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "fix(financial): rustfmt compliance for financial reports route — merged with unchecked `- [ ]` in body",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat (cumulative re-emit)",
+      "score_delta": 0,
+      "evidence": "re-churn 2026-06-24: 6146 lines across 2 commits in backend/crates/db/src/repositories/document.rs (cumulative — id already in seen_signals; score unchanged per Phase 1 dedup rule)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/ — heuristic, review candidate",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": "PR #1746 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/ — heuristic, review candidate",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [],
+  "phase_notes": {
+    "phase_1": "completed via subagent; covers PRs #1554-#1810 (page 1 of 3); PRs #1440-#1553 not deeply enumerated due to token budget; all 31 issues labeled (no untriaged signal); 0 stalled/draft-approved PRs",
+    "phase_1_5": "skipped — high-lag catch-up run; review_cursor not advanced this run",
+    "phase_1_6": "skipped — high-lag catch-up run; pm_cursor and coverage_cursor not advanced this run; management artifacts unchanged",
+    "phase_3": "no promotion this run — only bug-revert-pr-1713-delegations reached score 3; deferred to next normal run to allow concrete diff/file analysis; 6 plans already ready",
+    "phase_3_5": "n/a — no plans promoted",
+    "phase_5": "deferred — no signal met confidence=high + score>=3 + allowlist match (revert signal is not in the auto-fix allowlist)"
+  },
+  "caveats": [
+    "Cursor SHA 4829015b not present in local clone; switched to date-bounded git log (>=2026-06-16). Subagent count of 50 non-merge commits reflects squash-merge flattening of ~276 merged PRs.",
+    "Merged-PR enumeration covered page 1 (100 PRs, #1554-#1810). PRs #1440-#1553 not enumerated in detail; signals derived only from page 1 may under-count hotfix-no-test / unchecked-todo events.",
+    "churn_top_files raw output included generated artifacts (openapi.yaml, types.gen.ts) since they don't match the standard exclusion patterns; only document.rs treated as a real source hotspot this run.",
+    "Phase 1.5 and 1.6 skipped to keep the recovery commit lean. Both will resume on the next normal run; the dispatcher's planning loop is unaffected."
+  ]
+}
