@@ -1,0 +1,147 @@
+{
+  "date": "2026-06-24",
+  "run_iso": "2026-06-24T04:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 8d 0h since 2026-06-16; cursor delta = 96 merged PRs, 81 new issues",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-24",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso vs now",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 8d old; cloud routine may be paused; dispatcher (separate planning branch) continued landing PRs throughout the window",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist (only informational lag/stale signals emitted; resolution sweep handled in Phase 2 backlog mutation)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-24.md && head -1 matches '# 2026-06-24'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "last_pr_seen 1439 -> 1816, last_issue_seen 1437 -> 1793, last_commit_sha 4829015b -> 16394dee, last_run_iso advanced, seen_signals grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id from today re-emits with score_delta != 0 in seen_signals (cumulative exemption)",
+      "observed": "new signals lag-warning + stale-routine-alert have score_delta=0; no cumulative re-emit this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json && decay applied",
+      "observed": "no score > 8; 6 open items decayed, 9 dropped to 0 in this run's Phase 2 sweep",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; G6 trivially satisfied",
+      "observed": "0 new plan files",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c .md",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0 (only .research/ paths staged)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged .research/ diff (exempt files unchanged)",
+      "observed": "no leaks",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md from backlog.json and diff",
+      "observed": "byte-identical (regenerated this run via scratchpad/regen.py)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase reported failure (Phases 1.5 and 1.6 deliberately skipped, not failed)",
+      "observed": "no failed-phase entries; review_cursor + pm_cursor + coverage_cursor unchanged for skipped phases",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still in plans/ or moved to plans/_archive/",
+      "observed": "4 plans archived in lock-step with item resolution; no plan silently deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files .research/plans/_archive/ count this run >= HEAD count",
+      "observed": "archive grew from 6 to 10 files",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md from backlog.json triage rows and diff",
+      "observed": "byte-identical (regenerated this run via scratchpad/regen.py)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks + kill-switch + idempotency",
+      "observed": "auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED not set; no candidate matched bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts validity + pm_cursor + coverage_cursor advance",
+      "observed": "Phase 1.6 skipped this run; gate is a no-op when pm_cursor.next_index unchanged",
+      "expected": "no-op (skipped phase)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token in staged diff",
+      "observed": "no token-shaped string in any staged change",
+      "expected": "0"
+    }
+  ]
+}
