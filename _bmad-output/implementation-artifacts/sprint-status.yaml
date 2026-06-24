@@ -40,7 +40,7 @@ epics:
     name: "Platform Administration"
     status: in-progress
     stories_total: 7
-    stories_completed: 5  # 10b-1,2,3,4,6 done (coverage.json 2026-05-29: all status=done, high confidence)
+    stories_completed: 6  # 10b-1,2,3,4,5,6 done (10b-5 reconciled 2026-06-24: code + PRs #793/#854 landed, refresh_tokens column bug fixed)
   epic-80:
     name: "Dispute Resolution"
     status: partial
@@ -75,7 +75,7 @@ development_status:
   10b-2-feature-flag-management: done
   10b-3-platform-health-monitoring: done
   10b-4-system-announcements: done  # coverage.json 2026-05-27: handlers fully implemented since cf533ae4; SystemAnnouncementRepository CRUD + maintenance + ack; public_announcements_router; cargo check -p api-server exit 0 (frontend admin-web component still pending — backend story complete)
-  10b-5-support-data-access: ready-for-dev
+  10b-5-support-data-access: done  # GET /api/v1/platform-admin/support-data wired (servers/api-server routes/platform_admin/audit.rs) behind AuditRead + extract_super_admin_token; REPEATABLE READ snapshot reads (PR #793/#628); append-only support_tooling_events audit trail (migration 00163) hardened to RLS + ON DELETE RESTRICT (00165); retention/privacy posture documented (docs/data/support-data-retention-privacy.md, PR #854); admin-web SupportDataPage shipped. Fixed runtime is_revoked/updated_at column bug on refresh_tokens (revoked_at IS NULL) + #[sqlx::test] regression.
   10b-6-user-onboarding-tour: done  # coverage.json 2026-05-27: onboarding.rs routes mounted at /api/v1/onboarding; OnboardingRepository (needs_onboarding/get_tours_for_user/start_tour/complete_step/complete_tour/skip_tour/reset_tour); handlers fully implemented since cf533ae4; cargo check -p api-server exit 0 (frontend component still pending — backend story complete)
   10b-7-contextual-help-documentation: ready-for-dev
   # Epic 80: Dispute Resolution (verified 2026-05-25)
@@ -86,12 +86,12 @@ development_status:
   80-2-dispute-filing-flow: partial
   80-3-mediation-resolution: partial
 
-# ──────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
 # Slotted: 2026-05-26 | Priority: medium
 # Rule: dependent stories MUST NOT be promoted to `done` until each follow-up
 #       issue in this batch is either CLOSED or explicitly DEFERRED.
-# ──────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
 test_hardening_batch:
   batch_id: thb-2026-05-25
   slotted_at: 2026-05-25
