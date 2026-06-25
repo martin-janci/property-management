@@ -1,0 +1,247 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 9d (216h); cloud cron likely paused while dispatcher continued; brief notes catch-up scope"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverted PR #1690 (delegations frontend) per delegation retirement (BIT-213); revert merged 2026-06-22"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx \u2014 touched 13x across the 9-day window (route registrations for delegations/iot/notifications/financial/person-months/messaging/faults)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-sk-json",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/sk.json \u2014 touched 12x across the 9-day window (i18n keys for newly-shipped features)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/en.json \u2014 touched 12x across the 9-day window (i18n keys for newly-shipped features); EN+SK+CS+DE+HU+PL move in lock-step"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-performance-metrics-console-log",
+      "type": "code-review-finding",
+      "source": "ppt-web-core rotating review 2026-06-25",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:179-189 logs LCP/FID/CLS/TTFB/FCP/timing via console.log \u2014 replaces structured telemetry/no-op-in-prod guards; ships to production browsers"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "untriaged-issue-1828",
+      "type": "untriaged-issue",
+      "source": "issue #1828",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1828 (no labels, OPEN): Follow-up: accounting-web signup a11y + login link + missing tests/lint-script (PR #1808)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1827",
+      "type": "untriaged-issue",
+      "source": "issue #1827",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1827 (no labels, OPEN): Follow-up: 404 mapping left half-done in confirm_match + secret-hiding should use a DTO, not skip_serializing (PR #1809)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1826",
+      "type": "untriaged-issue",
+      "source": "issue #1826",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1826 (no labels, OPEN): Follow-up: reality-web auth-callback \"e2e\" coverage is integration-only + cements a CSRF-skip path (PR #1822)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1793",
+      "type": "untriaged-issue",
+      "source": "issue #1793",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1793 (no labels, OPEN): Follow-up: fault notifications \u2014 two transitions (triage, confirm) emit nothing + scattered dispatch logic (PR #1705)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1792",
+      "type": "untriaged-issue",
+      "source": "issue #1792",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1792 (no labels, OPEN): Follow-up: event bus retry \u2014 blocking per-subscription retry + silent Lagged/buffer-overflow drop defeat at-least-once (PR #1716)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-25.md && head -1 | grep ^# 2026-06-25$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor diff staged vs HEAD .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique|length)' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq new signals not in prev seen (excl cumulative) .research/signals/2026-06-25.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json + decay verified",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2192 vacuously true",
+      "observed": "no new plans",
+      "expected": "match annotations or none"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -cv _archive | wc -l \u2264 2",
+      "observed": "0",
+      "expected": "\u2264 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached -- .research/ excl baseline-docs | grep secrets-pattern | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regenerated copy",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder-rot in brief + any new plans",
+      "observed": "no matches",
+      "expected": "no matches"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs all in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count >= HEAD archive file count",
+      "observed": "6 \u2265 6",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regenerated copy",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length \u2264 3 + idempotency",
+      "observed": "length=0",
+      "expected": "\u2264 3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq -e .items action-list.json + risks.json + project-state.md nonempty + pm_cursor in 0..7",
+      "observed": "all pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached added lines | grep telegram-token-pattern | wc -l",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
