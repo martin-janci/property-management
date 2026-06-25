@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-23T09:59:19Z",
-  "scan_kind": "deep",
+  "generated": "2026-06-25T03:30:00Z",
+  "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
@@ -103,7 +103,7 @@
         "No mobile comments UI observed"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-25",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -161,13 +161,14 @@
         "sprint-status: 6-5-direct-messaging: ready-for-dev -> partial",
         "Backend: routes/messaging.rs (CreateThread/CreateMessage/CreateBlock, ThreadList/ThreadDetail, StartThreadRequest)",
         "ppt-web: features/messaging/ pages MessagesPage/ThreadDetailPage/NewMessagePage + hooks/useMessaging.ts; mobile screens/messages/MessagesScreen.tsx",
-        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)"
+        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)",
+        "PRs #1689 (N-party group conversations), #1696 (per-participant archive), #1702 (S3 attachments), #1768/#1756 (camelCase wire) merged this window — story now well past partial"
       ],
       "gaps": [
         "sprint-status ready-for-dev — code is well ahead of the label but story not marked done"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-25",
       "screen_refs": [
         {
           "screen_id": "ppt/messages",
@@ -289,15 +290,15 @@
         "coverage.json id=79-2: status=partial, confidence=high (AuthContext login/logout/refresh, JWT + @ppt/api-client, ProtectedRoute.tsx auth gates)",
         "Code present: ppt-web/src/pages/AuthCallbackPage.tsx, LoginPage.tsx, components/ProtectedRoute.tsx (+ tests), AuthRequiredGate.tsx",
         "Merged work: PRs #568/#609 SSO /auth/callback wiring, #642 cookie-Path reconciliation with tests; commits d0cd098a4/556c513ce add SSO callback + token-refresh integration tests",
-        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD"
+        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD",
+        "PR #1822 (2026-06-25) added reality-web SSO callback e2e coverage — closes gap-79-2-auth-callback-e2e"
       ],
       "gaps": [
-        "coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining)",
         "story markdown frontmatter stale ('Status: pending')",
         "security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-25",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -1449,7 +1450,7 @@
       "id": "10b-5-support-data-access",
       "title": "Support Data Access",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1460,15 +1461,12 @@
         "sprint-status.yaml: 10b-5-support-data-access: ready-for-dev (maps to partial)",
         "backend crates/db/src/repositories/platform_admin.rs get_support_data + migration 00163_create_support_tooling_events.sql",
         "admin-web/src/pages/SupportDataPage.tsx (+ .test.tsx)",
-        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)"
+        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)",
+        "PR #1829 (2026-06-25) closed support-data refresh_tokens column bug + reconciled sprint-status to done"
       ],
-      "gaps": [
-        "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done",
-        "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security)",
-        "no screen-map (orphan epic)"
-      ],
+      "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-25",
       "screen_refs": []
     },
     {
@@ -1578,5 +1576,6 @@
       "Disputes screen-maps (ppt/disputes, ppt/dispute-detail, ppt/file-dispute) tag UC-38 in frontmatter, but epic-80 story files reference UC-33 - UC code mismatch between the implemented screens and the audited stories (matched by domain-slug, not UC).",
       "Reports screen-map (ppt/reports) tags UC-16, but epic-81 story files reference UC-29 - UC code mismatch (matched by domain-slug)."
     ]
-  }
+  },
+  "_upkeep_note": "2026-06-25 upkeep — merged PRs marked against partial stories (10b-5 promoted to done; 79-2/6-5 evidence appended)"
 }

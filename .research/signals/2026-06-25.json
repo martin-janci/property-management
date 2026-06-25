@@ -1,0 +1,298 @@
+{
+  "date": "2026-06-25",
+  "last_run_iso": "2026-06-16T03:25:00Z",
+  "lag_hours": 215,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Routine last_run_iso=2026-06-16T03:25:00Z; lag 215h (8d 23h) > 36h threshold. Cloud routine likely missed runs.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/document.rs: 6146 lines changed since 2026-06-16. First emit. Cause: refactor-driven splits (document.rs via #1683; emergency.rs via #1798).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/messages/en.json: 3732 lines changed since 2026-06-16. First emit. Cause: refactor-driven splits (document.rs via #1683; emergency.rs via #1798).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/emergency.rs: 3362 lines changed since 2026-06-16. First emit. Cause: refactor-driven splits (document.rs via #1683; emergency.rs via #1798).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "unchecked-todo-pr-1705",
+      "type": "unchecked-todo",
+      "source": "PR #1705",
+      "score_delta": 2,
+      "evidence": "PR #1705 (feat(faults): fire notifications on every fault lifecycle event (BIT-185)) merged with `- [ ]` items in body. CI test checklist items (cargo test/clippy + fault_notification_recipient_tests R1-R6) left unchecked in PR body; auto-verified by CI.",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "evidence": "PR #1709 (feat(scheduler): payment reminders + auto-overdue transitions (Story 11.6 / BIT-) merged with `- [ ]` items in body. CI test predicate boxes (test_reminder_window_predicate, test_overdue_grace_period_predicate, scheduler_config defaults, metrics default) unchecked; auto-verified by CI.",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "PR #1768",
+      "score_delta": 2,
+      "evidence": "PR #1768 (fix(messaging): camelCase wire contract for thread/message/participant API (BIT-) merged with `- [ ]` items in body. Unchecked items include \"Live browser QA tracked in BIT-240\" \u2014 real manual QA gap. Also \"Rebase on top of #1756 if that merges first\".",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1703",
+      "type": "unchecked-todo",
+      "source": "PR #1703",
+      "score_delta": 2,
+      "evidence": "PR #1703 (feat(api-server): gap-sweep Epic 12 \u2014 meter reminders + OCR stub endpoints) merged with `- [ ]` items in body. Endpoint smoke-check checklist (GET /ai/ocr/meter-reading\u2192405, POST\u2192501, POST /correction\u2192200) unchecked; verifiable in CI tests.",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "PR #1723 (fix(financial): rustfmt compliance for financial reports routes) merged with `- [ ]` items in body. PR body listed CI fmt check unchecked; pure whitespace fix, auto-verified by CI fmt gate. Low-value signal \u2014 recorded for completeness.",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "PR #1717",
+      "score_delta": 2,
+      "evidence": "PR #1717 (feat(financial): income statement, balance sheet, cash flow + PDF/xlsx export) merged with `- [ ]` items in body. PDF/xlsx render + report-aggregate checks unchecked; mostly CI-verifiable assertions on outputs.",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1685",
+      "type": "unchecked-todo",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": "PR #1685 (feat(ppt-web): real-time IoT dashboard via BIT-145 WebSocket channel) merged with `- [ ]` items in body. Unchecked items are real manual browser QA: open /iot, post reading via API, kill WS, observe reconnect \u2014 none of these are covered by automated test.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1641",
+      "type": "unchecked-todo",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 (feat(ppt-web): Sentiment & Predictive Maintenance dashboards (Epic 13)) merged with `- [ ]` items in body. Unchecked items are manual browser QA on /ai/sentiment and /ai/predictive-maintenance \u2014 no automated coverage of acknowledge POST flow.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts re-added delegations frontend (PR #1690) \u2014 reconcile with retirement (BIT-213). Intentional reconciliation revert (not a regression rollback); evidence root-cause already documented in PR title.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "PR #1567: chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates \u2014 dependabot/renovate; informational only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "PR #1568: chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group \u2014 dependabot/renovate; informational only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-install-no-manager-gate",
+      "type": "code-review-finding",
+      "source": "code-review:api-handlers/integrations/install.rs",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/routes/integrations/install.rs:431,507,575,756,840,907,1019,1247,1616,1650,1763 \u2014 connect_airbnb / disconnect_airbnb / direct_connect_airbnb / connect_booking / disconnect_booking / create_portal_connection / delete_portal_connection only call verify_org_access (membership) and never verify_manager_role_in_org. Sibling sync.rs:161-197 defines that gate with explicit SECURITY #1525 docs warning the membership check is insufficient for OTA mutations. Any regular org member can connect or disconnect the org's Airbnb/Booking.com OAuth credentials. install::router is mounted via integrations/mod.rs:34.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "severity": "high"
+    },
+    {
+      "id": "code-review-api-handlers-emergency-lifecycle-no-gate",
+      "type": "code-review-finding",
+      "source": "code-review:api-handlers/emergency/incidents.rs",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/emergency/incidents.rs:156 (update_incident), :235 (resolve_incident), :266 (close_incident) \u2014 no is_emergency_manager(rls.role()) gate, while create_incident:49, acknowledge_incident:193, and sibling broadcasts.rs:134 deactivate_broadcast all gate the analogous lifecycle mutations. After the PR #1798 split, any authenticated org member can update/resolve/close incidents that managers must authorize to acknowledge \u2014 an inconsistency that likely regressed during the split.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-api-handlers-buildings-rls-leak",
+      "type": "code-review-finding",
+      "source": "code-review:api-handlers/buildings.rs",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/buildings.rs:1891-1926,1954-1964,1978-1989 (assign_unit_owner) \u2014 the .map_err(...)? on find_by_id_rls / get_total_ownership_rls / user_repo.find_by_id paths Err-returns to the caller without first calling rls.release().await, even though later branches (1929,1943,1967,1992) do release on early return. RlsConnection::Drop (api-core/src/extractors/rls_connection.rs:197) emits a tracing::warn! and spawns a background cleanup task on un-released drop, so the contract documented in emergency/mod.rs:36 ('every path calls rls.release().await before returning') is violated \u2014 produces warn-spam and delayed-pool-return on every unhappy path through this handler.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "medium"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "cap OK; 11 open items decayed -1, 10 dropped at 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "both new plans have annotation",
+      "expected": "both"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan template compliance",
+      "observed": "2 new plans, 4 metadata fields + 11 headings + ticked capability + Mode line + Files paths exist",
+      "expected": "2 \u2264 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets+private hostnames scan",
+      "observed": "0 (after rephrasing curl example)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical regen",
+      "observed": "diff -q match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed honesty",
+      "observed": "brief reports none; all cursors advanced",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converge",
+      "observed": "all prior plans still present or archived",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "count this run >= HEAD count",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical regen",
+      "observed": "diff -q match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions, kill-switch unset, idempotency trivially OK",
+      "expected": "cap OK"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "action-list/risks JSON valid; project-state non-empty; pm_cursor=6, coverage_cursor=0 (wrapped 12\u21920)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run"
+}
