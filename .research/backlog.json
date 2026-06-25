@@ -266,7 +266,7 @@
       "title": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
@@ -289,7 +289,7 @@
       "title": "SearchScreen stale-response race — overlapping searches can clobber newer results",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06",
@@ -773,7 +773,7 @@
       "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1085"
@@ -794,7 +794,7 @@
       "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1100"
@@ -940,7 +940,7 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
@@ -1010,7 +1010,7 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
@@ -1417,18 +1417,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-07"
+        "local git numstat since 2026-06-07",
+        "PR #1798"
       ],
       "evidence": [
-        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "resolved: PR #1798 merged 2026-06-24 — split emergency routes into cohesive sub-modules"
       ],
       "files": [
         "backend/servers/api-server/src/routes/emergency.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1436,19 +1438,20 @@
       "title": "Churn hotspot: 929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "local git numstat since 2026-06-07"
       ],
       "evidence": [
-        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "backend/servers/api-server/src/routes/vendors.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1457,18 +1460,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-07"
+        "local git numstat since 2026-06-07",
+        "PR #1800"
       ],
       "evidence": [
-        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07→2026-06-10); top-3 churn this run"
+        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07→2026-06-10); top-3 churn this run",
+        "resolved: PR #1800 merged 2026-06-24 — split enhanced_tenant_screening route into cohesive sub-modules"
       ],
       "files": [
         "backend/servers/api-server/src/routes/enhanced_tenant_screening.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1477,18 +1482,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-10T03:05:00Z"
+        "local git numstat since 2026-06-10T03:05:00Z",
+        "PR #1683"
       ],
       "evidence": [
-        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening",
+        "resolved: PR #1683 merged 2026-06-23 — split document repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/document.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1497,19 +1504,21 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "local git numstat since 2026-06-10T03:05:00Z",
-        "PR #1246"
+        "PR #1246",
+        "PR #1796"
       ],
       "evidence": [
-        "2856 lines changed in backend/crates/db/src/repositories/subscription.rs (incremental window 2026-06-10 03:05Z→18:30Z); driven by PR #1246 (PAP-112) RLS-context routing for subscription repo"
+        "2856 lines changed in backend/crates/db/src/repositories/subscription.rs (incremental window 2026-06-10 03:05Z→18:30Z); driven by PR #1246 (PAP-112) RLS-context routing for subscription repo",
+        "resolved: PR #1796 merged 2026-06-24 — split subscription repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/subscription.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1518,20 +1527,22 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "local git numstat since 2026-06-10T03:05:00Z",
         "PR #1193",
-        "PR #1203"
+        "PR #1203",
+        "PR #1708"
       ],
       "evidence": [
-        "2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (incremental window 2026-06-10 03:05Z→18:30Z); culmination of the PAP-36/PAP-47 AML-DSA hardening chain — multiple cross-tenant IDOR fixes landed in this window"
+        "2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (incremental window 2026-06-10 03:05Z→18:30Z); culmination of the PAP-36/PAP-47 AML-DSA hardening chain — multiple cross-tenant IDOR fixes landed in this window",
+        "resolved: PR #1708 merged 2026-06-22 — split aml_dsa route file into per-story submodules"
       ],
       "files": [
         "backend/servers/api-server/src/routes/aml_dsa.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1670,21 +1681,22 @@
       "title": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1151"
       ],
       "evidence": [
         "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
-        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)"
+        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         ".research/gc1-reconcile.sh",
         ".research/management/action-list.json"
       ],
       "created_at": "2026-06-07",
-      "updated_at": "2026-06-07",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1692,20 +1704,21 @@
       "title": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1121"
       ],
       "evidence": [
         "+1279 LOC churn 2026-06-05..2026-06-06 (PR #1121 gap-82-4-reality-mobile-listing-detail-favorites)",
-        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)"
+        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1713,20 +1726,21 @@
       "title": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1125"
       ],
       "evidence": [
         "+1293 LOC churn 2026-06-05..2026-06-06 (PR #1125 gap-82-3-reality-mobile-search-filters)",
-        "instability proxy; the stale-response race finding lives in the same file"
+        "instability proxy; the stale-response race finding lives in the same file",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -1734,22 +1748,23 @@
       "title": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
       ],
       "evidence": [
         "MainActivity.kt:76-109 handleDeepLink reimplements scheme/host dispatch with android.net.Uri",
         "MainActivity.kt:113-121 a second Android-only DeepLinkTarget sealed class lacks Sso — adding a new shared target silently no-ops on Android until both classes are updated",
-        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it"
+        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -2207,8 +2222,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2216,13 +2231,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -2230,8 +2246,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2239,13 +2255,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -2253,21 +2270,22 @@
       "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1081",
         "PR #1082"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -2297,8 +2315,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2324,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -2321,17 +2340,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: no new signals in 14 days"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3335,18 +3355,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #1294 commit 7ccce8a"
+        "PR #1294 commit 7ccce8a",
+        "PR #1693"
       ],
       "evidence": [
-        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry."
+        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry.",
+        "resolved: PR #1693 merged 2026-06-22 — split ota_xml into submodule file"
       ],
       "files": [
         "backend/crates/integrations/src/booking.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3416,18 +3438,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #1321 commit"
+        "PR #1321 commit",
+        "PR #1816"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/reserve_funds.rs +228/-255 (483 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — routes route reserve_funds_repo through rls.conn() / acquire_with_rls. Re-land of PAP-79 work that was marked done but never landed on dev (the done≠landed merge-stall pattern). Ships with reserve_funds_rls_repo_tests.rs (287 lines, new file). First runs_seen entry."
+        "backend/servers/api-server/src/routes/reserve_funds.rs +228/-255 (483 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — routes route reserve_funds_repo through rls.conn() / acquire_with_rls. Re-land of PAP-79 work that was marked done but never landed on dev (the done≠landed merge-stall pattern). Ships with reserve_funds_rls_repo_tests.rs (287 lines, new file). First runs_seen entry.",
+        "resolved: PR #1816 merged 2026-06-24 — split reserve_funds route file into cohesive sub-modules"
       ],
       "files": [
         "backend/servers/api-server/src/routes/reserve_funds.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3436,19 +3460,21 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #1321 commit",
-        "PR #1322 commit"
+        "PR #1322 commit",
+        "PR #1810"
       ],
       "evidence": [
-        "backend/crates/db/src/repositories/sensor.rs +233/-83 (316 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — repo methods take generic Executor<Postgres> so callers can pass either pool or transaction; supports the new acquire_with_rls flow. Ships alongside sensor_rls_repo_tests.rs (252 lines, new file). PR #1322 fmt fixup added +15/-3 (18 line-changes). Combined 334 line-changes. First runs_seen entry."
+        "backend/crates/db/src/repositories/sensor.rs +233/-83 (316 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — repo methods take generic Executor<Postgres> so callers can pass either pool or transaction; supports the new acquire_with_rls flow. Ships alongside sensor_rls_repo_tests.rs (252 lines, new file). PR #1322 fmt fixup added +15/-3 (18 line-changes). Combined 334 line-changes. First runs_seen entry.",
+        "resolved: PR #1810 merged 2026-06-24 — split sensor repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/sensor.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3537,18 +3563,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "local git numstat since 2026-06-12"
+        "local git numstat since 2026-06-12",
+        "PR #1719"
       ],
       "evidence": [
-        "Churn hotspot: form_rls_repo_tests.rs touched in 2 PRs (PAP-76 forms RLS + PAP-159 registry enum)"
+        "Churn hotspot: form_rls_repo_tests.rs touched in 2 PRs (PAP-76 forms RLS + PAP-159 registry enum)",
+        "resolved: PR #1719 merged 2026-06-23 — dedupe inline RLS role setup"
       ],
       "files": [
         "backend/crates/db/tests/form_rls_repo_tests.rs"
       ],
       "created_at": "2026-06-13",
-      "updated_at": "2026-06-13",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3670,18 +3698,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #1383"
+        "PR #1383",
+        "PR #1718"
       ],
       "evidence": [
-        "frontend/apps/mobile/app.config.icon.test.ts — 124 lines added in PR #1383 (gap-85-2 app icon variants regression test). NEW file co-added with the source change to app.config.ts in the same commit — healthy co-evolution, not instability. Tracked for visibility; expect no follow-up unless test churns again next run."
+        "frontend/apps/mobile/app.config.icon.test.ts — 124 lines added in PR #1383 (gap-85-2 app icon variants regression test). NEW file co-added with the source change to app.config.ts in the same commit — healthy co-evolution, not instability. Tracked for visibility; expect no follow-up unless test churns again next run.",
+        "resolved: PR #1718 merged 2026-06-23 — extract icon assertion helpers"
       ],
       "files": [
         "frontend/apps/mobile/app.config.icon.test.ts"
       ],
       "created_at": "2026-06-15",
-      "updated_at": "2026-06-15",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3813,18 +3843,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "hotspot_history.runs_seen 1→2 with new churn this run"
+        "hotspot_history.runs_seen 1→2 with new churn this run",
+        "PR #1700"
       ],
       "evidence": [
-        "forms.rs runs_seen=2: 2026-06-13 (PR #1337 explicit_auto_deref clippy fix, 2 lines) + 2026-06-16 (PR #1397 org-scope hardening, 334 lines). Instability proxy."
+        "forms.rs runs_seen=2: 2026-06-13 (PR #1337 explicit_auto_deref clippy fix, 2 lines) + 2026-06-16 (PR #1397 org-scope hardening, 334 lines). Instability proxy.",
+        "resolved: PR #1700 merged 2026-06-22 — split forms.rs into cohesive submodules"
       ],
       "files": [
         "backend/servers/api-server/src/routes/forms.rs"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-06-16",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3891,12 +3923,14 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #1681"
       ],
       "evidence": [
-        "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`."
+        "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
+        "resolved: PR #1681 merged 2026-06-22 — wire mobile Buildings & Leases screens to api-server"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3905,7 +3939,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-06-16",
+      "updated_at": "2026-06-25",
       "plan": null
     },
     {
@@ -3944,6 +3978,208 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "title": "Process: gap-sweep re-admitted board-retired delegation surface (PR #1690 → revert #1713)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "PR #1713"
+      ],
+      "evidence": [
+        "PR #1713 reverts #1690 — delegation page was re-added against board decision BIT-213 (PAP-33/51/55). Backend left untouched (correct — voting flow uses delegation). Gap-sweep mechanically re-admitted a board-retired surface."
+      ],
+      "files": [
+        "docs/UNWIRED_FEATURES.md",
+        "frontend/apps/ppt-web/src/features/delegations"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "title": "PR #1723 merged with unchecked test-plan boxes (rustfmt fix-up)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1723"
+      ],
+      "evidence": [
+        "PR #1723 fix(financial): rustfmt compliance — body has 2 unchecked `- [ ]` test-plan checkboxes (CI fmt + 'no logic changes'). Self-referential, low real value."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/emergency.rs",
+      "title": "Churn hotspot (post-split): backend/servers/api-server/src/routes/emergency.rs — 3362 lines/9d",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log churn since 2026-06-16"
+      ],
+      "evidence": [
+        "Top-1 churn this run: 3362 lines (~9d). emergency.rs got split by PR #1798 (resolved above); post-split churn indicates the split is still settling."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/emergency.rs"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental.rs — 2933 lines/9d",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log churn since 2026-06-16"
+      ],
+      "evidence": [
+        "Top-2 churn this run: 2933 lines (~9d). rental repo touched by rental booking + guest PII work (#1741 manager-gate, #1750 OCR seam)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "title": "Churn hotspot (post-split): backend/crates/integrations/src/booking/mod.rs — 2818 lines/9d",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log churn since 2026-06-16"
+      ],
+      "evidence": [
+        "Top-3 churn this run: 2818 lines (~9d). booking/mod.rs (post-split file). The original booking.rs split by #1693 — the new mod is still receiving heavy edits."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "title": "PR #1720 closed unmerged (Leases nav link — duplicate of #1694)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1720"
+      ],
+      "evidence": [
+        "PR #1720 'fix(ppt-web): add Leases nav link + home tile (#977)' closed without merge — superseded by #1694 (Leases nav PR landed first)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "title": "PR #1749 closed unmerged (icon test exclude — superseded by #1748 typecheck fix)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1749"
+      ],
+      "evidence": [
+        "PR #1749 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck' closed without merge — likely superseded by #1748 (canonical node-types fix)."
+      ],
+      "files": [
+        "frontend/apps/mobile/app.config.icon.test.ts"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "title": "PR #1727 closed unmerged (RLS baseline — superseded by #1728/#1729)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1727"
+      ],
+      "evidence": [
+        "PR #1727 'fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline' closed without merge — superseded by RLS baseline #1728/#1729."
+      ],
+      "files": [
+        "scripts/rls-baseline.sh"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "title": "PR #1698 closed unmerged (Story 3.2 unit mgmt UI — superseded by #1695)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1698"
+      ],
+      "evidence": [
+        "PR #1698 'feat(epic-3): story 3.2 - unit management UI (BIT-188)' closed without merge — superseded by #1695 (canonical unit management UI)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/buildings"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-broadcast-counts-missing-org-filter",
+      "title": "emergency.rs update_broadcast_counts() missing org_id filter — cross-tenant write risk",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "backend/crates/db/src/repositories/emergency.rs:792"
+      ],
+      "evidence": [
+        "update_broadcast_counts() missing organization_id WHERE clause; deactivate_broadcast() at line 830 has it. Cross-tenant writes possible if RLS context not always set. No test in emergency_cross_org_idor_tests.rs.",
+        "reachability check: `update_broadcast_counts` has ZERO call sites in the workspace (grep across backend/ found only the definition). Dead-code at present — defense-in-depth code smell, not an exploitable bug. Downgrade: score 2→1, confidence high→medium. Re-elevate if a caller is added without an org-scoped wrapper."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/emergency.rs"
+      ],
+      "created_at": "2026-06-25",
+      "updated_at": "2026-06-25",
       "plan": null
     }
   ]

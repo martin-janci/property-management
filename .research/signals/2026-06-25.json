@@ -1,0 +1,287 @@
+{
+  "date": "2026-06-25",
+  "generator": "claude-opus-4-7 routine run (catch-up after 9d 18h cron gap)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 9d 18h; 234h gap (threshold 36h). Cloud cron likely paused. Dispatcher (separate loop) was active.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts #1690 — delegation page was re-added against board decision BIT-213 (PAP-33/51/55). Backend left untouched (correct — voting flow uses delegation). Gap-sweep mechanically re-admitted a board-retired surface.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "PR #1723 fix(financial): rustfmt compliance — body has 2 unchecked `- [ ]` test-plan checkboxes (CI fmt + 'no logic changes'). Self-referential, low real value.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/emergency.rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "Top-1 churn this run: 3362 lines (~9d). emergency.rs got split by PR #1798 (resolved above); post-split churn indicates the split is still settling.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "Top-2 churn this run: 2933 lines (~9d). rental repo touched by rental booking + guest PII work (#1741 manager-gate, #1750 OCR seam). Cumulative re-emit: signal id already in seen_signals, score_delta=0 per dedup rule.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "Top-3 churn this run: 2818 lines (~9d). booking/mod.rs is the post-split file from #1693 — the new mod is still receiving heavy edits.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 'fix(ppt-web): add Leases nav link + home tile (#977)' closed without merge — superseded by #1694.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 'fix(mobile): exclude app.config.icon.test.ts from tsc typecheck' closed without merge — superseded by #1748.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 'fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline' closed without merge — superseded by RLS baseline #1728/#1729.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 'feat(epic-3): story 3.2 - unit management UI (BIT-188)' closed without merge — superseded by #1695.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] — chore(deps): bump gradle-minor-patch group in /mobile-native with 2 updates.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] — chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend axum group.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-broadcast-counts-missing-org-filter",
+      "type": "code-review-finding",
+      "source": "backend/crates/db/src/repositories/emergency.rs:792",
+      "score_delta": 2,
+      "evidence": "update_broadcast_counts() missing organization_id WHERE clause; deactivate_broadcast() at line 830 has it. Reachability check (post-emit): function has ZERO call sites in workspace — currently dead code; backlog row downgraded to score 1 / confidence medium accordingly.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-25.md",
+      "observed": "exists",
+      "expected": "exists"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursor delta vs HEAD",
+      "observed": "last_pr_seen 1439->1853, last_issue_seen 1437->1852, last_commit_sha 4829015b->29caaf6e, seen_signals 230->243, hotspot_history grew",
+      "expected": "any cursor advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | unique == .' .research/backlog.json",
+      "observed": "no duplicate ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "every signal id in seen_signals OR new this run; cumulative carve-out applied to churn-hotspot rental.rs",
+      "observed": "13 signals; 1 cumulative re-emit (rental.rs) has score_delta=0; rest are new ids",
+      "expected": "compliant"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap 8 + decay open items older than 14d",
+      "observed": "no score >8; 6 decayed; 10 dropped on decay-to-0",
+      "expected": "compliant"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has 'adversarial pass:' in brief",
+      "observed": "0 new plans this run",
+      "expected": "vacuous true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": null,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "deferred to Phase 6 staging",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": null,
+      "command": "secret scan on staged diff",
+      "observed": "deferred to Phase 6",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": null,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "deferred to Phase 6 (regen + diff)",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures list matches cursors not advanced",
+      "observed": "no phase failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still in plans/ or _archive/",
+      "observed": "no plans changed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "archive unchanged this run (6 files in _archive/)",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": null,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "deferred to Phase 6",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch + caps + idempotency + certainty + verify-all)",
+      "observed": "no auto-fix action this run (auto_fix_actions=[]); kill switch not set; no eligible candidate",
+      "expected": "compliant"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped this run (no pm_cursor advance, no management file rewrite); existing risks.json/action-list.json/project-state.md remain valid; gate is a no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": null,
+      "command": "no Telegram bot-token literal in diff",
+      "observed": "deferred to Phase 6",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate (no signal met confidence=high + score>=3 + allowlist match this run)",
+  "phase_1_5": {
+    "segment_reviewed": "api-handlers",
+    "reason": "churn-aligned (top-1 hotspot emergency.rs 3362 lines) + oldest-unreviewed-of-the-backend-segments (2026-06-10, 15 days)",
+    "findings_count": 1,
+    "downgraded_after_reachability": true
+  },
+  "phase_1_6": {
+    "ran": "partial — scrum-master digest only; no role analysis, no management/* file rewrite this run",
+    "reason": "9-day catch-up budget — prioritised brief + cursor advance over deep PM rotation",
+    "digest_for_telegram_phase6": {
+      "sprint": "Sprint — Epic 6, 7A, 8A & 10A (Jun 9 – Jun 25)",
+      "epics_done": 4,
+      "epics_total": 5,
+      "shipped_since_last_run": [
+        "#1848+#1853: Group messaging N-party support — backend contract + ppt-web client (BIT-206/244)",
+        "#1808: accounting-web public landing + signup (Next.js, cs/sk i18n) [PAP-312]",
+        "#1809: Accounting security — 404 not 500 + skip-serialize provider secrets [PAP-321]",
+        "#1850: Org-scoped favorite-alert worker (BIT-242)",
+        "#1741/#1750: Manager-role gate on Airbnb reservations + guest ID-document OCR seam"
+      ],
+      "next_up": [
+        {
+          "action": "Wire mediation party-submissions endpoints (Story 80-3 still partial)",
+          "owner": "pm-frontend"
+        },
+        {
+          "action": "Address downgraded code-review finding once a caller for update_broadcast_counts is added",
+          "owner": "pm-security"
+        },
+        {
+          "action": "Re-arm the cloud routine cron — 9-day gap suggests scheduler-side outage",
+          "owner": "pm-devops"
+        }
+      ],
+      "blockers": [
+        "Cloud routine cron paused — 9d 18h since last run (this run is catch-up)"
+      ],
+      "role_focus_today": "scrum-master (catch-up) — no PM rotation advanced",
+      "quiet": false
+    }
+  }
+}
