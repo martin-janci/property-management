@@ -1,0 +1,756 @@
+{
+  "date": "2026-06-25",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "window": {
+    "merged_prs": 256,
+    "closed_not_merged": 5,
+    "open_prs_touched": 23,
+    "new_issues": 84,
+    "lag_hours": 224,
+    "lag_days": 9,
+    "pr_number_range": [
+      1440,
+      1835
+    ]
+  },
+  "phase15": {
+    "segment_reviewed": "ppt-web-core",
+    "reason": "oldest-unreviewed (20d stale; backend churn was the realistic hotspot, but no frontend hotspot to override)",
+    "next_segment": "api-handlers"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "last run was 2026-06-16T03:25:00Z; lag \u2248 9d 8h (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-25",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 9d old; routine fell behind, cloud scheduler may be intermittent. Dispatcher branch is separate."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverts (or rolls back) #1690: \"revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)\""
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 closed unmerged on 2026-06-23: \"fix(ppt-web): add Leases nav link + home tile (#977)\""
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed unmerged on 2026-06-23: \"fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)\""
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed unmerged on 2026-06-22: \"fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS baseline\""
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed unmerged on 2026-06-22: \"feat(epic-3): story 3.2 - unit management UI (BIT-188)\""
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed unmerged on 2026-06-22: \"[PM #1627] saved-search alerts list: signal truncation past LIMIT 100\""
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-bucket-2026-06-25",
+      "type": "dep-update-noise",
+      "source": "dependabot",
+      "score_delta": 0,
+      "evidence": [
+        "12 dependabot merges this window: #1449,#1566,#1567,#1568,#1569,#1570,#1571,#1572,#1573,#1574,#1575,#1576"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-docs-screens-ppt-announcements-md",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "docs/screens/ppt/announcements.md: 3 touches this run (rebased-dev window \u2014 true 9-day churn underreported because dev was force-rebased)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "docs/screens/ppt/announcements.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs-screens-ppt-admin-contextual-help-md",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "docs/screens/ppt/admin-contextual-help.md: 2 touches this run (rebased-dev window \u2014 true 9-day churn underreported because dev was force-rebased)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "docs/screens/ppt/admin-contextual-help.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-platform-admin-rs",
+      "type": "churn-hotspot",
+      "source": "git log 4829015b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/platform_admin.rs: 2 touches this run (rebased-dev window \u2014 true 9-day churn underreported because dev was force-rebased)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/platform_admin.rs"
+      ]
+    },
+    {
+      "id": "untriaged-issue-1828",
+      "type": "untriaged-issue",
+      "source": "issue #1828",
+      "score_delta": 1,
+      "evidence": [
+        "#1828: Follow-up: accounting-web signup a11y + login link + missing tests/lint-script (PR #1808)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1827",
+      "type": "untriaged-issue",
+      "source": "issue #1827",
+      "score_delta": 1,
+      "evidence": [
+        "#1827: Follow-up: 404 mapping left half-done in confirm_match + secret-hiding should use a DTO, not skip_serializing (PR #1809)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1826",
+      "type": "untriaged-issue",
+      "source": "issue #1826",
+      "score_delta": 1,
+      "evidence": [
+        "#1826: Follow-up: reality-web auth-callback &#34;e2e&#34; coverage is integration-only + cements a CSRF-skip path (PR #1822)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1793",
+      "type": "untriaged-issue",
+      "source": "issue #1793",
+      "score_delta": 1,
+      "evidence": [
+        "#1793: Follow-up: fault notifications \u2014 two transitions (triage, confirm) emit nothing + scattered dispatch logic (PR #1705)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1792",
+      "type": "untriaged-issue",
+      "source": "issue #1792",
+      "score_delta": 1,
+      "evidence": [
+        "#1792: Follow-up: event bus retry \u2014 blocking per-subscription retry + silent Lagged/buffer-overflow drop defeat at-least-once (PR #1716)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1791",
+      "type": "untriaged-issue",
+      "source": "issue #1791",
+      "score_delta": 1,
+      "evidence": [
+        "#1791: Follow-up: message attachments \u2014 link trusts client-supplied file_key (IDOR) + unvalidated content-type (PR #1702)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1790",
+      "type": "untriaged-issue",
+      "source": "issue #1790",
+      "score_delta": 1,
+      "evidence": [
+        "#1790: Follow-up: payment reminders re-fire every ~5 min for the whole due-date window (no persistent dedup) (PR #1709)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1789",
+      "type": "untriaged-issue",
+      "source": "issue #1789",
+      "score_delta": 1,
+      "evidence": [
+        "#1789: Follow-up: N-party conversations \u2014 tests assert snake_case against camelCase wire; start_thread response still 2-party-shaped (PR #1689)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1788",
+      "type": "untriaged-issue",
+      "source": "issue #1788",
+      "score_delta": 1,
+      "evidence": [
+        "#1788: Follow-up: Booking.com listing-push \u2014 currency validation is structural-only, duplicates existing SupportedCurrency allowlist (PR #1743)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1787",
+      "type": "untriaged-issue",
+      "source": "issue #1787",
+      "score_delta": 1,
+      "evidence": [
+        "#1787: Follow-up: align get_booking_conflicts manager gate with canonical DB-backed predicate (PR #1741)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1786",
+      "type": "untriaged-issue",
+      "source": "issue #1786",
+      "score_delta": 1,
+      "evidence": [
+        "#1786: Follow-up: sensor WS handler \u2014 add authz regression tests for the surviving DB-checked path (PR #1737)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1785",
+      "type": "untriaged-issue",
+      "source": "issue #1785",
+      "score_delta": 1,
+      "evidence": [
+        "#1785: Follow-up: Stripe Checkout \u2014 multi-currency amount conversion + Stripe idempotency-key + webhook amount cross-check (PR #1726)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1784",
+      "type": "untriaged-issue",
+      "source": "issue #1784",
+      "score_delta": 1,
+      "evidence": [
+        "#1784: Follow-up: portal-listings \u2014 DB-level status/enum defense-in-depth + IG3 test note (PR #1746)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1783",
+      "type": "untriaged-issue",
+      "source": "issue #1783",
+      "score_delta": 1,
+      "evidence": [
+        "#1783: Follow-up: guest ID-document upload/OCR seam \u2014 PII audit-logging, content-type sniffing, structured-PII authz parity (PR #1750)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1782",
+      "type": "untriaged-issue",
+      "source": "issue #1782",
+      "score_delta": 1,
+      "evidence": [
+        "#1782: Follow-up: a third access-token verification copy (JwtService) left unmigrated + log lost token_type field (PR #1744)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1780",
+      "type": "untriaged-issue",
+      "source": "issue #1780",
+      "score_delta": 1,
+      "evidence": [
+        "#1780: Follow-up: camelCase wire flip (PR #1768) breaks React Native mobile messaging"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1777",
+      "type": "untriaged-issue",
+      "source": "issue #1777",
+      "score_delta": 1,
+      "evidence": [
+        "#1777: Follow-up: meter reminders can be sent twice to a resident with multiple unit meters (PR #1703)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1776",
+      "type": "untriaged-issue",
+      "source": "issue #1776",
+      "score_delta": 1,
+      "evidence": [
+        "#1776: Follow-up: N+1 block-check loop in start_thread for N-party conversations (PR #1689)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1773",
+      "type": "untriaged-issue",
+      "source": "issue #1773",
+      "score_delta": 1,
+      "evidence": [
+        "#1773: Follow-up: send_message + unread/read model not generalized for N-party group threads (PR #1689)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1772",
+      "type": "untriaged-issue",
+      "source": "issue #1772",
+      "score_delta": 1,
+      "evidence": [
+        "#1772: Follow-up: OCR endpoints unauthenticated + meter-reminder dedup/doc drift (PR #1703)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1771",
+      "type": "untriaged-issue",
+      "source": "issue #1771",
+      "score_delta": 1,
+      "evidence": [
+        "#1771: Follow-up: unread-count ignores per-participant soft-delete/archive (PR #1696)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1770",
+      "type": "untriaged-issue",
+      "source": "issue #1770",
+      "score_delta": 1,
+      "evidence": [
+        "#1770: Follow-up: bind attachment file_key to the issued upload key + validate MIME on link (PR #1702)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1769",
+      "type": "untriaged-issue",
+      "source": "issue #1769",
+      "score_delta": 1,
+      "evidence": [
+        "#1769: Follow-up: payment-reminder scheduler can double-send + UTC date boundary + tautological tests (PR #1709)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1767",
+      "type": "untriaged-issue",
+      "source": "issue #1767",
+      "score_delta": 1,
+      "evidence": [
+        "#1767: Follow-up: offline fault queue ordering/concurrency + offline-edit dedup gaps (PR #1715)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1766",
+      "type": "untriaged-issue",
+      "source": "issue #1766",
+      "score_delta": 1,
+      "evidence": [
+        "#1766: Follow-up: persisted rental booking/guest PII reads (list_bookings/get_booking/get_booking_with_guests/get_guest) not manager-gated (PR #174"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1765",
+      "type": "untriaged-issue",
+      "source": "issue #1765",
+      "score_delta": 1,
+      "evidence": [
+        "#1765: Follow-up: event bus backoff jitter + head-of-line blocking on retry (PR #1716)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1764",
+      "type": "untriaged-issue",
+      "source": "issue #1764",
+      "score_delta": 1,
+      "evidence": [
+        "#1764: Follow-up: Stripe Checkout hardening \u2014 session-creation idempotency key + webhook amount cross-check (PR #1726)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1763",
+      "type": "untriaged-issue",
+      "source": "issue #1763",
+      "score_delta": 1,
+      "evidence": [
+        "#1763: Follow-up: add integration test for sensor WS non-member 403 rejection (PR #1737)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1762",
+      "type": "untriaged-issue",
+      "source": "issue #1762",
+      "score_delta": 1,
+      "evidence": [
+        "#1762: Follow-up: portal listing edit silently downgrades sold/rented/archived to draft (PR #1746)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1761",
+      "type": "untriaged-issue",
+      "source": "issue #1761",
+      "score_delta": 1,
+      "evidence": [
+        "#1761: Follow-up: restore raw principal_kind in tenant-resolution warn logs; carry over #1675 finding-3 (PR #1744)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1760",
+      "type": "untriaged-issue",
+      "source": "issue #1760",
+      "score_delta": 1,
+      "evidence": [
+        "#1760: Follow-up: duplicate SQLx migration 00192 broke dev + ID-document PII hardening (PR #1750)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1759",
+      "type": "untriaged-issue",
+      "source": "issue #1759",
+      "score_delta": 1,
+      "evidence": [
+        "#1759: Follow-up: tighten Booking.com listing-push rate/currency validation (ISO-4217 whitelist, mixed-currency, amount bounds) (PR #1743)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1758",
+      "type": "untriaged-issue",
+      "source": "issue #1758",
+      "score_delta": 1,
+      "evidence": [
+        "#1758: Follow-up: preflight presence-check misses length floors for JWT_SECRET / ESIGN_TOKEN_SECRET (PR #1753)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1680",
+      "type": "untriaged-issue",
+      "source": "issue #1680",
+      "score_delta": 1,
+      "evidence": [
+        "#1680: Research dispatcher: cron environment can&#39;t run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "code-review-ppt-web-core-websocket-reconnect-thrashing",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:90-102 \u2014 WebSocketWrapper calls getAccessToken() inline without memoization, creating a new auth object on every render; WebSocketContext at line 256 depends on [auth.isAuthenticated, auth.accessToken] but the wrapper's object-identity churn defeats it, triggering reconnect cycles."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "title": "WebSocketWrapper causes reconnects on every parent render due to auth object recreation",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-query-leak",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:142-151 defines queryKeys.accounting, but line 347-368 (AUTHED_QUERY_KEY_ROOTS) omits 'accounting'. AuthContext.logout (line 542) only removes queries whose roots are in AUTHED_QUERY_KEY_ROOTS, so cached accounting data persists into the next logged-in user's session."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "title": "Accounting TanStack Query cache not cleared on logout \u2014 invoices/statements survive session change",
+      "severity": "high"
+    },
+    {
+      "id": "code-review-ppt-web-core-trivial-test-assertions",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.test.tsx and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx use expect(...).toBeDefined() without asserting concrete behavior; passes regardless of regression as long as the module compiles."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.test.tsx",
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx"
+      ],
+      "title": "AuthContext / useOcrMeterReading tests rely on .toBeDefined() \u2014 pass trivially on compile",
+      "severity": "low"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff staged vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_pr_seen 1439\u21921835, cursors advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique == length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-set vs new signal IDs (cumulative carve-out applied)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5cap",
+      "passed": true,
+      "command": "jq max score",
+      "observed": "\u22648",
+      "expected": "\u22648"
+    },
+    {
+      "goal": "G5decay",
+      "passed": true,
+      "command": "decay loop ran",
+      "observed": "11 decayed, 15 dropped",
+      "expected": "\u22651 decay per 14d-stale open row",
+      "note": "every open row with updated_at \u2264 14d-old lost \u22651 or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md + adversarial pass",
+      "observed": "1/1",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A plans/*.md",
+      "observed": "1",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G7metadata",
+      "passed": true,
+      "command": "grep **Vector/Score/Source/Confidence:**",
+      "observed": "all 4 present",
+      "expected": "all 4"
+    },
+    {
+      "goal": "G7headings",
+      "passed": true,
+      "command": "grep ## headings",
+      "observed": "all 11 present",
+      "expected": "all 11"
+    },
+    {
+      "goal": "G7capability",
+      "passed": true,
+      "command": "grep - [x]",
+      "observed": "C1+C6+C7 ticked",
+      "expected": "\u22651"
+    },
+    {
+      "goal": "G7mode",
+      "passed": true,
+      "command": "grep Mode: (local-only|cloud-ok)",
+      "observed": "cloud-ok",
+      "expected": "one of"
+    },
+    {
+      "goal": "G7files",
+      "passed": true,
+      "command": "check Files bullets exist on disk",
+      "observed": "3/3 exist",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures listed in brief",
+      "observed": "none",
+      "expected": "consistency"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW \u2265 HEAD",
+      "observed": "7 \u2265 7",
+      "expected": "NOW \u2265 HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions count + idempotency",
+      "observed": "no candidate (0 actions)",
+      "expected": "\u22643, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list+risks jq + cursors",
+      "observed": "all valid, pm_cursor 5\u21926, coverage 12\u21920",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

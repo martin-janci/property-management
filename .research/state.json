@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-06-25T12:00:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_pr_seen": 1835,
+  "last_issue_seen": 1828,
+  "last_commit_sha": "c5027c627bb1",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -321,6 +321,21 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "docs/screens/ppt/announcements.md": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-25",
+      "recent_churn": 2
+    },
+    "docs/screens/ppt/admin-contextual-help.md": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-25",
+      "recent_churn": 2
+    },
+    "backend/crates/db/src/repositories/platform_admin.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-25",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -553,7 +568,56 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-25",
+    "stale-routine-alert-2026-06-25",
+    "revert-pr-1713",
+    "closed-not-merged-pr-1720",
+    "closed-not-merged-pr-1749",
+    "closed-not-merged-pr-1727",
+    "closed-not-merged-pr-1698",
+    "closed-not-merged-pr-1634",
+    "dep-update-noise-bucket-2026-06-25",
+    "churn-hotspot-docs-screens-ppt-announcements-md",
+    "churn-hotspot-docs-screens-ppt-admin-contextual-help-md",
+    "churn-hotspot-backend-crates-db-src-repositories-platform-admin-rs",
+    "untriaged-issue-1828",
+    "untriaged-issue-1827",
+    "untriaged-issue-1826",
+    "untriaged-issue-1793",
+    "untriaged-issue-1792",
+    "untriaged-issue-1791",
+    "untriaged-issue-1790",
+    "untriaged-issue-1789",
+    "untriaged-issue-1788",
+    "untriaged-issue-1787",
+    "untriaged-issue-1786",
+    "untriaged-issue-1785",
+    "untriaged-issue-1784",
+    "untriaged-issue-1783",
+    "untriaged-issue-1782",
+    "untriaged-issue-1780",
+    "untriaged-issue-1777",
+    "untriaged-issue-1776",
+    "untriaged-issue-1773",
+    "untriaged-issue-1772",
+    "untriaged-issue-1771",
+    "untriaged-issue-1770",
+    "untriaged-issue-1769",
+    "untriaged-issue-1767",
+    "untriaged-issue-1766",
+    "untriaged-issue-1765",
+    "untriaged-issue-1764",
+    "untriaged-issue-1763",
+    "untriaged-issue-1762",
+    "untriaged-issue-1761",
+    "untriaged-issue-1760",
+    "untriaged-issue-1759",
+    "untriaged-issue-1758",
+    "untriaged-issue-1680",
+    "code-review-ppt-web-core-websocket-reconnect-thrashing",
+    "code-review-ppt-web-core-accounting-query-leak",
+    "code-review-ppt-web-core-trivial-test-assertions"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -561,15 +625,15 @@
     "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
-    "ppt-web-core": "2026-06-05",
+    "ppt-web-core": "2026-06-25",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
-    "plans_created": 12,
+    "runs": 41,
+    "vectors_created": 219,
+    "plans_created": 13,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
@@ -584,19 +648,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-06-25",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

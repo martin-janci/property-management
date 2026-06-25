@@ -1,6 +1,21 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-06-25 — daily PM rotation (Scrum Master + pm-security; 9-day catch-up routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a, wrap)._
+
+## 2026-06-25 — pm-security (9-day catch-up)
+
+The 06-16 → 06-25 window landed a wide IDOR/PII hardening campaign (messaging attachments, rental guest documents, Stripe Checkout idempotency, OCR-endpoint auth) and 256 PRs merged into `dev`. Net direction is positive, but **34 untriaged "Follow-up:" issues** filed by the post-merge reviewer are piling up faster than they close — the campaign is generating its own remediation backlog.
+
+**Top 3 security risks raised this run** (full list in `risks.json` under prefix `sec-`):
+
+1. **JWT verification fragmentation** (#1782) — two verification paths (`api_core::extractors` vs. `state.jwt_service` in `organizations/core.rs`) may differ in `leeway`/`iss`/`aud`/`token_type` enforcement. Blast radius: all org-scoped endpoints. *Owner: pm-security; action `sec-audit-jwt-verification-paths`.*
+2. **Stripe webhook amount not cross-checked** — `handle_payment_webhook` (`integrations/webhook.rs`) settles invoices without comparing `event.data.object.amount_total` to the stored invoice amount. Blast radius: financial settlement. *Owner: pm-security; action `sec-stripe-webhook-amount-reconciliation`.*
+3. **Refresh-token revocation + WS-expiry untested** (#481, #480) — both story-gating issues, code looks right but no HTTP-level / e2e tests confirm. *Owner: pm-security; actions `sec-test-revoked-refresh-token-e2e`, `sec-ws-jwt-expiry-e2e`.*
+
+`api-server` also still lacks the `JWT_SECRET` / `ESIGN_TOKEN_SECRET` ≥64-char floor that `reality-server/src/state.rs:105` already enforces — filed as `sec-jwt-secret-length-floor-api-server`.
+
+Coverage cursor wrapped epic-9 → epic-10a (idx 12 → 0); full role rotation has now visited every PM seat at least once.
+
 
 ## Executive summary
 
