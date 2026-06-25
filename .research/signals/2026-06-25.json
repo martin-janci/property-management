@@ -1,0 +1,356 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-25T16:35:00Z",
+  "trigger": "incremental (catch-up after 9d cron silence)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z; today=2026-06-25",
+      "score_delta": 0,
+      "evidence": "routine has not run in 9d 9h \u2014 cloud cron likely paused; dispatcher loop still ticking on its own branch",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "title_hint": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 'revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)' \u2014 DELIBERATE retirement per BIT-213, NOT a regression-fix revert. Original #1690 added Delegations route group; BIT-213 deferred it out of MVP scope.",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/delegations.tsx"
+      ],
+      "title_hint": "revert(delegations) \u2014 deliberate BIT-213 retirement, not a bug"
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 touched frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/*.md \u2014 Payment Management wiring",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1630 ppt-web routes (Payment Management wiring)"
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 touched frontend/apps/ppt-web/src/routes/AppRoutes.tsx, frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx without updating docs/screens/ppt/*.md \u2014 Sentiment + Predictive Maintenance routes (new group)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1641 ppt-web routes (Sentiment + Predictive Maintenance routes (new group))"
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "PR #1654 touched frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/*.md \u2014 invoice PDF button",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1654 ppt-web routes (invoice PDF button)"
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": "PR #1685 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/*.md \u2014 real-time IoT WebSocket",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1685 ppt-web routes (real-time IoT WebSocket)"
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": "PR #1690 touched frontend/apps/ppt-web/src/App.tsx, frontend/apps/ppt-web/src/routes/groups/delegations.tsx without updating docs/screens/ppt/*.md \u2014 Delegations feature (REVERTED by #1713 \u2014 see revert signal)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/delegations.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1690 ppt-web routes (Delegations feature (REVERTED by #1713 \u2014 see revert signal))"
+    },
+    {
+      "id": "screen-map-drift-pr-1694-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1694",
+      "score_delta": 2,
+      "evidence": "PR #1694 touched frontend/apps/ppt-web/src/App.tsx without updating docs/screens/ppt/*.md \u2014 Leases sidebar nav link",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "title_hint": "screen-map drift: PR #1694 ppt-web routes (Leases sidebar nav link)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "2818 lines changed in backend/crates/integrations/src/booking/mod.rs (window 2026-06-16\u21922026-06-25); cumulative re-emit (already in seen_signals)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "title_hint": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking/mod.rs appears in hotspot_history with runs_seen>=2; this window adds 2818 lines",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "title_hint": "Repeated churn: backend/crates/integrations/src/booking/mod.rs"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "2718 lines changed in backend/servers/api-server/tests/oauth_integration_tests.rs (window 2026-06-16\u21922026-06-25); cumulative re-emit (already in seen_signals)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "title_hint": "Churn hotspot: backend/servers/api-server/tests/oauth_integration_tests.rs"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/oauth_integration_tests.rs appears in hotspot_history with runs_seen>=2; this window adds 2718 lines",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "title_hint": "Repeated churn: backend/servers/api-server/tests/oauth_integration_tests.rs"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "2648 lines changed in backend/servers/api-server/src/routes/auth.rs (window 2026-06-16\u21922026-06-25); cumulative re-emit (already in seen_signals)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "title_hint": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/auth.rs appears in hotspot_history with runs_seen>=2; this window adds 2648 lines",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "title_hint": "Repeated churn: backend/servers/api-server/src/routes/auth.rs"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 closed unmerged on 2026-06-23 \u2014 fix(ppt-web): add Leases nav link + home tile (#977)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "title_hint": "PR #1720 closed unmerged: fix(ppt-web): add Leases nav link + home tile (#977)"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 closed unmerged on 2026-06-23 \u2014 fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "title_hint": "PR #1749 closed unmerged: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev fro"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 closed unmerged on 2026-06-22 \u2014 fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS baseline",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "title_hint": "PR #1727 closed unmerged: fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS basel"
+    },
+    {
+      "id": "dep-update-noise-batch-2026-06-25",
+      "type": "dep-update-noise",
+      "source": "12 dependabot PRs merged in window",
+      "score_delta": 0,
+      "evidence": "12 dependabot PRs merged 2026-06-16\u21922026-06-25 (no signal scored; brief log)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "title_hint": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar (confidence=high + score>=3 + allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md and H1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare staged state.json vs HEAD",
+      "observed": "cursors + seen_signals advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "see jq pipeline in routine-prompt",
+      "observed": "true (cumulative re-emit score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; decay applied",
+      "observed": "max 8 (test-gap-inquiry-idor-regression done at 6); decay applied 11 items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "match new plans vs brief 'adversarial pass:'",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count + section validation",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/ == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff (exempting baseline doc files)",
+      "observed": "no hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "identical (verified in scratchpad)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief 'Phases that failed' + verify cursors",
+      "observed": "no failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan present in plans/ or _archive/",
+      "observed": "no plan deletions",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls _archive count >= HEAD count",
+      "observed": "6 == 6 (no change)",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "identical (verified in scratchpad)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto_fix_actions; kill switch not set; idempotent",
+      "observed": "auto_fix_actions=[]",
+      "expected": "discipline upheld"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "no-op (Phase 1.6 skipped this run)",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
