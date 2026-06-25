@@ -1,0 +1,594 @@
+{
+  "date": "2026-06-25",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "routine-cadence",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25:00Z; lag = 9d 18h"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-25",
+      "type": "stale_routine_alert",
+      "source": "routine-cadence",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 9d old; cloud routine may be paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverted PR #1690 (delegation frontend re-wired into ppt-web), merged 2026-06-22 19:13",
+        "Re-introduction landed 16 min before CEO ruling that delegation STAYS RETIRED (BIT-213); ship-safe rule was breached at merge time",
+        "Frontend-only revert; backend /api/v1/delegations untouched (live in voting flow)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/features/delegations/index.ts",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "churn-window-since-2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx: 10\u201313 commits in 9-day window (top-3 raw churn after exclusions)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "churn-window-since-2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/rental.rs: 10\u201313 commits in 9-day window (top-3 raw churn after exclusions)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "churn-window-since-2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/document.rs: 10\u201313 commits in 9-day window (top-3 raw churn after exclusions)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed without merging on 2026-06-23: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed without merging on 2026-06-22: fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS baseline"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 closed without merging on 2026-06-23: fix(ppt-web): add Leases nav link + home tile (#977)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed without merging on 2026-06-22: feat(epic-3): story 3.2 - unit management UI (BIT-188)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1647 closed without merging on 2026-06-21: feat(iot): sensor register + edit + standalone list [BIT-147]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1636 closed without merging on 2026-06-21: fix(reality-server): reconcile portal import authz + dedup principal extractor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed without merging on 2026-06-22: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-1668-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1668",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1668 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1696 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1673-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1673",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1673 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1690 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1694-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1694",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1694 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1685 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1641 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1654 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1630 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1611 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1610 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1559 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 touched ppt-web route files without updating docs/screens/ppt/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1822",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1822 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1671-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1671",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1671 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1677-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1677",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1677 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-986-reality",
+      "type": "screen-map-drift",
+      "source": "PR #986",
+      "score_delta": 2,
+      "evidence": [
+        "PR #986 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1453 touched reality-web route files without updating docs/screens/reality/*.md (heuristic \u2014 fragile, see brief caveat)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 ... | grep ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq prev-vs-current state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "skipped \u2014 no non-cumulative signal re-emitted with score_delta>0",
+      "observed": "trivially true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8 count + decay applied to 6 items + 8 dropped at 0",
+      "observed": "0 items >8; decay applied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plan files created this run",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A | grep plans/",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached scan for secrets+private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures this run",
+      "observed": "no failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plans deleted (4 moved to _archive/, which is allowed)",
+      "observed": "all prior plans accounted for",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 11 >= HEAD 7",
+      "observed": "11>=7",
+      "expected": "growing"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 emitted no actions; auto_fix_actions=[]",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list+risks parse; project-state non-empty; pm_cursor in [0,7]; coverage_cursor advanced 12\u21920 (mod 13)",
+      "observed": "all valid",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no high-confidence signal met allowlist + score>=3 + idempotency)",
+  "notes": {
+    "phase1.5": {
+      "segment_reviewed": "ppt-web-core",
+      "selection_reason": "churn-aligned (lazyRoutes.tsx 13 commits) + oldest-unreviewed (2026-06-05)",
+      "raw_findings": 1,
+      "promoted_findings": 0,
+      "dropped_reason": "single finding (iot-lazy-naming) was verified as false-positive: m.SensorListPage IS exported from features/iot/index.ts; lazy alias rename is intentional"
+    },
+    "phase1.6": {
+      "role_run": "pm-security",
+      "headline": "5 sec actions added: ID-doc PII hardening (#1823), OCR auth (#1797), Stripe idempotency (#1824), LLM-doc IDOR (28d stale), OAuth refresh-token revocation"
+    }
+  }
+}
