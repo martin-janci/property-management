@@ -445,6 +445,10 @@ async fn main() -> anyhow::Result<()> {
     );
     let _drainer_worker_handle = drainer_worker.start();
 
+    let favorite_alert_worker =
+        services::FavoriteAlertWorker::new(db.clone(), services::FavoriteAlertConfig::from_env());
+    let _favorite_alert_worker_handle = favorite_alert_worker.start();
+
     // Create application state
     let state = AppState::new(db, tenant_resolution_cache, tenant_rate_limiters);
 

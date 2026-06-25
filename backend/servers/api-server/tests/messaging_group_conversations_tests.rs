@@ -47,6 +47,55 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
+/// Seed a user with an explicit display `name` (so participant-list rendering
+/// and search can be asserted against a known value).
+async fn seed_named_user(pool: &PgPool, email: &str, name: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at)
+        VALUES ($1, 'test_hash', $2, 'active', NOW())
+        RETURNING id
+        "#,
+    )
+    .bind(email)
+    .bind(name)
+    .fetch_one(pool)
+    .await
+    .expect("seed named user")
+}
+
+/// Insert an N-party thread with the given ordered participant ids.
+async fn seed_thread_n(pool: &PgPool, org: Uuid, participants: &[Uuid]) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO message_threads (organization_id, participant_ids)
+        VALUES ($1, $2)
+        RETURNING id
+        "#,
+    )
+    .bind(org)
+    .bind(participants)
+    .fetch_one(pool)
+    .await
+    .expect("seed N-party thread")
+}
+
+/// Insert a (non-deleted, unread) message authored by `sender` into `thread`.
+async fn seed_message(pool: &PgPool, thread: Uuid, sender: Uuid, content: &str) {
+    sqlx::query(
+        r#"
+        INSERT INTO messages (thread_id, sender_id, content)
+        VALUES ($1, $2, $3)
+        "#,
+    )
+    .bind(thread)
+    .bind(sender)
+    .bind(content)
+    .execute(pool)
+    .await
+    .expect("seed message");
+}
+
 /// Insert a block: `blocker` has blocked `blocked` within `org`.
 async fn seed_block(pool: &PgPool, org: Uuid, blocker: Uuid, blocked: Uuid) {
     sqlx::query(
@@ -246,6 +295,192 @@ async fn start_group_thread_with_blocked_recipient_is_rejected(pool: PgPool) {
         resp.json_value()["code"],
         json!("USER_BLOCKED"),
         "blocked recipient must be denied: {}",
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T5 — group thread detail returns the FULL other-participant list ([BIT-206])
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn group_thread_detail_returns_all_participants(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "detail3").await;
+    let alice = seed_named_user(&pool, "detail3-alice@msg.test", "Alice Anders").await;
+    let bob = seed_named_user(&pool, "detail3-bob@msg.test", "Bob Brown").await;
+    let carol = seed_named_user(&pool, "detail3-carol@msg.test", "Carol Clark").await;
+    seed_membership(&pool, org, alice, "org_admin").await;
+    seed_membership(&pool, org, bob, "resident").await;
+    seed_membership(&pool, org, carol, "resident").await;
+    let thread = seed_thread_n(&pool, org, &[alice, bob, carol]).await;
+
+    let token = mint_token(alice, "detail3-alice@msg.test");
+    let resp = app
+        .execute(
+            app.get(&format!("/api/v1/messages/threads/{thread}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::OK);
+    let v = resp.json_value();
+    let participants = v["participants"].as_array().expect("participants array");
+    assert_eq!(
+        participants.len(),
+        2,
+        "detail must return BOTH other participants, not one arbitrary other: {v}"
+    );
+    let ids: Vec<String> = participants
+        .iter()
+        .map(|p| p["id"].as_str().unwrap_or_default().to_string())
+        .collect();
+    assert!(ids.contains(&bob.to_string()), "bob must be listed: {v}");
+    assert!(
+        ids.contains(&carol.to_string()),
+        "carol must be listed: {v}"
+    );
+    assert!(
+        !ids.contains(&alice.to_string()),
+        "the caller must NOT be in the other-participant list: {v}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T6 — thread list renders all participants + preview + unread for a group
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_threads_renders_all_participants_and_preview(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "list3").await;
+    let alice = seed_named_user(&pool, "list3-alice@msg.test", "Alice Anders").await;
+    let bob = seed_named_user(&pool, "list3-bob@msg.test", "Bob Brown").await;
+    let carol = seed_named_user(&pool, "list3-carol@msg.test", "Carol Clark").await;
+    seed_membership(&pool, org, alice, "org_admin").await;
+    seed_membership(&pool, org, bob, "resident").await;
+    seed_membership(&pool, org, carol, "resident").await;
+    let thread = seed_thread_n(&pool, org, &[alice, bob, carol]).await;
+    // An unread inbound message from bob drives the preview + unread count.
+    seed_message(&pool, thread, bob, "hi group").await;
+
+    let token = mint_token(alice, "list3-alice@msg.test");
+    let resp = app
+        .execute(
+            app.get("/api/v1/messages/threads")
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::OK);
+    let v = resp.json_value();
+    let threads = v["threads"].as_array().expect("threads array");
+    assert_eq!(threads.len(), 1, "exactly one thread expected: {v}");
+    let t = &threads[0];
+
+    let participants = t["participants"].as_array().expect("participants array");
+    assert_eq!(
+        participants.len(),
+        2,
+        "list must render BOTH other participants for a group thread: {v}"
+    );
+    let ids: Vec<String> = participants
+        .iter()
+        .map(|p| p["id"].as_str().unwrap_or_default().to_string())
+        .collect();
+    assert!(ids.contains(&bob.to_string()) && ids.contains(&carol.to_string()));
+
+    assert_eq!(
+        t["unreadCount"],
+        json!(1),
+        "one unread inbound message expected: {v}"
+    );
+    assert_eq!(
+        t["lastMessage"]["content"],
+        json!("hi group"),
+        "preview of the last message expected: {v}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T7 — list search matches ANY participant, not one arbitrary other ([BIT-206])
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_search_matches_any_participant(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "search3").await;
+    let alice = seed_named_user(&pool, "search3-alice@msg.test", "Alice Anders").await;
+    let bob = seed_named_user(&pool, "search3-bob@msg.test", "Bob Brown").await;
+    // Carol has a uniquely-searchable name so a match proves the filter spans
+    // every participant rather than a single arbitrarily-picked other.
+    let carol = seed_named_user(&pool, "search3-carol@msg.test", "Zelda Zenith").await;
+    seed_membership(&pool, org, alice, "org_admin").await;
+    seed_membership(&pool, org, bob, "resident").await;
+    seed_membership(&pool, org, carol, "resident").await;
+    let thread = seed_thread_n(&pool, org, &[alice, bob, carol]).await;
+    seed_message(&pool, thread, bob, "hi group").await;
+
+    let token = mint_token(alice, "search3-alice@msg.test");
+    let resp = app
+        .execute(
+            app.get("/api/v1/messages/threads?search=Zelda")
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::OK);
+    let v = resp.json_value();
+    assert_eq!(
+        v["threads"].as_array().map(|a| a.len()).unwrap_or(0),
+        1,
+        "search on a non-first participant's name must still match the thread: {v}"
+    );
+    assert_eq!(
+        v["total"],
+        json!(1),
+        "count must agree with list for a search matching any participant: {v}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T8 — cross-tenant thread detail is still rejected (read-path IDOR guard)
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn group_thread_detail_cross_tenant_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "xdetail-a").await;
+    let org_b = seed_org(&pool, "xdetail-b").await;
+    let alice = seed_named_user(&pool, "xdetail-alice@msg.test", "Alice Anders").await;
+    let bob = seed_named_user(&pool, "xdetail-bob@msg.test", "Bob Brown").await;
+    let carol = seed_named_user(&pool, "xdetail-carol@msg.test", "Carol Clark").await;
+    seed_membership(&pool, org_a, alice, "org_admin").await;
+    // Bob + Carol form a thread inside org_b; alice (org_a) is a stranger.
+    seed_membership(&pool, org_b, bob, "org_admin").await;
+    seed_membership(&pool, org_b, carol, "resident").await;
+    let foreign_thread = seed_thread_n(&pool, org_b, &[bob, carol]).await;
+
+    let token = mint_token(alice, "xdetail-alice@msg.test");
+    let resp = app
+        .execute(
+            app.get(&format!("/api/v1/messages/threads/{foreign_thread}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a foreign-tenant thread must not be readable across orgs: {}",
         resp.text()
     );
 }

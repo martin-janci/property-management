@@ -22,11 +22,9 @@
 //! transport, so in-app pull is the delivery channel; an email/push drainer off
 //! the same queue remains a future follow-up.
 //!
-//! Out of scope (documented follow-up, blocked on a privilege decision):
-//! - **Favorite price-drop alerts (16.2)**: `portal_favorites` and
-//!   `listing_price_history` are `FORCE ROW LEVEL SECURITY` org-isolated, so a
-//!   context-less worker reads nothing; that half needs per-org / super-admin
-//!   context, a deliberate privilege decision.
+//! Favorite price-drop / back-on-market delivery now lives in
+//! [`crate::services::favorite_alerts`] because those reads must run in an
+//! explicit per-org RLS loop rather than the global-read context used here.
 
 use std::time::Duration;
 
