@@ -10,7 +10,7 @@
 //!   * `search_documents_by_embedding` — cosine-similarity search with a
 //!     pgvector-native fast path and an application-level JSONB fallback,
 //!   * `search_documents_pgvector`     — thin wrapper over the SQL function
-//!      with the same fallback,
+//!     with the same fallback,
 //!   * `get_rag_statistics`            — reads the `v_rag_statistics` view.
 //!
 //! Until now nothing exercised the similarity search end-to-end, and the
