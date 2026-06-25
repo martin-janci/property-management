@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-16 03:25 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-25 03:00 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,20 +8,51 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
-| 1 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconf | issue #1380 | 2026-06-15 | open |
-| 1 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backen | #1331 | 2026-06-13 | open |
+| 1 | Follow-up: accounting-web signup a11y + login link + missing tests/lint-script (PR #1808) | Issue #1828 | 2026-06-25 | open |
+| 1 | Follow-up: 404 mapping left half-done in confirm_match + secret-hiding should use a DTO, not skip_serializing (PR #1809) | Issue #1827 | 2026-06-25 | open |
+| 1 | Follow-up: reality-web auth-callback &#34;e2e&#34; coverage is integration-only + cements a CSRF-skip path (PR #1822) | Issue #1826 | 2026-06-25 | open |
+| 1 | Follow-up: fault notifications — two transitions (triage, confirm) emit nothing + scattered dispatch logic (PR #1705) | Issue #1793 | 2026-06-25 | open |
+| 1 | Follow-up: event bus retry — blocking per-subscription retry + silent Lagged/buffer-overflow drop defeat at-least-once (PR #1716) | Issue #1792 | 2026-06-25 | open |
+| 1 | Follow-up: message attachments — link trusts client-supplied file_key (IDOR) + unvalidated content-type (PR #1702) | Issue #1791 | 2026-06-25 | open |
+| 1 | Follow-up: payment reminders re-fire every ~5 min for the whole due-date window (no persistent dedup) (PR #1709) | Issue #1790 | 2026-06-25 | open |
+| 1 | Follow-up: N-party conversations — tests assert snake_case against camelCase wire; start_thread response still 2-party-shaped (PR #1689) | Issue #1789 | 2026-06-25 | open |
+| 1 | Follow-up: Booking.com listing-push — currency validation is structural-only, duplicates existing SupportedCurrency allowlist (PR #1743) | Issue #1788 | 2026-06-25 | open |
+| 1 | Follow-up: align get_booking_conflicts manager gate with canonical DB-backed predicate (PR #1741) | Issue #1787 | 2026-06-25 | open |
+| 1 | Follow-up: sensor WS handler — add authz regression tests for the surviving DB-checked path (PR #1737) | Issue #1786 | 2026-06-25 | open |
+| 1 | Follow-up: Stripe Checkout — multi-currency amount conversion + Stripe idempotency-key + webhook amount cross-check (PR #1726) | Issue #1785 | 2026-06-25 | open |
+| 1 | Follow-up: portal-listings — DB-level status/enum defense-in-depth + IG3 test note (PR #1746) | Issue #1784 | 2026-06-25 | open |
+| 1 | Follow-up: guest ID-document upload/OCR seam — PII audit-logging, content-type sniffing, structured-PII authz parity (PR #1750) | Issue #1783 | 2026-06-25 | open |
+| 1 | Follow-up: a third access-token verification copy (JwtService) left unmigrated + log lost token_type field (PR #1744) | Issue #1782 | 2026-06-25 | open |
+| 1 | Follow-up: camelCase wire flip (PR #1768) breaks React Native mobile messaging | Issue #1780 | 2026-06-25 | open |
+| 1 | Follow-up: meter reminders can be sent twice to a resident with multiple unit meters (PR #1703) | Issue #1777 | 2026-06-25 | open |
+| 1 | Follow-up: N+1 block-check loop in start_thread for N-party conversations (PR #1689) | Issue #1776 | 2026-06-25 | open |
+| 1 | Research dispatcher: cron environment can&#39;t run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) | Issue #1680 | 2026-06-25 | open |
+| 1 | Follow-up: send_message + unread/read model not generalized for N-party group threads (PR #1689) | Issue #1773 | 2026-06-25 | open |
+| 1 | Follow-up: OCR endpoints unauthenticated + meter-reminder dedup/doc drift (PR #1703) | Issue #1772 | 2026-06-25 | open |
+| 1 | Follow-up: unread-count ignores per-participant soft-delete/archive (PR #1696) | Issue #1771 | 2026-06-25 | open |
+| 1 | Follow-up: bind attachment file_key to the issued upload key + validate MIME on link (PR #1702) | Issue #1770 | 2026-06-25 | open |
+| 1 | Follow-up: payment-reminder scheduler can double-send + UTC date boundary + tautological tests (PR #1709) | Issue #1769 | 2026-06-25 | open |
+| 1 | Follow-up: offline fault queue ordering/concurrency + offline-edit dedup gaps (PR #1715) | Issue #1767 | 2026-06-25 | open |
+| 1 | Follow-up: persisted rental booking/guest PII reads (list_bookings/get_booking/get_booking_with_guests/get_guest) not manager-gated (PR #1741) | Issue #1766 | 2026-06-25 | open |
+| 1 | Follow-up: event bus backoff jitter + head-of-line blocking on retry (PR #1716) | Issue #1765 | 2026-06-25 | open |
+| 1 | Follow-up: Stripe Checkout hardening — session-creation idempotency key + webhook amount cross-check (PR #1726) | Issue #1764 | 2026-06-25 | open |
+| 1 | Follow-up: add integration test for sensor WS non-member 403 rejection (PR #1737) | Issue #1763 | 2026-06-25 | open |
+| 1 | Follow-up: portal listing edit silently downgrades sold/rented/archived to draft (PR #1746) | Issue #1762 | 2026-06-25 | open |
+| 1 | Follow-up: restore raw principal_kind in tenant-resolution warn logs; carry over #1675 finding-3 (PR #1744) | Issue #1761 | 2026-06-25 | open |
+| 1 | Follow-up: duplicate SQLx migration 00192 broke dev + ID-document PII hardening (PR #1750) | Issue #1760 | 2026-06-25 | open |
+| 1 | Follow-up: tighten Booking.com listing-push rate/currency validation (ISO-4217 whitelist, mixed-currency, amount bounds) (PR #1743) | Issue #1759 | 2026-06-25 | open |
+| 1 | Follow-up: preflight presence-check misses length floors for JWT_SECRET / ESIGN_TOKEN_SECRET (PR #1753) | Issue #1758 | 2026-06-25 | open |
+| 1 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured | issue #1380 | 2026-06-15 | open |
+| 1 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline | #1331 | 2026-06-13 | open |
 | 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061, #1061 closed | 2026-06-07 | done |
-| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks stagi | #950, PR #1143, issue #950 closed | 2026-06-07 | done |
-| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on r | #952, PR #1144, issue #952 closed | 2026-06-07 | done |
+| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950, PR #1143, issue #950 closed | 2026-06-07 | done |
+| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952, PR #1144, issue #952 closed | 2026-06-07 | done |
 | 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769, PR #1141, issue #769 closed | 2026-06-07 | done |
-| 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildin | #789, PR #1142, issue #789 closed | 2026-06-07 | done |
-| 1 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work  | #1151 | 2026-06-07 | open |
+| 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | #789, PR #1142, issue #789 closed | 2026-06-07 | done |
 | 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749, issue #749 closed | 2026-06-06 | done |
 | 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755, issue #755 closed | 2026-06-06 | done |
 | 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764, issue #764 closed | 2026-06-06 | done |
 | 1 | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | #765, issue #765 closed | 2026-06-06 | done |
-| 1 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-03 | open |
-| 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK | #951 | 2026-06-03 | open |
 | 1 | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | #751, #942 | 2026-06-02 | done |
 | 1 | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | #752, #929 | 2026-06-02 | done |
 | 1 | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | #756, #934 | 2026-06-02 | done |
@@ -45,21 +76,24 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime | #775, PR #926 | 2026-06-01 | done |
 | 1 | Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log | #776 | 2026-06-01 | done |
 | 1 | Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR | #777 | 2026-06-01 | done |
-| 1 | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonatio | #778, PR #882 | 2026-06-01 | done |
+| 1 | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation | #778, PR #882 | 2026-06-01 | done |
 | 1 | Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces | #788, PR #922 | 2026-06-01 | done |
 | 1 | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware | #790, PR #913 | 2026-06-01 | done |
 | 1 | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves | #791, PR #924 | 2026-06-01 | done |
 | 1 | Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev) | #846, PR #880 | 2026-06-01 | done |
-| 1 | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev | #847 | 2026-06-01 | done |
-| 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenan | #848, PR #913 | 2026-06-01 | done |
-| 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violati | #850, PR #883 | 2026-06-01 | done |
-| 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API st | #851, PR #904 | 2026-06-01 | done |
-| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust Stri | #859, PR #871 | 2026-06-01 | done |
-| 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — route | #867, PR #870 | 2026-06-01 | done |
-| 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | #836, PR #866 | 2026-05-31 | done |
-| 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | #845, PR #862 | 2026-05-31 | done |
-| 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | #849, PR #869 | 2026-05-31 | done |
+| 1 | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev) | #847 | 2026-06-01 | done |
+| 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | #848, PR #913 | 2026-06-01 | done |
+| 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | #850, PR #883 | 2026-06-01 | done |
+| 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | #851, PR #904 | 2026-06-01 | done |
+| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | #859, PR #871 | 2026-06-01 | done |
+| 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | #867, PR #870 | 2026-06-01 | done |
+| 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | #836, PR #866 | 2026-05-31 | done |
+| 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | #845, PR #862 | 2026-05-31 | done |
+| 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | #849, PR #869 | 2026-05-31 | done |
 | 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
+| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53 | #1151 | 2026-06-07 | dropped |
+| 0 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-03 | dropped |
+| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | #951 | 2026-06-03 | dropped |
 
 ## Status legend
 
