@@ -52,3 +52,40 @@ CREATE UNIQUE INDEX idx_favorite_alert_queue_price_dedupe
 CREATE UNIQUE INDEX idx_favorite_alert_queue_status_dedupe
     ON favorite_alert_queue(favorite_id, alert_type, previous_status, new_status)
     WHERE alert_type = 'back_on_market';
+
+-- Tenant isolation: a favorite_alert_queue row belongs to the org that owns the
+-- referenced listing. Mirrors portal_favorites_tenant_isolation (the parent
+-- table this queue is derived from) so the org boundary is identical. The
+-- per-org FavoriteAlertWorker sets app.current_org_id before reading/writing,
+-- and the portal-user delivery path runs under the same org context as
+-- portal_favorites reads.
+ALTER TABLE favorite_alert_queue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE favorite_alert_queue FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS favorite_alert_queue_tenant_isolation ON favorite_alert_queue;
+CREATE POLICY favorite_alert_queue_tenant_isolation ON favorite_alert_queue
+    FOR ALL
+    USING (
+        (
+            is_super_admin()
+            OR EXISTS (
+                SELECT 1
+                FROM listings p
+                WHERE p.id = favorite_alert_queue.listing_id
+                  AND p.organization_id = get_current_org_id()
+            )
+        )
+        AND get_current_org_not_deleted()
+    )
+    WITH CHECK (
+        (
+            is_super_admin()
+            OR EXISTS (
+                SELECT 1
+                FROM listings p
+                WHERE p.id = favorite_alert_queue.listing_id
+                  AND p.organization_id = get_current_org_id()
+            )
+        )
+        AND get_current_org_not_deleted()
+    );
