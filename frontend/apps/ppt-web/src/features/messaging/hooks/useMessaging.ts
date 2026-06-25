@@ -75,8 +75,13 @@ function fullName(firstName: string, lastName: string): string {
  * Map an API ThreadWithPreview to the feature-layer MessageThread type.
  */
 export function mapApiThreadToUi(apiThread: ThreadWithPreview): MessageThread {
-  const participant = apiThread.otherParticipant;
+  const participants = apiThread.participants;
   const lastMsg = apiThread.lastMessage;
+  // The last message's sender is one of the other participants (it isn't shown
+  // when the message is from me). Resolve their name from the participant list
+  // so group threads attribute the preview to the right person, not an
+  // arbitrary "other" ([BIT-206]).
+  const sender = lastMsg ? participants.find((p) => p.id === lastMsg.senderId) : undefined;
 
   return {
     id: apiThread.id,
@@ -86,22 +91,21 @@ export function mapApiThreadToUi(apiThread: ThreadWithPreview): MessageThread {
     lastMessageAt: apiThread.lastMessage?.createdAt ?? undefined,
     lastMessagePreview: lastMsg?.content ?? undefined,
     lastMessageSenderId: lastMsg?.senderId ?? undefined,
-    lastMessageSenderName: lastMsg?.isFromMe
-      ? undefined
-      : fullName(participant.firstName, participant.lastName),
+    lastMessageSenderName:
+      lastMsg && !lastMsg.isFromMe && sender
+        ? fullName(sender.firstName, sender.lastName) || undefined
+        : undefined,
     unreadCount: apiThread.unreadCount,
     createdAt: apiThread.createdAt,
     updatedAt: apiThread.updatedAt,
-    participants: [
-      {
-        id: participant.id,
-        userId: participant.id,
-        userName: fullName(participant.firstName, participant.lastName),
-        userAvatar: undefined,
-        joinedAt: apiThread.createdAt,
-        lastReadAt: undefined,
-      },
-    ],
+    participants: participants.map((p) => ({
+      id: p.id,
+      userId: p.id,
+      userName: fullName(p.firstName, p.lastName),
+      userAvatar: undefined,
+      joinedAt: apiThread.createdAt,
+      lastReadAt: undefined,
+    })),
     isArchived: false,
   };
 }
@@ -126,7 +130,6 @@ export function mapApiMessageToUi(apiMsg: MessageWithSender): Message {
  */
 export function mapApiThreadDetailToUi(detail: ThreadDetailResponse): ThreadWithMessages {
   const thread = detail.thread;
-  const other = detail.otherParticipant;
   const messages = detail.messages.map(mapApiMessageToUi);
 
   return {
@@ -138,16 +141,14 @@ export function mapApiThreadDetailToUi(detail: ThreadDetailResponse): ThreadWith
     unreadCount: 0, // mark-as-read keeps this fresh
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
-    participants: [
-      {
-        id: other.id,
-        userId: other.id,
-        userName: fullName(other.firstName, other.lastName),
-        userAvatar: undefined,
-        joinedAt: thread.createdAt,
-        lastReadAt: undefined,
-      },
-    ],
+    participants: detail.participants.map((p) => ({
+      id: p.id,
+      userId: p.id,
+      userName: fullName(p.firstName, p.lastName),
+      userAvatar: undefined,
+      joinedAt: thread.createdAt,
+      lastReadAt: undefined,
+    })),
     messages,
   };
 }
@@ -419,15 +420,19 @@ export function useMessageRecipients(buildingId?: string): {
 
 /**
  * Map feature-layer CreateThreadRequest to the API StartThreadRequest.
- * The API only supports a single recipient; we use the first one.
+ *
+ * Sends the full recipient set as `recipient_ids` so N-party group
+ * conversations (UC-05.8 / [BIT-183]) reach the backend intact; a single
+ * recipient is just an array of length one. The wire keys are snake_case to
+ * match the backend contract ([BIT-206]).
  */
 export function toStartThreadRequest(data: {
   recipientIds: string[];
   initialMessage: string;
 }): StartThreadRequest {
   return {
-    recipientId: data.recipientIds[0] ?? '',
-    initialMessage: data.initialMessage,
+    recipient_ids: data.recipientIds,
+    initial_message: data.initialMessage,
   };
 }
 
