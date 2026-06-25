@@ -40,7 +40,7 @@ epics:
     name: "Platform Administration"
     status: in-progress
     stories_total: 7
-    stories_completed: 6  # 10b-1,2,3,4,5,6 done (10b-5 reconciled 2026-06-24: code + PRs #793/#854 landed, refresh_tokens column bug fixed)
+    stories_completed: 7  # 10b-1..7 done (10b-5 reconciled 2026-06-24: PRs #793/#854; 10b-7 reconciled 2026-06-25: backend+admin-web+mobile shipped, tests via PR #844)
   epic-80:
     name: "Dispute Resolution"
     status: partial
@@ -77,7 +77,7 @@ development_status:
   10b-4-system-announcements: done  # coverage.json 2026-05-27: handlers fully implemented since cf533ae4; SystemAnnouncementRepository CRUD + maintenance + ack; public_announcements_router; cargo check -p api-server exit 0 (frontend admin-web component still pending — backend story complete)
   10b-5-support-data-access: done  # GET /api/v1/platform-admin/support-data wired (servers/api-server routes/platform_admin/audit.rs) behind AuditRead + extract_super_admin_token; REPEATABLE READ snapshot reads (PR #793/#628); append-only support_tooling_events audit trail (migration 00163) hardened to RLS + ON DELETE RESTRICT (00165); retention/privacy posture documented (docs/data/support-data-retention-privacy.md, PR #854); admin-web SupportDataPage shipped. Fixed runtime is_revoked/updated_at column bug on refresh_tokens (revoked_at IS NULL) + #[sqlx::test] regression.
   10b-6-user-onboarding-tour: done  # coverage.json 2026-05-27: onboarding.rs routes mounted at /api/v1/onboarding; OnboardingRepository (needs_onboarding/get_tours_for_user/start_tour/complete_step/complete_tour/skip_tour/reset_tour); handlers fully implemented since cf533ae4; cargo check -p api-server exit 0 (frontend component still pending — backend story complete)
-  10b-7-contextual-help-documentation: ready-for-dev
+  10b-7-contextual-help-documentation: done  # reconciled 2026-06-25: backend help.rs (11 route handlers + HelpRepository SQLx queries) mounted at /api/v1/help (lib.rs:233); help_repo wired into AppState (state.rs:253); migration 00034_create_contextual_help.sql in dev; regression tests help_tests.rs landed via PR #844 (merged 2026-05-30); admin-web HelpSidebar/HelpTooltip/useContextualHelp + articles.ts shipped; mobile HelpCenterScreen + ContextualHelp shipped; screen-map ppt/admin-contextual-help buildStatus=shipped
   # Epic 80: Dispute Resolution (verified 2026-05-25)
   80-2-dispute-filing-flow: partial  # Re-verified 2026-06-08 (verify-dispute-filing-flow-ac-coverage): AC-1/AC-2/AC-3/AC-5 MET + tested — FileDisputePage.tsx (type radio-cards, subject/description validation, char counter, submit contract) + EvidenceUploader.tsx (AC-2, was wrongly flagged missing) + FileDisputePageRoute.tsx orchestration (create→sequential evidence upload→toast→navigate). Happy/partial-fail/filtered/create-fail/non-Error error paths covered (FileDisputePage.test.tsx + FileDisputePageRoute.test.tsx, 22 tests, vitest exit 0). STILL BLOCKED on AC-4 (draft auto-save / useDraftStorage.ts not implemented) + redesign 5-step wizard in-progress — stays partial, NOT promoted.
 
@@ -86,12 +86,12 @@ development_status:
   80-2-dispute-filing-flow: partial
   80-3-mediation-resolution: partial
 
-# ─────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
 # Slotted: 2026-05-26 | Priority: medium
 # Rule: dependent stories MUST NOT be promoted to `done` until each follow-up
 #       issue in this batch is either CLOSED or explicitly DEFERRED.
-# ─────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────
 test_hardening_batch:
   batch_id: thb-2026-05-25
   slotted_at: 2026-05-25
