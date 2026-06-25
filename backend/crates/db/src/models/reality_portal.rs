@@ -122,6 +122,34 @@ pub struct SavedSearchAlert {
     pub processed_at: Option<DateTime<Utc>>,
 }
 
+/// An undelivered saved-search alert as seen by the email/push transport drainer
+/// (BIT-139, Epic 16). This is the *out-of-band* delivery view of a
+/// `search_alert_queue` row: it carries the recipient's contact details
+/// (resolved from `users`) and the saved-search name so the drainer can compose
+/// a notification without a second round-trip.
+///
+/// Delivery here is tracked by `search_alert_queue.notified_at` /
+/// `notify_attempts` (migration 00194), independently of the `status` column,
+/// which belongs to the in-app pull/read channel ([`SavedSearchAlert`]).
+#[derive(Debug, Clone, FromRow)]
+pub struct UndeliveredSearchAlert {
+    pub id: Uuid,
+    pub saved_search_id: Uuid,
+    pub user_id: Uuid,
+    /// Name of the saved search that produced the alert (joined).
+    pub saved_search_name: String,
+    /// Listings that newly matched the saved search.
+    pub matching_listing_ids: Vec<Uuid>,
+    /// `new_listing` (today); `price_change` is reserved for the favorites path.
+    pub alert_type: String,
+    /// Recipient email, resolved from `users` (not RLS-gated).
+    pub recipient_email: String,
+    /// Recipient display name, for the email greeting.
+    pub recipient_name: String,
+    /// Recipient locale (`sk` | `cs` | `de` | `en`) for future localized copy.
+    pub recipient_locale: Option<String>,
+}
+
 /// Create portal saved search.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreatePortalSavedSearch {

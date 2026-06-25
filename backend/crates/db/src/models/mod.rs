@@ -476,8 +476,9 @@ pub use reality_portal::{
     RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
     RealtorListing, RealtorProfile, SavedSearchAlert, ScheduleViewing, SearchAlertQueueEntry,
     SendInquiryMessage, UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
-    UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
-    UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
+    UndeliveredSearchAlert, UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite,
+    UpdatePortalSavedSearch, UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing,
+    ViewingSchedule,
 };
 
 // Epic 37: Community & Social Features

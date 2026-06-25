@@ -244,6 +244,90 @@ impl RealityPortalRepository {
         Ok(res.rows_affected())
     }
 
+    // ------------------------------------------------------------------------
+    // Saved-search alert transport drainer (BIT-139, Epic 16).
+    //
+    // The email/push drainer delivers alerts out-of-band and tracks its own
+    // progress via `notified_at` / `notify_attempts` (migration 00194), kept
+    // separate from the `status` column owned by the in-app read channel above.
+    // It runs service-role (no `app.current_user_id`); `search_alert_queue`,
+    // `portal_saved_searches`, and `users` are not RLS-gated, so it sees every
+    // tenant's pending alerts — that breadth is the whole point of a drainer and
+    // is why each row carries its own owner's contact details.
+    // ------------------------------------------------------------------------
+
+    /// Fetch alerts the transport drainer has not yet delivered, oldest first.
+    ///
+    /// Returns rows with `notified_at IS NULL` whose `notify_attempts` are still
+    /// under `max_attempts`, joined to the saved-search name and the recipient's
+    /// contact details. Rows that have exhausted their attempt budget are left
+    /// behind so one undeliverable alert can't wedge the queue.
+    pub async fn list_undelivered_search_alerts(
+        &self,
+        limit: i64,
+        max_attempts: i32,
+    ) -> Result<Vec<UndeliveredSearchAlert>, SqlxError> {
+        sqlx::query_as::<_, UndeliveredSearchAlert>(
+            r#"
+            SELECT
+                q.id,
+                q.saved_search_id,
+                q.user_id,
+                s.name           AS saved_search_name,
+                q.matching_listing_ids,
+                q.alert_type,
+                u.email          AS recipient_email,
+                u.name           AS recipient_name,
+                u.locale         AS recipient_locale
+            FROM search_alert_queue q
+            JOIN portal_saved_searches s ON s.id = q.saved_search_id
+            JOIN users u ON u.id = q.user_id
+            WHERE q.notified_at IS NULL
+              AND q.notify_attempts < $2
+            ORDER BY q.created_at ASC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .bind(max_attempts)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Mark an alert delivered by the transport drainer (`notified_at = now()`).
+    /// Idempotent: a row already notified is left untouched. Does **not** touch
+    /// `status`, so the in-app unread badge is unaffected.
+    pub async fn mark_search_alert_notified(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET notified_at = NOW()
+            WHERE id = $1 AND notified_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Record a failed transport-delivery attempt (`notify_attempts += 1`).
+    /// Once the count reaches the drainer's budget the row drops out of
+    /// [`list_undelivered_search_alerts`] and is no longer retried.
+    pub async fn record_search_alert_notify_failure(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET notify_attempts = notify_attempts + 1
+            WHERE id = $1 AND notified_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     // ========================================================================
     // Portal Favorites (Story 31.1, 31.4)
     // ========================================================================
