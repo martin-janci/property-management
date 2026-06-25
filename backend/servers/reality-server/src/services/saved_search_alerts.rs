@@ -218,7 +218,13 @@ impl SavedSearchAlertWorker {
             if !ids.is_empty() {
                 if let Err(e) = self
                     .repo
-                    .enqueue_search_alert(&mut *conn, search.id, search.user_id, &ids, "new_listing")
+                    .enqueue_search_alert(
+                        &mut *conn,
+                        search.id,
+                        search.user_id,
+                        &ids,
+                        "new_listing",
+                    )
                     .await
                 {
                     tracing::warn!(id = %search.id, error = %e, "[#983] failed to enqueue alert; skipping watermark advance");
