@@ -27,6 +27,12 @@
 --
 -- Because `embedding_vector` only exists when pgvector is installed, the view
 -- body is built dynamically so this migration succeeds on both kinds of DB.
+--
+-- The view already exists from 00081_create_pgvector.sql with a different column
+-- set (`chunks_with_embedding` in the slot now used by `chunks_with_vector`).
+-- `CREATE OR REPLACE VIEW` cannot rename/reorder an existing view's columns, so
+-- drop the old view first to allow the new column set to be installed cleanly.
+DROP VIEW IF EXISTS v_rag_statistics;
 
 DO $$
 DECLARE
