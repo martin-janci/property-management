@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "6-4-pinned-announcements",
   "selected_at": "2026-06-25T08:16:08Z",
-  "last_action": "repick",
-  "reason": "prior target '6-2-announcement-viewing-acknowledgment' exhausted; closest-to-done is '6-4-pinned-announcements' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
