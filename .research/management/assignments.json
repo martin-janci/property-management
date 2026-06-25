@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-25T18:10:00Z",
+  "generated": "2026-06-25T22:16:44Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
@@ -116,7 +116,7 @@
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-3c9d0245",
       "status": "review",
       "claimed_at": "2026-06-24T00:18:49Z",
-      "last_updated": "2026-06-25T12:31:50Z",
+      "last_updated": "2026-06-25T22:16:44Z",
       "status_changed_at": "2026-06-24T02:14:29Z",
       "pr_number": 1814,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1814",
@@ -138,7 +138,7 @@
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-d467ac04",
       "status": "review",
       "claimed_at": "2026-06-24T00:18:49Z",
-      "last_updated": "2026-06-25T12:31:50Z",
+      "last_updated": "2026-06-25T22:16:44Z",
       "status_changed_at": "2026-06-24T04:11:20Z",
       "pr_number": 1812,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1812",
@@ -552,6 +552,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-25T12:31:50Z"
+    },
+    {
+      "task_id": "80-3-mediation-resolution",
+      "branch": "auto-impl/80-3-mediation-resolution-ad00e6ed",
+      "status": "review",
+      "specialist": "pm-frontend",
+      "claimed_at": "2026-06-25T16:30:16Z",
+      "last_updated": "2026-06-25T22:16:44Z",
+      "status_changed_at": "2026-06-25T22:16:44Z",
+      "pr_number": 1846,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1846",
+      "merged_at": null,
+      "last_reviewed_oid": "94e46e404b9fcee469df5d41178d2a09436b3051",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "[orphan-recovered] pr=1846 status=done specialist=pm-frontend",
+      "reviewer_summary": "verdict=approve note=orphan-recovered; frontend wiring of dispute party-submissions endpoints; backend contract verified; 33 CI checks green; scope_drift=true (sprint-status promotion task-mandated); no blocking findings"
     }
   ]
 }
