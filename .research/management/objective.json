@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "10b-5-support-data-access",
-  "selected_at": "2026-06-24T22:20:52Z",
+  "epic_prefix": "6-5-direct-messaging",
+  "selected_at": "2026-06-25T10:46:15Z",
   "last_action": "repick",
-  "reason": "prior target '79-2-authentication-flow' exhausted; closest-to-done is '10b-5-support-data-access' (open=1 claimable=1)",
+  "reason": "prior target '6-4-pinned-announcements' exhausted; closest-to-done is '6-5-direct-messaging' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
