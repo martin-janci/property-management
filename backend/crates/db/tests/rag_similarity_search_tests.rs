@@ -212,12 +212,28 @@ async fn search_documents_by_embedding_is_org_scoped(pool: PgPool) {
 
     let vec = vec![1.0_f32, 0.0, 0.0];
     let mut conn = pool.acquire().await.expect("acquire");
-    repo.create_embedding(&mut *conn, org_a, doc_a, 0, "org a secret", Some(vec.clone()), serde_json::json!({}))
-        .await
-        .expect("seed org a chunk");
-    repo.create_embedding(&mut *conn, org_b, doc_b, 0, "org b secret", Some(vec.clone()), serde_json::json!({}))
-        .await
-        .expect("seed org b chunk");
+    repo.create_embedding(
+        &mut *conn,
+        org_a,
+        doc_a,
+        0,
+        "org a secret",
+        Some(vec.clone()),
+        serde_json::json!({}),
+    )
+    .await
+    .expect("seed org a chunk");
+    repo.create_embedding(
+        &mut *conn,
+        org_b,
+        doc_b,
+        0,
+        "org b secret",
+        Some(vec.clone()),
+        serde_json::json!({}),
+    )
+    .await
+    .expect("seed org b chunk");
 
     let results = repo
         .search_documents_by_embedding(&mut conn, org_a, &vec, 10, Some(0.5))
@@ -244,15 +260,39 @@ async fn get_rag_statistics_matches_view_contract(pool: PgPool) {
 
     let mut conn = pool.acquire().await.expect("acquire");
     // Two chunks WITH a JSONB embedding, one chunk WITHOUT (pending).
-    repo.create_embedding(&mut *conn, org, doc, 0, "chunk one", Some(vec![1.0, 0.0]), serde_json::json!({}))
-        .await
-        .expect("chunk 0");
-    repo.create_embedding(&mut *conn, org, doc, 1, "chunk two", Some(vec![0.0, 1.0]), serde_json::json!({}))
-        .await
-        .expect("chunk 1");
-    repo.create_embedding(&mut *conn, org, doc, 2, "chunk three (no embedding)", None, serde_json::json!({}))
-        .await
-        .expect("chunk 2");
+    repo.create_embedding(
+        &mut *conn,
+        org,
+        doc,
+        0,
+        "chunk one",
+        Some(vec![1.0, 0.0]),
+        serde_json::json!({}),
+    )
+    .await
+    .expect("chunk 0");
+    repo.create_embedding(
+        &mut *conn,
+        org,
+        doc,
+        1,
+        "chunk two",
+        Some(vec![0.0, 1.0]),
+        serde_json::json!({}),
+    )
+    .await
+    .expect("chunk 1");
+    repo.create_embedding(
+        &mut *conn,
+        org,
+        doc,
+        2,
+        "chunk three (no embedding)",
+        None,
+        serde_json::json!({}),
+    )
+    .await
+    .expect("chunk 2");
 
     // The load-bearing assertion: this call SELECTs the view columns the model
     // declares. On the pre-00194 view it errors with
@@ -273,5 +313,8 @@ async fn get_rag_statistics_matches_view_contract(pool: PgPool) {
         "avg chunk length should be computed, got {}",
         stats.avg_chunk_length
     );
-    assert!(stats.last_updated.is_some(), "last_updated should be populated");
+    assert!(
+        stats.last_updated.is_some(),
+        "last_updated should be populated"
+    );
 }
