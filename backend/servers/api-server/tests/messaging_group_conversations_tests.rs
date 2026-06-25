@@ -338,7 +338,10 @@ async fn group_thread_detail_returns_all_participants(pool: PgPool) {
         .map(|p| p["id"].as_str().unwrap_or_default().to_string())
         .collect();
     assert!(ids.contains(&bob.to_string()), "bob must be listed: {v}");
-    assert!(ids.contains(&carol.to_string()), "carol must be listed: {v}");
+    assert!(
+        ids.contains(&carol.to_string()),
+        "carol must be listed: {v}"
+    );
     assert!(
         !ids.contains(&alice.to_string()),
         "the caller must NOT be in the other-participant list: {v}"
