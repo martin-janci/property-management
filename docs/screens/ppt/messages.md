@@ -38,3 +38,4 @@ the UI's page/pageSize params to the API's limit/offset params.
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-05-24 — agent: promoted apiStatus stub→integrated; wired MessagesPageRoute to useThreads/useUnreadCount hooks.
+- 2026-06-25 — agent: reconciliation pass — sprint-status 6-5 flipped ready-for-dev→done. Backend (20+ endpoints, RLS repo, migrations 00017/00018/00019/00189/00190/00191, cross-tenant tests) and ppt-web (MessagesPage/ThreadDetailPage/NewMessagePage + hooks) confirmed shipped. Gate #486 satisfied: getToken() in useMessaging.ts routes through centralised token-provider.ts (globalTokenProvider via AuthContext), not a raw bypass. Mobile messaging UI deferred and not overstated.
