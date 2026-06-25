@@ -1,0 +1,158 @@
+{
+  "date": "2026-06-25",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "routine self-check 2026-06-25",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 9d 231h (last_run_iso=2026-06-16T03:25:00Z)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-25",
+      "type": "stale_routine_alert",
+      "source": "routine self-check 2026-06-25",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 9d old; cloud routine may be paused. Dispatcher (separate loop on .research/management/) is still ticking \u2014 commits visible up to 2026-06-25 18:10."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "recovery run \u2014 no signal met confidence=high + score\u22653 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-25.md && head -1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "new signal ids not in prev seen",
+      "observed": "true (lag-warning-2026-06-25 + stale-routine-alert-2026-06-25 are new)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score >8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "per-item decay check",
+      "observed": "0 violations",
+      "expected": "0 violations",
+      "remediation": ""
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans \u2192 no adversarial pass needed",
+      "observed": "0 new plans",
+      "expected": "0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse failed-phases",
+      "observed": "none (Phase 1.5 + 1.6 deliberately skipped, cursors not advanced for those)",
+      "expected": "failed phases listed if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "all 9 prior plans present",
+      "expected": "all"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= prev",
+      "observed": "\u2265",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline (kill switch + caps + idempotency)",
+      "observed": "empty auto_fix_actions (no candidates)",
+      "expected": "\u22641 PR/issue/comment + idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2192 no-op gate",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
