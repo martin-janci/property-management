@@ -7,7 +7,7 @@ sitemapRefs:
 implementations:
   ppt-web:
     component: AnnouncementsPage
-    buildStatus: in-progress
+    buildStatus: shipped
     redesignStatus: in-progress
     apiStatus: complete
   mobile:
@@ -121,6 +121,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-25 — agent: verify-6-2-announcement-viewing-acknowledgment — Coverage 6-2 finish-to-done: verified ppt-web viewing + acknowledgment slice live (ViewAnnouncementPage renders readCount/acknowledgedCount + AcknowledgmentStatsPanel + Acknowledge/Mark-as-Read; auto-fire POST /{id}/read on load + POST /{id}/acknowledge; api-client useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats route through shared authenticatedFetchJson — no direct getToken). Story-gate #486 confirmed CLOSED/completed (2026-05-26). Flipped ppt-web buildStatus in-progress→shipped; sprint-status 6-2 ready-for-dev→done. Docs/status reconciliation only — no code change.
 
 - 2026-06-25 — agent: verify-6-4-pinned-announcements — Story 6.4 (pinned announcements) verified functionally complete on dev and reconciled to `done` in sprint-status. Backend: PATCH/POST /api/v1/announcements/{id}/pin (lifecycle.rs pin_announcement) — manager-only, max-3-per-org cap enforced atomically via pin_with_cap_rls (SELECT FOR UPDATE vs TOCTOU race #518), auto-unpin scheduler (services/scheduler.rs auto_unpin_expired_announcements, 30-day cutoff), composite index idx_announcements_org_pinned_published (migration 00158). Repository: pin_with_cap_rls/unpin_rls/count_pinned_rls. Regression: announcement_tests.rs test_pin_announcement + test_auto_unpin_expired. Frontend ppt-web: PinnedAnnouncementsBand (features/announcements/components) — separate usePinnedAnnouncements query (pinned=true, staleTime 5 min, immune to list filters), AnnouncementCard Pin/Unpin button calling usePinAnnouncement mutation, AnnouncementList optimistic pinned-first sort. Tests: PinnedAnnouncementsBand.test.tsx (4 cases), AnnouncementList.test.tsx pin/unpin UI cases, announcements.list.route.test.tsx case (e); 838 tests pass. This screen stays buildStatus=in-progress: aggregates 6-2 viewing + skeleton-card loading still TBD; NOT flipped to shipped.
 
