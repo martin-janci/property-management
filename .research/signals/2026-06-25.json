@@ -1,0 +1,222 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "routine self",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-06-16T03:25:00Z; ~225h (~9d) since last run — cloud schedule may have stalled"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-25",
+      "type": "stale_routine_alert",
+      "source": "routine self",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 9d old; dispatcher (separate loop) clearly still ticking — see .research/management/assignments.json on the planning branch."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-2026-06-25",
+      "type": "dep-update-noise",
+      "source": "PRs #1567, #1568 (merged); #1836-#1842 (open dependabot)",
+      "score_delta": 0,
+      "evidence": [
+        "Merged this window: #1567 gradle-minor-patch, #1568 tower-http 0.6→0.7 in axum group",
+        "Open this run (today): #1836 gradle-wrapper, #1837 rust-toolchain, #1838 actions/cache, #1839 dorny/paths-filter, #1840 actions/checkout, #1841 cargo-minor-patch, #1842 rust_xlsxwriter"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "2380 lines (additions+deletions) on origin/dev since cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-buildings-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "2347 lines (additions+deletions) on origin/dev since cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-sync-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "2293 lines (additions+deletions) on origin/dev since cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-1705",
+      "type": "unchecked-todo",
+      "source": "PR #1705",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1705 body contains unchecked `- [ ]` checkbox(es): feat(faults): fire notifications on every fault lifecycle event (BIT-185)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1709 body contains unchecked `- [ ]` checkbox(es): feat(scheduler): payment reminders + auto-overdue transitions (Story 11.6 / BIT-176)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "PR #1768",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1768 body contains unchecked `- [ ]` checkbox(es): fix(messaging): camelCase wire contract for thread/message/participant API (BIT-239)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1703",
+      "type": "unchecked-todo",
+      "source": "PR #1703",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1703 body contains unchecked `- [ ]` checkbox(es): feat(api-server): gap-sweep Epic 12 — meter reminders + OCR stub endpoints (closes #982)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "PR #1717",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1717 body contains unchecked `- [ ]` checkbox(es): feat(financial): income statement, balance sheet, cash flow + PDF/xlsx export (Story 11.7)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1685",
+      "type": "unchecked-todo",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1685 body contains unchecked `- [ ]` checkbox(es): feat(ppt-web): real-time IoT dashboard via BIT-145 WebSocket channel (Epic 14, FR72)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1723 body contains unchecked `- [ ]` checkbox(es): fix(financial): rustfmt compliance for financial reports routes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverted PR #1690: revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "fix(ppt-web): add Leases nav link + home tile (#977) — superseded by #1694"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": [
+        "fix(mobile): exclude app.config.icon.test.ts from tsc — superseded by #1748"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": [
+        "fix(ci): unblock backend gate — superseded by #1721 + #1728"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": [
+        "feat(epic-3): story 3.2 - unit management UI (BIT-188) — superseded by #1695"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": [
+        "[PM #1627] saved-search alerts list: signal truncation past LIMIT 100"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate this run (high lag; routine prioritised catch-up over auto-fix)",
+  "phases_skipped": [
+    "1.5-code-review",
+    "1.6-project-management"
+  ],
+  "phases_skipped_reason": "catch-up run after 9d lag; dispatcher actively running comprehensive post-merge review (74 from-merged-review follow-ups since cursor)"
+}
