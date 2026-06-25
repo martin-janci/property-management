@@ -81,6 +81,25 @@ pub struct PriceChangeAlert {
     pub changed_at: DateTime<Utc>,
 }
 
+/// Favorite alert queued for in-app delivery.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct FavoriteAlert {
+    pub id: Uuid,
+    pub favorite_id: Uuid,
+    pub listing_id: Uuid,
+    pub title: String,
+    pub alert_type: String,
+    pub old_price: Option<Decimal>,
+    pub new_price: Option<Decimal>,
+    pub currency: Option<String>,
+    pub change_percentage: Option<Decimal>,
+    pub previous_status: Option<String>,
+    pub new_status: Option<String>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub processed_at: Option<DateTime<Utc>>,
+}
+
 // ============================================
 // Portal Saved Searches Enhanced (Story 31.2, 31.3)
 // ============================================
