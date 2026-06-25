@@ -1,0 +1,262 @@
+{
+  "date": "2026-06-25",
+  "lag_hours": 219,
+  "phases_skipped": [
+    "Phase 1.5 (code review)",
+    "Phase 1.6 (project management)"
+  ],
+  "phases_skipped_reason": "9-day catch-up run; focus on signal harvest + resolution sweep. review_cursor and pm_cursor not advanced.",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2933 lines changed in backend/crates/db/src/repositories/rental.rs over 9-day window \u2014 top-3 churn (Epic 18 guest ID-docs + booking fixes)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "re-emit: 6146 lines changed over 9-day window \u2014 cumulative carve-out; backlog item now resolved by PR #1683",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "re-emit: 3362 lines changed over 9-day window \u2014 cumulative carve-out; backlog item now resolved by PR #1798",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713 (reverts PR #1690)",
+      "score_delta": 3,
+      "evidence": "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213). Backlog row refactor-revert-pr-1713-delegations created with score 3.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "dependabot: bump gradle-minor-patch group in /mobile-native (com.diffplug.spotless, lifecycle-runtime-compose)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "dependabot: bump tower-http 0.6.11 \u2192 0.7.0 in /backend (axum group)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso = 2026-06-16T03:25Z (this run = 2026-06-25T06:30Z)",
+      "score_delta": 0,
+      "evidence": "routine ran 9d 0h after previous run (state.json last_run_iso 2026-06-16T03:25Z); exceeds 36h lag and 3d stale-routine thresholds. Cloud cron likely paused.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "resolutions": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "pr": 1798
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "pr": 1800
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "pr": 1683
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+      "pr": 1796
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "pr": 1708
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "pr": 1693
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+      "pr": 1816
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+      "pr": 1810
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "pr": 1719
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "pr": 1718
+    },
+    {
+      "id": "code-review-api-core-osrng-expect",
+      "pr": 1684
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "pr": 1700
+    },
+    {
+      "id": "code-review-mobile-rn-screens-mock-data",
+      "pr": 1681
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+      "pr": 1682
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ~= '# 2026-06-25'",
+      "observed": "will-pass",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor advancement check",
+      "observed": "last_pr 1439\u21921829, last_issue 1437\u21921828, seen_signals grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique id count",
+      "observed": "verified after build",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative carve-out",
+      "observed": "document-rs/emergency-rs re-emits have score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "cap enforced",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items >14d aged",
+      "observed": "16 decayed, 10 dropped to 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "noop",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count \u2264 2",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "all staged paths under .research/",
+      "observed": "verified at stage",
+      "expected": "0 non-.research paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "no secrets added",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen matches",
+      "observed": "regen byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "1.5/1.6 skipped (catch-up), cursor not advanced for those",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "no plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "archive count unchanged (no archive ops this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen matches",
+      "observed": "regen byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no auto-fix actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm artifacts (no-op when Phase 1.6 skipped)",
+      "observed": "Phase 1.6 skipped this run",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret literal",
+      "observed": "0 token-shape matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate this run (no signal matched confidence=high + score\u22653 + allowlist)"
+}
