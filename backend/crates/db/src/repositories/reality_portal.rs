@@ -492,7 +492,7 @@ impl RealityPortalRepository {
             WHERE pf.price_alert_enabled = true
               AND lph.changed_at > COALESCE(pf.last_price_alert_at, pf.created_at)
             ORDER BY lph.changed_at ASC, pf.created_at ASC
-            "#
+            "#,
         )
         .fetch_all(executor)
         .await
@@ -519,7 +519,7 @@ impl RealityPortalRepository {
             JOIN listings l ON l.id = pf.listing_id
             WHERE pf.last_seen_listing_status IS DISTINCT FROM l.status
             ORDER BY pf.created_at ASC
-            "#
+            "#,
         )
         .fetch_all(executor)
         .await

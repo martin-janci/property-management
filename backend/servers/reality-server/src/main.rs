@@ -434,10 +434,8 @@ async fn main() -> anyhow::Result<()> {
     );
     let _alert_worker_handle = alert_worker.start();
 
-    let favorite_alert_worker = services::FavoriteAlertWorker::new(
-        db.clone(),
-        services::FavoriteAlertConfig::from_env(),
-    );
+    let favorite_alert_worker =
+        services::FavoriteAlertWorker::new(db.clone(), services::FavoriteAlertConfig::from_env());
     let _favorite_alert_worker_handle = favorite_alert_worker.start();
 
     // Create application state

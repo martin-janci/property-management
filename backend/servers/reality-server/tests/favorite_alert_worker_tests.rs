@@ -109,7 +109,10 @@ async fn worker_queues_price_and_back_on_market_alerts(pool: PgPool) {
         "first pass should queue only the price-change alert"
     );
     assert_eq!(first_pass[0].alert_type, "price_change");
-    assert_eq!(repo.count_pending_favorite_alerts(user_id).await.unwrap(), 1);
+    assert_eq!(
+        repo.count_pending_favorite_alerts(user_id).await.unwrap(),
+        1
+    );
 
     // Second transition back to active should enqueue a back-on-market alert.
     sqlx::query("UPDATE listings SET status = $2 WHERE id = $1")

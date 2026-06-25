@@ -112,7 +112,10 @@ impl FavoriteAlertWorker {
                 continue;
             }
 
-            let price_candidates = match self.repo.list_pending_favorite_price_alerts(&mut *conn).await
+            let price_candidates = match self
+                .repo
+                .list_pending_favorite_price_alerts(&mut *conn)
+                .await
             {
                 Ok(v) => v,
                 Err(e) => {
@@ -154,7 +157,10 @@ impl FavoriteAlertWorker {
                 queued_price += 1;
             }
 
-            let status_candidates = match self.repo.list_pending_favorite_status_alerts(&mut *conn).await
+            let status_candidates = match self
+                .repo
+                .list_pending_favorite_status_alerts(&mut *conn)
+                .await
             {
                 Ok(v) => v,
                 Err(e) => {
