@@ -84,7 +84,7 @@ development_status:
   # Epic 80: Dispute Resolution (verified 2026-05-25)
   80-1-disputes-api-integration: done
   80-2-dispute-filing-flow: partial
-  80-3-mediation-resolution: partial
+  80-3-mediation-resolution: done  # promoted 2026-06-25 (80-3-mediation-resolution): final gap closed — party submissions endpoints (GET/POST /api/v1/disputes/{id}/submissions, already on backend) wired into the frontend. Added @ppt/api-client listSubmissions/submitResponse + useDisputeSubmissions/useSubmitResponse (snake_case wire types PartySubmission/SubmitResponseRequest matching backend serde). Surfaced as a "Submissions" tab in MediationWorkspacePage via new MediationSubmissionsPanel (list + party composer with type/visibility). i18n added for all 6 locales; MediationSubmissionsPanel.test.tsx (5 tests). Prior wiring (DisputeDetailRoute/MediationWorkspacePage, mediation hooks, sessions) already shipped. Band A typecheck+biome clean; Band B ppt-web build clean; full dispute suite 152 tests green.
 
 # ───────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
@@ -193,6 +193,7 @@ test_hardening_batch:
 # Notes and blockers
 notes:
   - "Story 80-3 verified 2026-05-25: DisputeDetailPage.tsx+MediationPage.tsx+all hooks confirmed implemented; DisputeDetailRoute in App.tsx is inline JSX stub not using DisputeDetailPage; no /disputes/:id/mediation route; useEscalateDispute/useResolveDispute/useAssignMediator not wired from App.tsx — story stays partial, follow-up wiring task needed"
+  - "Story 80-3 COMPLETED 2026-06-25: route wiring (DisputeMediationRoute + /disputes/:id/mediation), mediation hooks, and mediation sessions were already shipped on dev. Final remaining gap — party submissions endpoints (GET/POST /api/v1/disputes/{id}/submissions) — now wired: api-client listSubmissions/submitResponse + useDisputeSubmissions/useSubmitResponse, MediationSubmissionsPanel surfaced as a Submissions tab in MediationWorkspacePage, i18n × 6 locales, 5-test suite. screen-map ppt/dispute-detail apiStatus flipped partial→shipped. Story promoted to done."
   - "Epic 6 depends on Epic 2B Notification Infrastructure for sending notifications on publish"
   - "Story 6.1 is the foundation - other stories build on announcement infrastructure"
   - "Story 6.1 completed 2025-12-21 - awaiting code review"

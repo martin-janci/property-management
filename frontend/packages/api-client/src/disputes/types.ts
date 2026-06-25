@@ -216,6 +216,41 @@ export interface UpdateSessionRequest {
 }
 
 // ============================================
+// Party Submission Types (Story 80.3)
+// ============================================
+
+/**
+ * A submission filed by a party during mediation
+ * (`GET /api/v1/disputes/{id}/submissions`).
+ *
+ * Field names mirror the backend `PartySubmission` model exactly. The backend
+ * serializes with serde defaults (no `rename_all`), so the wire format is
+ * snake_case — these property names match the JSON on the wire.
+ */
+export interface PartySubmission {
+  id: string;
+  dispute_id: string;
+  party_id: string;
+  submission_type: string;
+  content: string;
+  is_visible_to_all: boolean;
+  created_at: string;
+}
+
+/**
+ * Request body for submitting a party response
+ * (`POST /api/v1/disputes/{id}/submissions`).
+ *
+ * The backend derives `dispute_id` from the path and `party_id` from the
+ * authenticated user's party membership, so neither needs to be sent.
+ */
+export interface SubmitResponseRequest {
+  submission_type: string;
+  content: string;
+  is_visible_to_all: boolean;
+}
+
+// ============================================
 // Timeline Types (Story 80.3)
 // ============================================
 

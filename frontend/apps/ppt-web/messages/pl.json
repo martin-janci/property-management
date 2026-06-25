@@ -545,6 +545,26 @@
       },
       "errors": {
         "detailsMinLength": "Szczegóły muszą zawierać co najmniej 10 znaków."
+      },
+      "tabSubmissions": "Pisma",
+      "submissions": {
+        "title": "Pisma stron",
+        "subtitle": "Oświadczenia i odpowiedzi złożone przez strony tego sporu.",
+        "empty": "Brak pism.",
+        "privateNote": "Widoczne tylko dla mediatora",
+        "composerTitle": "Złóż pismo",
+        "typeLabel": "Typ pisma",
+        "typeStatement": "Oświadczenie",
+        "typeEvidence": "Dowód",
+        "typeResponse": "Odpowiedź",
+        "typeRequest": "Wniosek",
+        "contentLabel": "Treść",
+        "contentPlaceholder": "Napisz swoje pismo…",
+        "visibleToAll": "Widoczne dla wszystkich stron",
+        "submit": "Wyślij",
+        "submitting": "Wysyłanie…",
+        "submittedSuccess": "Pismo złożone",
+        "submitError": "Nie udało się złożyć pisma"
       }
     },
     "draftSavedAgo": "Szkic zapisany · {{time}}",
