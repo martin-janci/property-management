@@ -37,7 +37,13 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 
 /// Insert a refresh token. `revoked` controls whether `revoked_at` is set;
 /// `expired` controls whether `expires_at` is in the past.
-async fn seed_refresh_token(pool: &PgPool, user_id: Uuid, hash: &str, revoked: bool, expired: bool) {
+async fn seed_refresh_token(
+    pool: &PgPool,
+    user_id: Uuid,
+    hash: &str,
+    revoked: bool,
+    expired: bool,
+) {
     let expires_at = if expired {
         Utc::now() - Duration::hours(1)
     } else {

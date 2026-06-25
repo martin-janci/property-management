@@ -10,8 +10,7 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
-endpoints:
-  - get_support_data
+endpoints: []
 relatedScreens:
   - id: ppt/admin-platform-health
     rel: sibling
@@ -60,6 +59,13 @@ RLS-hardened in 00165) so support-tooling access is itself audited.
 
 ### Specific (recent)
 
+- 2026-06-25 — agent: dispatcher followup (PR #1829) — cleared the `endpoints`
+  frontmatter: `get_support_data` is not yet registered in `@ppt/sitemap`, so
+  screen-map strict validation rejected it. The route stays documented under
+  Notes > Broader context. Follow-up: add `get_support_data`
+  (`GET /api/v1/platform-admin/support-data`) to
+  `frontend/packages/sitemap/src/data/api-server/index.ts` (alongside the other
+  Epic-10B platform-admin endpoints), then restore the endpoint ref here.
 - 2026-06-24 — agent: 10b-5-support-data-access — fixed a latent runtime bug:
   the support-data session queries referenced a non-existent `is_revoked` (and
   `updated_at`) column on `refresh_tokens`; corrected to `revoked_at IS NULL` /
@@ -69,6 +75,11 @@ RLS-hardened in 00165) so support-tooling access is itself audited.
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-06-25 — agent: dispatcher followup — fixed PR #1829 red CI gates:
+  ran rustfmt on `support_data_session_columns_tests.rs` (clears check / lint /
+  fmt-clippy, which all gate on `cargo fmt --check`) and cleared the
+  unverifiable `get_support_data` endpoint ref (clears screen-map strict
+  validation). Endpoint still documented in Notes.
 - 2026-06-24 — agent: 10b-5-support-data-access — created screen-map (was an
   orphan epic); verified backend wiring (transactional reads, AuditRead +
   super-admin gate, append-only audit trail), fixed `refresh_tokens` column
