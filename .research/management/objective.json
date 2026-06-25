@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "6-2-announcement-viewing-acknowledgment",
-  "selected_at": "2026-06-25T06:09:23Z",
+  "epic_prefix": "6-4-pinned-announcements",
+  "selected_at": "2026-06-25T08:16:08Z",
   "last_action": "repick",
-  "reason": "prior target '10b-5-support-data-access' exhausted; closest-to-done is '6-2-announcement-viewing-acknowledgment' (open=1 claimable=1)",
+  "reason": "prior target '6-2-announcement-viewing-acknowledgment' exhausted; closest-to-done is '6-4-pinned-announcements' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
