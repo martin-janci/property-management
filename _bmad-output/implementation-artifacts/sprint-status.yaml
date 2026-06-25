@@ -20,7 +20,7 @@ epics:
     name: "Announcements & Communication"
     status: in-progress
     stories_total: 6
-    stories_completed: 1
+    stories_completed: 2  # 6-1 (verified done 2026-06-25) + 6-6
   epic-7a:
     name: "Basic Document Management"
     status: in-progress
@@ -50,7 +50,7 @@ epics:
 # Story-level development status
 development_status:
   # Epic 6: Announcements & Communication
-  6-1-announcement-creation-targeting: review
+  6-1-announcement-creation-targeting: done  # Verified 2026-06-25 (verify-6-1-announcement-creation-targeting): create+targeting slice complete on dev. Backend: POST /api/v1/announcements (servers/api-server routes/announcements/crud.rs create_announcement) — manager auth, content sanitization, target_type validation against target_type::ALL_TYPES (all/building/units/roles), org-membership validation of target_ids (Critical 1.3 fix), RLS-aware AnnouncementRepository::create_rls (crates/db repositories/announcement.rs) persisting target_type + target_ids JSONB. Schema: migration 00015_create_announcements (announcement_target_type enum + target_ids JSONB) + 00176 GIN index. Targeting enforced on visibility via announcement_targeting_predicate! RLS macro; regression covered by announcement_targeting_visibility_tests.rs (#920) + announcement_tests.rs. Frontend ppt-web: CreateAnnouncementPage + EditAnnouncementPage (real, not stubs) wrap AnnouncementForm with TargetSelector (all/building/units/roles multi-select); useCreateAnnouncement/useUpdateAnnouncement real TanStack mutations POST/PUT /api/v1/announcements. Creation screen-maps announcement-new.md/announcement-edit.md already buildStatus=shipped. (announcements.md list/detail screen stays in-progress — it aggregates 6-2/6-3/6-4 work, e.g. skeleton-card loading still TBD.)
   6-2-announcement-viewing-acknowledgment: ready-for-dev
   6-3-announcement-comments-discussion: ready-for-dev
   6-4-pinned-announcements: ready-for-dev
