@@ -453,6 +453,20 @@
       "files": [
         "docs/screens/reality/"
       ]
+    },
+    {
+      "id": "dispatcher-buffer-low-2026-06-25",
+      "type": "dispatcher-buffer-low",
+      "source": "routine-fire-payload 2026-06-25 (post-commit)",
+      "score_delta": 0,
+      "evidence": [
+        "claimable=7/72 \u2014 coverage exhausted (only 7 NEW partial stories minable)",
+        "planner refill needed: decompose epic-6/80/84 partials into right-sized stories",
+        "received as routine-fire payload after today's research commit (e5c885b) had already landed \u2014 recorded for audit, no backlog mutation"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "note": "informational signal from dispatcher; research routine does not own planner decomposition \u2014 surfaced to operator via push notification"
     }
   ],
   "goal_checks": [
