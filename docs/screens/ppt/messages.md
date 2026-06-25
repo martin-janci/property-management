@@ -34,8 +34,10 @@ the UI's page/pageSize params to the API's limit/offset params.
 ### Specific (recent)
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:490`.
 - 2026-05-24 — api-integration: wired to GET /api/v1/messages/threads + unread-count; onDeleteThreads shows a not-supported toast (API does not expose thread deletion).
+- 2026-06-25 — group conversations (BIT-244): thread list renders the full participant set, not one arbitrary "other". `ThreadWithPreview.otherParticipant` → `participants: ParticipantInfo[]` (backend PR #1848); list preview attributed to the actual last-message sender.
 
 ## Agent Log
+- 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadToUi` maps every other participant from `participants[]`; preview sender resolved from the participant list. No route/status change.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-05-24 — agent: promoted apiStatus stub→integrated; wired MessagesPageRoute to useThreads/useUnreadCount hooks.
 - 2026-06-25 — agent: reconciliation pass — sprint-status 6-5 flipped ready-for-dev→done. Backend (20+ endpoints, RLS repo, migrations 00017/00018/00019/00189/00190/00191, cross-tenant tests) and ppt-web (MessagesPage/ThreadDetailPage/NewMessagePage + hooks) confirmed shipped. Gate #486 satisfied: getToken() in useMessaging.ts routes through centralised token-provider.ts (globalTokenProvider via AuthContext), not a raw bypass. Mobile messaging UI deferred and not overstated.
