@@ -269,7 +269,10 @@ impl SearchAlertDrainerWorker {
                     if count == 1 { "" } else { "s" },
                     if count == 1 { "it" } else { "them" },
                 ),
-                locale: alert.recipient_locale.clone().unwrap_or_else(|| "en".into()),
+                locale: alert
+                    .recipient_locale
+                    .clone()
+                    .unwrap_or_else(|| "en".into()),
             };
 
             // An alert counts as delivered if *any* channel succeeds. Email is

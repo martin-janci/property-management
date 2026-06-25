@@ -207,7 +207,10 @@ async fn drains_alert_to_email_and_owner_push_tokens(pool: PgPool) {
     // C1 + C4: pushed to both of the owner's tokens, never the other user's.
     let mut pushed = push.tokens.lock().unwrap().clone();
     pushed.sort();
-    assert_eq!(pushed, vec!["owner-token-1".to_string(), "owner-token-2".to_string()]);
+    assert_eq!(
+        pushed,
+        vec!["owner-token-1".to_string(), "owner-token-2".to_string()]
+    );
     assert!(
         !pushed.iter().any(|t| t == "other-token-1"),
         "a foreign user's token must never receive the owner's alert"
@@ -216,14 +219,22 @@ async fn drains_alert_to_email_and_owner_push_tokens(pool: PgPool) {
     // C2: delivery recorded out-of-band — `notified_at` set, `status` untouched.
     let (status, notified_at, attempts) = alert_state(&pool, alert_id).await;
     assert_eq!(status, "pending", "in-app read state must be untouched");
-    assert!(notified_at.is_some(), "notified_at must be set after delivery");
+    assert!(
+        notified_at.is_some(),
+        "notified_at must be set after delivery"
+    );
     assert_eq!(attempts, 0);
 
     // C3: re-running is a no-op — the row is already notified.
     let email2 = RecordingEmail::default();
     let push2 = RecordingPush::default();
-    let delivered2 = worker(&pool, email2.clone(), push2.clone()).run_once().await;
-    assert_eq!(delivered2, 0, "already-notified alerts are not re-delivered");
+    let delivered2 = worker(&pool, email2.clone(), push2.clone())
+        .run_once()
+        .await;
+    assert_eq!(
+        delivered2, 0,
+        "already-notified alerts are not re-delivered"
+    );
     assert!(email2.recipients.lock().unwrap().is_empty());
     assert!(push2.tokens.lock().unwrap().is_empty());
 }
@@ -257,10 +268,16 @@ async fn failed_delivery_increments_attempts_until_budget_exhausted(pool: PgPool
         let delivered = worker(&pool, failing_email.clone(), push.clone())
             .run_once()
             .await;
-        assert_eq!(delivered, 0, "a fully-failed alert is never marked delivered");
+        assert_eq!(
+            delivered, 0,
+            "a fully-failed alert is never marked delivered"
+        );
         let (status, notified_at, attempts) = alert_state(&pool, alert_id).await;
         assert_eq!(status, "pending");
-        assert!(notified_at.is_none(), "failed delivery must not set notified_at");
+        assert!(
+            notified_at.is_none(),
+            "failed delivery must not set notified_at"
+        );
         assert_eq!(attempts, expected_attempts);
     }
 
@@ -270,5 +287,8 @@ async fn failed_delivery_increments_attempts_until_budget_exhausted(pool: PgPool
         .await;
     assert_eq!(delivered, 0);
     let (_, _, attempts) = alert_state(&pool, alert_id).await;
-    assert_eq!(attempts, 3, "exhausted rows are skipped, not retried further");
+    assert_eq!(
+        attempts, 3,
+        "exhausted rows are skipped, not retried further"
+    );
 }
