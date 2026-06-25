@@ -28,10 +28,10 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use db::models::CreatePortalSavedSearch;
 use db::repositories::RealityPortalRepository;
-use reality_server::services::{
-    AlertEmailTransport, AlertNotification, AlertPushTransport, SearchAlertDrainerConfig,
-    SearchAlertDrainerWorker,
+use reality_server::services::search_alert_drainer::{
+    AlertEmailTransport, AlertNotification, AlertPushTransport,
 };
+use reality_server::services::{SearchAlertDrainerConfig, SearchAlertDrainerWorker};
 use sqlx::PgPool;
 use uuid::Uuid;
 
