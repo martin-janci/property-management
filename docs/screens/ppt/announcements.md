@@ -7,7 +7,7 @@ sitemapRefs:
 implementations:
   ppt-web:
     component: AnnouncementsPage
-    buildStatus: in-progress
+    buildStatus: shipped
     redesignStatus: in-progress
     apiStatus: complete
   mobile:
@@ -121,6 +121,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-25 — agent: verify-6-2-announcement-viewing-acknowledgment — Coverage 6-2 finish-to-done: verified ppt-web viewing + acknowledgment slice live (ViewAnnouncementPage renders readCount/acknowledgedCount + AcknowledgmentStatsPanel + Acknowledge/Mark-as-Read; auto-fire POST /{id}/read on load + POST /{id}/acknowledge; api-client useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats route through shared authenticatedFetchJson — no direct getToken). Story-gate #486 confirmed CLOSED/completed (2026-05-26). Flipped ppt-web buildStatus in-progress→shipped; sprint-status 6-2 ready-for-dev→done. Docs/status reconciliation only — no code change.
 
 - 2026-06-09 — agent: feat-6-3-announce-comments-web-ui — Coverage 6-3: added AnnouncementComments.test.tsx (14 cases) covering threading/replies, depth-3 reply cap, deleted-comment tombstone, add/reply wiring (parentId), owner/manager delete affordance, disabled + empty + loading states, Ctrl+Enter submit. Feature (component + api-client hooks + page wiring) already shipped under gap-6-3; this closes the test-coverage gap (mirrors #1190/#1196 pattern). Clarified comment-threading depth in Notes > Specific. ppt-web test/typecheck/biome clean.
 

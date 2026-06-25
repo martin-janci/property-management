@@ -51,7 +51,7 @@ epics:
 development_status:
   # Epic 6: Announcements & Communication
   6-1-announcement-creation-targeting: review
-  6-2-announcement-viewing-acknowledgment: ready-for-dev
+  6-2-announcement-viewing-acknowledgment: done  # Verified 2026-06-25 (verify-6-2-announcement-viewing-acknowledgment): viewing + acknowledgment UI fully wired in ppt-web — ViewAnnouncementPage renders readCount/acknowledgedCount + AcknowledgmentStatsPanel + Acknowledge/Mark-as-Read buttons; auto-fire POST /{id}/read on load (fire-and-forget) + POST /{id}/acknowledge; api-client hooks useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats go through the shared authenticatedFetchJson helper (lib/fetch.ts). Story-gate #486 (direct getToken bypassing interceptor) CLOSED/completed 2026-05-26 — token handling now centralized in one helper, gate cleared. Tests present: acknowledgment.test.tsx, ViewAnnouncementPage.test.tsx, announcements.route.test.tsx, api-client announcements/hooks.test.ts. Mobile AnnouncementDetailScreen ships auto-read + acknowledge.
   6-3-announcement-comments-discussion: ready-for-dev
   6-4-pinned-announcements: ready-for-dev
   6-5-direct-messaging: ready-for-dev
@@ -169,7 +169,7 @@ test_hardening_batch:
       story_gate:
         - 6-2-announcement-viewing-acknowledgment
         - 6-5-direct-messaging
-      status: open
+      status: closed   # closed/completed 2026-05-26 — getToken centralized into shared authenticatedFetchJson helper (lib/fetch.ts)
 
     - issue: 487
       title: "MFA e2e tests missing rate-limit coverage; mod common inside nested module may not compile"
@@ -187,8 +187,8 @@ test_hardening_batch:
 #   10a-2-oauth-client-registration    → #482
 #   10a-3-oauth-token-management        → #481
 #   7a-5-document-sharing              → #485
-#   6-2-announcement-viewing-acknowledgment → #486
-#   6-5-direct-messaging               → #486
+#   6-2-announcement-viewing-acknowledgment → #486 (CLEARED: #486 closed/completed 2026-05-26 — 6-2 promoted to done 2026-06-25)
+#   6-5-direct-messaging               → #486 (CLEARED: #486 closed/completed 2026-05-26)
 
 # Notes and blockers
 notes:
