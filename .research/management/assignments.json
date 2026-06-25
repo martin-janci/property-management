@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T22:56:05Z",
+  "generated": "2026-06-25T02:11:33Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
@@ -358,15 +358,15 @@
       "branch": "auto-impl/10b-5-support-data-access-b77df24c",
       "status": "review",
       "claimed_at": "2026-06-24T22:20:52Z",
-      "last_updated": "2026-06-24T22:56:05Z",
+      "last_updated": "2026-06-25T02:11:33Z",
       "status_changed_at": "2026-06-24T22:56:05Z",
       "pr_number": 1829,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1829",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=1829 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fixed refresh_tokens is_revoked->revoked_at runtime bug in support-data queries (+sqlx regression); reconciled sprint-status 10B.5 to done; refreshed retention doc; created screen-map",
-      "reviewer_summary": "verdict=changes note=2-red-ci-gates-on-new-files:fmt-clippy(test-file-unformatted)+screen-map-strict-validation(admin-support-data.md);load-bearing-refresh_tokens-fix-correct",
-      "last_reviewed_oid": "0868481fe1088c45b6d2c683921c6b06e566907e",
+      "reviewer_summary": "verdict=approve note=approved-as-comment(self-approval-blocked);all-gates-green-except-build-in_progress;no-dedup",
+      "last_reviewed_oid": "08d04801c268e95e957fea795fdd1eec072ffadc",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
