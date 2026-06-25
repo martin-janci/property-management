@@ -1,0 +1,234 @@
+{
+  "date": "2026-06-25",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Last routine run was 2026-06-16T03:25:00Z \u2014 9d 16h ago; >36h threshold tripped"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-06-25",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 9d old; cloud routine may be paused"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/api-server/src/routes/emergency.rs",
+      "file": "backend/servers/api-server/src/routes/emergency.rs",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn this run: 3362 lines (additions+deletions) in window 2026-06-17..2026-06-25",
+        "re-emit on cumulative signal \u2014 score_delta=0 per G4"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "repeated-churn",
+      "source": "backend/servers/api-server/src/routes/emergency.rs",
+      "file": "backend/servers/api-server/src/routes/emergency.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen=1\u21922; last_seen=2026-06-10\u21922026-06-25; this run churn=3362"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/db/src/repositories/rental.rs",
+      "file": "backend/crates/db/src/repositories/rental.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn this run: 2933 lines (additions+deletions) in window 2026-06-17..2026-06-25"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/integrations/src/booking/mod.rs",
+      "file": "backend/crates/integrations/src/booking/mod.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn this run: 2818 lines (additions+deletions) in window 2026-06-17..2026-06-25"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1713 reverted #1690 (delegation frontend re-added by mistake); BIT-198 ruling came 16 min after #1690 merge \u2014 process/coordination signal, code revert is the fix"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1606 (PAP-281 accounting manager-only role gate): test plan '- [ ] cargo test -p api-server accounting_contacts_authz against real PG' not re-checked at merge"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #1723 (rustfmt compliance follow-up to #1717 BIT-175): test plan '- [ ] cargo fmt --all -- --check passes' not re-checked at merge"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-25.md && head -1 matches '# 2026-06-25'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq advance-vs-HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative re-emit with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no item score > 8",
+      "observed": "0",
+      "expected": "0",
+      "note": "decay applied to 11 items; 14 dropped to 0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans, \u22642",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret-pattern grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regenerate from backlog.json",
+      "observed": "regenerated this run",
+      "expected": "byte-identical",
+      "note": "regenerated in same run via write_artifacts.py"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "Phases that failed listed correctly",
+      "observed": "phase-1.5 + phase-1.6 skipped + cursors not advanced",
+      "expected": "failed phases listed + cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plans deleted (no plans/ writes this run)",
+      "observed": "plans/ untouched",
+      "expected": "plans only added or moved to _archive"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count \u2265 HEAD",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regenerate from backlog.json triage rows",
+      "observed": "regenerated this run",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline",
+      "observed": "0 actions (no candidate)",
+      "expected": "\u22641 PR + \u22641 issue + \u22641 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid when Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped \u2014 no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token grep on staged adds",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no_eligible_candidate"
+}
