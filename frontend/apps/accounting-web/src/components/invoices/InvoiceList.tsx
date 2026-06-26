@@ -13,10 +13,10 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useInvoices } from './api';
+import styles from './app.module.css';
 import { InvoiceStatusBadge } from './InvoiceStatusBadge';
 import { formatMoney } from './totals';
 import type { AccInvoiceExt } from './types';
-import styles from './app.module.css';
 
 const STATUS_OPTIONS = [
   'draft',
@@ -56,9 +56,7 @@ export function InvoiceList({ locale }: { locale: string }) {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>{t('list.title')}</h1>
-          {data && (
-            <p className={styles.subtitle}>{t('list.count', { count: data.length })}</p>
-          )}
+          {data && <p className={styles.subtitle}>{t('list.count', { count: data.length })}</p>}
         </div>
         <Button variant="primary" onClick={() => router.push('/invoices/new')}>
           {t('list.newInvoice')}

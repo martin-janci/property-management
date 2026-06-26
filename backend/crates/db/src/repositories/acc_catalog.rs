@@ -166,18 +166,16 @@ impl AccCatalogRepository {
 
     /// Soft-deactivate a catalog item (UC-ACC-04.1). Deactivate != delete:
     /// referenced items stay in the table so past documents are never broken.
-    pub async fn deactivate_item_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<(), sqlx::Error>
+    pub async fn deactivate_item_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<(), sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query("UPDATE acc_catalog_item SET is_active = false, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(executor)
-            .await?;
+        sqlx::query(
+            "UPDATE acc_catalog_item SET is_active = false, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(executor)
+        .await?;
         Ok(())
     }
 

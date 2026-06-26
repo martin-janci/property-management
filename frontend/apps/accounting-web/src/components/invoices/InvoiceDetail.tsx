@@ -12,9 +12,9 @@ import { Button, Spinner, Table } from '@ppt/ui-kit';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useDuplicateInvoice, useInvoice, useInvoiceItems, useIssueInvoice } from './api';
+import styles from './app.module.css';
 import { InvoiceStatusBadge } from './InvoiceStatusBadge';
 import { formatMoney } from './totals';
-import styles from './app.module.css';
 
 export function InvoiceDetail({ id, locale }: { id: string; locale: string }) {
   const t = useTranslations('app.invoices');

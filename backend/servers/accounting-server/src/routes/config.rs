@@ -541,7 +541,10 @@ mod tests {
         for dt in ["invoice", "proforma", "advance", "credit_note"] {
             let mut r = ok_series();
             r.doc_type = dt.to_string();
-            assert!(validate_numbering_series(&r).is_ok(), "doc_type {dt} should pass");
+            assert!(
+                validate_numbering_series(&r).is_ok(),
+                "doc_type {dt} should pass"
+            );
         }
     }
 }

@@ -43,8 +43,7 @@ export function useContact(id: string | undefined) {
 export function useCreateContact() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: ContactRequest) =>
-      request<Contact>('/contacts', { method: 'POST', body }),
+    mutationFn: (body: ContactRequest) => request<Contact>('/contacts', { method: 'POST', body }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contactKeys.lists() });
     },

@@ -61,8 +61,7 @@ export function useInvoiceItems(id: string | undefined) {
 export function useCreateInvoice() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: CreateInvoice) =>
-      request<Invoice>('/invoices', { method: 'POST', body }),
+    mutationFn: (body: CreateInvoice) => request<Invoice>('/invoices', { method: 'POST', body }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: invoiceKeys.lists() });
     },
@@ -115,8 +114,7 @@ export function useIssueInvoice() {
 export function useDuplicateInvoice() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      request<Invoice>(`/invoices/${id}/duplicate`, { method: 'POST' }),
+    mutationFn: (id: string) => request<Invoice>(`/invoices/${id}/duplicate`, { method: 'POST' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: invoiceKeys.lists() });
     },

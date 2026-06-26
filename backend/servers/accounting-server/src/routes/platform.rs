@@ -94,11 +94,7 @@ pub struct TwoFactorConfirmRequest {
 /// Generate a high-entropy, URL-safe, unguessable opaque token (share link /
 /// secret). Two v4 UUIDs (244 bits) concatenated, hyphens stripped.
 fn generate_opaque_token() -> String {
-    format!(
-        "{}{}",
-        Uuid::new_v4().simple(),
-        Uuid::new_v4().simple()
-    )
+    format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple())
 }
 
 /// Generate `RECOVERY_CODE_COUNT` one-time recovery codes (UC-ACC-16.1: issued
@@ -515,7 +511,7 @@ pub async fn enroll_two_factor(
         tenant_id,
         user_id,
         secret,
-        enabled: false,         // not active until confirmed
+        enabled: false, // not active until confirmed
         confirmed_at: None,
         // Stored as a JSON array (hashed at rest preferred — Phase 2).
         recovery_codes: serde_json::json!(recovery_codes),

@@ -10,8 +10,8 @@
 //! isolation is enforced by RLS — SELECT statements never add a
 //! `tenant_id = $` clause, but INSERT statements MUST set `tenant_id`.
 
-use crate::models::accounting::Invoice;
 use crate::models::acc_contacts_ext::{AccContactAddress, AccContactExt, AccContactTag};
+use crate::models::accounting::Invoice;
 use crate::DbPool;
 use rust_decimal::Decimal;
 use sqlx::{Executor, Postgres};
@@ -502,7 +502,10 @@ mod tests {
         // shared projection must list exactly that many comma-separated names so
         // `query_as::<AccContactExt>` maps positionally without drift.
         let count = CONTACT_EXT_COLUMNS.split(',').count();
-        assert_eq!(count, 23, "CONTACT_EXT_COLUMNS must list all AccContactExt fields");
+        assert_eq!(
+            count, 23,
+            "CONTACT_EXT_COLUMNS must list all AccContactExt fields"
+        );
     }
 
     #[test]

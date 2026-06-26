@@ -92,8 +92,14 @@ mod tests {
 
     #[test]
     fn vat_for_base_rounds() {
-        assert_eq!(vat_for_base(d("100.00"), d("20"), RoundingMode::Arithmetic), d("20.00"));
-        assert_eq!(vat_for_base(d("9.99"), d("20"), RoundingMode::Arithmetic), d("2.00"));
+        assert_eq!(
+            vat_for_base(d("100.00"), d("20"), RoundingMode::Arithmetic),
+            d("20.00")
+        );
+        assert_eq!(
+            vat_for_base(d("9.99"), d("20"), RoundingMode::Arithmetic),
+            d("2.00")
+        );
     }
 
     #[test]
@@ -126,10 +132,7 @@ mod tests {
 
     #[test]
     fn groups_reconcile_to_document_total() {
-        let lines = vec![
-            line("3", "3.33", "20", "0"),
-            line("1", "100", "10", "0"),
-        ];
+        let lines = vec![line("3", "3.33", "20", "0"), line("1", "100", "10", "0")];
         let groups = group_by_rate(&lines, RoundingMode::Arithmetic).unwrap();
         let doc = crate::money::compute_document_total(&lines, RoundingMode::Arithmetic).unwrap();
         let base_sum: Decimal = groups.iter().map(|g| g.base).sum();
@@ -141,8 +144,16 @@ mod tests {
     #[test]
     fn reverse_negates_each_group() {
         let groups = vec![
-            VatGroup { rate: d("20"), base: d("100.00"), vat: d("20.00") },
-            VatGroup { rate: d("10"), base: d("50.00"), vat: d("5.00") },
+            VatGroup {
+                rate: d("20"),
+                base: d("100.00"),
+                vat: d("20.00"),
+            },
+            VatGroup {
+                rate: d("10"),
+                base: d("50.00"),
+                vat: d("5.00"),
+            },
         ];
         let reversed = reverse_groups(&groups);
         assert_eq!(reversed[0].base, d("-100.00"));
@@ -154,7 +165,11 @@ mod tests {
 
     #[test]
     fn reverse_then_sum_nets_to_zero() {
-        let groups = vec![VatGroup { rate: d("20"), base: d("100.00"), vat: d("20.00") }];
+        let groups = vec![VatGroup {
+            rate: d("20"),
+            base: d("100.00"),
+            vat: d("20.00"),
+        }];
         let reversed = reverse_groups(&groups);
         assert_eq!(groups[0].vat + reversed[0].vat, Decimal::ZERO);
         assert_eq!(groups[0].base + reversed[0].base, Decimal::ZERO);

@@ -19,8 +19,8 @@
 import { Alert, Button, Input, Spinner } from '@ppt/ui-kit';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useState } from 'react';
-import { useRouter } from '@/i18n/routing';
 import styles from '@/components/invoices/app.module.css';
+import { useRouter } from '@/i18n/routing';
 import { useContact, useCreateContact, useUpdateContact } from './api';
 import type { ContactKind, ContactRequest } from './types';
 
@@ -366,7 +366,12 @@ export function ContactForm({ contactId }: { contactId?: string }) {
         </div>
 
         <div className={styles.formActions}>
-          <Button variant="ghost" type="button" onClick={() => router.push('/contacts')} disabled={busy}>
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={() => router.push('/contacts')}
+            disabled={busy}
+          >
             {tc('cancel')}
           </Button>
           <Button variant="primary" type="submit" disabled={busy}>

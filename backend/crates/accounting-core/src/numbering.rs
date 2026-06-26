@@ -120,9 +120,8 @@ fn parse_pad_width(spec: &str) -> Result<usize> {
         // All zeros, e.g. "00" -> width 2 (length of the spec).
         spec.len()
     } else {
-        spec.parse().map_err(|_| {
-            AccountingError::Numbering(format!("invalid seq pad width: {spec:?}"))
-        })?
+        spec.parse()
+            .map_err(|_| AccountingError::Numbering(format!("invalid seq pad width: {spec:?}")))?
     };
     Ok(width)
 }
@@ -148,7 +147,10 @@ mod tests {
     fn formats_default_template() {
         // UC-ACC-02.3 default template from migration 00194.
         let p = parts("INV", 2026, 7);
-        assert_eq!(format_number("{prefix}{year}{seq:04}", &p).unwrap(), "INV20260007");
+        assert_eq!(
+            format_number("{prefix}{year}{seq:04}", &p).unwrap(),
+            "INV20260007"
+        );
     }
 
     #[test]

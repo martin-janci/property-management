@@ -14,6 +14,8 @@
 // Generated client + types (enabled in Phase 2 once the spec is exported):
 // export * from './generated';
 
+// Low-level transport + structured error.
+export { AccountingApiError, request } from './client';
 // Runtime config: base URL + Bearer-token wiring (host app calls
 // configureAccountingApi once at startup).
 export {
@@ -27,16 +29,11 @@ export {
   resetAccountingApi,
   type TokenProvider,
 } from './config';
-
-// Low-level transport + structured error.
-export { AccountingApiError, request } from './client';
-
-// tanstack-query keys.
-export { contactKeys, invoiceKeys } from './query-keys';
-
 // Domain hooks.
 export * from './contacts';
 export * from './invoices';
+// tanstack-query keys.
+export { contactKeys, invoiceKeys } from './query-keys';
 
 // Hand-typed fallback domain types (superseded by ./generated in Phase 2).
 export type {

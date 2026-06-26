@@ -385,7 +385,7 @@ mod tests {
             description: Some("Senior rate".into()),
             kind: "service".into(),
             unit_id: None,
-            vat_rate: Decimal::new(2000, 2), // 20.00 %
+            vat_rate: Decimal::new(2000, 2),    // 20.00 %
             unit_price: Decimal::new(10000, 2), // 100.00 (net)
             price_is_gross: false,
             category_id: None,

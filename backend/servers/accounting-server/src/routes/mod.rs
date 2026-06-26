@@ -73,7 +73,10 @@ pub fn api_router() -> Router<AppState> {
         .nest(
             "/contacts",
             Router::new()
-                .route("/", get(contacts::list_contacts).post(contacts::create_contact))
+                .route(
+                    "/",
+                    get(contacts::list_contacts).post(contacts::create_contact),
+                )
                 .route(
                     "/{id}",
                     get(contacts::get_contact)
@@ -87,7 +90,10 @@ pub fn api_router() -> Router<AppState> {
         .nest(
             "/catalog",
             Router::new()
-                .route("/items", get(catalog::list_items).post(catalog::create_item))
+                .route(
+                    "/items",
+                    get(catalog::list_items).post(catalog::create_item),
+                )
                 .route(
                     "/items/{id}",
                     get(catalog::get_item).patch(catalog::update_item),
@@ -99,7 +105,10 @@ pub fn api_router() -> Router<AppState> {
         .nest(
             "/invoices",
             Router::new()
-                .route("/", get(invoices::list_invoices).post(invoices::create_invoice))
+                .route(
+                    "/",
+                    get(invoices::list_invoices).post(invoices::create_invoice),
+                )
                 .route(
                     "/{id}",
                     get(invoices::get_invoice)

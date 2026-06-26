@@ -73,7 +73,10 @@ export function useUpdateContact(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: ContactRequest) =>
-      authedFetch<AccContactExt>(`/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+      authedFetch<AccContactExt>(`/contacts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contactKeys.list() });
       qc.invalidateQueries({ queryKey: contactKeys.detail(id) });

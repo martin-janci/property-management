@@ -21,9 +21,9 @@ import { useMemo, useState } from 'react';
 import { useContacts } from '@/components/contacts/api';
 import { useRouter } from '@/i18n/routing';
 import { useCreateInvoice, useIssueInvoice } from './api';
+import styles from './app.module.css';
 import { computeDocumentTotals, computeLine, formatMoney } from './totals';
 import type { CreateInvoiceItem } from './types';
-import styles from './app.module.css';
 
 interface DraftLine extends CreateInvoiceItem {
   /** stable client-side key for React */

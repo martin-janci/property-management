@@ -35,8 +35,6 @@ function readRuntimeEnvUrl(): string | undefined {
 /** Resolve the accounting-server base URL (no trailing slash). */
 export function getAccountingApiBase(): string {
   const candidate =
-    readRuntimeEnvUrl() ??
-    process.env.NEXT_PUBLIC_ACCOUNTING_API_URL ??
-    DEFAULT_ACCOUNTING_API_URL;
+    readRuntimeEnvUrl() ?? process.env.NEXT_PUBLIC_ACCOUNTING_API_URL ?? DEFAULT_ACCOUNTING_API_URL;
   return candidate.replace(/\/+$/, '');
 }

@@ -10,10 +10,10 @@
 import { Badge, Button, Input, Spinner, Table } from '@ppt/ui-kit';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import { useRouter } from '@/i18n/routing';
 // Shared screen styles live in the invoices component dir (both dirs are
 // FE-Screens-owned); reuse to avoid duplicating tokens.
 import styles from '@/components/invoices/app.module.css';
+import { useRouter } from '@/i18n/routing';
 import { useContacts } from './api';
 import type { AccContactExt } from './types';
 

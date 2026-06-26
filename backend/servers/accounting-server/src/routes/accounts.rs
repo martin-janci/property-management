@@ -439,7 +439,11 @@ pub async fn create_company(
         Some(org.id),
         serde_json::json!({ "name": org.name, "slug": org.slug }),
     ) {
-        if let Err(e) = state.platform_repo.record_audit_rls(&mut *conn, entry).await {
+        if let Err(e) = state
+            .platform_repo
+            .record_audit_rls(&mut *conn, entry)
+            .await
+        {
             tracing::warn!("audit record for company create failed (non-fatal): {e}");
         }
     }
@@ -551,8 +555,16 @@ pub async fn invite_user(
     };
 
     // UC-ACC-01.10 — audit on the SAME RLS connection (same org context).
-    audit_membership(&state, &mut **rls, organization_id, actor_id, "invite", invitee.id, role)
-        .await;
+    audit_membership(
+        &state,
+        &mut **rls,
+        organization_id,
+        actor_id,
+        "invite",
+        invitee.id,
+        role,
+    )
+    .await;
 
     rls.release().await;
     Ok(Json(MembershipMutationResponse {
@@ -1073,7 +1085,7 @@ mod tests {
     fn plan_limits_are_sane() {
         // UC-ACC-01.8 — the displayed limits the billing handler reports are the
         // same constants the create/invite gates enforce.
-        assert!(DEFAULT_PLAN_MAX_COMPANIES >= 1);
-        assert!(DEFAULT_PLAN_MAX_MEMBERS_PER_COMPANY >= 1);
+        const { assert!(DEFAULT_PLAN_MAX_COMPANIES >= 1) };
+        const { assert!(DEFAULT_PLAN_MAX_MEMBERS_PER_COMPANY >= 1) };
     }
 }

@@ -26,7 +26,9 @@ use axum::{
 };
 use chrono::Datelike;
 use db::models::acc_invoicing_ext::{AccDocumentLink, AccInvoiceExt};
-use db::models::accounting::{CreateInvoice, CreateInvoiceItem, Invoice, InvoiceItem, UpdateInvoice};
+use db::models::accounting::{
+    CreateInvoice, CreateInvoiceItem, Invoice, InvoiceItem, UpdateInvoice,
+};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Connection;
@@ -815,8 +817,8 @@ pub async fn create_credit_note(
     // (UC-ACC-05.7). Building a signed credit-note header keeps the receivables
     // recompute (EPIC-ACC-09) and VAT records (EPIC-ACC-10) consistent.
     let line_inputs: Vec<LineInput> = credit_lines.iter().map(|(_, li)| li.clone()).collect();
-    let positive = money::compute_document_total(&line_inputs, mode)
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    let positive =
+        money::compute_document_total(&line_inputs, mode).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let credit_header = AccInvoiceExt {
         // ids/timestamps are DB-defaulted on insert; placeholders here.
@@ -1210,7 +1212,10 @@ mod tests {
     fn rounding_mode_mapping() {
         assert_eq!(rounding_mode_for(Some("bankers")), RoundingMode::Bankers);
         assert_eq!(rounding_mode_for(Some("none")), RoundingMode::None);
-        assert_eq!(rounding_mode_for(Some("arithmetic")), RoundingMode::Arithmetic);
+        assert_eq!(
+            rounding_mode_for(Some("arithmetic")),
+            RoundingMode::Arithmetic
+        );
         // Unknown / absent → arithmetic default.
         assert_eq!(rounding_mode_for(None), RoundingMode::Arithmetic);
         assert_eq!(rounding_mode_for(Some("weird")), RoundingMode::Arithmetic);

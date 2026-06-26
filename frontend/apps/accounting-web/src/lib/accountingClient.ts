@@ -8,4 +8,4 @@
  * both halves agree on a single base URL without either coder editing the
  * other's files.
  */
-export { getAccountingApiBase, DEFAULT_ACCOUNTING_API_URL } from '@/config/api';
+export { DEFAULT_ACCOUNTING_API_URL, getAccountingApiBase } from '@/config/api';

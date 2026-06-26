@@ -209,10 +209,7 @@ mod tests {
     fn document_total_equals_sum_of_rounded_lines() {
         // Two lines each rounding 9.99 net + 2.00 vat. Header must equal the sum
         // of the rounded rows, not a re-sum of full precision (#1522 invariant).
-        let lines = vec![
-            line("3", "3.33", "20", "0"),
-            line("3", "3.33", "20", "0"),
-        ];
+        let lines = vec![line("3", "3.33", "20", "0"), line("3", "3.33", "20", "0")];
         let m = compute_document_total(&lines, RoundingMode::Arithmetic).unwrap();
         assert_eq!(m.base, d("19.98"));
         assert_eq!(m.vat, d("4.00"));

@@ -130,57 +130,149 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
     .await
     .expect("seed user");
 
-    sqlx::query("INSERT INTO acc_company_settings (tenant_id) VALUES ($1)").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_numbering_series (tenant_id, doc_type, year) VALUES ($1, 'invoice', 2026)").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_unit (tenant_id, code, name) VALUES ($1, 'pcs', 'pieces')").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_vat_rate (tenant_id, name, rate) VALUES ($1, 'standard', 20)").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_bank_account (tenant_id, label, iban) VALUES ($1, 'main', 'SK0000')").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_email_template (tenant_id, subject, body) VALUES ($1, 's', 'b')").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_document_template (tenant_id, name) VALUES ($1, 'classic')").bind(org_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_item_category (tenant_id, name) VALUES ($1, 'services')").bind(org_a).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO acc_company_settings (tenant_id) VALUES ($1)")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO acc_numbering_series (tenant_id, doc_type, year) VALUES ($1, 'invoice', 2026)",
+    )
+    .bind(org_a)
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO acc_unit (tenant_id, code, name) VALUES ($1, 'pcs', 'pieces')")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO acc_vat_rate (tenant_id, name, rate) VALUES ($1, 'standard', 20)")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO acc_bank_account (tenant_id, label, iban) VALUES ($1, 'main', 'SK0000')",
+    )
+    .bind(org_a)
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO acc_email_template (tenant_id, subject, body) VALUES ($1, 's', 'b')")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO acc_document_template (tenant_id, name) VALUES ($1, 'classic')")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO acc_item_category (tenant_id, name) VALUES ($1, 'services')")
+        .bind(org_a)
+        .execute(&pool)
+        .await
+        .unwrap();
 
     let item_a: Uuid = sqlx::query_scalar(
         "INSERT INTO acc_catalog_item (tenant_id, name) VALUES ($1, 'Consulting') RETURNING id",
-    ).bind(org_a).fetch_one(&pool).await.unwrap();
+    )
+    .bind(org_a)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     sqlx::query("INSERT INTO acc_price_level (tenant_id, item_id, name, price) VALUES ($1, $2, 'retail', 100)")
         .bind(org_a).bind(item_a).execute(&pool).await.unwrap();
 
     let contact_a: Uuid = sqlx::query_scalar(
         "INSERT INTO contact (tenant_id, name) VALUES ($1, 'Acme s.r.o.') RETURNING id",
-    ).bind(org_a).fetch_one(&pool).await.unwrap();
+    )
+    .bind(org_a)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     sqlx::query("INSERT INTO acc_contact_address (tenant_id, contact_id) VALUES ($1, $2)")
-        .bind(org_a).bind(contact_a).execute(&pool).await.unwrap();
+        .bind(org_a)
+        .bind(contact_a)
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query("INSERT INTO acc_contact_tag (tenant_id, contact_id, tag) VALUES ($1, $2, 'vip')")
-        .bind(org_a).bind(contact_a).execute(&pool).await.unwrap();
+        .bind(org_a)
+        .bind(contact_a)
+        .execute(&pool)
+        .await
+        .unwrap();
 
     let inv_a: Uuid = sqlx::query_scalar(
         "INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date)
          VALUES ($1, $2, 'F-1', CURRENT_DATE, CURRENT_DATE) RETURNING id",
-    ).bind(org_a).bind(contact_a).fetch_one(&pool).await.unwrap();
+    )
+    .bind(org_a)
+    .bind(contact_a)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_a2: Uuid = sqlx::query_scalar(
         "INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date)
          VALUES ($1, $2, 'F-2', CURRENT_DATE, CURRENT_DATE) RETURNING id",
-    ).bind(org_a).bind(contact_a).fetch_one(&pool).await.unwrap();
+    )
+    .bind(org_a)
+    .bind(contact_a)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     sqlx::query("INSERT INTO acc_document_link (tenant_id, from_invoice_id, to_invoice_id) VALUES ($1, $2, $3)")
         .bind(org_a).bind(inv_a).bind(inv_a2).execute(&pool).await.unwrap();
     sqlx::query("INSERT INTO acc_attachment (tenant_id, filename, content_type, storage_key) VALUES ($1, 'f.pdf', 'application/pdf', 'k1')")
         .bind(org_a).execute(&pool).await.unwrap();
     sqlx::query("INSERT INTO acc_tag (tenant_id, entity_id, tag) VALUES ($1, $2, 'urgent')")
-        .bind(org_a).bind(inv_a).execute(&pool).await.unwrap();
-    sqlx::query("INSERT INTO acc_share_link (tenant_id, invoice_id, token) VALUES ($1, $2, 'tok-a')")
-        .bind(org_a).bind(inv_a).execute(&pool).await.unwrap();
+        .bind(org_a)
+        .bind(inv_a)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO acc_share_link (tenant_id, invoice_id, token) VALUES ($1, $2, 'tok-a')",
+    )
+    .bind(org_a)
+    .bind(inv_a)
+    .execute(&pool)
+    .await
+    .unwrap();
     sqlx::query("INSERT INTO acc_audit_log (tenant_id, actor_id, action, entity_type, entity_id) VALUES ($1, $2, 'create', 'invoice', $3)")
         .bind(org_a).bind(user_a).bind(inv_a).execute(&pool).await.unwrap();
     sqlx::query("INSERT INTO acc_two_factor (tenant_id, user_id, secret) VALUES ($1, $2, 'seed')")
-        .bind(org_a).bind(user_a).execute(&pool).await.unwrap();
+        .bind(org_a)
+        .bind(user_a)
+        .execute(&pool)
+        .await
+        .unwrap();
 
     // ---- Create a NOSUPERUSER NOBYPASSRLS role so FORCE RLS actually binds ----
     let role = format!("acc_rls_test_{}", Uuid::new_v4().simple());
     let grant = |sql: String| sqlx::query(sqlx::AssertSqlSafe(sql));
-    grant(format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS")).execute(&pool).await.expect("create role");
-    grant(format!("GRANT USAGE ON SCHEMA public TO \"{role}\"")).execute(&pool).await.expect("grant usage");
-    grant(format!("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO \"{role}\"")).execute(&pool).await.expect("grant dml");
-    grant(format!("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO \"{role}\"")).execute(&pool).await.expect("grant exec");
+    grant(format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"))
+        .execute(&pool)
+        .await
+        .expect("create role");
+    grant(format!("GRANT USAGE ON SCHEMA public TO \"{role}\""))
+        .execute(&pool)
+        .await
+        .expect("grant usage");
+    grant(format!(
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO \"{role}\""
+    ))
+    .execute(&pool)
+    .await
+    .expect("grant dml");
+    grant(format!(
+        "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO \"{role}\""
+    ))
+    .execute(&pool)
+    .await
+    .expect("grant exec");
 
     // ---- One pinned connection; SET ROLE; run all checks under it ----
     let mut conn = pool.acquire().await.expect("acquire connection");
@@ -192,24 +284,46 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
     // Company B is fully isolated: sees none of A's rows.
     set_request_ctx(&mut conn, Some(org_b), None, false).await;
     for t in NEW_TABLES {
-        assert_eq!(count_on(&mut conn, t).await, 0, "company B must NOT see {t} from company A");
+        assert_eq!(
+            count_on(&mut conn, t).await,
+            0,
+            "company B must NOT see {t} from company A"
+        );
     }
 
     // Company A sees each of its rows.
     set_request_ctx(&mut conn, Some(org_a), Some(user_a), false).await;
     for t in NEW_TABLES {
-        assert!(count_on(&mut conn, t).await >= 1, "company A should see its own {t} row");
+        assert!(
+            count_on(&mut conn, t).await >= 1,
+            "company A should see its own {t} row"
+        );
     }
 
     // acc_audit_log is append-only: UPDATE/DELETE match no rows under FORCE RLS
     // (only SELECT + INSERT policies exist), so they affect 0 rows — not error.
     let upd = sqlx::query("UPDATE acc_audit_log SET action = 'tamper'")
-        .execute(&mut *conn).await.expect("update returns ok (0 rows)");
-    assert_eq!(upd.rows_affected(), 0, "acc_audit_log must be immutable (no UPDATE policy)");
+        .execute(&mut *conn)
+        .await
+        .expect("update returns ok (0 rows)");
+    assert_eq!(
+        upd.rows_affected(),
+        0,
+        "acc_audit_log must be immutable (no UPDATE policy)"
+    );
     let del = sqlx::query("DELETE FROM acc_audit_log")
-        .execute(&mut *conn).await.expect("delete returns ok (0 rows)");
-    assert_eq!(del.rows_affected(), 0, "acc_audit_log must be append-only (no DELETE policy)");
-    assert!(count_on(&mut conn, "acc_audit_log").await >= 1, "the audit row survives tamper attempts");
+        .execute(&mut *conn)
+        .await
+        .expect("delete returns ok (0 rows)");
+    assert_eq!(
+        del.rows_affected(),
+        0,
+        "acc_audit_log must be append-only (no DELETE policy)"
+    );
+    assert!(
+        count_on(&mut conn, "acc_audit_log").await >= 1,
+        "the audit row survives tamper attempts"
+    );
 
     // Cross-tenant write rejected (WITH CHECK). Done LAST: the failed statement
     // aborts only its own implicit transaction.
@@ -218,7 +332,10 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
         .bind(org_a)
         .execute(&mut *conn)
         .await;
-    assert!(cross.is_err(), "WITH CHECK must reject a row whose tenant_id != current org");
+    assert!(
+        cross.is_err(),
+        "WITH CHECK must reject a row whose tenant_id != current org"
+    );
 
     sqlx::query("RESET ROLE").execute(&mut *conn).await.ok();
 }

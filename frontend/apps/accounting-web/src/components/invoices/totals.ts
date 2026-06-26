@@ -55,7 +55,9 @@ function num(v: string | number | null | undefined): number {
 }
 
 /** Compute net/VAT/gross for a single line (UC-ACC-05.2). */
-export function computeLine(line: Pick<CreateInvoiceItem, 'qty' | 'unit_price' | 'vat_rate'>): LineTotals {
+export function computeLine(
+  line: Pick<CreateInvoiceItem, 'qty' | 'unit_price' | 'vat_rate'>
+): LineTotals {
   const qty = num(line.qty);
   const unitPrice = num(line.unit_price);
   const rate = num(line.vat_rate);

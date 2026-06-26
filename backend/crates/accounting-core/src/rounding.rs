@@ -117,7 +117,10 @@ mod tests {
 
     #[test]
     fn round_respects_4dp_precision() {
-        assert_eq!(round(d("1.234567"), 4, RoundingMode::Arithmetic), d("1.2346"));
+        assert_eq!(
+            round(d("1.234567"), 4, RoundingMode::Arithmetic),
+            d("1.2346")
+        );
     }
 
     // --- round_money() -----------------------------------------------------
