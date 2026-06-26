@@ -1,0 +1,315 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25Z (9d 11h ago); cloud routine likely paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-2026-06-26",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25Z is 9d old; dispatcher state lives separately on planning branch."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16T03:25Z..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touching backend/servers/reality-server/src/services/saved_search_alerts.rs since last cursor (9-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-messaging-types-ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16T03:25Z..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits touching frontend/packages/api-client/src/messaging/types.ts since last cursor (9-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-messaging-hooks-useMessaging-ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16T03:25Z..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits touching frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts since last cursor (9-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "resolution",
+      "source": "PR #1798",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1798 (churn-hotspot-backend-servers-api-server-src-routes-emergency-rs: split emergenc)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "type": "resolution",
+      "source": "PR #1800",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1800 (churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "resolution",
+      "source": "PR #1683",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1683 (churn-hotspot-backend-crates-db-src-repositories-document-rs: split document rep)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+      "type": "resolution",
+      "source": "PR #1796",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1796 (churn-hotspot-backend-crates-db-src-repositories-subscription-rs: split subscrip)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "type": "resolution",
+      "source": "PR #1708",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1708 (churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs: split aml_dsa ro)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "resolution",
+      "source": "PR #1693",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1693 (churn-hotspot-backend-crates-integrations-src-booking-rs: split ota_xml into sub)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+      "type": "resolution",
+      "source": "PR #1816",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1816 (churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs: split rese)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+      "type": "resolution",
+      "source": "PR #1810",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1810 (churn-hotspot-backend-crates-db-src-repositories-sensor-rs: split sensor reposit)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "type": "resolution",
+      "source": "PR #1719",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1719 (churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs: dedupe inline RLS )"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "type": "resolution",
+      "source": "PR #1718",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1718 (churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts: extract icon asserti)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "type": "resolution",
+      "source": "PR #1700",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1700 (repeated-churn-backend-servers-api-server-src-routes-forms-rs: split forms.rs in)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-code-review-mobile-rn-screens-mock-data",
+      "type": "resolution",
+      "source": "PR #1681",
+      "score_delta": 0,
+      "evidence": [
+        "verbatim ID match in PR #1681 (code-review-mobile-rn-screens-mock-data: wire mobile Buildings &amp; Leases scre)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no_candidate (no signal met confidence=high + score≥3 + allowlist this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-26.md && head -1 …",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_pr_seen, last_issue_seen, last_commit_sha all advance + new seen_signals"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-signal id collision check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans adversarial pass annotated",
+      "observed": "no new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plans count <= 2 and all required sections",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths in staged set",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phase cursor freeze check",
+      "observed": "no phase failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan-promotion convergence",
+      "observed": "no prior plan deletions",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto-fix actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid (when Phase 1.6 ran)",
+      "observed": "phase 1.6 skipped — gate no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "true",
+      "expected": "true"
+    }
+  ]
+}
