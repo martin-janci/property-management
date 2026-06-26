@@ -34,17 +34,23 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "PR #1713"
       ],
       "evidence": [
         "PR #1713 reverted PR #1690 (delegation frontend re-add); 966 deletions across frontend/packages/api-client/src/delegation/* + frontend/apps/ppt-web routes; second-revert for delegations feature"
       ],
-      "files": [],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "frontend/packages/api-client/src/index.ts",
+        "docs/use-cases.md"
+      ],
       "created_at": "2026-06-26",
       "updated_at": "2026-06-26",
-      "plan": null
+      "plan": "plans/bug-revert-pr-1713.md"
     },
     {
       "id": "code-review-mobile-rn-report-fault-fake-submit",
