@@ -1,0 +1,196 @@
+{
+  "date": "2026-06-26",
+  "mode": "incremental (10-day catch-up due to routine lag)",
+  "phases_run": [
+    "Phase 1",
+    "Phase 2",
+    "Phase 3 (no new plans)",
+    "Phase 4",
+    "Phase 6"
+  ],
+  "phases_skipped": [
+    "Phase 1.5 (rotating expert review)",
+    "Phase 1.6 (project management)",
+    "Phase 5 (auto-fix)"
+  ],
+  "phases_skipped_reason": "10-day catch-up; review/PM/auto-fix deferred to next run to keep this commit bounded \u2014 daily artifacts (brief + state cursor + decay/resolution sweep) are the priority",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "last_run_iso=2026-06-16T03:25:00Z; current=2026-06-26 \u2014 routine has been silent for 10 days (lag \u2248 240h)"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-26",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "state.json last_run_iso 10d old; cloud routine cron likely paused \u2014 dispatcher (separate loop on planning branch) is still active (last dispatcher commit ad2052c 2026-06-25 22:16)"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "PR #1713 (martin-janci, merged 2026-06-22T17:13Z) reverts PR #1690 \u2014 re-added delegation frontend; reverted to honor delegation-feature retirement decision (BIT-213). Author-intentional revert, no underlying code regression to file."
+    },
+    {
+      "id": "churn-hotspot-docs-screens-ppt-announcements-md",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "docs/screens/ppt/announcements.md \u2014 5 changes in 10-day window (epic-6 announcement reconciliation work)"
+    },
+    {
+      "id": "churn-hotspot-docs-screens-ppt-messages-md",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "docs/screens/ppt/messages.md \u2014 3 changes in 10-day window (epic-6 messaging activity)"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs \u2014 3 changes in 10-day window (epic-16 saved-search alert pipeline development)"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-26.md && head -1 | grep ^# 2026-06-26",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal carry-over",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8 count",
+      "observed": "true (no score >8)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-research staged count",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in cached diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "11 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length",
+      "observed": "0",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor did not advance (Phase 1.6 skipped) \u2192 no-op gate",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass per new plan",
+      "observed": "no new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failures",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence: prior plans either active or archived",
+      "observed": "4 prior plans \u2192 archive, others remain",
+      "expected": "PASS"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score\u22653 + allowlist this run (and 10-day catch-up posture: side-effect actions deferred)"
+}
