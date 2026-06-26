@@ -1,0 +1,371 @@
+{
+  "version": 1,
+  "date": "2026-06-26",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run since 2026-06-16T03:25Z \u2014 ~10 days lag; cloud cron likely paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverted PR #1690 (delegation frontend re-add); 966 deletions across frontend/packages/api-client/src/delegation/* + frontend/apps/ppt-web routes; second-revert for delegations feature"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "first-parent churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx touched in 11 merged PRs since last cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-index-ts",
+      "type": "churn-hotspot",
+      "source": "first-parent churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/packages/api-client/src/index.ts touched in 7 merged PRs since last cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "first-parent churn since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs touched in 7 merged PRs since last cursor"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-1743",
+      "type": "hotfix-no-test",
+      "source": "PR #1743",
+      "score_delta": 2,
+      "evidence": [
+        "Booking.com listing-push base_rate + currency validation tightened; PR #1743 diff includes no *test/*spec* files (1 file changed)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1737",
+      "type": "hotfix-no-test",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": [
+        "IoT sensor WebSocket: duplicate JWT-trusting handler removed and converged on DB-checked path; PR #1737 changed 7 files with no *test/*spec* file in diff (follow-up #1786 acknowledges missing authz regression tests)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1684",
+      "type": "hotfix-no-test",
+      "source": "PR #1684",
+      "score_delta": 2,
+      "evidence": [
+        "CSPRNG failure propagation in crypto encrypt instead of panicking; PR #1684 changed 1 file with no *test/*spec* file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 (fix(ppt-web): add Leases nav link + home tile) closed unmerged 2026-06-23 \u2014 superseded by PR #1694 which delivered same nav-link feature"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] fix(iot): remove duplicate JWT-trusting sensor WS channel \u2014 touched routes/groups/iot.tsx + lazyRoutes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(messaging): per-participant thread archive + soft-delete \u2014 touched ppt-web routes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1713-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1713",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] revert(delegations): remove re-added delegation frontend \u2014 touched lazyRoutes + AppRoutes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(delegations): wire delegation feature into ppt-web \u2014 touched routes without docs/screens/ppt update (later reverted by #1713)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1694-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1694",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(ppt-web): add Leases sidebar nav link \u2014 touched App.tsx without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(ppt-web): real-time IoT dashboard via BIT-145 WS channel \u2014 touched lazyRoutes/IoT routes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(ppt-web): Sentiment & Predictive Maintenance dashboards \u2014 touched ppt-web routes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] fix(ppt-web): loading state on invoice PDF download \u2014 touched ppt-web routes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(ppt-web): invoice PDF download button \u2014 touched ppt-web routes without docs/screens/ppt update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1822",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] 79-2-authentication-flow: reality-web SSO callback e2e \u2014 touched reality-web/src/app without docs/screens/reality update (auth-callback screen not documented)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] fix(portal-listings): IDOR validation + FE field wiring \u2014 touched reality-web/src/app without docs/screens/reality update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1677-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1677",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] fix(reality-web): defend listing detail JSON-LD against partial SSR body \u2014 touched reality-web/src/app without docs/screens/reality update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": [
+        "[heuristic \u2014 file-basename match] feat(epic-15): portal-user listing CRUD \u2014 touched reality-web/src/app without docs/screens/reality update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-26.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; decay applied to >=14d-old open items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths under .research/ only",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases listed; cursors not advanced for failures",
+      "observed": "no failures",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (none this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 gate is no-op",
+      "observed": "no pm_cursor advance",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
