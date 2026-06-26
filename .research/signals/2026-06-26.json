@@ -1,0 +1,253 @@
+{
+  "date": "2026-06-26",
+  "run_iso": "2026-06-26T16:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "state.json:last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z; lag is 10d 252h. Cloud cron may be paused \u2014 verify scheduler before next run. Dispatcher (separate loop, .research/management/assignments.json) has been ticking through; routine alone fell behind.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1844-yaml-verify",
+      "type": "unchecked-todo",
+      "source": "PR #1844",
+      "score_delta": 2,
+      "evidence": "PR #1844 (docs(epic-6): reconcile 6-5 direct-messaging status to done) merged with two `- [ ]` checkbox lines unrun: python3 yaml.safe_load assertion + 'no other story lines touched in sprint-status.yaml' assertion.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-26 origin/dev",
+      "score_delta": 1,
+      "evidence": "messaging.rs route touched in 6 commits this window (BIT-244, BIT-206, UC-05.9).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-26 origin/dev",
+      "score_delta": 1,
+      "evidence": "db models/mod.rs touched 5x this window \u2014 model surface expanded for group threads.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-26 origin/dev",
+      "score_delta": 1,
+      "evidence": "messaging db model touched 5x \u2014 group conversations + participants[] + camelCase serde.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1822",
+      "score_delta": 2,
+      "evidence": "PR #1822 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx without docs/screens/reality/*.md. Heuristic \u2014 review candidate, not a promotable plan (file is .test.tsx).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-core-unsafe-api-response-cast",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84",
+      "score_delta": 2,
+      "evidence": "Unsafe `as unknown as SessionRow[]` cast of API response silently masks shape mismatches; query-level error handling exists but does not catch type violations.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-console-in-production",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/lib/websocket.ts:344,352,472,484,504,519,559,570,621",
+      "score_delta": 1,
+      "evidence": "Unconditional console.warn/console.error calls ship to production without debug-flag guards (api.ts:200 is correctly gated by import.meta.env.DEV; websocket.ts is not).",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-unhandled-query-errors",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:330-332",
+      "score_delta": 1,
+      "evidence": "Hook returns `isError` and `error` from useQuery but provides no onError handler or documented error-boundary contract; consumers may render silent failures.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 (fix(ppt-web): add Leases nav link + home tile) closed unmerged 2026-06-23 \u2014 body says original gaps were fixed by PR #1020 + #1023.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 closed 2026-06-23 \u2014 replaced by #1748 (mobile node-types typecheck fix).",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 (fix(ci): unblock backend gate) closed 2026-06-22 \u2014 backend CI was unblocked by a different chain.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 (feat(epic-3): story 3.2 unit management UI BIT-188) closed unmerged 2026-06-22.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no high-confidence allowlisted signal met certainty bar; ROUTINE_AUTOFIX_DISABLED not set)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-26.md && head -1 | grep -q '^# 2026-06-26$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json) '... advanced check'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative-signal-not-in-prev-seen check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at<=today-14 either decayed -1 or dropped",
+      "observed": "all 33 decay-eligible items either lost 1 point or transitioned to dropped/done",
+      "expected": "all eligible items lost \u22651 point or moved to dropped/done"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan annotated with adversarial-pass result",
+      "observed": "no new plans this run",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed honesty",
+      "observed": "no phases failed; cursors all advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no silent deletion of prior plans",
+      "observed": "9 active + 6 archived plans all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "OK",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 auto-fix discipline (caps+kill switch+idempotency)",
+      "observed": "no candidate this run; auto_fix_actions=[]",
+      "expected": "auto-fix discipline held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm/coverage cursors",
+      "observed": "action-list/risks parse, project-state non-empty, pm_cursor=6, coverage_cursor=0 (advanced from 12)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token committed",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
