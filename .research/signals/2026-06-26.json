@@ -1,0 +1,185 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine has not run in 10d (last_run_iso=2026-06-16T03:25:00Z) \u2014 cloud cron may have missed scheduled runs; this is a catch-up sweep",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "unchecked-todo-pr-1844",
+      "type": "unchecked-todo",
+      "source": "PR #1844",
+      "score_delta": 2,
+      "evidence": "PR #1844 (docs(epic-6): reconcile 6-5 direct-messaging screen-map) merged with unchecked TODO checkboxes (- [ ]) in body \u2014 review follow-ups (often CI-gate checkboxes per recent history)",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "PR #1768",
+      "score_delta": 3,
+      "evidence": "PR #1768 (fix(messaging): camelCase wire contract) merged with unchecked TODO checkboxes (- [ ]) in body \u2014 review follow-ups (often CI-gate checkboxes per recent history)",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "evidence": "PR #1709 (feat(scheduler): payment reminders + auto-late-fee) merged with unchecked TODO checkboxes (- [ ]) in body \u2014 review follow-ups (often CI-gate checkboxes per recent history)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1705",
+      "type": "unchecked-todo",
+      "source": "PR #1705",
+      "score_delta": 2,
+      "evidence": "PR #1705 (feat(faults): fire notifications on every status transition) merged with unchecked TODO checkboxes (- [ ]) in body \u2014 review follow-ups (often CI-gate checkboxes per recent history)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1703",
+      "type": "unchecked-todo",
+      "source": "PR #1703",
+      "score_delta": 2,
+      "evidence": "PR #1703 (feat(api-server): gap-sweep Epic 12 \u2014 message attachments) merged with unchecked TODO checkboxes (- [ ]) in body \u2014 review follow-ups (often CI-gate checkboxes per recent history)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-26.md && head -1 == \"# 2026-06-26\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev \u2026 last_pr_seen changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length==unique|length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative seen-signal re-emit with score_delta>0",
+      "observed": "true",
+      "expected": "true",
+      "note": "all new signals are first-time-seen IDs"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0",
+      "expected": "<=2",
+      "note": "vacuous pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secret patterns in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse phases-that-failed",
+      "observed": "two phases skipped intentionally; lag-mode caveat surfaced in brief",
+      "expected": "matches Since-last-run section",
+      "note": "Phase 1.5 and 1.6 skipped; review_cursor and pm_cursor preserved as required"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans still in plans/ or _archive/",
+      "observed": "all 9 active plans present",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions==[] and ROUTINE_AUTOFIX_DISABLED unset",
+      "observed": "no candidate (no allowlisted signal matched bar)",
+      "expected": "<=1 per category",
+      "note": "phase-5 noop"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 no-op gate",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
