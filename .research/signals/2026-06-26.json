@@ -1,0 +1,362 @@
+{
+  "date": "2026-06-26",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine-run-2026-06-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "routine last_run_iso 2026-06-16T03:25:00Z \u2192 today 2026-06-26 = 10d lag (>36h)"
+      ]
+    },
+    {
+      "id": "stale-routine-2026-06-26",
+      "type": "stale_routine_alert",
+      "source": "routine-run-2026-06-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "routine state.json last_run_iso=2026-06-16T03:25:00Z is 10d old; cloud cron may have paused."
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/delegations/",
+        "frontend/packages/api-client/src/delegation/"
+      ],
+      "evidence": [
+        "PR #1713 reverted PR #1690 (delegation frontend re-add) per board decision BIT-213. Root-cause: gap-sweep dispatcher PR overturned a board decision silently."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1844",
+      "type": "unchecked-todo",
+      "source": "PR #1844",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #1844 merged with 2 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1705",
+      "type": "unchecked-todo",
+      "source": "PR #1705",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #1705 merged with 3 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #1709 merged with 5 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "PR #1768",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "evidence": [
+        "PR #1768 merged with 3 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1703",
+      "type": "unchecked-todo",
+      "source": "PR #1703",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #1703 merged with 4 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "evidence": [
+        "PR #1723 merged with 2 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "PR #1717",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #1717 merged with 7 unchecked `- [ ]` boxes in body; mostly pre-flight CI gate checklists."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "evidence": [
+        "Dependabot PR #1567 merged (routine dependency bump)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "evidence": [
+        "Dependabot PR #1568 merged (routine dependency bump)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs/screens/ppt/announcements.md",
+      "type": "churn-hotspot",
+      "source": "churn-window-2026-06-16..2026-06-26 (PRs [1832, 1834, 1835])",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "docs/screens/ppt/announcements.md"
+      ],
+      "evidence": [
+        "4 touches in window across PRs [1832, 1834, 1835]; runs_seen=1"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/reality_portal.rs",
+      "type": "churn-hotspot",
+      "source": "churn-window-2026-06-16..2026-06-26 (PRs [1849, 1850])",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/reality_portal.rs"
+      ],
+      "evidence": [
+        "2 touches in window across PRs [1849, 1850]; runs_seen=1"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/services/saved_search_alerts.rs",
+      "type": "churn-hotspot",
+      "source": "churn-window-2026-06-16..2026-06-26 (PRs [1847, 1850])",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ],
+      "evidence": [
+        "2 touches in window across PRs [1847, 1850]; runs_seen=1"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-rng-expect-password-reset",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:551 \u2014 expect('OS rng failed') on SysRng.try_fill_bytes() in password reset token generation (production path, reachable by any user)"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-http-client-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:759 \u2014 expect('Failed to create HTTP client') on reqwest::Client::build() during PM API client initialization"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-guaranteed-unwrap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:179 \u2014 unwrap() on chars().next() after is_empty() check is guaranteed safe but defensive"
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-26.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD jq",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique jq",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup (non-cumulative double-score)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; decay applied to all open items >14d",
+      "observed": "cap=true; old_open=0",
+      "expected": "cap=true; old_open=0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation",
+      "observed": "no new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count <= 2",
+      "observed": 0,
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths only .research/",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failures",
+      "expected": "all failures listed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or archive",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7>=7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "epics=13 cc=0 pm=6 (cc was 12, pm was 5)",
+      "expected": "cc in [0,13); pm in [0,7]; advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": 0,
+      "expected": 0
+    }
+  ]
+}
