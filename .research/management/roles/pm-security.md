@@ -1,62 +1,81 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-26
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+**Run context:** Rotation idx 5; last run 2026-05-27 (30d stale). Deep rotation slot.
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+The most critical carried risks (#480 WS token in URL, #481 OAuth revocation bypass) show partial or full mitigation in code but remain formally open in sprint-status.yaml and must be formally closed before Epic 10A stories can be promoted to done. The new accounting-server surface (PAP-312, PRD #1817 + web #1808) has zero code on disk yet — security requirements must be defined before the first PR lands.
 
-## next_actions
+## Top findings
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+### 1. [HIGH] Issue #481 (OAuth refresh-token revocation bypass) appears resolved in code but still open
 
-## risks
+**Evidence:**
+- `backend/crates/db/src/repositories/oauth.rs:413-414`: `WHERE token_hash = $1 AND revoked_at IS NULL`
+- `backend/servers/api-server/src/services/oauth.rs:511`: second guard `if refresh_token.is_revoked() { ... }`
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+**Recommendation:** Have rust-backend formally verify the revocation path with the revocation-endpoint test added in #1393, then close #481 in sprint-status.yaml to unblock 10A story gating.
 
-## open_questions
+**Owner:** rust-backend
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+### 2. [HIGH] Issue #480 (JWT in WS query param) — application-level mitigation in place, infra-layer exposure remains
 
-## decisions_needed
+**Evidence:**
+- `backend/servers/api-server/src/routes/ws_notifications.rs:122` explicitly never logs `params.token`
+- But token travels in `?token=<jwt>` on the upgrade URL → nginx/CDN access logs record it server-side
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+**Recommendation:** Implement short-lived WS ticket endpoint (POST /api/v1/ws/ticket → opaque 30s single-use token); WS upgrade uses ticket. This is the standard WS bearer-token mitigation.
+
+**Owner:** rust-backend
+
+### 3. [MEDIUM] `_principal: RequestPrincipal` discard pattern in ai/workflows.rs + automation.rs
+
+**Evidence:** 5 handlers — `ai/workflows.rs:490,558,738` + `automation.rs:425,455` — assert auth gate then discard principal without role/tenant check. Currently serve global template data so IDOR is not active, but the pattern matches the prior ai.rs cross-tenant IDOR cluster.
+
+**Recommendation:** Add SECURITY comment to each handler documenting global-read intent + listing data classes that MUST NOT be added without tenant scoping. File follow-up to add any-valid-tenant-member check.
+
+**Owner:** rust-backend
+
+### 4. [MEDIUM] accounting-server has no threat model / tenant isolation design
+
+**Evidence:**
+- `backend/servers/accounting-server/`: NOT FOUND (PRD #1817 merged, no code yet)
+- `frontend/apps/accounting-web/src/components/signup/SignupForm.tsx:41`: `TODO(PAP-303 #2/#3): replace with accountingApiClient.signup(...) mutation`
+
+**Recommendation:** Produce security ADR before first backend PR: tenant isolation (shared api-server RLS vs separate DB), auth handoff (OAuth resource-server vs separate domain), PII/financial classification. Require pm-security review on auth scaffold PR.
+
+**Owner:** pm-security
+
+## Risks (new this rotation)
+
+1. **pm-security-ws-jwt-in-url-infra-logs** (prob: high, impact: high) — see finding #2
+2. **pm-security-accounting-server-no-threat-model** (prob: medium, impact: high) — see finding #4
+3. **pm-security-ai-workflows-principal-discard-future-risk** (prob: medium, impact: high) — see finding #3
+
+## Risks resolved this rotation
+
+- **pm-qa-booking-oauth-no-secure-replacement** → resolved by #1393 + cross-org IDOR cluster fixes #1467/#1601/#1635/#1639/#1741
+
+## Next actions (added to action-list.json)
+
+- `sec-481-formally-close-oauth-revocation` [high] — close #481 in sprint-status (unblocks 10a-1/10a-3)
+- `sec-480-ws-ticket-endpoint` [high] — implement POST /api/v1/ws/ticket
+- `sec-accounting-server-threat-model` [high] — produce security ADR
+- `sec-487-mfa-rate-limit-tests` [medium] — close #487 (clears 10a-1 gate)
+- `sec-483-voice-device-idor-test` [medium] — close #483
+- `sec-nginx-ws-token-log-redact` [medium] — interim ?token= redaction (pm-devops)
+- `sec-ai-principal-comment` [low] — SECURITY comment on _principal discard handlers
+
+## Decisions needed
+
+- accounting-server tenant isolation / auth boundary — DEC-PEND-2026-06-26-A
+- WS JWT-in-URL permanent design vs WS ticket — DEC-PEND-2026-06-26-B
+- #481 formal close: this sprint (code fix verified) or pending additional test coverage — rust-backend
+
+## Open questions
+
+1. Is #481 actually fixed by `revoked_at IS NULL`, or does a separate query path still use the old `is_revoked` boolean column? support_data_session_columns_tests.rs comments suggest prior naming confusion.
+2. accounting-server: shared api-server DB+RLS or separate?
+3. Are nginx/CDN logs currently redacting `?token=` for /ws upgrade?
+4. Issue #482 (ProtectedRoute tenants[0] fallback): work started? Blocks 10a-2.
+5. #1393 Booking.com OAuth/CSRF: covers state-param CSRF on callback, or only token-exchange?

@@ -85,3 +85,40 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+
+### DEC-PEND-2026-06-26-A — accounting-server tenant isolation / auth boundary
+
+**Date:** 2026-06-26
+**Owner:** pm-tech-lead + pm-security
+**Status:** pending
+
+**Question:** Will accounting-server (PAP-312, PRD #1817 merged) share the api-server PostgreSQL schema + RLS policies + RequestPrincipal pattern, or define its own auth domain (OAuth resource-server)?
+
+**Why now:** First backend PR will inherit whatever pattern is chosen. accounting-web (#1808) is already +2254 LOC scaffold with no API client wiring. Without a decision, ad-hoc patterns will land before the question is asked.
+
+**Required before:** First non-docs commit under `backend/servers/accounting-server/`.
+
+---
+
+### DEC-PEND-2026-06-26-B — WS JWT-in-URL permanent design vs WS ticket
+
+**Date:** 2026-06-26
+**Owner:** pm-security + pm-tech-lead
+**Status:** pending
+
+**Question:** Accept JWT-in-query-string as documented risk (with infra-log redaction), or invest in POST /api/v1/ws/ticket (30s opaque single-use token)?
+
+**Why now:** Issue #480 is open; ws_notifications.rs app-side suppression is in place but nginx/CDN logs are out of code's control. WS surface grows with 8a-3 notification sync.
+
+---
+
+### DEC-PEND-2026-06-26-C — PR #1846 (80-3 mediation) scope_drift adjudication
+
+**Date:** 2026-06-26
+**Owner:** human reviewer / product
+**Status:** pending
+
+**Question:** Accept PR #1846 at current scope (auto-merge after rebase) or expand scope to full party-submissions integration before merge?
+
+**Why now:** 80-3 mediation-resolution story cannot promote to done while this draft hangs. Dispatcher flagged scope_drift; needs human call.

@@ -1,0 +1,1184 @@
+{
+  "date": "2026-06-26",
+  "merged_count": 292,
+  "open_touched_count": 30,
+  "closed_unmerged_count": 7,
+  "issue_count": 83,
+  "commit_count": 410,
+  "churn_hotspots": [
+    "backend/servers/api-server/src/routes/emergency.rs",
+    "backend/crates/db/src/repositories/subscription.rs",
+    "backend/servers/api-server/src/routes/iot.rs"
+  ],
+  "phase15_segment": "api-handlers",
+  "phase15_pick_reason": "churn-aligned",
+  "phase16_role": "pm-security",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine_state",
+      "score_delta": 0,
+      "evidence": "routine has not run since 2026-06-16 (10 days). stale_routine_alert: state.json last_run_iso=2026-06-16T03:25:00Z is 10d old; cloud routine may be paused.",
+      "confidence": "high",
+      "candidate_vector": "ops"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/emergency.rs",
+      "type": "churn-hotspot",
+      "source": "churn-aggregation-2026-06-26",
+      "score_delta": 1,
+      "evidence": "1681 LOC across 1 PRs ([1798])",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/subscription.rs",
+      "type": "churn-hotspot",
+      "source": "churn-aggregation-2026-06-26",
+      "score_delta": 1,
+      "evidence": "1240 LOC across 1 PRs ([1796])",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/iot.rs",
+      "type": "churn-hotspot",
+      "source": "churn-aggregation-2026-06-26",
+      "score_delta": 1,
+      "evidence": "1063 LOC across 2 PRs ([1737, 1815])",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/emergency.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/emergency.rs appeared as hotspot before (runs_seen=1); this run: 1681 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/subscription.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/subscription.rs appeared as hotspot before (runs_seen=1); this run: 1240 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/iot.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/iot.rs appeared as hotspot before (runs_seen=1); this run: 1063 LOC across 2 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/sensor.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/sensor.rs appeared as hotspot before (runs_seen=1); this run: 962 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/vendors.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/vendors.rs appeared as hotspot before (runs_seen=1); this run: 870 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/enhanced_tenant_screening.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/enhanced_tenant_screening.rs appeared as hotspot before (runs_seen=1); this run: 774 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reserve_funds.rs",
+      "type": "repeated-churn",
+      "source": "churn-history-2026-06-26",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/reserve_funds.rs appeared as hotspot before (runs_seen=1); this run: 640 LOC across 1 PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "pr-1713",
+      "score_delta": 3,
+      "evidence": "PR #1713: revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213)",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "hotfix-no-test-pr-1512-invoices-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1512",
+      "score_delta": 2,
+      "evidence": "PR #1512 (fix(api-server): clippy fixes in accounting routes (post-#1454)) \u2014 no test files in diff; touched 3 files (e.g. ['backend/servers/api-server/src/routes/accounting/invoices.rs', 'backend/servers/api-server/src/routes/accounting/matches.rs', 'backend/servers/api-server/src/routes/accounting/statements.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1536-searchscreen-kt",
+      "type": "hotfix-no-test",
+      "source": "pr-1536",
+      "score_delta": 2,
+      "evidence": "PR #1536 (fix(mobile-native): remove unused import failing spotless on dev (post-#1447)) \u2014 no test files in diff; touched 1 files (e.g. ['mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1537-form-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix(db): cast enum write paths on rental_guests + forms (#1008 encode/decode)) \u2014 no test files in diff; touched 2 files (e.g. ['backend/crates/db/src/repositories/form.rs', 'backend/crates/db/src/repositories/rental.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1539-oauth-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1539",
+      "score_delta": 2,
+      "evidence": "PR #1539 (fix(oauth): reject public client supplying a client_secret with invalid_client) \u2014 no test files in diff; touched 1 files (e.g. ['backend/servers/api-server/src/routes/oauth.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1545-hu-json",
+      "type": "hotfix-no-test",
+      "source": "pr-1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 (fix(reality-web): unbreak production build \u2014 /accounting QueryClient prerender +) \u2014 no test files in diff; touched 3 files (e.g. ['frontend/apps/reality-web/messages/hu.json', 'frontend/apps/reality-web/messages/pl.json', 'frontend/apps/reality-web/src/app/accounting/layout.tsx'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1551-document-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix(db): cast document_category in count_accessible_rls filter (closes #1528)) \u2014 no test files in diff; touched 1 files (e.g. ['backend/crates/db/src/repositories/document.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1561-principal-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1561",
+      "score_delta": 2,
+      "evidence": "PR #1561 (fix(reality-server): admit public agencies on imports via PortalPrincipal (close) \u2014 no test files in diff; touched 2 files (e.g. ['backend/crates/api-core/src/extractors/principal.rs', 'backend/servers/reality-server/src/routes/imports.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1565-document-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix(db): correct document get-by-id read path (u.name + enum ::text decode)) \u2014 no test files in diff; touched 1 files (e.g. ['backend/crates/db/src/repositories/document.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1582-usefoldertree-ts",
+      "type": "hotfix-no-test",
+      "source": "pr-1582",
+      "score_delta": 2,
+      "evidence": "PR #1582 (fix(mobile): wire useFolderTree / FOLDER_TREE_QUERY_KEY into document screens (c) \u2014 no test files in diff; touched 4 files (e.g. ['frontend/apps/mobile/src/hooks/useFolderTree.ts', 'frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx', 'frontend/apps/mobile/src/screens/documents/MoveDocumentSheet.tsx'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1617-booking-channel-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1617",
+      "score_delta": 2,
+      "evidence": "PR #1617 (fix(integrations): wire combined OTA availability+rate push into listing-push ro) \u2014 no test files in diff; touched 1 files (e.g. ['backend/servers/api-server/src/routes/integrations/booking_channel.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1619-searchscreen-kt",
+      "type": "hotfix-no-test",
+      "source": "pr-1619",
+      "score_delta": 2,
+      "evidence": "PR #1619 (fix(mobile-native): close infinite-scroll in-flight double-fetch race + pin tran) \u2014 no test files in diff; touched 2 files (e.g. ['mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt', 'mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/listing/SearchStateTest.kt'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1639-airbnb-connections-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1639",
+      "score_delta": 2,
+      "evidence": "PR #1639 (fix(api-server): manager-gate Airbnb linked-listing config reads (closes #1626)) \u2014 no test files in diff; touched 1 files (e.g. ['backend/servers/api-server/src/routes/integrations/airbnb_connections.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1723-financial-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1723",
+      "score_delta": 2,
+      "evidence": "PR #1723 (fix(financial): rustfmt compliance for financial reports routes) \u2014 no test files in diff; touched 1 files (e.g. ['backend/servers/api-server/src/routes/financial.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1724-00188-create-notification-events-sql",
+      "type": "hotfix-no-test",
+      "source": "pr-1724",
+      "score_delta": 2,
+      "evidence": "PR #1724 (fix(db): resolve duplicate migration version 00187 (BIT-223)) \u2014 no test files in diff; touched 2 files (e.g. ['backend/crates/db/migrations/00188_create_notification_events.sql', 'backend/crates/db/src/repositories/notification_event.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1730-build-mobile-sh",
+      "type": "hotfix-no-test",
+      "source": "pr-1730",
+      "score_delta": 2,
+      "evidence": "PR #1730 (fix(frontend): restore exec bit on build-mobile.sh (#1662)) \u2014 no test files in diff; touched 1 files (e.g. ['frontend/apps/mobile/scripts/build-mobile.sh'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1732-cs-json",
+      "type": "hotfix-no-test",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix(ppt-web): translate iot.* namespace into all locales (#1666)) \u2014 no test files in diff; touched 5 files (e.g. ['frontend/apps/ppt-web/messages/cs.json', 'frontend/apps/ppt-web/messages/de.json', 'frontend/apps/ppt-web/messages/hu.json'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1734-backend-yml",
+      "type": "hotfix-no-test",
+      "source": "pr-1734",
+      "score_delta": 2,
+      "evidence": "PR #1734 (fix(api-server): repair voting PDF test setup regression (#1645)) \u2014 no test files in diff; touched 1 files (e.g. ['.github/workflows/backend.yml'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1735-backend-skip-yml",
+      "type": "hotfix-no-test",
+      "source": "pr-1735",
+      "score_delta": 2,
+      "evidence": "PR #1735 (fix(ci): make backend-skip mixed-PR decision deterministic (#1672)) \u2014 no test files in diff; touched 2 files (e.g. ['.github/workflows/backend-skip.yml', '.github/workflows/backend.yml'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1737-auth-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 (fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checke) \u2014 no test files in diff; touched 7 files (e.g. ['backend/crates/api-core/src/extractors/auth.rs', 'backend/servers/api-server/src/lib.rs', 'backend/servers/api-server/src/routes/iot.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1742-admin-web-dockerfile",
+      "type": "hotfix-no-test",
+      "source": "pr-1742",
+      "score_delta": 2,
+      "evidence": "PR #1742 (fix(docker): copy @ppt/e2e package.json into frontend deps stage) \u2014 no test files in diff; touched 3 files (e.g. ['docker/frontend/admin-web.Dockerfile', 'docker/frontend/ppt-web.Dockerfile', 'docker/frontend/reality-web.Dockerfile'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1743-booking-channel-rs",
+      "type": "hotfix-no-test",
+      "source": "pr-1743",
+      "score_delta": 2,
+      "evidence": "PR #1743 (fix(integrations): validate base_rate + currency in Booking.com listing push (#1) \u2014 no test files in diff; touched 1 files (e.g. ['backend/servers/api-server/src/routes/integrations/booking_channel.rs'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1748-tsconfig-json",
+      "type": "hotfix-no-test",
+      "source": "pr-1748",
+      "score_delta": 2,
+      "evidence": "PR #1748 (fix(mobile): resolve node-types typecheck break in icon guard test (dev build re) \u2014 no test files in diff; touched 1 files (e.g. ['frontend/apps/mobile/tsconfig.json'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1757-00193-rental-guest-id-documents-sql",
+      "type": "hotfix-no-test",
+      "source": "pr-1757",
+      "score_delta": 2,
+      "evidence": "PR #1757 (fix(db): resolve duplicate migration version 00192 collision (unblocks all backe) \u2014 no test files in diff; touched 1 files (e.g. ['backend/crates/db/migrations/00193_rental_guest_id_documents.sql'])",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "pr-1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix) modified backend/crates/db/src/repositories/rental.rs \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1617-booking-channel-rs",
+      "type": "risky-churn",
+      "source": "pr-1617",
+      "score_delta": 2,
+      "evidence": "PR #1617 (fix) modified backend/servers/api-server/src/routes/integrations/booking_channel.rs \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1732-cs-json",
+      "type": "risky-churn",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix) modified frontend/apps/ppt-web/messages/cs.json \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1732-de-json",
+      "type": "risky-churn",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix) modified frontend/apps/ppt-web/messages/de.json \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1732-hu-json",
+      "type": "risky-churn",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix) modified frontend/apps/ppt-web/messages/hu.json \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1732-pl-json",
+      "type": "risky-churn",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix) modified frontend/apps/ppt-web/messages/pl.json \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1732-sk-json",
+      "type": "risky-churn",
+      "source": "pr-1732",
+      "score_delta": 2,
+      "evidence": "PR #1732 (fix) modified frontend/apps/ppt-web/messages/sk.json \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1737-iot-rs",
+      "type": "risky-churn",
+      "source": "pr-1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 (fix) modified backend/servers/api-server/src/routes/iot.rs \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1743-booking-channel-rs",
+      "type": "risky-churn",
+      "source": "pr-1743",
+      "score_delta": 2,
+      "evidence": "PR #1743 (fix) modified backend/servers/api-server/src/routes/integrations/booking_channel.rs \u2014 a top-churn file \u2014 with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1197",
+      "type": "unchecked-todo",
+      "source": "pr-1197",
+      "score_delta": 3,
+      "evidence": "PR #1197: 2 unchecked `- [ ]` in body; title: test-oauth-authorization-server-integration: integration tests for OAuth authorization server",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1427",
+      "type": "unchecked-todo",
+      "source": "pr-1427",
+      "score_delta": 3,
+      "evidence": "PR #1427: 2 unchecked `- [ ]` in body; title: fix(db): resolve document_access RLS text[] binding gap (BIT-24)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1428",
+      "type": "unchecked-todo",
+      "source": "pr-1428",
+      "score_delta": 3,
+      "evidence": "PR #1428: 3 unchecked `- [ ]` in body; title: fix(mobile-native): de-tautologize AuthGuard test, extract authGuardDecision",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1433",
+      "type": "unchecked-todo",
+      "source": "pr-1433",
+      "score_delta": 3,
+      "evidence": "PR #1433: 3 unchecked `- [ ]` in body; title: fix(api-server): uniform rls.release() on early-return paths in forms.rs + fix tautological re-presi",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1434",
+      "type": "unchecked-todo",
+      "source": "pr-1434",
+      "score_delta": 3,
+      "evidence": "PR #1434: 1 unchecked `- [ ]` in body; title: fix(api-server): use common::seed_membership in reserve_funds IDOR tests (#1373)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1441",
+      "type": "unchecked-todo",
+      "source": "pr-1441",
+      "score_delta": 2,
+      "evidence": "PR #1441: 3 unchecked `- [ ]` in body; title: feat(gh-1375): add pre-push cargo fmt + clippy gate",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1442",
+      "type": "unchecked-todo",
+      "source": "pr-1442",
+      "score_delta": 3,
+      "evidence": "PR #1442: 3 unchecked `- [ ]` in body; title: refactor(tests): replace duplicate seed_membership with canonical common:: import (GH #1373)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1443",
+      "type": "unchecked-todo",
+      "source": "pr-1443",
+      "score_delta": 2,
+      "evidence": "PR #1443: 2 unchecked `- [ ]` in body; title: test(reports): add cron validator drift guard (GH #1368)",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1460",
+      "type": "unchecked-todo",
+      "source": "pr-1460",
+      "score_delta": 3,
+      "evidence": "PR #1460: 3 unchecked `- [ ]` in body; title: fix(db): FORCE RLS on developer_oauth_apps/grants/api_key_usage_logs (BIT-76, #1303)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1465",
+      "type": "unchecked-todo",
+      "source": "pr-1465",
+      "score_delta": 3,
+      "evidence": "PR #1465: 5 unchecked `- [ ]` in body; title: fix(mobile-native): iOS stale-response guard, staging deep-link host, orphaned plist, xcconfig drift",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1468",
+      "type": "unchecked-todo",
+      "source": "pr-1468",
+      "score_delta": 3,
+      "evidence": "PR #1468: 6 unchecked `- [ ]` in body; title: fix(disputes): watch subscription + flush-on-unmount + i18n keys (GH #1364, #1404)",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1471",
+      "type": "unchecked-todo",
+      "source": "pr-1471",
+      "score_delta": 3,
+      "evidence": "PR #1471: 5 unchecked `- [ ]` in body; title: test(db): RLS-routing test coverage \u2014 ESG FORCE policy, webhook repo, public plans (BIT-74)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1476",
+      "type": "unchecked-todo",
+      "source": "pr-1476",
+      "score_delta": 3,
+      "evidence": "PR #1476: 3 unchecked `- [ ]` in body; title: chore(api-server): RLS dev-tooling + test-suite cleanup (GH #1340, #1341, #1366)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1477",
+      "type": "unchecked-todo",
+      "source": "pr-1477",
+      "score_delta": 3,
+      "evidence": "PR #1477: 3 unchecked `- [ ]` in body; title: test(mobile): App.tsx auth-gate wiring test (GH #1411)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1484",
+      "type": "unchecked-todo",
+      "source": "pr-1484",
+      "score_delta": 3,
+      "evidence": "PR #1484: 1 unchecked `- [ ]` in body; title: chore(db): fix tracker-id in registry_rules_enum_decode_tests (BIT-114, GH #1366)",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1485",
+      "type": "unchecked-todo",
+      "source": "pr-1485",
+      "score_delta": 3,
+      "evidence": "PR #1485: 2 unchecked `- [ ]` in body; title: fix(integrations): Booking.com client timeout + Retry-After + RateLimited (BIT-110, GH #1338)",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1492",
+      "type": "unchecked-todo",
+      "source": "pr-1492",
+      "score_delta": 3,
+      "evidence": "PR #1492: 5 unchecked `- [ ]` in body; title: fix(db): cast remaining rental enum readers \u2014 GUEST/CALENDAR_BLOCK/ICAL_FEED_COLUMNS (BIT-118)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1501",
+      "type": "unchecked-todo",
+      "source": "pr-1501",
+      "score_delta": 3,
+      "evidence": "PR #1501: 2 unchecked `- [ ]` in body; title: test(reality-server): handler-level IDOR regression for imports/feeds (GH #1300)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1507",
+      "type": "unchecked-todo",
+      "source": "pr-1507",
+      "score_delta": 3,
+      "evidence": "PR #1507: 5 unchecked `- [ ]` in body; title: fix(tests): restore user_memberships seed + fix platform principal for IDOR tests",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "pr-1606",
+      "score_delta": 3,
+      "evidence": "PR #1606: 1 unchecked `- [ ]` in body; title: feat(accounting): manager-only role gate for list_contacts (PAP-281)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1625",
+      "type": "unchecked-todo",
+      "source": "pr-1625",
+      "score_delta": 3,
+      "evidence": "PR #1625: 4 unchecked `- [ ]` in body; title: feat(voting): PDF generation + archive for vote reports (PAP-288, Story 5.6/5.8)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1641",
+      "type": "unchecked-todo",
+      "source": "pr-1641",
+      "score_delta": 2,
+      "evidence": "PR #1641: 5 unchecked `- [ ]` in body; title: feat(ppt-web): Sentiment & Predictive Maintenance dashboards (Epic 13, Story 13.2/13.3)",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1642",
+      "type": "unchecked-todo",
+      "source": "pr-1642",
+      "score_delta": 3,
+      "evidence": "PR #1642: 7 unchecked `- [ ]` in body; title: feat(epic-15): portal-user listing CRUD \u2014 owner/realtor edit (#986)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1685",
+      "type": "unchecked-todo",
+      "source": "pr-1685",
+      "score_delta": 3,
+      "evidence": "PR #1685: 4 unchecked `- [ ]` in body; title: feat(ppt-web): real-time IoT dashboard via BIT-145 WebSocket channel (Epic 14, FR72)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1703",
+      "type": "unchecked-todo",
+      "source": "pr-1703",
+      "score_delta": 3,
+      "evidence": "PR #1703: 4 unchecked `- [ ]` in body; title: feat(api-server): gap-sweep Epic 12 \u2014 meter reminders + OCR stub endpoints (closes #982)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1705",
+      "type": "unchecked-todo",
+      "source": "pr-1705",
+      "score_delta": 2,
+      "evidence": "PR #1705: 3 unchecked `- [ ]` in body; title: feat(faults): fire notifications on every fault lifecycle event (BIT-185)",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "pr-1709",
+      "score_delta": 2,
+      "evidence": "PR #1709: 5 unchecked `- [ ]` in body; title: feat(scheduler): payment reminders + auto-overdue transitions (Story 11.6 / BIT-176)",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "pr-1717",
+      "score_delta": 3,
+      "evidence": "PR #1717: 7 unchecked `- [ ]` in body; title: feat(financial): income statement, balance sheet, cash flow + PDF/xlsx export (Story 11.7)",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "pr-1723",
+      "score_delta": 3,
+      "evidence": "PR #1723: 2 unchecked `- [ ]` in body; title: fix(financial): rustfmt compliance for financial reports routes",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "pr-1768",
+      "score_delta": 3,
+      "evidence": "PR #1768: 3 unchecked `- [ ]` in body; title: fix(messaging): camelCase wire contract for thread/message/participant API (BIT-239)",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1844",
+      "type": "unchecked-todo",
+      "source": "pr-1844",
+      "score_delta": 3,
+      "evidence": "PR #1844: 2 unchecked `- [ ]` in body; title: docs(epic-6): reconcile 6-5 direct-messaging status to done",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 closed without merge: fix(ppt-web): add Leases nav link + home tile (#977) (author=martin-janci, closed=2026-06-23T16:17:38Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 closed without merge: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI) (author=martin-janci, closed=2026-06-23T06:14:41Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 closed without merge: fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS baseline (author=martin-janci, closed=2026-06-22T21:04:53Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 closed without merge: feat(epic-3): story 3.2 - unit management UI (BIT-188) (author=martin-janci, closed=2026-06-22T16:50:15Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1634",
+      "score_delta": 1,
+      "evidence": "PR #1634 closed without merge: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100 (author=martin-janci, closed=2026-06-22T13:48:09Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1647",
+      "score_delta": 1,
+      "evidence": "PR #1647 closed without merge: feat(iot): sensor register + edit + standalone list [BIT-147] (author=martin-janci, closed=2026-06-21T10:48:35Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1636",
+      "score_delta": 1,
+      "evidence": "PR #1636 closed without merge: fix(reality-server): reconcile portal import authz + dedup principal extractor (#1584 findings 1,4) (author=martin-janci, closed=2026-06-21T09:00:25Z)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-pr-1276",
+      "type": "dep-update-noise",
+      "source": "pr-1276",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump react-i18next from 16.6.6 to 17.0.8 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1277",
+      "type": "dep-update-noise",
+      "source": "pr-1277",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump expo-device from 55.0.16 to 56.0.4 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1278",
+      "type": "dep-update-noise",
+      "source": "pr-1278",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump expo from 55.0.25 to 56.0.11 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1279",
+      "type": "dep-update-noise",
+      "source": "pr-1279",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump expo-status-bar from 55.0.6 to 56.0.4 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1313",
+      "type": "dep-update-noise",
+      "source": "pr-1313",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump the cargo-minor-patch group across 1 directory with 10 updates",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "pr-1449",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump the npm-minor-patch group across 1 directory with 25 updates",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "pr-1566",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump androidx.compose:compose-bom from 2026.05.01 to 2026.06.00 in ",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "pr-1567",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "pr-1568",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "pr-1569",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-m",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "pr-1570",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump mikepenz/action-junit-report from 5 to 6",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "pr-1571",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump the npm-minor-patch group in /frontend with 6 updates",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "pr-1572",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump expo-secure-store from 55.0.14 to 56.0.4 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "pr-1573",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps-dev): bump @types/node from 20.19.40 to 25.9.3 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "pr-1574",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump the cargo-minor-patch group across 1 directory with 3 updates",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "pr-1575",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps-dev): bump @babel/core from 7.29.7 to 8.0.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "pr-1576",
+      "score_delta": 0,
+      "evidence": "dependency update: chore(deps): bump i18next from 25.10.10 to 26.3.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "deps"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 touched reality-web app routes (['frontend/apps/reality-web/src/app/accounting/layout.tsx']) without updating docs/screens/reality/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 touched ppt-web routes (['frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx', 'frontend/apps/ppt-web/src/routes/groups/faults.tsx']) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched ppt-web routes (['frontend/apps/ppt-web/src/routes/groups/accounting.tsx', 'frontend/apps/ppt-web/src/routes/lazyRoutes.tsx']) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched reality-web app routes (['frontend/apps/reality-web/src/app/accounting/layout.tsx', 'frontend/apps/reality-web/src/app/accounting/page.tsx']) without updating docs/screens/reality/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1713-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1713",
+      "score_delta": 2,
+      "evidence": "PR #1713 touched ppt-web routes (['frontend/apps/ppt-web/src/App.tsx', 'frontend/apps/ppt-web/src/routes/AppRoutes.tsx', 'frontend/apps/ppt-web/src/routes/groups/delegations.tsx']) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1733",
+      "score_delta": 2,
+      "evidence": "PR #1733 touched ppt-web routes (['frontend/apps/ppt-web/src/routes/groups/financial.tsx']) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 touched ppt-web routes (['frontend/apps/ppt-web/src/routes/groups/iot.tsx']) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1746",
+      "score_delta": 2,
+      "evidence": "PR #1746 touched reality-web app routes (['frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/_mock.ts', 'frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx']) without updating docs/screens/reality/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1822",
+      "score_delta": 2,
+      "evidence": "PR #1822 touched reality-web app routes (['frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx']) without updating docs/screens/reality/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-api-handlers-emergency-mutations-no-role-gate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "severity": "high",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/emergency/protocols.rs:28 \u2014 create_protocol has no is_emergency_manager check; only RLS-validated org membership required, so any tenant member can author emergency protocols",
+        "backend/servers/api-server/src/routes/emergency/protocols.rs:107 \u2014 update_protocol allows any org member to overwrite a protocol",
+        "backend/servers/api-server/src/routes/emergency/protocols.rs:137 \u2014 delete_protocol allows any org member to wipe a protocol",
+        "backend/servers/api-server/src/routes/emergency/contacts.rs:28 \u2014 create_contact / update_contact / delete_contact similarly skip the manager gate",
+        "backend/servers/api-server/src/routes/emergency/drills.rs:35 \u2014 create_drill / update_drill / delete_drill skip the manager gate; broadcasts.rs:40 and incidents.rs:49 show the intended pattern via is_emergency_manager(rls.role())"
+      ],
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/emergency/protocols.rs",
+        "backend/servers/api-server/src/routes/emergency/contacts.rs",
+        "backend/servers/api-server/src/routes/emergency/drills.rs",
+        "backend/servers/api-server/src/routes/emergency/shared.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-ets-screening-results-no-role-gate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "severity": "high",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs:44 \u2014 create_credit_result accepts CreateScreeningCreditResult from any authenticated org member with no role check; caller can inject arbitrary credit-bureau-like records for any screening_id in their org",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs:87 \u2014 create_background_result has same gap (criminal/background data forge surface)",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs:130 \u2014 create_eviction_result has same gap",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/models.rs:39 \u2014 create_risk_model and activate_risk_model (line 98) gate risk-scoring on RLS only; any org member can flip the active model that drives tenant approve/deny decisions"
+      ],
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/models.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/providers.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-ets-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "severity": "high",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/models.rs:34,54,74,93,112 \u2014 all error branches collapse to (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(), leaking raw sqlx error text (table/column/constraint names) to clients and masking 404/400/conflict as 500",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs:39,58,82,101,125,144 \u2014 same pattern across 6 handlers",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/results.rs:46,66,92,96,117,210,224 \u2014 same pattern; line 92/210 hits even after a successful AI score compute, so any DB hiccup in create_ai_result returns 500 with raw sqlx text",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/{providers.rs,queue.rs,reporting.rs} \u2014 module-wide pattern (~27 handler arms total)"
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/models.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/screening_results.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/results.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/providers.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/queue.rs",
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening/reporting.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-26.md && head -1 matches '# 2026-06-26'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq comparing staged state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit with score_delta>0 == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "0 over-cap; 26 decayed by 1",
+      "expected": "0 over-cap"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated in brief with adversarial pass",
+      "observed": "2/2 annotated (passed + fixed-in-place)",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans with all 15 sections + capability + mode + file-existence",
+      "observed": "2 plans, all checks PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converge",
+      "observed": "all prior plans in plans/ or _archive",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 -> 13",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor",
+      "observed": "all PASS, pm_cursor.next_index=6, coverage_cursor.next_index=0",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
