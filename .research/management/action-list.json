@@ -575,6 +575,106 @@
         "subject": "10b-7-contextual-help-documentation: reconcile sprint-status to done (#1831)",
         "at": "2026-06-25T10:08:08Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-reconcile-sprint-status-yaml-epic-6-stories-6-1-6-5-to-done",
+      "action": "Reconcile sprint-status.yaml Epic 6 stories 6-1..6-5 to done",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-close-or-defer-test-hardening-gate-issues-480-481-484-bl",
+      "action": "Close or defer test-hardening gate issues #480/#481/#484 (block 10a + 8a stories)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-shepherd-pr-1846-80-3-mediation-wire-to-merge-and-promote",
+      "action": "Shepherd PR #1846 (80-3 mediation wire) to merge and promote story to done",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-merge-pr-1797-ocr-auth-lib-rs-256-mounts-api-v1-ai-ocr",
+      "action": "Merge PR #1797 (OCR auth) — lib.rs:256 mounts /api/v1/ai/ocr/* without auth extractor",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-merge-pr-1799-add-file-key-prefix-validation-in-link-mess",
+      "action": "Merge PR #1799 + add file_key prefix validation in link_message_attachment (messaging.rs ~1530) so file_key must begin with messages/{thread_id}/",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-close-issue-481-oauth-refresh-token-revocation-verify-se",
+      "action": "Close issue #481 (OAuth refresh-token revocation): verify session.rs:55 fix is comprehensive across all token lookup paths and close to unblock 10a-1/10a-3",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-investigate-482-protectedroute-tenants-0-role-fallback",
+      "action": "Investigate #482 (ProtectedRoute tenants[0] role fallback): add multi-tenant unit test and close",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-merge-pr-1823-rental-guest-id-pii-hardening-drop-file-k",
+      "action": "Merge PR #1823 (rental guest ID PII hardening): drop %file_key from tracing::error structured field (rentals.rs:1184)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-close-issue-480-end-to-end-ws-expiry-disconnect-integratio",
+      "action": "Close issue #480 end-to-end (WS expiry disconnect integration test) to unblock 8a-3",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
     }
-  ]
+  ],
+  "generated": "2026-06-26T06:30:00Z"
 }

@@ -1,62 +1,43 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-26
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Last run: 2026-06-26T06:30:00Z (previous run 2026-05-27)_
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+7/8 test-hardening issues from thb-2026-05-25 still open and gating Epic 10A OAuth stories; 4 security-critical PRs (#1797 OCR auth, #1799 messaging file_key confused-deputy, #1806 booking_channel manager gate, #1823 rental ID PII) still unmerged as of 2026-06-26.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Merge PR #1797 (OCR auth) — lib.rs:256 mounts /api/v1/ai/ocr/* without auth extractor — owner: `pm-backend`
+- **[high]** Merge PR #1799 + add file_key prefix validation in link_message_attachment (messaging.rs ~1530) so file_key must begin with messages/{thread_id}/ — owner: `pm-backend`
+- **[high]** Close issue #481 (OAuth refresh-token revocation): verify session.rs:55 fix is comprehensive across all token lookup paths and close to unblock 10a-1/10a-3 — owner: `pm-backend`
+- **[medium]** Investigate #482 (ProtectedRoute tenants[0] role fallback): add multi-tenant unit test and close — owner: `pm-frontend`
+- **[medium]** Merge PR #1823 (rental guest ID PII hardening): drop %file_key from tracing::error structured field (rentals.rs:1184) — owner: `pm-backend`
+- **[medium]** Close issue #480 end-to-end (WS expiry disconnect integration test) to unblock 8a-3 — owner: `pm-backend`
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **high/high** — Unauthenticated OCR endpoints (POST /api/v1/ai/ocr/meter-reading + /correction): both handlers lack auth extractor; multipart parser runs without JWT; any future payload processing behind the door is immediately exploitable
+  - Mitigation: Block PR #1797 close until both handlers have auth + CI test asserts 401 on unauth path
+- **medium/high** — Messaging confused-deputy: link_message_attachment does not validate file_key starts with messages/{thread_id}/; participant in two threads can link thread-A storage into thread-B
+  - Mitigation: Server-side prefix check in link_message_attachment; cross-thread confusion test
+- **high/high** — Epic 10A OAuth fully blocked by 3 open hardening issues (#481 revocation, #482 ProtectedRoute, #487 MFA rate-limit) — any new OAuth provider work lands without verified gates
+  - Mitigation: Triage each blocking issue (close-with-evidence or formal defer) before epic-10A implementation kicks off
+- **medium/medium** — Guest ID-document PII leak via structured logs: rentals.rs:1184 emits %file_key (id-documents/<org>/<file>) in tracing::error fields shipped to SIEM/3rd-party log sinks
+  - Mitigation: Replace %file_key with truncated/hashed token; grep all id-document tracing macros
+- **low/medium** — Delegation backend remains active after #1713 frontend revert: routes/delegations.rs fully mounted and accepts create/accept/revoke/check — backend may be in inconsistent state still reachable by direct API
+  - Mitigation: Confirm BIT-213 retirement scope: if backend kept active intentionally, document allowed caller set + verify RLS isolation tests
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Has PR #1806 (DB-backed manager gate replacing JWT role claim) merged? Which endpoints still trust the JWT role claim?
+- Is the original #481 bug in a different query path beyond session.rs (token-info / OAuth introspection)?
+- Have PRs #1824 (Stripe) + #1825 (Booking.com) merged? Do idempotency keys prevent duplicate charges on network retry?
+- Issue #483 voice device IDOR: is the list-commands endpoint accessible to non-managers; is the IDOR test added?
+- PR #1713 BIT-213 reconciliation rationale: data-model conflict, premature exposure, or frontend security gap — and does it require any backend retirement?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Gate epic-10A OAuth start on closure of #481 + #487, or formally defer with risk-acceptance? (owner: pm-delivery + rust-backend)
+- Retire OCR endpoints entirely until real OCR backend wired, or just auth-gate them? (owner: pm-delivery)
+- Delegation backend (delegations.rs) — feature-flag-gate or retire in line with BIT-213 frontend retirement, or intentionally keep as headless API? (owner: pm-delivery + rust-backend)

@@ -1,42 +1,33 @@
-# Role: pm-scrum-master — 2026-05-29
+# pm-scrum-master — 2026-06-26
 
-> Delivery lead / coordinator. Always runs. Static read-only.
+_Last run: 2026-06-26T06:30:00Z_
 
 ## Summary
 
-This window (#717–#730 plus late-arriving #597/#657/#659/#685/#695/#706) delivered 4 app-gap PRs and confirmed the reports IDOR PR (#662) awaiting review; the bulk of activity was research/dispatcher infra. Coverage now reads 27 done / 22 partial / 0 not-started (49 stories), with `sprint-status.yaml` stale on 10b-3/10b-4/10b-6 (all delivered) and several test-hardening issues (#480–#487) still open and blocking story promotions.
+The 10-day window (2026-06-16 to 2026-06-26) saw 270 merged PRs across messaging (Epic 6 group threads, participant lists — #1768/#1844/#1848/#1853), accounting MVP (#1717/#1804/#1807/#1811), saved-search alerts (Epic 16 — #1847/#1849), disputes (Epic 80 — #1845/#1846), and booking-channel hardening (#1806/#1824/#1825); coverage backlog exhausted (0/72 claimable), 12 partial stories now in-flight or shipped, but sprint-status.yaml labels lag — five Epic 6 stories verified done on dev still carry stale labels, and three test-hardening-batch gate issues (#480/#481/#484) remain open.
 
 ## Sprint progress
+- Sprint: Epic 6, 7A, 8A, 10A — Announcements, Documents, Notifications, OAuth (extended to include Epics 11/16/80/84 in-flight)
+- Epics done: 2 / 6
 
-- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth.
-- Epics done: 2 / 6 active (epic-8a, epic-9 fully done; epic-10b complete in coverage).
+## Shipped
 
-## Shipped since last run
+- Epic 6 — group thread messaging (PRs #1768/#1844/#1848/#1853)
+- Epic 11 — accounting MVP financial-reports + scheduler + state-machine (#1717/#1804/#1807/#1811)
+- Epic 16 — saved-search alert cadence + transport drainer (#1847/#1849)
+- Epic 80 — dispute state reconciliation + party submissions (#1845/#1846 in review)
+- Booking-channel hardening — DB-backed manager gate + Stripe multi-currency + Booking.com currency validation (#1806/#1824/#1825)
 
-- #718 fix(ios): gesture-mask + sheet-env (LocationManager) + SSO CSRF tests — closes #618/#625/#578
-- #719 gap-84-2 e-signature UI: manager/landlord signerParties + cs/de i18n — resolves all 6 PR#513 follow-ups
-- #720 gap-10b-3 admin Platform Health UI: MFA-interception test coverage
-- #724 gap-10a-4 OAuth scope picker (admin-web) + scope-grant audit trail
-- Late-merges below the prior cursor: #695 gap-10b-6 onboarding SQLx, #706 gap-10b-4 system-announcements CRUD+tests, #685 gap-81-1 CronPicker isNaN→Number.isNaN, #597 gap-8a-3 WebSocket sync confirmed, #657 JWT/RUST_ENV test-guard consolidation (#629), #659 reality-mobile screen agent-logs (#581)
+## Next actions (top 3)
 
-## Next actions
-
-1. [high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647) — owner: pm-security.
-2. [high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test) — owner: pm-security.
-3. [high] Promote draft #723 (gap-9-2 MFA recovery codes backend) to review/merge — owner: pm-backend.
-4. [medium] Sync sprint-status.yaml: 10b-3/10b-4/10b-6 done, 8a-3 WS done; epic-10b → done — owner: pm-scrum-master.
-5. [medium] Triage gap-82 drafts #639/#641/#705 to non-draft review — owner: pm-frontend (mobile-lag owner).
+- **[high]** Reconcile sprint-status.yaml Epic 6 stories 6-1..6-5 to done — owner: `pm-backend`
+- **[high]** Close or defer test-hardening gate issues #480/#481/#484 (block 10a + 8a stories) — owner: `pm-security`
+- **[high]** Shepherd PR #1846 (80-3 mediation wire) to merge and promote story to done — owner: `pm-frontend`
 
 ## Blockers
 
-- **Epic 81 — Reports promotion:** cron_expression column missing (#616); 81-1/81-2 partial. (RBAC #614 + tenant-scope #624 closed by #643.)
-- **Test-hardening batch #480–#487:** open; gates 8a-3/10a-1/10a-3/7a-5/6-2/6-5 from done.
-- **80-2 dispute-filing-flow (partial):** EvidenceUploader.tsx + useDraftStorage.ts missing; no owner assigned.
-
-## Open questions
-
-- Are Epic 81 backend pause/resume/executions-download routes implemented or still missing?
-- Disposition of dependabot sqlx 0.8→0.9 (#665/#666) — compatibility pass needed before merge?
-- Is #723 (MFA recovery backend) reviewed yet or purely draft?
-- Is the 80-2 EvidenceUploader gap owned by anyone?
-- Do the 5 newly-closed follow-ups (#578/#581/#618/#625/#629) unblock any sprint-status gates?
+- 10a-1/10a-3 blocked by gate #481 (OAuth refresh-token revocation bypass)
+- 8a-2/8a-3 blocked by gates #480 (WS JWT in logs) + #484 (FCM serial swallow)
+- 84-5 pgvector-rag PR #1833 quarantined (broken v_rag_statistics view)
+- 80-2 dispute filing AC-4 (useDraftStorage.ts) not implemented
+- 7a-2 folder-organization stuck in CI red

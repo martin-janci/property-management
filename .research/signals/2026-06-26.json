@@ -1,0 +1,545 @@
+{
+  "date": "2026-06-26",
+  "generated": "2026-06-26T06:30:00Z",
+  "signals": [
+    {
+      "id": "revert-pr-1713",
+      "type": "revert-pr",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "Revert PR: revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213) (orig #1690)",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "routes/delegations.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1844",
+      "type": "unchecked-todo",
+      "source": "PR #1844",
+      "score_delta": 2,
+      "evidence": "merged PR body has '- [ ]' unchecked items: docs(epic-6): reconcile 6-5 direct-messaging status to done",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "_bmad-output/implementation-artifacts/sprint-status.yaml",
+        "backend/crates/db/src/repositories/messaging.rs",
+        "backend/crates/db/tests/messaging_rls_cross_tenant_tests.rs",
+        "backend/servers/api-server/src/routes/messaging.rs",
+        "docs/screens/ppt/message-thread.md",
+        "docs/screens/ppt/messages.md"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1768",
+      "type": "unchecked-todo",
+      "source": "PR #1768",
+      "score_delta": 2,
+      "evidence": "merged PR body has '- [ ]' unchecked items: fix(messaging): camelCase wire contract for thread/message/participant API (BIT-239)",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "crates/db/src/models/messaging.rs",
+        "routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "merged PR body has '- [ ]' unchecked items: fix(financial): rustfmt compliance for financial reports routes",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "PR #1717",
+      "score_delta": 3,
+      "evidence": "merged PR body has '- [ ]' unchecked items (security-adjacent context): feat(financial): income statement, balance sheet, cash flow + PDF/xlsx export (Story 11.7)",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/Cargo.toml",
+        "backend/crates/db/src/models/financial.rs",
+        "backend/crates/db/src/repositories/financial.rs",
+        "backend/servers/api-server/Cargo.toml",
+        "backend/servers/api-server/src/routes/financial.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "evidence": "merged PR body has '- [ ]' unchecked items: feat(scheduler): payment reminders + auto-overdue transitions (Story 11.6 / BIT-176)",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": [
+        "apps/mobile/tsconfig.json",
+        "frontend/apps/mobile/tsconfig.json"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": [
+        "db/src/repositories/notification_event.rs",
+        "servers/api-server/src/routes/organizations/mod.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(ppt-web): add Leases nav link + home tile (#977)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": [
+        "routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "closed without merge: feat(epic-3): story 3.2 - unit management UI (BIT-188)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": [
+        "routes/buildings.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "closed without merge: feat(iot): sensor register + edit + standalone list [BIT-147]",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(reality-server): reconcile portal import authz + dedup principal extractor (#1584 findings 1,4)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": "closed without merge: [PM #1627] saved-search alerts list: signal truncation past LIMIT 100",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting routes)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged",
+      "source": "PR #1506",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): pass role to seed_membership in booking-oauth non-manager test (unblocks backend check)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged",
+      "source": "PR #1505",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): cast rental enum columns to text across rental.rs queries (PAP-158)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump i18next from 25.10.10 to 26.3.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps-dev): bump @babel/core from 7.29.7 to 8.0.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump the cargo-minor-patch group across 1 directory with 3 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps-dev): bump @types/node from 20.19.40 to 25.9.3 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump expo-secure-store from 55.0.14 to 56.0.4 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump the npm-minor-patch group in /frontend with 6 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump mikepenz/action-junit-report from 5 to 6",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-minor-patch group",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump androidx.compose:compose-bom from 2026.05.01 to 2026.06.00 in /mobile-native in the compose group",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR #1449",
+      "score_delta": 0,
+      "evidence": "dependency-update PR (author=dependabot[bot]): chore(deps): bump the npm-minor-patch group across 1 directory with 25 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-_bmad-output-implementation-artifacts-sprint-status-yaml",
+      "type": "churn-hotspot",
+      "source": "file:_bmad-output/implementation-artifacts/sprint-status.yaml",
+      "score_delta": 1,
+      "evidence": "top-3 PR-body-mentioned file (list API lacks per-file diff stats): 6 mentions across 6 merged PRs",
+      "confidence": "low",
+      "candidate_vector": "refactor",
+      "files": [
+        "_bmad-output/implementation-artifacts/sprint-status.yaml"
+      ]
+    },
+    {
+      "id": "churn-hotspot--research-plans--md",
+      "type": "churn-hotspot",
+      "source": "file:.research/plans/.md",
+      "score_delta": 1,
+      "evidence": "top-3 PR-body-mentioned file (list API lacks per-file diff stats): 5 mentions across 5 merged PRs",
+      "confidence": "low",
+      "candidate_vector": "refactor",
+      "files": [
+        ".research/plans/.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs-screens-ppt-announcements-md",
+      "type": "churn-hotspot",
+      "source": "file:docs/screens/ppt/announcements.md",
+      "score_delta": 1,
+      "evidence": "top-3 PR-body-mentioned file (list API lacks per-file diff stats): 4 mentions across 4 merged PRs",
+      "confidence": "low",
+      "candidate_vector": "refactor",
+      "files": [
+        "docs/screens/ppt/announcements.md"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutations-no-error-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:258 — createConnection useMutation no onError",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:272 — syncPlatforms useMutation no onError",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:373 — checkIn useMutation no onError",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:385 — checkOut useMutation no onError"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:399 — hardcoded 'Booking not found' string, no useTranslation"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-auth-hook-misuse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:169-174 — useRentalsAuth() not reactive to AuthContext token refresh",
+        "lines 190/201 — `enabled: !!auth` permanently disables queries on initial unauthenticated mount until manual remount"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag-warning",
+      "source": "internal",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-06-16T03:25:00Z is 10d old — cloud routine likely paused or trigger missed",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-06-26",
+      "type": "stale-routine-alert",
+      "source": "internal",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 10d old; cloud routine cron may be broken; dispatcher state on planning branch should be checked separately",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD: any cursor advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq new signals vs prior seen_signals, non-cumulative w/ score_delta==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8 and no score<0; decay applied per >14d open items",
+      "observed": "cap-true, decay applied to 23 open items (11 decayed, 12 dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated with adversarial pass in brief",
+      "observed": "0 new plans this run — vacuously passes",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached new plans count, all 15 sections+meta+capability+mode+files-exist",
+      "observed": "0 new plans this run",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames in staged diff (with carve-outs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases + cursors not advanced for failed",
+      "observed": "no phases failed; all cursors advanced",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or _archive/",
+      "observed": "9/9 prior plans present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows",
+      "observed": "now=7 head=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions size limits",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "<=3 total, <=1 pr/issue/comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor 0..7 + coverage_cursor advanced",
+      "observed": "action-list+risks parse OK, pm_cursor=6, cc 12->0 (epic-9 -> epic-10a)",
+      "expected": "all conditions"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram bot-token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlisted candidate met confidence=high + score>=3 this run"
+}

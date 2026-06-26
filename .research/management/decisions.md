@@ -85,3 +85,9 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## Pending — surfaced by pm-security 2026-06-26
+
+- [open · 2026-06-26] Gate epic-10A OAuth start on closure of #481 + #487, or formally defer with risk-acceptance? (owner: pm-delivery + rust-backend)
+- [open · 2026-06-26] Retire OCR endpoints entirely until real OCR backend wired, or just auth-gate them? (owner: pm-delivery)
+- [open · 2026-06-26] Delegation backend (delegations.rs) — feature-flag-gate or retire in line with BIT-213 frontend retirement, or intentionally keep as headless API? (owner: pm-delivery + rust-backend)

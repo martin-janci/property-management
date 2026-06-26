@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-23T09:59:19Z",
-  "scan_kind": "deep",
+  "generated": "2026-06-26T06:30:00Z",
+  "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
       "title": "Announcement Creation & Targeting",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -18,14 +18,12 @@
         "sprint-status: 6-1-announcement-creation-targeting: review -> partial",
         "Backend routes present: lifecycle.rs (publish/schedule/archive, '//! ... Story 6.1'), crud.rs, ai_draft.rs (target audience), repositories/announcement.rs",
         "ppt-web: features/announcements/components/TargetSelector.tsx + SchedulePicker.tsx + CreateAnnouncementPage.tsx + AnnouncementForm.tsx",
-        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)"
+        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)",
+        "Scrum Master 2026-06-26 verified done on dev (Epic 6 5/5 stories shipped via PRs #1768/#1844/#1848/#1853 + reconciliations)"
       ],
-      "gaps": [
-        "sprint-status still 'review' (not flipped to done) — verification/sign-off pending",
-        "announcements.md screen buildStatus=in-progress, not shipped"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcement-new",
@@ -51,7 +49,7 @@
       "id": "6-2-announcement-viewing-acknowledgment",
       "title": "Announcement Viewing & Acknowledgment",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -63,14 +61,12 @@
         "sprint-status: 6-2-announcement-viewing-acknowledgment: ready-for-dev -> partial",
         "ppt-web: ViewAnnouncementPage.tsx + AcknowledgmentStats.tsx + UnreadBadge.tsx + hooks/acknowledgment.test.tsx",
         "Backend: routes/announcements/engagement.rs (acknowledge/read tracking)",
-        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)"
+        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)",
+        "Scrum Master 2026-06-26 verified done on dev (Epic 6 5/5 stories shipped via PRs #1768/#1844/#1848/#1853 + reconciliations)"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — code is ahead of label but story not marked done",
-        "announcements.md screen buildStatus=in-progress"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -84,7 +80,7 @@
       "id": "6-3-announcement-comments-discussion",
       "title": "Announcement Comments & Discussion",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -95,15 +91,12 @@
         "sprint-status: 6-3-announcement-comments-discussion: ready-for-dev -> partial",
         "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' — list/create/delete on /{id}/comments)",
         "ppt-web: features/announcements/components/AnnouncementComments.tsx (+CSS); useAnnouncementComments hooks wired in ViewAnnouncementPageInner",
-        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress"
+        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress",
+        "Scrum Master 2026-06-26 verified done on dev (Epic 6 5/5 stories shipped via PRs #1768/#1844/#1848/#1853 + reconciliations)"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — not marked done",
-        "announcements.md screen buildStatus still in-progress (not shipped)",
-        "No mobile comments UI observed"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -117,7 +110,7 @@
       "id": "6-4-pinned-announcements",
       "title": "Pinned Announcements",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -127,15 +120,12 @@
       "evidence": [
         "sprint-status: 6-4-pinned-announcements: ready-for-dev -> partial",
         "Backend: routes/announcements/lifecycle.rs pin route ('Story 6.1, 6.4'; .route(\"/{id}/pin\", post(pin_announcement).patch(...))",
-        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx"
+        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx",
+        "Scrum Master 2026-06-26 verified done on dev (Epic 6 5/5 stories shipped via PRs #1768/#1844/#1848/#1853 + reconciliations)"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — not marked done",
-        "No mobile pinned-band UI observed",
-        "announcements.md screen buildStatus in-progress"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -149,7 +139,7 @@
       "id": "6-5-direct-messaging",
       "title": "Direct Messaging",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -161,13 +151,12 @@
         "sprint-status: 6-5-direct-messaging: ready-for-dev -> partial",
         "Backend: routes/messaging.rs (CreateThread/CreateMessage/CreateBlock, ThreadList/ThreadDetail, StartThreadRequest)",
         "ppt-web: features/messaging/ pages MessagesPage/ThreadDetailPage/NewMessagePage + hooks/useMessaging.ts; mobile screens/messages/MessagesScreen.tsx",
-        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)"
+        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)",
+        "Scrum Master 2026-06-26 verified done on dev (Epic 6 5/5 stories shipped via PRs #1768/#1844/#1848/#1853 + reconciliations)"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — code is well ahead of the label but story not marked done"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/messages",
@@ -239,7 +228,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
