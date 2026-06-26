@@ -475,10 +475,10 @@ pub use reality_portal::{
     PortalFavoriteWithListing, PortalImportJob, PortalImportJobWithStats, PortalSavedSearch,
     PriceChangeAlert, PublicRealtorProfile, RealityAgency, RealityAgencyInvitation,
     RealityAgencyMember, RealityFeedSubscription, RealtorListing, RealtorProfile, SavedSearchAlert,
-    ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage, UpdateAgencyBranding,
-    UpdateCrmConnection, UpdateFeedSubscription, UpdateImportJob as UpdatePortalImportJob,
-    UpdatePortalFavorite, UpdatePortalSavedSearch, UpdateRealityAgency, UpdateRealtorProfile,
-    UpdateViewing, ViewingSchedule,
+    ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage, UndeliveredSearchAlert,
+    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
+    UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
+    UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
 };
 
 // Epic 37: Community & Social Features

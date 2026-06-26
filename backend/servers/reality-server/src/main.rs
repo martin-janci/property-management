@@ -434,6 +434,17 @@ async fn main() -> anyhow::Result<()> {
     );
     let _alert_worker_handle = alert_worker.start();
 
+    // BIT-139 / Epic 16: drain enqueued alerts to the email + push transports.
+    // Reads the same `search_alert_queue`, fans out to each owner's
+    // `device_push_tokens`, and marks delivery via `notified_at` (independent of
+    // the in-app read `status`). Transports are logging stubs until a real
+    // email/push service is wired; disabled-safe via SEARCH_ALERT_DRAINER_* env.
+    let drainer_worker = services::SearchAlertDrainerWorker::new(
+        db.clone(),
+        services::SearchAlertDrainerConfig::from_env(),
+    );
+    let _drainer_worker_handle = drainer_worker.start();
+
     let favorite_alert_worker =
         services::FavoriteAlertWorker::new(db.clone(), services::FavoriteAlertConfig::from_env());
     let _favorite_alert_worker_handle = favorite_alert_worker.start();
