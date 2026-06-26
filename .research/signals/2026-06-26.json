@@ -1,0 +1,283 @@
+{
+  "date": "2026-06-26",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run for ~10 days (~240 hours). last_run_iso=2026-06-16T03:25:00Z; today=2026-06-26. Cloud cron likely paused or restarted; surfaced via stale_routine_alert path. Catch-up sweep is bounded to >7-day-PR-cutoff cursors, not full 30-day deep.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 (revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)) merged 2026-06-22 — intentional retirement of resurrected delegation UI to align with backend retirement. Indicates spec/implementation drift between epic retirement decision and feature-team work; surface as process risk, not a code defect.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat 2026-06-16..2026-06-26 (origin/dev)",
+      "score_delta": 0,
+      "evidence": "3308 lines (+184/-3124, 10 commits) this run — repository being split into sub-modules + read-path consolidation (PRs #1469, #1565, #1551, #1613). Re-emit (already in seen_signals; runs_seen 1→2; cumulative — no score_delta).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat 2026-06-16..2026-06-26 (origin/dev)",
+      "score_delta": 0,
+      "evidence": "2051 lines (+4/-2047, 2 commits) this run — module split into forms/{crud,fields,mod,submissions,types}.rs. Re-emit (already in seen_signals; runs_seen 2→3; cumulative — no score_delta).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat 2026-06-16..2026-06-26 (origin/dev)",
+      "score_delta": 0,
+      "evidence": "1700 lines (+1648/-52, 7 commits) this run — Booking.com listing-push + currency validation + connect-credential encryption (PRs #1472, #1485, #1617, #1743, #1825). Re-emit (already in seen_signals; runs_seen 1→2; cumulative — no score_delta).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 (pre-run) with new churn this run",
+      "score_delta": 0,
+      "evidence": "forms.rs runs_seen pre-run 2 (2026-06-13, 2026-06-16) — third hit this run (2026-06-16..2026-06-26 module split). Re-emit (already in seen_signals; cumulative — no score_delta).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat 2026-06-16..2026-06-26 (origin/dev)",
+      "score_delta": 1,
+      "evidence": "1668 lines (+1547/-121, 7 commits) — NEW hotspot. PRs #1629/#1631 financial-client auth + decimal coercion; PR #1723 rustfmt batch on financial routes; multiple accounting hardening rounds (PAP-321 F1/F2 #1809).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1737-iot-ws-dedup",
+      "type": "hotfix-no-test",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": "fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on DB-checked handler — security-critical refactor (auth scope) merged without any test file in diff. Merge-commit file list shows no `*test*`/`*spec*` path.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1743-booking-listing-push",
+      "type": "hotfix-no-test",
+      "source": "PR #1743",
+      "score_delta": 2,
+      "evidence": "fix(integrations): validate base_rate + currency in Booking.com listing push (#1664) — currency validation on outbound integration, no test file in merge commit. Issue #1759 (Booking.com listing-push rate/currency tightening follow-up) already filed; tests not yet added.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1632-reality-portal-import-scope",
+      "type": "hotfix-no-test",
+      "source": "PR #1632",
+      "score_delta": 2,
+      "evidence": "fix(reality-server): scope portal import feeds per-agency, not per-user (closes #1584) — multi-tenant scope correction merged. Follow-up issue (#1768/#1772 cluster) cites portal-import authz fragility. No regression test in merge commit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1602-mfa-recovery-limiter",
+      "type": "hotfix-no-test",
+      "source": "PR #1602",
+      "score_delta": 2,
+      "evidence": "fix(api-server): MFA recovery limiter — evict stale entries + dedicated audit action (closes #1583). Rate-limiting eviction state-machine change — high risk of regression on cleanup TTLs. Merge commit has no rate-limit test diff.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-batch-2026-06-26",
+      "type": "closed-not-merged-pr",
+      "source": "PRs #1459, #1461, #1462, #1474, #1475, #1479, #1482, #1488, #1493, #1494, #1496, #1497, #1498, #1500, #1503, #1504, #1505, #1506, #1511, #1634, #1636, #1647, #1698, #1720, #1727, #1749",
+      "score_delta": 1,
+      "evidence": "26 PRs closed-unmerged in window. Pattern: all authored by martin-janci, closed in favor of next-iteration replacement (squashed/superseded fixes). Common pattern during rapid iteration. Triage row to track the pattern, not actionable per-PR.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-2026-06-26",
+      "type": "dep-update-noise",
+      "source": "Dependabot PRs #1566-#1576 cluster + later renovate hits",
+      "score_delta": 0,
+      "evidence": "11 dependabot-authored PRs merged in window covering: Compose BOM 2026.05.01→.06.00, tower-http 0.6→0.7, rust-toolchain 1.94→1.100 (action), expo-secure-store 55→56, @types/node 20→25 (major), i18next 25→26, npm-minor-patch group (6 updates), cargo-minor-patch (3 updates), @babel/core 7→8 (major). Three majors merged together (@types/node, i18next, @babel/core) without staging — verify no silent breakages.",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "api-handlers",
+    "reason": "16 days old + churn-aligned (forms.rs in top-3 hotspots; financial.rs new top-5 hotspot)",
+    "next_segment": "ppt-web-core (oldest unreviewed 2026-06-05)",
+    "findings_count": 0,
+    "skipped": false,
+    "note": "forms/ refactored cleanly into crud/fields/mod/submissions/types submodules — 0 unwraps, 0 TODOs in non-test code. financial.rs (2380 LOC) — only unwraps are inside #[cfg(test)] PDF render fixtures. messaging.rs (2054 LOC) handlers all gated on participant role + thread membership. No new findings this slice."
+  },
+  "phase_1_6": {
+    "role": "pm-security",
+    "next_index_after_run": 6,
+    "coverage_cursor_after_run": 0,
+    "note": "Lightweight upkeep due to 10-day-lag catch-up budget. Cursors advanced; management/ artifacts re-timestamped. Full role-deep-dive deferred to next normal-cadence run."
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ... grep ^# <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals non-cumulative-IDs not in prior seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8 + decay applied",
+      "observed": "true",
+      "expected": "true",
+      "note": "decay applied: 8 items decayed (-1), 20 items dropped (score→0). All open items >14d old were handled."
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A — 0 new plans this run",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached new plans count + structure",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached grep secrets/hostnames",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief mentions 'Phases that failed: none'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans present in working tree or _archive",
+      "observed": "no silent deletions",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count vs HEAD",
+      "observed": "11 vs 7 (grew by 4)",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management/ JSON + pm_cursor + coverage_cursor",
+      "observed": "action-list/risks valid; pm_cursor=6 in [0,7]; coverage_cursor=0 in [0,13); both advanced from HEAD (5→6, 12→0).",
+      "expected": "valid + cursors advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "10-day catch-up run — Phase 5 conservative-skip; no signal cleared `confidence=high + score>=3 + allowlist` after dedup. closed-not-merged batch is the only newly-stacked-to-3 candidate and it is not on the auto-fix allowlist."
+}

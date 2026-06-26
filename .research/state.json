@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-06-26T14:30:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_pr_seen": 1853,
+  "last_issue_seen": 1852,
+  "last_commit_sha": "d973e804",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -238,9 +238,9 @@
       "recent_churn": 709
     },
     "backend/crates/db/src/repositories/document.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-10",
-      "recent_churn": 2940
+      "runs_seen": 2,
+      "last_seen": "2026-06-26",
+      "recent_churn": 3308
     },
     "backend/crates/db/src/repositories/subscription.rs": {
       "runs_seen": 1,
@@ -253,9 +253,9 @@
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 433
+      "runs_seen": 2,
+      "last_seen": "2026-06-26",
+      "recent_churn": 1700
     },
     "backend/servers/api-server/src/routes/api_ecosystem.rs": {
       "runs_seen": 1,
@@ -283,9 +283,9 @@
       "recent_churn": 334
     },
     "backend/servers/api-server/src/routes/forms.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-06-16",
-      "recent_churn": 334
+      "runs_seen": 3,
+      "last_seen": "2026-06-26",
+      "recent_churn": 2051
     },
     "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs": {
       "runs_seen": 1,
@@ -321,6 +321,11 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/api-server/src/routes/financial.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-26",
+      "recent_churn": 1668
     }
   },
   "seen_signals": [
@@ -553,11 +558,20 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-26",
+    "revert-pr-1713",
+    "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+    "hotfix-no-test-pr-1737-iot-ws-dedup",
+    "hotfix-no-test-pr-1743-booking-listing-push",
+    "hotfix-no-test-pr-1632-portal-import-scope",
+    "hotfix-no-test-pr-1602-mfa-recovery-limiter",
+    "closed-not-merged-batch-2026-06-26",
+    "dep-update-noise-2026-06-26"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-06-10",
+    "api-handlers": "2026-06-26",
     "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
@@ -567,8 +581,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 180,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
@@ -584,19 +598,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-06-26",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

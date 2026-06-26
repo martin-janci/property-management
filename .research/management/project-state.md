@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-06-26 — light upkeep refresh after 10-day routine lag (catch-up sweep, 262 merged PRs); pm_cursor idx 5 → 6 (pm-security ran), coverage_cursor idx 12 → 0 (wrap to epic-10a). Full role rebuild deferred to next normal-cadence run._
 
 ## Executive summary
 
