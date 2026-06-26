@@ -47,6 +47,20 @@ ignore = [
     # Follow-up: drop when `rsa` ships a constant-time fix, or switch
     # jsonwebtoken to the `aws_lc_rs` backend.
     "RUSTSEC-2023-0071",
+
+    # RUSTSEC-2026-0187 — stack overflow in `lopdf` (<= 0.26) when parsing
+    # deeply nested PDF objects. Pulled in transitively by `genpdf 0.2.0`
+    # (unmaintained, pins `lopdf 0.26`) via the `db` crate's PDF generation
+    # (voting / e-signature documents; also the accounting-server PDF export
+    # hooks). No fixed `lopdf` is reachable without replacing `genpdf`, which
+    # has no newer release.
+    #
+    # Reachability: we only GENERATE PDFs from our own trusted document models;
+    # we never parse untrusted/attacker-supplied PDFs through lopdf, so the
+    # deeply-nested-object DoS path is not exercised.
+    # Follow-up: replace `genpdf`/`lopdf` (dependency hygiene). Repo-wide, not
+    # ACC-specific — this advisory is new and currently red on dev too.
+    "RUSTSEC-2026-0187",
 ]
 
 [bans]
