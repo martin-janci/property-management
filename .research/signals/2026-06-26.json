@@ -1,0 +1,292 @@
+{
+  "generated_at": "2026-06-26T10:00:00Z",
+  "since": "2026-06-16T03:25:00Z",
+  "summary": {
+    "merged_prs": 96,
+    "unmerged_closed_prs": 4,
+    "open_prs_touched": 30,
+    "issues_new_or_updated": 83,
+    "commits_window": 100,
+    "dep_update_count": 2,
+    "lag_days": 10,
+    "top_churn": [
+      {
+        "file": "backend/crates/db/src/models/mod.rs",
+        "count": 3
+      },
+      {
+        "file": "backend/crates/db/src/models/reality_portal.rs",
+        "count": 3
+      },
+      {
+        "file": "backend/crates/db/src/repositories/reality_portal.rs",
+        "count": 3
+      }
+    ],
+    "screen_drift_detected": 0,
+    "phase_1_5_status": "skipped — deliberately-degraded catch-up run (10d lag); review_cursor not advanced",
+    "phase_1_6_status": "skipped — deliberately-degraded catch-up run (10d lag); pm_cursor + coverage_cursor not advanced"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine missed runs for ~10 days (last_run_iso=2026-06-16T03:25:00Z). Stale-routine alert threshold (>=3 days) crossed."
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)"
+      ],
+      "files": []
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1723 fix(financial): rustfmt compliance for financial reports routes — body contains unchecked checkbox"
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1720 fix(ppt-web): add Leases nav link + home tile (#977) closed unmerged on 2026-06-23T16:17:38Z"
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1749 fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI) closed unmerged on 2026-06-23T06:14:41Z"
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1727 fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline closed unmerged on 2026-06-22T21:04:53Z"
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #1698 feat(epic-3): story 3.2 - unit management UI (BIT-188) closed unmerged on 2026-06-22T16:50:15Z"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-2026-06-26",
+      "type": "dep-update-noise",
+      "source": "merged-window 2026-06-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "2 dependabot/renovate-style PRs merged in window since 2026-06-16T03:25:00Z"
+      ],
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-26",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/models/mod.rs: 3 commits since 2026-06-16T03:25:00Z"
+      ],
+      "files": [
+        "backend/crates/db/src/models/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-26",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/models/reality_portal.rs: 3 commits since 2026-06-16T03:25:00Z"
+      ],
+      "files": [
+        "backend/crates/db/src/models/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/repositories/reality_portal.rs: 3 commits since 2026-06-16T03:25:00Z (cumulative re-emit)"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-count (excl cumulative)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+floor + decay",
+      "observed": "0 over cap, 0 under floor; 11 decayed/14 dropped applied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "0 new plans",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed listed + cursors not advanced",
+      "observed": "Phase 1.5+1.6 listed in brief; review_cursor/pm_cursor/coverage_cursor unchanged vs HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "9 prior, 0 missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "7 == 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions; kill-switch implicit",
+      "expected": "≤1 each type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 skipped → no-op)",
+      "observed": "pm_cursor unchanged → no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram secret in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "Phase 5 skipped — deliberately-degraded catch-up run; no high-confidence + score>=3 + allowlist-matching candidate evaluated"
+}
