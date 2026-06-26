@@ -1,0 +1,207 @@
+{
+  "date": "2026-06-26",
+  "run_started_iso": "2026-06-26T04:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine-state",
+      "score_delta": 0,
+      "evidence": "Routine has not run since 2026-06-16T03:25:00Z — 10 days lag at run start. Cloud cron likely paused; dispatcher (separate loop, planning branch) remained active.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-26",
+      "type": "lag_warning",
+      "source": "routine-state",
+      "score_delta": 0,
+      "evidence": "stale_routine_alert: last_run_iso=2026-06-16, 10 days old at run start; cloud cron may be paused; dispatcher unaffected.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 \"revert(delegations): remove re-added delegation frontend (#1690)\". BIT-213 had retired the delegation feature; #1690 re-wired it by accident. Investigate why retirement boundary leaked.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/delegations/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "3 commits touching reality-server saved-search alerts service (epic 16 — PRs #1849, #1847). Active feature work — not instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-main-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "3 commits touching reality-server main.rs (alert drainer + alert_frequency cadence wiring, PRs #1849/#1847).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/main.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "3 commits touching db/reality_portal.rs (favorite-alert worker + repository methods, PRs #1850/#1849). Hotspot 2 runs in a row. PR #1812 (currently OPEN) proposes a split — same pattern as document.rs/subscription.rs/sensor.rs. [re-emit — score not re-applied]",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "evidence": "reality_portal.rs runs_seen=2 after this run (prior 2026-06-12). Repeat hotspot — already tracked by open split PR #1812.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only allowlist-eligible signals are doc-stub/orphan-doc/lockfile-drift/fixme/stalled-review; this run produced churn-hotspot + revert which are not in the auto-fix allowlist.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-26.md && head -1 grep ^# 2026-06-26$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup with cumulative carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no scores >8; 11 decayed/12 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans adversarial-pass",
+      "observed": "no new plans this run",
+      "expected": "no new plans → n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff -q matched",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases (Phase 1.5/1.6 deferred, documented)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "now=7 head=7",
+      "expected": "now ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "diff -q matched",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions empty (no eligible candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts",
+      "observed": "Phase 1.6 skipped — no-op clause applies",
+      "expected": "n/a or pm_cursor.next_index ∈ 0..7 (5)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

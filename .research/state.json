@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-26T04:00:00Z",
+  "last_run_ms": 30000,
+  "last_pr_seen": 1853,
+  "last_issue_seen": 1852,
+  "last_commit_sha": "d973e80",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -263,9 +263,9 @@
       "recent_churn": 133
     },
     "backend/crates/db/src/repositories/reality_portal.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 87
+      "runs_seen": 2,
+      "last_seen": "2026-06-26",
+      "recent_churn": 3
     },
     "backend/servers/api-server/src/routes/iot.rs": {
       "runs_seen": 1,
@@ -321,6 +321,16 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/reality-server/src/services/saved_search_alerts.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-26",
+      "recent_churn": 3
+    },
+    "backend/servers/reality-server/src/main.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-26",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -553,7 +563,13 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-26",
+    "stale-routine-alert-2026-06-26",
+    "revert-pr-1713",
+    "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+    "churn-hotspot-backend-servers-reality-server-src-main-rs",
+    "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +583,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 177,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
