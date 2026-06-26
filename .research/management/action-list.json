@@ -112,11 +112,12 @@
       "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "churn settled — no further booking.rs touches in window (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
@@ -141,11 +142,12 @@
       "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "churn settled — no further touches in window (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
@@ -256,11 +258,12 @@
       "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "churn settled — no further touches in window (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "triage-issue-1380",
@@ -303,11 +306,12 @@
       "action": "Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "churn settled — no further touches in window (last activity PR #1700 split forms.rs) (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
@@ -457,11 +461,12 @@
       "action": "Coverage gap [mvp]: Announcement Viewing & Acknowledgment — verify and finish to done. Gaps: sprint-status ready-for-dev — code is ahead of label but story not marked done; announcements.md screen buildStatus=in-progress",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "resolved by PR #1834 (status reconcile to done) (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "6-3-announcement-comments-discussion",
@@ -502,11 +507,12 @@
       "action": "Coverage gap [mvp]: Direct Messaging — verify and finish to done. Gaps: sprint-status ready-for-dev — code is well ahead of the label but story not marked done",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolution": "resolved by PR #1844 (docs reconcile to done) and PRs #1768/#1756/#1853 wire camelCase + N-party (window 2026-06-16→2026-06-26)"
     },
     {
       "id": "79-1-api-client-integration",
@@ -575,6 +581,381 @@
         "subject": "10b-7-contextual-help-documentation: reconcile sprint-status to done (#1831)",
         "at": "2026-06-25T10:08:08Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-reconcile-sprint-status-yaml-development-status-fields-to-ma",
+      "action": "Reconcile sprint-status.yaml development_status fields to match coverage.json verified state: flip Epic 7A (7a-2 through 7a-5), Epic 10A (10a-1, 10a-2, 10a-3), and Epic 10B (10b-5, 10b-7) from ready-for-dev to done; update epics stories_completed counters accordingly",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-close-or-formally-defer-thb-batch-items-480-ws-jwt-in-logs-4",
+      "action": "Close or formally defer THB batch items #480 (WS JWT in logs), #481 (OAuth revocation bypass), #484 (serial FCM dispatch), and #487 (MFA rate-limit tests) -- these are the only remaining story-gates blocking Epic 8A and 10A from being formally closed on the board",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-remediate-open-security-follow-up-issues-from-the-window-pri",
+      "action": "Remediate open security follow-up issues from the window: prioritise #1791 (message attachments file_key IDOR), #1782 (3rd JWT-verification copy), #1772 (OCR unauthenticated endpoints), and #1766 (persisted rental booking/guest PII reads) -- all are IDOR/PII class at high impact",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-complete-epic-80-story-80-3-mediation-and-resolution-wire-pa",
+      "action": "Complete Epic 80 story 80-3 (Mediation and Resolution): wire party submissions endpoints into MediationPage.tsx / MediationWorkspacePage.tsx to close the apiStatus=partial gap on dispute-detail screen-map",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-resolve-duplicate-sqlx-migration-00192-issue-1760-and-harden",
+      "action": "Resolve duplicate SQLx migration 00192 (issue #1760) and harden ID-doc PII storage before next release cut -- duplicate migration will cause apply failures on fresh DB or CI ephemeral environments",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-scrum-master-quarantine-evaluate-pr-1833-pgvector-rag-decide-promote-to-d",
+      "action": "Quarantine-evaluate PR #1833 (pgvector-RAG): decide promote-to-dev or permanently quarantine; coverage.json shows 84-5 as partial (migration-only, no retrieval service); blocking a clean phase3 story count",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-validate-client-supplied-file-key-in-link-message-attachment",
+      "action": "Validate client-supplied file_key in link_message_attachment against the server-issued prefix (messages/{thread_id}/) before persisting to DB -- any arbitrary S3 key is currently accepted from the client",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-add-minimum-length-floor-32-bytes-for-jwt-secret-and-esign-t",
+      "action": "Add minimum-length floor (>=32 bytes) for JWT_SECRET and ESIGN_TOKEN_SECRET in preflight.rs check_required_env -- current guard only checks non-empty, allowing a trivially-guessable 1-char secret in prod (#1758)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-audit-and-migrate-the-third-jwt-access-token-verification-co",
+      "action": "Audit and migrate the third JWT access-token verification copy (JwtService in services/jwt.rs vs two other decode paths) to the unified extractor -- restore lost log line (#1782)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-add-manager-only-role-gate-to-list-bookings-and-get-booking-",
+      "action": "Add manager-only role gate to list_bookings and get_booking in rentals.rs -- endpoints currently scope only by tenant (TenantExtractor) and expose guest PII (name, email, phone) to any org member (#1766)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-fix-oauth-refresh-token-revocation-bypass-481-restore-the-re",
+      "action": "Fix OAuth refresh-token revocation bypass (#481): restore the revoked_at IS NULL predicate in the token lookup query so revoked tokens cannot be reused across the RFC 9700 rotation boundary",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "pm-security-add-pii-audit-logging-and-content-type-sniffing-validation-t",
+      "action": "Add PII audit-logging and content-type sniffing validation to the guest ID-document upload/OCR seam -- currently file content-type is client-declared with no server-side sniff (#1783)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-26"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-no-screen-map-orphan-epic",
+      "action": "no screen-map (orphan epic) (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-sprint-status-still-ready-for-",
+      "action": "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-10b-5-support-data-access-support-data-access-is-privacy",
+      "action": "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security) (10b-5-support-data-access Support Data Access)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-coverage-json-here-still-parti",
+      "action": "coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining) (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-security-sensitive-sso-jwt-coo",
+      "action": "security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-story-markdown-frontmatter-sta",
+      "action": "story markdown frontmatter stale ('Status: pending') (79-2-authentication-flow Authentication Flow Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-10b-7-contextual-help-documentation-sprint-status-still-ready-for-",
+      "action": "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done (10b-7-contextual-help-documentation Contextual Help & Documentation)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-1-announcement-creation-targeting-announcements-md-screen-builds",
+      "action": "announcements.md screen buildStatus=in-progress, not shipped (6-1-announcement-creation-targeting Announcement Creation & Targeting)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-1-announcement-creation-targeting-sprint-status-still-review-not",
+      "action": "sprint-status still 'review' (not flipped to done) — verification/sign-off pending (6-1-announcement-creation-targeting Announcement Creation & Targeting)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-announcements-md-screen-builds",
+      "action": "announcements.md screen buildStatus=in-progress (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-sprint-status-ready-for-dev-co",
+      "action": "sprint-status ready-for-dev — code is ahead of label but story not marked done (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-5-direct-messaging-sprint-status-ready-for-dev-co",
+      "action": "sprint-status ready-for-dev — code is well ahead of the label but story not marked done (6-5-direct-messaging Direct Messaging)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-coverage-gap-noted-full-featur",
+      "action": "coverage gap noted full feature-integration / e2e verification incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-coverage-json-last-checked-202",
+      "action": "coverage.json (last_checked 2026-05-23) still marks partial; promote commits not present on this worktree HEAD (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-no-screen-map-orphan-epic",
+      "action": "no screen-map (orphan epic) (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-story-markdown-frontmatter-sta",
+      "action": "story markdown frontmatter stale ('Status: pending') (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-announcements-md-screen-builds",
+      "action": "announcements.md screen buildStatus still in-progress (not shipped) (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-no-mobile-comments-ui-observed",
+      "action": "No mobile comments UI observed (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-sprint-status-ready-for-dev-no",
+      "action": "sprint-status ready-for-dev — not marked done (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-announcements-md-screen-builds",
+      "action": "announcements.md screen buildStatus in-progress (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-no-mobile-pinned-band-ui-obser",
+      "action": "No mobile pinned-band UI observed (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-sprint-status-ready-for-dev-no",
+      "action": "sprint-status ready-for-dev — not marked done (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-26"
     }
-  ]
+  ],
+  "generated": "2026-06-26T03:25:00Z"
 }

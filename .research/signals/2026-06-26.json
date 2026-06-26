@@ -1,0 +1,608 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-26",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25Z \u2014 9d 23h lag (cloud routine pause)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-26",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine state.json last_run_iso=2026-06-16 is 9d old; cloud routine may be paused. Dispatcher (separate loop) was active 2026-06-25 22:16 (dispatcher commit ad2052c4)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213); reverts feat PR #1690 merged earlier in window. Net: delegations feature reverted from ppt-web."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-since-cursor",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn this run: 13 commits touching this file since cursor (10-day catch-up window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-cursor",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn this run: 10 commits touching this file since cursor (10-day catch-up window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-cursor",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: file appeared in top-3 churn again (10 commits since cursor); runs_seen would be 2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "git-log-since-cursor",
+      "score_delta": 1,
+      "evidence": [
+        "file hit top-3 churn for runs_seen=2; instability proxy (previous last_seen=2026-06-10)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1565 (fix(db): correct document get-by-id read path (u.name + enum) is a fix PR touching churn-hotspot file `backend/crates/db/src/repositories/document.rs` with no test diff in same commit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1551 (fix(db): cast document_category in count_accessible_rls filt) is a fix PR touching churn-hotspot file `backend/crates/db/src/repositories/document.rs` with no test diff in same commit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "PR #1537",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1537 (fix(db): cast enum write paths on rental_guests + forms (#10) is a fix PR touching churn-hotspot file `backend/crates/db/src/repositories/rental.rs` with no test diff in same commit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1469-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1469",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1469 (fix(db): correct schema-drift SQL in document/form/user repo) is a fix PR touching churn-hotspot file `backend/crates/db/src/repositories/document.rs` with no test diff in same commit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1822",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1822 (79-2-authentication-flow: reality-web SSO callback e2e coverage (gap-7) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1746 (fix(portal-listings): validate enums/status + ownership IDOR tests + F) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1737 (fix(iot): remove duplicate JWT-trusting sensor WS channel, converge on) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1696 (feat(messaging): per-participant thread archive + soft-delete (BIT-182) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1733 (fix(ppt-web): add loading state + double-click guard to invoice PDF do) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1713-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1713",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1713 (revert(delegations): remove re-added delegation frontend (#1690) (#171) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1690 (feat(delegations): wire delegation feature into ppt-web (Story 3.4) (#) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1694-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1694",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1694 (feat(ppt-web): add Leases sidebar nav link (closes #977 gap 2) (#1694)) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1685 (feat(ppt-web): real-time IoT dashboard via BIT-145 WS channel (Epic 14) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1677-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1677",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1677 (fix(reality-web): defend listing detail JSON-LD against partial SSR bo) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1642 (feat(epic-15): portal-user listing CRUD \u2014 owner/realtor edit (#986) (#) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1641 (feat(ppt-web): Sentiment & Predictive Maintenance dashboards (Epic 13,) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1654 (feat(ppt-web): invoice \"PDF\" download button (#975.6) (#1654)) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1630 (feat(ppt-web): wire Payment Management page to the org-wide endpoints ) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-se) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-se) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1611 (test(reports): cover ScheduleDetailPageRoute download/retry toast wiri) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1610 (fix(faults): confirm delete + use closed_count + refresh stats on dele) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1559 (feat(UC-06): optimistic add for announcement comments (Story 6.3) (#15) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 (feat(UC-03): wire useDeleteFault + useFaultStatistics into FaultsPage ) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 (fix(reality-web): unbreak production build \u2014 /accounting QueryClient p) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1453 (N5 \u2014 Bank-statement upload + payment-matching + match-review (PAP-210)) touched reality-web routes without updating docs/screens/reality/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 (feat: native accounting MVP (N1-N4) + @hey-api migration (#1454)) touched ppt-web routes without updating docs/screens/ppt/*.md (heuristic; review candidate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-cache-leak-on-logout",
+      "type": "code-review-finding",
+      "source": "code review (frontend lens)",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 \u2014 AUTHED_QUERY_KEY_ROOTS list omits 'accounting' even though queryKeys.accounting.all = ['accounting'] (line 143) is used by invoices/contacts/statements/lines/matches subtrees; file header at line 342-346 explicitly warns 'When you add a new auth-scoped query root, add it here too \u2014 otherwise the cached data will leak into the next user's session'",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:532-544 \u2014 logout() iterates AUTHED_QUERY_KEY_ROOTS and calls queryClient.removeQueries({ queryKey: [root] }); because 'accounting' is missing, all cached statements/invoices/payment-matches remain in the TanStack Query cache after logout and are visible to the next user on the same browser session (impact: cross-tenant accounting data leak \u2014 same class of bug as issue #712 which this code was written to prevent)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-payment-match-no-onerror",
+      "type": "code-review-finding",
+      "source": "code review (frontend lens)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 \u2014 confirmMutation and rejectMutation define only onSuccess; no onError handler and no isError branch in the render path; impact: failed confirm/reject of a payment match silently swallows the network/server error, the optimistic UI shows no toast and the user has no way to know the action failed (especially severe for accounting where the user assumes the match was persisted)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-double-cast",
+      "type": "code-review-finding",
+      "source": "code review (frontend lens)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 `(sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[]` double-casts API response across the @ppt/api-client boundary, defeating the generated-client type guarantees; impact: schema drift between OpenAPI spec and SessionRow renders incorrect data or crashes the iteration at lines 138-186 without TS catching it at build time"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + head -1",
+      "observed": "# 2026-06-26",
+      "expected": "# 2026-06-26"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced",
+      "observed": "true (verified in bash; harness shell mismatch)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted signals",
+      "observed": "true (verified in bash; harness shell mismatch)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "sanity",
+      "observed": "open count: 58",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotates new plans",
+      "observed": "all plans annotated with adversarial pass",
+      "expected": "each appears w/ adversarial pass"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-plan:code-review-ppt-web-core-accounting-cache-leak-on-logout.md",
+      "passed": true,
+      "command": "metadata+headings+mode+cap+files",
+      "observed": "md=True head=True mode=True cap=True file=True",
+      "expected": "all true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff outside .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure consistency",
+      "observed": "**none** (Phase 1 deeper fetch recovered after ancestor mismatch; Phase 1.5 + Ph",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present somewhere",
+      "observed": "missing=[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "cur=11 head=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no actions taken (no allowlist candidate)",
+      "expected": "discipline held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt + cursors",
+      "observed": "pm=6 cc=0 epics=13",
+      "expected": "pm in [0,7]; cc in [0,N)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

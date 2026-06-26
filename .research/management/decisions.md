@@ -85,3 +85,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+- **NEW (2026-06-26, pm-scrum-master + pm-security rotation):**
+  - Decide on formal deferral vs. immediate fix for THB batch issues #480 and #481 (story-gates for Epic 8A and 10A) -- owner: rust-backend + pm-scrum-master
+  - Decide whether Epic 80 story 80-3 (Mediation party submissions) ships in the current sprint or is pushed to next sprint with a scope note -- owner: pm-frontend + product owner
+  - Decide the scope cut for pgvector-RAG story 84-5: migration-only counts as done (phase3 story), or must a retrieval service ship before the story is counted -- owner: pm-backend
+  - Agree on a sprint-status maintenance process: manual reconcile by scrum master each run vs. automated promotion via coverage.json diffs -- owner: pm-scrum-master
+  - Decide whether list_bookings / get_booking guest PII access requires manager role (matching Airbnb gate) or whether any org member is legitimately entitled to read booking guest PII -- owner: product-owner + rust-backend
+  - Confirm whether the OAuth epic (10a) stories can enter review with #481 (revocation bypass) still open or whether the story gate must hold until #481 is closed -- owner: pm-delivery
+  - Approve or defer minimum-length secret enforcement (#1758) as a prod-deploy gate vs. a later hardening item given the low-probability/high-impact profile -- owner: pm-security + DevOps
+  - Determine whether the WebSocket JWT-in-query-param issue (#480) requires an architecture change (ticket exchange) or a quick mitigation (masked logging + expiry re-check) for the current sprint -- owner: rust-backend + pm-security
