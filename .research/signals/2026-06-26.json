@@ -140,6 +140,19 @@
       "confidence": "high",
       "candidate_vector": "dep-update",
       "files": []
+    },
+    {
+      "id": "dispatcher-buffer-low-refill-2026-06-26",
+      "type": "buffer-low-refill",
+      "source": "trigger payload at 2026-06-26T14:55Z (dispatcher fire)",
+      "score_delta": 0,
+      "evidence": "Dispatcher fired with buffer-low: claimable=1/72 (coverage 2026-06-23 fully consumed; 84-5 quarantined, 6-3 substance merged). Same-day rerun executed coverage upkeep Step 2 (sprint-status sync): 7 coverage stories flipped to done (6-1, 6-2, 6-3, 6-4, 6-5, 10b-5, 10b-7). Action-list: 2 closed (6-2, 6-5), 1 added (79-2-authentication-flow), 1 quarantine-annotated (84-5). 5 partial stories remain (79-1 done in action-list / partial in coverage = drift to follow up, 79-2, 80-2 in-progress, 80-3, 84-5 quarantined).",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".research/management/coverage.json",
+        ".research/management/action-list.json"
+      ]
     }
   ],
   "phase_1_5": {
@@ -154,7 +167,14 @@
     "role": "pm-security",
     "next_index_after_run": 6,
     "coverage_cursor_after_run": 0,
-    "note": "Lightweight upkeep due to 10-day-lag catch-up budget. Cursors advanced; management/ artifacts re-timestamped. Full role-deep-dive deferred to next normal-cadence run."
+    "note": "Lightweight upkeep due to 10-day-lag catch-up budget. Cursors advanced; management/ artifacts re-timestamped. Full role-deep-dive deferred to next normal-cadence run.",
+    "rerun_2026-06-26T14:55Z": {
+      "trigger": "buffer-low",
+      "coverage_stories_flipped_done": 7,
+      "action_list_changes": "2 closed (6-2, 6-5), 1 added (79-2), 84-5 quarantine annotated",
+      "partial_stories_remaining": 5,
+      "note": "Phase 1.6 coverage upkeep Step 2 actually executed here (the morning run did only timestamp refresh). Cheap sprint-status sync only — full local scan still required for deep refresh."
+    }
   },
   "goal_checks": [
     {

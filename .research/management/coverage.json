@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-26T14:30:00Z",
+  "generated": "2026-06-26T14:55:00Z",
   "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
       "title": "Announcement Creation & Targeting",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -18,14 +18,15 @@
         "sprint-status: 6-1-announcement-creation-targeting: review -> partial",
         "Backend routes present: lifecycle.rs (publish/schedule/archive, '//! ... Story 6.1'), crud.rs, ai_draft.rs (target audience), repositories/announcement.rs",
         "ppt-web: features/announcements/components/TargetSelector.tsx + SchedulePicker.tsx + CreateAnnouncementPage.tsx + AnnouncementForm.tsx",
-        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)"
+        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)",
+        "2026-06-26: Verified 2026-06-25 in sprint-status — create+targeting backend RLS + frontend ppt-web wiring complete; tests landed (announcement_targeting_visibility_tests.rs, announcement_tests.rs)."
       ],
       "gaps": [
         "sprint-status still 'review' (not flipped to done) — verification/sign-off pending",
         "announcements.md screen buildStatus=in-progress, not shipped"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcement-new",
@@ -51,7 +52,7 @@
       "id": "6-2-announcement-viewing-acknowledgment",
       "title": "Announcement Viewing & Acknowledgment",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -63,14 +64,15 @@
         "sprint-status: 6-2-announcement-viewing-acknowledgment: ready-for-dev -> partial",
         "ppt-web: ViewAnnouncementPage.tsx + AcknowledgmentStats.tsx + UnreadBadge.tsx + hooks/acknowledgment.test.tsx",
         "Backend: routes/announcements/engagement.rs (acknowledge/read tracking)",
-        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)"
+        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)",
+        "2026-06-26: Verified 2026-06-25 in sprint-status — ViewAnnouncementPage + acknowledgment hooks + mobile auto-read; tests acknowledgment.test.tsx, ViewAnnouncementPage.test.tsx landed."
       ],
       "gaps": [
         "sprint-status ready-for-dev — code is ahead of label but story not marked done",
         "announcements.md screen buildStatus=in-progress"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -84,7 +86,7 @@
       "id": "6-3-announcement-comments-discussion",
       "title": "Announcement Comments & Discussion",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -95,7 +97,8 @@
         "sprint-status: 6-3-announcement-comments-discussion: ready-for-dev -> partial",
         "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' — list/create/delete on /{id}/comments)",
         "ppt-web: features/announcements/components/AnnouncementComments.tsx (+CSS); useAnnouncementComments hooks wired in ViewAnnouncementPageInner",
-        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress"
+        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress",
+        "2026-06-26: Verified 2026-06-25 in sprint-status (PR #1835); backend comments routes + RLS repo + threading tests landed; ppt-web AnnouncementComments wired."
       ],
       "gaps": [
         "sprint-status ready-for-dev — not marked done",
@@ -103,7 +106,7 @@
         "No mobile comments UI observed"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -117,7 +120,7 @@
       "id": "6-4-pinned-announcements",
       "title": "Pinned Announcements",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -127,7 +130,8 @@
       "evidence": [
         "sprint-status: 6-4-pinned-announcements: ready-for-dev -> partial",
         "Backend: routes/announcements/lifecycle.rs pin route ('Story 6.1, 6.4'; .route(\"/{id}/pin\", post(pin_announcement).patch(...))",
-        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx"
+        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx",
+        "2026-06-26: Verified 2026-06-25 in sprint-status — pin/unpin route + max-3 cap + auto-unpin scheduler; PinnedAnnouncementsBand UI shipped."
       ],
       "gaps": [
         "sprint-status ready-for-dev — not marked done",
@@ -135,7 +139,7 @@
         "announcements.md screen buildStatus in-progress"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -149,7 +153,7 @@
       "id": "6-5-direct-messaging",
       "title": "Direct Messaging",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -161,13 +165,14 @@
         "sprint-status: 6-5-direct-messaging: ready-for-dev -> partial",
         "Backend: routes/messaging.rs (CreateThread/CreateMessage/CreateBlock, ThreadList/ThreadDetail, StartThreadRequest)",
         "ppt-web: features/messaging/ pages MessagesPage/ThreadDetailPage/NewMessagePage + hooks/useMessaging.ts; mobile screens/messages/MessagesScreen.tsx",
-        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)"
+        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)",
+        "2026-06-26: Verified 2026-06-25 in sprint-status (PR #1844) — full messaging backend + ppt-web UI + RLS cross-tenant tests landed."
       ],
       "gaps": [
         "sprint-status ready-for-dev — code is well ahead of the label but story not marked done"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/messages",
@@ -1449,7 +1454,7 @@
       "id": "10b-5-support-data-access",
       "title": "Support Data Access",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1460,7 +1465,8 @@
         "sprint-status.yaml: 10b-5-support-data-access: ready-for-dev (maps to partial)",
         "backend crates/db/src/repositories/platform_admin.rs get_support_data + migration 00163_create_support_tooling_events.sql",
         "admin-web/src/pages/SupportDataPage.tsx (+ .test.tsx)",
-        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)"
+        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)",
+        "2026-06-26: Reconciled 2026-06-25 (PR #1829) — refresh_tokens column bug fixed + sprint-status flip to done; SupportDataPage shipped."
       ],
       "gaps": [
         "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done",
@@ -1468,7 +1474,7 @@
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": []
     },
     {
@@ -1500,7 +1506,7 @@
       "id": "10b-7-contextual-help-documentation",
       "title": "Contextual Help & Documentation",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1512,13 +1518,14 @@
         "sprint-status.yaml: 10b-7-contextual-help-documentation: ready-for-dev (maps to partial)",
         "backend crates/db/src/repositories/help.rs + routes/help.rs",
         "admin-web help feature (HelpSidebar, useContextualHelp, articles.ts) + mobile HelpCenter/HelpCenterScreen; screen admin-contextual-help.md buildStatus: shipped",
-        "merged PR #844 (gap-10b-7 contextual help handler regression tests)"
+        "merged PR #844 (gap-10b-7 contextual help handler regression tests)",
+        "2026-06-26: Reconciled 2026-06-25 (PR #1831) — help.rs routes + HelpRepository + admin-web HelpSidebar + mobile HelpCenterScreen shipped."
       ],
       "gaps": [
         "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-26",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-contextual-help",
