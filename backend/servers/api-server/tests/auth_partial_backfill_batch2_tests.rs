@@ -360,10 +360,7 @@ async fn get_tour_existing_returns_200(pool: PgPool) {
 
     let (access, _) = create_authenticated_user(&app, &user).await;
 
-    let list_resp = app
-        .get("/api/v1/onboarding/tours")
-        .bearer(&access)
-        .build();
+    let list_resp = app.get("/api/v1/onboarding/tours").bearer(&access).build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let tours = list_resp.json_value();
@@ -565,9 +562,7 @@ async fn get_help_article_existing_slug_returns_200(pool: PgPool) {
     }
 
     let slug = articles[0]["slug"].as_str().expect("slug");
-    let resp = app
-        .get(&format!("/api/v1/help/articles/{slug}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/articles/{slug}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -628,9 +623,7 @@ async fn get_help_category_existing_slug_returns_200(pool: PgPool) {
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let cats = list_resp.json_value();
-    let cats = cats
-        .as_array()
-        .or_else(|| cats["categories"].as_array());
+    let cats = cats.as_array().or_else(|| cats["categories"].as_array());
 
     let Some(cats) = cats else {
         return;
@@ -640,9 +633,7 @@ async fn get_help_category_existing_slug_returns_200(pool: PgPool) {
     }
 
     let slug = cats[0]["slug"].as_str().expect("slug");
-    let resp = app
-        .get(&format!("/api/v1/help/categories/{slug}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/categories/{slug}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -672,9 +663,7 @@ async fn get_help_tooltip_existing_key_returns_200(pool: PgPool) {
     }
 
     let key = tooltips[0]["key"].as_str().expect("key");
-    let resp = app
-        .get(&format!("/api/v1/help/tooltips/{key}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/tooltips/{key}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);

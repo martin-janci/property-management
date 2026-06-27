@@ -190,7 +190,9 @@ async fn revoke_session_returns_200(pool: PgPool) {
     let list_response = app.execute(list_resp).await;
     list_response.assert_status(StatusCode::OK);
     let sessions_body = list_response.json_value();
-    let sessions = sessions_body["sessions"].as_array().expect("sessions array");
+    let sessions = sessions_body["sessions"]
+        .as_array()
+        .expect("sessions array");
     let session_id = sessions
         .first()
         .expect("at least one active session after login")["id"]
@@ -255,10 +257,7 @@ async fn get_me_returns_200_with_user_object(pool: PgPool) {
 
     let (access_token, _) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/auth/me")
-        .bearer(&access_token)
-        .build();
+    let resp = app.get("/api/v1/auth/me").bearer(&access_token).build();
     let response = app.execute(resp).await;
 
     response.assert_status(StatusCode::OK);
@@ -566,10 +565,7 @@ async fn verify_email_with_valid_token_returns_200(pool: PgPool) {
     seed_verification_token(&pool, user_id, raw_token).await;
 
     let resp = app
-        .get(&format!(
-            "/api/v1/auth/verify-email?token={}",
-            raw_token
-        ))
+        .get(&format!("/api/v1/auth/verify-email?token={}", raw_token))
         .build();
     let response = app.execute(resp).await;
 
