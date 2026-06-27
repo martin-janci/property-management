@@ -89,19 +89,19 @@ fn units_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let ubase = format!("{bbase}/units");
     let uid = format!("{ubase}/{UUID2}");
     vec![
-        (Method::GET, format!("{ubase}"), None),
+        (Method::GET, ubase.to_string(), None),
         (
             Method::POST,
-            format!("{ubase}"),
+            ubase.to_string(),
             Some(r#"{"unit_number":"1A","floor":1,"area_sqm":55.0}"#),
         ),
-        (Method::GET, format!("{uid}"), None),
+        (Method::GET, uid.to_string(), None),
         (
             Method::PUT,
-            format!("{uid}"),
+            uid.to_string(),
             Some(r#"{"unit_number":"1B"}"#),
         ),
-        (Method::DELETE, format!("{uid}"), None),
+        (Method::DELETE, uid.to_string(), None),
         (Method::POST, format!("{uid}/restore"), None),
     ]
 }
@@ -134,19 +134,19 @@ fn unit_residents_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = format!("/api/v1/buildings/{UUID}/units/{UUID2}/residents");
     let rid = format!("{base}/00000000-0000-0000-0000-000000000003");
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"user_id":"00000000-0000-0000-0000-000000000003","start_date":"2024-01-01"}"#),
         ),
-        (Method::GET, format!("{rid}"), None),
+        (Method::GET, rid.to_string(), None),
         (
             Method::PUT,
-            format!("{rid}"),
+            rid.to_string(),
             Some(r#"{"start_date":"2024-02-01"}"#),
         ),
-        (Method::DELETE, format!("{rid}"), None),
+        (Method::DELETE, rid.to_string(), None),
         (
             Method::POST,
             format!("{rid}/end"),

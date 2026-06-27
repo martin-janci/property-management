@@ -81,7 +81,7 @@ fn ops_costs_extra_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn platform_admin_org_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/platform-admin/organizations";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::POST, format!("{base}/{UUID}/suspend"), None),
         (Method::POST, format!("{base}/{UUID}/reactivate"), None),
@@ -97,10 +97,10 @@ fn platform_admin_stats_flags_cases() -> Vec<(Method, String, Option<&'static st
             "/api/v1/platform-admin/stats".to_string(),
             None,
         ),
-        (Method::GET, format!("{ff}"), None),
+        (Method::GET, ff.to_string(), None),
         (
             Method::POST,
-            format!("{ff}"),
+            ff.to_string(),
             Some(r#"{"key":"pf-test","enabled":false}"#),
         ),
         (Method::GET, format!("{ff}/{UUID}"), None),
@@ -155,10 +155,10 @@ fn platform_admin_health_cases() -> Vec<(Method, String, Option<&'static str>)> 
 fn platform_admin_announcements_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/platform-admin/announcements";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"title":"Maintenance","body":"Scheduled downtime","level":"info"}"#),
         ),
         (Method::GET, format!("{base}/{UUID}"), None),
@@ -177,12 +177,12 @@ fn platform_admin_maintenance_cases() -> Vec<(Method, String, Option<&'static st
     vec![
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(
                 r#"{"title":"Upgrade","scheduled_at":"2025-01-01T02:00:00Z","duration_minutes":60}"#,
             ),
         ),
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::DELETE, format!("{base}/{UUID}"), None),
     ]
 }
@@ -191,7 +191,7 @@ fn platform_admin_maintenance_cases() -> Vec<(Method, String, Option<&'static st
 fn platform_admin_support_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/platform-admin/support/users";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::GET, format!("{base}/{UUID}/memberships"), None),
         (Method::GET, format!("{base}/{UUID}/sessions"), None),

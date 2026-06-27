@@ -64,22 +64,22 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
     let milestone = format!("{cert}/milestones/{UUID2}");
     vec![
         (Method::GET, format!("{base}/dashboard"), None),
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(
                 r#"{"building_id":"00000000-0000-0000-0000-000000000001","certification_type":"LEED","target_level":"Gold"}"#,
             ),
         ),
         (Method::GET, format!("{base}/expiring"), None),
-        (Method::GET, format!("{cert}"), None),
+        (Method::GET, cert.to_string(), None),
         (
             Method::PUT,
-            format!("{cert}"),
+            cert.to_string(),
             Some(r#"{"status":"active"}"#),
         ),
-        (Method::DELETE, format!("{cert}"), None),
+        (Method::DELETE, cert.to_string(), None),
         (Method::GET, format!("{cert}/with-credits"), None),
         // Credits
         (Method::GET, format!("{cert}/credits"), None),
@@ -88,9 +88,9 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
             format!("{cert}/credits"),
             Some(r#"{"category":"energy","points":5}"#),
         ),
-        (Method::GET, format!("{credit}"), None),
-        (Method::PUT, format!("{credit}"), Some(r#"{"points":6}"#)),
-        (Method::DELETE, format!("{credit}"), None),
+        (Method::GET, credit.to_string(), None),
+        (Method::PUT, credit.to_string(), Some(r#"{"points":6}"#)),
+        (Method::DELETE, credit.to_string(), None),
         // Documents
         (Method::GET, format!("{cert}/documents"), None),
         (
@@ -98,7 +98,7 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
             format!("{cert}/documents"),
             Some(r#"{"title":"Certificate","url":"https://example.com/doc.pdf"}"#),
         ),
-        (Method::DELETE, format!("{doc}"), None),
+        (Method::DELETE, doc.to_string(), None),
         // Milestones
         (Method::GET, format!("{cert}/milestones"), None),
         (
@@ -108,10 +108,10 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
         ),
         (
             Method::PUT,
-            format!("{milestone}"),
+            milestone.to_string(),
             Some(r#"{"completed":true}"#),
         ),
-        (Method::DELETE, format!("{milestone}"), None),
+        (Method::DELETE, milestone.to_string(), None),
         // Benchmarks
         (Method::GET, format!("{cert}/benchmarks"), None),
         (
@@ -145,10 +145,10 @@ fn organizations_cases() -> Vec<(Method, String, Option<&'static str>)> {
     vec![
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"name":"Test Org","country":"SK"}"#),
         ),
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/my"), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (

@@ -62,7 +62,7 @@ fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request
 fn admin_users_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/users";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::POST, format!("{base}/{UUID}/suspend"), None),
         (Method::POST, format!("{base}/{UUID}/reactivate"), None),
@@ -123,7 +123,7 @@ fn tenant_lifecycle_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn infra_traces_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/infrastructure/traces";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::GET, format!("{base}/{UUID}/spans"), None),
     ]
@@ -132,10 +132,10 @@ fn infra_traces_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn infra_feature_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/infrastructure/feature-flags";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"key":"test-flag","enabled":false}"#),
         ),
         (Method::GET, format!("{base}/{UUID}"), None),
@@ -179,10 +179,10 @@ fn infra_dashboard_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn infra_jobs_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/infrastructure/jobs";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"job_type":"example","payload":{}}"#),
         ),
         (Method::GET, format!("{base}/{UUID}"), None),
@@ -238,10 +238,10 @@ fn infra_health_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn ops_deployments_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/operations/deployments";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"version":"1.0.0","environment":"staging"}"#),
         ),
         (Method::GET, format!("{base}/dashboard"), None),
@@ -261,10 +261,10 @@ fn ops_deployments_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn ops_migrations_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/operations/migrations";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"name":"test_migration","description":"test"}"#),
         ),
         (Method::GET, format!("{base}/{UUID}"), None),
@@ -290,10 +290,10 @@ fn ops_schema_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn ops_backups_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/operations/backups";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"description":"manual"}"#),
         ),
         (Method::GET, format!("{base}/dashboard"), None),
@@ -329,10 +329,10 @@ fn ops_dr_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn ops_costs_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/operations/costs";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (
             Method::POST,
-            format!("{base}"),
+            base.to_string(),
             Some(r#"{"amount":100,"currency":"EUR","category":"compute"}"#),
         ),
         (Method::GET, format!("{base}/dashboard"), None),
