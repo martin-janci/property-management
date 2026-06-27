@@ -250,7 +250,7 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
             app.patch(&format!("/api/v1/accounting/invoices/{invoice_id}"))
                 .bearer(&token_b)
                 .tenant(org_b_id)
-                .json(&json!({"number": "INV-HACKED"}))
+                .json(json!({"number": "INV-HACKED"}))
                 .build(),
         )
         .await;
@@ -266,7 +266,7 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
             app.post("/api/v1/accounting/invoices")
                 .bearer(&token_b)
                 .tenant(org_b_id)
-                .json(&json!({
+                .json(json!({
                     "tenant_id": org_b_id,
                     "contact_id": contact_a_id, // cross-tenant contact
                     "number": "INV-B-001",
