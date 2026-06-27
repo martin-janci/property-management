@@ -59,21 +59,9 @@ fn capability_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/capabilities";
     vec![
         (Method::GET, format!("{base}/registry"), None),
-        (
-            Method::GET,
-            format!("{base}/users/{UUID}"),
-            None,
-        ),
-        (
-            Method::POST,
-            format!("{base}/users/{UUID}/grant"),
-            Some(r#"{"capability":"AuditRead"}"#),
-        ),
-        (
-            Method::DELETE,
-            format!("{base}/users/{UUID}/grant/{UUID}"),
-            None,
-        ),
+        (Method::GET, format!("{base}/users/{UUID}"), None),
+        (Method::POST, format!("{base}/users/{UUID}/grant"), Some(r#"{"capability":"AuditRead"}"#)),
+        (Method::DELETE, format!("{base}/users/{UUID}/grant/{UUID}"), None),
     ]
 }
 
@@ -98,11 +86,7 @@ fn agency_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}/"), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::POST, format!("{base}/{UUID}/suspend"), None),
-        (
-            Method::POST,
-            format!("{base}/{UUID}/domains"),
-            Some(r#"{"domain":"example.com"}"#),
-        ),
+        (Method::POST, format!("{base}/{UUID}/domains"), Some(r#"{"domain":"example.com"}"#)),
     ]
 }
 
@@ -134,11 +118,7 @@ fn audit_cases() -> Vec<(Method, String, Option<&'static str>)> {
 
 /// Metrics sub-router: /api/v1/admin/metrics/…
 fn metrics_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    vec![(
-        Method::GET,
-        "/api/v1/admin/metrics/summary".to_string(),
-        None,
-    )]
+    vec![(Method::GET, "/api/v1/admin/metrics/summary".to_string(), None)]
 }
 
 /// Principals sub-router: /api/v1/admin/principals/…
@@ -173,11 +153,7 @@ fn tenant_feature_flag_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = format!("/admin/tenants/{UUID}/feature-flags");
     vec![
         (Method::GET, base.clone(), None),
-        (
-            Method::PUT,
-            base,
-            Some(r#"{"key":"some-flag","enabled":true}"#),
-        ),
+        (Method::PUT, base, Some(r#"{"key":"some-flag","enabled":true}"#)),
     ]
 }
 
