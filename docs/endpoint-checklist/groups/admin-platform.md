@@ -30,87 +30,87 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin_tenants.rs  (mount: /admin/tenants/{org_id}/branding | /admin/tenants/{org_id}/feature-flags)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /admin/tenants/{org_id}/branding | get_tenant_branding | partial | none | real handler (AgencyBrandingRepository); no test hits path |
-| PUT | /admin/tenants/{org_id}/branding | update_tenant_branding | partial | none | real upsert + css sanitizer (sanitizer has unit tests, handler path untested) |
-| GET | /admin/tenants/{org_id}/feature-flags | list_tenant_feature_flags | partial | none | real handler; no path test |
-| PUT | /admin/tenants/{org_id}/feature-flags | upsert_tenant_feature_flag | partial | none | real handler; no path test |
+| GET | /admin/tenants/{org_id}/branding | get_tenant_branding | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| PUT | /admin/tenants/{org_id}/branding | update_tenant_branding | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /admin/tenants/{org_id}/feature-flags | list_tenant_feature_flags | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| PUT | /admin/tenants/{org_id}/feature-flags | upsert_tenant_feature_flag | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin_tenant_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/tenants/{id}/export | export_handler | partial | none | real (tenant_ops::export_tenant); no test |
-| POST | /api/v1/admin/tenants/{id}/purge | purge_handler | partial | none | real (tenant_ops::purge_tenant); no test |
-| POST | /api/v1/admin/tenants/restore | restore_handler | partial | none | real (multipart + restore_tenant_export); no test |
+| POST | /api/v1/admin/tenants/{id}/export | export_handler | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/tenants/{id}/purge | purge_handler | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/tenants/restore | restore_handler | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/agencies.rs  (mount: /api/v1/admin/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/agencies | list_agencies | partial | none | real (platform_admin_repo); no path test |
-| GET | /api/v1/admin/agencies/{id} | get_agency | partial | none | real; no path test |
-| POST | /api/v1/admin/agencies/{id}/suspend | suspend_agency | partial | none | real; no path test |
-| POST | /api/v1/admin/agencies/{id}/domains | add_domain | partial | none | real; no path test |
+| GET | /api/v1/admin/agencies | list_agencies | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/agencies/{id} | get_agency | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/agencies/{id}/suspend | suspend_agency | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/agencies/{id}/domains | add_domain | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/audit.rs  (mount: /api/v1/admin/audit)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/audit/csv | export_csv | partial | none | real (fetch_rows + CSV); no path test |
-| GET | /api/v1/admin/audit | list_audit_events | partial | none | real (fetch_rows); no path test |
+| GET | /api/v1/admin/audit/csv | export_csv | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/audit | list_audit_events | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/capabilities.rs  (mount: /api/v1/admin/capabilities)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/capabilities/registry | list_registry | partial | none | real (sqlx runtime query); no path test |
-| GET | /api/v1/admin/capabilities/me | list_for_me | partial | none | real; gated only by RequestPrincipal (bootstrap); no path test |
-| GET | /api/v1/admin/capabilities/users/{user_id} | list_for_user | partial | none | real; no path test |
-| POST | /api/v1/admin/capabilities/users/{user_id}/grant | grant_capability | partial | none | real; no path test |
-| DELETE | /api/v1/admin/capabilities/users/{user_id}/grant/{grant_id} | revoke_capability | partial | none | real; no path test |
+| GET | /api/v1/admin/capabilities/registry | list_registry | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/capabilities/me | list_for_me | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/capabilities/users/{user_id} | list_for_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/capabilities/users/{user_id}/grant | grant_capability | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| DELETE | /api/v1/admin/capabilities/users/{user_id}/grant/{grant_id} | revoke_capability | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/impersonation.rs  (mount: /api/v1/admin/impersonation)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/impersonation/active | list_active | partial | none | real (ImpersonationService); no path test |
-| POST | /api/v1/admin/impersonation/start | start | partial | none | real; no path test |
-| DELETE | /api/v1/admin/impersonation/{token_id} | stop | partial | none | real; no path test |
+| GET | /api/v1/admin/impersonation/active | list_active | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/impersonation/start | start | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| DELETE | /api/v1/admin/impersonation/{token_id} | stop | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/memberships.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/memberships/invite | invite | partial | none | real (AuthPolicyEnforcer + UserRepository); no path test |
-| POST | /api/v1/admin/memberships/accept | accept | partial | none | real; gated by principal identity binding (no capability); no path test |
-| DELETE | /api/v1/admin/memberships/{user_id} | revoke | partial | none | real; no path test |
-| GET | /api/v1/admin/memberships/merge-collisions | merge_collisions | partial | none | real; no path test |
+| POST | /api/v1/admin/memberships/invite | invite | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/memberships/accept | accept | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| DELETE | /api/v1/admin/memberships/{user_id} | revoke | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/memberships/merge-collisions | merge_collisions | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/metrics.rs  (mount: /api/v1/admin/metrics)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/metrics/summary | metrics_summary | partial | none | real (sqlx count queries); no path test |
+| GET | /api/v1/admin/metrics/summary | metrics_summary | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/notifications.rs  (mount: /api/v1/admin/notifications)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/notifications/analytics | get_analytics | partial | none | real (NotificationEventRepository); no path test |
+| GET | /api/v1/admin/notifications/analytics | get_analytics | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/users.rs  (mount: /api/v1/admin/principals)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/principals | search_users | partial | none | real (platform_admin_repo); no path test |
-| GET | /api/v1/admin/principals/{id} | get_user | partial | none | real; no path test |
-| POST | /api/v1/admin/principals/{id}/principal-kind | set_principal_kind | partial | none | real; no path test |
+| GET | /api/v1/admin/principals | search_users | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/principals/{id} | get_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/principals/{id}/principal-kind | set_principal_kind | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/users_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/users | list_users | partial | none | real (user_repo); no path test |
-| GET | /api/v1/admin/users/{id} | get_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/suspend | suspend_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/reactivate | reactivate_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/delete | delete_user | partial | none | real; no path test |
+| GET | /api/v1/admin/users | list_users | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| GET | /api/v1/admin/users/{id} | get_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/users/{id}/suspend | suspend_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/users/{id}/reactivate | reactivate_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/users/{id}/delete | delete_user | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 
 ## admin/mfa/mod.rs  (mount: /api/v1/admin/mfa)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/mfa/enroll/start | start_enroll | partial | none | real handler; no test hits enroll/* |
-| POST | /api/v1/admin/mfa/enroll/verify | verify_enroll | partial | none | real handler; no test hits enroll/* |
+| POST | /api/v1/admin/mfa/enroll/start | start_enroll | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
+| POST | /api/v1/admin/mfa/enroll/verify | verify_enroll | done | admin_authz_backfill_tests.rs | 401 anon + 403 non-admin |
 | POST | /api/v1/admin/mfa/verify | verify_step_up | done | admin_mfa_step_up_tests.rs | happy-path 200 step-up |
 | POST | /api/v1/admin/mfa/recovery/use | use_recovery | done | admin_mfa_recovery_tests.rs, mfa_recovery_cross_user_idor_tests.rs | happy-path 200 (first-use) |
 | POST | /api/v1/admin/mfa/disable | disable_mfa | done | admin_mfa_disable_tests.rs, mfa_disable_rls_scope_tests.rs | happy-path 200 |
