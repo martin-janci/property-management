@@ -15,8 +15,8 @@ different answers. Read both.
 
 | Metric | Count | % of all endpoints |
 |---|---|---|
-| **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
-| Partial — real handler, **no** happy-path test | 1831 | 88.8% |
+| **DONE** — real handler **and** a passing happy-path test | **127** | **6.2%** |
+| Partial — real handler, **no** happy-path test | 1811 | 87.8% |
 | Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
 | Missing — in spec/use-case, no handler | 0 | 0.0% ✓ confirmed by BIT-269 |
 | **Total endpoints** | **2063** | 100% |
@@ -51,11 +51,11 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
-| [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **107** | **1831** | **125** | **5.2%** | **93.9%** |
+| [ai-automation](./groups/ai-automation.md) | 93 | 20 | 71 | 2 | 21.5% | 97.8% |
+| **Total** | **2063** | **127** | **1811** | **125** | **6.2%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
-and deepest test investment. AI/automation has **zero** happy-path coverage.
+and deepest test investment. AI/automation batch 1 added 20 registry happy-path tests (21.5%).
 
 ## Gaps & stubs (the 125 not-implemented endpoints)
 
