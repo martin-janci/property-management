@@ -125,7 +125,9 @@ async fn submit_classification_feedback_succeeds(pool: PgPool) {
 
     let res = app
         .session(token, org_id)
-        .post(&format!("/api/v1/documents/{doc_id}/classification/feedback"))
+        .post(&format!(
+            "/api/v1/documents/{doc_id}/classification/feedback"
+        ))
         .json(json!({
             "accepted": true,
             "correct_category": null
@@ -140,8 +142,7 @@ async fn submit_classification_feedback_succeeds(pool: PgPool) {
 async fn get_classification_history_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "intel-class-hist").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "intel-class-hist").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
