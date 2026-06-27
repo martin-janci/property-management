@@ -26,13 +26,7 @@ async fn list_articles_returns_200(pool: PgPool) {
 #[sqlx::test(migrations = "../../db/migrations")]
 async fn get_article_unknown_slug_returns_404(pool: PgPool) {
     let router = articles_router(pool);
-    let status = common::send(
-        &router,
-        Method::GET,
-        "/api/v1/articles/no-such-slug",
-        None,
-    )
-    .await;
+    let status = common::send(&router, Method::GET, "/api/v1/articles/no-such-slug", None).await;
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 

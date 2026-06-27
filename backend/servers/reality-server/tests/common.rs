@@ -3,7 +3,9 @@
 //! Provides: env setup, JWT minting, AppState construction, and
 //! a convenience oneshot-request helper.
 
-use api_core::{middleware::TenantRateLimiterSet, middleware::TenantResolutionCache, PrincipalClaims};
+use api_core::{
+    middleware::TenantRateLimiterSet, middleware::TenantResolutionCache, PrincipalClaims,
+};
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
