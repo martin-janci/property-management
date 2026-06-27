@@ -239,7 +239,13 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
     seed_membership(&pool, org_id, user_id, "org_admin").await;
     let building_id = seed_building(&pool, org_id).await;
     let token = mint(user_id, &email, org_id);
-    Fixture { app, token, org_id, building_id, user_id }
+    Fixture {
+        app,
+        token,
+        org_id,
+        building_id,
+        user_id,
+    }
 }
 
 // ===========================================================================
@@ -275,7 +281,12 @@ async fn pa_list_benchmarks_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa list benchmarks: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa list benchmarks: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -296,7 +307,12 @@ async fn pa_create_benchmark_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pa create benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pa create benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -307,13 +323,20 @@ async fn pa_get_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .get(&format!("/api/v1/portfolio-analytics/benchmarks/{bench_id}"))
+                .get(&format!(
+                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa get benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -324,14 +347,21 @@ async fn pa_update_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .put(&format!("/api/v1/portfolio-analytics/benchmarks/{bench_id}"))
+                .put(&format!(
+                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({ "target_value": "97.0" }))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa update benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa update benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -342,13 +372,20 @@ async fn pa_delete_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .delete(&format!("/api/v1/portfolio-analytics/benchmarks/{bench_id}"))
+                .delete(&format!(
+                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "pa delete benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pa delete benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -364,7 +401,12 @@ async fn pa_list_property_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa list property metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa list property metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -388,7 +430,12 @@ async fn pa_upsert_property_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa upsert property metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa upsert property metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -407,7 +454,12 @@ async fn pa_get_property_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa get property metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get property metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -423,7 +475,12 @@ async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa get portfolio metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get portfolio metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -443,7 +500,12 @@ async fn pa_calculate_portfolio_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa calc metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa calc metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -459,7 +521,12 @@ async fn pa_list_comparisons_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa list comparisons: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa list comparisons: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -480,7 +547,12 @@ async fn pp_create_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp create portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp create portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -496,7 +568,12 @@ async fn pp_list_portfolios_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list portfolios: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list portfolios: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -513,7 +590,12 @@ async fn pp_get_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -531,7 +613,12 @@ async fn pp_update_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp update portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp update portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -548,7 +635,12 @@ async fn pp_delete_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "pp delete portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pp delete portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -572,7 +664,12 @@ async fn pp_add_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp add property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp add property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -591,7 +688,12 @@ async fn pp_list_properties_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list properties: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list properties: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -611,7 +713,12 @@ async fn pp_get_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -632,7 +739,12 @@ async fn pp_update_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp update property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp update property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -652,7 +764,12 @@ async fn pp_remove_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "pp remove property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pp remove property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -678,7 +795,12 @@ async fn pp_create_transaction_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp create transaction: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp create transaction: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -697,7 +819,12 @@ async fn pp_list_transactions_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list transactions: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list transactions: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -718,7 +845,12 @@ async fn pp_get_transaction_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get transaction: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get transaction: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -740,7 +872,12 @@ async fn pp_update_transaction_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp update transaction: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp update transaction: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -761,7 +898,12 @@ async fn pp_delete_transaction_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "pp delete transaction: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pp delete transaction: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -788,7 +930,12 @@ async fn pp_upsert_cash_flow_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp upsert cash flow: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp upsert cash flow: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -807,7 +954,12 @@ async fn pp_get_cash_flows_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get cash flows: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get cash flows: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -830,7 +982,12 @@ async fn pp_calculate_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp calculate metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp calculate metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -849,7 +1006,12 @@ async fn pp_get_latest_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get latest metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get latest metrics: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -868,7 +1030,12 @@ async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp metrics summary: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp metrics summary: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -889,7 +1056,12 @@ async fn pp_create_benchmark_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp create benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp create benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -905,7 +1077,12 @@ async fn pp_list_benchmarks_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list benchmarks: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list benchmarks: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -916,13 +1093,20 @@ async fn pp_get_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .get(&format!("/api/v1/portfolio-performance/benchmarks/{bench_id}"))
+                .get(&format!(
+                    "/api/v1/portfolio-performance/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -933,14 +1117,21 @@ async fn pp_update_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .put(&format!("/api/v1/portfolio-performance/benchmarks/{bench_id}"))
+                .put(&format!(
+                    "/api/v1/portfolio-performance/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({ "avg_cap_rate": "0.060" }))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp update benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp update benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -951,13 +1142,20 @@ async fn pp_delete_benchmark_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .delete(&format!("/api/v1/portfolio-performance/benchmarks/{bench_id}"))
+                .delete(&format!(
+                    "/api/v1/portfolio-performance/benchmarks/{bench_id}"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "pp delete benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pp delete benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -981,7 +1179,12 @@ async fn pp_create_comparison_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp create comparison: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp create comparison: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1000,7 +1203,12 @@ async fn pp_list_comparisons_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list comparisons: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list comparisons: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1032,7 +1240,12 @@ async fn pp_get_comparison_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp get comparison: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp get comparison: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1051,7 +1264,12 @@ async fn pp_get_dashboard_summary_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp dashboard summary: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp dashboard summary: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1070,7 +1288,12 @@ async fn pp_get_dashboard_property_cards_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp dashboard property-cards: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp dashboard property-cards: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1089,7 +1312,12 @@ async fn pp_get_dashboard_cash_flow_trend_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp dashboard cash-flow-trend: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp dashboard cash-flow-trend: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1114,7 +1342,12 @@ async fn pp_create_alert_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "pp create alert: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "pp create alert: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1133,7 +1366,12 @@ async fn pp_list_alerts_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp list alerts: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp list alerts: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1153,7 +1391,12 @@ async fn pp_mark_alert_read_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp mark alert read: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp mark alert read: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1174,5 +1417,10 @@ async fn pp_resolve_alert_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "pp resolve alert: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pp resolve alert: {}",
+        resp.text()
+    );
 }

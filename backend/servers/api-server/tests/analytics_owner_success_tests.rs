@@ -1,8 +1,8 @@
 //! Happy-path tests for owner-analytics endpoints (Epic 74).
 //! Covers all 17 partial endpoints → promoted to done.
 use axum::http::StatusCode;
-use chrono::{Utc, Duration};
-use jsonwebtoken::{encode, Header, EncodingKey};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -111,13 +111,11 @@ async fn seed_valuation(pool: &PgPool, unit_id: Uuid) -> Uuid {
 }
 
 async fn seed_value_history(pool: &PgPool, unit_id: Uuid) {
-    sqlx::query(
-        r#"INSERT INTO property_value_history (unit_id, value) VALUES ($1, 100000)"#,
-    )
-    .bind(unit_id)
-    .execute(pool)
-    .await
-    .expect("seed value history");
+    sqlx::query(r#"INSERT INTO property_value_history (unit_id, value) VALUES ($1, 100000)"#)
+        .bind(unit_id)
+        .execute(pool)
+        .await
+        .expect("seed value history");
 }
 
 async fn seed_rule(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
@@ -169,7 +167,9 @@ async fn oa_create_valuation_succeeds(pool: PgPool) {
     });
 
     let resp = app
-        .post(&format!("/api/v1/owner-analytics/units/{unit_id}/valuation"))
+        .post(&format!(
+            "/api/v1/owner-analytics/units/{unit_id}/valuation"
+        ))
         .bearer_auth(&token)
         .json(&body)
         .send()
@@ -189,7 +189,9 @@ async fn oa_get_valuation_with_comparables_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-gvc@oa.test", org_id);
 
     let resp = app
-        .get(&format!("/api/v1/owner-analytics/valuations/{valuation_id}"))
+        .get(&format!(
+            "/api/v1/owner-analytics/valuations/{valuation_id}"
+        ))
         .bearer_auth(&token)
         .send()
         .await;
@@ -446,9 +448,7 @@ async fn oa_delete_auto_approval_rule_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-dr@oa.test", org_id);
 
     let resp = app
-        .delete(&format!(
-            "/api/v1/owner-analytics/expense-rules/{rule_id}"
-        ))
+        .delete(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
         .bearer_auth(&token)
         .send()
         .await;

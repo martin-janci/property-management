@@ -219,7 +219,12 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
     let user_id = seed_user(&pool, &email).await;
     seed_membership(&pool, org_id, user_id, "org_admin").await;
     let token = mint_token(user_id, &email);
-    Fixture { app, token, org_id, user_id }
+    Fixture {
+        app,
+        token,
+        org_id,
+        user_id,
+    }
 }
 
 // ===========================================================================
@@ -239,7 +244,12 @@ async fn esg_get_configuration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get configuration: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get configuration: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -260,7 +270,12 @@ async fn esg_upsert_configuration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "upsert configuration: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "upsert configuration: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -306,7 +321,12 @@ async fn esg_create_metric_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create metric: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create metric: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -324,7 +344,12 @@ async fn esg_update_metric_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update metric: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update metric: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -342,7 +367,12 @@ async fn esg_verify_metric_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "verify metric: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "verify metric: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -360,7 +390,12 @@ async fn esg_delete_metric_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete metric: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete metric: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -404,7 +439,12 @@ async fn esg_create_carbon_footprint_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create carbon: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create carbon: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -420,7 +460,12 @@ async fn esg_get_carbon_summary_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "carbon summary: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "carbon summary: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -455,7 +500,12 @@ async fn esg_delete_carbon_footprint_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete carbon: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete carbon: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -475,7 +525,12 @@ async fn esg_list_benchmarks_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list benchmarks: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list benchmarks: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -499,7 +554,12 @@ async fn esg_create_benchmark_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create benchmark: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -517,7 +577,12 @@ async fn esg_delete_benchmark_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete benchmark: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete benchmark: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -561,7 +626,12 @@ async fn esg_create_target_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create target: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create target: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -596,7 +666,12 @@ async fn esg_update_target_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update target: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update target: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -614,7 +689,12 @@ async fn esg_delete_target_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete target: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete target: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -657,7 +737,12 @@ async fn esg_create_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create report: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -692,7 +777,12 @@ async fn esg_update_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update report: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -711,7 +801,12 @@ async fn esg_submit_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "submit report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "submit report: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -730,7 +825,12 @@ async fn esg_approve_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "approve report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "approve report: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -749,7 +849,12 @@ async fn esg_delete_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete report: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -769,7 +874,12 @@ async fn esg_list_eu_taxonomy_assessments_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list eu taxonomy: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list eu taxonomy: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -790,7 +900,12 @@ async fn esg_create_eu_taxonomy_assessment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create eu taxonomy: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create eu taxonomy: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -807,7 +922,12 @@ async fn esg_get_eu_taxonomy_assessment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get eu taxonomy: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get eu taxonomy: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -828,7 +948,12 @@ async fn esg_update_eu_taxonomy_assessment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update eu taxonomy: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update eu taxonomy: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -848,7 +973,12 @@ async fn esg_get_dashboard_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get dashboard: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get dashboard: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -866,7 +996,12 @@ async fn esg_refresh_dashboard_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "refresh dashboard: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "refresh dashboard: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -886,7 +1021,12 @@ async fn esg_list_import_jobs_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list import jobs: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list import jobs: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -906,7 +1046,12 @@ async fn esg_create_import_job_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create import job: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create import job: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -923,7 +1068,12 @@ async fn esg_get_import_job_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get import job: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get import job: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -943,5 +1093,10 @@ async fn esg_get_statistics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get statistics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get statistics: {}",
+        resp.text()
+    );
 }

@@ -208,7 +208,12 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
     let user_id = seed_user(&pool, &email).await;
     seed_membership(&pool, org_id, user_id, "org_admin").await;
     let token = mint(user_id, &email, org_id);
-    Fixture { app, token, org_id, user_id }
+    Fixture {
+        app,
+        token,
+        org_id,
+        user_id,
+    }
 }
 
 // ===========================================================================
@@ -228,7 +233,12 @@ async fn gp_list_connections_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list connections: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list connections: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -248,7 +258,12 @@ async fn gp_create_connection_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create connection: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create connection: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -265,7 +280,12 @@ async fn gp_get_connection_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get connection: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get connection: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -285,7 +305,12 @@ async fn gp_update_connection_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update connection: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update connection: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -302,7 +327,12 @@ async fn gp_delete_connection_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete connection: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete connection: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -313,13 +343,20 @@ async fn gp_test_connection_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .post(&format!("/api/v1/government-portal/connections/{conn_id}/test"))
+                .post(&format!(
+                    "/api/v1/government-portal/connections/{conn_id}/test"
+                ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "test connection: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "test connection: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -339,7 +376,12 @@ async fn gp_list_templates_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list templates: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list templates: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -376,7 +418,12 @@ async fn gp_list_submissions_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list submissions: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list submissions: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -398,7 +445,12 @@ async fn gp_create_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -415,7 +467,12 @@ async fn gp_get_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -435,7 +492,12 @@ async fn gp_update_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -454,7 +516,12 @@ async fn gp_validate_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "validate submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "validate submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -474,7 +541,12 @@ async fn gp_submit_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "submit submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "submit submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -493,7 +565,12 @@ async fn gp_cancel_submission_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "cancel submission: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "cancel submission: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -512,7 +589,12 @@ async fn gp_get_submission_audit_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get submission audit: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get submission audit: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -535,7 +617,12 @@ async fn gp_list_attachments_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list attachments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list attachments: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -561,7 +648,12 @@ async fn gp_add_attachment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add attachment: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add attachment: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -581,7 +673,12 @@ async fn gp_delete_attachment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete attachment: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete attachment: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -601,7 +698,12 @@ async fn gp_list_schedules_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list schedules: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list schedules: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -623,7 +725,12 @@ async fn gp_create_schedule_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create schedule: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create schedule: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -664,7 +771,12 @@ async fn gp_update_schedule_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update schedule: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update schedule: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -683,7 +795,12 @@ async fn gp_delete_schedule_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete schedule: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete schedule: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================

@@ -137,11 +137,7 @@ async fn seed_portfolio(pool: &PgPool, org_id: Uuid, investor_id: Uuid) -> Uuid 
     .expect("seed portfolio")
 }
 
-async fn seed_portfolio_property(
-    pool: &PgPool,
-    portfolio_id: Uuid,
-    building_id: Uuid,
-) -> Uuid {
+async fn seed_portfolio_property(pool: &PgPool, portfolio_id: Uuid, building_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO portfolio_properties
                (portfolio_id, building_id, investment_amount, ownership_share, acquisition_date)
@@ -155,7 +151,12 @@ async fn seed_portfolio_property(
     .expect("seed portfolio property")
 }
 
-async fn seed_distribution(pool: &PgPool, org_id: Uuid, portfolio_id: Uuid, investor_id: Uuid) -> Uuid {
+async fn seed_distribution(
+    pool: &PgPool,
+    org_id: Uuid,
+    portfolio_id: Uuid,
+    investor_id: Uuid,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO investor_distributions
                (organization_id, portfolio_id, investor_id, distribution_type,
@@ -171,7 +172,12 @@ async fn seed_distribution(pool: &PgPool, org_id: Uuid, portfolio_id: Uuid, inve
     .expect("seed distribution")
 }
 
-async fn seed_capital_call(pool: &PgPool, org_id: Uuid, portfolio_id: Uuid, investor_id: Uuid) -> Uuid {
+async fn seed_capital_call(
+    pool: &PgPool,
+    org_id: Uuid,
+    portfolio_id: Uuid,
+    investor_id: Uuid,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO capital_calls
                (organization_id, portfolio_id, investor_id, call_number,
@@ -207,7 +213,13 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
     seed_membership(&pool, org_id, user_id, "org_admin").await;
     let building_id = seed_building(&pool, org_id).await;
     let token = mint(user_id, &email, org_id);
-    Fixture { app, token, org_id, building_id, user_id }
+    Fixture {
+        app,
+        token,
+        org_id,
+        building_id,
+        user_id,
+    }
 }
 
 // ===========================================================================
@@ -227,7 +239,12 @@ async fn ip_list_investors_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list investors: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list investors: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -244,7 +261,12 @@ async fn ip_create_investor_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create investor: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create investor: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -279,7 +301,12 @@ async fn ip_update_investor_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update investor: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update investor: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -296,7 +323,12 @@ async fn ip_delete_investor_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete investor: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete investor: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -315,7 +347,12 @@ async fn ip_get_investor_summary_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "investor summary: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "investor summary: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -335,7 +372,12 @@ async fn ip_list_portfolios_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list portfolios: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list portfolios: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -358,7 +400,12 @@ async fn ip_create_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -376,7 +423,12 @@ async fn ip_get_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -395,7 +447,12 @@ async fn ip_update_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -413,7 +470,12 @@ async fn ip_delete_portfolio_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete portfolio: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete portfolio: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -432,7 +494,12 @@ async fn ip_list_investor_portfolios_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "investor portfolios: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "investor portfolios: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -458,7 +525,12 @@ async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add portfolio property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add portfolio property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -480,7 +552,12 @@ async fn ip_update_portfolio_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update portfolio property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update portfolio property: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -501,7 +578,12 @@ async fn ip_remove_portfolio_property_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "remove portfolio property: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "remove portfolio property: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -547,7 +629,12 @@ async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create roi: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create roi: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -601,7 +688,12 @@ async fn ip_create_distribution_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create distribution: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create distribution: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -620,7 +712,12 @@ async fn ip_list_investor_distributions_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list investor distributions: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list investor distributions: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -633,16 +730,19 @@ async fn ip_update_distribution_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .put(&format!(
-                    "/api/v1/investor-portal/distributions/{dist_id}"
-                ))
+                .put(&format!("/api/v1/investor-portal/distributions/{dist_id}"))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({ "status": "paid" }))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update distribution: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update distribution: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -669,7 +769,12 @@ async fn ip_create_report_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create report: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create report: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -688,7 +793,12 @@ async fn ip_list_investor_reports_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list investor reports: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list investor reports: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -748,7 +858,12 @@ async fn ip_create_capital_call_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create capital call: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create capital call: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -767,7 +882,12 @@ async fn ip_list_investor_capital_calls_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list investor capital calls: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list investor capital calls: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -787,7 +907,12 @@ async fn ip_update_capital_call_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update capital call: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update capital call: {}",
+        resp.text()
+    );
 }
 
 // ===========================================================================
@@ -802,15 +927,18 @@ async fn ip_get_investor_dashboard_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .get(&format!(
-                    "/api/v1/investor-portal/dashboard/{inv_id}"
-                ))
+                .get(&format!("/api/v1/investor-portal/dashboard/{inv_id}"))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "investor dashboard: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "investor dashboard: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -835,5 +963,10 @@ async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "upsert dashboard metrics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "upsert dashboard metrics: {}",
+        resp.text()
+    );
 }
