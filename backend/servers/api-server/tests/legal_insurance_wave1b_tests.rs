@@ -20,12 +20,11 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user_with_org, seed_membership, seed_org, TestApp, TestUser};
+use common::{create_authenticated_user_with_org, seed_org, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Shared fixture helpers
