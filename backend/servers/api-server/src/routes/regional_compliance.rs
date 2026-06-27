@@ -141,7 +141,7 @@ async fn validate_slovak_vote(
 ) -> Result<Json<SlovakVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_by_id(payload.vote_id)
+        .find_poll_by_id_rls(&state.db, payload.vote_id)
         .await
         .map_err(|e| {
             (
@@ -158,7 +158,7 @@ async fn validate_slovak_vote(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Slovakia, &payload.decision_type.to_string())
+        .get_quorum_rule(Jurisdiction::Slovakia, payload.decision_type.legal_reference())
         .await
         .map_err(|e| {
             (
@@ -227,7 +227,7 @@ async fn get_slovak_vote_minutes(
 ) -> Result<Json<SlovakVoteMinutes>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_by_id(vote_id)
+        .find_poll_by_id_rls(&state.db, vote_id)
         .await
         .map_err(|e| {
             (
@@ -577,7 +577,7 @@ async fn validate_czech_vote(
 ) -> Result<Json<CzechVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_by_id(payload.vote_id)
+        .find_poll_by_id_rls(&state.db, payload.vote_id)
         .await
         .map_err(|e| {
             (
@@ -594,7 +594,7 @@ async fn validate_czech_vote(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Czechia, &payload.decision_type.to_string())
+        .get_quorum_rule(Jurisdiction::Czechia, payload.decision_type.legal_reference())
         .await
         .map_err(|e| {
             (
@@ -669,7 +669,7 @@ async fn get_czech_usneseni(
 ) -> Result<Json<CzechSvjUsneseni>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_by_id(vote_id)
+        .find_poll_by_id_rls(&state.db, vote_id)
         .await
         .map_err(|e| {
             (

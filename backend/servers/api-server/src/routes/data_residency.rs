@@ -9,12 +9,11 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use api_core::extractors::TenantExtractor;
 use db::models::data_residency::*;
-use db::repositories::data_residency::{data_region_to_string, string_to_data_region};
+use db::repositories::data_residency::string_to_data_region;
 
 use crate::state::AppState;
 

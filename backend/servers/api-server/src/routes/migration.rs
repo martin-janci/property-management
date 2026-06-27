@@ -12,13 +12,12 @@ use axum::{
 };
 use axum_extra::extract::Multipart;
 use db::models::{
-    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus, ExportCategoriesResponse,
-    ExportCategoryInfo, ExportDataCategory, ExportPrivacyOptions, FieldDataType, FieldValidation,
-    ImportCategoriesResponse, ImportCategoryInfo, ImportDataType, ImportFieldMapping,
-    ImportJobHistory, ImportJobStatus, ImportJobStatusResponse, ImportPreviewResult,
-    ImportRowError, ImportTemplateSummary, MigrationExportResponse, MigrationExportStatus,
-    MigrationExportStatusResponse, MigrationPagination, RecordTypeCounts, TemplateFormat,
-    UpdateImportTemplate, ValidationIssue, ValidationSeverity,
+    ApproveImportRequest, ApproveImportResponse, ExportCategoriesResponse, ExportCategoryInfo,
+    ExportDataCategory, ExportPrivacyOptions, ImportCategoriesResponse, ImportCategoryInfo,
+    ImportDataType, ImportFieldMapping, ImportJobHistory, ImportJobStatus, ImportJobStatusResponse,
+    ImportPreviewResult, ImportRowError, ImportTemplateSummary, MigrationExportResponse,
+    MigrationExportStatus, MigrationExportStatusResponse, MigrationPagination, RecordTypeCounts,
+    TemplateFormat, UpdateImportTemplate, ValidationIssue, ValidationSeverity,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -828,8 +827,8 @@ async fn list_import_jobs(
         .list_import_jobs_history(
             &mut **rls.conn(),
             org_id,
-            query.status,
-            query.data_type,
+            query.status.clone(),
+            query.data_type.clone(),
             page,
             per_page,
         )
@@ -1275,6 +1274,7 @@ async fn get_export_status(
                 None,
                 Some(chrono::Utc::now()),
                 None,
+                None,
             )
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -1580,7 +1580,7 @@ async fn get_import_preview(
             skipped: job.skipped_rows,
         },
         issues,
-        total_issue_count: job.failed_rows as i64,
+        total_issue_count: job.failed_rows,
         duplicates: vec![],
         sample_records: vec![],
         column_mapping: vec![],
