@@ -201,7 +201,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_fee_schedule should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_fee_schedule should succeed: {}",
+        resp.text()
+    );
     let schedule = resp.json_value();
     let schedule_id_str = schedule["id"].as_str().expect("id missing");
     let schedule_id = Uuid::parse_str(schedule_id_str).expect("invalid schedule uuid");
@@ -209,9 +214,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 2.2 GET /api/v1/financial/fee-schedules -> list_fee_schedules
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/fee-schedules?organization_id={org_id}&building_id={building_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/fee-schedules?organization_id={org_id}&building_id={building_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -362,7 +369,10 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK, "checkout initiation should succeed: {}", resp.text());
     let checkout_res = resp.json_value();
-    assert_eq!(checkout_res["checkoutUrl"], "https://checkout.stripe.test/cs_happy_test_session_id");
+    assert_eq!(
+        checkout_res["checkoutUrl"],
+        "https://checkout.stripe.test/cs_happy_test_session_id"
+    );
 
     // 3.8 POST /api/v1/financial/payments -> record_payment (Allocates to outstanding invoices)
     let record_payment_payload = json!({
@@ -442,7 +452,8 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED);
     let unallocated_payment = resp.json_value();
     let unallocated_payment_id_str = unallocated_payment["id"].as_str().expect("id missing");
-    let unallocated_payment_id = Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
+    let unallocated_payment_id = Uuid::parse_str(unallocated_payment_id_str)
+        .expect("invalid payment uuid");
 
     // 4.1 GET /api/v1/financial/payments/unallocated -> list_unallocated_payments
     let resp = app
