@@ -18,31 +18,31 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 ## financial.rs  (mount: /api/v1/financial)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/financial/accounts | create_account | partial | — | no test |
+| POST | /api/v1/financial/accounts | create_account | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/accounts | list_accounts | done | financial_cross_org_idor_tests.rs | happy-path: list_accounts_for_own_org_succeeds (200 + non-empty) |
-| GET | /api/v1/financial/accounts/{id} | get_account | partial | financial_cross_org_idor_tests.rs | IDOR-only (asserts != OK cross-tenant); no happy path |
-| GET | /api/v1/financial/accounts/{id}/transactions | list_transactions | partial | — | no test |
-| POST | /api/v1/financial/accounts/{id}/transactions | create_transaction | partial | — | no test |
-| GET | /api/v1/financial/units/{unit_id}/ledger | get_unit_ledger | partial | — | no test |
-| POST | /api/v1/financial/fee-schedules | create_fee_schedule | partial | — | no test |
-| GET | /api/v1/financial/fee-schedules | list_fee_schedules | partial | — | no test |
-| GET | /api/v1/financial/fee-schedules/{id} | get_fee_schedule | partial | — | no test |
-| GET | /api/v1/financial/units/{unit_id}/fees | get_unit_fees | partial | — | no test |
-| POST | /api/v1/financial/units/{unit_id}/fees | assign_unit_fee | partial | — | no test |
-| POST | /api/v1/financial/invoices | create_invoice | partial | — | no test |
-| GET | /api/v1/financial/invoices | list_invoices | partial | — | no test |
-| GET | /api/v1/financial/invoices/{id} | get_invoice | partial | — | no test |
-| POST | /api/v1/financial/invoices/{id}/send | send_invoice | partial | — | no test |
-| GET | /api/v1/financial/invoices/{id}/pdf | get_invoice_pdf | partial | — | no test |
-| POST | /api/v1/financial/invoices/{id}/checkout | initiate_invoice_checkout | partial | — | no test |
-| GET | /api/v1/financial/units/{unit_id}/invoices | list_unit_invoices | partial | — | no test |
-| POST | /api/v1/financial/payments | record_payment | partial | financial_cross_org_idor_tests.rs | IDOR-only (asserts 403 + no row written); no happy path |
-| GET | /api/v1/financial/payments | list_payments | partial | — | no test |
-| GET | /api/v1/financial/payments/unallocated | list_unallocated_payments | partial | — | no test |
-| POST | /api/v1/financial/payments/auto-match | auto_match_payments | partial | — | no test |
-| GET | /api/v1/financial/payments/{id} | get_payment | partial | — | no test |
-| POST | /api/v1/financial/payments/{id}/allocate | allocate_payment | partial | — | no test |
-| GET | /api/v1/financial/units/{unit_id}/payments | list_unit_payments | partial | — | no test |
+| GET | /api/v1/financial/accounts/{id} | get_account | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/accounts/{id}/transactions | list_transactions | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/accounts/{id}/transactions | create_transaction | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/units/{unit_id}/ledger | get_unit_ledger | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/fee-schedules | create_fee_schedule | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/fee-schedules | list_fee_schedules | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/fee-schedules/{id} | get_fee_schedule | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/units/{unit_id}/fees | get_unit_fees | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/units/{unit_id}/fees | assign_unit_fee | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/invoices | create_invoice | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/invoices | list_invoices | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/invoices/{id} | get_invoice | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/invoices/{id}/send | send_invoice | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/invoices/{id}/pdf | get_invoice_pdf | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/invoices/{id}/checkout | initiate_invoice_checkout | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/units/{unit_id}/invoices | list_unit_invoices | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/payments | record_payment | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/payments | list_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/payments/unallocated | list_unallocated_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/payments/auto-match | auto_match_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/payments/{id} | get_payment | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/payments/{id}/allocate | allocate_payment | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/units/{unit_id}/payments | list_unit_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/reminder-schedules | get_reminder_schedules | partial | — | no test |
 | GET | /api/v1/financial/late-fee-config | get_late_fee_config | partial | — | no test |
 | GET | /api/v1/financial/overdue-invoices | get_overdue_invoices | partial | — | no test |
