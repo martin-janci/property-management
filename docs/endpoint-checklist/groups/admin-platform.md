@@ -203,33 +203,33 @@ All handlers are real (deployment / migration-safety / DR / cost-monitoring repo
 | POST | /api/v1/operations/costs/recommendations/{id}/implement | mark_recommendation_implemented | partial | none | |
 
 ## platform_admin/ (mod.rs router → /api/v1/platform-admin; tenants/features/ops/audit handlers)
-All handlers are real (platform_admin_repo / feature_flag_repo / health_monitoring_repo / system_announcement_repo). No test references `/api/v1/platform-admin` → every endpoint is `partial`.
+All handlers are real (platform_admin_repo / feature_flag_repo / health_monitoring_repo / system_announcement_repo). Tested in platform_admin_endpoints_tests.rs.
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/platform-admin/organizations | list_organizations | partial | none | tenants.rs |
-| GET | /api/v1/platform-admin/organizations/{id} | get_organization | partial | none | tenants.rs |
-| POST | /api/v1/platform-admin/organizations/{id}/suspend | suspend_organization | partial | none | tenants.rs |
-| POST | /api/v1/platform-admin/organizations/{id}/reactivate | reactivate_organization | partial | none | tenants.rs |
-| GET | /api/v1/platform-admin/stats | get_platform_stats | partial | none | tenants.rs |
-| GET | /api/v1/platform-admin/feature-flags | list_feature_flags | partial | none | features.rs |
-| POST | /api/v1/platform-admin/feature-flags | create_feature_flag | partial | none | features.rs |
-| GET | /api/v1/platform-admin/feature-flags/{id} | get_feature_flag | partial | none | features.rs |
-| PUT | /api/v1/platform-admin/feature-flags/{id} | update_feature_flag | partial | none | features.rs |
-| DELETE | /api/v1/platform-admin/feature-flags/{id} | delete_feature_flag | partial | none | features.rs |
-| POST | /api/v1/platform-admin/feature-flags/{id}/toggle | toggle_feature_flag | partial | none | features.rs |
-| POST | /api/v1/platform-admin/feature-flags/{id}/overrides | create_feature_flag_override | partial | none | features.rs |
-| DELETE | /api/v1/platform-admin/feature-flags/{id}/overrides/{override_id} | delete_feature_flag_override | partial | none | features.rs |
-| GET | /api/v1/platform-admin/health/dashboard | get_health_dashboard | partial | none | ops.rs |
+| GET | /api/v1/platform-admin/organizations | list_organizations | done | platform_admin_endpoints_tests.rs | tenants.rs |
+| GET | /api/v1/platform-admin/organizations/{id} | get_organization | done | platform_admin_endpoints_tests.rs | tenants.rs |
+| POST | /api/v1/platform-admin/organizations/{id}/suspend | suspend_organization | done | platform_admin_endpoints_tests.rs | tenants.rs |
+| POST | /api/v1/platform-admin/organizations/{id}/reactivate | reactivate_organization | done | platform_admin_endpoints_tests.rs | tenants.rs |
+| GET | /api/v1/platform-admin/stats | get_platform_stats | done | platform_admin_endpoints_tests.rs | tenants.rs |
+| GET | /api/v1/platform-admin/feature-flags | list_feature_flags | done | platform_admin_endpoints_tests.rs | features.rs |
+| POST | /api/v1/platform-admin/feature-flags | create_feature_flag | done | platform_admin_endpoints_tests.rs | features.rs |
+| GET | /api/v1/platform-admin/feature-flags/{id} | get_feature_flag | done | platform_admin_endpoints_tests.rs | features.rs |
+| PUT | /api/v1/platform-admin/feature-flags/{id} | update_feature_flag | done | platform_admin_endpoints_tests.rs | features.rs |
+| DELETE | /api/v1/platform-admin/feature-flags/{id} | delete_feature_flag | done | platform_admin_endpoints_tests.rs | features.rs |
+| POST | /api/v1/platform-admin/feature-flags/{id}/toggle | toggle_feature_flag | done | platform_admin_endpoints_tests.rs | features.rs |
+| POST | /api/v1/platform-admin/feature-flags/{id}/overrides | create_feature_flag_override | done | platform_admin_endpoints_tests.rs | features.rs |
+| DELETE | /api/v1/platform-admin/feature-flags/{id}/overrides/{override_id} | delete_feature_flag_override | done | platform_admin_endpoints_tests.rs | features.rs |
+| GET | /api/v1/platform-admin/health/dashboard | get_health_dashboard | done | platform_admin_endpoints_tests.rs | ops.rs |
 | GET | /api/v1/platform-admin/health/metrics/{name}/history | get_metric_history | partial | none | ops.rs |
-| GET | /api/v1/platform-admin/health/alerts | get_health_alerts | partial | none | ops.rs |
+| GET | /api/v1/platform-admin/health/alerts | get_health_alerts | done | platform_admin_endpoints_tests.rs | ops.rs |
 | POST | /api/v1/platform-admin/health/alerts/{id}/acknowledge | acknowledge_alert | partial | none | ops.rs |
-| GET | /api/v1/platform-admin/health/thresholds | get_thresholds | partial | none | ops.rs |
+| GET | /api/v1/platform-admin/health/thresholds | get_thresholds | done | platform_admin_endpoints_tests.rs | ops.rs |
 | PUT | /api/v1/platform-admin/health/thresholds/{name} | update_threshold | partial | none | ops.rs |
-| GET | /api/v1/platform-admin/announcements | list_system_announcements | partial | none | ops.rs |
-| POST | /api/v1/platform-admin/announcements | create_system_announcement | partial | none | ops.rs |
-| GET | /api/v1/platform-admin/announcements/{id} | get_system_announcement | partial | none | ops.rs |
-| PUT | /api/v1/platform-admin/announcements/{id} | update_system_announcement | partial | none | ops.rs |
-| DELETE | /api/v1/platform-admin/announcements/{id} | delete_system_announcement | partial | none | ops.rs |
+| GET | /api/v1/platform-admin/announcements | list_system_announcements | done | platform_admin_endpoints_tests.rs | ops.rs |
+| POST | /api/v1/platform-admin/announcements | create_system_announcement | done | platform_admin_endpoints_tests.rs | ops.rs |
+| GET | /api/v1/platform-admin/announcements/{id} | get_system_announcement | done | platform_admin_endpoints_tests.rs | ops.rs |
+| PUT | /api/v1/platform-admin/announcements/{id} | update_system_announcement | done | platform_admin_endpoints_tests.rs | ops.rs |
+| DELETE | /api/v1/platform-admin/announcements/{id} | delete_system_announcement | done | platform_admin_endpoints_tests.rs | ops.rs |
 | POST | /api/v1/platform-admin/maintenance | schedule_maintenance | partial | none | ops.rs |
 | GET | /api/v1/platform-admin/maintenance | get_upcoming_maintenance_admin | partial | none | ops.rs |
 | DELETE | /api/v1/platform-admin/maintenance/{id} | delete_scheduled_maintenance | partial | none | ops.rs |
@@ -245,10 +245,10 @@ All handlers are real (platform_admin_repo / feature_flag_repo / health_monitori
 ## platform_admin/ public routers (mod.rs)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/feature-flags | get_resolved_feature_flags | partial | none | public resolved flags; real (feature_flag_repo); no path test |
+| GET | /api/v1/feature-flags | get_resolved_feature_flags | done | platform_admin_endpoints_tests.rs | public resolved flags; real (feature_flag_repo); no path test |
 | GET | /api/v1/system-announcements/active | get_active_announcements | partial | none | real; no path test |
 | POST | /api/v1/system-announcements/{id}/acknowledge | acknowledge_announcement | partial | none | real; no path test |
 | GET | /api/v1/maintenance/upcoming | get_upcoming_maintenance | partial | none | real; no path test |
 
 ## Summary
-- done: 5 | partial: 154 | stub: 0 | missing: 0 | total: 159
+- done: 27 | partial: 132 | stub: 0 | missing: 0 | total: 159

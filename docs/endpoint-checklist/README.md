@@ -15,23 +15,23 @@ different answers. Read both.
 
 | Metric | Count | % of all endpoints |
 |---|---|---|
-| **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
-| Partial — real handler, **no** happy-path test | 1831 | 88.8% |
-| Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
-| Missing — in spec/use-case, no handler | 0 | 0.0% |
-| **Total endpoints** | **2063** | 100% |
+| ✅ `done` | **302** | **14.4%** | Implemented **and** exercised by a passing test |
+| 🟡 `partial` | **1614** | 76.9% | Implemented (real DB/logic) but no behaviour-asserting test |
+| 🔧 `stub` | **117** | 5.6% | Placeholder handler (501 / mock data) or unmounted ROADMAP router |
+| ❌ `missing` | **65** | 3.1% | No handler for a spec endpoint (often flat vs nested paths) |
+| **Total** | **2098** | 100% | Distinct method+path across both servers |
 
-- **Test-verified DONE = 5.2%.** This is the strict number the ticket defines: an
+- **Test-verified DONE = 14.4%.** This is the strict number the ticket defines: an
   endpoint only counts as done if a test exercises its success path. By that bar the
-  platform is ~5% done.
-- **Implementation breadth = 93.9%** (`done + partial`). Almost every endpoint has a
-  real, DB/repo-backed handler. Only **6.1% are stubs/mock/unmounted**.
+  platform is ~14% done.
+- **Implementation breadth = 91.3%** (`done + partial`). Almost every endpoint has a
+  real, DB/repo-backed handler. Only **5.6% are stubs/mock/unmounted**.
 
 **The gap is test coverage, not implementation.** The overwhelming majority of the
 codebase's tests are **authorization / cross-org IDOR / RBAC rejection** suites that
 assert `401/403/404` and deliberately never reach a `2xx`. They harden the security
 boundary (which is the right first priority) but they do not prove the feature works,
-so they cannot promote an endpoint to `done`. Closing the 5.2% → high-90s gap is
+so they cannot promote an endpoint to `done`. Closing the 14.4% → high-90s gap is
 primarily a **happy-path integration-test** effort, not a build effort.
 
 ## Per-group summary
@@ -45,14 +45,14 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [faults-maintenance](./groups/faults-maintenance.md) | 273 | 10 | 249 | 14 | 3.7% | 94.9% |
 | [leasing](./groups/leasing.md) | 84 | 3 | 80 | 1 | 3.6% | 98.8% |
 | [finance](./groups/finance.md) | 234 | 8 | 226 | 0 | 3.4% | 100% |
-| [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
+| [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 15 | 180 | 73 | 5.6% | 72.8% |
 | [org-property](./groups/org-property.md) | 94 | 3 | 91 | 0 | 3.2% | 100% |
-| [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
+| [admin-platform](./groups/admin-platform.md) | 159 | 27 | 132 | 0 | 17.0% | 100% |
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **107** | **1831** | **125** | **5.2%** | **93.9%** |
+| **Total** | **2063** | **135** | **1803** | **125** | **6.5%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.
@@ -115,6 +115,9 @@ compliance-adjacent modules return mock data in production paths.
   cross-reference** (test files hit endpoints by URI string, e.g. `.uri("/api/v1/...")`).
   This is deterministic and reproducible but conservative: a test that exercises a path
   without a clear `2xx` assertion is treated as **not** proving the success path.
+### `missing` endpoints
+
+The spec→handler diff (Phase 4) found **65 missing endpoints**. Most of these missing endpoints represent structural mismatches between the OpenAPI surface (which frequently uses flat paths like `/api/v1/units/{id}`) and the actual mounted routes in `lib.rs` (which nest resources, e.g., `/api/v1/buildings/{building_id}/units/{unit_id}`). See `_SPEC_DIFF.md` for the full list.
 - Several test files exercise the **repository layer directly** rather than the HTTP
   endpoint (noted per group). Those do not count toward `done` for the endpoint.
 - A handful of routers are **dead code** (defined but never mounted, e.g.

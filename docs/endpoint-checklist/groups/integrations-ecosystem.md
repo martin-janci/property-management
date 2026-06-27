@@ -232,12 +232,12 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## features.rs  (mount: /api/v1/features)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/features/resolved | get_resolved_features | partial | — | real handler, no test |
-| GET | /api/v1/features/{key}/check | check_feature | partial | — | |
-| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | partial | — | |
-| POST | /api/v1/features/{key}/preference | set_feature_preference | partial | — | |
-| POST | /api/v1/features/analytics/event | log_feature_event | partial | — | |
-| GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | partial | — | |
+| GET | /api/v1/features/resolved | get_resolved_features | done | platform_admin_endpoints_tests.rs | real handler, no test |
+| GET | /api/v1/features/{key}/check | check_feature | done | platform_admin_endpoints_tests.rs | |
+| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | done | platform_admin_endpoints_tests.rs | |
+| POST | /api/v1/features/{key}/preference | set_feature_preference | done | platform_admin_endpoints_tests.rs | |
+| POST | /api/v1/features/analytics/event | log_feature_event | done | platform_admin_endpoints_tests.rs | |
+| GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | done | platform_admin_endpoints_tests.rs | |
 
 ## integrations/install.rs  (mount: /api/v1/integrations)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 15 | partial: 180 | stub: 73 | missing: 0 | total: 268
 </content>
