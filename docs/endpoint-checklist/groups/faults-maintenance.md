@@ -11,13 +11,13 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 ## faults.rs  (mount: /api/v1/faults)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/faults | create_fault | partial | faults_tests.rs | only auth-reject test; has idempotency middleware layer |
-| GET | /api/v1/faults | list_faults | partial | faults_tests.rs | auth-reject only |
+| POST | /api/v1/faults | create_fault | done | faults_tests.rs | happy-path integrated |
+| GET | /api/v1/faults | list_faults | done | faults_tests.rs | happy-path integrated |
 | GET | /api/v1/faults/my | list_my_faults | partial | faults_tests.rs | auth-reject only |
 | GET | /api/v1/faults/{id} | get_fault | partial | — | no test (axum 0.7 `{id}` path-param tests skipped per file note) |
 | PUT | /api/v1/faults/{id} | update_fault | partial | — | |
-| POST | /api/v1/faults/{id}/triage | triage_fault | partial | — | |
-| POST | /api/v1/faults/{id}/assign | assign_fault | partial | — | |
+| POST | /api/v1/faults/{id}/triage | triage_fault | done | faults_tests.rs | happy-path integrated |
+| POST | /api/v1/faults/{id}/assign | assign_fault | done | faults_tests.rs | happy-path integrated |
 | PUT | /api/v1/faults/{id}/status | update_status | partial | — | |
 | POST | /api/v1/faults/{id}/resolve | resolve_fault | partial | — | |
 | POST | /api/v1/faults/{id}/confirm | confirm_fault | partial | — | |
@@ -330,4 +330,4 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 | POST | /api/v1/vendors/invoices/{id}/payment | invoices::record_payment | partial | — | |
 
 ## Summary
-- done: 10 | partial: 249 | stub: 14 | missing: 0 | total: 273
+- done: 14 | partial: 245 | stub: 14 | missing: 0 | total: 273

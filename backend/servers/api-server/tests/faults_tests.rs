@@ -242,3 +242,132 @@ mod http_methods {
         );
     }
 }
+
+// =============================================================================
+// Happy Path Tests
+// =============================================================================
+
+#[cfg(test)]
+mod happy_path {
+    use super::*;
+    use common::{create_authenticated_user_with_org, TestUser};
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_faults_happy_path(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let user = TestUser::new();
+        let (token, org_id) = create_authenticated_user_with_org(&app, &user, "flthappy").await;
+
+        // Resolve user ID
+        let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+            .bind(&user.email)
+            .fetch_one(&app.pool)
+            .await
+            .expect("resolve user id");
+
+        // Seed user_memberships directly so user resolves as OrgAdmin (manager role)
+        // because triage/assign handlers query `is_manager_in_org` which queries `user_memberships`
+        sqlx::query(
+            r#"INSERT INTO user_memberships (user_id, organization_id, role)
+               VALUES ($1, $2, 'OrgAdmin')
+               ON CONFLICT DO NOTHING"#,
+        )
+        .bind(user_id)
+        .bind(org_id)
+        .execute(&app.pool)
+        .await
+        .expect("seed user_membership");
+
+        // Seed building
+        let building_id = sqlx::query_scalar::<_, Uuid>(
+            r#"INSERT INTO buildings (organization_id, name, street, city, postal_code, country)
+               VALUES ($1, 'Happy Fault Building', 'Happy St 2', 'Bratislava', '81101', 'Slovakia') RETURNING id"#,
+        )
+        .bind(org_id)
+        .fetch_one(&app.pool)
+        .await
+        .expect("seed building");
+
+        // 1. Create a fault (POST /api/v1/faults)
+        let create_payload = json!({
+            "building_id": building_id,
+            "unit_id": null,
+            "title": "Leaking Pipe",
+            "description": "Pipe is leaking in the laundry room",
+            "location_description": "Laundry room",
+            "category": "plumbing",
+            "priority": "medium",
+            "idempotency_key": null
+        });
+        let request = app
+            .post("/api/v1/faults")
+            .bearer(&token)
+            .tenant(org_id)
+            .json(&create_payload)
+            .build();
+        let response = app.execute(request).await;
+        assert_eq!(
+            response.status,
+            StatusCode::CREATED,
+            "Failed to create fault: {}",
+            response.text()
+        );
+        let create_res = response.json_value();
+        let fault_id_str = create_res["id"].as_str().expect("id missing");
+        let fault_id = Uuid::parse_str(fault_id_str).expect("invalid fault uuid");
+
+        // 2. List faults (GET /api/v1/faults)
+        let request = app
+            .get(&format!("/api/v1/faults?building_id={}", building_id))
+            .bearer(&token)
+            .tenant(org_id)
+            .build();
+        let response = app.execute(request).await;
+        assert_eq!(response.status, StatusCode::OK);
+        let list_res = response.json_value();
+        assert!(list_res["faults"]
+            .as_array()
+            .map(|arr| !arr.is_empty())
+            .unwrap_or(false));
+
+        // 3. Triage fault (POST /api/v1/faults/{id}/triage)
+        let triage_payload = json!({
+            "priority": "high",
+            "category": "plumbing",
+            "assigned_to": null
+        });
+        let request = app
+            .post(&format!("/api/v1/faults/{}/triage", fault_id))
+            .bearer(&token)
+            .tenant(org_id)
+            .json(&triage_payload)
+            .build();
+        let response = app.execute(request).await;
+        assert_eq!(
+            response.status,
+            StatusCode::OK,
+            "Failed to triage fault: {}",
+            response.text()
+        );
+
+        // 4. Assign fault (POST /api/v1/faults/{id}/assign)
+        let assign_payload = json!({
+            "assigned_to": user_id
+        });
+        let request = app
+            .post(&format!("/api/v1/faults/{}/assign", fault_id))
+            .bearer(&token)
+            .tenant(org_id)
+            .json(&assign_payload)
+            .build();
+        let response = app.execute(request).await;
+        assert_eq!(
+            response.status,
+            StatusCode::OK,
+            "Failed to assign fault: {}",
+            response.text()
+        );
+    }
+}
+
