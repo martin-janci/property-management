@@ -304,8 +304,7 @@ async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
 async fn trigger_workflow_returns_created(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "wf-trigger").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-trigger").await;
     let session = app.session(token, org_id);
 
     let workflow_id = seed_workflow(&pool, org_id).await;
@@ -340,8 +339,7 @@ async fn trigger_workflow_returns_created(pool: PgPool) {
 async fn get_workflow_execution_returns_ok(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "wf-exec-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-exec-get").await;
     let session = app.session(token, org_id);
 
     let workflow_id = seed_workflow(&pool, org_id).await;
@@ -372,8 +370,7 @@ async fn get_workflow_execution_returns_ok(pool: PgPool) {
 async fn list_workflow_execution_steps_returns_ok(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "wf-exec-steps").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-exec-steps").await;
     let session = app.session(token, org_id);
 
     let workflow_id = seed_workflow(&pool, org_id).await;
@@ -406,8 +403,7 @@ async fn list_workflow_execution_steps_returns_ok(pool: PgPool) {
 async fn handle_workflow_event_returns_ok(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "wf-events").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-events").await;
     let session = app.session(token, org_id);
 
     let resp = app
@@ -445,8 +441,7 @@ async fn list_lease_templates_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-lease-tpls").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-lease-tpls").await;
     let session = app.session(token, org_id);
 
     let resp = app
@@ -502,17 +497,14 @@ async fn list_listing_descriptions_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-listing-desc").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-listing-desc").await;
     let session = app.session(token, org_id);
     let listing_id = Uuid::new_v4();
 
     let resp = app
         .execute(
             session
-                .get(&format!(
-                    "/api/v1/ai/llm/listing/descriptions/{listing_id}"
-                ))
+                .get(&format!("/api/v1/ai/llm/listing/descriptions/{listing_id}"))
                 .build(),
         )
         .await;
@@ -530,8 +522,7 @@ async fn publish_listing_description_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-listing-pub").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-listing-pub").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let session = app.session(token, org_id);
 
@@ -584,11 +575,7 @@ async fn get_escalation_config_returns_ok(pool: PgPool) {
     let session = app.session(token, org_id);
 
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/ai/llm/chat/escalation-config")
-                .build(),
-        )
+        .execute(session.get("/api/v1/ai/llm/chat/escalation-config").build())
         .await;
     assert_eq!(
         resp.status,
@@ -675,8 +662,7 @@ async fn batch_enhance_photos_returns_created(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-photo-batch").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-photo-batch").await;
     let session = app.session(token, org_id);
 
     let resp = app
@@ -713,8 +699,7 @@ async fn get_photo_enhancement_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-photo-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-photo-get").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let session = app.session(token, org_id);
 
@@ -745,8 +730,7 @@ async fn list_voice_devices_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-voice-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-list").await;
     let session = app.session(token, org_id);
 
     let resp = app
@@ -771,8 +755,7 @@ async fn list_voice_commands_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-voice-cmds").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-cmds").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let session = app.session(token, org_id);
 
@@ -799,8 +782,7 @@ async fn delete_voice_device_returns_no_content(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-voice-del").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-del").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let session = app.session(token, org_id);
 
@@ -830,8 +812,7 @@ async fn get_ai_statistics_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-stats").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-stats").await;
     let session = app.session(token, org_id);
 
     let resp = app
@@ -877,8 +858,7 @@ async fn get_generation_request_returns_ok(pool: PgPool) {
     create_llm_tables(&pool).await;
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "llm-request-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-request-get").await;
     let session = app.session(token, org_id);
 
     let request_id = seed_generation_request(&pool, org_id).await;
