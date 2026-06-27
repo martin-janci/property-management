@@ -79,7 +79,9 @@ async fn list_event_preferences_returns_ok(pool: PgPool) {
     let (token, org) = create_authenticated_user_with_org(&app, &user, "g1").await;
     let sess = app.session(token, org);
 
-    let resp = app.execute(sess.get(&format!("{BASE}/events")).build()).await;
+    let resp = app
+        .execute(sess.get(&format!("{BASE}/events")).build())
+        .await;
 
     resp.assert_status(StatusCode::OK);
     resp.assert_json_field("preferences");
@@ -398,10 +400,7 @@ async fn apply_role_defaults_returns_ok(pool: PgPool) {
     .assert_status(StatusCode::OK);
 
     let resp = app
-        .execute(
-            sess.post(&format!("{BASE}/roles/manager/apply"))
-                .build(),
-        )
+        .execute(sess.post(&format!("{BASE}/roles/manager/apply")).build())
         .await;
 
     resp.assert_status(StatusCode::OK);
@@ -454,9 +453,7 @@ async fn get_notification_group_returns_ok(pool: PgPool) {
 
     let sess = app.session(token, org);
     let resp = app
-        .execute(
-            sess.get(&format!("{BASE}/groups/{group_id}")).build(),
-        )
+        .execute(sess.get(&format!("{BASE}/groups/{group_id}")).build())
         .await;
 
     resp.assert_status(StatusCode::OK);
@@ -483,10 +480,7 @@ async fn delete_notification_group_returns_ok(pool: PgPool) {
 
     let sess = app.session(token, org);
     let resp = app
-        .execute(
-            sess.delete(&format!("{BASE}/groups/{group_id}"))
-                .build(),
-        )
+        .execute(sess.delete(&format!("{BASE}/groups/{group_id}")).build())
         .await;
 
     resp.assert_status(StatusCode::NO_CONTENT);
@@ -512,10 +506,7 @@ async fn mark_group_read_returns_ok(pool: PgPool) {
 
     let sess = app.session(token, org);
     let resp = app
-        .execute(
-            sess.post(&format!("{BASE}/groups/{group_id}/read"))
-                .build(),
-        )
+        .execute(sess.post(&format!("{BASE}/groups/{group_id}/read")).build())
         .await;
 
     resp.assert_status(StatusCode::NO_CONTENT);
