@@ -181,11 +181,11 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | GET | /api/v1/insurance/policies | list_policies | done | insurance_cross_tenant_idor_tests.rs | tenant-resolved 200, returns own policy |
-| POST | /api/v1/insurance/policies | create_policy | partial | — | seeded via repo, no API happy-path |
-| GET | /api/v1/insurance/policies/{policy_id} | get_policy | partial | insurance_cross_tenant_idor_tests.rs | IDOR-reject only |
-| PUT | /api/v1/insurance/policies/{policy_id} | update_policy | partial | — | |
+| POST | /api/v1/insurance/policies | create_policy | done | legal_insurance_wave1b_tests.rs | 200/201 with id/policy_number |
+| GET | /api/v1/insurance/policies/{policy_id} | get_policy | done | legal_insurance_wave1b_tests.rs | 200 same-org + 404 unknown |
+| PUT | /api/v1/insurance/policies/{policy_id} | update_policy | done | legal_insurance_wave1b_tests.rs | 200 policy_name changed |
 | DELETE | /api/v1/insurance/policies/{policy_id} | delete_policy | partial | insurance_cross_tenant_idor_tests.rs | IDOR-reject only |
-| GET | /api/v1/insurance/policies/expiring | get_expiring_policies | partial | — | |
+| GET | /api/v1/insurance/policies/expiring | get_expiring_policies | done | legal_insurance_wave1b_tests.rs | 200 policies array |
 | GET | /api/v1/insurance/policies/{policy_id}/documents | list_policy_documents | partial | — | |
 | POST | /api/v1/insurance/policies/{policy_id}/documents | add_policy_document | partial | — | |
 | DELETE | /api/v1/insurance/policies/{policy_id}/documents/{document_id} | remove_policy_document | partial | — | |
@@ -194,8 +194,8 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 | PUT | /api/v1/insurance/reminders/{reminder_id} | update_reminder | partial | — | |
 | DELETE | /api/v1/insurance/reminders/{reminder_id} | delete_reminder | partial | — | |
 | GET | /api/v1/insurance/claims | list_claims | partial | insurance_cross_tenant_idor_tests.rs | auth/IDOR only |
-| POST | /api/v1/insurance/claims | create_claim | partial | — | |
-| GET | /api/v1/insurance/claims/{claim_id} | get_claim | partial | — | |
+| POST | /api/v1/insurance/claims | create_claim | done | legal_insurance_wave1b_tests.rs | 200/201 with id/policy_id |
+| GET | /api/v1/insurance/claims/{claim_id} | get_claim | done | legal_insurance_wave1b_tests.rs | 200 same-org + 404 unknown |
 | PUT | /api/v1/insurance/claims/{claim_id} | update_claim | partial | — | |
 | DELETE | /api/v1/insurance/claims/{claim_id} | delete_claim | partial | — | |
 | POST | /api/v1/insurance/claims/{claim_id}/submit | submit_claim | partial | — | |
