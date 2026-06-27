@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
+#[allow(unused_imports)]
 use db::models::data_residency::{AccessType, DataRegion, DataTypeCategory, ResidencyAuditEvent};
 
 #[derive(Serialize)]
