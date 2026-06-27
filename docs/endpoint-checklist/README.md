@@ -15,8 +15,8 @@ different answers. Read both.
 
 | Metric | Count | % of all endpoints |
 |---|---|---|
-| **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
-| Partial — real handler, **no** happy-path test | 1831 | 88.8% |
+| **DONE** — real handler **and** a passing happy-path test | **187** | **9.1%** |
+| Partial — real handler, **no** happy-path test | 1751 | 84.9% |
 | Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
 | Missing — in spec/use-case, no handler | 0 | 0.0% ✓ confirmed by BIT-269 |
 | **Total endpoints** | **2063** | 100% |
@@ -44,7 +44,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [reality-server](./groups/reality-server.md) | 96 | 4 | 91 | 1 | 4.2% | 99.0% |
 | [faults-maintenance](./groups/faults-maintenance.md) | 273 | 10 | 249 | 14 | 3.7% | 94.9% |
 | [leasing](./groups/leasing.md) | 84 | 3 | 80 | 1 | 3.6% | 98.8% |
-| [finance](./groups/finance.md) | 234 | 8 | 226 | 0 | 3.4% | 100% |
+| [finance](./groups/finance.md) | 234 | 62 | 172 | 0 | 26.5% | 100% |
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
 | [org-property](./groups/org-property.md) | 94 | 3 | 91 | 0 | 3.2% | 100% |
 | [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
@@ -52,7 +52,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **133** | **1805** | **125** | **6.4%** | **93.9%** |
+| **Total** | **2063** | **187** | **1751** | **125** | **9.1%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.
