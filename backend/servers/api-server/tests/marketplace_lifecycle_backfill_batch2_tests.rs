@@ -186,7 +186,10 @@ async fn create_profile_succeeds(pool: PgPool) {
         resp.text()
     );
     let body = resp.json_value();
-    assert!(!body["id"].is_null(), "response must carry the new profile id");
+    assert!(
+        !body["id"].is_null(),
+        "response must carry the new profile id"
+    );
     assert_eq!(body["company_name"], json!("Acme Plumbing"));
 }
 
@@ -430,11 +433,9 @@ async fn list_rfqs_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.get(&format!(
-                "/api/v1/marketplace/rfqs?organization_id={org}"
-            ))
-            .bearer(&token)
-            .build(),
+            app.get(&format!("/api/v1/marketplace/rfqs?organization_id={org}"))
+                .bearer(&token)
+                .build(),
         )
         .await;
 
@@ -447,7 +448,10 @@ async fn list_rfqs_succeeds(pool: PgPool) {
     let body = resp.json_value();
     assert!(body.is_array(), "list_rfqs must return an array");
     assert!(
-        body.as_array().unwrap().iter().any(|r| r["id"] == json!(rfq)),
+        body.as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["id"] == json!(rfq)),
         "seeded RFQ must appear in its org's list"
     );
 }
