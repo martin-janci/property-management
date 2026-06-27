@@ -22,7 +22,13 @@ use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 
-fn authed(token: &str, method: Method, uri: &str, body: Option<serde_json::Value>, org_id: Uuid) -> Request<Body> {
+fn authed(
+    token: &str,
+    method: Method,
+    uri: &str,
+    body: Option<serde_json::Value>,
+    org_id: Uuid,
+) -> Request<Body> {
     let b = Request::builder()
         .method(method)
         .uri(uri)
@@ -85,7 +91,9 @@ async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-1").await;
 
     let uri = format!("/api/v1/automation/organizations/{org_id}/rules");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list automation rules");
 }
 
@@ -102,7 +110,9 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
         "trigger_config": {"cron": "0 9 * * 1"},
         "actions": [{"type": "notify", "config": {}}]
     });
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create automation rule");
 }
 
@@ -113,8 +123,14 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-3").await;
 
     let uri = format!("/api/v1/automation/rules/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing rule: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing rule: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -123,7 +139,15 @@ async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-tmpl-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/automation/templates", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/automation/templates",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list automation templates");
 }
 
@@ -134,8 +158,14 @@ async fn test_get_automation_template_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-tmpl-2").await;
 
     let uri = format!("/api/v1/automation/templates/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing template: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing template: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +179,15 @@ async fn test_create_chat_session_returns_201(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-chat-1").await;
 
     let body = json!({"title": "Test Session"});
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/chat/sessions", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/chat/sessions",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create chat session");
 }
 
@@ -159,7 +197,15 @@ async fn test_list_chat_sessions_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-chat-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/chat/sessions", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/chat/sessions",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list chat sessions");
 }
 
@@ -170,8 +216,14 @@ async fn test_get_chat_session_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-chat-3").await;
 
     let uri = format!("/api/v1/ai/chat/sessions/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing session: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing session: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -180,7 +232,15 @@ async fn test_list_chat_escalated_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-chat-4").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/chat/escalated", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/chat/escalated",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list escalated sessions");
 }
 
@@ -194,7 +254,15 @@ async fn test_get_sentiment_trends_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/sentiment/trends", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/sentiment/trends",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get sentiment trends");
 }
 
@@ -204,7 +272,15 @@ async fn test_list_sentiment_alerts_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/sentiment/alerts", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/sentiment/alerts",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list sentiment alerts");
 }
 
@@ -214,7 +290,15 @@ async fn test_get_sentiment_thresholds_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-3").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/sentiment/thresholds", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/sentiment/thresholds",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get sentiment thresholds");
 }
 
@@ -224,7 +308,15 @@ async fn test_get_sentiment_dashboard_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-4").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/sentiment/dashboard", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/sentiment/dashboard",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get sentiment dashboard");
 }
 
@@ -244,7 +336,15 @@ async fn test_create_equipment_returns_201(pool: PgPool) {
         "name": "HVAC Unit A",
         "category": "hvac"
     });
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/equipment/", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/equipment/",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create ai equipment");
 }
 
@@ -254,7 +354,15 @@ async fn test_list_equipment_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-eq-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/equipment/", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/equipment/",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list ai equipment");
 }
 
@@ -267,7 +375,9 @@ async fn test_get_equipment_returns_200(pool: PgPool) {
     let eq_id = seed_equipment(&pool, org_id, building).await;
 
     let uri = format!("/api/v1/ai/equipment/{eq_id}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get ai equipment");
 }
 
@@ -277,7 +387,15 @@ async fn test_list_predictions_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-eq-4").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/equipment/predictions", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/equipment/predictions",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list predictions");
 }
 
@@ -287,7 +405,15 @@ async fn test_list_needing_maintenance_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-eq-5").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/equipment/needing-maintenance", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/equipment/needing-maintenance",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list needing maintenance");
 }
 
@@ -305,8 +431,14 @@ async fn test_create_maintenance_returns_201(pool: PgPool) {
         "maintenance_type": "preventive",
         "description": "Routine filter check"
     });
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(body), org_id)).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create maintenance record");
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create maintenance record"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -318,7 +450,9 @@ async fn test_list_maintenance_returns_200(pool: PgPool) {
     let eq_id = seed_equipment(&pool, org_id, building).await;
 
     let uri = format!("/api/v1/ai/equipment/{eq_id}/maintenance");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list maintenance records");
 }
 
@@ -336,7 +470,15 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
         "name": "Test Workflow",
         "trigger_type": "manual"
     });
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/workflows/", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/workflows/",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create workflow");
 }
 
@@ -346,7 +488,15 @@ async fn test_list_workflows_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/workflows/", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/workflows/",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list workflows");
 }
 
@@ -363,7 +513,9 @@ async fn test_get_workflow_returns_200(pool: PgPool) {
     let wf_id = seed_workflow(&pool, org_id, user_id).await;
 
     let uri = format!("/api/v1/ai/workflows/{wf_id}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get workflow");
 }
 
@@ -373,7 +525,15 @@ async fn test_list_workflow_executions_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-4").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/workflows/executions", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/workflows/executions",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list workflow executions");
 }
 
@@ -383,7 +543,15 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-5").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/workflows/templates", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/workflows/templates",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list workflow templates");
 }
 
@@ -393,6 +561,18 @@ async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-6").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/workflows/templates/builtin", None, org_id)).await;
-    assert_eq!(resp.status, StatusCode::OK, "list builtin workflow templates");
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/workflows/templates/builtin",
+            None,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list builtin workflow templates"
+    );
 }

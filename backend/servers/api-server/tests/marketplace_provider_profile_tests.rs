@@ -41,10 +41,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{seed_membership, seed_org, TestApp, TestUser, create_authenticated_user};
+use common::{create_authenticated_user, seed_membership, seed_org, TestApp, TestUser};
 
-const JWT_SECRET: &str =
-    "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 #[derive(Serialize)]
 struct Claims {
@@ -121,11 +120,7 @@ async fn seed_rfq(pool: &PgPool, org_id: Uuid, created_by: Uuid, tag: &str) -> U
     .expect("seed rfq")
 }
 
-async fn seed_quote(
-    pool: &PgPool,
-    rfq_id: Uuid,
-    provider_id: Uuid,
-) -> Uuid {
+async fn seed_quote(pool: &PgPool, rfq_id: Uuid, provider_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO provider_quotes (rfq_id, provider_id, price, currency, status)
            VALUES ($1, $2, 1000.00, 'EUR', 'submitted') RETURNING id"#,
@@ -168,7 +163,10 @@ async fn create_profile_rejects_unauthenticated(pool: PgPool) {
         .build();
     let resp = app.execute(resp).await;
     assert!(
-        matches!(resp.status, StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN),
+        matches!(
+            resp.status,
+            StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN
+        ),
         "unauthenticated create must be rejected; got {}",
         resp.status
     );
@@ -218,7 +216,10 @@ async fn search_providers_rejects_unauthenticated(pool: PgPool) {
     let resp = app.get("/api/v1/marketplace/providers").build();
     let resp = app.execute(resp).await;
     assert!(
-        matches!(resp.status, StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN),
+        matches!(
+            resp.status,
+            StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN
+        ),
         "unauthenticated search must be rejected; got {}",
         resp.status
     );
@@ -1008,7 +1009,9 @@ async fn get_manager_dashboard_returns_200(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .get(&format!("/api/v1/marketplace/dashboard?organization_id={org_id}"))
+        .get(&format!(
+            "/api/v1/marketplace/dashboard?organization_id={org_id}"
+        ))
         .bearer(&token)
         .build();
     let resp = app.execute(resp).await;

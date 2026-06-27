@@ -40,7 +40,13 @@ async fn seed_unit(pool: &PgPool, building_id: Uuid) -> Uuid {
     .expect("seed unit")
 }
 
-fn authed(token: &str, method: Method, uri: &str, body: Option<serde_json::Value>, org_id: Uuid) -> Request<Body> {
+fn authed(
+    token: &str,
+    method: Method,
+    uri: &str,
+    body: Option<serde_json::Value>,
+    org_id: Uuid,
+) -> Request<Body> {
     let b = Request::builder()
         .method(method)
         .uri(uri)
@@ -73,7 +79,15 @@ async fn test_create_pet_registration_returns_201(pool: PgPool) {
         "pet_type": "dog",
         "pet_size": "medium"
     });
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/registry/pets", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/registry/pets",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create pet registration");
 }
 
@@ -83,7 +97,15 @@ async fn test_list_pet_registrations_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/registry/pets", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/registry/pets",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list pet registrations");
 }
 
@@ -94,8 +116,14 @@ async fn test_get_pet_registration_not_found_returns_404(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-3").await;
 
     let uri = format!("/api/v1/registry/pets/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert_eq!(resp.status, StatusCode::NOT_FOUND, "get missing pet registration");
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "get missing pet registration"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -106,8 +134,14 @@ async fn test_update_pet_registration_not_found_returns_404(pool: PgPool) {
 
     let uri = format!("/api/v1/registry/pets/{UUID}");
     let body = json!({"pet_name": "Max"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "update missing pet: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "update missing pet: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -117,8 +151,14 @@ async fn test_delete_pet_registration_not_found_returns_404(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-5").await;
 
     let uri = format!("/api/v1/registry/pets/{UUID}");
-    let resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "delete missing pet: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "delete missing pet: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -129,8 +169,14 @@ async fn test_review_pet_registration_not_found_returns_404(pool: PgPool) {
 
     let uri = format!("/api/v1/registry/pets/{UUID}/review");
     let body = json!({"status": "approved"});
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "review missing pet: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "review missing pet: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -152,8 +198,20 @@ async fn test_create_vehicle_registration_returns_201(pool: PgPool) {
         "model": "Octavia",
         "license_plate": "BA-123AA"
     });
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/registry/vehicles", Some(body), org_id)).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create vehicle registration");
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/registry/vehicles",
+            Some(body),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create vehicle registration"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -162,7 +220,15 @@ async fn test_list_vehicle_registrations_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/registry/vehicles", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/registry/vehicles",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list vehicle registrations");
 }
 
@@ -173,7 +239,9 @@ async fn test_get_vehicle_registration_not_found_returns_404(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-3").await;
 
     let uri = format!("/api/v1/registry/vehicles/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::NOT_FOUND, "get missing vehicle");
 }
 
@@ -185,8 +253,14 @@ async fn test_update_vehicle_registration_not_found_returns_client_error(pool: P
 
     let uri = format!("/api/v1/registry/vehicles/{UUID}");
     let body = json!({"make": "Volkswagen"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "update missing vehicle: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "update missing vehicle: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -196,8 +270,14 @@ async fn test_delete_vehicle_registration_not_found_returns_client_error(pool: P
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-5").await;
 
     let uri = format!("/api/v1/registry/vehicles/{UUID}");
-    let resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "delete missing vehicle: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "delete missing vehicle: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -208,8 +288,14 @@ async fn test_review_vehicle_registration_not_found_returns_client_error(pool: P
 
     let uri = format!("/api/v1/registry/vehicles/{UUID}/review");
     let body = json!({"status": "approved"});
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "review missing vehicle: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "review missing vehicle: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +314,15 @@ async fn test_create_parking_spot_returns_201(pool: PgPool) {
         "spot_number": "P-001",
         "spot_type": "standard"
     });
-    let resp = app.execute(authed(&token, Method::POST, "/api/v1/registry/parking-spots", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/registry/parking-spots",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create parking spot");
 }
 
@@ -238,7 +332,15 @@ async fn test_list_parking_spots_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-park-2").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/registry/parking-spots", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/registry/parking-spots",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list parking spots");
 }
 
@@ -249,8 +351,14 @@ async fn test_get_parking_spot_not_found_returns_404(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-park-3").await;
 
     let uri = format!("/api/v1/registry/parking-spots/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert_eq!(resp.status, StatusCode::NOT_FOUND, "get missing parking spot");
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "get missing parking spot"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -261,8 +369,14 @@ async fn test_update_parking_spot_not_found_returns_client_error(pool: PgPool) {
 
     let uri = format!("/api/v1/registry/parking-spots/{UUID}");
     let body = json!({"spot_number": "P-002"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "update missing parking spot: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "update missing parking spot: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -272,8 +386,14 @@ async fn test_delete_parking_spot_not_found_returns_client_error(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-park-5").await;
 
     let uri = format!("/api/v1/registry/parking-spots/{UUID}");
-    let resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "delete missing parking spot: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "delete missing parking spot: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -288,7 +408,9 @@ async fn test_get_registry_rules_returns_200(pool: PgPool) {
     let building = seed_building(&pool, org_id).await;
 
     let uri = format!("/api/v1/registry/buildings/{building}/rules");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get registry rules");
 }
 
@@ -305,7 +427,9 @@ async fn test_update_registry_rules_returns_200(pool: PgPool) {
         "allowed_pet_types": ["dog", "cat"],
         "max_vehicles_per_unit": 2
     });
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "update registry rules");
 }
 
@@ -317,6 +441,8 @@ async fn test_get_registry_statistics_returns_200(pool: PgPool) {
     let building = seed_building(&pool, org_id).await;
 
     let uri = format!("/api/v1/registry/buildings/{building}/statistics");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get registry statistics");
 }

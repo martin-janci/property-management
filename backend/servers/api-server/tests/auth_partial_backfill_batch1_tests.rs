@@ -310,10 +310,7 @@ async fn list_sessions_returns_200_with_sessions_array(pool: PgPool) {
 
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/auth/sessions")
-        .bearer(&access)
-        .build();
+    let resp = app.get("/api/v1/auth/sessions").bearer(&access).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -340,10 +337,7 @@ async fn revoke_session_returns_200(pool: PgPool) {
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
     // Fetch sessions to get a real session id.
-    let list_resp = app
-        .get("/api/v1/auth/sessions")
-        .bearer(&access)
-        .build();
+    let list_resp = app.get("/api/v1/auth/sessions").bearer(&access).build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let body = list_resp.json_value();
@@ -404,10 +398,7 @@ async fn get_me_returns_200_with_profile(pool: PgPool) {
 
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/auth/me")
-        .bearer(&access)
-        .build();
+    let resp = app.get("/api/v1/auth/me").bearer(&access).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -417,10 +408,7 @@ async fn get_me_returns_200_with_profile(pool: PgPool) {
         user.email,
         "email mismatch in /me response: {body}"
     );
-    assert!(
-        body["id"].as_str().is_some(),
-        "expected id field: {body}"
-    );
+    assert!(body["id"].as_str().is_some(), "expected id field: {body}");
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -460,7 +448,10 @@ async fn update_me_returns_200_with_updated_name(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
     assert_eq!(
-        body["name"].as_str().or_else(|| body["displayName"].as_str()).unwrap_or(""),
+        body["name"]
+            .as_str()
+            .or_else(|| body["displayName"].as_str())
+            .unwrap_or(""),
         NEW_NAME,
         "expected updated name in response: {body}"
     );

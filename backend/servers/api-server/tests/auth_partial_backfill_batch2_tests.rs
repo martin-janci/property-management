@@ -192,7 +192,8 @@ async fn mfa_verify_with_invalid_code_returns_400(pool: PgPool) {
     assert_eq!(
         resp.status.as_u16() / 100,
         4,
-        "expected 4xx for invalid TOTP: status={}", resp.status
+        "expected 4xx for invalid TOTP: status={}",
+        resp.status
     );
 
     cleanup_test_user(&pool, &user.email).await;
@@ -236,10 +237,7 @@ async fn get_onboarding_status_returns_200(pool: PgPool) {
 
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/onboarding/status")
-        .bearer(&access)
-        .build();
+    let resp = app.get("/api/v1/onboarding/status").bearer(&access).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -264,18 +262,12 @@ async fn get_user_tours_returns_200_with_array(pool: PgPool) {
 
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/onboarding/tours")
-        .bearer(&access)
-        .build();
+    let resp = app.get("/api/v1/onboarding/tours").bearer(&access).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
-    assert!(
-        body.is_array(),
-        "expected JSON array of tours: {body}"
-    );
+    assert!(body.is_array(), "expected JSON array of tours: {body}");
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -319,10 +311,7 @@ async fn get_tour_existing_returns_200(pool: PgPool) {
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
     // Get the list first to discover a real tour id.
-    let list_resp = app
-        .get("/api/v1/onboarding/tours")
-        .bearer(&access)
-        .build();
+    let list_resp = app.get("/api/v1/onboarding/tours").bearer(&access).build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let tours = list_resp.json_value();
@@ -612,10 +601,7 @@ async fn get_privacy_settings_returns_200(pool: PgPool) {
 
     let (access, _refresh) = create_authenticated_user(&app, &user).await;
 
-    let resp = app
-        .get("/api/v1/gdpr/privacy")
-        .bearer(&access)
-        .build();
+    let resp = app.get("/api/v1/gdpr/privacy").bearer(&access).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -686,13 +672,13 @@ async fn get_help_article_existing_slug_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
     // Discover a real slug from the list endpoint.
-    let list_resp = app
-        .get("/api/v1/help/articles")
-        .build();
+    let list_resp = app.get("/api/v1/help/articles").build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let articles = list_resp.json_value();
-    let articles = articles.as_array().or_else(|| articles["articles"].as_array());
+    let articles = articles
+        .as_array()
+        .or_else(|| articles["articles"].as_array());
 
     let Some(articles) = articles else {
         return; // No articles seeded — skip.
@@ -702,9 +688,7 @@ async fn get_help_article_existing_slug_returns_200(pool: PgPool) {
     }
 
     let slug = articles[0]["slug"].as_str().expect("article slug");
-    let resp = app
-        .get(&format!("/api/v1/help/articles/{slug}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/articles/{slug}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -718,9 +702,7 @@ async fn get_help_article_existing_slug_returns_200(pool: PgPool) {
 async fn get_help_category_existing_slug_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
-    let list_resp = app
-        .get("/api/v1/help/categories")
-        .build();
+    let list_resp = app.get("/api/v1/help/categories").build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let categories = list_resp.json_value();
@@ -736,9 +718,7 @@ async fn get_help_category_existing_slug_returns_200(pool: PgPool) {
     }
 
     let slug = categories[0]["slug"].as_str().expect("category slug");
-    let resp = app
-        .get(&format!("/api/v1/help/categories/{slug}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/categories/{slug}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);
@@ -752,9 +732,7 @@ async fn get_help_category_existing_slug_returns_200(pool: PgPool) {
 async fn get_help_tooltip_existing_key_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
-    let list_resp = app
-        .get("/api/v1/help/tooltips")
-        .build();
+    let list_resp = app.get("/api/v1/help/tooltips").build();
     let list_resp = app.execute(list_resp).await;
     list_resp.assert_status(StatusCode::OK);
     let tooltips = list_resp.json_value();
@@ -770,9 +748,7 @@ async fn get_help_tooltip_existing_key_returns_200(pool: PgPool) {
     }
 
     let key = tooltips[0]["key"].as_str().expect("tooltip key");
-    let resp = app
-        .get(&format!("/api/v1/help/tooltips/{key}"))
-        .build();
+    let resp = app.get(&format!("/api/v1/help/tooltips/{key}")).build();
     let resp = app.execute(resp).await;
 
     resp.assert_status(StatusCode::OK);

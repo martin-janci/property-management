@@ -21,7 +21,13 @@ use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 
-fn authed(token: &str, method: Method, uri: &str, body: Option<serde_json::Value>, org_id: Uuid) -> Request<Body> {
+fn authed(
+    token: &str,
+    method: Method,
+    uri: &str,
+    body: Option<serde_json::Value>,
+    org_id: Uuid,
+) -> Request<Body> {
     let b = Request::builder()
         .method(method)
         .uri(uri)
@@ -57,7 +63,15 @@ async fn test_list_lease_templates_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-lt-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/llm/lease/templates", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/llm/lease/templates",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list lease templates");
 }
 
@@ -68,8 +82,14 @@ async fn test_get_lease_template_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-lt-2").await;
 
     let uri = format!("/api/v1/ai/llm/lease/templates/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing lease template: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing lease template: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -83,8 +103,14 @@ async fn test_list_listing_descriptions_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-ld-1").await;
 
     let uri = format!("/api/v1/ai/llm/listing/descriptions/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing listing descriptions: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing listing descriptions: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +123,15 @@ async fn test_get_escalation_config_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-esc-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/llm/chat/escalation-config", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/llm/chat/escalation-config",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get escalation config");
 }
 
@@ -111,7 +145,15 @@ async fn test_update_escalation_config_returns_200(pool: PgPool) {
         "escalation_threshold": 3,
         "escalation_timeout_minutes": 30
     });
-    let resp = app.execute(authed(&token, Method::PUT, "/api/v1/ai/llm/chat/escalation-config", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::PUT,
+            "/api/v1/ai/llm/chat/escalation-config",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "update escalation config");
 }
 
@@ -125,7 +167,15 @@ async fn test_get_ai_statistics_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-stat-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/llm/statistics", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/llm/statistics",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "get ai statistics");
 }
 
@@ -135,7 +185,15 @@ async fn test_list_generation_requests_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-req-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/llm/requests", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/llm/requests",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list generation requests");
 }
 
@@ -146,8 +204,14 @@ async fn test_get_generation_request_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-req-2").await;
 
     let uri = format!("/api/v1/ai/llm/requests/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing generation request: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing generation request: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -161,8 +225,14 @@ async fn test_get_photo_enhancement_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-photo-1").await;
 
     let uri = format!("/api/v1/ai/llm/photos/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing photo enhancement: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing photo enhancement: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +245,15 @@ async fn test_list_voice_devices_returns_200(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-1").await;
 
-    let resp = app.execute(authed(&token, Method::GET, "/api/v1/ai/llm/voice/devices", None, org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/llm/voice/devices",
+            None,
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list voice devices");
 }
 
@@ -186,9 +264,15 @@ async fn test_list_voice_commands_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-2").await;
 
     let uri = format!("/api/v1/ai/llm/voice/commands/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     // 200 empty list or 404 if device not found — either is a non-auth response
-    assert_ne!(resp.status, StatusCode::UNAUTHORIZED, "voice commands must not return 401");
+    assert_ne!(
+        resp.status,
+        StatusCode::UNAUTHORIZED,
+        "voice commands must not return 401"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -203,8 +287,14 @@ async fn test_toggle_rule_not_found(pool: PgPool) {
 
     let uri = format!("/api/v1/automation/rules/{UUID}/toggle");
     let body = json!({"enabled": true});
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "toggle missing rule: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "toggle missing rule: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -214,8 +304,14 @@ async fn test_get_rule_logs_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-log-1").await;
 
     let uri = format!("/api/v1/automation/rules/{UUID}/logs");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get logs for missing rule: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get logs for missing rule: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -226,8 +322,14 @@ async fn test_update_automation_rule_not_found(pool: PgPool) {
 
     let uri = format!("/api/v1/automation/rules/{UUID}");
     let body = json!({"name": "Updated Rule"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "update missing rule: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "update missing rule: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -237,8 +339,14 @@ async fn test_delete_automation_rule_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-del-1").await;
 
     let uri = format!("/api/v1/automation/rules/{UUID}");
-    let resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "delete missing rule: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "delete missing rule: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +361,15 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
 
     // Create a session first
     let create_body = json!({"title": "Delete Me"});
-    let create_resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/chat/sessions", Some(create_body), org_id)).await;
+    let create_resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/chat/sessions",
+            Some(create_body),
+            org_id,
+        ))
+        .await;
     assert_eq!(create_resp.status, StatusCode::CREATED, "create session");
 
     let session_id = create_resp.json_value()["session"]["id"]
@@ -263,7 +379,9 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
         .to_string();
 
     let uri = format!("/api/v1/ai/chat/sessions/{session_id}");
-    let del_resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
+    let del_resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
     assert_eq!(del_resp.status, StatusCode::OK, "delete chat session");
 }
 
@@ -274,8 +392,20 @@ async fn test_list_chat_messages_roundtrip(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-msg-lst-1").await;
 
     let create_body = json!({"title": "Message List Test"});
-    let create_resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/chat/sessions", Some(create_body), org_id)).await;
-    assert_eq!(create_resp.status, StatusCode::CREATED, "create session for message list");
+    let create_resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/chat/sessions",
+            Some(create_body),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        create_resp.status,
+        StatusCode::CREATED,
+        "create session for message list"
+    );
 
     let session_id = create_resp.json_value()["session"]["id"]
         .as_str()
@@ -284,7 +414,9 @@ async fn test_list_chat_messages_roundtrip(pool: PgPool) {
         .to_string();
 
     let uri = format!("/api/v1/ai/chat/sessions/{session_id}/messages");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "list messages in session");
 }
 
@@ -302,7 +434,15 @@ async fn test_update_sentiment_thresholds_returns_200(pool: PgPool) {
         "negative_threshold": -0.5,
         "positive_threshold": 0.5
     });
-    let resp = app.execute(authed(&token, Method::PUT, "/api/v1/ai/sentiment/thresholds", Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::PUT,
+            "/api/v1/ai/sentiment/thresholds",
+            Some(body),
+            org_id,
+        ))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "update sentiment thresholds");
 }
 
@@ -313,8 +453,14 @@ async fn test_acknowledge_sentiment_alert_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-ack-1").await;
 
     let uri = format!("/api/v1/ai/sentiment/alerts/{UUID}/acknowledge");
-    let resp = app.execute(authed(&token, Method::POST, &uri, Some(json!({})), org_id)).await;
-    assert!(resp.status.is_client_error(), "acknowledge missing alert: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::POST, &uri, Some(json!({})), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "acknowledge missing alert: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -329,8 +475,20 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
 
     // Create workflow first
     let create_body = json!({"name": "Action Test Workflow", "trigger_type": "manual"});
-    let create_resp = app.execute(authed(&token, Method::POST, "/api/v1/ai/workflows/", Some(create_body), org_id)).await;
-    assert_eq!(create_resp.status, StatusCode::CREATED, "create workflow for action test");
+    let create_resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            "/api/v1/ai/workflows/",
+            Some(create_body),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        create_resp.status,
+        StatusCode::CREATED,
+        "create workflow for action test"
+    );
 
     let wf_id = create_resp.json_value()["workflow"]["id"]
         .as_str()
@@ -340,7 +498,9 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
 
     // List actions
     let list_uri = format!("/api/v1/ai/workflows/{wf_id}/actions");
-    let list_resp = app.execute(authed(&token, Method::GET, &list_uri, None, org_id)).await;
+    let list_resp = app
+        .execute(authed(&token, Method::GET, &list_uri, None, org_id))
+        .await;
     assert_eq!(list_resp.status, StatusCode::OK, "list workflow actions");
 
     // Add action
@@ -350,7 +510,15 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
         "action_type": "notify",
         "action_config": {}
     });
-    let add_resp = app.execute(authed(&token, Method::POST, &list_uri, Some(action_body), org_id)).await;
+    let add_resp = app
+        .execute(authed(
+            &token,
+            Method::POST,
+            &list_uri,
+            Some(action_body),
+            org_id,
+        ))
+        .await;
     assert_eq!(add_resp.status, StatusCode::CREATED, "add workflow action");
 }
 
@@ -362,8 +530,14 @@ async fn test_update_workflow_not_found(pool: PgPool) {
 
     let uri = format!("/api/v1/ai/workflows/{UUID}");
     let body = json!({"name": "Updated Workflow"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
-    assert!(resp.status.is_client_error(), "update missing workflow: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "update missing workflow: {}",
+        resp.status
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -373,8 +547,14 @@ async fn test_get_workflow_template_not_found(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-tmpl-1").await;
 
     let uri = format!("/api/v1/ai/workflows/templates/{UUID}");
-    let resp = app.execute(authed(&token, Method::GET, &uri, None, org_id)).await;
-    assert!(resp.status.is_client_error(), "get missing workflow template: {}", resp.status);
+    let resp = app
+        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "get missing workflow template: {}",
+        resp.status
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -391,7 +571,9 @@ async fn test_update_equipment_returns_200(pool: PgPool) {
 
     let uri = format!("/api/v1/ai/equipment/{eq_id}");
     let body = json!({"name": "Updated HVAC"});
-    let resp = app.execute(authed(&token, Method::PUT, &uri, Some(body), org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::PUT, &uri, Some(body), org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "update equipment");
 }
 
@@ -404,6 +586,8 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     let eq_id = seed_equipment(&pool, org_id, building).await;
 
     let uri = format!("/api/v1/ai/equipment/{eq_id}");
-    let resp = app.execute(authed(&token, Method::DELETE, &uri, None, org_id)).await;
+    let resp = app
+        .execute(authed(&token, Method::DELETE, &uri, None, org_id))
+        .await;
     assert_eq!(resp.status, StatusCode::OK, "delete equipment");
 }
