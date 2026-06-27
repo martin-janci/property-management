@@ -1,9 +1,16 @@
 # Action list
 
-<sub>Generated: 2026-06-27T14:25:00Z</sub>
+<sub>Generated: 2026-06-27T14:50:00Z</sub>
 
 | Status | Priority | Owner | Action | Dependency |
 |--------|----------|-------|--------|------------|
+| open | high | pm-tech-lead | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted | none |
+| open | high | pm-tech-lead | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:1 | none |
+| open | high | pm-backend | search_alert_drainer.rs:244-326 | none |
+| open | high | pm-backend | saved_search_alerts.rs:216-240 | none |
+| open | high | pm-tech-lead | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | none |
+| open | high | pm-tech-lead | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | none |
+| open | high | pm-tech-lead | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | none |
 | open | high | pm-scrum-master | Close or defer test-hardening issues #481, #487 (OAuth backend) so 10a-1 and 10a-3 can be promoted; assign rust-backend  | none |
 | open | high | pm-scrum-master | Fix Epic 16 drainer HIGH bugs (row reservation + transactional enqueue) before the next alert worker deployment; assign  | none |
 | open | high | pm-scrum-master | Reconcile sprint-status.yaml: promote Epic 6 (all 6 stories), Epic 7A (all 5 stories), Epic 10B (all 7 stories) to done  | none |
@@ -11,8 +18,11 @@
 | open | high | pm-security | Resolve issue #480: move WebSocket auth off the URL query parameter — either (a) exchange a short-lived WS-specific one- | none |
 | open | high | pm-security | Review and merge IDOR draft PR #1857 (security-llm-doc-idor): LLM document endpoints must enforce tenant-scoped RLS just | none |
 | open | high | pm-security | Verify and close issue #481: read backend/crates/db/src/repositories/session.rs find_by_token_hash_any_status to confirm | none |
+| open | high | pm-tech-lead | IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements unscoped | none |
 | open | medium | pm-frontend | Coverage gap [mvp]: Direct Messaging — verify and finish to done. Gaps: sprint-status ready-for-dev — code is well ahead | none |
 | open | medium | pm-frontend | Coverage gap [mvp]: Mediation and Resolution — verify and finish to done. Gaps: Party submissions endpoints unwired (api | none |
+| open | medium | pm-frontend | useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplica | none |
+| open | medium | pm-backend | search_alert_drainer.rs:122-174 | none |
 | open | medium | pm-scrum-master | Close test-hardening issue #482 (ProtectedRoute multi-tenant role fallback) so 10a-2 can be promoted; assign react-web t | none |
 | open | medium | pm-scrum-master | Wire party submissions endpoints in ppt-web dispute-detail to unblock 80-3-mediation-resolution; update dispute-detail s | none |
 | open | medium | pm-security | Audit guest ID-document OCR pipeline (Epic 18, story 18.2, route ai/ocr.rs) for PII leakage: confirm OCR result fields ( | none |
