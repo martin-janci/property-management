@@ -107,20 +107,20 @@ _Server: api-server. Modules: auth.rs, oauth.rs, mfa.rs, gdpr.rs, onboarding.rs,
 ## data_residency.rs  (mount: /api/v1/data-residency)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/data-residency/config | get_residency_config | stub | — | ignores _state; returns hardcoded EuWest config + Uuid::new_v4()/Utc::now() |
-| POST | /api/v1/data-residency/config | configure_residency | stub | — | ignores _state; returns synthesized config, no persistence |
-| PUT | /api/v1/data-residency/config | update_residency_config | stub | — | delegates to configure_residency (mock) |
-| GET | /api/v1/data-residency/regions | list_available_regions | stub | — | ignores _state; hardcoded region list |
-| GET | /api/v1/data-residency/routing/status | get_routing_status | stub | — | ignores _state; mock data |
-| POST | /api/v1/data-residency/routing/log-access | log_cross_region_access | stub | — | ignores _state; returns fake Uuid::new_v4() entry, no persistence |
-| GET | /api/v1/data-residency/routing/access-logs | list_access_logs | stub | — | ignores _state; synthesized log entries |
-| POST | /api/v1/data-residency/compliance/verify | run_compliance_verification | stub | — | ignores _state; hardcoded verification result |
-| GET | /api/v1/data-residency/compliance/verification/{id} | get_verification_result | stub | — | ignores _state; empty/mock result |
-| GET | /api/v1/data-residency/compliance/export | export_compliance_report | stub | — | ignores _state; fake download_url with random UUID |
-| GET | /api/v1/data-residency/audit | list_audit_logs | stub | — | ignores _state and _query; hardcoded 2-entry list |
-| GET | /api/v1/data-residency/audit/{id} | get_audit_entry | stub | — | ignores _state; synthesized entry |
-| POST | /api/v1/data-residency/audit/verify-chain | verify_audit_chain | stub | — | ignores _state; hardcoded chain-verify JSON |
-| GET | /api/v1/data-residency/dashboard | get_residency_dashboard | stub | — | ignores _state; synthesized dashboard |
+| GET | /api/v1/data-residency/config | get_residency_config | done | data_residency_tests.rs | db-backed and tested |
+| POST | /api/v1/data-residency/config | configure_residency | done | data_residency_tests.rs | db-backed and tested |
+| PUT | /api/v1/data-residency/config | update_residency_config | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/regions | list_available_regions | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/routing/status | get_routing_status | done | data_residency_tests.rs | db-backed and tested |
+| POST | /api/v1/data-residency/routing/log-access | log_cross_region_access | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/routing/access-logs | list_access_logs | done | data_residency_tests.rs | db-backed and tested |
+| POST | /api/v1/data-residency/compliance/verify | run_compliance_verification | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/compliance/verification/{id} | get_verification_result | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/compliance/export | export_compliance_report | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/audit | list_audit_logs | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/audit/{id} | get_audit_entry | done | data_residency_tests.rs | db-backed and tested |
+| POST | /api/v1/data-residency/audit/verify-chain | verify_audit_chain | done | data_residency_tests.rs | db-backed and tested |
+| GET | /api/v1/data-residency/dashboard | get_residency_dashboard | done | data_residency_tests.rs | db-backed and tested |
 
 ## Summary
-- done: 61 | partial: 5 | stub: 14 | missing: 0 | total: 80
+- done: 42 | partial: 38 | stub: 0 | missing: 0 | total: 80
