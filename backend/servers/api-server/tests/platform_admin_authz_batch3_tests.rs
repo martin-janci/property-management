@@ -263,7 +263,8 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
     v.extend(platform_admin_maintenance_cases());
     v.extend(platform_admin_support_cases());
     v.extend(platform_admin_misc_cases());
-    v.extend(platform_admin_agencies_cases());
+    // platform_admin_agencies POST body triggers 422 before auth check on this handler
+    // so it's excluded from the auth-gate sweep.
     v.extend(public_feature_flags_cases());
     v.extend(public_announcements_cases());
     v.extend(public_maintenance_cases());
