@@ -1,17 +1,6 @@
 {
   "archived_at": "2026-06-27T02:13:55Z",
-  "assignments": [
-    {
-      "task_id": "10b-5-support-data-access",
-      "branch": "auto-impl/10b-5-support-data-access-b77df24c",
-      "status": "merged",
-      "claimed_at": "2026-06-24T22:20:52Z",
-      "last_updated": "2026-06-25T04:19:59Z",
-      "status_changed_at": "2026-06-25T04:19:59Z",
-      "pr_number": 1829,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1829",
-      "merged_at": "2026-06-25T02:16:21Z",
-      "specialist": "rust-backend"
-    }
-  ]
+  "_deferred": true,
+  "_reason": "Full 452-row archive (~492KB) exceeds the mcp__github__push_files inline-content limit (known issue #1014); git push is 403 in this environment. The authoritative archive lives in the local working tree and must be landed by a run with working git transport or after archive compaction. This is a placeholder marker, NOT the real archive data.",
+  "assignments": []
 }
