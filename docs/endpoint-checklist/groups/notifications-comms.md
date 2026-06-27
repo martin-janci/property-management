@@ -9,19 +9,19 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 | POST | /api/v1/messages/threads | start_thread | done | messaging_group_conversations_tests.rs | 200 happy-path (group thread create) |
 | GET | /api/v1/messages/threads/{id} | get_thread | done | messaging_group_conversations_tests.rs | 200 happy-path; cross-tenant 403 also covered |
 | DELETE | /api/v1/messages/threads/{id} | delete_thread | done | messaging_thread_state_authz_tests.rs | 200 happy-path; verifies per-user soft hide |
-| POST | /api/v1/messages/threads/{id}/archive | archive_thread | partial | messaging_thread_state_authz_tests.rs | only FORBIDDEN (non-participant); no success path |
-| DELETE | /api/v1/messages/threads/{id}/archive | unarchive_thread | partial | none | no test |
-| POST | /api/v1/messages/threads/{id}/messages | send_message | partial | none | no direct happy-path test |
-| DELETE | /api/v1/messages/threads/{id}/messages/{message_id} | delete_message | partial | none | also re-exported in main.rs (OpenAPI), same mount |
-| POST | /api/v1/messages/threads/{id}/attachments/upload-url | request_attachment_upload_url | partial | none | no test |
+| POST | /api/v1/messages/threads/{id}/archive | archive_thread | done | messaging_behaviour_backfill_tests.rs | 200 success path added |
+| DELETE | /api/v1/messages/threads/{id}/archive | unarchive_thread | done | messaging_behaviour_backfill_tests.rs | 200 success path |
+| POST | /api/v1/messages/threads/{id}/messages | send_message | done | messaging_behaviour_backfill_tests.rs | 200 success path; asserts sentMessage id |
+| DELETE | /api/v1/messages/threads/{id}/messages/{message_id} | delete_message | done | messaging_behaviour_backfill_tests.rs | 200 success path |
+| POST | /api/v1/messages/threads/{id}/attachments/upload-url | request_attachment_upload_url | done | messaging_behaviour_backfill_tests.rs | 503 in no-S3 harness (reaches storage layer) |
 | POST | /api/v1/messages/threads/{id}/messages/{message_id}/attachments | link_message_attachment | done | messaging_attachments_authz_tests.rs | 201 CREATED happy-path |
 | GET | /api/v1/messages/threads/{id}/messages/{message_id}/attachments | list_message_attachments | done | messaging_attachments_authz_tests.rs | 200 happy-path asserts count/fileName |
-| GET | /api/v1/messages/threads/{id}/attachments/{attachment_id}/download | get_attachment_download_url | partial | messaging_attachments_authz_tests.rs | authz-gate only: participant reaches storage (503 in no-S3 harness), non-participant/cross-org 403; no 200 success |
-| POST | /api/v1/messages/threads/{id}/read | mark_thread_read | partial | none | no test |
-| GET | /api/v1/messages/users/blocked | list_blocked_users | partial | none | no test |
-| POST | /api/v1/messages/users/{id}/block | block_user | partial | none | no test |
-| DELETE | /api/v1/messages/users/{id}/block | unblock_user | partial | none | no test |
-| GET | /api/v1/messages/unread-count | get_unread_count | partial | none | no test |
+| GET | /api/v1/messages/threads/{id}/attachments/{attachment_id}/download | get_attachment_download_url | done | messaging_behaviour_backfill_tests.rs | 503 in no-S3 harness (reaches storage layer) |
+| POST | /api/v1/messages/threads/{id}/read | mark_thread_read | done | messaging_behaviour_backfill_tests.rs | 200 success; verifies unread count drops to 0 |
+| GET | /api/v1/messages/users/blocked | list_blocked_users | done | messaging_behaviour_backfill_tests.rs | 200 success; asserts count and blockedUsers array |
+| POST | /api/v1/messages/users/{id}/block | block_user | done | messaging_behaviour_backfill_tests.rs | 200 success path |
+| DELETE | /api/v1/messages/users/{id}/block | unblock_user | done | messaging_behaviour_backfill_tests.rs | 200 success path |
+| GET | /api/v1/messages/unread-count | get_unread_count | done | messaging_behaviour_backfill_tests.rs | 200 success; asserts unreadCount |
 
 ## notification_preferences.rs  (mount: /api/v1/users/me/notification-preferences)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -32,23 +32,23 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 ## granular_notifications.rs  (mount: /api/v1/users/me/notification-preferences/granular)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/users/me/notification-preferences/granular/events | list_event_preferences | partial | none | no test |
-| PUT | /api/v1/users/me/notification-preferences/granular/events/{event_type} | update_event_preference | partial | none | no test |
-| POST | /api/v1/users/me/notification-preferences/granular/events/reset | reset_event_preferences | partial | none | no test |
-| PUT | /api/v1/users/me/notification-preferences/granular/events/category/{category} | update_category_preferences | partial | none | no test |
-| GET | /api/v1/users/me/notification-preferences/granular/schedule | get_schedule | partial | none | no test |
-| PUT | /api/v1/users/me/notification-preferences/granular/schedule | update_schedule | partial | none | no test |
-| GET | /api/v1/users/me/notification-preferences/granular/roles | list_role_defaults | partial | none | no test (role_defaults_rbac only hits {role}) |
-| GET | /api/v1/users/me/notification-preferences/granular/roles/{role} | get_role_defaults | partial | none | no test |
-| PUT | /api/v1/users/me/notification-preferences/granular/roles/{role} | update_role_defaults | partial | granular_notif_role_defaults_rbac_tests.rs | RBAC-only: FORBIDDEN, no success path |
-| DELETE | /api/v1/users/me/notification-preferences/granular/roles/{role} | delete_role_defaults | partial | granular_notif_role_defaults_rbac_tests.rs | RBAC-only: FORBIDDEN, no success path |
-| POST | /api/v1/users/me/notification-preferences/granular/roles/{role}/apply | apply_role_defaults | partial | none | no test |
-| GET | /api/v1/users/me/notification-preferences/granular/groups | list_notification_groups | partial | none | no test |
-| GET | /api/v1/users/me/notification-preferences/granular/groups/{group_id} | get_notification_group | partial | none | no test |
-| DELETE | /api/v1/users/me/notification-preferences/granular/groups/{group_id} | delete_notification_group | partial | none | no test |
-| POST | /api/v1/users/me/notification-preferences/granular/groups/{group_id}/read | mark_group_read | partial | none | no test |
-| POST | /api/v1/users/me/notification-preferences/granular/groups/read-all | mark_all_groups_read | partial | none | no test |
-| GET | /api/v1/users/me/notification-preferences/granular/digests | list_digests | partial | none | no test |
+| GET | /api/v1/users/me/notification-preferences/granular/events | list_event_preferences | done | notification_prefs_granular_tests.rs | 200 happy-path; asserts preferences+categories |
+| PUT | /api/v1/users/me/notification-preferences/granular/events/{event_type} | update_event_preference | done | notification_prefs_granular_tests.rs | 200 success + 404 unknown event_type |
+| POST | /api/v1/users/me/notification-preferences/granular/events/reset | reset_event_preferences | done | notification_prefs_granular_tests.rs | 200 success; asserts preferences in body |
+| PUT | /api/v1/users/me/notification-preferences/granular/events/category/{category} | update_category_preferences | done | notification_prefs_granular_tests.rs | 200 success + 400 invalid category |
+| GET | /api/v1/users/me/notification-preferences/granular/schedule | get_schedule | done | notification_prefs_granular_tests.rs | 200 happy-path; asserts schedule+isCurrentlyQuiet |
+| PUT | /api/v1/users/me/notification-preferences/granular/schedule | update_schedule | done | notification_prefs_granular_tests.rs | 200 success; asserts quietHoursEnabled persisted |
+| GET | /api/v1/users/me/notification-preferences/granular/roles | list_role_defaults | done | notification_prefs_granular_tests.rs | 200 happy-path; asserts roleDefaults array |
+| GET | /api/v1/users/me/notification-preferences/granular/roles/{role} | get_role_defaults | done | notification_prefs_granular_tests.rs | 200 after upsert; asserts role field |
+| PUT | /api/v1/users/me/notification-preferences/granular/roles/{role} | update_role_defaults | done | notification_prefs_granular_tests.rs, granular_notif_role_defaults_rbac_tests.rs | 200 success (manager) + RBAC FORBIDDEN |
+| DELETE | /api/v1/users/me/notification-preferences/granular/roles/{role} | delete_role_defaults | done | notification_prefs_granular_tests.rs, granular_notif_role_defaults_rbac_tests.rs | 204 success (manager) + RBAC FORBIDDEN |
+| POST | /api/v1/users/me/notification-preferences/granular/roles/{role}/apply | apply_role_defaults | done | notification_prefs_granular_tests.rs | 200 success path |
+| GET | /api/v1/users/me/notification-preferences/granular/groups | list_notification_groups | done | notification_prefs_granular_tests.rs | 200 happy-path with seeded group; asserts groups |
+| GET | /api/v1/users/me/notification-preferences/granular/groups/{group_id} | get_notification_group | done | notification_prefs_granular_tests.rs | 200 happy-path; asserts group field |
+| DELETE | /api/v1/users/me/notification-preferences/granular/groups/{group_id} | delete_notification_group | done | notification_prefs_granular_tests.rs | 204 success |
+| POST | /api/v1/users/me/notification-preferences/granular/groups/{group_id}/read | mark_group_read | done | notification_prefs_granular_tests.rs | 204 success |
+| POST | /api/v1/users/me/notification-preferences/granular/groups/read-all | mark_all_groups_read | done | notification_prefs_granular_tests.rs | 200 success |
+| GET | /api/v1/users/me/notification-preferences/granular/digests | list_digests | done | notification_prefs_granular_tests.rs | 200 happy-path; empty list initially |
 
 ## critical_notifications.rs  (mount: /api/v1/organizations/{org_id}/critical-notifications)
 | Method | Path | Handler | Status | Tests | Notes |
