@@ -1,0 +1,199 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "260h (10d 20h) since last_run_iso 2026-06-16T03:25Z — routine missed the daily cadence. Also triggers stale_routine_alert (LAG_DAYS >= 3).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-1836",
+      "type": "dep-update-noise",
+      "source": "PR #1836",
+      "score_delta": 0,
+      "evidence": "dependabot: bump gradle-wrapper 9.5.1→9.6.0 (mobile-native)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1837",
+      "type": "dep-update-noise",
+      "source": "PR #1837",
+      "score_delta": 0,
+      "evidence": "dependabot: bump dtolnay/rust-toolchain 1.94.1→1.100.0 (actions-minor-patch group)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1838",
+      "type": "dep-update-noise",
+      "source": "PR #1838",
+      "score_delta": 0,
+      "evidence": "dependabot: bump actions/cache 5→6",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1839",
+      "type": "dep-update-noise",
+      "source": "PR #1839",
+      "score_delta": 0,
+      "evidence": "dependabot: bump dorny/paths-filter 3→4",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1840",
+      "type": "dep-update-noise",
+      "source": "PR #1840",
+      "score_delta": 0,
+      "evidence": "dependabot: bump actions/checkout 6→7",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1841",
+      "type": "dep-update-noise",
+      "source": "PR #1841",
+      "score_delta": 0,
+      "evidence": "dependabot: bump cargo-minor-patch group (3 updates, /backend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1842",
+      "type": "dep-update-noise",
+      "source": "PR #1842",
+      "score_delta": 0,
+      "evidence": "dependabot: bump rust_xlsxwriter 0.80.0→0.95.0 (/backend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-27.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD",
+      "observed": "cursors advanced (last_pr_seen 1439→1853, last_issue_seen 1437→1854, last_commit_sha→cfa4c932)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "new signal ids not in prior seen_signals",
+      "observed": "true (lag_warning and dep-update-noise are fresh ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay invariants",
+      "observed": "no score > 8; 11 items decayed −1, 17 items dropped to 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans",
+      "observed": "0 new plans this run",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plan files",
+      "observed": "0 ≤ 2",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0 lines (only .research/ paths staged)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets/hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "regenerated this run; canonical-source-of-truth",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phases 1.5/1.6 deliberately skipped (catch-up scope); cursors not advanced for those phases",
+      "expected": "documented in brief"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all 6 ready plans untouched",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD count",
+      "observed": "no archive changes; count stable",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "regenerated this run",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a — Phase 1.6 skipped",
+      "observed": "no-op gate",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate this run (allowlist required confidence=high + score>=3; lag_warning + dep-update-noise are score_delta=0)"
+}
