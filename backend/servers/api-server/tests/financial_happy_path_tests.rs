@@ -61,9 +61,19 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
         "opening_balance": "0.00"
     });
     let resp = app
-        .execute(session.post("/api/v1/financial/accounts").json(&create_acct).build())
+        .execute(
+            session
+                .post("/api/v1/financial/accounts")
+                .json(&create_acct)
+                .build(),
+        )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_account: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_account: {}",
+        resp.text()
+    );
     let acct = resp.json_value();
     let account_id = Uuid::parse_str(acct["id"].as_str().expect("id")).expect("uuid");
 
@@ -71,11 +81,18 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/financial/accounts?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/financial/accounts?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_accounts: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_accounts: {}",
+        resp.text()
+    );
     let list = resp.json_value();
     assert!(list.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
@@ -87,7 +104,12 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_account: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_account: {}",
+        resp.text()
+    );
     assert_eq!(resp.json_value()["id"], acct["id"]);
 
     // ========================================================================
@@ -106,12 +128,19 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/financial/accounts/{account_id}/transactions"))
+                .post(&format!(
+                    "/api/v1/financial/accounts/{account_id}/transactions"
+                ))
                 .json(&create_tx)
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_transaction: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_transaction: {}",
+        resp.text()
+    );
     let tx = resp.json_value();
     let _transaction_id = Uuid::parse_str(tx["id"].as_str().expect("id")).expect("uuid");
 
@@ -119,11 +148,18 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/financial/accounts/{account_id}/transactions"))
+                .get(&format!(
+                    "/api/v1/financial/accounts/{account_id}/transactions"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_transactions: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_transactions: {}",
+        resp.text()
+    );
     let txs = resp.json_value();
     assert!(txs.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
@@ -141,7 +177,12 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_unit_ledger: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_unit_ledger: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -197,7 +238,12 @@ async fn financial_happy_path_fee_schedules_and_unit_fees(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_fee_schedule: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_fee_schedule: {}",
+        resp.text()
+    );
     let fs = resp.json_value();
     let fs_id = Uuid::parse_str(fs["id"].as_str().expect("id")).expect("uuid");
 
@@ -205,11 +251,18 @@ async fn financial_happy_path_fee_schedules_and_unit_fees(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/financial/fee-schedules?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/financial/fee-schedules?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_fee_schedules: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_fee_schedules: {}",
+        resp.text()
+    );
     let list = resp.json_value();
     assert!(list.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
@@ -221,7 +274,12 @@ async fn financial_happy_path_fee_schedules_and_unit_fees(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_fee_schedule: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_fee_schedule: {}",
+        resp.text()
+    );
     assert_eq!(resp.json_value()["id"], fs["id"]);
 
     // ========================================================================
@@ -242,7 +300,12 @@ async fn financial_happy_path_fee_schedules_and_unit_fees(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "assign_unit_fee: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "assign_unit_fee: {}",
+        resp.text()
+    );
 
     // 2.2 GET /api/v1/financial/units/{unit_id}/fees -> get_unit_fees
     let resp = app
@@ -254,7 +317,12 @@ async fn financial_happy_path_fee_schedules_and_unit_fees(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_unit_fees: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_unit_fees: {}",
+        resp.text()
+    );
     let fees = resp.json_value();
     assert!(fees.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 }
@@ -319,7 +387,12 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_invoice: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_invoice: {}",
+        resp.text()
+    );
     let inv = resp.json_value();
     let invoice_id = Uuid::parse_str(inv["id"].as_str().expect("id")).expect("uuid");
 
@@ -327,11 +400,18 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/financial/invoices?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/financial/invoices?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_invoices: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_invoices: {}",
+        resp.text()
+    );
     let list = resp.json_value();
     assert!(list.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
@@ -343,7 +423,12 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_invoice: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_invoice: {}",
+        resp.text()
+    );
     assert_eq!(resp.json_value()["id"], inv["id"]);
 
     // 1.4 POST /api/v1/financial/invoices/{id}/send -> send_invoice
@@ -389,7 +474,12 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_unit_invoices: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_unit_invoices: {}",
+        resp.text()
+    );
     let unit_invs = resp.json_value();
     assert!(unit_invs.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 }
@@ -460,7 +550,12 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "record_payment: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "record_payment: {}",
+        resp.text()
+    );
     let payment = resp.json_value();
     let payment_id = Uuid::parse_str(payment["id"].as_str().expect("id")).expect("uuid");
 
@@ -468,11 +563,18 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/financial/payments?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/financial/payments?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_payments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_payments: {}",
+        resp.text()
+    );
     let list = resp.json_value();
     assert!(list.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
@@ -486,7 +588,12 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_unallocated_payments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_unallocated_payments: {}",
+        resp.text()
+    );
 
     // 1.4 GET /api/v1/financial/payments/{id} -> get_payment
     let resp = app
@@ -496,7 +603,12 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_payment: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_payment: {}",
+        resp.text()
+    );
     assert_eq!(resp.json_value()["id"], payment["id"]);
 
     // 1.5 POST /api/v1/financial/payments/{id}/allocate -> allocate_payment
@@ -529,7 +641,12 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_unit_payments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_unit_payments: {}",
+        resp.text()
+    );
     let unit_pays = resp.json_value();
     assert!(unit_pays.as_array().map(|a| !a.is_empty()).unwrap_or(false));
 
