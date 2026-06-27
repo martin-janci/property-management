@@ -4,7 +4,14 @@
     {
       "task_id": "10b-5-support-data-access",
       "branch": "auto-impl/10b-5-support-data-access-b77df24c",
-      "status": "merged"
+      "status": "merged",
+      "claimed_at": "2026-06-24T22:20:52Z",
+      "last_updated": "2026-06-25T04:19:59Z",
+      "status_changed_at": "2026-06-25T04:19:59Z",
+      "pr_number": 1829,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1829",
+      "merged_at": "2026-06-25T02:16:21Z",
+      "specialist": "rust-backend"
     }
   ]
 }
