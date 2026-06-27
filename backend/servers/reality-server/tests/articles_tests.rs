@@ -16,21 +16,21 @@ fn articles_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_articles_returns_200(pool: PgPool) {
     let router = articles_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/articles", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_article_unknown_slug_returns_404(pool: PgPool) {
     let router = articles_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/articles/no-such-slug", None).await;
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_comments_unknown_slug_returns_404(pool: PgPool) {
     let router = articles_router(pool);
     let status = common::send(
@@ -43,7 +43,7 @@ async fn list_comments_unknown_slug_returns_404(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_comment_unauthenticated_returns_401(pool: PgPool) {
     let router = articles_router(pool);
     let status = common::send_json(
@@ -57,7 +57,7 @@ async fn create_comment_unauthenticated_returns_401(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_comment_authenticated_unknown_article_returns_404(pool: PgPool) {
     let router = articles_router(pool);
     let user_id = Uuid::new_v4();

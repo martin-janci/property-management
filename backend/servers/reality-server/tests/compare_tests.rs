@@ -16,14 +16,14 @@ fn compare_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_compare_list_unauthenticated_returns_401(pool: PgPool) {
     let router = compare_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/compare", None).await;
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_compare_list_authenticated_returns_200(pool: PgPool) {
     let router = compare_router(pool);
     let user_id = Uuid::new_v4();
@@ -32,7 +32,7 @@ async fn get_compare_list_authenticated_returns_200(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn add_to_compare_unauthenticated_returns_401(pool: PgPool) {
     let router = compare_router(pool);
     let listing_id = Uuid::new_v4();
@@ -46,7 +46,7 @@ async fn add_to_compare_unauthenticated_returns_401(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn add_to_compare_unknown_listing_returns_404(pool: PgPool) {
     let router = compare_router(pool);
     let user_id = Uuid::new_v4();
@@ -62,7 +62,7 @@ async fn add_to_compare_unknown_listing_returns_404(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn remove_from_compare_unauthenticated_returns_401(pool: PgPool) {
     let router = compare_router(pool);
     let listing_id = Uuid::new_v4();
@@ -76,7 +76,7 @@ async fn remove_from_compare_unauthenticated_returns_401(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn remove_from_compare_authenticated_not_in_list_returns_404(pool: PgPool) {
     let router = compare_router(pool);
     let user_id = Uuid::new_v4();

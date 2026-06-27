@@ -17,42 +17,42 @@ fn listings_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn search_returns_200_empty_result(pool: PgPool) {
     let router = listings_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/listings", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn search_with_query_param_returns_200(pool: PgPool) {
     let router = listings_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/listings?q=city", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_featured_returns_200(pool: PgPool) {
     let router = listings_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/listings/featured", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_categories_returns_200(pool: PgPool) {
     let router = listings_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/listings/categories", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_suggestions_returns_200(pool: PgPool) {
     let router = listings_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/listings/suggestions", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_listing_unknown_id_returns_404(pool: PgPool) {
     let router = listings_router(pool);
     let id = Uuid::new_v4();
@@ -66,7 +66,7 @@ async fn get_listing_unknown_id_returns_404(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn record_view_unknown_listing_returns_404(pool: PgPool) {
     let router = listings_router(pool);
     let id = Uuid::new_v4();

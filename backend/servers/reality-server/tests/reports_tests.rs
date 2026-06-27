@@ -15,7 +15,7 @@ fn reports_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn submit_report_unauthenticated_invalid_listing_returns_404_or_unprocessable(pool: PgPool) {
     let router = reports_router(pool);
     let listing_id = Uuid::new_v4();
@@ -39,14 +39,14 @@ async fn submit_report_unauthenticated_invalid_listing_returns_404_or_unprocessa
     );
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_my_reports_unauthenticated_returns_401(pool: PgPool) {
     let router = reports_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/reports/me", None).await;
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_my_reports_authenticated_returns_200(pool: PgPool) {
     let router = reports_router(pool);
     let user_id = Uuid::new_v4();

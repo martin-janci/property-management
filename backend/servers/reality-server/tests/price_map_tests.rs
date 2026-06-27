@@ -14,14 +14,14 @@ fn price_map_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_price_map_returns_200(pool: PgPool) {
     let router = price_map_router(pool);
     let status = common::send(&router, Method::GET, "/api/v1/price-map", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_price_map_with_filters_returns_200(pool: PgPool) {
     let router = price_map_router(pool);
     let status = common::send(

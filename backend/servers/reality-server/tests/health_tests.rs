@@ -15,14 +15,14 @@ fn health_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn liveness_returns_200(pool: PgPool) {
     let router = health_router(pool);
     let status = common::send(&router, Method::GET, "/health", None).await;
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn readiness_returns_200_or_degraded(pool: PgPool) {
     // Readiness may return 200 (healthy) or 503 (degraded/unhealthy) depending
     // on whether the PM API is reachable in the test environment; either is

@@ -19,7 +19,7 @@ fn agent_reviews_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_reviews_unknown_realtor_returns_200_empty(pool: PgPool) {
     let router = agent_reviews_router(pool);
     let realtor_id = Uuid::new_v4();
@@ -34,7 +34,7 @@ async fn list_reviews_unknown_realtor_returns_200_empty(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_review_unauthenticated_returns_401(pool: PgPool) {
     let router = agent_reviews_router(pool);
     let realtor_id = Uuid::new_v4();
