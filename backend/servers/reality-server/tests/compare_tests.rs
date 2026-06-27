@@ -1,0 +1,93 @@
+//! Behaviour tests for GET /api/v1/compare, POST /api/v1/compare/{id},
+//! DELETE /api/v1/compare/{id}.
+
+mod common;
+
+use axum::{http::Method, Router};
+use reality_server::routes;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+fn compare_router(pool: PgPool) -> Router {
+    common::ensure_test_env();
+    let state = common::make_app_state(pool);
+    Router::new()
+        .nest("/api/v1/compare", routes::compare::router())
+        .with_state(state)
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn get_compare_list_unauthenticated_returns_401(pool: PgPool) {
+    let router = compare_router(pool);
+    let status = common::send(&router, Method::GET, "/api/v1/compare", None).await;
+    assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn get_compare_list_authenticated_returns_200(pool: PgPool) {
+    let router = compare_router(pool);
+    let user_id = Uuid::new_v4();
+    let token = common::mint_token(user_id);
+    let status = common::send(&router, Method::GET, "/api/v1/compare", Some(&token)).await;
+    assert_eq!(status, axum::http::StatusCode::OK);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn add_to_compare_unauthenticated_returns_401(pool: PgPool) {
+    let router = compare_router(pool);
+    let listing_id = Uuid::new_v4();
+    let status = common::send(
+        &router,
+        Method::POST,
+        &format!("/api/v1/compare/{listing_id}"),
+        None,
+    )
+    .await;
+    assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn add_to_compare_unknown_listing_returns_404(pool: PgPool) {
+    let router = compare_router(pool);
+    let user_id = Uuid::new_v4();
+    let token = common::mint_token(user_id);
+    let listing_id = Uuid::new_v4();
+    let status = common::send(
+        &router,
+        Method::POST,
+        &format!("/api/v1/compare/{listing_id}"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn remove_from_compare_unauthenticated_returns_401(pool: PgPool) {
+    let router = compare_router(pool);
+    let listing_id = Uuid::new_v4();
+    let status = common::send(
+        &router,
+        Method::DELETE,
+        &format!("/api/v1/compare/{listing_id}"),
+        None,
+    )
+    .await;
+    assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+async fn remove_from_compare_authenticated_not_in_list_returns_404(pool: PgPool) {
+    let router = compare_router(pool);
+    let user_id = Uuid::new_v4();
+    let token = common::mint_token(user_id);
+    let listing_id = Uuid::new_v4();
+    let status = common::send(
+        &router,
+        Method::DELETE,
+        &format!("/api/v1/compare/{listing_id}"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
+}
