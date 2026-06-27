@@ -63,7 +63,11 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
     let doc = format!("{cert}/documents/{UUID2}");
     let milestone = format!("{cert}/milestones/{UUID2}");
     vec![
-        (Method::GET, format!("{base}/dashboard?organization_id={UUID}"), None),
+        (
+            Method::GET,
+            format!("{base}/dashboard?organization_id={UUID}"),
+            None,
+        ),
         (Method::GET, base.to_string(), None),
         (
             Method::POST,
