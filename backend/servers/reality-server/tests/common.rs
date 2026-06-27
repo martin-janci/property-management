@@ -41,6 +41,7 @@ pub fn make_app_state(pool: PgPool) -> AppState {
     AppState::new(pool, tenant_cache, rate_limiters)
 }
 
+#[allow(dead_code)]
 pub fn mint_token(user_id: Uuid) -> String {
     let claims = PrincipalClaims {
         sub: user_id,
