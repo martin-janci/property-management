@@ -57,16 +57,16 @@ _Server: api-server. Modules: auth.rs, oauth.rs, mfa.rs, gdpr.rs, onboarding.rs,
 ## gdpr.rs  (mount: /api/v1/gdpr)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/gdpr/export/request | request_data_export | partial | — | real (data_export_repo + audit_log), no test |
-| GET | /api/v1/gdpr/export/status/{request_id} | get_export_status | partial | — | real handler, no test |
-| GET | /api/v1/gdpr/export/download/{token} | download_export | partial | — | real handler, no test |
-| GET | /api/v1/gdpr/export/categories | get_export_categories | partial | — | real handler, no test |
-| GET | /api/v1/gdpr/export/history | get_export_history | partial | — | real handler, no test |
-| POST | /api/v1/gdpr/deletion/request | request_data_deletion | partial | — | real handler, no test |
-| GET | /api/v1/gdpr/deletion/status | get_deletion_status | partial | — | real handler, no test |
-| POST | /api/v1/gdpr/deletion/cancel | cancel_deletion_request | partial | — | real handler, no test |
-| GET | /api/v1/gdpr/privacy | get_privacy_settings | partial | — | real handler, no test |
-| POST | /api/v1/gdpr/privacy | update_privacy_settings | partial | — | real handler, no test |
+| POST | /api/v1/gdpr/export/request | request_data_export | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/export/status/{request_id} | get_export_status | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/export/download/{token} | download_export | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/export/categories | get_export_categories | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/export/history | get_export_history | done | gdpr_compliance_tests.rs | |
+| POST | /api/v1/gdpr/deletion/request | request_data_deletion | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/deletion/status | get_deletion_status | done | gdpr_compliance_tests.rs | |
+| POST | /api/v1/gdpr/deletion/cancel | cancel_deletion_request | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/gdpr/privacy | get_privacy_settings | done | gdpr_compliance_tests.rs | |
+| POST | /api/v1/gdpr/privacy | update_privacy_settings | done | gdpr_compliance_tests.rs | |
 
 ## onboarding.rs  (mount: /api/v1/onboarding)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -123,4 +123,4 @@ _Server: api-server. Modules: auth.rs, oauth.rs, mfa.rs, gdpr.rs, onboarding.rs,
 | GET | /api/v1/data-residency/dashboard | get_residency_dashboard | stub | — | ignores _state; synthesized dashboard |
 
 ## Summary
-- done: 28 | partial: 38 | stub: 14 | missing: 0 | total: 80
+- done: 38 | partial: 28 | stub: 14 | missing: 0 | total: 80

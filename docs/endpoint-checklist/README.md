@@ -15,17 +15,17 @@ different answers. Read both.
 
 | Metric | Count | % of all endpoints |
 |---|---|---|
-| **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
-| Partial — real handler, **no** happy-path test | 1831 | 88.8% |
-| Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
+| **DONE** — real handler **and** a passing happy-path test | **127** | **6.2%** |
+| Partial — real handler, **no** happy-path test | 1812 | 87.8% |
+| Stub — handler missing/mock/`501`/unmounted | 124 | 6.0% |
 | Missing — in spec/use-case, no handler | 0 | 0.0% |
 | **Total endpoints** | **2063** | 100% |
 
-- **Test-verified DONE = 5.2%.** This is the strict number the ticket defines: an
+- **Test-verified DONE = 6.2%.** This is the strict number the ticket defines: an
   endpoint only counts as done if a test exercises its success path. By that bar the
-  platform is ~5% done.
-- **Implementation breadth = 93.9%** (`done + partial`). Almost every endpoint has a
-  real, DB/repo-backed handler. Only **6.1% are stubs/mock/unmounted**.
+  platform is ~6% done.
+- **Implementation breadth = 94.0%** (`done + partial`). Almost every endpoint has a
+  real, DB/repo-backed handler. Only **6.0% are stubs/mock/unmounted**.
 
 **The gap is test coverage, not implementation.** The overwhelming majority of the
 codebase's tests are **authorization / cross-org IDOR / RBAC rejection** suites that
@@ -38,7 +38,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 
 | Group | Endpoints | Done | Partial | Stub | % Done (tested) | % Implemented |
 |---|---|---|---|---|---|---|
-| [auth-identity](./groups/auth-identity.md) | 80 | 28 | 38 | 14 | 35.0% | 82.5% |
+| [auth-identity](./groups/auth-identity.md) | 80 | 38 | 28 | 14 | 47.5% | 82.5% |
 | [notifications-comms](./groups/notifications-comms.md) | 87 | 12 | 75 | 0 | 13.8% | 100% |
 | [documents-forms](./groups/documents-forms.md) | 118 | 15 | 103 | 0 | 12.7% | 100% |
 | [reality-server](./groups/reality-server.md) | 96 | 4 | 91 | 1 | 4.2% | 99.0% |
@@ -48,11 +48,11 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
 | [org-property](./groups/org-property.md) | 94 | 3 | 91 | 0 | 3.2% | 100% |
 | [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
-| [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
+| [compliance-screening](./groups/compliance-screening.md) | 85 | 12 | 54 | 19 | 14.1% | 77.6% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **107** | **1831** | **125** | **5.2%** | **93.9%** |
+| **Total** | **2063** | **127** | **1812** | **124** | **6.2%** | **94.0%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.

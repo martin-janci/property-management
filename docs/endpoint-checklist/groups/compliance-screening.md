@@ -5,16 +5,16 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 ## compliance.rs  (mount: /api/v1/compliance)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/compliance/audit-logs | get_audit_logs | partial | none | Real: audit_log_repo.query/count. SuperAdmin-gated. No test hits path. |
-| GET | /api/v1/compliance/audit-logs/summary | get_audit_summary | partial | none | Real: get_action_counts + verify_integrity. No test. |
-| GET | /api/v1/compliance/audit-logs/user/{user_id} | get_user_audit_logs | partial | none | Real: audit_log_repo.get_user_logs. No test. |
-| GET | /api/v1/compliance/audit-logs/integrity | verify_audit_integrity | partial | none | Real: audit_log_repo.verify_integrity. No test. |
-| GET | /api/v1/compliance/gdpr/data-exports | get_data_export_report | stub | none | Ignores params; returns exports=[], completed_count=0, downloaded_count=0 with "For now, return a summary ... in production this would query with filters" comment. Only a pending count is real → mock/TODO data. |
-| GET | /api/v1/compliance/gdpr/deletion-requests | get_deletion_requests_report | partial | none | Real: raw SQL over users.scheduled_deletion_at. No test. |
-| GET | /api/v1/compliance/gdpr/privacy-report | get_privacy_settings_report | partial | none | Real: raw SQL aggregations over users. No test. |
-| GET | /api/v1/compliance/security/login-activity | get_login_activity_report | partial | none | Real: raw SQL over audit_logs. No test. |
-| GET | /api/v1/compliance/security/mfa-status | get_mfa_status_report | partial | none | Real: raw SQL over user_2fa/users. No test. |
-| GET | /api/v1/compliance/security/failed-logins | get_failed_logins_report | partial | none | Real: raw SQL over audit_logs. No test. |
+| GET | /api/v1/compliance/audit-logs | get_audit_logs | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/audit-logs/summary | get_audit_summary | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/audit-logs/user/{user_id} | get_user_audit_logs | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/audit-logs/integrity | verify_audit_integrity | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/gdpr/data-exports | get_data_export_report | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/gdpr/deletion-requests | get_deletion_requests_report | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/gdpr/privacy-report | get_privacy_settings_report | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/security/login-activity | get_login_activity_report | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/security/mfa-status | get_mfa_status_report | done | gdpr_compliance_tests.rs | |
+| GET | /api/v1/compliance/security/failed-logins | get_failed_logins_report | done | gdpr_compliance_tests.rs | |
 
 ## regional_compliance.rs  (mount: /api/v1/regional-compliance)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -104,4 +104,4 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 | GET | /api/v1/tenant-screening/distribution | get_risk_distribution | partial | none | Real. No test. |
 
 ## Summary
-- done: 2 | partial: 63 | stub: 20 | missing: 0 | total: 85
+- done: 12 | partial: 54 | stub: 19 | missing: 0 | total: 85
