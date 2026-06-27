@@ -295,6 +295,33 @@ jobs:
           sudo docker image prune --all --force >/dev/null 2>&1 || true
           echo "Disk after cleanup:"; df -h /
 
+      # The api-server test binaries contain the ONLY compile-time-checked
+      # `sqlx::query!` macros in the whole backend (ocr_meter_reading_tests.rs
+      # lines 176 & 312 — every other DB access uses RUNTIME `sqlx::query()`).
+      # Those macros connect to DATABASE_URL at COMPILE time to validate their
+      # SQL against the live schema. With no committed `.sqlx` offline cache and
+      # no migrations applied, the `test` DB is empty, so they fail with
+      # `relation "meter_readings"/"ocr_meter_corrections" does not exist`.
+      # This was intermittent (BIT-323): `Swatinem/rust-cache` may reuse an
+      # already-compiled test binary, so the macro is never re-evaluated and the
+      # job is green — but on a cold/different cache key (e.g. the PR merge-ref)
+      # the binary recompiles against the empty DB and the job goes red on the
+      # same SHA a `push` run passed. Apply migrations BEFORE `cargo test` so the
+      # schema deterministically exists for the query-macro check.
+      #
+      # sqlx-cli is pinned to the workspace's SQLx version (0.9) to match the
+      # proc-macro, mirroring the `sqlx-migrations` gate below.
+      - name: Install SQLx CLI
+        if: needs.changes.outputs.backend == 'true'
+        run: cargo install sqlx-cli --version 0.9.0 --no-default-features --features native-tls,postgres --locked
+
+      - name: Run database migrations
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend/crates/db
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+        run: sqlx database create && sqlx migrate run
+
       - name: Run tests
         if: needs.changes.outputs.backend == 'true'
         working-directory: backend
