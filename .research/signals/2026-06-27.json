@@ -1,0 +1,155 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16 — 11 days ago. Catch-up run sweeps 96 merged PRs.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713-delegations",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213). Intentional retirement per BIT-213, not a bug revert.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-27.md && head -1 == '# 2026-06-27'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (last_pr_seen 1439→1853, last_issue_seen 1437→1854, sha 4829015b→e0e5fd8535db, seen_signals grew)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique|length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id replayed with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (cap)",
+      "passed": true,
+      "command": "jq '[.items[]|select(.score>8)]|length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (decay)",
+      "passed": true,
+      "command": "11 open items with updated_at<=2026-06-13 each lost 1pt (or moved to dropped); 17 reached 0 -> dropped",
+      "observed": "applied",
+      "expected": "applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans promoted (G7 count=0); vacuous pass",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count 0 (<=2); no plans to validate",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md byte-identical to staged",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; no stalled cursors",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted this run; all prior plans still in plans/ or plans/_archive/",
+      "observed": "all prior plans intact",
+      "expected": "intact"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ ls-files _archive/ ] -ge [ ls-tree HEAD _archive/ ]",
+      "observed": "equal",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md byte-identical to staged",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate this run); kill switch not asserted but no actions either way",
+      "observed": "0 actions",
+      "expected": "<=3 actions, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run -> no-op gate (pm_cursor untouched, no management artifacts to validate)",
+      "observed": "vacuous (skipped)",
+      "expected": "vacuous when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram bot-token literal scan on staged added lines (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no high-confidence allowlist signal this run)"
+}
