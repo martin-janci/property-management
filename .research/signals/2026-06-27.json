@@ -1,0 +1,250 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 11d 264h ago (cloud cron lapse); 96 merged PRs accumulated since last run"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 line-churn this run: 2933 lines changed (window 2026-06-16 → 2026-06-27, 11d)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 line-churn this run: 2818 lines changed (window 2026-06-16 → 2026-06-27, 11d)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "git log churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 line-churn this run: 2648 lines changed (window 2026-06-16 → 2026-06-27, 11d)"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen=2, last_seen=2026-05-30, recent_churn=2648"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1713 reverted #1690 (delegation FE re-add) — CEO ruled delegation stays retired per BIT-198/BIT-213; FE was re-shipped 16min before the ruling and rolled back same day"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "feat(epic-3): story 3.2 - unit management UI (BIT-188) — closed unmerged 2026-06-22 — likely superseded by BIT-188 follow-up; investigate"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "fix(ppt-web): add Leases nav link + home tile (#977) — closed unmerged 2026-06-23 — review notes both gaps already fixed; PR became redundant"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline — closed unmerged 2026-06-22 — replaced by separate fixes (#1721 fmt + #1728 baseline reclassification)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "fix(mobile): exclude app.config.icon.test.ts from tsc typecheck — closed unmerged 2026-06-23 — superseded by #1748 (proper node-types fix instead of exclusion)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-06-27",
+      "type": "dep-update-noise",
+      "source": "PRs [1567, 1568, 1836, 1837, 1838, 1839, 1840, 1841, 1842]",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "9 dependabot PRs in window: [1567, 1568, 1836, 1837, 1838, 1839, 1840, 1841, 1842]"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "phase_1_5_skipped": "11-day routine catch-up; segment ppt-web-core deferred to next run",
+  "phase_1_6_skipped": "11-day routine catch-up; pm-security rotation deferred to next run; pm_cursor not advanced",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && H1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative-only re-emit",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay applied",
+      "observed": "true (cap) + 11 decayed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "<=2 with adversarial-pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count + sections check",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed = none; no cursor regression",
+      "observed": "no failed phase; 1.5+1.6 skipped (explicit)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grew or same",
+      "observed": "7>=7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline (no actions)",
+      "observed": "0 actions",
+      "expected": "<=3 actions total, each type <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → gate no-op",
+      "observed": "pm_cursor unchanged at 5; coverage_cursor unchanged at 12; both valid",
+      "expected": "no-op (skipped)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
