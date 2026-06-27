@@ -373,8 +373,7 @@ async fn publish_description_for_org_blocks_cross_tenant_mutate(pool: PgPool) {
     let org_b = seed_org(&pool, "pub-b").await;
     let user_a = seed_user(&pool, "pub-a@ai-idor.test").await;
     let listing_in_a = Uuid::new_v4();
-    let desc_in_a =
-        seed_listing_description_returning_id(&pool, org_a, listing_in_a, user_a).await;
+    let desc_in_a = seed_listing_description_returning_id(&pool, org_a, listing_in_a, user_a).await;
 
     // Cross-org publish (org B targeting org A's description) returns None and
     // mutates nothing.
