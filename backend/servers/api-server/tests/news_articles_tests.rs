@@ -132,7 +132,10 @@ async fn create_article_succeeds(pool: PgPool) {
     resp.assert_status(StatusCode::CREATED);
     let body: Value = resp.json_value();
     assert!(body["id"].as_str().is_some(), "id must be present");
-    assert_eq!(body["message"].as_str(), Some("Article created successfully"));
+    assert_eq!(
+        body["message"].as_str(),
+        Some("Article created successfully")
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -505,8 +508,7 @@ async fn toggle_reaction_succeeds(pool: PgPool) {
 async fn get_reaction_counts_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) =
-        create_authenticated_user_with_org(&app, &user, "news-react-counts").await;
+    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-react-counts").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Counts article").await;
@@ -597,13 +599,11 @@ async fn update_comment_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.put(&format!(
-                "/api/v1/news/{article_id}/comments/{comment_id}"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org.to_string())
-            .json(json!({"content": "Edited text"}))
-            .build(),
+            app.put(&format!("/api/v1/news/{article_id}/comments/{comment_id}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .json(json!({"content": "Edited text"}))
+                .build(),
         )
         .await;
 
@@ -628,12 +628,10 @@ async fn delete_comment_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.delete(&format!(
-                "/api/v1/news/{article_id}/comments/{comment_id}"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org.to_string())
-            .build(),
+            app.delete(&format!("/api/v1/news/{article_id}/comments/{comment_id}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
         )
         .await;
 
@@ -648,13 +646,11 @@ async fn delete_comment_succeeds(pool: PgPool) {
 async fn moderate_comment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) =
-        create_authenticated_user_with_org(&app, &user, "news-cmt-moderate").await;
+    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-moderate").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Moderated article").await;
-    let comment_id =
-        seed_comment(&app.pool, article_id, author_id, "Offensive comment").await;
+    let comment_id = seed_comment(&app.pool, article_id, author_id, "Offensive comment").await;
 
     let resp = app
         .execute(
@@ -679,8 +675,7 @@ async fn moderate_comment_succeeds(pool: PgPool) {
 async fn list_comment_replies_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) =
-        create_authenticated_user_with_org(&app, &user, "news-cmt-replies").await;
+    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-replies").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Reply article").await;
