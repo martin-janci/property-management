@@ -17,39 +17,39 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | GET | /api/v1/marketplace/rfqs | list_rfqs | partial | — | |
 | GET | /api/v1/marketplace/rfqs/{id} | get_rfq | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK (owner reads own RFQ) |
 | PATCH | /api/v1/marketplace/rfqs/{id} | update_rfq | partial | — | |
-| DELETE | /api/v1/marketplace/rfqs/{id} | delete_rfq | partial | — | |
+| DELETE | /api/v1/marketplace/rfqs/{id} | delete_rfq | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | GET | /api/v1/marketplace/rfqs/{id}/quotes | list_rfq_quotes | partial | — | |
-| GET | /api/v1/marketplace/rfqs/{id}/compare | compare_quotes | partial | — | |
-| POST | /api/v1/marketplace/rfqs/{id}/award | award_quote | partial | — | |
-| POST | /api/v1/marketplace/rfqs/{id}/cancel | cancel_rfq | partial | — | |
+| GET | /api/v1/marketplace/rfqs/{id}/compare | compare_quotes | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/rfqs/{id}/award | award_quote | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/rfqs/{id}/cancel | cancel_rfq | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | POST | /api/v1/marketplace/quotes | submit_quote | partial | — | |
 | GET | /api/v1/marketplace/quotes/my | list_my_quotes | partial | — | |
 | GET | /api/v1/marketplace/quotes/{id} | get_quote | partial | — | |
-| PATCH | /api/v1/marketplace/quotes/{id} | update_quote | partial | — | |
-| DELETE | /api/v1/marketplace/quotes/{id} | withdraw_quote | partial | — | |
+| PATCH | /api/v1/marketplace/quotes/{id} | update_quote | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| DELETE | /api/v1/marketplace/quotes/{id} | withdraw_quote | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | GET | /api/v1/marketplace/invitations | list_my_invitations | partial | — | |
 | POST | /api/v1/marketplace/invitations/{id}/view | mark_invitation_viewed | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
 | POST | /api/v1/marketplace/invitations/{id}/decline | decline_invitation | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
 | POST | /api/v1/marketplace/verifications | submit_verification | partial | — | |
 | GET | /api/v1/marketplace/verifications | list_verifications | partial | — | |
-| GET | /api/v1/marketplace/verifications/queue | get_verification_queue | partial | — | |
-| GET | /api/v1/marketplace/verifications/expiring | get_expiring_verifications | partial | — | |
+| GET | /api/v1/marketplace/verifications/queue | get_verification_queue | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/verifications/expiring | get_expiring_verifications | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | GET | /api/v1/marketplace/verifications/{id} | get_verification | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
 | POST | /api/v1/marketplace/verifications/{id}/review | review_verification | partial | marketplace_voting_investor_cross_org_idor_tests.rs | authz-only (403) |
-| GET | /api/v1/marketplace/providers/{id}/badges | list_provider_badges | partial | — | |
-| POST | /api/v1/marketplace/providers/{id}/badges | award_badge | partial | — | |
+| GET | /api/v1/marketplace/providers/{id}/badges | list_provider_badges | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/providers/{id}/badges | award_badge | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | DELETE | /api/v1/marketplace/badges/{id} | revoke_badge | partial | marketplace_voting_investor_cross_org_idor_tests.rs | authz-only (403) |
-| POST | /api/v1/marketplace/providers/{id}/reviews | create_review | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/reviews | list_provider_reviews | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/ratings | get_rating_breakdown | partial | — | |
-| GET | /api/v1/marketplace/reviews | list_reviews | partial | — | |
-| GET | /api/v1/marketplace/reviews/{id} | get_review | partial | — | |
-| PATCH | /api/v1/marketplace/reviews/{id} | update_review | partial | — | |
-| DELETE | /api/v1/marketplace/reviews/{id} | delete_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/respond | respond_to_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/moderate | moderate_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/helpful | mark_review_helpful | partial | — | |
-| GET | /api/v1/marketplace/dashboard | get_manager_dashboard | partial | — | |
+| POST | /api/v1/marketplace/providers/{id}/reviews | create_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/providers/{id}/reviews | list_provider_reviews | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/providers/{id}/ratings | get_rating_breakdown | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/reviews | list_reviews | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/reviews/{id} | get_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| PATCH | /api/v1/marketplace/reviews/{id} | update_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| DELETE | /api/v1/marketplace/reviews/{id} | delete_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/reviews/{id}/respond | respond_to_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/reviews/{id}/moderate | moderate_review | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/marketplace/reviews/{id}/helpful | mark_review_helpful | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/marketplace/dashboard | get_manager_dashboard | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 
 ## public_api.rs  (mount: UNMOUNTED — ROADMAP(PAP-24) /api/v1/developer not nested in lib.rs)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -101,12 +101,12 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## api_ecosystem.rs  (mount: /api/v1/ecosystem)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/ecosystem/marketplace | list_marketplace_integrations | partial | — | router asserted in router_single_source_tests (static only, no path-exercising test) |
-| POST | /api/v1/ecosystem/marketplace | create_marketplace_integration | partial | — | |
-| GET | /api/v1/ecosystem/marketplace/{id} | get_marketplace_integration | partial | — | |
-| PUT | /api/v1/ecosystem/marketplace/{id} | update_marketplace_integration | partial | — | |
-| DELETE | /api/v1/ecosystem/marketplace/{id} | delete_marketplace_integration | partial | — | |
-| GET | /api/v1/ecosystem/marketplace/categories | list_integration_categories | partial | — | |
+| GET | /api/v1/ecosystem/marketplace | list_marketplace_integrations | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/ecosystem/marketplace | create_marketplace_integration | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/ecosystem/marketplace/{id} | get_marketplace_integration | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| PUT | /api/v1/ecosystem/marketplace/{id} | update_marketplace_integration | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| DELETE | /api/v1/ecosystem/marketplace/{id} | delete_marketplace_integration | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/ecosystem/marketplace/categories | list_integration_categories | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | GET | /api/v1/ecosystem/marketplace/{id}/ratings | list_integration_ratings | partial | — | |
 | POST | /api/v1/ecosystem/marketplace/{id}/ratings | create_integration_rating | partial | — | |
 | GET | /api/v1/ecosystem/organizations/{org_id}/integrations | list_organization_integrations | partial | — | |
@@ -115,12 +115,12 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | PUT | /api/v1/ecosystem/organizations/{org_id}/integrations/{id} | update_organization_integration | partial | — | |
 | DELETE | /api/v1/ecosystem/organizations/{org_id}/integrations/{id} | uninstall_integration | partial | — | |
 | POST | /api/v1/ecosystem/organizations/{org_id}/integrations/{id}/sync | sync_integration | partial | — | |
-| GET | /api/v1/ecosystem/connectors | list_connectors | partial | — | |
-| POST | /api/v1/ecosystem/connectors | create_connector | partial | — | |
-| GET | /api/v1/ecosystem/connectors/{id} | get_connector | partial | — | |
+| GET | /api/v1/ecosystem/connectors | list_connectors | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| POST | /api/v1/ecosystem/connectors | create_connector | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
+| GET | /api/v1/ecosystem/connectors/{id} | get_connector | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | PUT | /api/v1/ecosystem/connectors/{id} | update_connector | partial | — | |
 | DELETE | /api/v1/ecosystem/connectors/{id} | delete_connector | partial | — | |
-| GET | /api/v1/ecosystem/connectors/{id}/actions | list_connector_actions | partial | — | |
+| GET | /api/v1/ecosystem/connectors/{id}/actions | list_connector_actions | done | marketplace_ecosystem_backfill_batch3_tests.rs | happy-path 200/201/204 OK |
 | POST | /api/v1/ecosystem/connectors/{id}/actions | create_connector_action | partial | — | |
 | GET | /api/v1/ecosystem/organizations/{org_id}/connector-logs | list_connector_logs | partial | — | |
 | GET | /api/v1/ecosystem/organizations/{org_id}/webhooks | list_enhanced_webhooks | partial | — | |
