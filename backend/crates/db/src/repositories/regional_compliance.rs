@@ -62,7 +62,10 @@ impl RegionalComplianceRepository {
     }
 
     /// List all configured buildings for an organization.
-    pub async fn get_configured_buildings(&self, organization_id: Uuid) -> Result<Vec<Uuid>, SqlxError> {
+    pub async fn get_configured_buildings(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<Vec<Uuid>, SqlxError> {
         let buildings = sqlx::query_scalar::<_, Uuid>(
             r#"
             SELECT building_id FROM slovak_voting_configs WHERE organization_id = $1 AND enabled = true
@@ -239,8 +242,12 @@ impl RegionalComplianceRepository {
         organization_id: Uuid,
         config: ConfigureSlovakGdpr,
     ) -> Result<SlovakGdprConfig, SqlxError> {
-        let processing_purposes = config.processing_purposes.unwrap_or_else(|| serde_json::json!([]));
-        let consent_texts = config.consent_texts.unwrap_or_else(|| serde_json::json!({}));
+        let processing_purposes = config
+            .processing_purposes
+            .unwrap_or_else(|| serde_json::json!([]));
+        let consent_texts = config
+            .consent_texts
+            .unwrap_or_else(|| serde_json::json!({}));
 
         let row = sqlx::query_as::<_, SlovakGdprConfig>(
             r#"
@@ -483,4 +490,3 @@ impl RegionalComplianceRepository {
         ))
     }
 }
-

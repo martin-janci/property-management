@@ -57,7 +57,7 @@ impl DataResidencyRepository {
     /// Get current configuration for an organization.
     pub async fn get_config(&self, org_id: Uuid) -> Result<Option<DataResidencyConfig>, SqlxError> {
         sqlx::query_as::<_, DataResidencyConfig>(
-            "SELECT * FROM data_residency_config WHERE organization_id = $1"
+            "SELECT * FROM data_residency_config WHERE organization_id = $1",
         )
         .bind(org_id)
         .fetch_optional(&self.pool)
@@ -73,9 +73,10 @@ impl DataResidencyRepository {
     ) -> Result<DataResidencyConfig, SqlxError> {
         let primary_region_str = data_region_to_string(&payload.primary_region);
         let backup_region_str = payload.backup_region.as_ref().map(data_region_to_string);
-        let overrides_json = payload.data_type_overrides.as_ref().map(|o| {
-            serde_json::to_value(o).unwrap_or(serde_json::Value::Null)
-        });
+        let overrides_json = payload
+            .data_type_overrides
+            .as_ref()
+            .map(|o| serde_json::to_value(o).unwrap_or(serde_json::Value::Null));
 
         let config = sqlx::query_as::<_, DataResidencyConfig>(
             r#"
@@ -126,16 +127,19 @@ impl DataResidencyRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        let regions = rows.into_iter().map(|row| {
-            let r_str: String = row.get("region_str");
-            RegionInfo {
-                region: string_to_data_region(&r_str),
-                display_name: row.get("display_name"),
-                location_code: row.get("location_code"),
-                compliance_frameworks: row.get("compliance_frameworks"),
-                available: row.get("available"),
-            }
-        }).collect();
+        let regions = rows
+            .into_iter()
+            .map(|row| {
+                let r_str: String = row.get("region_str");
+                RegionInfo {
+                    region: string_to_data_region(&r_str),
+                    display_name: row.get("display_name"),
+                    location_code: row.get("location_code"),
+                    compliance_frameworks: row.get("compliance_frameworks"),
+                    available: row.get("available"),
+                }
+            })
+            .collect();
 
         Ok(regions)
     }
@@ -179,7 +183,10 @@ impl DataResidencyRepository {
     }
 
     /// List cross-region access logs for an organization.
-    pub async fn list_access_logs(&self, org_id: Uuid) -> Result<Vec<CrossRegionAccessLog>, SqlxError> {
+    pub async fn list_access_logs(
+        &self,
+        org_id: Uuid,
+    ) -> Result<Vec<CrossRegionAccessLog>, SqlxError> {
         sqlx::query_as::<_, CrossRegionAccessLog>(
             "SELECT * FROM cross_region_access_log WHERE organization_id = $1 ORDER BY accessed_at DESC"
         )
@@ -235,7 +242,10 @@ impl DataResidencyRepository {
                     "migration" => AccessType::Migration,
                     _ => AccessType::Read,
                 };
-                AccessTypeCount { access_type, count: c }
+                AccessTypeCount {
+                    access_type,
+                    count: c,
+                }
             })
             .collect();
 
@@ -284,7 +294,7 @@ impl DataResidencyRepository {
         id: Uuid,
     ) -> Result<Option<ComplianceVerificationResult>, SqlxError> {
         sqlx::query_as::<_, ComplianceVerificationResult>(
-            "SELECT * FROM compliance_verification_result WHERE id = $1 AND organization_id = $2"
+            "SELECT * FROM compliance_verification_result WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
@@ -422,7 +432,7 @@ impl DataResidencyRepository {
         id: Uuid,
     ) -> Result<Option<DataResidencyAuditLog>, SqlxError> {
         sqlx::query_as::<_, DataResidencyAuditLog>(
-            "SELECT * FROM residency_audit_log WHERE id = $1 AND organization_id = $2"
+            "SELECT * FROM residency_audit_log WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
@@ -433,7 +443,7 @@ impl DataResidencyRepository {
     /// Verify tamper-evident audit chain.
     pub async fn verify_audit_chain(&self, org_id: Uuid) -> Result<serde_json::Value, SqlxError> {
         let logs = sqlx::query_as::<_, DataResidencyAuditLog>(
-            "SELECT * FROM residency_audit_log WHERE organization_id = $1 ORDER BY created_at ASC"
+            "SELECT * FROM residency_audit_log WHERE organization_id = $1 ORDER BY created_at ASC",
         )
         .bind(org_id)
         .fetch_all(&self.pool)
@@ -453,7 +463,11 @@ impl DataResidencyRepository {
             hasher.update(&log.event_type);
             // Recompute description block if we want it to verify exactly
             // If details -> description was stored we can use it, else hash details string
-            let details_str = log.details.as_ref().map(|d| d.to_string()).unwrap_or_default();
+            let details_str = log
+                .details
+                .as_ref()
+                .map(|d| d.to_string())
+                .unwrap_or_default();
             hasher.update(&details_str);
             hasher.update(log.created_at.to_rfc3339());
             if let Some(ref ph) = prev_hash {

@@ -303,8 +303,7 @@ async fn submit_correction_persists_record(pool: PgPool) {
     .unwrap();
 
     assert!(body["id"].is_string(), "response must include id");
-    let correction_id =
-        Uuid::parse_str(body["id"].as_str().unwrap()).expect("id is a UUID");
+    let correction_id = Uuid::parse_str(body["id"].as_str().unwrap()).expect("id is a UUID");
 
     // Round-trip: verify the row is in the DB with correct values.
     let row = sqlx::query!(
