@@ -30,10 +30,10 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin_tenants.rs  (mount: /admin/tenants/{org_id}/branding | /admin/tenants/{org_id}/feature-flags)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /admin/tenants/{org_id}/branding | get_tenant_branding | partial | none | real handler (AgencyBrandingRepository); no test hits path |
-| PUT | /admin/tenants/{org_id}/branding | update_tenant_branding | partial | none | real upsert + css sanitizer (sanitizer has unit tests, handler path untested) |
-| GET | /admin/tenants/{org_id}/feature-flags | list_tenant_feature_flags | partial | none | real handler; no path test |
-| PUT | /admin/tenants/{org_id}/feature-flags | upsert_tenant_feature_flag | partial | none | real handler; no path test |
+| GET | /admin/tenants/{org_id}/branding | get_tenant_branding | done | platform_admin_authz_tests.rs | real handler (AgencyBrandingRepository); no test hits path |
+| PUT | /admin/tenants/{org_id}/branding | update_tenant_branding | done | platform_admin_authz_tests.rs | real upsert + css sanitizer (sanitizer has unit tests, handler path untested) |
+| GET | /admin/tenants/{org_id}/feature-flags | list_tenant_feature_flags | done | platform_admin_authz_tests.rs | real handler; no path test |
+| PUT | /admin/tenants/{org_id}/feature-flags | upsert_tenant_feature_flag | done | platform_admin_authz_tests.rs | real handler; no path test |
 
 ## admin_tenant_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -45,45 +45,45 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin/agencies.rs  (mount: /api/v1/admin/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/agencies | list_agencies | partial | none | real (platform_admin_repo); no path test |
-| GET | /api/v1/admin/agencies/{id} | get_agency | partial | none | real; no path test |
-| POST | /api/v1/admin/agencies/{id}/suspend | suspend_agency | partial | none | real; no path test |
-| POST | /api/v1/admin/agencies/{id}/domains | add_domain | partial | none | real; no path test |
+| GET | /api/v1/admin/agencies | list_agencies | done | platform_admin_authz_tests.rs | real (platform_admin_repo); no path test |
+| GET | /api/v1/admin/agencies/{id} | get_agency | done | platform_admin_authz_tests.rs | real; no path test |
+| POST | /api/v1/admin/agencies/{id}/suspend | suspend_agency | done | platform_admin_authz_tests.rs | real; no path test |
+| POST | /api/v1/admin/agencies/{id}/domains | add_domain | done | platform_admin_authz_tests.rs | real; no path test |
 
 ## admin/audit.rs  (mount: /api/v1/admin/audit)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/audit/csv | export_csv | partial | none | real (fetch_rows + CSV); no path test |
-| GET | /api/v1/admin/audit | list_audit_events | partial | none | real (fetch_rows); no path test |
+| GET | /api/v1/admin/audit/csv | export_csv | done | platform_admin_authz_tests.rs | real (fetch_rows + CSV); no path test |
+| GET | /api/v1/admin/audit | list_audit_events | done | platform_admin_authz_tests.rs | real (fetch_rows); no path test |
 
 ## admin/capabilities.rs  (mount: /api/v1/admin/capabilities)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/capabilities/registry | list_registry | partial | none | real (sqlx runtime query); no path test |
+| GET | /api/v1/admin/capabilities/registry | list_registry | done | platform_admin_authz_tests.rs | real (sqlx runtime query); no path test |
 | GET | /api/v1/admin/capabilities/me | list_for_me | partial | none | real; gated only by RequestPrincipal (bootstrap); no path test |
-| GET | /api/v1/admin/capabilities/users/{user_id} | list_for_user | partial | none | real; no path test |
-| POST | /api/v1/admin/capabilities/users/{user_id}/grant | grant_capability | partial | none | real; no path test |
-| DELETE | /api/v1/admin/capabilities/users/{user_id}/grant/{grant_id} | revoke_capability | partial | none | real; no path test |
+| GET | /api/v1/admin/capabilities/users/{user_id} | list_for_user | done | platform_admin_authz_tests.rs | real; no path test |
+| POST | /api/v1/admin/capabilities/users/{user_id}/grant | grant_capability | done | platform_admin_authz_tests.rs | real; no path test |
+| DELETE | /api/v1/admin/capabilities/users/{user_id}/grant/{grant_id} | revoke_capability | done | platform_admin_authz_tests.rs | real; no path test |
 
 ## admin/impersonation.rs  (mount: /api/v1/admin/impersonation)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/impersonation/active | list_active | partial | none | real (ImpersonationService); no path test |
-| POST | /api/v1/admin/impersonation/start | start | partial | none | real; no path test |
-| DELETE | /api/v1/admin/impersonation/{token_id} | stop | partial | none | real; no path test |
+| GET | /api/v1/admin/impersonation/active | list_active | done | platform_admin_authz_tests.rs | real (ImpersonationService); no path test |
+| POST | /api/v1/admin/impersonation/start | start | done | platform_admin_authz_tests.rs | real; no path test |
+| DELETE | /api/v1/admin/impersonation/{token_id} | stop | done | platform_admin_authz_tests.rs | real; no path test |
 
 ## admin/memberships.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/memberships/invite | invite | partial | none | real (AuthPolicyEnforcer + UserRepository); no path test |
+| POST | /api/v1/admin/memberships/invite | invite | done | platform_admin_authz_tests.rs | real (AuthPolicyEnforcer + UserRepository); no path test |
 | POST | /api/v1/admin/memberships/accept | accept | partial | none | real; gated by principal identity binding (no capability); no path test |
-| DELETE | /api/v1/admin/memberships/{user_id} | revoke | partial | none | real; no path test |
-| GET | /api/v1/admin/memberships/merge-collisions | merge_collisions | partial | none | real; no path test |
+| DELETE | /api/v1/admin/memberships/{user_id} | revoke | done | platform_admin_authz_tests.rs | real; no path test |
+| GET | /api/v1/admin/memberships/merge-collisions | merge_collisions | done | platform_admin_authz_tests.rs | real; no path test |
 
 ## admin/metrics.rs  (mount: /api/v1/admin/metrics)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/metrics/summary | metrics_summary | partial | none | real (sqlx count queries); no path test |
+| GET | /api/v1/admin/metrics/summary | metrics_summary | done | platform_admin_authz_tests.rs | real (sqlx count queries); no path test |
 
 ## admin/notifications.rs  (mount: /api/v1/admin/notifications)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -93,9 +93,9 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin/users.rs  (mount: /api/v1/admin/principals)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/principals | search_users | partial | none | real (platform_admin_repo); no path test |
-| GET | /api/v1/admin/principals/{id} | get_user | partial | none | real; no path test |
-| POST | /api/v1/admin/principals/{id}/principal-kind | set_principal_kind | partial | none | real; no path test |
+| GET | /api/v1/admin/principals | search_users | done | platform_admin_authz_tests.rs | real (platform_admin_repo); no path test |
+| GET | /api/v1/admin/principals/{id} | get_user | done | platform_admin_authz_tests.rs | real; no path test |
+| POST | /api/v1/admin/principals/{id}/principal-kind | set_principal_kind | done | platform_admin_authz_tests.rs | real; no path test |
 
 ## admin/users_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -234,7 +234,7 @@ All handlers are real (platform_admin_repo / feature_flag_repo / health_monitori
 | GET | /api/v1/platform-admin/maintenance | get_upcoming_maintenance_admin | partial | none | ops.rs |
 | DELETE | /api/v1/platform-admin/maintenance/{id} | delete_scheduled_maintenance | partial | none | ops.rs |
 | GET | /api/v1/platform-admin/support-data | get_support_data | partial | none | audit.rs |
-| GET | /api/v1/platform-admin/support/users | search_users_for_support | partial | none | audit.rs |
+| GET | /api/v1/platform-admin/support/users | search_users_for_support | done | platform_admin_authz_tests.rs | audit.rs |
 | GET | /api/v1/platform-admin/support/users/{id} | get_user_for_support | partial | none | audit.rs |
 | GET | /api/v1/platform-admin/support/users/{id}/memberships | get_user_memberships | partial | none | audit.rs |
 | GET | /api/v1/platform-admin/support/users/{id}/sessions | get_user_sessions | partial | none | audit.rs |

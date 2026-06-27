@@ -47,7 +47,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [finance](./groups/finance.md) | 234 | 8 | 226 | 0 | 3.4% | 100% |
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
 | [org-property](./groups/org-property.md) | 94 | 3 | 91 | 0 | 3.2% | 100% |
-| [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
+| [admin-platform](./groups/admin-platform.md) | 159 | 30 | 129 | 0 | 18.9% | 100% |
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
