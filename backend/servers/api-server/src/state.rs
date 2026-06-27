@@ -15,13 +15,14 @@ use db::{
         BackgroundJobRepository, BoardMeetingRepository, BudgetRepository,
         BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
-        DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
-        DocumentTemplateRepository, ESignatureNonceRepository, EddRepository, EmergencyRepository,
-        EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
-        EsgReportingRepository, FacilityRepository, FaultRepository, FeatureAnalyticsRepository,
-        FeatureFlagRepository, FeaturePackageRepository, FinancialRepository, FormRepository,
-        GovernmentPortalRepository, GranularNotificationRepository, HealthMonitoringRepository,
-        HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
+        DataResidencyRepository, DelegationRepository, DevicePushTokenRepository,
+        DisputeRepository, DocumentRepository, DocumentTemplateRepository,
+        ESignatureNonceRepository, EddRepository, EmergencyRepository, EnergyRepository,
+        EnhancedTenantScreeningRepository, EquipmentRepository, EsgReportingRepository,
+        FacilityRepository, FaultRepository, FeatureAnalyticsRepository, FeatureFlagRepository,
+        FeaturePackageRepository, FinancialRepository, FormRepository, GovernmentPortalRepository,
+        GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
+        InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
         ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
         MeterRepository, MigrationRepository, MultiCurrencyRepository,
@@ -30,12 +31,13 @@ use db::{
         OutageRepository, OwnerAnalyticsRepository, PackageVisitorRepository,
         PasswordResetRepository, PersonMonthRepository, PlatformAdminRepository,
         PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
-        PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
-        RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
-        SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
-        SubscriptionRepository, SystemAnnouncementRepository, TwoFactorAuthRepository,
-        UnitRepository, UnitResidentRepository, UserRepository, VendorRepository,
-        ViolationRepository, VoteRepository, WorkOrderRepository, WorkflowRepository,
+        PredictiveMaintenanceRepository, PropertyValuationRepository, RegionalComplianceRepository,
+        RegistryRepository, RentalRepository, ReportScheduleRepository, ReserveFundRepository,
+        RoleRepository, SensorRepository, SentimentRepository, SessionRepository,
+        SignatureRequestRepository, SubscriptionRepository, SystemAnnouncementRepository,
+        TwoFactorAuthRepository, UnitRepository, UnitResidentRepository, UserRepository,
+        VendorRepository, ViolationRepository, VoteRepository, WorkOrderRepository,
+        WorkflowRepository,
     },
     DbPool,
 };
@@ -244,6 +246,7 @@ pub struct AppState {
     pub two_factor_repo: TwoFactorAuthRepository,
     pub audit_log_repo: AuditLogRepository,
     pub data_export_repo: DataExportRepository,
+    pub data_residency_repo: DataResidencyRepository,
     pub oauth_repo: OAuthRepository,
     pub platform_admin_repo: PlatformAdminRepository,
     pub feature_flag_repo: FeatureFlagRepository,
@@ -297,10 +300,10 @@ pub struct AppState {
     pub package_visitor_repo: PackageVisitorRepository,
     // Epic 61: External Integrations Suite
     pub integration_repo: IntegrationRepository,
-    // Epic 65: Energy & Sustainability Tracking
-    pub energy_repo: EnergyRepository,
     // Epic 66: Platform Migration & Data Import
     pub migration_repo: MigrationRepository,
+    // Epic 65: Energy & Sustainability Tracking
+    pub energy_repo: EnergyRepository,
     // Epic 64: Advanced AI & LLM Capabilities
     pub llm_document_repo: LlmDocumentRepository,
     // Epic 57: Pet & Vehicle Registry
@@ -355,6 +358,8 @@ pub struct AppState {
     // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
     pub edd_repo: EddRepository,
     pub compliance_repo: ComplianceRepository,
+    // Epic 72: Regional Legal Compliance (SK/CZ)
+    pub regional_compliance_repo: RegionalComplianceRepository,
     // Epic 81: Report Schedule Management & Execution History
     pub report_schedule_repo: ReportScheduleRepository,
     pub accounting_service: AccountingService,
@@ -443,6 +448,7 @@ impl AppState {
         let two_factor_repo = TwoFactorAuthRepository::new(db.clone());
         let audit_log_repo = AuditLogRepository::new(db.clone());
         let data_export_repo = DataExportRepository::new(db.clone());
+        let data_residency_repo = DataResidencyRepository::new(db.clone());
         let oauth_repo = OAuthRepository::new(db.clone());
         let platform_admin_repo = PlatformAdminRepository::new(db.clone());
         let feature_flag_repo = FeatureFlagRepository::new(db.clone());
@@ -496,10 +502,10 @@ impl AppState {
         let package_visitor_repo = PackageVisitorRepository::new(db.clone());
         // Epic 61: External Integrations Suite
         let integration_repo = IntegrationRepository::new(db.clone());
-        // Epic 65: Energy & Sustainability Tracking
-        let energy_repo = EnergyRepository::new(db.clone());
         // Epic 66: Platform Migration & Data Import
         let migration_repo = MigrationRepository::new(db.clone());
+        // Epic 65: Energy & Sustainability Tracking
+        let energy_repo = EnergyRepository::new(db.clone());
         // Epic 64: Advanced AI & LLM Capabilities
         let llm_document_repo = LlmDocumentRepository::new(db.clone());
         // Epic 57: Pet & Vehicle Registry
@@ -554,6 +560,8 @@ impl AppState {
         // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
         let edd_repo = EddRepository::new(db.clone());
         let compliance_repo = ComplianceRepository::new(db.clone());
+        // Epic 72: Regional Legal Compliance (SK/CZ)
+        let regional_compliance_repo = RegionalComplianceRepository::new(db.clone());
         // Epic 81: Report Schedule Management & Execution History
         let report_schedule_repo = ReportScheduleRepository::new(db.clone());
         let accounting_repo = AccountingRepository::new(db.clone());
@@ -606,6 +614,7 @@ impl AppState {
             two_factor_repo,
             audit_log_repo,
             data_export_repo,
+            data_residency_repo,
             oauth_repo,
             platform_admin_repo,
             feature_flag_repo,
@@ -640,8 +649,8 @@ impl AppState {
             form_repo,
             package_visitor_repo,
             integration_repo,
-            energy_repo,
             migration_repo,
+            energy_repo,
             llm_document_repo,
             registry_repo,
             operations_repo,
@@ -670,6 +679,7 @@ impl AppState {
             api_ecosystem_repo,
             edd_repo,
             compliance_repo,
+            regional_compliance_repo,
             report_schedule_repo,
             accounting_service,
             accounting_repo,
