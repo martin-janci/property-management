@@ -43,7 +43,7 @@ impl MigrationRepository {
         match (data_type, include_system) {
             (Some(dt), true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2"
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2",
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -52,7 +52,7 @@ impl MigrationRepository {
             }
             (Some(dt), false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2"
+                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2",
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -61,7 +61,7 @@ impl MigrationRepository {
             }
             (None, true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL)"
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL)",
                 )
                 .bind(org_id)
                 .fetch_all(executor)
@@ -69,7 +69,7 @@ impl MigrationRepository {
             }
             (None, false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1"
+                    "SELECT * FROM import_templates WHERE organization_id = $1",
                 )
                 .bind(org_id)
                 .fetch_all(executor)
@@ -87,7 +87,7 @@ impl MigrationRepository {
         E: Executor<'e, Database = Postgres>,
     {
         sqlx::query_as::<_, ImportTemplate>(
-            "SELECT * FROM import_templates WHERE is_system_template = true"
+            "SELECT * FROM import_templates WHERE is_system_template = true",
         )
         .fetch_all(executor)
         .await
@@ -116,7 +116,7 @@ impl MigrationRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, 1, true, $7)
             RETURNING *
-            "#
+            "#,
         )
         .bind(org_id)
         .bind(name)
@@ -138,12 +138,10 @@ impl MigrationRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, ImportTemplate>(
-            "SELECT * FROM import_templates WHERE id = $1"
-        )
-        .bind(template_id)
-        .fetch_optional(executor)
-        .await
+        sqlx::query_as::<_, ImportTemplate>("SELECT * FROM import_templates WHERE id = $1")
+            .bind(template_id)
+            .fetch_optional(executor)
+            .await
     }
 
     /// Update a template.
@@ -171,7 +169,7 @@ impl MigrationRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(template_id)
         .bind(name)
@@ -220,7 +218,7 @@ impl MigrationRepository {
             FROM import_templates
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(template_id)
         .bind(org_id)
@@ -258,7 +256,7 @@ impl MigrationRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, NULL, 0, 0, 0, 0, $7, $8)
             RETURNING *
-            "#
+            "#,
         )
         .bind(org_id)
         .bind(template_id)
@@ -281,12 +279,10 @@ impl MigrationRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, ImportJob>(
-            "SELECT * FROM import_jobs WHERE id = $1"
-        )
-        .bind(job_id)
-        .fetch_optional(executor)
-        .await
+        sqlx::query_as::<_, ImportJob>("SELECT * FROM import_jobs WHERE id = $1")
+            .bind(job_id)
+            .fetch_optional(executor)
+            .await
     }
 
     /// Update an import job.
@@ -325,7 +321,7 @@ impl MigrationRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(job_id)
         .bind(status)
@@ -367,7 +363,7 @@ impl MigrationRepository {
                     WHERE j.organization_id = $1 AND j.status = $2 AND t.data_type = $3
                     ORDER BY j.created_at DESC
                     LIMIT $4 OFFSET $5
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(s)
@@ -384,7 +380,7 @@ impl MigrationRepository {
                     WHERE organization_id = $1 AND status = $2
                     ORDER BY created_at DESC
                     LIMIT $3 OFFSET $4
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(s)
@@ -401,7 +397,7 @@ impl MigrationRepository {
                     WHERE j.organization_id = $1 AND t.data_type = $2
                     ORDER BY j.created_at DESC
                     LIMIT $3 OFFSET $4
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -417,7 +413,7 @@ impl MigrationRepository {
                     WHERE organization_id = $1
                     ORDER BY created_at DESC
                     LIMIT $2 OFFSET $3
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(limit)
@@ -454,7 +450,7 @@ impl MigrationRepository {
             JOIN import_templates t ON j.template_id = t.id
             LEFT JOIN users u ON j.created_by = u.id
             WHERE j.organization_id = $1
-            "#
+            "#,
         );
 
         let mut param_idx = 2;
@@ -473,7 +469,11 @@ impl MigrationRepository {
             dt_val = Some(dt);
         }
 
-        query.push_str(&format!(" ORDER BY j.created_at DESC LIMIT ${} OFFSET ${}", param_idx, param_idx + 1));
+        query.push_str(&format!(
+            " ORDER BY j.created_at DESC LIMIT ${} OFFSET ${}",
+            param_idx,
+            param_idx + 1
+        ));
 
         let mut q = sqlx::query_as::<_, ImportJobHistory>(sqlx::AssertSqlSafe(&query)).bind(org_id);
 
@@ -505,7 +505,7 @@ impl MigrationRepository {
                     SELECT COUNT(j.id) FROM import_jobs j
                     JOIN import_templates t ON j.template_id = t.id
                     WHERE j.organization_id = $1 AND j.status = $2 AND t.data_type = $3
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(s)
@@ -518,7 +518,7 @@ impl MigrationRepository {
                     r#"
                     SELECT COUNT(id) FROM import_jobs
                     WHERE organization_id = $1 AND status = $2
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(s)
@@ -531,7 +531,7 @@ impl MigrationRepository {
                     SELECT COUNT(j.id) FROM import_jobs j
                     JOIN import_templates t ON j.template_id = t.id
                     WHERE j.organization_id = $1 AND t.data_type = $2
-                    "#
+                    "#,
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -539,12 +539,10 @@ impl MigrationRepository {
                 .await?
             }
             (None, None) => {
-                sqlx::query_as(
-                    "SELECT COUNT(id) FROM import_jobs WHERE organization_id = $1"
-                )
-                .bind(org_id)
-                .fetch_one(executor)
-                .await?
+                sqlx::query_as("SELECT COUNT(id) FROM import_jobs WHERE organization_id = $1")
+                    .bind(org_id)
+                    .fetch_one(executor)
+                    .await?
             }
         };
         Ok(count.0)
@@ -571,7 +569,7 @@ impl MigrationRepository {
                 job_id, organization_id, row_number, "column", message, error_code, original_value
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#
+            "#,
         )
         .bind(job_id)
         .bind(org_id)
@@ -606,7 +604,7 @@ impl MigrationRepository {
             WHERE job_id = $1
             ORDER BY row_number ASC, id ASC
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(job_id)
         .bind(limit)
@@ -624,12 +622,11 @@ impl MigrationRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(id) FROM import_row_errors WHERE job_id = $1"
-        )
-        .bind(job_id)
-        .fetch_one(executor)
-        .await?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(id) FROM import_row_errors WHERE job_id = $1")
+                .bind(job_id)
+                .fetch_one(executor)
+                .await?;
         Ok(count.0)
     }
 
@@ -660,7 +657,7 @@ impl MigrationRepository {
             )
             VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
             RETURNING *
-            "#
+            "#,
         )
         .bind(org_id)
         .bind(status)
@@ -682,12 +679,10 @@ impl MigrationRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, MigrationExport>(
-            "SELECT * FROM migration_exports WHERE id = $1"
-        )
-        .bind(export_id)
-        .fetch_optional(executor)
-        .await
+        sqlx::query_as::<_, MigrationExport>("SELECT * FROM migration_exports WHERE id = $1")
+            .bind(export_id)
+            .fetch_optional(executor)
+            .await
     }
 
     /// Find a migration export by download token.
@@ -700,7 +695,7 @@ impl MigrationRepository {
         E: Executor<'e, Database = Postgres>,
     {
         sqlx::query_as::<_, MigrationExport>(
-            "SELECT * FROM migration_exports WHERE download_token = $1"
+            "SELECT * FROM migration_exports WHERE download_token = $1",
         )
         .bind(token)
         .fetch_optional(executor)
@@ -743,7 +738,7 @@ impl MigrationRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(export_id)
         .bind(status)
@@ -780,7 +775,7 @@ impl MigrationRepository {
             WHERE organization_id = $1
             ORDER BY created_at DESC
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(org_id)
         .bind(limit)
@@ -798,13 +793,11 @@ impl MigrationRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(id) FROM migration_exports WHERE organization_id = $1"
-        )
-        .bind(org_id)
-        .fetch_one(executor)
-        .await?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(id) FROM migration_exports WHERE organization_id = $1")
+                .bind(org_id)
+                .fetch_one(executor)
+                .await?;
         Ok(count.0)
     }
 }
-
