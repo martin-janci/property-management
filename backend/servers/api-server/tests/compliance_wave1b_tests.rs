@@ -61,8 +61,7 @@ use common::TestApp;
 // JWT helpers — mirrors the pattern in aml_dsa_audit_logging_tests.rs
 // ---------------------------------------------------------------------------
 
-const JWT_SECRET: &str =
-    "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -597,7 +596,10 @@ async fn verify_edd_document_updates_status(pool: PgPool) {
         .build();
     let r = app.execute(resp).await;
     assert_eq!(r.status, StatusCode::OK);
-    assert_eq!(r.json_value()["verification_status"].as_str().unwrap(), "verified");
+    assert_eq!(
+        r.json_value()["verification_status"].as_str().unwrap(),
+        "verified"
+    );
 }
 
 // ===========================================================================
@@ -647,12 +649,13 @@ async fn add_edd_note_stores_note_and_returns_body(pool: PgPool) {
     );
 
     // DB side-effect: note appended to compliance_notes JSONB array
-    let notes: serde_json::Value =
-        sqlx::query_scalar("SELECT COALESCE(compliance_notes, '[]'::jsonb) FROM edd_records WHERE id = $1")
-            .bind(edd_id)
-            .fetch_one(&pool)
-            .await
-            .expect("fetch notes");
+    let notes: serde_json::Value = sqlx::query_scalar(
+        "SELECT COALESCE(compliance_notes, '[]'::jsonb) FROM edd_records WHERE id = $1",
+    )
+    .bind(edd_id)
+    .fetch_one(&pool)
+    .await
+    .expect("fetch notes");
     assert_eq!(
         notes.as_array().unwrap().len(),
         1,
@@ -922,7 +925,10 @@ async fn get_moderation_stats_returns_stats_shape(pool: PgPool) {
     assert_eq!(r.status, StatusCode::OK);
     let body = r.json_value();
     assert!(body["pending_count"].is_number(), "expected pending_count");
-    assert!(body["under_review_count"].is_number(), "expected under_review_count");
+    assert!(
+        body["under_review_count"].is_number(),
+        "expected under_review_count"
+    );
 }
 
 // ===========================================================================
@@ -978,7 +984,9 @@ async fn assign_moderation_case_requires_moderator_role(pool: PgPool) {
     let unknown = Uuid::new_v4();
     let body = json!({ "assignee_id": Uuid::new_v4() });
     let resp = app
-        .post(&format!("/api/v1/aml-dsa/moderation/cases/{unknown}/assign"))
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{unknown}/assign"
+        ))
         .bearer(&token)
         .json(body)
         .build();
@@ -1170,5 +1178,8 @@ async fn verify_audit_integrity_super_admin_returns_integrity_report(pool: PgPoo
     let r = app.execute(resp).await;
     assert_eq!(r.status, StatusCode::OK);
     let body = r.json_value();
-    assert!(body["verified"].is_boolean(), "expected 'verified' boolean field");
+    assert!(
+        body["verified"].is_boolean(),
+        "expected 'verified' boolean field"
+    );
 }
