@@ -6,7 +6,6 @@
 mod common;
 
 use axum::http::StatusCode;
-use rust_decimal::Decimal;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -23,7 +22,7 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "budhappy").await;
 
     // 3. Resolve user ID for verification
-    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+    let _user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&app.pool)
         .await
@@ -378,7 +377,7 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     );
     let actual = resp.json_value();
     let actual_id_str = actual["id"].as_str().expect("actual id missing");
-    let actual_id = Uuid::parse_str(actual_id_str).expect("invalid uuid");
+    let _actual_id = Uuid::parse_str(actual_id_str).expect("invalid uuid");
 
     // 5.2 GET /api/v1/budgets/items/{item_id}/actuals -> list_actuals
     let resp = app
