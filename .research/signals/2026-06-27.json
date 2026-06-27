@@ -1,0 +1,280 @@
+{
+  "date": "2026-06-27",
+  "phase_1_5": {
+    "segment_reviewed": "ppt-web-core",
+    "selection_reason": "oldest-unreviewed",
+    "experts_used": [
+      "frontend"
+    ],
+    "findings_count": 2,
+    "next_segment": "mobile-native-kmp (next-oldest: 2026-06-06)"
+  },
+  "phase_1_6": {
+    "pm_role_run": "pm-security",
+    "epic_rechecked": "epic-9",
+    "pm_cursor_advanced_to": 6,
+    "coverage_cursor_advanced_to": 0
+  },
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-payment-matching-no-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 — confirmMutation/rejectMutation lack onError; silent failure on confirm/reject"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-invoice-mgmt-no-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:36-49 — create/delete mutations lack onError; silent failure"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1713 \"revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)\""
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1698 closed unmerged 2026-06-22 — feat(epic-3): story 3.2 unit management UI (BIT-188)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1720 closed unmerged 2026-06-23 — fix(ppt-web): add Leases nav link (#977)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1727 closed unmerged 2026-06-22 — fix(ci): unblock backend gate organizations fmt + notification_event RLS baseline"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1749 closed unmerged 2026-06-23 — fix(mobile): exclude app.config.icon.test.ts from tsc typecheck"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1858",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1858",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1858 closed unmerged 2026-06-27 — chore(api-server): remove 59 unmounted ROADMAP routers (BIT-257); superseded by #1863"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine has not run in 11d 17h since 2026-06-16T03:25:00Z",
+        "stale_routine_alert: cloud cron last_run_iso 11d old; dispatcher continued in window"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot: bump gradle-minor-patch group in /mobile-native (2 updates)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot: bump tower-http 0.6.11 → 0.7.0 in /backend axum group"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 11d window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs — 3 PRs in 11d (#1847/#1849/#1850, BIT-139/140 feature rollout)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score≥3 + allowlist (no screen-map-drift signals this run, no eligible fixme-in-merged-code, no lockfile-drift)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-27.md",
+      "observed": "exit 0 (file written)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq advance check",
+      "observed": "cursors advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq dedup ids",
+      "observed": "no duplicates",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen_signals overlap",
+      "observed": "cumulative carve-out respected",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap + decay check",
+      "observed": "cap held; decay applied to 14d-stale items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans + adversarial annotation",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan-shape check",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached scope",
+      "observed": ".research/ only (to be verified at commit)",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep",
+      "observed": "no leaks",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan-promote convergence",
+      "observed": "no plan moves this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "_archive/ unchanged this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE byte-identity",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "Phase 5 no-candidate",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "all parse + cursors in range",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "no literal token in diff",
+      "expected": "true"
+    }
+  ]
+}
