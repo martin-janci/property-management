@@ -50,9 +50,9 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
-| [analytics-portals](./groups/analytics-portals.md) | 173 | 104 | 69 | 0 | 60.1% | 100% |
+| [analytics-portals](./groups/analytics-portals.md) | 173 | 141 | 32 | 0 | 81.5% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **208** | **1730** | **125** | **10.1%** | **93.9%** |
+| **Total** | **2063** | **245** | **1693** | **125** | **11.9%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.

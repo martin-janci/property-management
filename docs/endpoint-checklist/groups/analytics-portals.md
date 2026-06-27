@@ -160,44 +160,44 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 ## esg_reporting.rs  (mount: /api/v1/esg)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/esg/configuration | get_configuration | partial | — | |
-| POST | /api/v1/esg/configuration | upsert_configuration | partial | — | |
-| GET | /api/v1/esg/metrics | list_metrics | partial | — | |
-| POST | /api/v1/esg/metrics | create_metric | partial | — | |
+| GET | /api/v1/esg/configuration | get_configuration | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/configuration | upsert_configuration | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/metrics | list_metrics | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/metrics | create_metric | done | analytics_esg_reporting_success_tests.rs | |
 | GET | /api/v1/esg/metrics/{id} | get_metric | done | esg_reporting_cross_org_idor_tests.rs | T9 own-org happy-path OK (get_metric_for_own_org_succeeds) |
-| PUT | /api/v1/esg/metrics/{id} | update_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection (T3), no success path |
-| POST | /api/v1/esg/metrics/{id}/verify | verify_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
-| POST | /api/v1/esg/metrics/{id}/delete | delete_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
-| GET | /api/v1/esg/carbon | list_carbon_footprints | partial | — | |
-| POST | /api/v1/esg/carbon | create_carbon_footprint | partial | — | |
-| GET | /api/v1/esg/carbon/summary/{year} | get_carbon_summary | partial | — | |
-| GET | /api/v1/esg/carbon/{id} | get_carbon_footprint | partial | — | |
-| POST | /api/v1/esg/carbon/{id}/delete | delete_carbon_footprint | partial | — | |
-| GET | /api/v1/esg/benchmarks | list_benchmarks | partial | — | |
-| POST | /api/v1/esg/benchmarks | create_benchmark | partial | — | |
-| POST | /api/v1/esg/benchmarks/{id}/delete | delete_benchmark | partial | — | |
-| GET | /api/v1/esg/targets | list_targets | partial | — | |
-| POST | /api/v1/esg/targets | create_target | partial | — | |
-| GET | /api/v1/esg/targets/{id} | get_target | partial | — | |
-| PUT | /api/v1/esg/targets/{id} | update_target | partial | — | |
-| POST | /api/v1/esg/targets/{id}/delete | delete_target | partial | — | |
-| GET | /api/v1/esg/reports | list_reports | partial | — | |
-| POST | /api/v1/esg/reports | create_report | partial | — | |
-| GET | /api/v1/esg/reports/{id} | get_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection (T6), no success path |
-| PUT | /api/v1/esg/reports/{id} | update_report | partial | — | |
-| POST | /api/v1/esg/reports/{id}/submit | submit_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
-| POST | /api/v1/esg/reports/{id}/approve | approve_report | partial | — | |
-| POST | /api/v1/esg/reports/{id}/delete | delete_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
-| GET | /api/v1/esg/eu-taxonomy | list_eu_taxonomy_assessments | partial | — | |
-| POST | /api/v1/esg/eu-taxonomy | create_eu_taxonomy_assessment | partial | — | |
-| GET | /api/v1/esg/eu-taxonomy/{id} | get_eu_taxonomy_assessment | partial | — | |
-| PUT | /api/v1/esg/eu-taxonomy/{id} | update_eu_taxonomy_assessment | partial | — | |
-| GET | /api/v1/esg/dashboard/{year} | get_dashboard | partial | — | |
-| POST | /api/v1/esg/dashboard/{year}/refresh | refresh_dashboard | partial | — | |
-| GET | /api/v1/esg/imports | list_import_jobs | partial | — | |
-| POST | /api/v1/esg/imports | create_import_job | partial | — | |
-| GET | /api/v1/esg/imports/{id} | get_import_job | partial | — | |
-| GET | /api/v1/esg/statistics | get_statistics | partial | — | |
+| PUT | /api/v1/esg/metrics/{id} | update_metric | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/metrics/{id}/verify | verify_metric | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/metrics/{id}/delete | delete_metric | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/carbon | list_carbon_footprints | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/carbon | create_carbon_footprint | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/carbon/summary/{year} | get_carbon_summary | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/carbon/{id} | get_carbon_footprint | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/carbon/{id}/delete | delete_carbon_footprint | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/benchmarks | list_benchmarks | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/benchmarks | create_benchmark | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/benchmarks/{id}/delete | delete_benchmark | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/targets | list_targets | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/targets | create_target | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/targets/{id} | get_target | done | analytics_esg_reporting_success_tests.rs | |
+| PUT | /api/v1/esg/targets/{id} | update_target | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/targets/{id}/delete | delete_target | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/reports | list_reports | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/reports | create_report | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/reports/{id} | get_report | done | analytics_esg_reporting_success_tests.rs | |
+| PUT | /api/v1/esg/reports/{id} | update_report | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/reports/{id}/submit | submit_report | done | analytics_esg_reporting_success_tests.rs | seeds draft, submits |
+| POST | /api/v1/esg/reports/{id}/approve | approve_report | done | analytics_esg_reporting_success_tests.rs | seeds pending_review directly |
+| POST | /api/v1/esg/reports/{id}/delete | delete_report | done | analytics_esg_reporting_success_tests.rs | seeds draft, deletes |
+| GET | /api/v1/esg/eu-taxonomy | list_eu_taxonomy_assessments | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/eu-taxonomy | create_eu_taxonomy_assessment | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/eu-taxonomy/{id} | get_eu_taxonomy_assessment | done | analytics_esg_reporting_success_tests.rs | |
+| PUT | /api/v1/esg/eu-taxonomy/{id} | update_eu_taxonomy_assessment | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/dashboard/{year} | get_dashboard | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/dashboard/{year}/refresh | refresh_dashboard | done | analytics_esg_reporting_success_tests.rs | seeds a metric first |
+| GET | /api/v1/esg/imports | list_import_jobs | done | analytics_esg_reporting_success_tests.rs | |
+| POST | /api/v1/esg/imports | create_import_job | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/imports/{id} | get_import_job | done | analytics_esg_reporting_success_tests.rs | |
+| GET | /api/v1/esg/statistics | get_statistics | done | analytics_esg_reporting_success_tests.rs | |
 
 ## Summary
 - done: 3 | partial: 170 | stub: 0 | missing: 0 | total: 173
