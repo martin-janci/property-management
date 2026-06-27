@@ -47,6 +47,28 @@ ignore = [
     # Follow-up: drop when `rsa` ships a constant-time fix, or switch
     # jsonwebtoken to the `aws_lc_rs` backend.
     "RUSTSEC-2023-0071",
+
+    # RUSTSEC-2026-0187 — Stack overflow in `lopdf` (<= 0.41.0) via deeply
+    # nested PDF objects. Unbounded recursion in the PARSER entry points
+    # (`lopdf::Document::load_mem` / `load*`) lets a crafted PDF (~10k levels
+    # of nesting) exhaust the call stack. Fixed in lopdf >= 0.42.0.
+    #
+    # We pull lopdf 0.26.0 transitively: genpdf 0.2.0 -> printpdf 0.3.4 ->
+    # lopdf ^0.26. genpdf 0.2.0 is the latest (and now-unmaintained) genpdf
+    # release; printpdf 0.3.4 pins lopdf 0.26, so `cargo update -p lopdf`
+    # cannot reach 0.42 without replacing the whole PDF-generation stack
+    # (a feature migration, not a maintenance fix — out of scope here).
+    #
+    # Reachability: we only GENERATE PDFs (genpdf `Document::render` ->
+    # invoices, income statements, voting reports — see
+    # servers/api-server/src/routes/financial.rs & voting.rs). We never call
+    # any lopdf `load*` parser entry point and never parse attacker-supplied
+    # PDFs; `grep -rn 'lopdf|load_mem|Document::load'` over the backend is
+    # empty. The vulnerable recursive-parse path is therefore unreachable.
+    # Scoped ignore keeps every OTHER advisory enforced (no `--admin` bypass).
+    # Tracking: BIT-319. Follow-up: drop once the genpdf/printpdf stack is
+    # upgraded to a build that resolves lopdf >= 0.42.0.
+    "RUSTSEC-2026-0187",
 ]
 
 [bans]
