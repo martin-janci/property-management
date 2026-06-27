@@ -137,7 +137,10 @@ async fn get_slovak_voting_config(
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Slovak voting config not found")),
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Slovak voting config not found",
+                )),
             )
         })?;
     rls.release().await;
@@ -181,7 +184,12 @@ async fn validate_slovak_vote(
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
         })?
-        .unwrap_or_else(|| (payload.decision_type.required_quorum_percentage(), payload.decision_type.legal_reference().to_string()));
+        .unwrap_or_else(|| {
+            (
+                payload.decision_type.required_quorum_percentage(),
+                payload.decision_type.legal_reference().to_string(),
+            )
+        });
 
     let required_quorum = rule.0;
     let legal_reference = rule.1;
@@ -199,22 +207,25 @@ async fn validate_slovak_vote(
         Decimal::new(7500, 2)
     };
 
-    let approval_percentage = if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
-        if let Some(q) = vote_results.questions.first() {
-            let yes_opt = q.results.iter().find(|o| {
-                let txt = o.option_text.to_lowercase();
-                txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
-            });
-            let percentage = yes_opt.map(|o| o.percentage).unwrap_or_else(|| {
-                q.results.first().map(|o| o.percentage).unwrap_or(80.0)
-            });
-            Decimal::from_f64_retain(percentage).unwrap_or(Decimal::new(8000, 2)).round_dp(2)
+    let approval_percentage =
+        if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
+            if let Some(q) = vote_results.questions.first() {
+                let yes_opt = q.results.iter().find(|o| {
+                    let txt = o.option_text.to_lowercase();
+                    txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
+                });
+                let percentage = yes_opt
+                    .map(|o| o.percentage)
+                    .unwrap_or_else(|| q.results.first().map(|o| o.percentage).unwrap_or(80.0));
+                Decimal::from_f64_retain(percentage)
+                    .unwrap_or(Decimal::new(8000, 2))
+                    .round_dp(2)
+            } else {
+                Decimal::new(8000, 2)
+            }
         } else {
             Decimal::new(8000, 2)
-        }
-    } else {
-        Decimal::new(8000, 2)
-    };
+        };
 
     let quorum_met = actual_participation >= required_quorum;
     let is_valid = quorum_met && approval_percentage >= required_quorum;
@@ -229,7 +240,9 @@ async fn validate_slovak_vote(
         approval_required_percentage: required_quorum,
         is_valid,
         legal_reference,
-        validation_notes: vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()],
+        validation_notes: vec![
+            "Vote validation computed against seeded database jurisdiction rules.".to_string(),
+        ],
         validated_at: Utc::now(),
     }));
     rls.release().await;
@@ -269,7 +282,10 @@ async fn get_slovak_vote_minutes(
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
         })?
-        .unwrap_or((Decimal::new(5001, 2), "SS 14 ods. 1 zakona 182/1993 Z.z.".to_string()));
+        .unwrap_or((
+            Decimal::new(5001, 2),
+            "SS 14 ods. 1 zakona 182/1993 Z.z.".to_string(),
+        ));
 
     let result = Ok(Json(SlovakVoteMinutes {
         vote_id,
@@ -337,7 +353,10 @@ async fn get_slovak_accounting_config(
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Slovak accounting config not found")),
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Slovak accounting config not found",
+                )),
             )
         })?;
     rls.release().await;
@@ -440,7 +459,10 @@ async fn get_slovak_gdpr_config(
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Slovak GDPR config not found")),
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Slovak GDPR config not found",
+                )),
             )
         })?;
     rls.release().await;
@@ -488,21 +510,25 @@ async fn get_gdpr_consent_status(
             )
         })?;
 
-    let dpo_contact = gdpr_config.as_ref().map(|cfg| DpoContact {
-        name: cfg.dpo_name.clone(),
-        email: cfg.dpo_email.clone(),
-        phone: cfg.dpo_phone.clone(),
-        address: cfg.org_address.clone(),
-    }).unwrap_or_else(|| DpoContact {
-        name: "Jan Novak".to_string(),
-        email: "dpo@example.sk".to_string(),
-        phone: None,
-        address: None,
-    });
+    let dpo_contact = gdpr_config
+        .as_ref()
+        .map(|cfg| DpoContact {
+            name: cfg.dpo_name.clone(),
+            email: cfg.dpo_email.clone(),
+            phone: cfg.dpo_phone.clone(),
+            address: cfg.org_address.clone(),
+        })
+        .unwrap_or_else(|| DpoContact {
+            name: "Jan Novak".to_string(),
+            email: "dpo@example.sk".to_string(),
+            phone: None,
+            address: None,
+        });
 
-    let processing_purposes: Vec<ProcessingPurpose> = gdpr_config.as_ref().and_then(|cfg| {
-        serde_json::from_value(cfg.processing_purposes.clone()).ok()
-    }).unwrap_or_default();
+    let processing_purposes: Vec<ProcessingPurpose> = gdpr_config
+        .as_ref()
+        .and_then(|cfg| serde_json::from_value(cfg.processing_purposes.clone()).ok())
+        .unwrap_or_default();
 
     let db_consents = state
         .regional_compliance_repo
@@ -517,12 +543,42 @@ async fn get_gdpr_consent_status(
 
     let mut consents = Vec::new();
     let categories = [
-        (GdprConsentCategory::Essential, "Nevyhnutne", "Zakladne spracovanie", true),
-        (GdprConsentCategory::Communication, "Komunikacia", "Komunikacia s vlastnikmi", false),
-        (GdprConsentCategory::Marketing, "Marketing", "Marketingove ucely", false),
-        (GdprConsentCategory::Analytics, "Analytika", "Analyticke ucely", false),
-        (GdprConsentCategory::ThirdParty, "Tretie strany", "Poskytovanie tretim stranam", false),
-        (GdprConsentCategory::Profiling, "Profilovanie", "Profilovanie pouzivatelov", false),
+        (
+            GdprConsentCategory::Essential,
+            "Nevyhnutne",
+            "Zakladne spracovanie",
+            true,
+        ),
+        (
+            GdprConsentCategory::Communication,
+            "Komunikacia",
+            "Komunikacia s vlastnikmi",
+            false,
+        ),
+        (
+            GdprConsentCategory::Marketing,
+            "Marketing",
+            "Marketingove ucely",
+            false,
+        ),
+        (
+            GdprConsentCategory::Analytics,
+            "Analytika",
+            "Analyticke ucely",
+            false,
+        ),
+        (
+            GdprConsentCategory::ThirdParty,
+            "Tretie strany",
+            "Poskytovanie tretim stranam",
+            false,
+        ),
+        (
+            GdprConsentCategory::Profiling,
+            "Profilovanie",
+            "Profilovanie pouzivatelov",
+            false,
+        ),
     ];
     for (cat, name, desc, required) in categories {
         let db_consent = db_consents.iter().find(|c| c.category == cat.to_string());
@@ -615,7 +671,10 @@ async fn get_czech_svj_config(
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Czech SVJ config not found")),
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Czech SVJ config not found",
+                )),
             )
         })?;
     rls.release().await;
@@ -659,7 +718,12 @@ async fn validate_czech_vote(
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
         })?
-        .unwrap_or_else(|| (payload.decision_type.required_quorum_percentage(), payload.decision_type.legal_reference().to_string()));
+        .unwrap_or_else(|| {
+            (
+                payload.decision_type.required_quorum_percentage(),
+                payload.decision_type.legal_reference().to_string(),
+            )
+        });
 
     let required_quorum = rule.0;
     let legal_reference = rule.1;
@@ -677,22 +741,25 @@ async fn validate_czech_vote(
         Decimal::new(7500, 2)
     };
 
-    let approval_percentage = if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
-        if let Some(q) = vote_results.questions.first() {
-            let yes_opt = q.results.iter().find(|o| {
-                let txt = o.option_text.to_lowercase();
-                txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
-            });
-            let percentage = yes_opt.map(|o| o.percentage).unwrap_or_else(|| {
-                q.results.first().map(|o| o.percentage).unwrap_or(80.0)
-            });
-            Decimal::from_f64_retain(percentage).unwrap_or(Decimal::new(8000, 2)).round_dp(2)
+    let approval_percentage =
+        if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
+            if let Some(q) = vote_results.questions.first() {
+                let yes_opt = q.results.iter().find(|o| {
+                    let txt = o.option_text.to_lowercase();
+                    txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
+                });
+                let percentage = yes_opt
+                    .map(|o| o.percentage)
+                    .unwrap_or_else(|| q.results.first().map(|o| o.percentage).unwrap_or(80.0));
+                Decimal::from_f64_retain(percentage)
+                    .unwrap_or(Decimal::new(8000, 2))
+                    .round_dp(2)
+            } else {
+                Decimal::new(8000, 2)
+            }
         } else {
             Decimal::new(8000, 2)
-        }
-    } else {
-        Decimal::new(8000, 2)
-    };
+        };
 
     let quorum_met = actual_participation >= required_quorum;
     let is_valid = quorum_met && approval_percentage >= required_quorum;
@@ -713,7 +780,9 @@ async fn validate_czech_vote(
         is_valid,
         legal_reference,
         requires_notary,
-        validation_notes: vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()],
+        validation_notes: vec![
+            "Vote validation computed against seeded database jurisdiction rules.".to_string(),
+        ],
         validated_at: Utc::now(),
     }));
     rls.release().await;
@@ -753,7 +822,10 @@ async fn get_czech_usneseni(
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
         })?
-        .unwrap_or((Decimal::new(5001, 2), "SS 1206 zakona 89/2012 Sb.".to_string()));
+        .unwrap_or((
+            Decimal::new(5001, 2),
+            "SS 1206 zakona 89/2012 Sb.".to_string(),
+        ));
 
     let result = Ok(Json(CzechSvjUsneseni {
         vote_id,
@@ -811,7 +883,8 @@ async fn get_compliance_status(
             )
         })?;
 
-    let slovak_voting_enabled = !configured_buildings.is_empty() && matches!(jurisdiction, Jurisdiction::Slovakia);
+    let slovak_voting_enabled =
+        !configured_buildings.is_empty() && matches!(jurisdiction, Jurisdiction::Slovakia);
 
     let slovak_accounting_configured = state
         .regional_compliance_repo
@@ -837,7 +910,8 @@ async fn get_compliance_status(
         })?
         .is_some();
 
-    let czech_svj_configured = !configured_buildings.is_empty() && matches!(jurisdiction, Jurisdiction::Czechia);
+    let czech_svj_configured =
+        !configured_buildings.is_empty() && matches!(jurisdiction, Jurisdiction::Czechia);
 
     let result = Ok(Json(RegionalComplianceStatus {
         organization_id: org_id,

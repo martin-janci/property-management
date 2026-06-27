@@ -9,8 +9,8 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use db::models::regional_compliance::*;
 use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
+use db::models::regional_compliance::*;
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -50,7 +50,7 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
         r#"
         INSERT INTO organizations (name, slug, contact_email, status)
         VALUES ($1, $2, $3, 'active') RETURNING id
-        "#
+        "#,
     )
     .bind(format!("Regional Org {slug}"))
     .bind(format!("regional-{slug}"))
@@ -66,7 +66,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
         INSERT INTO users (email, password_hash, name, status, email_verified_at)
         VALUES ($1, 'test_hash', 'Regional User', 'active', NOW())
         RETURNING id
-        "#
+        "#,
     )
     .bind(email)
     .fetch_one(pool)
@@ -80,7 +80,7 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
         INSERT INTO buildings (organization_id, street, city, postal_code, country)
         VALUES ($1, 'Hlavna 1', 'Bratislava', '81101', 'Slovakia')
         RETURNING id
-        "#
+        "#,
     )
     .bind(org_id)
     .fetch_one(pool)
@@ -147,7 +147,10 @@ async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
 
     // 1. Get initial voting config (should 404)
     let req = app
-        .get(&format!("/api/v1/regional-compliance/slovak/voting/config/{}", building_id))
+        .get(&format!(
+            "/api/v1/regional-compliance/slovak/voting/config/{}",
+            building_id
+        ))
         .bearer(&token)
         .header("X-Tenant-ID", &org_id.to_string())
         .build();
@@ -164,11 +167,14 @@ async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
         "allow_proxy_voting": true
     });
 
-    let req = RequestBuilder::new(Method::POST, "/api/v1/regional-compliance/slovak/voting/config")
-        .bearer(&token)
-        .header("X-Tenant-ID", &org_id.to_string())
-        .json(config_payload)
-        .build();
+    let req = RequestBuilder::new(
+        Method::POST,
+        "/api/v1/regional-compliance/slovak/voting/config",
+    )
+    .bearer(&token)
+    .header("X-Tenant-ID", &org_id.to_string())
+    .json(config_payload)
+    .build();
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
     let body: SlovakVotingConfig = serde_json::from_value(resp.json_value()).unwrap();
@@ -178,7 +184,10 @@ async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
 
     // 3. Get updated voting config
     let req = app
-        .get(&format!("/api/v1/regional-compliance/slovak/voting/config/{}", building_id))
+        .get(&format!(
+            "/api/v1/regional-compliance/slovak/voting/config/{}",
+            building_id
+        ))
         .bearer(&token)
         .header("X-Tenant-ID", &org_id.to_string())
         .build();
@@ -206,7 +215,11 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
     let body: GdprConsentStatus = serde_json::from_value(resp.json_value()).unwrap();
-    let essential = body.consents.iter().find(|c| c.category == GdprConsentCategory::Essential).unwrap();
+    let essential = body
+        .consents
+        .iter()
+        .find(|c| c.category == GdprConsentCategory::Essential)
+        .unwrap();
     assert_eq!(essential.granted, true);
 
     // 2. Grant Marketing consent
@@ -215,11 +228,14 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
         "granted": true,
         "consent_version": "1.2"
     });
-    let req = RequestBuilder::new(Method::POST, "/api/v1/regional-compliance/slovak/gdpr/consent")
-        .bearer(&token)
-        .header("X-Tenant-ID", &org_id.to_string())
-        .json(record_payload)
-        .build();
+    let req = RequestBuilder::new(
+        Method::POST,
+        "/api/v1/regional-compliance/slovak/gdpr/consent",
+    )
+    .bearer(&token)
+    .header("X-Tenant-ID", &org_id.to_string())
+    .json(record_payload)
+    .build();
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
 
@@ -232,7 +248,11 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
     let body: GdprConsentStatus = serde_json::from_value(resp.json_value()).unwrap();
-    let marketing = body.consents.iter().find(|c| c.category == GdprConsentCategory::Marketing).unwrap();
+    let marketing = body
+        .consents
+        .iter()
+        .find(|c| c.category == GdprConsentCategory::Marketing)
+        .unwrap();
     assert_eq!(marketing.granted, true);
     assert_eq!(marketing.consent_version.as_deref(), Some("1.2"));
 
@@ -242,11 +262,14 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
         "granted": false,
         "consent_version": "1.2"
     });
-    let req = RequestBuilder::new(Method::POST, "/api/v1/regional-compliance/slovak/gdpr/consent/withdraw")
-        .bearer(&token)
-        .header("X-Tenant-ID", &org_id.to_string())
-        .json(withdraw_payload)
-        .build();
+    let req = RequestBuilder::new(
+        Method::POST,
+        "/api/v1/regional-compliance/slovak/gdpr/consent/withdraw",
+    )
+    .bearer(&token)
+    .header("X-Tenant-ID", &org_id.to_string())
+    .json(withdraw_payload)
+    .build();
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
 
@@ -259,6 +282,10 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
     let body: GdprConsentStatus = serde_json::from_value(resp.json_value()).unwrap();
-    let marketing = body.consents.iter().find(|c| c.category == GdprConsentCategory::Marketing).unwrap();
+    let marketing = body
+        .consents
+        .iter()
+        .find(|c| c.category == GdprConsentCategory::Marketing)
+        .unwrap();
     assert_eq!(marketing.granted, false);
 }

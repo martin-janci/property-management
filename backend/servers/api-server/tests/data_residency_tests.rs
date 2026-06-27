@@ -9,8 +9,8 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use db::models::data_residency::{DataRegion, DataTypeCategory, AccessType, ResidencyAuditEvent};
 use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
+use db::models::data_residency::{AccessType, DataRegion, DataTypeCategory, ResidencyAuditEvent};
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -50,7 +50,7 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
         r#"
         INSERT INTO organizations (name, slug, contact_email, status)
         VALUES ($1, $2, $3, 'active') RETURNING id
-        "#
+        "#,
     )
     .bind(format!("Residency Org {slug}"))
     .bind(format!("residency-{slug}"))
@@ -66,7 +66,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
         INSERT INTO users (email, password_hash, name, status, email_verified_at)
         VALUES ($1, 'test_hash', 'Residency User', 'active', NOW())
         RETURNING id
-        "#
+        "#,
     )
     .bind(email)
     .fetch_one(pool)

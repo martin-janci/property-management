@@ -165,7 +165,10 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
     )
     .unwrap();
 
-    assert!(body["reading_id"].is_string(), "response must include reading_id");
+    assert!(
+        body["reading_id"].is_string(),
+        "response must include reading_id"
+    );
     let reading_id =
         Uuid::parse_str(body["reading_id"].as_str().unwrap()).expect("reading_id is a UUID");
 

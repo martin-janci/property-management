@@ -7,12 +7,7 @@
 
 use crate::state::AppState;
 use api_core::extractors::AuthUser;
-use axum::{
-    extract::State,
-    http::StatusCode,
-    routing::post,
-    Json, Router,
-};
+use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use axum_extra::extract::Multipart;
 use common::errors::ErrorResponse;
 use db::models::meter::CreateOcrCorrection;
@@ -140,23 +135,33 @@ async fn process_meter_reading(
     while let Ok(Some(field)) = multipart.next_field().await {
         match field.name() {
             Some("meter_id") => {
-                let text = field.text().await.map_err(|_| bad_request("Invalid meter_id field"))?;
+                let text = field
+                    .text()
+                    .await
+                    .map_err(|_| bad_request("Invalid meter_id field"))?;
                 meter_id = Some(
                     Uuid::parse_str(&text)
                         .map_err(|_| bad_request("meter_id must be a valid UUID"))?,
                 );
             }
             Some("reading_value") => {
-                let text = field.text().await.map_err(|_| bad_request("Invalid reading_value field"))?;
-                reading_value = Some(
-                    Decimal::from_str(&text)
-                        .map_err(|_| bad_request("reading_value must be a valid decimal number"))?,
-                );
+                let text = field
+                    .text()
+                    .await
+                    .map_err(|_| bad_request("Invalid reading_value field"))?;
+                reading_value =
+                    Some(Decimal::from_str(&text).map_err(|_| {
+                        bad_request("reading_value must be a valid decimal number")
+                    })?);
             }
             Some("image") => {
                 image_content_type = field.content_type().map(|s| s.to_owned());
                 image_bytes = Some(
-                    field.bytes().await.map_err(|_| bad_request("Failed to read image bytes"))?.to_vec(),
+                    field
+                        .bytes()
+                        .await
+                        .map_err(|_| bad_request("Failed to read image bytes"))?
+                        .to_vec(),
                 );
             }
             _ => {
@@ -190,23 +195,27 @@ async fn process_meter_reading(
     }
 
     // Upload image to storage when available, otherwise use a placeholder.
-    let photo_url = if let (Some(bytes), Some(ref storage)) = (image_bytes, &state.storage_service) {
+    let photo_url = if let (Some(bytes), Some(ref storage)) = (image_bytes, &state.storage_service)
+    {
         let mime = image_content_type.as_deref().unwrap_or("image/jpeg");
         let key = format!("ocr/meter-readings/{}/{}.jpg", meter_id, Uuid::new_v4());
-        storage
-            .upload(&key, bytes, mime)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = ?e, "Failed to upload OCR image");
-                internal_err("Failed to store meter image")
-            })?
+        storage.upload(&key, bytes, mime).await.map_err(|e| {
+            tracing::error!(error = ?e, "Failed to upload OCR image");
+            internal_err("Failed to store meter image")
+        })?
     } else {
         format!("pending-upload/{}/{}", meter_id, Uuid::new_v4())
     };
 
     let meter_reading = state
         .meter_repo
-        .submit_photo_reading(auth.user_id, meter_id, reading, photo_url.clone(), Some(reading))
+        .submit_photo_reading(
+            auth.user_id,
+            meter_id,
+            reading,
+            photo_url.clone(),
+            Some(reading),
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = ?e, "Failed to create photo meter reading");
@@ -223,7 +232,12 @@ async fn process_meter_reading(
                 // Confidence is 0 until a real OCR pipeline is wired; the
                 // value here is caller-supplied, not machine-extracted.
                 confidence: 0.0,
-                bounding_box: BoundingBox { x: 0.0, y: 0.0, width: 0.0, height: 0.0 },
+                bounding_box: BoundingBox {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 0.0,
+                    height: 0.0,
+                },
                 raw_text: extracted.to_string(),
                 processing_time_ms: 0,
             },
@@ -257,7 +271,10 @@ async fn submit_correction(
     if !is_member {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new("FORBIDDEN", "Not a member of this organisation")),
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Not a member of this organisation",
+            )),
         ));
     }
 
