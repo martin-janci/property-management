@@ -5,14 +5,14 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## marketplace.rs  (mount: /api/v1/marketplace)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/marketplace/providers | create_profile | partial | — | real handler, no test |
-| GET | /api/v1/marketplace/providers | search_providers | partial | — | |
-| GET | /api/v1/marketplace/providers/me | get_my_profile | partial | — | |
-| PATCH | /api/v1/marketplace/providers/me | update_my_profile | partial | — | |
-| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | partial | — | |
-| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | partial | — | |
-| GET | /api/v1/marketplace/providers/{id} | get_provider | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | partial | — | |
+| POST | /api/v1/marketplace/providers | create_profile | done | integrations_batch4_tests.rs | happy-path 201 |
+| GET | /api/v1/marketplace/providers | search_providers | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/me | get_my_profile | done | integrations_batch4_tests.rs | happy-path 200 |
+| PATCH | /api/v1/marketplace/providers/me | update_my_profile | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/{id} | get_provider | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | done | integrations_batch4_tests.rs | happy-path 200 |
 | POST | /api/v1/marketplace/rfqs | create_rfq | partial | — | |
 | GET | /api/v1/marketplace/rfqs | list_rfqs | partial | — | |
 | GET | /api/v1/marketplace/rfqs/{id} | get_rfq | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK (owner reads own RFQ) |
@@ -215,28 +215,28 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## feature_packages.rs  (mount: /api/v1/feature-packages; public_router nested at /public)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/feature-packages/ | list_packages | partial | — | router asserted in router_single_source_tests (static only) |
-| POST | /api/v1/feature-packages/ | create_package | partial | — | |
-| GET | /api/v1/feature-packages/{id} | get_package | partial | — | |
-| PUT | /api/v1/feature-packages/{id} | update_package | partial | — | |
-| DELETE | /api/v1/feature-packages/{id} | delete_package | partial | — | |
-| POST | /api/v1/feature-packages/{id}/features | add_features | partial | — | |
-| DELETE | /api/v1/feature-packages/{id}/features/{fid} | remove_feature | partial | — | |
-| GET | /api/v1/feature-packages/organizations/{org_id} | get_org_packages | partial | — | |
-| POST | /api/v1/feature-packages/organizations/{org_id}/assign | assign_package | partial | — | |
-| DELETE | /api/v1/feature-packages/organizations/{org_id}/packages/{pid} | deactivate_org_package | partial | — | |
-| GET | /api/v1/feature-packages/public/ | list_public_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/compare | compare_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/{id} | get_public_package | partial | — | public_router |
+| GET | /api/v1/feature-packages/ | list_packages | done | integrations_batch4_tests.rs | happy-path 200 (super_admin) |
+| POST | /api/v1/feature-packages/ | create_package | done | integrations_batch4_tests.rs | happy-path 201 |
+| GET | /api/v1/feature-packages/{id} | get_package | done | integrations_batch4_tests.rs | happy-path 200 |
+| PUT | /api/v1/feature-packages/{id} | update_package | done | integrations_batch4_tests.rs | happy-path 200 |
+| DELETE | /api/v1/feature-packages/{id} | delete_package | done | integrations_batch4_tests.rs | happy-path 204 |
+| POST | /api/v1/feature-packages/{id}/features | add_features | done | integrations_batch4_tests.rs | happy-path 201 |
+| DELETE | /api/v1/feature-packages/{id}/features/{fid} | remove_feature | done | integrations_batch4_tests.rs | happy-path 204 |
+| GET | /api/v1/feature-packages/organizations/{org_id} | get_org_packages | done | integrations_batch4_tests.rs | happy-path 200 |
+| POST | /api/v1/feature-packages/organizations/{org_id}/assign | assign_package | done | integrations_batch4_tests.rs | happy-path 201 |
+| DELETE | /api/v1/feature-packages/organizations/{org_id}/packages/{pid} | deactivate_org_package | done | integrations_batch4_tests.rs | happy-path 204 |
+| GET | /api/v1/feature-packages/public/ | list_public_packages | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
+| GET | /api/v1/feature-packages/public/compare | compare_packages | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
+| GET | /api/v1/feature-packages/public/{id} | get_public_package | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
 
 ## features.rs  (mount: /api/v1/features)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/features/resolved | get_resolved_features | partial | — | real handler, no test |
-| GET | /api/v1/features/{key}/check | check_feature | partial | — | |
-| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | partial | — | |
+| GET | /api/v1/features/resolved | get_resolved_features | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/features/{key}/check | check_feature | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | done | integrations_batch4_tests.rs | happy-path 200 |
 | POST | /api/v1/features/{key}/preference | set_feature_preference | partial | — | |
-| POST | /api/v1/features/analytics/event | log_feature_event | partial | — | |
+| POST | /api/v1/features/analytics/event | log_feature_event | done | integrations_batch4_tests.rs | happy-path 200 |
 | GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | partial | — | |
 
 ## integrations/install.rs  (mount: /api/v1/integrations)
@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 57 | partial: 138 | stub: 73 | missing: 0 | total: 268
 </content>
