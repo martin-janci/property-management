@@ -19,25 +19,25 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 ## regional_compliance.rs  (mount: /api/v1/regional-compliance)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/regional-compliance/jurisdiction | get_jurisdiction | stub | none | Returns Jurisdiction::default(); ignores state. |
-| PUT | /api/v1/regional-compliance/jurisdiction | set_jurisdiction | stub | none | Echoes payload back; no persistence. |
-| POST | /api/v1/regional-compliance/slovak/voting/config | configure_slovak_voting | stub | none | Mock: Uuid::new_v4() ids, no DB. |
-| GET | /api/v1/regional-compliance/slovak/voting/config/{building_id} | get_slovak_voting_config | stub | none | Hardcoded mock config. |
-| POST | /api/v1/regional-compliance/slovak/voting/validate | validate_slovak_vote | stub | none | Hardcoded participation/approval percentages. |
-| GET | /api/v1/regional-compliance/slovak/voting/minutes/{vote_id} | get_slovak_vote_minutes | stub | none | Fully hardcoded minutes. |
-| POST | /api/v1/regional-compliance/slovak/accounting/config | configure_slovak_accounting | stub | none | Mock: Uuid::new_v4(), no DB. |
-| GET | /api/v1/regional-compliance/slovak/accounting/config | get_slovak_accounting_config | stub | none | Hardcoded mock config. |
-| POST | /api/v1/regional-compliance/slovak/accounting/export | export_slovak_accounting | stub | none | Hardcoded counts/totals; fake download_url. |
-| POST | /api/v1/regional-compliance/slovak/gdpr/config | configure_slovak_gdpr | stub | none | Mock: Uuid::new_v4(), no DB. |
-| GET | /api/v1/regional-compliance/slovak/gdpr/config | get_slovak_gdpr_config | stub | none | Hardcoded mock config. |
-| POST | /api/v1/regional-compliance/slovak/gdpr/consent | record_gdpr_consent | stub | none | Mock: Uuid::new_v4(), no persistence. |
-| GET | /api/v1/regional-compliance/slovak/gdpr/consent/status | get_gdpr_consent_status | stub | none | Hardcoded mock status. |
-| POST | /api/v1/regional-compliance/slovak/gdpr/consent/withdraw | withdraw_gdpr_consent | stub | none | Mock: Uuid::new_v4(), no persistence. |
-| POST | /api/v1/regional-compliance/czech/svj/config | configure_czech_svj | stub | none | Mock: Uuid::new_v4(), no DB. |
-| GET | /api/v1/regional-compliance/czech/svj/config/{building_id} | get_czech_svj_config | stub | none | Hardcoded mock config. |
-| POST | /api/v1/regional-compliance/czech/svj/validate | validate_czech_vote | stub | none | Hardcoded participation/approval. |
-| GET | /api/v1/regional-compliance/czech/svj/usneseni/{vote_id} | get_czech_usneseni | stub | none | Fully hardcoded usneseni. |
-| GET | /api/v1/regional-compliance/status | get_compliance_status | stub | none | Hardcoded mock status. |
+| GET | /api/v1/regional-compliance/jurisdiction | get_jurisdiction | done | regional_compliance_tests.rs | db-backed and tested |
+| PUT | /api/v1/regional-compliance/jurisdiction | set_jurisdiction | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/voting/config | configure_slovak_voting | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/slovak/voting/config/{building_id} | get_slovak_voting_config | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/voting/validate | validate_slovak_vote | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/slovak/voting/minutes/{vote_id} | get_slovak_vote_minutes | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/accounting/config | configure_slovak_accounting | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/slovak/accounting/config | get_slovak_accounting_config | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/accounting/export | export_slovak_accounting | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/gdpr/config | configure_slovak_gdpr | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/slovak/gdpr/config | get_slovak_gdpr_config | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/gdpr/consent | record_gdpr_consent | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/slovak/gdpr/consent/status | get_gdpr_consent_status | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/slovak/gdpr/consent/withdraw | withdraw_gdpr_consent | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/czech/svj/config | configure_czech_svj | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/czech/svj/config/{building_id} | get_czech_svj_config | done | regional_compliance_tests.rs | db-backed and tested |
+| POST | /api/v1/regional-compliance/czech/svj/validate | validate_czech_vote | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/czech/svj/usneseni/{vote_id} | get_czech_usneseni | done | regional_compliance_tests.rs | db-backed and tested |
+| GET | /api/v1/regional-compliance/status | get_compliance_status | done | regional_compliance_tests.rs | db-backed and tested |
 
 ## aml_dsa/  (mount: /api/v1/aml-dsa)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -104,4 +104,4 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 | GET | /api/v1/tenant-screening/distribution | get_risk_distribution | partial | none | Real. No test. |
 
 ## Summary
-- done: 2 | partial: 63 | stub: 20 | missing: 0 | total: 85
+- done: 21 | partial: 63 | stub: 1 | missing: 0 | total: 85
