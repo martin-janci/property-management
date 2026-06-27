@@ -7,26 +7,26 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 ## registry.rs  (mount: /api/v1/registry)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/registry/pets | create_pet_registration | partial | — | real (registry_repo); no test references /api/v1/registry at all |
-| GET | /api/v1/registry/pets | list_pet_registrations | partial | — | real; no test |
-| GET | /api/v1/registry/pets/{id} | get_pet_registration | partial | — | real; no test |
-| PUT | /api/v1/registry/pets/{id} | update_pet_registration | partial | — | real; no test |
-| DELETE | /api/v1/registry/pets/{id} | delete_pet_registration | partial | — | real; no test |
-| POST | /api/v1/registry/pets/{id}/review | review_pet_registration | partial | — | real; no test |
-| POST | /api/v1/registry/vehicles | create_vehicle_registration | partial | — | real; no test |
-| GET | /api/v1/registry/vehicles | list_vehicle_registrations | partial | — | real; no test |
-| GET | /api/v1/registry/vehicles/{id} | get_vehicle_registration | partial | — | real; no test |
-| PUT | /api/v1/registry/vehicles/{id} | update_vehicle_registration | partial | — | real; no test |
-| DELETE | /api/v1/registry/vehicles/{id} | delete_vehicle_registration | partial | — | real; no test |
-| POST | /api/v1/registry/vehicles/{id}/review | review_vehicle_registration | partial | — | real; no test |
-| POST | /api/v1/registry/parking-spots | create_parking_spot | partial | — | real; no test |
-| GET | /api/v1/registry/parking-spots | list_parking_spots | partial | — | real; no test |
-| GET | /api/v1/registry/parking-spots/{id} | get_parking_spot | partial | — | real; no test |
-| PUT | /api/v1/registry/parking-spots/{id} | update_parking_spot | partial | — | real; no test |
-| DELETE | /api/v1/registry/parking-spots/{id} | delete_parking_spot | partial | — | real; no test |
-| GET | /api/v1/registry/buildings/{building_id}/rules | get_registry_rules | partial | — | real; no test |
-| PUT | /api/v1/registry/buildings/{building_id}/rules | update_registry_rules | partial | — | real; no test |
-| GET | /api/v1/registry/buildings/{building_id}/statistics | get_registry_statistics | partial | — | real; no test |
+| POST | /api/v1/registry/pets | create_pet_registration | done | registry_backfill_tests.rs | success-path 201 |
+| GET | /api/v1/registry/pets | list_pet_registrations | done | registry_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/registry/pets/{id} | get_pet_registration | done | registry_backfill_tests.rs | success-path 200 |
+| PUT | /api/v1/registry/pets/{id} | update_pet_registration | done | registry_backfill_tests.rs | success-path 200 |
+| DELETE | /api/v1/registry/pets/{id} | delete_pet_registration | done | registry_backfill_tests.rs | success-path 204 |
+| POST | /api/v1/registry/pets/{id}/review | review_pet_registration | done | registry_backfill_tests.rs | success-path 200 |
+| POST | /api/v1/registry/vehicles | create_vehicle_registration | done | registry_backfill_tests.rs | success-path 201 |
+| GET | /api/v1/registry/vehicles | list_vehicle_registrations | done | registry_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/registry/vehicles/{id} | get_vehicle_registration | done | registry_backfill_tests.rs | success-path 200 |
+| PUT | /api/v1/registry/vehicles/{id} | update_vehicle_registration | done | registry_backfill_tests.rs | success-path 200 |
+| DELETE | /api/v1/registry/vehicles/{id} | delete_vehicle_registration | done | registry_backfill_tests.rs | success-path 204 |
+| POST | /api/v1/registry/vehicles/{id}/review | review_vehicle_registration | done | registry_backfill_tests.rs | success-path 200 |
+| POST | /api/v1/registry/parking-spots | create_parking_spot | done | registry_backfill_tests.rs | success-path 201 |
+| GET | /api/v1/registry/parking-spots | list_parking_spots | done | registry_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/registry/parking-spots/{id} | get_parking_spot | done | registry_backfill_tests.rs | success-path 200 |
+| PUT | /api/v1/registry/parking-spots/{id} | update_parking_spot | done | registry_backfill_tests.rs | success-path 200 |
+| DELETE | /api/v1/registry/parking-spots/{id} | delete_parking_spot | done | registry_backfill_tests.rs | success-path 204 |
+| GET | /api/v1/registry/buildings/{building_id}/rules | get_registry_rules | done | registry_backfill_tests.rs | success-path 200 |
+| PUT | /api/v1/registry/buildings/{building_id}/rules | update_registry_rules | done | registry_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/registry/buildings/{building_id}/statistics | get_registry_statistics | done | registry_backfill_tests.rs | success-path 200 |
 
 ## automation.rs  (mount: /api/v1/automation)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -130,4 +130,4 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 | POST | /api/v1/ai/ocr/correction | submit_correction | stub | — | accepts payload and discards it (no training sink); returns 200 but does no work |
 
 ## Summary
-- done: 0 | partial: 91 | stub: 2 | missing: 0 | total: 93
+- done: 20 | partial: 71 | stub: 2 | missing: 0 | total: 93
