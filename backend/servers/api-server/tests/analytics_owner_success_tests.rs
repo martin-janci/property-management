@@ -173,7 +173,13 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
     let token = mint(user_id, &email, org_id);
-    Fixture { app, token, org_id, unit_id, user_id }
+    Fixture {
+        app,
+        token,
+        org_id,
+        unit_id,
+        user_id,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -319,10 +325,7 @@ async fn calculate_roi_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .post(&format!(
-                    "/api/v1/owner-analytics/units/{}/roi",
-                    f.unit_id
-                ))
+                .post(&format!("/api/v1/owner-analytics/units/{}/roi", f.unit_id))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
@@ -486,9 +489,7 @@ async fn update_auto_approval_rule_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .put(&format!(
-                    "/api/v1/owner-analytics/expense-rules/{rule_id}"
-                ))
+                .put(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
@@ -514,9 +515,7 @@ async fn delete_auto_approval_rule_succeeds(pool: PgPool) {
         .app
         .execute(
             f.app
-                .delete(&format!(
-                    "/api/v1/owner-analytics/expense-rules/{rule_id}"
-                ))
+                .delete(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .build(),
