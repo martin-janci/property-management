@@ -188,29 +188,29 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## migration.rs  (mount: /api/v1/migration)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/migration/templates | list_templates | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| POST | /api/v1/migration/templates | create_template | partial | — | |
-| GET | /api/v1/migration/templates/system | list_system_templates | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/templates/{template_id} | get_template | partial | — | |
-| PUT | /api/v1/migration/templates/{template_id} | update_template | partial | — | |
-| DELETE | /api/v1/migration/templates/{template_id} | delete_template | partial | — | |
-| GET | /api/v1/migration/templates/{template_id}/download | download_template | partial | — | |
-| POST | /api/v1/migration/templates/{template_id}/duplicate | duplicate_template | partial | — | |
-| GET | /api/v1/migration/categories/import | get_import_categories | partial | — | |
-| POST | /api/v1/migration/import/upload | upload_import_file | partial | — | |
-| GET | /api/v1/migration/import/jobs | list_import_jobs | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/import/jobs/{job_id} | get_import_job_status | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| POST | /api/v1/migration/import/jobs/{job_id}/cancel | cancel_import_job | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/retry | retry_import_job | partial | — | |
-| GET | /api/v1/migration/import/jobs/{job_id}/errors | get_import_job_errors | partial | — | |
-| POST | /api/v1/migration/export | request_migration_export | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/export/{export_id} | get_export_status | partial | — | |
-| GET | /api/v1/migration/export/{export_id}/download | download_export | partial | — | |
-| GET | /api/v1/migration/export/history | get_export_history | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/categories/export | get_export_categories | partial | — | |
-| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | partial | — | |
+| GET | /api/v1/migration/templates | list_templates | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/templates | create_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/system | list_system_templates | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/{template_id} | get_template | done | migration_db_tests.rs | db-backed and tested |
+| PUT | /api/v1/migration/templates/{template_id} | update_template | done | migration_db_tests.rs | db-backed and tested |
+| DELETE | /api/v1/migration/templates/{template_id} | delete_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/{template_id}/download | download_template | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/templates/{template_id}/duplicate | duplicate_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/categories/import | get_import_categories | done | migration_db_tests.rs | static metadata |
+| POST | /api/v1/migration/import/upload | upload_import_file | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs | list_import_jobs | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs/{job_id} | get_import_job_status | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/cancel | cancel_import_job | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/retry | retry_import_job | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs/{job_id}/errors | get_import_job_errors | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/export | request_migration_export | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/{export_id} | get_export_status | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/{export_id}/download | download_export | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/history | get_export_history | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/categories/export | get_export_categories | done | migration_db_tests.rs | static metadata |
+| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | done | migration_db_tests.rs | db-backed and tested |
 
 ## feature_packages.rs  (mount: /api/v1/feature-packages; public_router nested at /public)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 32 | partial: 163 | stub: 73 | missing: 0 | total: 268
 </content>
