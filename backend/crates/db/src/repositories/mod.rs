@@ -412,3 +412,8 @@ pub use report_schedule::ReportScheduleRepository;
 pub mod data_residency;
 
 pub use data_residency::DataResidencyRepository;
+
+// Epic 72: Regional Legal Compliance
+pub mod regional_compliance;
+
+pub use regional_compliance::RegionalComplianceRepository;

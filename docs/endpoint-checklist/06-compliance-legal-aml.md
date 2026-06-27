@@ -22,25 +22,25 @@
 | `GET /api/v1/compliance/security/login-activity` | `compliance.rs:get_login_activity_report` | partial | — | sqlx-backed, no test |
 | `GET /api/v1/compliance/security/mfa-status` | `compliance.rs:get_mfa_status_report` | partial | — | sqlx-backed, no test |
 | `GET /api/v1/compliance/security/failed-logins` | `compliance.rs:get_failed_logins_report` | partial | — | sqlx-backed, no test |
-| `GET /api/v1/regional-compliance/jurisdiction` | `regional_compliance.rs:get_jurisdiction` | stub | — | hardcoded, ignores state |
-| `PUT /api/v1/regional-compliance/jurisdiction` | `regional_compliance.rs:set_jurisdiction` | stub | — | echoes input, no persist |
-| `POST /api/v1/regional-compliance/slovak/voting/config` | `regional_compliance.rs:configure_slovak_voting` | stub | — | fabricated response |
-| `GET /api/v1/regional-compliance/slovak/voting/config/{building_id}` | `regional_compliance.rs:get_slovak_voting_config` | stub | — | hardcoded response |
-| `POST /api/v1/regional-compliance/slovak/voting/validate` | `regional_compliance.rs:validate_slovak_vote` | stub | — | hardcoded participation values |
-| `GET /api/v1/regional-compliance/slovak/voting/minutes/{vote_id}` | `regional_compliance.rs:get_slovak_vote_minutes` | stub | — | hardcoded minutes |
-| `POST /api/v1/regional-compliance/slovak/accounting/config` | `regional_compliance.rs:configure_slovak_accounting` | stub | — | fabricated response |
-| `GET /api/v1/regional-compliance/slovak/accounting/config` | `regional_compliance.rs:get_slovak_accounting_config` | stub | — | hardcoded response |
-| `POST /api/v1/regional-compliance/slovak/accounting/export` | `regional_compliance.rs:export_slovak_accounting` | stub | — | fabricated response |
-| `POST /api/v1/regional-compliance/slovak/gdpr/config` | `regional_compliance.rs:configure_slovak_gdpr` | stub | — | fabricated response |
-| `GET /api/v1/regional-compliance/slovak/gdpr/config` | `regional_compliance.rs:get_slovak_gdpr_config` | stub | — | hardcoded response |
-| `POST /api/v1/regional-compliance/slovak/gdpr/consent` | `regional_compliance.rs:record_gdpr_consent` | stub | — | fabricated response |
-| `GET /api/v1/regional-compliance/slovak/gdpr/consent/status` | `regional_compliance.rs:get_gdpr_consent_status` | stub | — | hardcoded response |
-| `POST /api/v1/regional-compliance/slovak/gdpr/consent/withdraw` | `regional_compliance.rs:withdraw_gdpr_consent` | stub | — | fabricated response |
-| `POST /api/v1/regional-compliance/czech/svj/config` | `regional_compliance.rs:configure_czech_svj` | stub | — | fabricated response |
-| `GET /api/v1/regional-compliance/czech/svj/config/{building_id}` | `regional_compliance.rs:get_czech_svj_config` | stub | — | hardcoded response |
-| `POST /api/v1/regional-compliance/czech/svj/validate` | `regional_compliance.rs:validate_czech_vote` | stub | — | hardcoded validation |
-| `GET /api/v1/regional-compliance/czech/svj/usneseni/{vote_id}` | `regional_compliance.rs:get_czech_usneseni` | stub | — | hardcoded response |
-| `GET /api/v1/regional-compliance/status` | `regional_compliance.rs:get_compliance_status` | stub | — | hardcoded response |
+| `GET /api/v1/regional-compliance/jurisdiction` | `regional_compliance.rs:get_jurisdiction` | done | test_jurisdiction_lifecycle | DB-backed via RegionalComplianceRepository |
+| `PUT /api/v1/regional-compliance/jurisdiction` | `regional_compliance.rs:set_jurisdiction` | done | test_jurisdiction_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/voting/config` | `regional_compliance.rs:configure_slovak_voting` | done | test_slovak_voting_config_lifecycle | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/slovak/voting/config/{building_id}` | `regional_compliance.rs:get_slovak_voting_config` | done | test_slovak_voting_config_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/voting/validate` | `regional_compliance.rs:validate_slovak_vote` | done | test_slovak_voting_config_lifecycle | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/slovak/voting/minutes/{vote_id}` | `regional_compliance.rs:get_slovak_vote_minutes` | done | test_slovak_voting_config_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/accounting/config` | `regional_compliance.rs:configure_slovak_accounting` | done | — | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/slovak/accounting/config` | `regional_compliance.rs:get_slovak_accounting_config` | done | — | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/accounting/export` | `regional_compliance.rs:export_slovak_accounting` | done | — | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/gdpr/config` | `regional_compliance.rs:configure_slovak_gdpr` | done | test_gdpr_consent_lifecycle | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/slovak/gdpr/config` | `regional_compliance.rs:get_slovak_gdpr_config` | done | test_gdpr_consent_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/gdpr/consent` | `regional_compliance.rs:record_gdpr_consent` | done | test_gdpr_consent_lifecycle | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/slovak/gdpr/consent/status` | `regional_compliance.rs:get_gdpr_consent_status` | done | test_gdpr_consent_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/slovak/gdpr/consent/withdraw` | `regional_compliance.rs:withdraw_gdpr_consent` | done | test_gdpr_consent_lifecycle | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/czech/svj/config` | `regional_compliance.rs:configure_czech_svj` | done | — | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/czech/svj/config/{building_id}` | `regional_compliance.rs:get_czech_svj_config` | done | — | DB-backed via RegionalComplianceRepository |
+| `POST /api/v1/regional-compliance/czech/svj/validate` | `regional_compliance.rs:validate_czech_vote` | done | — | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/czech/svj/usneseni/{vote_id}` | `regional_compliance.rs:get_czech_usneseni` | done | — | DB-backed via RegionalComplianceRepository |
+| `GET /api/v1/regional-compliance/status` | `regional_compliance.rs:get_compliance_status` | done | test_jurisdiction_lifecycle | DB-backed via RegionalComplianceRepository |
 | `GET /api/v1/data-residency/config` | `data_residency.rs:get_residency_config` | done | `data_residency_tests.rs` | DB-backed config |
 | `POST /api/v1/data-residency/config` | `data_residency.rs:configure_residency` | done | `data_residency_tests.rs` | DB-backed config |
 | `PUT /api/v1/data-residency/config` | `data_residency.rs:update_residency_config` | done | `data_residency_tests.rs` | DB-backed config |

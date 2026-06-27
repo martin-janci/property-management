@@ -31,7 +31,7 @@ use db::{
         PasswordResetRepository, PersonMonthRepository, PlatformAdminRepository,
         PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
-        RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
+        RegionalComplianceRepository, RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
         SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
         SubscriptionRepository, SystemAnnouncementRepository, TwoFactorAuthRepository,
         UnitRepository, UnitResidentRepository, UserRepository, VendorRepository,
@@ -356,6 +356,8 @@ pub struct AppState {
     // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
     pub edd_repo: EddRepository,
     pub compliance_repo: ComplianceRepository,
+    // Epic 72: Regional Legal Compliance (SK/CZ)
+    pub regional_compliance_repo: RegionalComplianceRepository,
     // Epic 81: Report Schedule Management & Execution History
     pub report_schedule_repo: ReportScheduleRepository,
     pub accounting_service: AccountingService,
@@ -556,6 +558,8 @@ impl AppState {
         // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
         let edd_repo = EddRepository::new(db.clone());
         let compliance_repo = ComplianceRepository::new(db.clone());
+        // Epic 72: Regional Legal Compliance (SK/CZ)
+        let regional_compliance_repo = RegionalComplianceRepository::new(db.clone());
         // Epic 81: Report Schedule Management & Execution History
         let report_schedule_repo = ReportScheduleRepository::new(db.clone());
         let accounting_repo = AccountingRepository::new(db.clone());
@@ -673,6 +677,7 @@ impl AppState {
             api_ecosystem_repo,
             edd_repo,
             compliance_repo,
+            regional_compliance_repo,
             report_schedule_repo,
             accounting_service,
             accounting_repo,
