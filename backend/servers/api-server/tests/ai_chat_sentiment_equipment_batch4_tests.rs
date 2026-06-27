@@ -333,7 +333,9 @@ async fn acknowledge_sentiment_alert_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/ai/sentiment/alerts/{alert_id}/acknowledge"))
+                .post(&format!(
+                    "/api/v1/ai/sentiment/alerts/{alert_id}/acknowledge"
+                ))
                 .json(json!({}))
                 .build(),
         )
@@ -458,10 +460,7 @@ async fn update_equipment_succeeds(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert_eq!(
-        resp.json_value()["name"].as_str().unwrap(),
-        "Updated HVAC"
-    );
+    assert_eq!(resp.json_value()["name"].as_str().unwrap(), "Updated HVAC");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -570,7 +569,9 @@ async fn acknowledge_prediction_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/ai/equipment/predictions/{pred_id}/acknowledge"))
+                .post(&format!(
+                    "/api/v1/ai/equipment/predictions/{pred_id}/acknowledge"
+                ))
                 .json(json!({"notes": "Scheduled for next week"}))
                 .build(),
         )
@@ -988,7 +989,9 @@ async fn get_registry_statistics_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/registry/buildings/{building_id}/statistics"))
+                .get(&format!(
+                    "/api/v1/registry/buildings/{building_id}/statistics"
+                ))
                 .build(),
         )
         .await;
