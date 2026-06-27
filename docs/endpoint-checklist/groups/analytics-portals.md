@@ -6,23 +6,23 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | GET | /api/v1/owner-analytics/units/{unit_id}/valuation | get_unit_valuation | done | owner_analytics_cross_org_idor_tests.rs | T3 happy-path OK (same-org); T1/T4 are IDOR/401 |
-| POST | /api/v1/owner-analytics/units/{unit_id}/valuation | create_valuation | partial | — | no test hits success path |
-| GET | /api/v1/owner-analytics/valuations/{valuation_id} | get_valuation_with_comparables | partial | — | |
-| POST | /api/v1/owner-analytics/valuations/{valuation_id}/comparables | add_comparable | partial | — | |
-| GET | /api/v1/owner-analytics/units/{unit_id}/value-history | get_value_history | partial | owner_analytics_cross_org_idor_tests.rs | T2 only asserts no-leak under `if status==OK`; not a guaranteed happy-path |
-| GET | /api/v1/owner-analytics/units/{unit_id}/value-trend | get_value_trend | partial | — | |
-| POST | /api/v1/owner-analytics/units/{unit_id}/roi | calculate_roi | partial | — | |
-| GET | /api/v1/owner-analytics/units/{unit_id}/cash-flow | get_cash_flow_breakdown | partial | — | |
-| GET | /api/v1/owner-analytics/units/{unit_id}/roi-dashboard | get_roi_dashboard | partial | — | |
-| GET | /api/v1/owner-analytics/portfolio | get_portfolio_summary | partial | — | |
-| POST | /api/v1/owner-analytics/portfolio/compare | compare_properties | partial | — | |
-| GET | /api/v1/owner-analytics/expense-rules | list_auto_approval_rules | partial | — | |
-| POST | /api/v1/owner-analytics/expense-rules | create_auto_approval_rule | partial | — | |
-| PUT | /api/v1/owner-analytics/expense-rules/{id} | update_auto_approval_rule | partial | — | |
-| DELETE | /api/v1/owner-analytics/expense-rules/{id} | delete_auto_approval_rule | partial | — | |
-| POST | /api/v1/owner-analytics/expenses/submit | submit_expense | partial | — | |
-| GET | /api/v1/owner-analytics/expenses | list_expense_requests | partial | — | |
-| POST | /api/v1/owner-analytics/expenses/{id}/review | review_expense | partial | — | |
+| POST | /api/v1/owner-analytics/units/{unit_id}/valuation | create_valuation | done | analytics_owner_success_tests.rs | oa_create_valuation_succeeds |
+| GET | /api/v1/owner-analytics/valuations/{valuation_id} | get_valuation_with_comparables | done | analytics_owner_success_tests.rs | oa_get_valuation_with_comparables_succeeds |
+| POST | /api/v1/owner-analytics/valuations/{valuation_id}/comparables | add_comparable | done | analytics_owner_success_tests.rs | oa_add_comparable_succeeds |
+| GET | /api/v1/owner-analytics/units/{unit_id}/value-history | get_value_history | done | analytics_owner_success_tests.rs | oa_get_value_history_succeeds |
+| GET | /api/v1/owner-analytics/units/{unit_id}/value-trend | get_value_trend | done | analytics_owner_success_tests.rs | oa_get_value_trend_succeeds; seeds value_history row |
+| POST | /api/v1/owner-analytics/units/{unit_id}/roi | calculate_roi | done | analytics_owner_success_tests.rs | oa_calculate_roi_succeeds |
+| GET | /api/v1/owner-analytics/units/{unit_id}/cash-flow | get_cash_flow_breakdown | done | analytics_owner_success_tests.rs | oa_get_cash_flow_succeeds |
+| GET | /api/v1/owner-analytics/units/{unit_id}/roi-dashboard | get_roi_dashboard | done | analytics_owner_success_tests.rs | oa_get_roi_dashboard_succeeds |
+| GET | /api/v1/owner-analytics/portfolio | get_portfolio_summary | done | analytics_owner_success_tests.rs | oa_get_portfolio_summary_succeeds |
+| POST | /api/v1/owner-analytics/portfolio/compare | compare_properties | done | analytics_owner_success_tests.rs | oa_compare_properties_succeeds |
+| GET | /api/v1/owner-analytics/expense-rules | list_auto_approval_rules | done | analytics_owner_success_tests.rs | oa_list_auto_approval_rules_succeeds |
+| POST | /api/v1/owner-analytics/expense-rules | create_auto_approval_rule | done | analytics_owner_success_tests.rs | oa_create_auto_approval_rule_succeeds |
+| PUT | /api/v1/owner-analytics/expense-rules/{id} | update_auto_approval_rule | done | analytics_owner_success_tests.rs | oa_update_auto_approval_rule_succeeds |
+| DELETE | /api/v1/owner-analytics/expense-rules/{id} | delete_auto_approval_rule | done | analytics_owner_success_tests.rs | oa_delete_auto_approval_rule_succeeds |
+| POST | /api/v1/owner-analytics/expenses/submit | submit_expense | done | analytics_owner_success_tests.rs | oa_submit_expense_succeeds |
+| GET | /api/v1/owner-analytics/expenses | list_expense_requests | done | analytics_owner_success_tests.rs | oa_list_expense_requests_succeeds |
+| POST | /api/v1/owner-analytics/expenses/{id}/review | review_expense | done | analytics_owner_success_tests.rs | oa_review_expense_succeeds |
 
 ## portfolio_analytics.rs  (mount: /api/v1/portfolio-analytics)
 | Method | Path | Handler | Status | Tests | Notes |
