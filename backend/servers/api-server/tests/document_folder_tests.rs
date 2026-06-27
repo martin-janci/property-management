@@ -1198,7 +1198,9 @@ async fn get_folder_manager_succeeds(pool: PgPool) {
     );
     // Response shape: {"folder": {"id": "...", ...}}
     let body = resp.json_value();
-    let id_str = body["folder"]["id"].as_str().expect("folder.id must be a string");
+    let id_str = body["folder"]["id"]
+        .as_str()
+        .expect("folder.id must be a string");
     assert_eq!(
         id_str,
         folder_id.to_string().as_str(),

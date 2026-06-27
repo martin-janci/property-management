@@ -53,7 +53,12 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
 // document_versions is a VIEW over the documents table (migration 00035).
 // Versions are stored as additional rows in `documents` with parent_document_id
 // pointing to the root document.
-async fn seed_document_version(pool: &PgPool, root_doc_id: Uuid, org_id: Uuid, user_id: Uuid) -> Uuid {
+async fn seed_document_version(
+    pool: &PgPool,
+    root_doc_id: Uuid,
+    org_id: Uuid,
+    user_id: Uuid,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO documents \
          (organization_id, title, category, file_key, file_name, mime_type, size_bytes, \
@@ -92,8 +97,7 @@ async fn seed_document_share(pool: &PgPool, document_id: Uuid, shared_by: Uuid) 
 async fn create_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-create-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-create-ok").await;
 
     let resp = app
         .execute(
@@ -124,22 +128,20 @@ async fn create_document_succeeds(pool: PgPool) {
 async fn list_documents_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-list-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-list-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let _ = seed_document(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
-            app.session(token, org_id)
-                .get("/api/v1/documents")
-                .build(),
-        )
+        .execute(app.session(token, org_id).get("/api/v1/documents").build())
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("documents").is_some(), "response must include documents key");
+    assert!(
+        body.get("documents").is_some(),
+        "response must include documents key"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -150,8 +152,7 @@ async fn list_documents_succeeds(pool: PgPool) {
 async fn update_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-update-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-update-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
@@ -175,8 +176,7 @@ async fn update_document_succeeds(pool: PgPool) {
 async fn delete_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-delete-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-delete-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
@@ -208,8 +208,7 @@ async fn delete_document_succeeds(pool: PgPool) {
 async fn update_document_access_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-access-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-access-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
@@ -233,8 +232,7 @@ async fn update_document_access_succeeds(pool: PgPool) {
 async fn get_version_history_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-ver-hist-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-ver-hist-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
@@ -248,7 +246,10 @@ async fn get_version_history_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("history").is_some(), "response must include history key");
+    assert!(
+        body.get("history").is_some(),
+        "response must include history key"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -291,8 +292,7 @@ async fn create_version_succeeds(pool: PgPool) {
 async fn get_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "doc-ver-get-ok").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-ver-get-ok").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
     let version_id = seed_document_version(&pool, doc_id, org_id, user_id).await;
@@ -307,7 +307,10 @@ async fn get_version_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("version").is_some(), "response must include version key");
+    assert!(
+        body.get("version").is_some(),
+        "response must include version key"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -361,7 +364,10 @@ async fn list_shares_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("shares").is_some(), "response must include shares key");
+    assert!(
+        body.get("shares").is_some(),
+        "response must include shares key"
+    );
 }
 
 // ---------------------------------------------------------------------------
