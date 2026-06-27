@@ -58,7 +58,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_category failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_category failed: {}",
+        resp.text()
+    );
     let category = resp.json_value();
     let category_id_str = category["id"].as_str().expect("id missing");
     let category_id = Uuid::parse_str(category_id_str).expect("invalid uuid");
@@ -66,15 +71,25 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     // 1.2 GET /api/v1/budgets/categories -> list_categories
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/budgets/categories?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.get(&format!(
+                "/api/v1/budgets/categories?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_categories failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_categories failed: {}",
+        resp.text()
+    );
     let categories_list = resp.json_value();
-    assert!(categories_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(categories_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 1.3 PUT /api/v1/budgets/categories/{id} -> update_category
     let update_cat_payload = json!({
@@ -91,7 +106,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update_category failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update_category failed: {}",
+        resp.text()
+    );
     let updated_cat = resp.json_value();
     assert_eq!(updated_cat["name"], "Updated Utilities");
 
@@ -116,7 +136,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_budget failed: {}",
+        resp.text()
+    );
     let budget = resp.json_value();
     let budget_id_str = budget["id"].as_str().expect("budget id missing");
     let budget_id = Uuid::parse_str(budget_id_str).expect("invalid uuid");
@@ -131,20 +156,35 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_budgets failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_budgets failed: {}",
+        resp.text()
+    );
     let budgets_list = resp.json_value();
-    assert!(budgets_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(budgets_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 2.3 GET /api/v1/budgets/{id} -> get_budget
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/budgets/{budget_id}?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.get(&format!(
+                "/api/v1/budgets/{budget_id}?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_budget failed: {}",
+        resp.text()
+    );
     let budget_details = resp.json_value();
     assert_eq!(budget_details["id"], budget_id_str);
 
@@ -163,7 +203,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update_budget failed: {}",
+        resp.text()
+    );
     let updated_budget = resp.json_value();
     assert_eq!(updated_budget["name"], "Updated Budget 2026");
 
@@ -188,7 +233,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add_budget_item failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add_budget_item failed: {}",
+        resp.text()
+    );
     let budget_item = resp.json_value();
     let item_id_str = budget_item["id"].as_str().expect("item id missing");
     let item_id = Uuid::parse_str(item_id_str).expect("invalid uuid");
@@ -202,9 +252,17 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_budget_items failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_budget_items failed: {}",
+        resp.text()
+    );
     let items_list = resp.json_value();
-    assert!(items_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(items_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 3.3 PUT /api/v1/budgets/items/{item_id} -> update_budget_item
     let update_item_payload = json!({
@@ -220,7 +278,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update_budget_item failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update_budget_item failed: {}",
+        resp.text()
+    );
     let updated_item = resp.json_value();
     assert_eq!(updated_item["name"], "Electricity Updated");
 
@@ -231,39 +294,60 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     // 4.1 POST /api/v1/budgets/{id}/submit -> submit_budget
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/budgets/{budget_id}/submit?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.post(&format!(
+                "/api/v1/budgets/{budget_id}/submit?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "submit_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "submit_budget failed: {}",
+        resp.text()
+    );
     let submitted_budget = resp.json_value();
     assert_eq!(submitted_budget["status"], "pending_approval");
 
     // 4.2 POST /api/v1/budgets/{id}/approve -> approve_budget
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.post(&format!(
+                "/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "approve_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "approve_budget failed: {}",
+        resp.text()
+    );
     let approved_budget = resp.json_value();
     assert_eq!(approved_budget["status"], "approved");
 
     // 4.3 POST /api/v1/budgets/{id}/activate -> activate_budget
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/budgets/{budget_id}/activate?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.post(&format!(
+                "/api/v1/budgets/{budget_id}/activate?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "activate_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "activate_budget failed: {}",
+        resp.text()
+    );
     let activated_budget = resp.json_value();
     assert_eq!(activated_budget["status"], "active");
 
@@ -286,7 +370,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "record_actual failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "record_actual failed: {}",
+        resp.text()
+    );
     let actual = resp.json_value();
     let actual_id_str = actual["id"].as_str().expect("actual id missing");
     let actual_id = Uuid::parse_str(actual_id_str).expect("invalid uuid");
@@ -300,9 +389,17 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_actuals failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_actuals failed: {}",
+        resp.text()
+    );
     let actuals_list = resp.json_value();
-    assert!(actuals_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(actuals_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // ========================================================================
     // 6. STATISTICS, ALERTS, AND DASHBOARD
@@ -317,9 +414,16 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_budget_summary failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_budget_summary failed: {}",
+        resp.text()
+    );
     let summary = resp.json_value();
-    assert!(summary["totalBudgeted"].as_str().is_some() || summary["totalBudgeted"].as_f64().is_some());
+    assert!(
+        summary["totalBudgeted"].as_str().is_some() || summary["totalBudgeted"].as_f64().is_some()
+    );
 
     // 6.2 GET /api/v1/budgets/{id}/variance -> get_category_variance
     let resp = app
@@ -330,7 +434,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_category_variance failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_category_variance failed: {}",
+        resp.text()
+    );
 
     // 6.3 GET /api/v1/budgets/{id}/alerts -> list_variance_alerts
     let resp = app
@@ -341,7 +450,12 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_variance_alerts failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_variance_alerts failed: {}",
+        resp.text()
+    );
     let alerts_list = resp.json_value();
     if let Some(alerts) = alerts_list.as_array() {
         if !alerts.is_empty() {
@@ -361,20 +475,32 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                         .build(),
                 )
                 .await;
-            assert_eq!(ack_resp.status, StatusCode::OK, "acknowledge_alert failed: {}", ack_resp.text());
+            assert_eq!(
+                ack_resp.status,
+                StatusCode::OK,
+                "acknowledge_alert failed: {}",
+                ack_resp.text()
+            );
         }
     }
 
     // 6.5 GET /api/v1/budgets/dashboard -> get_dashboard
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/budgets/dashboard?organization_id={org_id}&building_id={building_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.get(&format!(
+                "/api/v1/budgets/dashboard?organization_id={org_id}&building_id={building_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_dashboard failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_dashboard failed: {}",
+        resp.text()
+    );
 
     // ========================================================================
     // 7. CLEANUP / DELETE ROUTINES (Close & Delete Budget/Category/Items)
@@ -383,13 +509,20 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     // 7.1 POST /api/v1/budgets/{id}/close -> close_budget
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/budgets/{budget_id}/close?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.post(&format!(
+                "/api/v1/budgets/{budget_id}/close?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "close_budget failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "close_budget failed: {}",
+        resp.text()
+    );
     let closed_budget = resp.json_value();
     assert_eq!(closed_budget["status"], "closed");
 
@@ -402,16 +535,28 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete_budget_item failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete_budget_item failed: {}",
+        resp.text()
+    );
 
     // 7.3 DELETE /api/v1/budgets/categories/{id} -> delete_category
     let resp = app
         .execute(
-            app.delete(&format!("/api/v1/budgets/categories/{category_id}?organization_id={org_id}"))
-                .bearer(&token)
-                .tenant(org_id)
-                .build(),
+            app.delete(&format!(
+                "/api/v1/budgets/categories/{category_id}?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .tenant(org_id)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete_category failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete_category failed: {}",
+        resp.text()
+    );
 }

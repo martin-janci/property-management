@@ -32,12 +32,14 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
         .expect("resolve user A id");
 
     // Update User A's role to manager (since accounting is manager-only)
-    sqlx::query("UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2")
-        .bind(user_a_id)
-        .bind(org_a_id)
-        .execute(&app.pool)
-        .await
-        .expect("update user A role to manager");
+    sqlx::query(
+        "UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2",
+    )
+    .bind(user_a_id)
+    .bind(org_a_id)
+    .execute(&app.pool)
+    .await
+    .expect("update user A role to manager");
 
     // Org B (Attacker / Foreign Tenant)
     let user_b = TestUser::new();
@@ -49,12 +51,14 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
         .expect("resolve user B id");
 
     // Update User B's role to manager
-    sqlx::query("UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2")
-        .bind(user_b_id)
-        .bind(org_b_id)
-        .execute(&app.pool)
-        .await
-        .expect("update user B role to manager");
+    sqlx::query(
+        "UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2",
+    )
+    .bind(user_b_id)
+    .bind(org_b_id)
+    .execute(&app.pool)
+    .await
+    .expect("update user B role to manager");
 
     // Seed Contact A in Org A
     let contact_a_id = sqlx::query_scalar::<_, Uuid>(
@@ -89,9 +93,17 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_contacts failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_contacts failed: {}",
+        resp.text()
+    );
     let contacts = resp.json_value();
-    assert!(contacts.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(contacts
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
     assert_eq!(contacts[0]["name"], "Contact A");
 
     // 2.2 POST /api/v1/accounting/invoices -> create_invoice (Org A)
@@ -120,7 +132,12 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_invoice failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_invoice failed: {}",
+        resp.text()
+    );
     let invoice = resp.json_value();
     let invoice_id_str = invoice["id"].as_str().expect("invoice id missing");
     let invoice_id = Uuid::parse_str(invoice_id_str).expect("invalid uuid");
@@ -135,9 +152,17 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_invoices failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_invoices failed: {}",
+        resp.text()
+    );
     let invoices = resp.json_value();
-    assert!(invoices.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(invoices
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
     assert_eq!(invoices[0]["id"], invoice_id_str);
 
     // 2.4 GET /api/v1/accounting/invoices/{id} -> get_invoice (Org A)
@@ -149,7 +174,12 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_invoice failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_invoice failed: {}",
+        resp.text()
+    );
     let invoice_details = resp.json_value();
     assert_eq!(invoice_details["id"], invoice_id_str);
 
@@ -162,7 +192,12 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "list_invoice_items failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list_invoice_items failed: {}",
+        resp.text()
+    );
     let items = resp.json_value();
     assert!(items.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
     assert_eq!(items[0]["description"], "Consulting A");
@@ -181,7 +216,12 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update_invoice failed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update_invoice failed: {}",
+        resp.text()
+    );
     let updated_inv = resp.json_value();
     assert_eq!(updated_inv["number"], "INV-A-001-REV");
 
