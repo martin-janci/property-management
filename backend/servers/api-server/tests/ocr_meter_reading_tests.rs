@@ -172,19 +172,23 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
     let reading_id =
         Uuid::parse_str(body["reading_id"].as_str().unwrap()).expect("reading_id is a UUID");
 
-    // Verify the row actually landed in the DB.
-    let row = sqlx::query!(
-        r#"SELECT source AS "source!", status AS "status!", photo_url
+    // Verify the row actually landed in the DB. Runtime-checked sqlx
+    // (`query_as`, not the `query!` macro): the `test` CI job compiles tests
+    // against the live DATABASE_URL with no migrations applied, so compile-time
+    // macro checking is non-deterministic (BIT-322). The enum columns are cast
+    // to ::text so they decode straight into String.
+    let (source, status, photo_url): (String, String, Option<String>) = sqlx::query_as(
+        r#"SELECT source::text, status::text, photo_url
            FROM meter_readings WHERE id = $1"#,
-        reading_id
     )
+    .bind(reading_id)
     .fetch_one(&pool)
     .await
     .expect("reading must exist in DB");
 
-    assert_eq!(row.source, "photo", "source must be 'photo'");
-    assert_eq!(row.status, "pending", "status must be 'pending'");
-    assert!(row.photo_url.is_some(), "photo_url must be set");
+    assert_eq!(source, "photo", "source must be 'photo'");
+    assert_eq!(status, "pending", "status must be 'pending'");
+    assert!(photo_url.is_some(), "photo_url must be set");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -308,19 +312,20 @@ async fn submit_correction_persists_record(pool: PgPool) {
     assert!(body["id"].is_string(), "response must include id");
     let correction_id = Uuid::parse_str(body["id"].as_str().unwrap()).expect("id is a UUID");
 
-    // Round-trip: verify the row is in the DB with correct values.
-    let row = sqlx::query!(
-        r#"SELECT original_value, corrected_value, image_url
+    // Round-trip: verify the row is in the DB with correct values. Runtime
+    // `query_as` (not `query!`) for deterministic CI compilation — see BIT-322.
+    let (corrected_value, image_url): (rust_decimal::Decimal, String) = sqlx::query_as(
+        r#"SELECT corrected_value, image_url
            FROM ocr_meter_corrections WHERE id = $1"#,
-        correction_id
     )
+    .bind(correction_id)
     .fetch_one(&pool)
     .await
     .expect("correction must exist in DB");
 
-    assert_eq!(row.image_url, "https://example.com/meter.jpg");
+    assert_eq!(image_url, "https://example.com/meter.jpg");
     assert_eq!(
-        row.corrected_value,
+        corrected_value,
         rust_decimal::Decimal::try_from(105.5_f64).unwrap()
     );
 }
