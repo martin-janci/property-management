@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "84-5-pgvector-rag",
   "selected_at": "2026-06-26T20:18:14Z",
-  "last_action": "repick",
-  "reason": "prior target '80-2-dispute-filing-flow' exhausted; closest-to-done is '84-5-pgvector-rag' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
