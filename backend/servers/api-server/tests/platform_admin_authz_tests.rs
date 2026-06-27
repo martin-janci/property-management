@@ -59,11 +59,7 @@ fn capability_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/capabilities";
     vec![
         (Method::GET, format!("{base}/registry"), None),
-        (
-            Method::GET,
-            format!("{base}/users/{UUID}"),
-            None,
-        ),
+        (Method::GET, format!("{base}/users/{UUID}"), None),
         (
             Method::POST,
             format!("{base}/users/{UUID}/grant"),
@@ -163,7 +159,9 @@ fn tenant_branding_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::PUT,
             base,
-            Some(r##"{"primary_color":"#fff","secondary_color":"#000","logo_url":null,"favicon_url":null,"custom_css":null}"##),
+            Some(
+                r##"{"primary_color":"#fff","secondary_color":"#000","logo_url":null,"favicon_url":null,"custom_css":null}"##,
+            ),
         ),
     ]
 }

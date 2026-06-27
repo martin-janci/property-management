@@ -25,7 +25,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{seed_membership, seed_org, TestApp, TestUser, create_authenticated_user_with_org};
+use common::{create_authenticated_user_with_org, seed_membership, seed_org, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Shared fixture helpers
@@ -135,7 +135,10 @@ async fn legal_get_document_same_org_200(pool: PgPool) {
     let sess = app.session(token, org_id);
 
     let resp = app
-        .execute(sess.get(&format!("/api/v1/legal/documents/{doc_id}")).build())
+        .execute(
+            sess.get(&format!("/api/v1/legal/documents/{doc_id}"))
+                .build(),
+        )
         .await;
 
     resp.assert_status(StatusCode::OK);
@@ -418,10 +421,7 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
                 .build(),
         )
         .await;
-    let req_id = create.json_value()["id"]
-        .as_str()
-        .unwrap()
-        .to_string();
+    let req_id = create.json_value()["id"].as_str().unwrap().to_string();
 
     let upd = app
         .execute(
@@ -496,10 +496,7 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
     resp.assert_status(StatusCode::CREATED);
     let body = resp.json_value();
     assert!(body["id"].is_string());
-    assert_eq!(
-        body["requirement_id"].as_str(),
-        Some(req_id.as_str())
-    );
+    assert_eq!(body["requirement_id"].as_str(), Some(req_id.as_str()));
 }
 
 // ---------------------------------------------------------------------------
