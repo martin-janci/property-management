@@ -38,10 +38,15 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{seed_membership, seed_org, TestApp};
 use api_server::services::JwtService;
+use common::{seed_membership, seed_org, TestApp};
 
-fn mint_token(user_id: Uuid, email: &str, org_id: Option<Uuid>, roles: Option<Vec<String>>) -> String {
+fn mint_token(
+    user_id: Uuid,
+    email: &str,
+    org_id: Option<Uuid>,
+    roles: Option<Vec<String>>,
+) -> String {
     let config = common::TestConfig::default();
     let jwt = JwtService::new(&config.jwt_secret).expect("jwt service");
     jwt.generate_access_token(user_id, email, "Test User", org_id, roles)
@@ -110,7 +115,9 @@ async fn seed_review(
 ) -> Uuid {
     let token = mint_user_token(reviewer_id, &format!("{prefix}@test.local"));
     let resp = app
-        .post(&format!("/api/v1/marketplace/providers/{provider_id}/reviews"))
+        .post(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/reviews"
+        ))
         .bearer(&token)
         .json(json!({
             "organization_id": reviewer_org,
@@ -151,7 +158,9 @@ async fn list_provider_badges_returns_200(pool: PgPool) {
     let token = mint_user_token(user_id, "lpb@test.local");
 
     let resp = app
-        .get(&format!("/api/v1/marketplace/providers/{provider_id}/badges"))
+        .get(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/badges"
+        ))
         .bearer(&token)
         .build();
     let resp = app.execute(resp).await;
@@ -181,7 +190,9 @@ async fn award_badge_returns_201(pool: PgPool) {
     let admin_token = mint_super_admin_token(admin_id, "ab-admin@test.local");
 
     let resp = app
-        .post(&format!("/api/v1/marketplace/providers/{provider_id}/badges"))
+        .post(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/badges"
+        ))
         .bearer(&admin_token)
         .json(json!({ "badge_type": "verified" }))
         .build();
@@ -217,7 +228,9 @@ async fn create_review_returns_201(pool: PgPool) {
     let token = mint_user_token(reviewer_id, "cr-rev@test.local");
 
     let resp = app
-        .post(&format!("/api/v1/marketplace/providers/{provider_id}/reviews"))
+        .post(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/reviews"
+        ))
         .bearer(&token)
         .json(json!({
             "organization_id": reviewer_org,
@@ -255,7 +268,9 @@ async fn list_provider_reviews_returns_200(pool: PgPool) {
     let token = mint_user_token(user_id, "lpr@test.local");
 
     let resp = app
-        .get(&format!("/api/v1/marketplace/providers/{provider_id}/reviews"))
+        .get(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/reviews"
+        ))
         .bearer(&token)
         .build();
     let resp = app.execute(resp).await;
@@ -283,7 +298,9 @@ async fn get_rating_breakdown_returns_200(pool: PgPool) {
     let token = mint_user_token(user_id, "grb@test.local");
 
     let resp = app
-        .get(&format!("/api/v1/marketplace/providers/{provider_id}/ratings"))
+        .get(&format!(
+            "/api/v1/marketplace/providers/{provider_id}/ratings"
+        ))
         .bearer(&token)
         .build();
     let resp = app.execute(resp).await;
@@ -542,10 +559,7 @@ async fn get_resolved_features_returns_200(pool: PgPool) {
     // features.rs extract_user_context reads org_id from JWT claims (not header)
     let token = mint_user_token_with_org(user_id, "grf@test.local", org_id);
 
-    let resp = app
-        .get("/api/v1/features/resolved")
-        .bearer(&token)
-        .build();
+    let resp = app.get("/api/v1/features/resolved").bearer(&token).build();
     let resp = app.execute(resp).await;
     assert_eq!(
         resp.status,
@@ -710,9 +724,7 @@ async fn get_feature_stats_returns_200(pool: PgPool) {
 async fn list_public_packages_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
-    let resp = app
-        .get("/api/v1/feature-packages/public/")
-        .build();
+    let resp = app.get("/api/v1/feature-packages/public/").build();
     let resp = app.execute(resp).await;
     assert_eq!(
         resp.status,
@@ -732,9 +744,7 @@ async fn list_public_packages_returns_200(pool: PgPool) {
 async fn compare_packages_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
-    let resp = app
-        .get("/api/v1/feature-packages/public/compare")
-        .build();
+    let resp = app.get("/api/v1/feature-packages/public/compare").build();
     let resp = app.execute(resp).await;
     assert_eq!(
         resp.status,
