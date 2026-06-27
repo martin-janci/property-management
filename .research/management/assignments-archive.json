@@ -1,1 +1,10 @@
-__ARCHIVE_FULL_CONTENT__
+{
+  "archived_at": "2026-06-27T02:13:55Z",
+  "assignments": [
+    {
+      "task_id": "10b-5-support-data-access",
+      "branch": "auto-impl/10b-5-support-data-access-b77df24c",
+      "status": "merged"
+    }
+  ]
+}
