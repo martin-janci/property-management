@@ -193,7 +193,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         resp.text()
     );
     let ledger_details = resp.json_value();
-    assert_eq!(ledger_details["account"]["accountType"], "unit_ledger");
+    assert_eq!(ledger_details["account"]["account_type"], "unit_ledger");
 
     // ========================================================================
     // 2. FEE SCHEDULES (Story 11.2)
