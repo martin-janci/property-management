@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-27T12:22:01Z",
+  "generated": "2026-06-27T14:14:00Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -98,15 +98,15 @@
       "branch": "auto-impl/security-llm-doc-idor-45e6e354",
       "status": "review",
       "claimed_at": "2026-06-27T10:12:58Z",
-      "last_updated": "2026-06-27T12:20:53Z",
+      "last_updated": "2026-06-27T14:14:00Z",
       "status_changed_at": "2026-06-27T10:30:48Z",
       "pr_number": 1857,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1857",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=1857 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=IDOR fix already shipped on dev (#766/#816); added 2 missing cross-tenant IDOR regression tests (publish mutate + photo-enhancement read); cargo check clean, sqlx::test needs CI postgres",
-      "reviewer_summary": "verdict=changes note=fmt-check-fails-on-new-test-L373-run-cargo-fmt; tests+scope-drift OK; cargo-deny(lopdf) pre-existing",
-      "last_reviewed_oid": "699dc150c2f38aefeb3651b64e4e9eefe254b166",
+      "reviewer_summary": "verdict=approve note=fmt-fixed-L373-now-100col-single-line; fmt+clippy+lint+check+test+security-tests+rls-smoke+sqlx all GREEN; only cargo-deny(lopdf RUSTSEC advisory) red = PRE-EXISTING dev-wide, unrelated to this test-only PR; parked needs-human-review (respawn cannot fix a dependency advisory; force-merge past security/license gate inappropriate for cron)",
+      "last_reviewed_oid": "c5b87611db66df045ed933476e8d90db4dfd0236",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
