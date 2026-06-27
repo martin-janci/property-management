@@ -1,0 +1,179 @@
+{
+  "date": "2026-06-27",
+  "run_iso": "2026-06-27T22:18:25Z",
+  "lag_hours": 282,
+  "lag_days": 11,
+  "stale_routine_alert": "state.json last_run_iso=2026-06-16T03:25:00Z is 11d old; cloud routine paused. Dispatcher state lives on planning branch \u2014 check separately.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "Last routine run 2026-06-16T03:25:00Z \u2192 11d gap; 264 merged PRs accumulated since cursor #1439 (range #1447-#1898)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverts PR #1690 (delegations frontend wired into ppt-web). Per BIT-213, #1690 merged 16min before CEO ruled delegation stays retired per PAP-33/PAP-51/PAP-55. Process failure: gap-sweep mechanically re-admitted a board-retired customer surface. Backend delegation API untouched; only standalone page+route+nav+api-client removed.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat 2026-06-16\u21922026-06-27",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/rental.rs \u2014 2933 lines changed in window (top non-doc/non-generated hotspot). All additions, no deletions \u2014 sustained feature/coverage churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat 2026-06-16\u21922026-06-27",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/migration.rs \u2014 2921 lines changed (+2338/-583) in window. Major rework: BIT-256 tenant-migration endpoints (PR #1859/#1861). 23 new endpoints landed \u2014 large mixed delta is the signal.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat 2026-06-16\u21922026-06-27",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking/mod.rs \u2014 2818 lines added in window. File was split out from booking.rs (now a directory) \u2014 large addition is the split landing.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-session-staletime",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 \u2014 ppt-web-core review (2026-06-27)",
+      "score_delta": 1,
+      "evidence": "useAiChatSession in frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:63 has no staleTime configured, while sibling useAiChatMessages (line 75) defines staleTime: 10000ms. Indefinite stale reads on session metadata.",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "severity": "Low"
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-feedback-invalidate",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 \u2014 ppt-web-core review (2026-06-27)",
+      "score_delta": 1,
+      "evidence": "useMessageFeedback in frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:144 lacks onSuccess invalidation \u2014 escalated-messages cache stays stale after feedback POST. Peer mutations (useCreateSession L101, useSendMessage L118) invalidate properly.",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "severity": "Low"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists, H1 matches today",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "state advanced (cursors + signals + hotspots)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "all 182 ids unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "no non-cumulative re-scoring",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "no score > 8; decay applied to 11 items, 26 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "no new plans this run \u2014 vacuously satisfied",
+      "expected": "every new plan has adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans (<= 2)",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "all 9 staged files under .research/",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "no secrets/hostnames in staged diff (excluding baseline docs)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md byte-identical to regen from backlog.json",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no phases failed this run",
+      "expected": "failed phases listed in brief"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "all prior plan slugs accounted for in plans/ or _archive/",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "_archive count unchanged (7 == 7)",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md byte-identical to regen",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty (no candidate); 0 PRs/issues/comments opened by routine",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "action-list + risks parse; project-state non-empty; pm_cursor 5\u21926, coverage_cursor 12\u21920 (advanced)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "no Telegram token in staged diff",
+      "expected": "exit 0"
+    }
+  ]
+}

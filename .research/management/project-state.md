@@ -1,6 +1,16 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+## 11-day catch-up note (2026-06-27)
+
+The routine missed runs between 2026-06-16 and 2026-06-27. This refresh consolidates 264 merged PRs (#1447–#1898), 83 new/updated issues, and 11 closed-unmerged PRs into the backlog + management view. Highlights:
+
+- **Process incident:** PR #1690 (delegations frontend re-wired) was reverted by #1713 (BIT-213) — gap-sweep mechanically re-admitted a board-retired customer surface. Tracked in backlog as `revert-delegations-pr-1690-process` (score 3, dx vector).
+- **Security follow-ups (pm-security rotation):** added risk `pm-security-migration-upload-no-content-validation` (multipart upload in migration.rs has no MIME/magic-bytes check); reconfirmed `security-llm-doc-idor` (PR #1857 in review) and `pm-qa-oauth-revoked-token-bypass-open` (#481) as release blockers.
+- **Top churn (post-exclusions):** rental.rs (2933), migration.rs (+2338/-583, BIT-256), booking/mod.rs (2818 — file split from booking.rs).
+- **Phase 1.5 code-review:** segment `ppt-web-core` — 2 Low findings on `useAiChat.ts` (staleTime drift, mutation invalidation).
+
+
+_Generated: 2026-06-27 — daily PM rotation (Scrum Master + pm-security; routine refresh after 11d lag). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 12 → 0 (wrap to epic-0)._
 
 ## Executive summary
 
