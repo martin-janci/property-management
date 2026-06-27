@@ -24,40 +24,9 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
     // Org A (Happy Path & Target)
     let user_a = TestUser::new();
     let (token_a, org_a_id) = create_authenticated_user_with_org(&app, &user_a, "orga").await;
-    let user_a_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
-        .bind(&user_a.email)
-        .fetch_one(&app.pool)
-        .await
-        .expect("resolve user A id");
-
-    // Update User A's role to manager (since accounting is manager-only)
-    sqlx::query(
-        "UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2",
-    )
-    .bind(user_a_id)
-    .bind(org_a_id)
-    .execute(&app.pool)
-    .await
-    .expect("update user A role to manager");
-
     // Org B (Attacker / Foreign Tenant)
     let user_b = TestUser::new();
     let (token_b, org_b_id) = create_authenticated_user_with_org(&app, &user_b, "orgb").await;
-    let user_b_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
-        .bind(&user_b.email)
-        .fetch_one(&app.pool)
-        .await
-        .expect("resolve user B id");
-
-    // Update User B's role to manager
-    sqlx::query(
-        "UPDATE memberships SET role = 'manager' WHERE user_id = $1 AND organization_id = $2",
-    )
-    .bind(user_b_id)
-    .bind(org_b_id)
-    .execute(&app.pool)
-    .await
-    .expect("update user B role to manager");
 
     // Seed Contact A in Org A
     let contact_a_id = sqlx::query_scalar::<_, Uuid>(
