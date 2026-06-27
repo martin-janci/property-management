@@ -46,30 +46,30 @@ _Server: api-server. Modules: signatures.rs, templates.rs, legal.rs, lease_abstr
 ## documents/intelligence.rs  (mount: /api/v1/documents)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/documents/{id}/ocr/reprocess | reprocess_ocr | partial | — | no test |
-| POST | /api/v1/documents/search | search_documents | partial | — | no test |
-| GET | /api/v1/documents/{id}/classification | get_classification | partial | — | no test |
-| POST | /api/v1/documents/{id}/classification/feedback | submit_classification_feedback | partial | — | no test |
-| GET | /api/v1/documents/{id}/classification/history | get_classification_history | partial | — | no test |
-| POST | /api/v1/documents/{id}/summarize | request_summarization | partial | — | no test |
-| POST | /api/v1/documents/{id}/ai-summarize | ai_summarize_document | partial | — | no test |
-| GET | /api/v1/documents/intelligence/stats | get_intelligence_stats | partial | — | no test |
+| POST | /api/v1/documents/{id}/ocr/reprocess | reprocess_ocr | done | documents_intelligence_templates_tests.rs | OK happy path (enqueues OCR) |
+| POST | /api/v1/documents/search | search_documents | done | documents_intelligence_templates_tests.rs | OK happy path asserting results array |
+| GET | /api/v1/documents/{id}/classification | get_classification | done | documents_intelligence_templates_tests.rs | OK happy path |
+| POST | /api/v1/documents/{id}/classification/feedback | submit_classification_feedback | done | documents_intelligence_templates_tests.rs | OK happy path (accepted=true) |
+| GET | /api/v1/documents/{id}/classification/history | get_classification_history | done | documents_intelligence_templates_tests.rs | OK happy path asserting history array |
+| POST | /api/v1/documents/{id}/summarize | request_summarization | done | documents_intelligence_templates_tests.rs | OK happy path (enqueues summarization) |
+| POST | /api/v1/documents/{id}/ai-summarize | ai_summarize_document | partial | — | not unit-testable: live LLM inference + S3 text extraction, needs external creds |
+| GET | /api/v1/documents/intelligence/stats | get_intelligence_stats | done | documents_intelligence_templates_tests.rs | OK happy path asserting stats array |
 
 ## templates.rs  (mount: /api/v1/templates)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/templates | create_template | partial | — | no test (templates hits in grep are unrelated automation/ai/iot routes) |
-| GET | /api/v1/templates | list_templates | partial | — | no test |
-| GET | /api/v1/templates/{id} | get_template | partial | — | no test |
-| PUT | /api/v1/templates/{id} | update_template | partial | — | no test |
-| DELETE | /api/v1/templates/{id} | delete_template | partial | — | no test |
-| POST | /api/v1/templates/{id}/generate | generate_document | partial | — | no test |
+| POST | /api/v1/templates | create_template | done | documents_intelligence_templates_tests.rs | CREATED happy path asserting id |
+| GET | /api/v1/templates | list_templates | done | documents_intelligence_templates_tests.rs | OK happy path asserting templates array |
+| GET | /api/v1/templates/{id} | get_template | done | documents_intelligence_templates_tests.rs | OK happy path asserting template.id |
+| PUT | /api/v1/templates/{id} | update_template | done | documents_intelligence_templates_tests.rs | OK happy path asserting updated name |
+| DELETE | /api/v1/templates/{id} | delete_template | done | documents_intelligence_templates_tests.rs | NO_CONTENT + follow-up GET returns 404 |
+| POST | /api/v1/templates/{id}/generate | generate_document | done | documents_intelligence_templates_tests.rs | CREATED happy path asserting document_id |
 
 ## signatures.rs  (mount: /api/v1/signature-requests router; /api/v1/signatures public_sign_router)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/signature-requests | list_signature_requests | partial | — | no test |
-| POST | /api/v1/signature-requests | create_signature_request | partial | — | requests seeded via SQL, not the API |
+| GET | /api/v1/signature-requests | list_signature_requests | partial | — | BLOCKED: handler extracts Path(document_id) but router registers it at "/" with no path param — unreachable as wired (see BIT-312 follow-up) |
+| POST | /api/v1/signature-requests | create_signature_request | partial | — | BLOCKED: same Path(document_id)-vs-"/" wiring mismatch; requests currently seeded via SQL, not the API (see BIT-312 follow-up) |
 | GET | /api/v1/signature-requests/{id} | get_signature_request | done | esignature_email_status_tracking_tests.rs | OK happy path asserting signer_counts |
 | POST | /api/v1/signature-requests/{id}/remind | send_reminder | partial | — | no test |
 | POST | /api/v1/signature-requests/{id}/cancel | cancel_signature_request | partial | — | no test |
