@@ -117,6 +117,36 @@ impl BoardMeetingRepository {
         .await
     }
 
+    /// Resolve a board member for a user, scoped to a specific motion's organization/meeting.
+    pub async fn get_board_member_for_motion<'e, E>(
+        &self,
+        executor: E,
+        motion_id: Uuid,
+        user_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMember>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, BoardMember>(
+            r#"
+            SELECT bm.* FROM board_members bm
+            JOIN board_meetings bmeet ON bmeet.organization_id = bm.organization_id
+            JOIN meeting_motions mm ON mm.meeting_id = bmeet.id
+            WHERE mm.id = $1
+              AND bm.user_id = $2
+              AND bm.organization_id = $3
+              AND bm.is_active = true
+            LIMIT 1
+            "#,
+        )
+        .bind(motion_id)
+        .bind(user_id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
+    }
+
     /// List board members with optional filters.
     pub async fn list_board_members<'e, E>(
         &self,

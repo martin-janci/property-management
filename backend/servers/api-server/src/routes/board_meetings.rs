@@ -63,6 +63,16 @@ fn not_found(resource: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
+fn forbidden(resource: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new(
+            "FORBIDDEN",
+            format!("Access forbidden: {}", resource),
+        )),
+    )
+}
+
 /// Validate that `meeting_id` belongs to the caller's organization.
 ///
 /// Root-meeting org check for child-table operations (agenda items, motions,
@@ -728,6 +738,7 @@ async fn cast_vote(
 ) -> ApiResult<Json<db::models::board_meetings::MotionVote>> {
     input.motion_id = motion_id;
     let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let out = async {
         // Root-motion org check before writing a vote row.
         state
@@ -736,12 +747,18 @@ async fn cast_vote(
             .await
             .map_err(internal_error)?
             .ok_or_else(|| not_found("Motion"))?;
-        // NOTE: In production, we'd look up the board_member_id from user.user_id
-        // For now, we'll use a placeholder - this should be retrieved from the board_members table
-        let board_member_id = motion_id; // Placeholder - should be actual board member lookup
+
+        // Resolve the caller's board_member_id from the board_members table by user_id (+ org/meeting scope)
+        let board_member = state
+            .board_meeting_repo
+            .get_board_member_for_motion(&mut **rls.conn(), motion_id, user_id, org_id)
+            .await
+            .map_err(internal_error)?
+            .ok_or_else(|| forbidden("Caller is not a board member of the meeting"))?;
+
         state
             .board_meeting_repo
-            .cast_vote(&mut **rls.conn(), board_member_id, input)
+            .cast_vote(&mut **rls.conn(), board_member.id, input)
             .await
             .map(Json)
             .map_err(internal_error)
