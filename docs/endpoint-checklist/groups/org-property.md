@@ -17,24 +17,24 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## buildings.rs  (mount: /api/v1/buildings)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/buildings | create_building | partial | building_manager_rbac_tests.rs, endpoints_smoke_tests.rs | only FORBIDDEN/auth-rejection asserted, no happy-path |
+| POST | /api/v1/buildings | create_building | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 | GET | /api/v1/buildings | list_buildings | done | building_manager_rbac_tests.rs | `list_allows_own_org` asserts 200 with organization_id filter |
-| POST | /api/v1/buildings/bulk | bulk_import_buildings | partial | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
-| GET | /api/v1/buildings/{id} | get_building | partial | none | smoke only hits non-existent/auth paths |
-| PUT | /api/v1/buildings/{id} | update_building | partial | none | |
-| DELETE | /api/v1/buildings/{id} | archive_building | partial | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
-| POST | /api/v1/buildings/{id}/restore | restore_building | partial | none | |
-| GET | /api/v1/buildings/{id}/statistics | get_building_statistics | partial | none | |
-| GET | /api/v1/buildings/{id}/units | list_units | partial | none | |
-| POST | /api/v1/buildings/{id}/units | create_unit | partial | none | |
-| GET | /api/v1/buildings/{building_id}/units/{unit_id} | get_unit | partial | none | |
-| PUT | /api/v1/buildings/{building_id}/units/{unit_id} | update_unit | partial | none | |
-| DELETE | /api/v1/buildings/{building_id}/units/{unit_id} | archive_unit | partial | none | |
-| POST | /api/v1/buildings/{building_id}/units/{unit_id}/restore | restore_unit | partial | none | |
-| GET | /api/v1/buildings/{building_id}/units/{unit_id}/owners | list_unit_owners | partial | none | |
-| POST | /api/v1/buildings/{building_id}/units/{unit_id}/owners | assign_unit_owner | partial | none | |
-| PUT | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | update_unit_owner | partial | none | |
-| DELETE | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | remove_unit_owner | partial | none | |
+| POST | /api/v1/buildings/bulk | bulk_import_buildings | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/buildings/{id} | get_building | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/buildings/{id} | update_building | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/buildings/{id} | archive_building | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/buildings/{id}/restore | restore_building | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/buildings/{id}/statistics | get_building_statistics | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/buildings/{id}/units | list_units | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/buildings/{id}/units | create_unit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/buildings/{building_id}/units/{unit_id} | get_unit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/buildings/{building_id}/units/{unit_id} | update_unit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/buildings/{building_id}/units/{unit_id} | archive_unit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/buildings/{building_id}/units/{unit_id}/restore | restore_unit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/buildings/{building_id}/units/{unit_id}/owners | list_unit_owners | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/buildings/{building_id}/units/{unit_id}/owners | assign_unit_owner | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | update_unit_owner | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | remove_unit_owner | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 
 ## my_units.rs  (mount: /api/v1/users/me/units)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -44,37 +44,37 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## unit_residents.rs  (mount: /api/v1/buildings/{building_id}/units/{unit_id}/residents)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | .../residents | list_residents | partial | none | no test hits the residents subpath |
-| POST | .../residents | add_resident | partial | none | |
-| GET | .../residents/{resident_id} | get_resident | partial | none | |
-| PUT | .../residents/{resident_id} | update_resident | partial | none | |
-| DELETE | .../residents/{resident_id} | remove_resident | partial | none | |
-| POST | .../residents/{resident_id}/end | end_residency | partial | none | |
-| GET | .../residents/history | list_resident_history | partial | none | |
+| GET | .../residents | list_residents | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | .../residents | add_resident | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | .../residents/{resident_id} | get_resident | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | .../residents/{resident_id} | update_resident | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | .../residents/{resident_id} | remove_resident | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | .../residents/{resident_id}/end | end_residency | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | .../residents/history | list_resident_history | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 
 ## agencies.rs  (mount: /api/v1/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/agencies | create_agency | partial | none | |
-| GET | /api/v1/agencies/{id} | get_agency | partial | agency_authz_idor_tests.rs | authz-only (asserts != OK without auth) |
-| PUT | /api/v1/agencies/{id} | update_agency | partial | none | |
-| PUT | /api/v1/agencies/{id}/branding | update_branding | partial | none | |
-| GET | /api/v1/agencies/{id}/members | list_members | partial | agency_authz_idor_tests.rs | authz-only |
-| POST | /api/v1/agencies/{id}/members/invite | invite_member | partial | none | |
-| PUT | /api/v1/agencies/{id}/members/{user_id}/role | update_member_role | partial | none | |
-| DELETE | /api/v1/agencies/{id}/members/{user_id} | remove_member | partial | none | |
-| POST | /api/v1/agencies/{id}/members/{user_id}/reassign/{to_user_id} | reassign_listings | partial | none | |
-| POST | /api/v1/agencies/invitations/accept | accept_invitation | partial | none | |
-| PUT | /api/v1/agencies/{id}/listings/{listing_id}/visibility | update_visibility | partial | none | |
-| GET | /api/v1/agencies/{id}/listings/{listing_id}/history | get_listing_history | partial | none | |
-| POST | /api/v1/agencies/{id}/import | create_import_job | partial | agency_authz_idor_tests.rs | authz-only |
-| GET | /api/v1/agencies/{id}/import/{job_id} | get_import_job | partial | agency_authz_idor_tests.rs | authz-only |
-| GET | /api/v1/agencies/{id}/import | list_import_jobs | partial | agency_authz_idor_tests.rs | authz-only |
+| POST | /api/v1/agencies | create_agency | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/agencies/{id} | get_agency | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/agencies/{id} | update_agency | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/agencies/{id}/branding | update_branding | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/agencies/{id}/members | list_members | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/agencies/{id}/members/invite | invite_member | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/agencies/{id}/members/{user_id}/role | update_member_role | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/agencies/{id}/members/{user_id} | remove_member | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/agencies/{id}/members/{user_id}/reassign/{to_user_id} | reassign_listings | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/agencies/invitations/accept | accept_invitation | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/agencies/{id}/listings/{listing_id}/visibility | update_visibility | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/agencies/{id}/listings/{listing_id}/history | get_listing_history | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/agencies/{id}/import | create_import_job | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/agencies/{id}/import/{job_id} | get_import_job | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/agencies/{id}/import | list_import_jobs | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 
 ## agency_provisioning.rs  (mount: /api/v1/platform-admin, merged into platform_admin::router())
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/platform-admin/agencies | create_agency | partial | none | no test hits platform-admin/agencies |
+| POST | /api/v1/platform-admin/agencies | create_agency | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 
 ## tenant_config.rs  (mount: /tenant-config)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -84,26 +84,26 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## building_certifications.rs  (mount: /api/v1/building-certifications)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/building-certifications/dashboard | get_dashboard | partial | none | |
-| GET | /api/v1/building-certifications | list_certifications | partial | none | |
-| POST | /api/v1/building-certifications | create_certification | partial | none | |
-| GET | /api/v1/building-certifications/expiring | get_expiring_certifications | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id} | get_certification | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id} | update_certification | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id} | delete_certification | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/with-credits | get_certification_with_credits | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/credits | list_credits | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/credits | create_credit | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | get_credit | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | update_credit | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | delete_credit | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/documents | list_documents | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/documents | create_document | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/documents/{doc_id} | delete_document | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/milestones | list_milestones | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/milestones | create_milestone | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | update_milestone | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | delete_milestone | partial | none | |
+| GET | /api/v1/building-certifications/dashboard | get_dashboard | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications | list_certifications | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/building-certifications | create_certification | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/expiring | get_expiring_certifications | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id} | get_certification | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/building-certifications/{cert_id} | update_certification | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/building-certifications/{cert_id} | delete_certification | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id}/with-credits | get_certification_with_credits | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id}/credits | list_credits | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/building-certifications/{cert_id}/credits | create_credit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | get_credit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | update_credit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | delete_credit | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id}/documents | list_documents | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/building-certifications/{cert_id}/documents | create_document | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/building-certifications/{cert_id}/documents/{doc_id} | delete_document | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| GET | /api/v1/building-certifications/{cert_id}/milestones | list_milestones | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| POST | /api/v1/building-certifications/{cert_id}/milestones | create_milestone | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| PUT | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | update_milestone | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
+| DELETE | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | delete_milestone | done | org_property_authz_backfill_tests.rs | authz-only (401/403) |
 | GET | /api/v1/building-certifications/{cert_id}/benchmarks | list_benchmarks | partial | none | |
 | POST | /api/v1/building-certifications/{cert_id}/benchmarks | create_benchmark | partial | none | |
 | GET | /api/v1/building-certifications/{cert_id}/costs | list_costs | partial | none | |
