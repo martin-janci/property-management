@@ -173,11 +173,16 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
         Uuid::parse_str(body["reading_id"].as_str().unwrap()).expect("reading_id is a UUID");
 
     // Verify the row actually landed in the DB.
-    let row = sqlx::query!(
-        r#"SELECT source AS "source!", status AS "status!", photo_url
-           FROM meter_readings WHERE id = $1"#,
-        reading_id
+    #[derive(sqlx::FromRow)]
+    struct MeterReadingRow {
+        source: String,
+        status: String,
+        photo_url: Option<String>,
+    }
+    let row: MeterReadingRow = sqlx::query_as::<_, MeterReadingRow>(
+        "SELECT source, status, photo_url FROM meter_readings WHERE id = $1",
     )
+    .bind(reading_id)
     .fetch_one(&pool)
     .await
     .expect("reading must exist in DB");
@@ -309,11 +314,15 @@ async fn submit_correction_persists_record(pool: PgPool) {
     let correction_id = Uuid::parse_str(body["id"].as_str().unwrap()).expect("id is a UUID");
 
     // Round-trip: verify the row is in the DB with correct values.
-    let row = sqlx::query!(
-        r#"SELECT original_value, corrected_value, image_url
-           FROM ocr_meter_corrections WHERE id = $1"#,
-        correction_id
+    #[derive(sqlx::FromRow)]
+    struct MeterCorrectionRow {
+        image_url: String,
+        corrected_value: rust_decimal::Decimal,
+    }
+    let row: MeterCorrectionRow = sqlx::query_as::<_, MeterCorrectionRow>(
+        "SELECT image_url, corrected_value FROM ocr_meter_corrections WHERE id = $1",
     )
+    .bind(correction_id)
     .fetch_one(&pool)
     .await
     .expect("correction must exist in DB");
