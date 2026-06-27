@@ -450,12 +450,10 @@ async fn award_badge_as_admin_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.post(&format!(
-                "/api/v1/marketplace/providers/{provider}/badges"
-            ))
-            .bearer(&token)
-            .json(json!({ "badge_type": "verified_business" }))
-            .build(),
+            app.post(&format!("/api/v1/marketplace/providers/{provider}/badges"))
+                .bearer(&token)
+                .json(json!({ "badge_type": "verified_business" }))
+                .build(),
         )
         .await;
 
@@ -484,20 +482,18 @@ async fn create_review_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.post(&format!(
-                "/api/v1/marketplace/providers/{provider}/reviews"
-            ))
-            .bearer(&token)
-            .json(json!({
-                "organization_id": org,
-                "quality_rating": 5,
-                "timeliness_rating": 4,
-                "communication_rating": 5,
-                "value_rating": 4,
-                "review_title": "Excellent service",
-                "review_text": "Completed on time and under budget"
-            }))
-            .build(),
+            app.post(&format!("/api/v1/marketplace/providers/{provider}/reviews"))
+                .bearer(&token)
+                .json(json!({
+                    "organization_id": org,
+                    "quality_rating": 5,
+                    "timeliness_rating": 4,
+                    "communication_rating": 5,
+                    "value_rating": 4,
+                    "review_title": "Excellent service",
+                    "review_text": "Completed on time and under budget"
+                }))
+                .build(),
         )
         .await;
 
@@ -507,7 +503,10 @@ async fn create_review_succeeds(pool: PgPool) {
         "create_review must return 201: {}",
         resp.text()
     );
-    assert_eq!(resp.json_value()["review_title"], json!("Excellent service"));
+    assert_eq!(
+        resp.json_value()["review_title"],
+        json!("Excellent service")
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -558,11 +557,9 @@ async fn get_rating_breakdown_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.get(&format!(
-                "/api/v1/marketplace/providers/{provider}/ratings"
-            ))
-            .bearer(&token)
-            .build(),
+            app.get(&format!("/api/v1/marketplace/providers/{provider}/ratings"))
+                .bearer(&token)
+                .build(),
         )
         .await;
 
@@ -867,8 +864,7 @@ async fn create_marketplace_integration_as_admin_succeeds(pool: PgPool) {
 async fn get_marketplace_integration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let admin = seed_user(&pool, "eco-get-admin@b3.test").await;
-    let admin_token =
-        mint_token_with_role(admin, "eco-get-admin@b3.test", None, "super_admin");
+    let admin_token = mint_token_with_role(admin, "eco-get-admin@b3.test", None, "super_admin");
 
     // Seed an integration directly so we have a known ID.
     let slug = format!("get-integ-{}", Uuid::new_v4());
@@ -889,11 +885,9 @@ async fn get_marketplace_integration_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.get(&format!(
-                "/api/v1/ecosystem/marketplace/{integration_id}"
-            ))
-            .bearer(&reader_token)
-            .build(),
+            app.get(&format!("/api/v1/ecosystem/marketplace/{integration_id}"))
+                .bearer(&reader_token)
+                .build(),
         )
         .await;
 
@@ -926,18 +920,16 @@ async fn update_marketplace_integration_as_admin_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.put(&format!(
-                "/api/v1/ecosystem/marketplace/{integration_id}"
-            ))
-            .bearer(&token)
-            .json(json!({
-                "name": "Updated Integration",
-                "description": "Updated description",
-                "category": "tools",
-                "vendor_name": "Vendor",
-                "version": "1.1.0"
-            }))
-            .build(),
+            app.put(&format!("/api/v1/ecosystem/marketplace/{integration_id}"))
+                .bearer(&token)
+                .json(json!({
+                    "name": "Updated Integration",
+                    "description": "Updated description",
+                    "category": "tools",
+                    "vendor_name": "Vendor",
+                    "version": "1.1.0"
+                }))
+                .build(),
         )
         .await;
 
@@ -970,11 +962,9 @@ async fn delete_marketplace_integration_as_admin_succeeds(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.delete(&format!(
-                "/api/v1/ecosystem/marketplace/{integration_id}"
-            ))
-            .bearer(&token)
-            .build(),
+            app.delete(&format!("/api/v1/ecosystem/marketplace/{integration_id}"))
+                .bearer(&token)
+                .build(),
         )
         .await;
 
@@ -1006,10 +996,7 @@ async fn list_integration_categories_succeeds(pool: PgPool) {
         "list_integration_categories must return 200: {}",
         resp.text()
     );
-    assert!(
-        resp.json_value().is_array(),
-        "categories must be an array"
-    );
+    assert!(resp.json_value().is_array(), "categories must be an array");
 }
 
 // ---------------------------------------------------------------------------
@@ -1074,8 +1061,7 @@ async fn create_connector_as_admin_succeeds(pool: PgPool) {
 async fn get_connector_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let admin = seed_user(&pool, "conn-get-admin@b3.test").await;
-    let admin_token =
-        mint_token_with_role(admin, "conn-get-admin@b3.test", None, "super_admin");
+    let admin_token = mint_token_with_role(admin, "conn-get-admin@b3.test", None, "super_admin");
 
     // Seed a connector directly.
     let slug = format!("get-conn-{}", Uuid::new_v4());
