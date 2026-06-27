@@ -3,6 +3,8 @@
 //! Handles database operations for import templates, import jobs,
 //! import row errors, and migration exports.
 
+#![allow(clippy::too_many_arguments)]
+
 use crate::models::migration::{
     ImportDataType, ImportJob, ImportJobHistory, ImportJobStatus, ImportRowError, ImportTemplate,
     MigrationExport, MigrationExportStatus,
@@ -15,6 +17,7 @@ use uuid::Uuid;
 /// Repository for platform migration operations.
 #[derive(Clone)]
 pub struct MigrationRepository {
+    #[allow(dead_code)]
     pool: DbPool,
 }
 
