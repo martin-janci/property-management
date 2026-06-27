@@ -140,7 +140,10 @@ async fn messaging_happy_paths(pool: PgPool) {
         )
         .await;
     assert_eq!(read_req.status, StatusCode::OK);
-    assert!(read_req.json_value()["message"].as_str().unwrap().contains("messages marked as read"));
+    assert!(read_req.json_value()["message"]
+        .as_str()
+        .unwrap()
+        .contains("messages marked as read"));
 
     // Verify Bob's unread count is now 0
     let unread_req2 = app
@@ -157,14 +160,19 @@ async fn messaging_happy_paths(pool: PgPool) {
     // 4. Delete Message happy path (DELETE /api/v1/messages/threads/{id}/messages/{message_id})
     let delete_req = app
         .execute(
-            app.delete(&format!("/api/v1/messages/threads/{thread}/messages/{message_id}"))
-                .bearer(&token_a)
-                .header("X-Tenant-ID", &org.to_string())
-                .build(),
+            app.delete(&format!(
+                "/api/v1/messages/threads/{thread}/messages/{message_id}"
+            ))
+            .bearer(&token_a)
+            .header("X-Tenant-ID", &org.to_string())
+            .build(),
         )
         .await;
     assert_eq!(delete_req.status, StatusCode::OK);
-    assert_eq!(delete_req.json_value()["message"], "Message deleted successfully");
+    assert_eq!(
+        delete_req.json_value()["message"],
+        "Message deleted successfully"
+    );
 
     // 5. Archive Thread and Unarchive Thread happy path (POST / DELETE /threads/{id}/archive)
     let arch_req = app
@@ -187,7 +195,10 @@ async fn messaging_happy_paths(pool: PgPool) {
         )
         .await;
     assert_eq!(unarch_req.status, StatusCode::OK);
-    assert_eq!(unarch_req.json_value()["message"], "Conversation un-archived");
+    assert_eq!(
+        unarch_req.json_value()["message"],
+        "Conversation un-archived"
+    );
 
     // 6. Block User, List Blocked, and Unblock User happy path
     let block_req = app
@@ -199,7 +210,10 @@ async fn messaging_happy_paths(pool: PgPool) {
         )
         .await;
     assert_eq!(block_req.status, StatusCode::OK);
-    assert_eq!(block_req.json_value()["message"], "User blocked successfully");
+    assert_eq!(
+        block_req.json_value()["message"],
+        "User blocked successfully"
+    );
 
     let list_blocked = app
         .execute(
@@ -212,7 +226,10 @@ async fn messaging_happy_paths(pool: PgPool) {
     assert_eq!(list_blocked.status, StatusCode::OK);
     let blocked_body = list_blocked.json_value();
     assert_eq!(blocked_body["count"].as_i64(), Some(1));
-    assert_eq!(blocked_body["blockedUsers"][0]["blockedId"].as_str(), Some(bob.to_string().as_str()));
+    assert_eq!(
+        blocked_body["blockedUsers"][0]["blockedId"].as_str(),
+        Some(bob.to_string().as_str())
+    );
 
     let unblock_req = app
         .execute(
@@ -223,7 +240,10 @@ async fn messaging_happy_paths(pool: PgPool) {
         )
         .await;
     assert_eq!(unblock_req.status, StatusCode::OK);
-    assert_eq!(unblock_req.json_value()["message"], "User unblocked successfully");
+    assert_eq!(
+        unblock_req.json_value()["message"],
+        "User unblocked successfully"
+    );
 
     let list_blocked2 = app
         .execute(
@@ -240,15 +260,17 @@ async fn messaging_happy_paths(pool: PgPool) {
     // These reach the S3/storage layer and fail with 503 SERVICE_UNAVAILABLE since no S3 is configured.
     let upload_req = app
         .execute(
-            app.post(&format!("/api/v1/messages/threads/{thread}/attachments/upload-url"))
-                .bearer(&token_a)
-                .header("X-Tenant-ID", &org.to_string())
-                .json(json!({
-                    "fileName": "test.txt",
-                    "fileType": "text/plain",
-                    "fileSize": 100
-                }))
-                .build(),
+            app.post(&format!(
+                "/api/v1/messages/threads/{thread}/attachments/upload-url"
+            ))
+            .bearer(&token_a)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({
+                "fileName": "test.txt",
+                "fileType": "text/plain",
+                "fileSize": 100
+            }))
+            .build(),
         )
         .await;
     assert_eq!(upload_req.status, StatusCode::SERVICE_UNAVAILABLE);
@@ -273,10 +295,12 @@ async fn messaging_happy_paths(pool: PgPool) {
 
     let download_req = app
         .execute(
-            app.get(&format!("/api/v1/messages/threads/{thread}/attachments/{attachment_id}/download"))
-                .bearer(&token_a)
-                .header("X-Tenant-ID", &org.to_string())
-                .build(),
+            app.get(&format!(
+                "/api/v1/messages/threads/{thread}/attachments/{attachment_id}/download"
+            ))
+            .bearer(&token_a)
+            .header("X-Tenant-ID", &org.to_string())
+            .build(),
         )
         .await;
     assert_eq!(download_req.status, StatusCode::SERVICE_UNAVAILABLE);

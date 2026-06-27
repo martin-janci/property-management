@@ -59,11 +59,7 @@ fn mint_auth_user_jwt(user_id: Uuid, tenant_id: Option<Uuid>) -> String {
 
 /// Mint a token for routes that use `JwtService::validate_access_token` (services/jwt Claims).
 /// Fields: sub (String), email, name, exp, iat, jti, token_type, org_id, roles.
-fn mint_service_jwt(
-    user_id: Uuid,
-    org_id: Option<Uuid>,
-    roles: Option<Vec<&str>>,
-) -> String {
+fn mint_service_jwt(user_id: Uuid, org_id: Option<Uuid>, roles: Option<Vec<&str>>) -> String {
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde::Serialize;
     #[derive(Serialize)]
@@ -319,7 +315,9 @@ async fn test_get_provider_complete_returns_200(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::GET)
-                .uri(format!("/api/v1/marketplace/providers/{profile_id}/complete"))
+                .uri(format!(
+                    "/api/v1/marketplace/providers/{profile_id}/complete"
+                ))
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .body(Body::empty())
                 .unwrap(),
@@ -542,20 +540,20 @@ async fn test_remove_feature_from_package_returns_204(pool: PgPool) {
     let token = super_admin_token(user_id);
 
     // Seed the item directly
-    sqlx::query(
-        "INSERT INTO feature_package_items (package_id, feature_flag_id) VALUES ($1,$2)",
-    )
-    .bind(pkg_id)
-    .bind(flag_id)
-    .execute(&pool)
-    .await
-    .expect("seed package item");
+    sqlx::query("INSERT INTO feature_package_items (package_id, feature_flag_id) VALUES ($1,$2)")
+        .bind(pkg_id)
+        .bind(flag_id)
+        .execute(&pool)
+        .await
+        .expect("seed package item");
 
     let resp = app
         .execute(
             Request::builder()
                 .method(Method::DELETE)
-                .uri(format!("/api/v1/feature-packages/{pkg_id}/features/{flag_id}"))
+                .uri(format!(
+                    "/api/v1/feature-packages/{pkg_id}/features/{flag_id}"
+                ))
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .body(Body::empty())
                 .unwrap(),
@@ -602,7 +600,9 @@ async fn test_assign_package_to_org_returns_201(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::POST)
-                .uri(format!("/api/v1/feature-packages/organizations/{org_id}/assign"))
+                .uri(format!(
+                    "/api/v1/feature-packages/organizations/{org_id}/assign"
+                ))
                 .header(header::CONTENT_TYPE, "application/json")
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .body(Body::from(body.to_string()))
@@ -639,7 +639,9 @@ async fn test_deactivate_org_package_returns_204(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::DELETE)
-                .uri(format!("/api/v1/feature-packages/organizations/{org_id}/packages/{org_pkg_id}"))
+                .uri(format!(
+                    "/api/v1/feature-packages/organizations/{org_id}/packages/{org_pkg_id}"
+                ))
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .body(Body::empty())
                 .unwrap(),
@@ -703,7 +705,9 @@ async fn test_compare_packages_returns_200(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::GET)
-                .uri(format!("/api/v1/feature-packages/public/compare?ids={pkg_a},{pkg_b}"))
+                .uri(format!(
+                    "/api/v1/feature-packages/public/compare?ids={pkg_a},{pkg_b}"
+                ))
                 .body(Body::empty())
                 .unwrap(),
         )
