@@ -4,9 +4,8 @@
 //! import row errors, and migration exports.
 
 use crate::models::migration::{
-    CreateImportJob, CreateImportTemplate, CreateMigrationExport, ImportDataType, ImportJob,
-    ImportJobStatus, ImportRowError, ImportTemplate, MigrationExport, MigrationExportStatus,
-    UpdateImportTemplate,
+    ImportDataType, ImportJob, ImportJobHistory, ImportJobStatus, ImportRowError, ImportTemplate,
+    MigrationExport, MigrationExportStatus,
 };
 use crate::DbPool;
 use chrono::{DateTime, Utc};
@@ -475,7 +474,7 @@ impl MigrationRepository {
             param_idx + 1
         ));
 
-        let mut q = sqlx::query_as::<_, ImportJobHistory>(sqlx::AssertSqlSafe(&query)).bind(org_id);
+        let mut q = sqlx::query_as::<_, ImportJobHistory>(sqlx::AssertSqlSafe(query)).bind(org_id);
 
         if let Some(s) = status_val {
             q = q.bind(s);
