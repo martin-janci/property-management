@@ -48,7 +48,7 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use serde_json::json;
