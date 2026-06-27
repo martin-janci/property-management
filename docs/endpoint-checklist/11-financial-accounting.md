@@ -1,0 +1,240 @@
+# Financial, Accounting & Reporting endpoints
+
+Mount prefixes (src/lib.rs): accounting→`/api/v1/accounting`, financial→`/api/v1/financial`, budgets→`/api/v1/budgets`, reserve_funds→`/api/v1/reserve-funds`, multi_currency→`/api/v1/multi-currency`, market_pricing→BOTH `/api/v1/pricing` AND `/api/v1/market-pricing`, reports→`/api/v1/reports`, esg_reporting→`/api/v1/esg`. person_months is nested under buildings: unit-level `/api/v1/buildings/{building_id}/units/{unit_id}/person-months`, building-level `/api/v1/buildings/{building_id}/person-months`. No module in this group is unmounted; no `todo!`/`501` stubs found.
+
+| Method + Path | Handler | Status | Test | Notes |
+|---|---|---|---|---|
+| `GET /api/v1/accounting/invoices` | `accounting/invoices.rs:list_invoices` | done | `accounting_invoices_tests.rs` | authz & RLS exercised |
+| `POST /api/v1/accounting/invoices` | `accounting/invoices.rs:create_invoice` | done | `accounting_invoices_tests.rs` | authz, validation & math calculations |
+| `GET /api/v1/accounting/invoices/{id}` | `accounting/invoices.rs:get_invoice` | done | `accounting_invoices_tests.rs` | authz & tenant isolation |
+| `PATCH /api/v1/accounting/invoices/{id}` | `accounting/invoices.rs:update_invoice` | done | `accounting_invoices_tests.rs` | authz & tenant isolation |
+| `DELETE /api/v1/accounting/invoices/{id}` | `accounting/invoices.rs:delete_invoice` | done | `accounting_invoices_tests.rs` | authz & tenant isolation |
+| `GET /api/v1/accounting/invoices/{id}/items` | `accounting/invoices.rs:list_invoice_items` | done | `accounting_invoices_tests.rs` | authz & tenant isolation |
+| `GET /api/v1/accounting/contacts` | `accounting/contacts.rs:list_contacts` | done | `accounting_contacts_authz_tests.rs` | authz exercised |
+| `GET /api/v1/accounting/statements` | `accounting/statements.rs:list_statements` | done | `accounting_reconciliation_tests.rs` | authz & list statements |
+| `POST /api/v1/accounting/statements` | `accounting/statements.rs:upload_statement` | done | `accounting_reconciliation_tests.rs` | multipart CSV upload & match engine |
+| `GET /api/v1/accounting/statements/{id}/lines` | `accounting/statements.rs:list_statement_lines` | done | `accounting_reconciliation_tests.rs` | statement lines retrieval |
+| `GET /api/v1/accounting/lines/{id}/matches` | `accounting/matches.rs:list_matches` | done | `accounting_reconciliation_tests.rs` | payment matching suggestions |
+| `POST /api/v1/accounting/matches/{id}/confirm` | `accounting/matches.rs:confirm_match` | done | `accounting_reconciliation_tests.rs` | match confirmation & invoice payment transition |
+| `POST /api/v1/accounting/matches/{id}/reject` | `accounting/matches.rs:reject_match` | done | `accounting_reconciliation_tests.rs` | match rejection |
+| `POST /api/v1/financial/accounts` | `financial.rs:create_account` | partial | — | implemented, untested |
+| `GET /api/v1/financial/accounts` | `financial.rs:list_accounts` | done | `financial_cross_org_idor_tests.rs` | list exercised |
+| `GET /api/v1/financial/accounts/{id}` | `financial.rs:get_account` | done | `financial_cross_org_idor_tests.rs` | IDOR exercised |
+| `GET /api/v1/financial/accounts/{id}/transactions` | `financial.rs:list_transactions` | partial | — | implemented, untested |
+| `POST /api/v1/financial/accounts/{id}/transactions` | `financial.rs:create_transaction` | partial | — | implemented, untested |
+| `GET /api/v1/financial/units/{unit_id}/ledger` | `financial.rs:get_unit_ledger` | partial | — | implemented, untested |
+| `POST /api/v1/financial/fee-schedules` | `financial.rs:create_fee_schedule` | partial | — | implemented, untested |
+| `GET /api/v1/financial/fee-schedules` | `financial.rs:list_fee_schedules` | partial | — | implemented, untested |
+| `GET /api/v1/financial/fee-schedules/{id}` | `financial.rs:get_fee_schedule` | partial | — | implemented, untested |
+| `GET /api/v1/financial/units/{unit_id}/fees` | `financial.rs:get_unit_fees` | partial | — | implemented, untested |
+| `POST /api/v1/financial/units/{unit_id}/fees` | `financial.rs:assign_unit_fee` | partial | — | implemented, untested |
+| `POST /api/v1/financial/invoices` | `financial.rs:create_invoice` | partial | — | implemented, untested |
+| `GET /api/v1/financial/invoices` | `financial.rs:list_invoices` | partial | — | implemented, untested |
+| `GET /api/v1/financial/invoices/{id}` | `financial.rs:get_invoice` | partial | — | implemented, untested |
+| `POST /api/v1/financial/invoices/{id}/send` | `financial.rs:send_invoice` | partial | — | implemented, untested |
+| `GET /api/v1/financial/invoices/{id}/pdf` | `financial.rs:get_invoice_pdf` | partial | — | genpdf render |
+| `GET /api/v1/financial/units/{unit_id}/invoices` | `financial.rs:list_unit_invoices` | partial | — | implemented, untested |
+| `POST /api/v1/financial/payments` | `financial.rs:record_payment` | done | `financial_cross_org_idor_tests.rs` | IDOR exercised |
+| `GET /api/v1/financial/payments` | `financial.rs:list_payments` | partial | — | implemented, untested |
+| `GET /api/v1/financial/payments/unallocated` | `financial.rs:list_unallocated_payments` | partial | — | implemented, untested |
+| `POST /api/v1/financial/payments/auto-match` | `financial.rs:auto_match_payments` | partial | — | implemented, untested |
+| `GET /api/v1/financial/payments/{id}` | `financial.rs:get_payment` | partial | — | implemented, untested |
+| `POST /api/v1/financial/payments/{id}/allocate` | `financial.rs:allocate_payment` | partial | — | implemented, untested |
+| `GET /api/v1/financial/units/{unit_id}/payments` | `financial.rs:list_unit_payments` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reminder-schedules` | `financial.rs:get_reminder_schedules` | partial | — | implemented, untested |
+| `GET /api/v1/financial/late-fee-config` | `financial.rs:get_late_fee_config` | partial | — | implemented, untested |
+| `GET /api/v1/financial/overdue-invoices` | `financial.rs:get_overdue_invoices` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reports/ar-aging` | `financial.rs:get_ar_aging_report` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reports/income-statement` | `financial.rs:get_income_statement` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reports/balance-sheet` | `financial.rs:get_balance_sheet` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reports/cash-flow` | `financial.rs:get_cash_flow` | partial | — | implemented, untested |
+| `GET /api/v1/financial/reports/{report}/export` | `financial.rs:export_report` | partial | — | implemented, untested |
+| `POST /api/v1/budgets` | `budgets.rs:create_budget` | partial | — | implemented, untested |
+| `GET /api/v1/budgets` | `budgets.rs:list_budgets` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/{id}` | `budgets.rs:get_budget` | partial | — | implemented, untested |
+| `PUT /api/v1/budgets/{id}` | `budgets.rs:update_budget` | partial | — | implemented, untested |
+| `DELETE /api/v1/budgets/{id}` | `budgets.rs:delete_budget` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/{id}/submit` | `budgets.rs:submit_budget` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/{id}/approve` | `budgets.rs:approve_budget` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/{id}/activate` | `budgets.rs:activate_budget` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/{id}/close` | `budgets.rs:close_budget` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/{id}/summary` | `budgets.rs:get_budget_summary` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/{id}/variance` | `budgets.rs:get_category_variance` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/{id}/alerts` | `budgets.rs:list_variance_alerts` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/{id}/items` | `budgets.rs:add_budget_item` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/{id}/items` | `budgets.rs:list_budget_items` | partial | — | implemented, untested |
+| `PUT /api/v1/budgets/items/{item_id}` | `budgets.rs:update_budget_item` | partial | — | implemented, untested |
+| `DELETE /api/v1/budgets/items/{item_id}` | `budgets.rs:delete_budget_item` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/items/{item_id}/actuals` | `budgets.rs:record_actual` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/items/{item_id}/actuals` | `budgets.rs:list_actuals` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/categories` | `budgets.rs:create_category` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/categories` | `budgets.rs:list_categories` | partial | — | implemented, untested |
+| `PUT /api/v1/budgets/categories/{id}` | `budgets.rs:update_category` | partial | — | implemented, untested |
+| `DELETE /api/v1/budgets/categories/{id}` | `budgets.rs:delete_category` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/alerts/{id}/acknowledge` | `budgets.rs:acknowledge_alert` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/dashboard` | `budgets.rs:get_dashboard` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/capital-plans` | `budgets.rs:create_capital_plan` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/capital-plans` | `budgets.rs:list_capital_plans` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/capital-plans/summary` | `budgets.rs:get_yearly_capital_summary` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/capital-plans/{id}` | `budgets.rs:get_capital_plan` | partial | — | implemented, untested |
+| `PUT /api/v1/budgets/capital-plans/{id}` | `budgets.rs:update_capital_plan` | partial | — | implemented, untested |
+| `DELETE /api/v1/budgets/capital-plans/{id}` | `budgets.rs:delete_capital_plan` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/capital-plans/{id}/start` | `budgets.rs:start_capital_plan` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/capital-plans/{id}/complete` | `budgets.rs:complete_capital_plan` | partial | — | implemented, untested |
+| `POST /api/v1/budgets/forecasts` | `budgets.rs:create_forecast` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/forecasts` | `budgets.rs:list_forecasts` | partial | — | implemented, untested |
+| `GET /api/v1/budgets/forecasts/{id}` | `budgets.rs:get_forecast` | partial | — | implemented, untested |
+| `PUT /api/v1/budgets/forecasts/{id}` | `budgets.rs:update_forecast` | partial | — | implemented, untested |
+| `DELETE /api/v1/budgets/forecasts/{id}` | `budgets.rs:delete_forecast` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds` | `reserve_funds.rs:list_funds` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds` | `reserve_funds.rs:create_fund` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/dashboard` | `reserve_funds.rs:get_dashboard` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}` | `reserve_funds.rs:get_fund` | done | `reserve_funds_cross_org_idor_tests.rs` | IDOR exercised |
+| `PUT /api/v1/reserve-funds/{fund_id}` | `reserve_funds.rs:update_fund` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/health` | `reserve_funds.rs:get_fund_health` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/schedules` | `reserve_funds.rs:list_schedules` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/schedules` | `reserve_funds.rs:create_schedule` | partial | — | implemented, untested |
+| `PUT /api/v1/reserve-funds/{fund_id}/schedules/{schedule_id}` | `reserve_funds.rs:update_schedule` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/transactions` | `reserve_funds.rs:list_transactions` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/transactions` | `reserve_funds.rs:record_transaction` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/transfers` | `reserve_funds.rs:transfer_funds` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/policies` | `reserve_funds.rs:list_policies` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/policies` | `reserve_funds.rs:create_policy` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/policies/active` | `reserve_funds.rs:get_active_policy` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/projections` | `reserve_funds.rs:create_projection` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/projections/current` | `reserve_funds.rs:get_current_projection` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/projections/{projection_id}/items` | `reserve_funds.rs:get_projection_items` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/projections/{projection_id}/items` | `reserve_funds.rs:add_projection_items` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/{fund_id}/components` | `reserve_funds.rs:list_components` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/{fund_id}/components` | `reserve_funds.rs:create_component` | partial | — | implemented, untested |
+| `PUT /api/v1/reserve-funds/{fund_id}/components/{component_id}` | `reserve_funds.rs:update_component` | partial | — | implemented, untested |
+| `GET /api/v1/reserve-funds/alerts` | `reserve_funds.rs:list_alerts` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/alerts/{alert_id}/acknowledge` | `reserve_funds.rs:acknowledge_alert` | partial | — | implemented, untested |
+| `POST /api/v1/reserve-funds/alerts/{alert_id}/resolve` | `reserve_funds.rs:resolve_alert` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/config` | `multi_currency.rs:get_currency_config` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/config` | `multi_currency.rs:create_or_update_currency_config` | partial | — | implemented, untested |
+| `PUT /api/v1/multi-currency/config` | `multi_currency.rs:update_currency_config` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/properties` | `multi_currency.rs:list_property_currency_configs` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/properties` | `multi_currency.rs:create_property_currency_config` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/properties/{building_id}` | `multi_currency.rs:get_property_currency_config` | done | `multi_currency_cross_org_idor_tests.rs` | IDOR exercised |
+| `PUT /api/v1/multi-currency/properties/{building_id}` | `multi_currency.rs:update_property_currency_config` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/rates` | `multi_currency.rs:list_exchange_rates` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/rates` | `multi_currency.rs:create_exchange_rate` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/rates/latest` | `multi_currency.rs:get_latest_exchange_rate` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/rates/override` | `multi_currency.rs:override_exchange_rate` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/rates/fetch` | `multi_currency.rs:fetch_exchange_rates` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/transactions` | `multi_currency.rs:list_transactions` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/transactions` | `multi_currency.rs:create_transaction` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/transactions/{id}` | `multi_currency.rs:get_transaction` | partial | — | implemented, untested |
+| `PUT /api/v1/multi-currency/transactions/{id}/rate` | `multi_currency.rs:update_transaction_rate` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/cross-border` | `multi_currency.rs:list_cross_border_leases` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/cross-border` | `multi_currency.rs:create_cross_border_lease` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/cross-border/{lease_id}` | `multi_currency.rs:get_cross_border_lease` | partial | — | implemented, untested |
+| `PUT /api/v1/multi-currency/cross-border/{lease_id}` | `multi_currency.rs:update_cross_border_lease` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/cross-border/compliance/{country}` | `multi_currency.rs:get_compliance_requirements` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/reports/configs` | `multi_currency.rs:list_report_configs` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/reports/configs` | `multi_currency.rs:create_report_config` | partial | — | implemented, untested |
+| `POST /api/v1/multi-currency/reports/generate` | `multi_currency.rs:generate_report` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/reports/snapshots` | `multi_currency.rs:list_report_snapshots` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/reports/exposure` | `multi_currency.rs:get_currency_exposure` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/dashboard` | `multi_currency.rs:get_dashboard` | partial | — | implemented, untested |
+| `GET /api/v1/multi-currency/statistics` | `multi_currency.rs:get_statistics` | partial | — | implemented, untested |
+| `GET /api/v1/{pricing,market-pricing}/regions` | `market_pricing.rs:list_regions` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/regions` | `market_pricing.rs:create_region` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/regions/{id}` | `market_pricing.rs:get_region` | partial | — | dual-mounted; untested |
+| `PUT /api/v1/{pricing,market-pricing}/regions/{id}` | `market_pricing.rs:update_region` | partial | — | dual-mounted; untested |
+| `DELETE /api/v1/{pricing,market-pricing}/regions/{id}` | `market_pricing.rs:delete_region` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/data` | `market_pricing.rs:list_data_points` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/data` | `market_pricing.rs:add_data_point` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/statistics/{region_id}` | `market_pricing.rs:get_statistics` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/statistics/generate` | `market_pricing.rs:generate_statistics` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/recommendations` | `market_pricing.rs:list_recommendations` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/recommendations/request` | `market_pricing.rs:request_recommendation` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/recommendations/{id}` | `market_pricing.rs:get_recommendation` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/recommendations/{id}/details` | `market_pricing.rs:get_recommendation_details` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/recommendations/{id}/accept` | `market_pricing.rs:accept_recommendation` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/recommendations/{id}/reject` | `market_pricing.rs:reject_recommendation` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/units/{unit_id}/history` | `market_pricing.rs:get_pricing_history` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/units/{unit_id}/price` | `market_pricing.rs:record_price_change` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/units/{unit_id}/current-rent` | `market_pricing.rs:get_current_rent` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/cma` | `market_pricing.rs:list_cmas` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/cma` | `market_pricing.rs:create_cma` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/cma/{id}` | `market_pricing.rs:get_cma` | partial | — | dual-mounted; untested |
+| `PUT /api/v1/{pricing,market-pricing}/cma/{id}` | `market_pricing.rs:update_cma` | partial | — | dual-mounted; untested |
+| `DELETE /api/v1/{pricing,market-pricing}/cma/{id}` | `market_pricing.rs:delete_cma` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/cma/{id}/details` | `market_pricing.rs:get_cma_details` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/cma/{id}/properties` | `market_pricing.rs:get_cma_properties` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/cma/{id}/properties` | `market_pricing.rs:add_cma_property` | partial | — | dual-mounted; untested |
+| `DELETE /api/v1/{pricing,market-pricing}/cma/{cma_id}/properties/{property_id}` | `market_pricing.rs:remove_cma_property` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/cma/{id}/recalculate` | `market_pricing.rs:recalculate_cma` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/comparables` | `market_pricing.rs:get_comparables` | partial | — | dual-mounted; untested |
+| `GET /api/v1/{pricing,market-pricing}/dashboard` | `market_pricing.rs:get_pricing_dashboard` | partial | — | dual-mounted; untested |
+| `POST /api/v1/{pricing,market-pricing}/dashboard/export` | `market_pricing.rs:export_pricing_data` | partial | — | dual-mounted; untested |
+| `GET /api/v1/reports/faults` | `reports.rs:get_fault_statistics_report` | partial | — | implemented, untested |
+| `GET /api/v1/reports/voting` | `reports.rs:get_voting_participation_report` | partial | — | implemented, untested |
+| `GET /api/v1/reports/occupancy` | `reports.rs:get_occupancy_report` | partial | — | implemented, untested |
+| `GET /api/v1/reports/consumption` | `reports.rs:get_consumption_report` | partial | — | implemented, untested |
+| `POST /api/v1/reports/export` | `reports.rs:export_report` | done | `reports_export_org_scope_tests.rs` | org-scope exercised |
+| `GET /api/v1/reports/export/{job_id}/status` | `reports.rs:get_export_job_status` | done | `reports_export_org_scope_tests.rs` | status exercised |
+| `PUT /api/v1/reports/schedules/{id}` | `reports.rs:update_schedule` | done | `report_schedule_cron_roundtrip_tests.rs` | cron/RBAC exercised |
+| `PUT /api/v1/reports/schedules/{id}/pause` | `reports.rs:pause_schedule` | done | `report_schedule_org_scope_jwt_tests.rs` | org-scope exercised |
+| `PUT /api/v1/reports/schedules/{id}/resume` | `reports.rs:resume_schedule` | done | `report_schedule_org_scope_jwt_tests.rs` | org-scope exercised |
+| `GET /api/v1/reports/schedules/{id}/executions` | `reports.rs:list_schedule_executions` | done | `report_execution_download_retry_e2e_tests.rs` | e2e exercised |
+| `GET /api/v1/reports/executions/{id}` | `reports.rs:get_execution` | done | `report_schedule_sibling_scope_tests.rs` | scope exercised |
+| `GET /api/v1/reports/executions/{id}/download` | `reports.rs:get_execution_download_url` | done | `report_execution_download_retry_e2e_tests.rs` | e2e exercised |
+| `POST /api/v1/reports/executions/{id}/retry` | `reports.rs:retry_execution` | done | `report_execution_download_retry_e2e_tests.rs` | e2e exercised |
+| `GET /api/v1/esg/configuration` | `esg_reporting.rs:get_configuration` | partial | — | implemented, untested |
+| `POST /api/v1/esg/configuration` | `esg_reporting.rs:upsert_configuration` | partial | — | implemented, untested |
+| `GET /api/v1/esg/metrics` | `esg_reporting.rs:list_metrics` | partial | — | implemented, untested |
+| `POST /api/v1/esg/metrics` | `esg_reporting.rs:create_metric` | partial | — | implemented, untested |
+| `GET /api/v1/esg/metrics/{id}` | `esg_reporting.rs:get_metric` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `PUT /api/v1/esg/metrics/{id}` | `esg_reporting.rs:update_metric` | partial | — | implemented, untested |
+| `POST /api/v1/esg/metrics/{id}/verify` | `esg_reporting.rs:verify_metric` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `POST /api/v1/esg/metrics/{id}/delete` | `esg_reporting.rs:delete_metric` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `GET /api/v1/esg/carbon` | `esg_reporting.rs:list_carbon_footprints` | partial | — | implemented, untested |
+| `POST /api/v1/esg/carbon` | `esg_reporting.rs:create_carbon_footprint` | partial | — | implemented, untested |
+| `GET /api/v1/esg/carbon/summary/{year}` | `esg_reporting.rs:get_carbon_summary` | partial | — | implemented, untested |
+| `GET /api/v1/esg/carbon/{id}` | `esg_reporting.rs:get_carbon_footprint` | partial | — | implemented, untested |
+| `POST /api/v1/esg/carbon/{id}/delete` | `esg_reporting.rs:delete_carbon_footprint` | partial | — | implemented, untested |
+| `GET /api/v1/esg/benchmarks` | `esg_reporting.rs:list_benchmarks` | partial | — | implemented, untested |
+| `POST /api/v1/esg/benchmarks` | `esg_reporting.rs:create_benchmark` | partial | — | implemented, untested |
+| `POST /api/v1/esg/benchmarks/{id}/delete` | `esg_reporting.rs:delete_benchmark` | partial | — | implemented, untested |
+| `GET /api/v1/esg/targets` | `esg_reporting.rs:list_targets` | partial | — | implemented, untested |
+| `POST /api/v1/esg/targets` | `esg_reporting.rs:create_target` | partial | — | implemented, untested |
+| `GET /api/v1/esg/targets/{id}` | `esg_reporting.rs:get_target` | partial | — | implemented, untested |
+| `PUT /api/v1/esg/targets/{id}` | `esg_reporting.rs:update_target` | partial | — | implemented, untested |
+| `POST /api/v1/esg/targets/{id}/delete` | `esg_reporting.rs:delete_target` | partial | — | implemented, untested |
+| `GET /api/v1/esg/reports` | `esg_reporting.rs:list_reports` | partial | — | implemented, untested |
+| `POST /api/v1/esg/reports` | `esg_reporting.rs:create_report` | partial | — | implemented, untested |
+| `GET /api/v1/esg/reports/{id}` | `esg_reporting.rs:get_report` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `PUT /api/v1/esg/reports/{id}` | `esg_reporting.rs:update_report` | partial | — | implemented, untested |
+| `POST /api/v1/esg/reports/{id}/submit` | `esg_reporting.rs:submit_report` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `POST /api/v1/esg/reports/{id}/approve` | `esg_reporting.rs:approve_report` | partial | — | implemented, untested |
+| `POST /api/v1/esg/reports/{id}/delete` | `esg_reporting.rs:delete_report` | done | `esg_reporting_cross_org_idor_tests.rs` | IDOR exercised |
+| `GET /api/v1/esg/eu-taxonomy` | `esg_reporting.rs:list_eu_taxonomy_assessments` | partial | — | implemented, untested |
+| `POST /api/v1/esg/eu-taxonomy` | `esg_reporting.rs:create_eu_taxonomy_assessment` | partial | — | implemented, untested |
+| `GET /api/v1/esg/eu-taxonomy/{id}` | `esg_reporting.rs:get_eu_taxonomy_assessment` | partial | — | implemented, untested |
+| `PUT /api/v1/esg/eu-taxonomy/{id}` | `esg_reporting.rs:update_eu_taxonomy_assessment` | partial | — | implemented, untested |
+| `GET /api/v1/esg/dashboard/{year}` | `esg_reporting.rs:get_dashboard` | partial | — | implemented, untested |
+| `POST /api/v1/esg/dashboard/{year}/refresh` | `esg_reporting.rs:refresh_dashboard` | partial | — | implemented, untested |
+| `GET /api/v1/esg/imports` | `esg_reporting.rs:list_import_jobs` | partial | — | implemented, untested |
+| `POST /api/v1/esg/imports` | `esg_reporting.rs:create_import_job` | partial | — | implemented, untested |
+| `GET /api/v1/esg/imports/{id}` | `esg_reporting.rs:get_import_job` | partial | — | implemented, untested |
+| `GET /api/v1/esg/statistics` | `esg_reporting.rs:get_statistics` | partial | — | implemented, untested |
+| `GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months` | `person_months.rs:get_unit_person_months` | partial | — | nested under buildings |
+| `POST /api/v1/buildings/{building_id}/units/{unit_id}/person-months` | `person_months.rs:upsert_person_month` | partial | — | nested under buildings |
+| `GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months/{id}` | `person_months.rs:get_person_month` | partial | — | nested under buildings |
+| `PUT /api/v1/buildings/{building_id}/units/{unit_id}/person-months/{id}` | `person_months.rs:update_person_month` | partial | — | nested under buildings |
+| `DELETE /api/v1/buildings/{building_id}/units/{unit_id}/person-months/{id}` | `person_months.rs:delete_person_month` | partial | — | nested under buildings |
+| `GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months/yearly` | `person_months.rs:get_yearly_summary` | partial | — | nested under buildings |
+| `POST /api/v1/buildings/{building_id}/units/{unit_id}/person-months/calculate` | `person_months.rs:calculate_from_residents` | partial | — | nested under buildings |
+| `GET /api/v1/buildings/{building_id}/person-months` | `person_months.rs:list_building_person_months` | partial | — | building-level router |
+| `POST /api/v1/buildings/{building_id}/person-months/bulk` | `person_months.rs:bulk_upsert_person_months` | partial | — | building-level router |
+| `GET /api/v1/buildings/{building_id}/person-months/summary` | `person_months.rs:get_building_summary` | partial | — | building-level router |
+
+## Tally
+done: 33  partial: 194  stub: 0  missing: 0  total: 227
+
+> Note: the 33 `market_pricing.rs` rows are each dual-mounted under both `/api/v1/pricing` and `/api/v1/market-pricing`; counted once per handler. Counting each mount separately would add 33 more paths (total 260).
+</content>
+</invoke>
