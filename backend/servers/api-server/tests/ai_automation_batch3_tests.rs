@@ -53,6 +53,18 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed building")
 }
 
+async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO equipment (organization_id, building_id, name, category, status) \
+         VALUES ($1, $2, 'Test Equipment', 'hvac', 'operational') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed equipment")
+}
+
 // ---------------------------------------------------------------------------
 // LLM — Lease generation templates (read-only, no external call)
 // ---------------------------------------------------------------------------
