@@ -91,7 +91,7 @@ fn impersonation_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn agency_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/agencies";
     vec![
-        (Method::GET, format!("{base}/"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::POST, format!("{base}/{UUID}/suspend"), None),
         (
