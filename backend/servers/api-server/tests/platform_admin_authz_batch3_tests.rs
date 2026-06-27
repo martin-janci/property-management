@@ -228,11 +228,7 @@ fn platform_admin_agencies_cases() -> Vec<(Method, String, Option<&'static str>)
 /// Public feature-flags: GET /api/v1/feature-flags
 /// Requires auth (returns per-user resolved state).
 fn public_feature_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    vec![(
-        Method::GET,
-        "/api/v1/feature-flags".to_string(),
-        None,
-    )]
+    vec![(Method::GET, "/api/v1/feature-flags".to_string(), None)]
 }
 
 /// Public system-announcements: /api/v1/system-announcements/* (auth-gated)
