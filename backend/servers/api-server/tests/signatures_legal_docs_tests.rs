@@ -64,12 +64,7 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     .expect("seed document")
 }
 
-async fn seed_signature_request(
-    pool: &PgPool,
-    doc_id: Uuid,
-    org_id: Uuid,
-    user_id: Uuid,
-) -> Uuid {
+async fn seed_signature_request(pool: &PgPool, doc_id: Uuid, org_id: Uuid, user_id: Uuid) -> Uuid {
     let signers = json!([
         {"email": "signer@example.com", "name": "Test Signer", "order": 0, "status": "pending"}
     ]);
@@ -193,8 +188,7 @@ async fn create_legal_doc(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
 async fn create_legal_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-create").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-create").await;
 
     let resp = app
         .execute(
@@ -216,8 +210,7 @@ async fn create_legal_document_succeeds(pool: PgPool) {
 async fn list_legal_documents_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-list").await;
     create_legal_doc(&app, &token, org_id).await;
 
     let resp = app
@@ -240,8 +233,7 @@ async fn list_legal_documents_succeeds(pool: PgPool) {
 async fn list_legal_documents_summary_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-summ").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-summ").await;
 
     let resp = app
         .execute(
@@ -258,8 +250,7 @@ async fn list_legal_documents_summary_succeeds(pool: PgPool) {
 async fn update_legal_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-upd").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-upd").await;
     let doc_id = create_legal_doc(&app, &token, org_id).await;
 
     let resp = app
@@ -283,8 +274,7 @@ async fn update_legal_document_succeeds(pool: PgPool) {
 async fn delete_legal_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-del").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-del").await;
     let doc_id = create_legal_doc(&app, &token, org_id).await;
 
     let resp = app
@@ -302,8 +292,7 @@ async fn delete_legal_document_succeeds(pool: PgPool) {
 async fn add_legal_document_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-ver").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-ver").await;
     let doc_id = create_legal_doc(&app, &token, org_id).await;
 
     let resp = app
@@ -326,8 +315,7 @@ async fn add_legal_document_version_succeeds(pool: PgPool) {
 async fn list_legal_document_versions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-doc-vers").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-doc-vers").await;
     let doc_id = create_legal_doc(&app, &token, org_id).await;
 
     let resp = app
@@ -410,8 +398,7 @@ async fn create_requirement(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
 async fn create_legal_requirement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-create").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-create").await;
 
     let resp = app
         .execute(
@@ -433,8 +420,7 @@ async fn create_legal_requirement_succeeds(pool: PgPool) {
 async fn list_legal_requirements_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-list").await;
     create_requirement(&app, &token, org_id).await;
 
     let resp = app
@@ -448,7 +434,11 @@ async fn list_legal_requirements_succeeds(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
     assert!(
-        body["requirements"].as_array().map(|a| a.len()).unwrap_or(0) >= 1,
+        body["requirements"]
+            .as_array()
+            .map(|a| a.len())
+            .unwrap_or(0)
+            >= 1,
         "expected at least one requirement"
     );
 }
@@ -457,8 +447,7 @@ async fn list_legal_requirements_succeeds(pool: PgPool) {
 async fn list_requirements_with_details_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-detail").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-detail").await;
 
     let resp = app
         .execute(
@@ -475,8 +464,7 @@ async fn list_requirements_with_details_succeeds(pool: PgPool) {
 async fn get_compliance_statistics_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-stats").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-stats").await;
 
     let resp = app
         .execute(
@@ -493,8 +481,7 @@ async fn get_compliance_statistics_succeeds(pool: PgPool) {
 async fn get_legal_requirement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-get").await;
     let req_id = create_requirement(&app, &token, org_id).await;
 
     let resp = app
@@ -517,8 +504,7 @@ async fn get_legal_requirement_succeeds(pool: PgPool) {
 async fn update_legal_requirement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-upd").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-upd").await;
     let req_id = create_requirement(&app, &token, org_id).await;
 
     let resp = app
@@ -537,8 +523,7 @@ async fn update_legal_requirement_succeeds(pool: PgPool) {
 async fn delete_legal_requirement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-req-del").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-req-del").await;
     let req_id = create_requirement(&app, &token, org_id).await;
 
     let resp = app
@@ -556,8 +541,7 @@ async fn delete_legal_requirement_succeeds(pool: PgPool) {
 async fn create_compliance_verification_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-verify").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-verify").await;
     let req_id = create_requirement(&app, &token, org_id).await;
 
     let resp = app
@@ -605,7 +589,11 @@ async fn list_compliance_verifications_succeeds(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
     assert!(
-        body["verifications"].as_array().map(|a| a.len()).unwrap_or(0) >= 1,
+        body["verifications"]
+            .as_array()
+            .map(|a| a.len())
+            .unwrap_or(0)
+            >= 1,
         "expected at least one verification"
     );
 }

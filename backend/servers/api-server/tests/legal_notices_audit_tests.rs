@@ -184,8 +184,7 @@ async fn get_notice_statistics_succeeds(pool: PgPool) {
 async fn get_legal_notice_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-notice-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-notice-get").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let (notice_id, _) = create_notice_with_recipient(&app, &token, org_id, user_id).await;
 
@@ -209,8 +208,7 @@ async fn get_legal_notice_succeeds(pool: PgPool) {
 async fn update_legal_notice_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-notice-upd").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-notice-upd").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let (notice_id, _) = create_notice_with_recipient(&app, &token, org_id, user_id).await;
 
@@ -230,8 +228,7 @@ async fn update_legal_notice_succeeds(pool: PgPool) {
 async fn delete_legal_notice_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-notice-del").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-notice-del").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let (notice_id, _) = create_notice_with_recipient(&app, &token, org_id, user_id).await;
 
@@ -301,8 +298,7 @@ async fn list_notice_recipients_succeeds(pool: PgPool) {
 async fn acknowledge_legal_notice_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-notice-ack").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-notice-ack").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let (notice_id, recipient_id) =
         create_notice_with_recipient(&app, &token, org_id, user_id).await;
@@ -351,8 +347,7 @@ async fn create_compliance_template(app: &TestApp, token: &str, org_id: Uuid) ->
 async fn create_compliance_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-create").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-create").await;
 
     let resp = app
         .execute(
@@ -374,8 +369,7 @@ async fn create_compliance_template_succeeds(pool: PgPool) {
 async fn list_compliance_templates_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-list").await;
     create_compliance_template(&app, &token, org_id).await;
 
     let resp = app
@@ -398,8 +392,7 @@ async fn list_compliance_templates_succeeds(pool: PgPool) {
 async fn get_compliance_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-get").await;
     let tpl_id = create_compliance_template(&app, &token, org_id).await;
 
     let resp = app
@@ -419,8 +412,7 @@ async fn get_compliance_template_succeeds(pool: PgPool) {
 async fn update_compliance_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-upd").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-upd").await;
     let tpl_id = create_compliance_template(&app, &token, org_id).await;
 
     let resp = app
@@ -439,8 +431,7 @@ async fn update_compliance_template_succeeds(pool: PgPool) {
 async fn delete_compliance_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-del").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-del").await;
     let tpl_id = create_compliance_template(&app, &token, org_id).await;
 
     let resp = app
@@ -458,8 +449,7 @@ async fn delete_compliance_template_succeeds(pool: PgPool) {
 async fn apply_compliance_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-tpl-apply").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-tpl-apply").await;
     let tpl_id = create_compliance_template(&app, &token, org_id).await;
 
     let resp = app
@@ -484,8 +474,7 @@ async fn apply_compliance_template_succeeds(pool: PgPool) {
 async fn list_audit_trail_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "legal-audit-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "legal-audit-list").await;
 
     let resp = app
         .execute(
@@ -497,7 +486,10 @@ async fn list_audit_trail_succeeds(pool: PgPool) {
 
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
-    assert!(body["audit_entries"].is_array(), "expected audit_entries array");
+    assert!(
+        body["audit_entries"].is_array(),
+        "expected audit_entries array"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

@@ -124,8 +124,7 @@ async fn upload_lease_document_succeeds(pool: PgPool) {
 async fn list_lease_documents_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-list-docs").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-list-docs").await;
     let user_id = user_id_for(&pool, &user.email).await;
     seed_lease_document(&pool, org_id, user_id).await;
 
@@ -218,8 +217,7 @@ async fn process_lease_document_succeeds(pool: PgPool) {
 async fn list_lease_extractions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-list-ext").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-list-ext").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_lease_document(&pool, org_id, user_id).await;
     seed_lease_extraction(&pool, doc_id).await;
@@ -246,8 +244,7 @@ async fn list_lease_extractions_succeeds(pool: PgPool) {
 async fn get_lease_extraction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-get-ext").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-get-ext").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_lease_document(&pool, org_id, user_id).await;
     let ext_id = seed_lease_extraction(&pool, doc_id).await;
@@ -339,8 +336,7 @@ async fn reject_lease_extraction_succeeds(pool: PgPool) {
 async fn list_extraction_corrections_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-list-corr").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-list-corr").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_lease_document(&pool, org_id, user_id).await;
     let ext_id = seed_lease_extraction(&pool, doc_id).await;
@@ -364,8 +360,7 @@ async fn list_extraction_corrections_succeeds(pool: PgPool) {
 async fn add_extraction_correction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-add-corr").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-add-corr").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_lease_document(&pool, org_id, user_id).await;
     let ext_id = seed_lease_extraction(&pool, doc_id).await;
@@ -393,8 +388,7 @@ async fn add_extraction_correction_succeeds(pool: PgPool) {
 async fn list_lease_imports_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "la-list-imports").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "la-list-imports").await;
 
     let resp = app
         .execute(
@@ -479,11 +473,7 @@ async fn list_forms_succeeds(pool: PgPool) {
     create_form(&app, &token, org_id).await;
 
     let resp = app
-        .execute(
-            app.session(token, org_id)
-                .get("/api/v1/forms")
-                .build(),
-        )
+        .execute(app.session(token, org_id).get("/api/v1/forms").build())
         .await;
 
     resp.assert_status(StatusCode::OK);
@@ -498,8 +488,7 @@ async fn list_forms_succeeds(pool: PgPool) {
 async fn list_available_forms_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-available").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-available").await;
 
     let resp = app
         .execute(
@@ -673,8 +662,7 @@ async fn add_field(app: &TestApp, token: &str, org_id: Uuid, form_id: Uuid) -> U
 async fn list_form_fields_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-list-fields").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-list-fields").await;
     let form_id = create_form(&app, &token, org_id).await;
 
     let resp = app
@@ -694,8 +682,7 @@ async fn list_form_fields_succeeds(pool: PgPool) {
 async fn add_form_field_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-add-field").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-add-field").await;
     let form_id = create_form(&app, &token, org_id).await;
 
     let resp = app
@@ -722,8 +709,7 @@ async fn add_form_field_succeeds(pool: PgPool) {
 async fn reorder_form_fields_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-reorder").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-reorder").await;
     let form_id = create_form(&app, &token, org_id).await;
 
     // Get the field created by create_form
@@ -760,8 +746,7 @@ async fn reorder_form_fields_succeeds(pool: PgPool) {
 async fn update_form_field_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-upd-field").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-upd-field").await;
     let form_id = create_form(&app, &token, org_id).await;
     let field_id = add_field(&app, &token, org_id, form_id).await;
 
@@ -781,8 +766,7 @@ async fn update_form_field_succeeds(pool: PgPool) {
 async fn delete_form_field_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-del-field").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-del-field").await;
     let form_id = create_form(&app, &token, org_id).await;
     let field_id = add_field(&app, &token, org_id, form_id).await;
 
@@ -847,8 +831,7 @@ async fn create_published_form_with_submission(
 async fn list_form_submissions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-list-subs").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-list-subs").await;
     let (form_id, _) = create_published_form_with_submission(&app, &token, org_id).await;
 
     let resp = app
@@ -871,8 +854,7 @@ async fn list_form_submissions_succeeds(pool: PgPool) {
 async fn get_form_submission_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-get-sub").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-get-sub").await;
     let (form_id, sub_id) = create_published_form_with_submission(&app, &token, org_id).await;
 
     let resp = app
@@ -895,8 +877,7 @@ async fn get_form_submission_succeeds(pool: PgPool) {
 async fn review_form_submission_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-review-sub").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-review-sub").await;
     let (form_id, sub_id) = create_published_form_with_submission(&app, &token, org_id).await;
 
     let resp = app
@@ -920,8 +901,7 @@ async fn review_form_submission_succeeds(pool: PgPool) {
 async fn record_form_download_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "form-download").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "form-download").await;
     let form_id = create_form(&app, &token, org_id).await;
 
     // Publish so the form is findable for download tracking
