@@ -36,19 +36,19 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | GET | /api/v1/marketplace/verifications/expiring | get_expiring_verifications | partial | — | |
 | GET | /api/v1/marketplace/verifications/{id} | get_verification | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
 | POST | /api/v1/marketplace/verifications/{id}/review | review_verification | partial | marketplace_voting_investor_cross_org_idor_tests.rs | authz-only (403) |
-| GET | /api/v1/marketplace/providers/{id}/badges | list_provider_badges | partial | — | |
-| POST | /api/v1/marketplace/providers/{id}/badges | award_badge | partial | — | |
+| GET | /api/v1/marketplace/providers/{id}/badges | list_provider_badges | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/marketplace/providers/{id}/badges | award_badge | done | integrations_marketplace_reviews_tests.rs | |
 | DELETE | /api/v1/marketplace/badges/{id} | revoke_badge | partial | marketplace_voting_investor_cross_org_idor_tests.rs | authz-only (403) |
-| POST | /api/v1/marketplace/providers/{id}/reviews | create_review | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/reviews | list_provider_reviews | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/ratings | get_rating_breakdown | partial | — | |
-| GET | /api/v1/marketplace/reviews | list_reviews | partial | — | |
-| GET | /api/v1/marketplace/reviews/{id} | get_review | partial | — | |
-| PATCH | /api/v1/marketplace/reviews/{id} | update_review | partial | — | |
-| DELETE | /api/v1/marketplace/reviews/{id} | delete_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/respond | respond_to_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/moderate | moderate_review | partial | — | |
-| POST | /api/v1/marketplace/reviews/{id}/helpful | mark_review_helpful | partial | — | |
+| POST | /api/v1/marketplace/providers/{id}/reviews | create_review | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/marketplace/providers/{id}/reviews | list_provider_reviews | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/marketplace/providers/{id}/ratings | get_rating_breakdown | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/marketplace/reviews | list_reviews | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/marketplace/reviews/{id} | get_review | done | integrations_marketplace_reviews_tests.rs | |
+| PATCH | /api/v1/marketplace/reviews/{id} | update_review | done | integrations_marketplace_reviews_tests.rs | |
+| DELETE | /api/v1/marketplace/reviews/{id} | delete_review | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/marketplace/reviews/{id}/respond | respond_to_review | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/marketplace/reviews/{id}/moderate | moderate_review | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/marketplace/reviews/{id}/helpful | mark_review_helpful | done | integrations_marketplace_reviews_tests.rs | |
 | GET | /api/v1/marketplace/dashboard | get_manager_dashboard | partial | — | |
 
 ## public_api.rs  (mount: UNMOUNTED — ROADMAP(PAP-24) /api/v1/developer not nested in lib.rs)
@@ -225,19 +225,19 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | GET | /api/v1/feature-packages/organizations/{org_id} | get_org_packages | partial | — | |
 | POST | /api/v1/feature-packages/organizations/{org_id}/assign | assign_package | partial | — | |
 | DELETE | /api/v1/feature-packages/organizations/{org_id}/packages/{pid} | deactivate_org_package | partial | — | |
-| GET | /api/v1/feature-packages/public/ | list_public_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/compare | compare_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/{id} | get_public_package | partial | — | public_router |
+| GET | /api/v1/feature-packages/public/ | list_public_packages | done | integrations_marketplace_reviews_tests.rs | public_router |
+| GET | /api/v1/feature-packages/public/compare | compare_packages | done | integrations_marketplace_reviews_tests.rs | public_router |
+| GET | /api/v1/feature-packages/public/{id} | get_public_package | done | integrations_marketplace_reviews_tests.rs | public_router |
 
 ## features.rs  (mount: /api/v1/features)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/features/resolved | get_resolved_features | partial | — | real handler, no test |
-| GET | /api/v1/features/{key}/check | check_feature | partial | — | |
-| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | partial | — | |
-| POST | /api/v1/features/{key}/preference | set_feature_preference | partial | — | |
-| POST | /api/v1/features/analytics/event | log_feature_event | partial | — | |
-| GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | partial | — | |
+| GET | /api/v1/features/resolved | get_resolved_features | done | integrations_marketplace_reviews_tests.rs | real handler, no test |
+| GET | /api/v1/features/{key}/check | check_feature | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/features/{key}/preference | set_feature_preference | done | integrations_marketplace_reviews_tests.rs | |
+| POST | /api/v1/features/analytics/event | log_feature_event | done | integrations_marketplace_reviews_tests.rs | |
+| GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | done | integrations_marketplace_reviews_tests.rs | |
 
 ## integrations/install.rs  (mount: /api/v1/integrations)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 30 | partial: 165 | stub: 73 | missing: 0 | total: 268
 </content>
