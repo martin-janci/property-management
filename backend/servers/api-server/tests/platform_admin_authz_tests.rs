@@ -123,7 +123,7 @@ fn membership_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn audit_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/audit";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/csv"), None),
     ]
 }
@@ -141,7 +141,7 @@ fn metrics_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn principals_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/principals";
     vec![
-        (Method::GET, format!("{base}"), None),
+        (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (
             Method::PUT,
