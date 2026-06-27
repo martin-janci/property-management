@@ -42,7 +42,10 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 async fn list_saved_searches_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send(&app, Method::GET, "/api/v1/saved-searches", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_saved_searches");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_saved_searches"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -51,7 +54,10 @@ async fn list_saved_searches_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = saved_searches_router(pool);
     let status = send(&app, Method::GET, "/api/v1/saved-searches", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_saved_searches must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated list_saved_searches must not return 401"
+    );
 }
 
 // ── create_saved_search ─────────────────────────────────────────────────────
@@ -67,7 +73,10 @@ async fn create_saved_search_unauthenticated_returns_401(pool: PgPool) {
         json!({"name": "test", "filters": {}}),
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated create_saved_search");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated create_saved_search"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -83,7 +92,10 @@ async fn create_saved_search_authenticated_returns_non_401(pool: PgPool) {
         json!({"name": "My Search", "filters": {}}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated create_saved_search must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated create_saved_search must not return 401"
+    );
 }
 
 // ── list_search_alerts ──────────────────────────────────────────────────────
@@ -92,7 +104,10 @@ async fn create_saved_search_authenticated_returns_non_401(pool: PgPool) {
 async fn list_search_alerts_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send(&app, Method::GET, "/api/v1/saved-searches/alerts", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_search_alerts");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_search_alerts"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -100,8 +115,17 @@ async fn list_search_alerts_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-alerts").await;
     let token = mint_token(user);
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::GET, "/api/v1/saved-searches/alerts", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_search_alerts must not return 401");
+    let status = send(
+        &app,
+        Method::GET,
+        "/api/v1/saved-searches/alerts",
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated list_search_alerts must not return 401"
+    );
 }
 
 // ── mark_all_alerts_read ────────────────────────────────────────────────────
@@ -109,8 +133,17 @@ async fn list_search_alerts_authenticated_returns_non_401(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn mark_all_alerts_read_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::POST, "/api/v1/saved-searches/alerts/read-all", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated mark_all_alerts_read");
+    let status = send(
+        &app,
+        Method::POST,
+        "/api/v1/saved-searches/alerts/read-all",
+        None,
+    )
+    .await;
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated mark_all_alerts_read"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -118,8 +151,17 @@ async fn mark_all_alerts_read_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-all-alerts").await;
     let token = mint_token(user);
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::POST, "/api/v1/saved-searches/alerts/read-all", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated mark_all_alerts_read must not return 401");
+    let status = send(
+        &app,
+        Method::POST,
+        "/api/v1/saved-searches/alerts/read-all",
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated mark_all_alerts_read must not return 401"
+    );
 }
 
 // ── mark_alert_read ─────────────────────────────────────────────────────────
@@ -135,7 +177,10 @@ async fn mark_alert_read_unauthenticated_returns_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated mark_alert_read");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated mark_alert_read"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -151,7 +196,10 @@ async fn mark_alert_read_authenticated_unknown_returns_non_401(pool: PgPool) {
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated mark_alert_read must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated mark_alert_read must not return 401"
+    );
 }
 
 // ── get_saved_search ────────────────────────────────────────────────────────
@@ -160,8 +208,17 @@ async fn mark_alert_read_authenticated_unknown_returns_non_401(pool: PgPool) {
 async fn get_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::GET, &format!("/api/v1/saved-searches/{id}"), None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated get_saved_search");
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/saved-searches/{id}"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated get_saved_search"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -170,8 +227,17 @@ async fn get_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::GET, &format!("/api/v1/saved-searches/{id}"), Some(&token)).await;
-    assert_ne!(status, 401, "authenticated get_saved_search must not return 401");
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/saved-searches/{id}"),
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated get_saved_search must not return 401"
+    );
 }
 
 // ── update_saved_search ─────────────────────────────────────────────────────
@@ -188,7 +254,10 @@ async fn update_saved_search_unauthenticated_returns_401(pool: PgPool) {
         json!({"name": "updated"}),
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated update_saved_search");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated update_saved_search"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -205,7 +274,10 @@ async fn update_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
         json!({"name": "updated"}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated update_saved_search must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated update_saved_search must not return 401"
+    );
 }
 
 // ── delete_saved_search ─────────────────────────────────────────────────────
@@ -214,8 +286,17 @@ async fn update_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
 async fn delete_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::DELETE, &format!("/api/v1/saved-searches/{id}"), None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated delete_saved_search");
+    let status = send(
+        &app,
+        Method::DELETE,
+        &format!("/api/v1/saved-searches/{id}"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated delete_saved_search"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -224,8 +305,17 @@ async fn delete_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
     let token = mint_token(user);
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::DELETE, &format!("/api/v1/saved-searches/{id}"), Some(&token)).await;
-    assert_ne!(status, 401, "authenticated delete_saved_search must not return 401");
+    let status = send(
+        &app,
+        Method::DELETE,
+        &format!("/api/v1/saved-searches/{id}"),
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated delete_saved_search must not return 401"
+    );
 }
 
 // ── run_saved_search ────────────────────────────────────────────────────────
@@ -234,8 +324,17 @@ async fn delete_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
 async fn run_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::POST, &format!("/api/v1/saved-searches/{id}/run"), None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated run_saved_search");
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/saved-searches/{id}/run"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated run_saved_search"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -244,6 +343,15 @@ async fn run_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
-    let status = send(&app, Method::POST, &format!("/api/v1/saved-searches/{id}/run"), Some(&token)).await;
-    assert_ne!(status, 401, "authenticated run_saved_search must not return 401");
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/saved-searches/{id}/run"),
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated run_saved_search must not return 401"
+    );
 }

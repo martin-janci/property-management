@@ -56,7 +56,10 @@ async fn send_contact_message_unauthenticated_does_not_return_401(pool: PgPool) 
         }),
     )
     .await;
-    assert_ne!(status, 401, "public send_contact_message must not require auth");
+    assert_ne!(
+        status, 401,
+        "public send_contact_message must not require auth"
+    );
 }
 
 // ── request_viewing (public) ────────────────────────────────────────────────
@@ -86,7 +89,10 @@ async fn request_viewing_unauthenticated_does_not_return_401(pool: PgPool) {
 async fn list_my_inquiries_unauthenticated_returns_401(pool: PgPool) {
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_my_inquiries");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_my_inquiries"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -95,7 +101,10 @@ async fn list_my_inquiries_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_my_inquiries must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated list_my_inquiries must not return 401"
+    );
 }
 
 // ── list_buyer_inquiries ────────────────────────────────────────────────────
@@ -104,7 +113,10 @@ async fn list_my_inquiries_authenticated_returns_non_401(pool: PgPool) {
 async fn list_buyer_inquiries_unauthenticated_returns_401(pool: PgPool) {
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries/mine", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_buyer_inquiries");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_buyer_inquiries"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -113,7 +125,10 @@ async fn list_buyer_inquiries_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries/mine", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_buyer_inquiries must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated list_buyer_inquiries must not return 401"
+    );
 }
 
 // ── get_inquiry ─────────────────────────────────────────────────────────────
@@ -132,7 +147,13 @@ async fn get_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
-    let status = send(&app, Method::GET, &format!("/api/v1/inquiries/{id}"), Some(&token)).await;
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/{id}"),
+        Some(&token),
+    )
+    .await;
     assert_ne!(status, 401, "authenticated get_inquiry must not return 401");
 }
 
@@ -142,7 +163,13 @@ async fn get_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) {
 async fn mark_as_read_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
-    let status = send(&app, Method::PUT, &format!("/api/v1/inquiries/{id}/read"), None).await;
+    let status = send(
+        &app,
+        Method::PUT,
+        &format!("/api/v1/inquiries/{id}/read"),
+        None,
+    )
+    .await;
     assert_eq!(status, 401, "expected 401 for unauthenticated mark_as_read");
 }
 
@@ -152,8 +179,17 @@ async fn mark_as_read_authenticated_unknown_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
-    let status = send(&app, Method::PUT, &format!("/api/v1/inquiries/{id}/read"), Some(&token)).await;
-    assert_ne!(status, 401, "authenticated mark_as_read must not return 401");
+    let status = send(
+        &app,
+        Method::PUT,
+        &format!("/api/v1/inquiries/{id}/read"),
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated mark_as_read must not return 401"
+    );
 }
 
 // ── respond_to_inquiry ──────────────────────────────────────────────────────
@@ -170,7 +206,10 @@ async fn respond_to_inquiry_unauthenticated_returns_401(pool: PgPool) {
         json!({"message": "Thank you for your inquiry"}),
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated respond_to_inquiry");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated respond_to_inquiry"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -187,5 +226,8 @@ async fn respond_to_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) 
         json!({"message": "Thank you for your inquiry"}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated respond_to_inquiry must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated respond_to_inquiry must not return 401"
+    );
 }

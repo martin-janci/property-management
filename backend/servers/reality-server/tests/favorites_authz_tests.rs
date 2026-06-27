@@ -44,7 +44,10 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 async fn list_favorites_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_favorites");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_favorites"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -53,7 +56,10 @@ async fn list_favorites_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_favorites must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated list_favorites must not return 401"
+    );
 }
 
 // ── list_favorite_alerts ────────────────────────────────────────────────────
@@ -62,7 +68,10 @@ async fn list_favorites_authenticated_returns_non_401(pool: PgPool) {
 async fn list_favorite_alerts_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/alerts", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated list_favorite_alerts");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated list_favorite_alerts"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -71,7 +80,10 @@ async fn list_favorite_alerts_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/alerts", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated list_favorite_alerts must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated list_favorite_alerts must not return 401"
+    );
 }
 
 // ── mark_all_favorite_alerts_read ──────────────────────────────────────────
@@ -79,8 +91,17 @@ async fn list_favorite_alerts_authenticated_returns_non_401(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn mark_all_favorite_alerts_read_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
-    let status = send(&app, Method::POST, "/api/v1/favorites/alerts/read-all", None).await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated mark_all_favorite_alerts_read");
+    let status = send(
+        &app,
+        Method::POST,
+        "/api/v1/favorites/alerts/read-all",
+        None,
+    )
+    .await;
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated mark_all_favorite_alerts_read"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -88,8 +109,17 @@ async fn mark_all_favorite_alerts_read_authenticated_returns_non_401(pool: PgPoo
     let user = seed_user(&pool, "mark-all-fav-alerts").await;
     let token = mint_token(user);
     let app = favorites_router(pool);
-    let status = send(&app, Method::POST, "/api/v1/favorites/alerts/read-all", Some(&token)).await;
-    assert_ne!(status, 401, "authenticated mark_all_favorite_alerts_read must not return 401");
+    let status = send(
+        &app,
+        Method::POST,
+        "/api/v1/favorites/alerts/read-all",
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "authenticated mark_all_favorite_alerts_read must not return 401"
+    );
 }
 
 // ── mark_favorite_alert_read ────────────────────────────────────────────────
@@ -105,7 +135,10 @@ async fn mark_favorite_alert_read_unauthenticated_returns_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated mark_favorite_alert_read");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated mark_favorite_alert_read"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -121,7 +154,10 @@ async fn mark_favorite_alert_read_authenticated_unknown_returns_non_401(pool: Pg
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated mark_favorite_alert_read must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated mark_favorite_alert_read must not return 401"
+    );
 }
 
 // ── list_favorite_ids (SSR-anonymous) ──────────────────────────────────────
@@ -130,7 +166,10 @@ async fn mark_favorite_alert_read_authenticated_unknown_returns_non_401(pool: Pg
 async fn list_favorite_ids_unauthenticated_returns_200(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/ids", None).await;
-    assert_eq!(status, 200, "list_favorite_ids must return 200 for unauthenticated (SSR-anonymous)");
+    assert_eq!(
+        status, 200,
+        "list_favorite_ids must return 200 for unauthenticated (SSR-anonymous)"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -139,7 +178,10 @@ async fn list_favorite_ids_authenticated_returns_200(pool: PgPool) {
     let token = mint_token(user);
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/ids", Some(&token)).await;
-    assert_eq!(status, 200, "authenticated list_favorite_ids must return 200");
+    assert_eq!(
+        status, 200,
+        "authenticated list_favorite_ids must return 200"
+    );
 }
 
 // ── add_favorite ────────────────────────────────────────────────────────────
@@ -171,7 +213,10 @@ async fn add_favorite_authenticated_unknown_listing_returns_non_401(pool: PgPool
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated add_favorite must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated add_favorite must not return 401"
+    );
 }
 
 // ── remove_favorite ─────────────────────────────────────────────────────────
@@ -187,7 +232,10 @@ async fn remove_favorite_unauthenticated_returns_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated remove_favorite");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated remove_favorite"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -203,7 +251,10 @@ async fn remove_favorite_authenticated_unknown_returns_non_401(pool: PgPool) {
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated remove_favorite must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated remove_favorite must not return 401"
+    );
 }
 
 // ── check_favorite ──────────────────────────────────────────────────────────
@@ -219,7 +270,10 @@ async fn check_favorite_unauthenticated_returns_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, 401, "expected 401 for unauthenticated check_favorite");
+    assert_eq!(
+        status, 401,
+        "expected 401 for unauthenticated check_favorite"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -235,5 +289,8 @@ async fn check_favorite_authenticated_returns_non_401(pool: PgPool) {
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated check_favorite must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated check_favorite must not return 401"
+    );
 }
