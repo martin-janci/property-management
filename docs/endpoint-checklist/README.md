@@ -38,7 +38,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 
 | Group | Endpoints | Done | Partial | Stub | % Done (tested) | % Implemented |
 |---|---|---|---|---|---|---|
-| [auth-identity](./groups/auth-identity.md) | 80 | 28 | 38 | 14 | 35.0% | 82.5% |
+| [auth-identity](./groups/auth-identity.md) | 80 | 61 | 5 | 14 | 76.3% | 82.5% |
 | [notifications-comms](./groups/notifications-comms.md) | 87 | 12 | 75 | 0 | 13.8% | 100% |
 | [documents-forms](./groups/documents-forms.md) | 118 | 15 | 103 | 0 | 12.7% | 100% |
 | [reality-server](./groups/reality-server.md) | 96 | 4 | 91 | 1 | 4.2% | 99.0% |
@@ -52,7 +52,7 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **107** | **1831** | **125** | **5.2%** | **93.9%** |
+| **Total** | **2063** | **140** | **1798** | **125** | **6.8%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.
