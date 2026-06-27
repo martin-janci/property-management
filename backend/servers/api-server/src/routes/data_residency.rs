@@ -291,7 +291,7 @@ async fn do_configure_residency(
     let _ = state
         .data_residency_repo
         .create_audit_entry(
-            &mut **rls.conn(),
+            rls.conn(),
             org_id,
             Some(user_id),
             ResidencyAuditEvent::ConfigurationUpdated,
@@ -584,7 +584,7 @@ async fn run_compliance_verification_impl(
     let _ = state
         .data_residency_repo
         .create_audit_entry(
-            &mut **rls.conn(),
+            rls.conn(),
             org_id,
             Some(user_id),
             ResidencyAuditEvent::ComplianceCheckPerformed,
@@ -724,7 +724,7 @@ async fn list_audit_logs_impl(
     let org_id = rls.tenant_id();
     let (entries, total_count) = state
         .data_residency_repo
-        .list_audit_logs(&mut **rls.conn(), org_id, query_params)
+        .list_audit_logs(rls.conn(), org_id, query_params)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -977,7 +977,7 @@ async fn get_residency_dashboard_impl(
     };
     let (entries, _) = state
         .data_residency_repo
-        .list_audit_logs(&mut **rls.conn(), org_id, query)
+        .list_audit_logs(rls.conn(), org_id, query)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 

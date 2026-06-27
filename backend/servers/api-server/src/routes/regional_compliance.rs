@@ -379,7 +379,7 @@ async fn export_slovak_accounting(
     ) = state
         .regional_compliance_repo
         .get_accounting_metrics(
-            &mut **rls.conn(),
+            rls.conn(),
             payload.organization_id,
             payload.from_date,
             payload.to_date,

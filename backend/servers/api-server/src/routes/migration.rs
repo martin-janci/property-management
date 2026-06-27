@@ -893,7 +893,7 @@ async fn get_import_job_status(
 
     let progress_percent = if let Some(total) = job.total_rows {
         if total > 0 {
-            (job.processed_rows * 100 / total) as i32
+            job.processed_rows * 100 / total
         } else {
             0
         }
@@ -992,7 +992,7 @@ async fn cancel_import_job(
 
     let progress_percent = if let Some(total) = updated_job.total_rows {
         if total > 0 {
-            (updated_job.processed_rows * 100 / total) as i32
+            updated_job.processed_rows * 100 / total
         } else {
             0
         }
