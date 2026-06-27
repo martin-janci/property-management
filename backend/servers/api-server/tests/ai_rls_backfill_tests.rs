@@ -369,7 +369,9 @@ async fn update_maintenance_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .put(&format!("/api/v1/ai/equipment/maintenance/{maintenance_id}"))
+                .put(&format!(
+                    "/api/v1/ai/equipment/maintenance/{maintenance_id}"
+                ))
                 .json(json!({ "status": "completed", "description": "Filter replaced" }))
                 .build(),
         )
@@ -529,9 +531,7 @@ async fn list_chat_messages_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!(
-                    "/api/v1/ai/chat/sessions/{session_id}/messages"
-                ))
+                .get(&format!("/api/v1/ai/chat/sessions/{session_id}/messages"))
                 .build(),
         )
         .await;
@@ -552,9 +552,7 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!(
-                    "/api/v1/ai/chat/messages/{message_id}/feedback"
-                ))
+                .post(&format!("/api/v1/ai/chat/messages/{message_id}/feedback"))
                 .json(json!({ "rating": 5, "helpful": true, "feedback_text": "Very helpful!" }))
                 .build(),
         )

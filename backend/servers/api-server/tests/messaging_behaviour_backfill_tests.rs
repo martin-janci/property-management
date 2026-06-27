@@ -274,7 +274,10 @@ async fn messaging_block_list_unblock(pool: PgPool) {
         )
         .await;
     assert_eq!(unblock.status, StatusCode::OK);
-    assert_eq!(unblock.json_value()["message"], "User unblocked successfully");
+    assert_eq!(
+        unblock.json_value()["message"],
+        "User unblocked successfully"
+    );
 
     // list_blocked_users after unblock → count=0
     let list2 = app
