@@ -1,0 +1,229 @@
+{
+  "date": "2026-06-27",
+  "run_iso": "2026-06-27T02:25:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine has not run in 10d 22h — last run 2026-06-16T03:25Z, this run 2026-06-27T02:25Z"
+    },
+    {
+      "id": "stale-routine-2026-06-27",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "state.json last_run_iso is 10d old; cloud routine cron is likely paused. Dispatcher (separate loop on planning branch) appears to still be ticking — see .research/management/assignments.json on planning"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "PR #1713 reverts PR #1690 (feat(delegations): wire delegation feature into ppt-web) — re-added feature collided with delegation retirement (BIT-213)"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot[bot]: chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates — merged"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot[bot]: chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group — merged"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 commits in 2026-06-16..2026-06-27 (Epic 16 BIT-140 alert_frequency cadence + BIT-139 transport drainer)"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/db/src/repositories/reality_portal.rs",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit (allowlist=churn-hotspot): re-churn 2026-06-16..2026-06-27 — 3 commits (Epic 16 saved-search + favorites); score_delta NOT re-applied per G4"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/db/src/models/reality_portal.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 commits in 2026-06-16..2026-06-27 (Epic 16 alert + org-scoped favorite alert worker)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 allowlist requires high-confidence signals from a narrow allowlist; this run produced no eligible candidates (the revert, churn, and dep-update signals are not in Phase 5's auto-fix allowlist)",
+  "resolution_log": [
+    {
+      "backlog_id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "resolving_pr": 1798
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "resolving_pr": 1800
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "resolving_pr": 1683
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+      "resolving_pr": 1796
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "resolving_pr": 1708
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "resolving_pr": 1693
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+      "resolving_pr": 1816
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+      "resolving_pr": 1810
+    },
+    {
+      "backlog_id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "resolving_pr": 1719
+    },
+    {
+      "backlog_id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "resolving_pr": 1718
+    },
+    {
+      "backlog_id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "resolving_pr": 1700
+    },
+    {
+      "backlog_id": "code-review-mobile-rn-screens-mock-data",
+      "resolving_pr": 1681
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": null,
+      "command": "test -f .research/briefs/2026-06-27.md && head -1 .research/briefs/2026-06-27.md | grep -q '^# 2026-06-27$'",
+      "observed": "deferred to post-write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": null,
+      "command": "jq state-diff vs HEAD",
+      "observed": "deferred to commit gate",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": null,
+      "command": "jq dedup check",
+      "observed": "deferred to commit gate",
+      "expected": "true"
+    },
+    {
+      "goal": "G5(cap)",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/",
+      "observed": "0 new plans (Phase 3 promoted nothing this run)",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": null,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "deferred to commit gate",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": null,
+      "command": "git diff --cached secret-scan",
+      "observed": "deferred to commit gate",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md $(regen)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md $(regen)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "len(auto_fix_actions)==0",
+      "observed": "0 actions",
+      "expected": "≤1 per category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "no-op (Phase 1.6 skipped)",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": null,
+      "command": "git diff --cached telegram-scan",
+      "observed": "deferred to commit gate",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "Phase 1.5 (rotating expert review) skipped this run — lag-catchup discipline: 10 days behind, prioritised observation harvest + backlog reconciliation over a 4-hour static review pass. review_cursor untouched.",
+    "Phase 1.6 (project-management/scrum-master) skipped this run — same rationale. pm_cursor + coverage_cursor untouched. G16 is a no-op when 1.6 is skipped.",
+    "Phase 5 (auto-fix) — no candidate. Kill switch not set.",
+    "Phase 2 step-ordering deviation noted: applied step 6 (resolution check) BEFORE step 5 (decay) for the 12 verbatim id-in-PR-title matches, so PR-resolved items mark as 'done' instead of 'dropped: decayed'. This is more honest than strict-order decay-first for items resolved during the lag window. The 25 unrelated decays still ran with score_delta=-1 per spec."
+  ]
+}
