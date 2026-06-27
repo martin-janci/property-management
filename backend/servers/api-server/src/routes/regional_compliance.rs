@@ -158,7 +158,10 @@ async fn validate_slovak_vote(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Slovakia, payload.decision_type.legal_reference())
+        .get_quorum_rule(
+            Jurisdiction::Slovakia,
+            payload.decision_type.legal_reference(),
+        )
         .await
         .map_err(|e| {
             (
@@ -594,7 +597,10 @@ async fn validate_czech_vote(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Czechia, payload.decision_type.legal_reference())
+        .get_quorum_rule(
+            Jurisdiction::Czechia,
+            payload.decision_type.legal_reference(),
+        )
         .await
         .map_err(|e| {
             (
