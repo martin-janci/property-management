@@ -24,11 +24,12 @@ use db::{
         HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
         ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
-        MeterRepository, MultiCurrencyRepository, NotificationPreferenceRepository,
-        OAuthRepository, OnboardingRepository, OperationsRepository, OrganizationMemberRepository,
-        OrganizationRepository, OutageRepository, OwnerAnalyticsRepository,
-        PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
-        PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
+        MeterRepository, MigrationRepository, MultiCurrencyRepository,
+        NotificationPreferenceRepository, OAuthRepository, OnboardingRepository,
+        OperationsRepository, OrganizationMemberRepository, OrganizationRepository,
+        OutageRepository, OwnerAnalyticsRepository, PackageVisitorRepository,
+        PasswordResetRepository, PersonMonthRepository, PlatformAdminRepository,
+        PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
         RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
         SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
@@ -298,6 +299,8 @@ pub struct AppState {
     pub integration_repo: IntegrationRepository,
     // Epic 65: Energy & Sustainability Tracking
     pub energy_repo: EnergyRepository,
+    // Epic 66: Platform Migration & Data Import
+    pub migration_repo: MigrationRepository,
     // Epic 64: Advanced AI & LLM Capabilities
     pub llm_document_repo: LlmDocumentRepository,
     // Epic 57: Pet & Vehicle Registry
@@ -495,6 +498,8 @@ impl AppState {
         let integration_repo = IntegrationRepository::new(db.clone());
         // Epic 65: Energy & Sustainability Tracking
         let energy_repo = EnergyRepository::new(db.clone());
+        // Epic 66: Platform Migration & Data Import
+        let migration_repo = MigrationRepository::new(db.clone());
         // Epic 64: Advanced AI & LLM Capabilities
         let llm_document_repo = LlmDocumentRepository::new(db.clone());
         // Epic 57: Pet & Vehicle Registry
@@ -636,6 +641,7 @@ impl AppState {
             package_visitor_repo,
             integration_repo,
             energy_repo,
+            migration_repo,
             llm_document_repo,
             registry_repo,
             operations_repo,

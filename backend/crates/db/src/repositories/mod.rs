@@ -402,3 +402,8 @@ pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateP
 pub mod report_schedule;
 
 pub use report_schedule::ReportScheduleRepository;
+
+// Epic 66: Platform Migration & Data Import
+pub mod migration;
+
+pub use migration::MigrationRepository;
