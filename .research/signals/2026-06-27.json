@@ -1,0 +1,253 @@
+{
+  "date": "2026-06-27",
+  "lag_days": 11,
+  "phase_status": {
+    "phase_1": "ok",
+    "phase_1_5": "ok",
+    "phase_1_6": "ok",
+    "phase_2": "ok",
+    "phase_3": "ok",
+    "phase_4": "ok"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "11d 264h since last successful routine commit on dev (2026-06-16T03:25Z). Two intermediate runs (2026-06-22 brief and 2026-06-25 brief) exist on abandoned session branches (claude/wonderful-gates-24vsrc, claude/wonderful-gates-if8yht) but were never replayed onto dev by research-land.yml \u2014 suspect CI replay regression.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-27",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-06-16T03:25Z is 11d old; cloud routine appears paused or unable to push. Dispatcher (planning branch) is still ticking. Possible cause: research-land.yml replay not running or routine-trigger cron disabled.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverted #1690 (delegations frontend) \u2014 re-merge raced with CEO ruling that delegation stays retired. Process gap: PR #1690 merged 16 minutes before the board decision dropped; agent-PR merging is not gated on retirement decision sync.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        "frontend/apps/ppt-web/src/pages/delegations/",
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "PR #1723",
+      "score_delta": 2,
+      "evidence": "PR #1723 (fix: rustfmt compliance for financial reports routes) body contains unchecked `- [ ]` markers. PR itself is a fmt-only fix; the unchecked items refer to outstanding non-formatting follow-up. Low practical risk because the PR is fmt-only.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/financial_reports/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-reality_portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since 2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/models/reality_portal.rs touched 3 times in the last 11d (saved-search alerts feature shipping series). First-time hotspot \u2014 runs_seen will become 1.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality_portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since 2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/reality_portal.rs touched 3 times in the last 11d (saved-search alerts feature shipping series). First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved_search_alerts-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since 2026-06-16 churn",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs touched 3 times in the last 11d (Story 16.3 alert_frequency + email/push transport drainer). First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-06-pkg-bumps",
+      "type": "dep-update-noise",
+      "source": "PRs #1567 + #1568",
+      "score_delta": 0,
+      "evidence": "2 dependabot PRs in window (gradle-minor-patch group, tower-http 0.6.11 \u2192 0.7.0). Both auto-merged. No follow-up needed.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-reality-server-drainer-dup-send",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 \u2014 when any channel succeeds (`any_ok=true`) but `mark_search_alert_notified` then fails, worker logs and continues without `record_search_alert_notify_failure`. Row stays `notified_at IS NULL` with `notify_attempts` unchanged \u2192 next 60s poll re-sends the email+push. Bounded retry only fires in the `else if` branch where `any_ok` was false. User-facing duplicate delivery bug.",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-watermark-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs:176-180 & 237-240 \u2014 `mark_saved_search_matched` calls use `let _ = \u2026await;` and silently swallow DB errors. First-sighting branch leaves `last_matched_at` unset \u2192 search re-enters 'no watermark' on every poll; post-scan watermark advance silently fails \u2192 breaks documented daily/weekly cadence (comment at 234-236 explicitly warns this). At minimum a tracing::warn! is missing.",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit with score_delta>0 absent",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied (11 decayed, 26 dropped)",
+      "observed": "0 violations",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotates adversarial pass for the one new plan",
+      "observed": "passed",
+      "expected": "passed | fixed-in-place | rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, all metadata + 11 headings + file paths exist",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists 'Phases that failed: none'",
+      "observed": "none",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans all present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD (7 >= 7)",
+      "observed": "7>=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline (no actions this run)",
+      "observed": "empty",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor advanced",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type reached confidence=high + score>=3 + not-in-history this run"
+}

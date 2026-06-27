@@ -1,62 +1,56 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-27
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Run by pm-rotation index 5 → 6._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Sprint has active auth/authz debt across four open THB issues (#480, #481, #482, #487) that gate Epic 10A OAuth stories; messaging attachment IDOR (#1791) has test coverage landed but the GitHub issue remains flagged, while SSO CSRF-skip (#1826) is documented as intentional PKCE-based protection in sso.rs:42-49 but requires independent verification that state param is always validated on callback.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Verify issue #481 (OAuth refresh-token revocation) is fully fixed: confirm OAuthRepository::find_refresh_token_by_hash includes AND revoked_at IS NULL on the production grant path (not the family-reuse any-status variant)
+  - owner: rust-backend
+  - DoD: Issue #481 closed with confirmed query using revoked_at IS NULL; stories 10a-1 and 10a-3 unblocked
+- **[high]** Audit issue #480: WebSocket auth token in query param — confirm converged DB-checked handler (PR #1737) never writes token value to tracing/access logs; confirm session re-validation on JWT expiry
+  - owner: rust-backend
+  - DoD: Issue #480 closed; no JWT token value in structured logs; expiry re-check confirmed
+- **[high]** Independently verify #1826 (reality-web SSO callback CSRF): confirm sso_callback at backend/servers/reality-server/src/routes/sso.rs enforces state→session-id lookup on every callback and that in-memory sso_sessions has TTL/expiry
+  - owner: rust-backend
+  - DoD: State param validated server-side on every callback; stale sessions pruned; #1826 closed or accepted-risk documented
+- **[high]** Close or scope issue #1791 (message attachment IDOR): messaging_attachments_authz_tests.rs covers participant isolation — confirm the route handler enforces the same checks in production, not just tests
+  - owner: rust-backend
+  - DoD: Issue #1791 closed or residual scope documented; no unguarded attachment download path
+- **[medium]** Fix issue #482 (ProtectedRoute role fallback uses tenants[0] for multi-tenant users): wrong tenant silently grants/denies based on array order; add unit tests for multi-tenant fixture
+  - owner: react-web
+  - DoD: Issue #482 closed; ProtectedRoute selects role from active tenant context, not array position; tests present
+- **[medium]** Validate search_alert_drainer.rs PII handling: LogEmailTransport logs to_email at INFO; confirm production log filters strip it before SMTP wire-up
+  - owner: rust-backend
+  - DoD: Email address not in info-level logs in production config; or field redacted/hashed
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **medium/high** — Issue #481 open: if OAuthRepository production lookup omits revoked_at IS NULL, revoked refresh tokens are reusable — direct RFC 9700 violation enabling token reuse after logout/rotation
+  - mitigation: Sprint gate blocks 10a-1/10a-3 from 'done'; must close before Epic 10A ships to prod
+- **high/high** — Issue #480 open: JWT token value emitted in WebSocket query param may surface in access logs (credential-in-logs exposure)
+  - mitigation: PR #1737 removed duplicate handler; confirm surviving handler strips token from log context before closing #480
+- **low/high** — Issue #1826 (SSO callback CSRF): sso.rs comment asserts PKCE session_id provides CSRF protection but in-memory sso_sessions has no documented TTL — stale entries could be exploited
+  - mitigation: session_id IS UUID v4 (random); add TTL eviction of pending sessions older than ~10 minutes
+- **medium/medium** — LogEmailTransport logs recipient email at INFO; in prod = PII in structured logs; duplicate-delivery bug could compound by sending to wrong user_id row
+  - mitigation: Replace to_email field with hashed/truncated value; audit RealityPortalRepository drain query for per-row user_id scoping
+- **medium/high** — Issue #487 open: MFA brute-force/rate-limit test coverage missing — no regression guard against MFA bypass via rapid guessing; gates 10a-1
+  - mitigation: Add rate-limit integration tests for MFA endpoint before Epic 10A stories promote to done
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Does OAuthRepository::find_refresh_token_by_hash (production grant path) include AND revoked_at IS NULL, or was #481 fix only partial?
+- Does sso_sessions in-memory map have TTL/cleanup, or do pending SSO sessions accumulate indefinitely?
+- What is residual scope of #1791 given messaging_attachments_authz_tests.rs already covers main IDOR vectors — close or keep open?
+- Is the deeplink-token-URL-decode backlog item scheduled this sprint or deferred, and does it affect OAuth redirects in Epic 10A?
+- Does the org-scoped favorite alert worker (PR #1850) run service-role without RLS and fan out strictly by row-level user_id like search_alert_drainer?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Accept or fix PII (email address) in INFO-level structured logs from LogEmailTransport before real SMTP transport enabled — owner: rust-backend + Tech Lead
+- Determine whether #1826 SSO CSRF concern is fully mitigated by PKCE session_id approach or requires additional TTL eviction + documentation — owner: rust-backend + Security Lead
+- Decide whether THB #480/#481/#482/#487 must all close before Epic 10A ships to prod, or if any can be formally deferred with a tracking issue — owner: Scrum Master + Tech Lead
+

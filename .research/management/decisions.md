@@ -85,3 +85,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## 2026-06-27 decisions needed (pm-scrum-master + pm-security rotation)
+
+- Formally defer or fix THB issues #481/#482/#487 this sprint to unblock Epic 10A — owner: pm-security + pm-backend, decision by 2026-06-30
+- Decide whether 80-2-dispute-filing-flow AC-4 + 5-step wizard redesign belong this sprint or a follow-up — owner: pm-product
+- Should 7a-3/7a-4/7a-5 start parallel dev while 7a-2 CI fix is pending, accepting merge-order risk? — owner: pm-tech-lead
+- Assign DRI for 37 open follow-up issues' security-class items (#1791, #1826) — pm-backend vs pm-security — owner: pm-scrum-master + pm-security
+- Accept or fix PII (email address) in INFO-level structured logs from LogEmailTransport before real SMTP transport enabled — owner: rust-backend + Tech Lead
+- Determine whether #1826 SSO CSRF concern is fully mitigated by PKCE session_id approach or requires additional TTL eviction + documentation — owner: rust-backend + Security Lead
+- Decide whether THB #480/#481/#482/#487 must all close before Epic 10A ships to prod, or if any can be formally deferred with a tracking issue — owner: Scrum Master + Tech Lead
