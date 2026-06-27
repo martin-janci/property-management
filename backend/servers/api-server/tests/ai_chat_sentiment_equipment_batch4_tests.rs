@@ -186,12 +186,7 @@ async fn create_chat_session_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["id"].is_string());
 }
 
@@ -204,12 +199,7 @@ async fn list_chat_sessions_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/chat/sessions").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -228,12 +218,7 @@ async fn get_chat_session_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(
         resp.json_value()["id"].as_str().unwrap(),
         sess_id.to_string()
@@ -255,12 +240,7 @@ async fn delete_chat_session_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -278,12 +258,7 @@ async fn list_chat_messages_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -304,12 +279,7 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -321,12 +291,7 @@ async fn list_escalated_chat_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/chat/escalated").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 // ---------------------------------------------------------------------------
@@ -342,12 +307,7 @@ async fn get_sentiment_trends_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/sentiment/trends").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -359,12 +319,7 @@ async fn list_sentiment_alerts_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/sentiment/alerts").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -378,19 +333,12 @@ async fn acknowledge_sentiment_alert_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!(
-                    "/api/v1/ai/sentiment/alerts/{alert_id}/acknowledge"
-                ))
+                .post(&format!("/api/v1/ai/sentiment/alerts/{alert_id}/acknowledge"))
                 .json(json!({}))
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -402,12 +350,7 @@ async fn get_sentiment_thresholds_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/sentiment/thresholds").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -424,12 +367,7 @@ async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -441,12 +379,7 @@ async fn get_sentiment_dashboard_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/sentiment/dashboard").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 // ---------------------------------------------------------------------------
@@ -472,12 +405,7 @@ async fn create_equipment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["id"].is_string());
 }
 
@@ -490,12 +418,7 @@ async fn list_equipment_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/equipment/").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["equipment"].is_array());
 }
 
@@ -514,12 +437,7 @@ async fn get_equipment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(resp.json_value()["id"].as_str().unwrap(), eq_id.to_string());
 }
 
@@ -539,12 +457,7 @@ async fn update_equipment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(
         resp.json_value()["name"].as_str().unwrap(),
         "Updated HVAC"
@@ -566,12 +479,7 @@ async fn delete_equipment_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -589,12 +497,7 @@ async fn list_equipment_maintenance_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["maintenance"].is_array());
 }
 
@@ -618,12 +521,7 @@ async fn create_equipment_maintenance_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["id"].is_string());
 }
 
@@ -644,12 +542,7 @@ async fn update_equipment_maintenance_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -661,12 +554,7 @@ async fn list_equipment_predictions_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/ai/equipment/predictions").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["predictions"].is_array());
 }
 
@@ -682,19 +570,12 @@ async fn acknowledge_prediction_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!(
-                    "/api/v1/ai/equipment/predictions/{pred_id}/acknowledge"
-                ))
+                .post(&format!("/api/v1/ai/equipment/predictions/{pred_id}/acknowledge"))
                 .json(json!({"notes": "Scheduled for next week"}))
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -710,12 +591,7 @@ async fn list_equipment_needing_maintenance_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["equipment"].is_array());
 }
 
@@ -745,12 +621,7 @@ async fn create_pet_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
@@ -763,12 +634,7 @@ async fn list_pet_registrations_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/registry/pets").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -789,12 +655,7 @@ async fn get_pet_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(
         resp.json_value()["registration"]["id"].as_str().unwrap(),
         pet_id.to_string()
@@ -819,12 +680,7 @@ async fn update_pet_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -844,12 +700,7 @@ async fn delete_pet_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -870,12 +721,7 @@ async fn review_pet_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -900,12 +746,7 @@ async fn create_vehicle_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
@@ -918,12 +759,7 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/registry/vehicles").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -944,12 +780,7 @@ async fn get_vehicle_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(
         resp.json_value()["registration"]["id"].as_str().unwrap(),
         veh_id.to_string()
@@ -974,12 +805,7 @@ async fn update_vehicle_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -999,12 +825,7 @@ async fn delete_vehicle_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1025,12 +846,7 @@ async fn review_vehicle_registration_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1051,12 +867,7 @@ async fn create_parking_spot_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     assert!(resp.json_value()["spot"]["id"].is_string());
 }
 
@@ -1069,12 +880,7 @@ async fn list_parking_spots_succeeds(pool: PgPool) {
     let resp = app
         .execute(session.get("/api/v1/registry/parking-spots").build())
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value().is_array());
 }
 
@@ -1093,12 +899,7 @@ async fn get_parking_spot_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert_eq!(
         resp.json_value()["spot"]["id"].as_str().unwrap(),
         spot_id.to_string()
@@ -1121,12 +922,7 @@ async fn update_parking_spot_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1144,12 +940,7 @@ async fn delete_parking_spot_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1162,18 +953,11 @@ async fn get_registry_rules_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!(
-                    "/api/v1/registry/buildings/{building_id}/rules"
-                ))
+                .get(&format!("/api/v1/registry/buildings/{building_id}/rules"))
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1186,19 +970,12 @@ async fn update_registry_rules_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .put(&format!(
-                    "/api/v1/registry/buildings/{building_id}/rules"
-                ))
+                .put(&format!("/api/v1/registry/buildings/{building_id}/rules"))
                 .json(json!({"max_pets_per_unit": 2, "allowed_pet_types": ["dog", "cat"]}))
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1211,16 +988,9 @@ async fn get_registry_statistics_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!(
-                    "/api/v1/registry/buildings/{building_id}/statistics"
-                ))
+                .get(&format!("/api/v1/registry/buildings/{building_id}/statistics"))
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
