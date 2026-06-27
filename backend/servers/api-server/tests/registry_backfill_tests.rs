@@ -86,8 +86,12 @@ async fn create_pet(session: &AuthenticatedSession<'_>, app: &TestApp, unit_id: 
         .await;
     assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     let body = resp.json_value();
-    Uuid::parse_str(body["registration"]["id"].as_str().expect("registration.id"))
-        .expect("uuid")
+    Uuid::parse_str(
+        body["registration"]["id"]
+            .as_str()
+            .expect("registration.id"),
+    )
+    .expect("uuid")
 }
 
 /// Create a vehicle registration through the real endpoint and return its id.
@@ -108,8 +112,12 @@ async fn create_vehicle(session: &AuthenticatedSession<'_>, app: &TestApp, unit_
         .await;
     assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
     let body = resp.json_value();
-    Uuid::parse_str(body["registration"]["id"].as_str().expect("registration.id"))
-        .expect("uuid")
+    Uuid::parse_str(
+        body["registration"]["id"]
+            .as_str()
+            .expect("registration.id"),
+    )
+    .expect("uuid")
 }
 
 /// Create a parking spot through the real endpoint and return its id.
