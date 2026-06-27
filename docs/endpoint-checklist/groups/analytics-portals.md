@@ -131,31 +131,31 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 ## government_portal.rs  (mount: /api/v1/government-portal)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/government-portal/connections | list_connections | partial | — | no test file references this prefix |
-| POST | /api/v1/government-portal/connections | create_connection | partial | — | |
-| GET | /api/v1/government-portal/connections/{id} | get_connection | partial | — | |
-| PUT | /api/v1/government-portal/connections/{id} | update_connection | partial | — | |
-| DELETE | /api/v1/government-portal/connections/{id} | delete_connection | partial | — | |
-| POST | /api/v1/government-portal/connections/{id}/test | test_connection | partial | — | |
-| GET | /api/v1/government-portal/templates | list_templates | partial | — | |
-| GET | /api/v1/government-portal/templates/{id} | get_template | partial | — | |
-| GET | /api/v1/government-portal/submissions | list_submissions | partial | — | |
-| POST | /api/v1/government-portal/submissions | create_submission | partial | — | |
-| GET | /api/v1/government-portal/submissions/{id} | get_submission | partial | — | |
-| PUT | /api/v1/government-portal/submissions/{id} | update_submission | partial | — | |
-| POST | /api/v1/government-portal/submissions/{id}/validate | validate_submission | partial | — | |
-| POST | /api/v1/government-portal/submissions/{id}/submit | submit_submission | partial | — | |
-| POST | /api/v1/government-portal/submissions/{id}/cancel | cancel_submission | partial | — | |
-| GET | /api/v1/government-portal/submissions/{id}/audit | get_submission_audit | partial | — | |
-| GET | /api/v1/government-portal/submissions/{id}/attachments | list_attachments | partial | — | |
-| POST | /api/v1/government-portal/submissions/{id}/attachments | add_attachment | partial | — | |
-| DELETE | /api/v1/government-portal/submissions/{submission_id}/attachments/{attachment_id} | delete_attachment | partial | — | |
-| GET | /api/v1/government-portal/schedules | list_schedules | partial | — | |
-| POST | /api/v1/government-portal/schedules | create_schedule | partial | — | |
-| GET | /api/v1/government-portal/schedules/{id} | get_schedule | partial | — | |
-| PUT | /api/v1/government-portal/schedules/{id} | update_schedule | partial | — | |
-| DELETE | /api/v1/government-portal/schedules/{id} | delete_schedule | partial | — | |
-| GET | /api/v1/government-portal/stats | get_stats | partial | — | |
+| GET | /api/v1/government-portal/connections | list_connections | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/connections | create_connection | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/connections/{id} | get_connection | done | analytics_government_portal_success_tests.rs | |
+| PUT | /api/v1/government-portal/connections/{id} | update_connection | done | analytics_government_portal_success_tests.rs | |
+| DELETE | /api/v1/government-portal/connections/{id} | delete_connection | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/connections/{id}/test | test_connection | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/templates | list_templates | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/templates/{id} | get_template | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/submissions | list_submissions | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/submissions | create_submission | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/submissions/{id} | get_submission | done | analytics_government_portal_success_tests.rs | |
+| PUT | /api/v1/government-portal/submissions/{id} | update_submission | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/submissions/{id}/validate | validate_submission | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/submissions/{id}/submit | submit_submission | done | analytics_government_portal_success_tests.rs | seeds validated status directly |
+| POST | /api/v1/government-portal/submissions/{id}/cancel | cancel_submission | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/submissions/{id}/audit | get_submission_audit | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/submissions/{id}/attachments | list_attachments | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/submissions/{id}/attachments | add_attachment | done | analytics_government_portal_success_tests.rs | |
+| DELETE | /api/v1/government-portal/submissions/{submission_id}/attachments/{attachment_id} | delete_attachment | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/schedules | list_schedules | done | analytics_government_portal_success_tests.rs | |
+| POST | /api/v1/government-portal/schedules | create_schedule | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/schedules/{id} | get_schedule | done | analytics_government_portal_success_tests.rs | |
+| PUT | /api/v1/government-portal/schedules/{id} | update_schedule | done | analytics_government_portal_success_tests.rs | |
+| DELETE | /api/v1/government-portal/schedules/{id} | delete_schedule | done | analytics_government_portal_success_tests.rs | |
+| GET | /api/v1/government-portal/stats | get_stats | done | analytics_government_portal_success_tests.rs | |
 
 ## esg_reporting.rs  (mount: /api/v1/esg)
 | Method | Path | Handler | Status | Tests | Notes |
