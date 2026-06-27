@@ -1,0 +1,223 @@
+{
+  "date": "2026-06-27",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine missed runs from 2026-06-16T03:25Z → 2026-06-27T04:14:54Z (11d 264h); cloud cron likely paused — dispatcher state on planning branch should be checked separately",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "stale_routine_alert": true
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 'revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)' reverts PR #1690 (delegations frontend wiring); delegations were already retired and #1690 re-added them in error",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "score_delta_applied": 3
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..origin/dev numstat",
+      "score_delta": 1,
+      "evidence": "2933 additions+deletions across 11d window; top-1 code-file churn",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "score_delta_applied": 1
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..origin/dev numstat",
+      "score_delta": 1,
+      "evidence": "2818 additions+deletions across 11d window; top-2 code-file churn — Booking.com integration (several fix() PRs targeting it: #1743, #1825)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "score_delta_applied": 1
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..origin/dev numstat",
+      "score_delta": 1,
+      "evidence": "2718 additions+deletions across 11d window; top-3 code-file churn",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "score_delta_applied": 1
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2 + this run",
+      "score_delta": 1,
+      "evidence": "previously a hotspot on 2026-06-02; re-emerges as top-3 code-file churn this catch-up run (runs_seen → 3)",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "score_delta_applied": 1
+    },
+    {
+      "id": "catch-up-coverage-limitation-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "96 merged PRs + 83 new issues since 2026-06-16; per-PR diff scan (risky-churn, fixme-in-merged-code, hotfix-no-test, screen-map-drift) is over routine budget for this catch-up run — relied on PR-title signals and aggregate churn; next normal run will resume incremental scanning. follow-up,from-merged-review issues already filed by post-merge-review skill cover most discrete findings",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true (cap), 31 decayed/20 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "no new plans this run → no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases cursors unchanged",
+      "observed": "review_cursor + pm_cursor + coverage_cursor all unchanged",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all prior slugs resolve",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows",
+      "observed": "now=7 head=7",
+      "expected": "now≥head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix counts",
+      "observed": "length=0",
+      "expected": "≤3 with sub-caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram secret scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "resolutions": [
+    "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+    "code-review-mobile-rn-screens-mock-data"
+  ],
+  "decay_count": 31,
+  "dropped_count": 20
+}
