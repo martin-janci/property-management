@@ -7,30 +7,30 @@ No stub markers (`todo!`/`unimplemented!`/`NOT_IMPLEMENTED`/`ROADMAP`) found in 
 ## voting.rs  (mount: /api/v1/voting)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/voting | create_vote | partial | voting_tests.rs | only 401 unauthorized assert |
-| GET | /api/v1/voting | list_votes | partial | voting_tests.rs | only 401 unauthorized assert |
+| POST | /api/v1/voting | create_vote | done | voting_tests.rs | happy-path integrated |
+| GET | /api/v1/voting | list_votes | done | voting_tests.rs | happy-path integrated |
 | GET | /api/v1/voting/{id} | get_vote | done | marketplace_voting_investor_cross_org_idor_tests.rs | `get_vote_for_own_org_succeeds` asserts 200 |
-| PUT | /api/v1/voting/{id} | update_vote | partial | — | no test |
-| DELETE | /api/v1/voting/{id} | delete_vote | partial | — | no test |
-| POST | /api/v1/voting/{id}/publish | publish_vote | partial | — | no test |
-| POST | /api/v1/voting/{id}/cancel | cancel_vote | partial | — | no test |
-| POST | /api/v1/voting/{id}/close | close_vote | partial | — | no test |
-| POST | /api/v1/voting/{id}/questions | add_question | partial | — | no test |
-| GET | /api/v1/voting/{id}/questions | list_questions | partial | — | no test |
-| PUT | /api/v1/voting/{id}/questions/{question_id} | update_question | partial | — | no test |
-| DELETE | /api/v1/voting/{id}/questions/{question_id} | delete_question | partial | — | no test |
-| GET | /api/v1/voting/{id}/eligibility | check_eligibility | partial | — | no test |
-| POST | /api/v1/voting/{id}/cast | cast_vote | partial | voting_tests.rs | only 401 unauthorized assert |
-| GET | /api/v1/voting/{id}/my-response | get_my_response | partial | — | no test |
-| POST | /api/v1/voting/{id}/comments | add_comment | partial | — | no test |
-| GET | /api/v1/voting/{id}/comments | list_comments | partial | — | no test |
-| GET | /api/v1/voting/{id}/comments/{comment_id}/replies | list_replies | partial | — | no test |
-| POST | /api/v1/voting/{id}/comments/{comment_id}/hide | hide_comment | partial | — | no test |
-| GET | /api/v1/voting/{id}/results | get_results | partial | — | no test |
+| PUT | /api/v1/voting/{id} | update_vote | done | voting_behaviour_tests.rs | happy-path: update title |
+| DELETE | /api/v1/voting/{id} | delete_vote | done | voting_behaviour_tests.rs | happy-path: delete draft |
+| POST | /api/v1/voting/{id}/publish | publish_vote | done | voting_behaviour_tests.rs | happy-path: publish draft |
+| POST | /api/v1/voting/{id}/cancel | cancel_vote | done | voting_behaviour_tests.rs | happy-path: cancel active |
+| POST | /api/v1/voting/{id}/close | close_vote | done | voting_behaviour_tests.rs | happy-path: close active |
+| POST | /api/v1/voting/{id}/questions | add_question | done | voting_behaviour_tests.rs | happy-path: add question |
+| GET | /api/v1/voting/{id}/questions | list_questions | done | voting_behaviour_tests.rs | happy-path: list questions |
+| PUT | /api/v1/voting/{id}/questions/{question_id} | update_question | done | voting_behaviour_tests.rs | happy-path: update question |
+| DELETE | /api/v1/voting/{id}/questions/{question_id} | delete_question | done | voting_behaviour_tests.rs | happy-path: delete question |
+| GET | /api/v1/voting/{id}/eligibility | check_eligibility | done | voting_behaviour_tests.rs | happy-path: eligibility check |
+| POST | /api/v1/voting/{id}/cast | cast_vote | done | voting_tests.rs | happy-path integrated |
+| GET | /api/v1/voting/{id}/my-response | get_my_response | done | voting_behaviour_tests.rs | happy-path: get my response after cast |
+| POST | /api/v1/voting/{id}/comments | add_comment | done | voting_behaviour_tests.rs | happy-path: add comment |
+| GET | /api/v1/voting/{id}/comments | list_comments | done | voting_behaviour_tests.rs | happy-path: list comments |
+| GET | /api/v1/voting/{id}/comments/{comment_id}/replies | list_replies | done | voting_behaviour_tests.rs | happy-path: list replies |
+| POST | /api/v1/voting/{id}/comments/{comment_id}/hide | hide_comment | done | voting_behaviour_tests.rs | happy-path: hide comment |
+| GET | /api/v1/voting/{id}/results | get_results | done | voting_tests.rs | happy-path integrated |
 | GET | /api/v1/voting/{id}/report | get_report_data | done | voting_report_tests.rs | 200 (json + format=pdf) |
 | GET | /api/v1/voting/{id}/report.pdf | get_report_pdf | done | voting_report_tests.rs | 200, archives document |
-| GET | /api/v1/voting/{id}/audit | get_audit_log | partial | — | no test |
-| GET | /api/v1/voting/building/{building_id}/active | list_active_by_building | partial | — | no test |
+| GET | /api/v1/voting/{id}/audit | get_audit_log | done | voting_behaviour_tests.rs | happy-path: audit log |
+| GET | /api/v1/voting/building/{building_id}/active | list_active_by_building | done | voting_behaviour_tests.rs | happy-path: active votes for building |
 
 ## board_meetings.rs  (mount: /api/v1/board-meetings)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -265,4 +265,4 @@ Router assembled in `reserve_funds/mod.rs` by merging seven sub-routers (funds, 
 | POST | /api/v1/reserve-funds/alerts/{alert_id}/resolve | resolve_alert | partial | — | alerts.rs; no test |
 
 ## Summary
-- done: 5 | partial: 214 | stub: 0 | missing: 0 | total: 219
+- done: 9 | partial: 210 | stub: 0 | missing: 0 | total: 219

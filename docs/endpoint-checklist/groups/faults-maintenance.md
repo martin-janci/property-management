@@ -11,25 +11,25 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 ## faults.rs  (mount: /api/v1/faults)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/faults | create_fault | partial | faults_tests.rs | only auth-reject test; has idempotency middleware layer |
-| GET | /api/v1/faults | list_faults | partial | faults_tests.rs | auth-reject only |
-| GET | /api/v1/faults/my | list_my_faults | partial | faults_tests.rs | auth-reject only |
-| GET | /api/v1/faults/{id} | get_fault | partial | — | no test (axum 0.7 `{id}` path-param tests skipped per file note) |
-| PUT | /api/v1/faults/{id} | update_fault | partial | — | |
-| POST | /api/v1/faults/{id}/triage | triage_fault | partial | — | |
-| POST | /api/v1/faults/{id}/assign | assign_fault | partial | — | |
-| PUT | /api/v1/faults/{id}/status | update_status | partial | — | |
-| POST | /api/v1/faults/{id}/resolve | resolve_fault | partial | — | |
-| POST | /api/v1/faults/{id}/confirm | confirm_fault | partial | — | |
-| POST | /api/v1/faults/{id}/reopen | reopen_fault | partial | — | |
-| GET | /api/v1/faults/{id}/comments | list_comments | partial | — | |
-| POST | /api/v1/faults/{id}/comments | add_comment | partial | — | |
-| POST | /api/v1/faults/{id}/work-notes | add_work_note | partial | — | |
+| POST | /api/v1/faults | create_fault | done | faults_tests.rs | happy-path integrated |
+| GET | /api/v1/faults | list_faults | done | faults_tests.rs | happy-path integrated |
+| GET | /api/v1/faults/my | list_my_faults | done | faults_behaviour_tests.rs | happy-path: list my faults |
+| GET | /api/v1/faults/{id} | get_fault | done | faults_behaviour_tests.rs | happy-path: get fault detail |
+| PUT | /api/v1/faults/{id} | update_fault | done | faults_behaviour_tests.rs | happy-path: update title |
+| POST | /api/v1/faults/{id}/triage | triage_fault | done | faults_tests.rs | happy-path integrated |
+| POST | /api/v1/faults/{id}/assign | assign_fault | done | faults_tests.rs | happy-path integrated |
+| PUT | /api/v1/faults/{id}/status | update_status | done | faults_behaviour_tests.rs | happy-path: status → in_progress |
+| POST | /api/v1/faults/{id}/resolve | resolve_fault | done | faults_behaviour_tests.rs | happy-path: resolve |
+| POST | /api/v1/faults/{id}/confirm | confirm_fault | done | faults_behaviour_tests.rs | happy-path: confirm resolution |
+| POST | /api/v1/faults/{id}/reopen | reopen_fault | done | faults_behaviour_tests.rs | happy-path: reopen resolved |
+| GET | /api/v1/faults/{id}/comments | list_comments | done | faults_behaviour_tests.rs | happy-path: list timeline |
+| POST | /api/v1/faults/{id}/comments | add_comment | done | faults_behaviour_tests.rs | happy-path: add comment |
+| POST | /api/v1/faults/{id}/work-notes | add_work_note | done | faults_behaviour_tests.rs | happy-path: add work note |
 | GET | /api/v1/faults/{id}/attachments | list_attachments | partial | — | |
 | POST | /api/v1/faults/{id}/attachments | add_attachment | partial | — | |
 | DELETE | /api/v1/faults/{id}/attachments/{attachment_id} | delete_attachment | partial | — | |
 | POST | /api/v1/faults/{id}/suggest | get_ai_suggestion | partial | — | |
-| GET | /api/v1/faults/statistics | get_statistics | partial | faults_tests.rs | auth-reject only |
+| GET | /api/v1/faults/statistics | get_statistics | done | faults_behaviour_tests.rs | happy-path: get statistics |
 
 ## work_orders.rs  (mount: /api/v1/work-orders)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -330,4 +330,4 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 | POST | /api/v1/vendors/invoices/{id}/payment | invoices::record_payment | partial | — | |
 
 ## Summary
-- done: 10 | partial: 249 | stub: 14 | missing: 0 | total: 273
+- done: 14 | partial: 245 | stub: 14 | missing: 0 | total: 273
