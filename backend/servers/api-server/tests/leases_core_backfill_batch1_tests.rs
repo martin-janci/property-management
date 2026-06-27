@@ -219,7 +219,9 @@ async fn test_list_applications_returns_200(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::GET)
-                .uri(format!("/api/v1/leases/applications?organization_id={org_id}"))
+                .uri(format!(
+                    "/api/v1/leases/applications?organization_id={org_id}"
+                ))
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .header("X-Tenant-ID", org_id.to_string())
                 .body(Body::empty())

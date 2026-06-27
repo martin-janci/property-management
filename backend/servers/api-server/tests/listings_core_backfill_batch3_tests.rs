@@ -171,7 +171,12 @@ async fn test_create_listing_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create listing → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create listing → 201; body: {}",
+        resp.text()
+    );
     let json = resp.json_value();
     assert!(json.get("id").is_some(), "response must include id");
 }
@@ -196,7 +201,12 @@ async fn test_list_listings_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "list listings → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list listings → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -230,7 +240,12 @@ async fn test_create_listing_from_unit_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create from-unit → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create from-unit → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -253,7 +268,12 @@ async fn test_listing_statistics_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "listing statistics → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "listing statistics → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -304,7 +324,12 @@ async fn test_update_listing_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update listing → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update listing → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -328,7 +353,12 @@ async fn test_delete_listing_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete listing → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete listing → 204; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -355,7 +385,12 @@ async fn test_update_listing_status_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update listing status → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update listing status → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -386,7 +421,12 @@ async fn test_publish_listing_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "publish listing → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "publish listing → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -411,7 +451,12 @@ async fn test_global_publish_listing_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "global-publish → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "global-publish → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -436,7 +481,12 @@ async fn test_global_unpublish_listing_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "global-unpublish → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "global-unpublish → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -459,7 +509,12 @@ async fn test_get_syndication_dashboard_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "syndication dashboard → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "syndication dashboard → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -482,7 +537,12 @@ async fn test_get_org_syndication_stats_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "org syndication stats → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "org syndication stats → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -506,7 +566,12 @@ async fn test_get_listing_syndications_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "listing syndications → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "listing syndications → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -530,7 +595,12 @@ async fn test_get_listing_syndication_status_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "syndication status → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "syndication status → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -588,7 +658,12 @@ async fn test_add_photo_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "add photo → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add photo → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -616,7 +691,12 @@ async fn test_reorder_photos_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "reorder photos → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "reorder photos → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -641,5 +721,10 @@ async fn test_delete_photo_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete photo → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete photo → 204; body: {}",
+        resp.text()
+    );
 }

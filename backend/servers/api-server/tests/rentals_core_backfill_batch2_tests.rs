@@ -347,7 +347,12 @@ async fn test_delete_connection_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete connection → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete connection → 204; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -635,7 +640,12 @@ async fn test_create_calendar_block_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create calendar block → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create calendar block → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -661,7 +671,12 @@ async fn test_delete_calendar_block_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete calendar block → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete calendar block → 204; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1069,7 +1084,12 @@ async fn test_delete_ical_feed_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete ical feed → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete ical feed → 204; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
