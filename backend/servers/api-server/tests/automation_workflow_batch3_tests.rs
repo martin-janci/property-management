@@ -186,7 +186,10 @@ async fn get_rule_succeeds(pool: PgPool) {
     );
     let resp = app.execute(req).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert_eq!(resp.json_value()["id"].as_str().unwrap(), rule_id.to_string());
+    assert_eq!(
+        resp.json_value()["id"].as_str().unwrap(),
+        rule_id.to_string()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -205,10 +208,7 @@ async fn update_rule_succeeds(pool: PgPool) {
     );
     let resp = app.execute(req).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert_eq!(
-        resp.json_value()["name"].as_str().unwrap(),
-        "Updated Rule"
-    );
+    assert_eq!(resp.json_value()["name"].as_str().unwrap(), "Updated Rule");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -225,12 +225,7 @@ async fn delete_rule_succeeds(pool: PgPool) {
         org_id,
     );
     let resp = app.execute(req).await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -275,10 +270,7 @@ async fn list_templates_succeeds(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id, _) = setup_principal(&app, &pool, &user, "lt").await;
     let session = app.session(token, org_id);
-    let req = inject_tenant(
-        session.get("/api/v1/automation/templates").build(),
-        org_id,
-    );
+    let req = inject_tenant(session.get("/api/v1/automation/templates").build(), org_id);
     let resp = app.execute(req).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     // Migration seeds system templates — list must be non-empty.
@@ -388,10 +380,7 @@ async fn get_workflow_succeeds(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert_eq!(
-        resp.json_value()["id"].as_str().unwrap(),
-        wf_id.to_string()
-    );
+    assert_eq!(resp.json_value()["id"].as_str().unwrap(), wf_id.to_string());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -440,12 +429,7 @@ async fn delete_workflow_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -520,12 +504,7 @@ async fn delete_workflow_action_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "body: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
