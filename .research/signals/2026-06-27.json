@@ -20,6 +20,15 @@
       "files": [
         "frontend/apps/ppt-web/src/"
       ]
+    },
+    {
+      "id": "dispatcher-buffer-low-2026-06-27",
+      "type": "dispatcher-alert",
+      "source": "routine-fire payload at 2026-06-27 ~06:35 UTC",
+      "score_delta": 0,
+      "evidence": "buffer-low: claimable=0/72 — coverage.json stale (generated 2026-06-23T09:59Z, 4 days old, deep scan; 12 partials reported resolved/in-flight). Dispatcher requests fresh coverage rescan + refill. Matches self-improvement finding `phase-2-6-buffer-claimable-overstates`: all 72 open action-list items already terminal in archive; gc1-reconcile.sh / action-list-reconcile must auto-close them including status=failed. Routine cannot scan coverage — that path is `/ppt-project-management scan` local-only (skill docstring: 'Do NOT run the skill scan mode here — the authoritative full rebuild is the on-demand local /ppt-project-management scan'). Log-only signal here.",
+      "confidence": "high",
+      "candidate_vector": "dx"
     }
   ],
   "goal_checks": [
