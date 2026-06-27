@@ -92,7 +92,11 @@ fn platform_admin_org_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn platform_admin_stats_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let ff = "/api/v1/platform-admin/feature-flags";
     vec![
-        (Method::GET, "/api/v1/platform-admin/stats".to_string(), None),
+        (
+            Method::GET,
+            "/api/v1/platform-admin/stats".to_string(),
+            None,
+        ),
         (Method::GET, format!("{ff}"), None),
         (
             Method::POST,
@@ -110,7 +114,9 @@ fn platform_admin_stats_flags_cases() -> Vec<(Method, String, Option<&'static st
         (
             Method::POST,
             format!("{ff}/{UUID}/overrides"),
-            Some(r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"org","enabled":true}"#),
+            Some(
+                r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"org","enabled":true}"#,
+            ),
         ),
         (
             Method::DELETE,
@@ -172,7 +178,9 @@ fn platform_admin_maintenance_cases() -> Vec<(Method, String, Option<&'static st
         (
             Method::POST,
             format!("{base}"),
-            Some(r#"{"title":"Upgrade","scheduled_at":"2025-01-01T02:00:00Z","duration_minutes":60}"#),
+            Some(
+                r#"{"title":"Upgrade","scheduled_at":"2025-01-01T02:00:00Z","duration_minutes":60}"#,
+            ),
         ),
         (Method::GET, format!("{base}"), None),
         (Method::DELETE, format!("{base}/{UUID}"), None),

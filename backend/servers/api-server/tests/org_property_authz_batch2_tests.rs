@@ -68,7 +68,9 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
         (
             Method::POST,
             format!("{base}"),
-            Some(r#"{"building_id":"00000000-0000-0000-0000-000000000001","certification_type":"LEED","target_level":"Gold"}"#),
+            Some(
+                r#"{"building_id":"00000000-0000-0000-0000-000000000001","certification_type":"LEED","target_level":"Gold"}"#,
+            ),
         ),
         (Method::GET, format!("{base}/expiring"), None),
         (Method::GET, format!("{cert}"), None),
@@ -87,11 +89,7 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
             Some(r#"{"category":"energy","points":5}"#),
         ),
         (Method::GET, format!("{credit}"), None),
-        (
-            Method::PUT,
-            format!("{credit}"),
-            Some(r#"{"points":6}"#),
-        ),
+        (Method::PUT, format!("{credit}"), Some(r#"{"points":6}"#)),
         (Method::DELETE, format!("{credit}"), None),
         // Documents
         (Method::GET, format!("{cert}/documents"), None),

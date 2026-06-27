@@ -62,7 +62,9 @@ fn buildings_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/"),
-            Some(r#"{"organization_id":"00000000-0000-0000-0000-000000000001","street":"Main St 1","city":"Bratislava","postal_code":"81101","country":"SK","name":"Test Building"}"#),
+            Some(
+                r#"{"organization_id":"00000000-0000-0000-0000-000000000001","street":"Main St 1","city":"Bratislava","postal_code":"81101","country":"SK","name":"Test Building"}"#,
+            ),
         ),
         (
             Method::POST,

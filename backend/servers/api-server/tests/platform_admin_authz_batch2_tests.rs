@@ -150,7 +150,9 @@ fn infra_feature_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/{UUID}/overrides"),
-            Some(r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"user","enabled":true}"#),
+            Some(
+                r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"user","enabled":true}"#,
+            ),
         ),
         (
             Method::DELETE,
@@ -201,7 +203,11 @@ fn infra_health_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}/checks/{UUID}/results"), None),
         (Method::GET, format!("{base}/alerts"), None),
         (Method::GET, format!("{base}/alerts/{UUID}"), None),
-        (Method::POST, format!("{base}/alerts/{UUID}/acknowledge"), None),
+        (
+            Method::POST,
+            format!("{base}/alerts/{UUID}/acknowledge"),
+            None,
+        ),
         (Method::POST, format!("{base}/alerts/{UUID}/resolve"), None),
         (Method::GET, format!("{base}/alert-rules"), None),
         (
