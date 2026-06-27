@@ -45,39 +45,39 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 ## ai/sessions.rs — ai_chat_router  (mount: /api/v1/ai/chat)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/ai/chat/sessions | create_session | partial | ai_auth_tests.rs | real; auth-only (401/403) |
-| GET | /api/v1/ai/chat/sessions | list_sessions | partial | ai_auth_tests.rs | auth-only |
-| GET | /api/v1/ai/chat/sessions/{session_id} | get_session | partial | — | real; no test |
-| DELETE | /api/v1/ai/chat/sessions/{session_id} | delete_session | partial | — | real; no test |
-| GET | /api/v1/ai/chat/sessions/{session_id}/messages | list_messages | partial | — | real; no test |
-| POST | /api/v1/ai/chat/sessions/{session_id}/messages | send_message | partial | ai_auth_tests.rs | auth-only |
-| POST | /api/v1/ai/chat/messages/{message_id}/feedback | provide_feedback | partial | — | real; no test |
-| GET | /api/v1/ai/chat/escalated | list_escalated | partial | — | real; no test |
+| POST | /api/v1/ai/chat/sessions | create_session | done | ai_rls_backfill_tests.rs | success-path 201 |
+| GET | /api/v1/ai/chat/sessions | list_sessions | done | ai_rls_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/ai/chat/sessions/{session_id} | get_session | done | ai_rls_backfill_tests.rs | success-path 200 |
+| DELETE | /api/v1/ai/chat/sessions/{session_id} | delete_session | done | ai_rls_backfill_tests.rs | success-path 204 |
+| GET | /api/v1/ai/chat/sessions/{session_id}/messages | list_messages | done | ai_rls_backfill_tests.rs | success-path 200 |
+| POST | /api/v1/ai/chat/sessions/{session_id}/messages | send_message | partial | ai_auth_tests.rs | auth-only; live LLM call — requires provider mock to test success path |
+| POST | /api/v1/ai/chat/messages/{message_id}/feedback | provide_feedback | done | ai_rls_backfill_tests.rs | success-path 201 (SQL-seeded message) |
+| GET | /api/v1/ai/chat/escalated | list_escalated | done | ai_rls_backfill_tests.rs | success-path 200 |
 
 ## ai/sessions.rs — sentiment_router  (mount: /api/v1/ai/sentiment)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/ai/sentiment/trends | get_trends | partial | — | real; no test |
-| GET | /api/v1/ai/sentiment/alerts | list_alerts | partial | — | real; no test |
-| POST | /api/v1/ai/sentiment/alerts/{alert_id}/acknowledge | acknowledge_alert | partial | — | real; no test |
-| GET | /api/v1/ai/sentiment/thresholds | get_thresholds | partial | — | real; no test |
-| PUT | /api/v1/ai/sentiment/thresholds | update_thresholds | partial | — | real; no test |
-| GET | /api/v1/ai/sentiment/dashboard | get_dashboard | partial | ai_auth_tests.rs | auth-only |
+| GET | /api/v1/ai/sentiment/trends | get_trends | done | ai_rls_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/ai/sentiment/alerts | list_alerts | done | ai_rls_backfill_tests.rs | success-path 200 |
+| POST | /api/v1/ai/sentiment/alerts/{alert_id}/acknowledge | acknowledge_alert | done | ai_rls_backfill_tests.rs | success-path 200 (SQL-seeded alert) |
+| GET | /api/v1/ai/sentiment/thresholds | get_thresholds | done | ai_rls_backfill_tests.rs | success-path 200 (auto-creates defaults) |
+| PUT | /api/v1/ai/sentiment/thresholds | update_thresholds | done | ai_rls_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/ai/sentiment/dashboard | get_dashboard | done | ai_rls_backfill_tests.rs | success-path 200 |
 
 ## ai/equipment.rs — equipment_router  (mount: /api/v1/ai/equipment)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/ai/equipment/ | create_equipment | partial | — | real; no test |
-| GET | /api/v1/ai/equipment/ | list_equipment | partial | ai_auth_tests.rs | auth-only |
-| GET | /api/v1/ai/equipment/{id} | get_equipment | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only (cross-tenant reject) |
-| PUT | /api/v1/ai/equipment/{id} | update_equipment | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| DELETE | /api/v1/ai/equipment/{id} | delete_equipment | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| GET | /api/v1/ai/equipment/{id}/maintenance | list_maintenance | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| POST | /api/v1/ai/equipment/{id}/maintenance | create_maintenance | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| PUT | /api/v1/ai/equipment/maintenance/{id} | update_maintenance | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| GET | /api/v1/ai/equipment/predictions | list_predictions | partial | — | real; no test |
-| POST | /api/v1/ai/equipment/predictions/{id}/acknowledge | acknowledge_prediction | partial | equipment_cross_tenant_idor_tests.rs | IDOR-only |
-| GET | /api/v1/ai/equipment/needing-maintenance | list_needing_maintenance | partial | — | real; no test |
+| POST | /api/v1/ai/equipment/ | create_equipment | done | ai_rls_backfill_tests.rs | success-path 201 |
+| GET | /api/v1/ai/equipment/ | list_equipment | done | ai_rls_backfill_tests.rs | success-path 200 |
+| GET | /api/v1/ai/equipment/{id} | get_equipment | done | ai_rls_backfill_tests.rs | success-path 200 |
+| PUT | /api/v1/ai/equipment/{id} | update_equipment | done | ai_rls_backfill_tests.rs | success-path 200 |
+| DELETE | /api/v1/ai/equipment/{id} | delete_equipment | done | ai_rls_backfill_tests.rs | success-path 204 |
+| GET | /api/v1/ai/equipment/{id}/maintenance | list_maintenance | done | ai_rls_backfill_tests.rs | success-path 200 |
+| POST | /api/v1/ai/equipment/{id}/maintenance | create_maintenance | done | ai_rls_backfill_tests.rs | success-path 201 |
+| PUT | /api/v1/ai/equipment/maintenance/{id} | update_maintenance | done | ai_rls_backfill_tests.rs | success-path 200 (SQL-seeded maintenance) |
+| GET | /api/v1/ai/equipment/predictions | list_predictions | done | ai_rls_backfill_tests.rs | success-path 200 (SQL-seeded prediction) |
+| POST | /api/v1/ai/equipment/predictions/{id}/acknowledge | acknowledge_prediction | done | ai_rls_backfill_tests.rs | success-path 200 (SQL-seeded prediction) |
+| GET | /api/v1/ai/equipment/needing-maintenance | list_needing_maintenance | done | ai_rls_backfill_tests.rs | success-path 200 |
 
 ## ai/workflows.rs — workflow_router  (mount: /api/v1/ai/workflows)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -130,4 +130,4 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 | POST | /api/v1/ai/ocr/correction | submit_correction | stub | — | accepts payload and discards it (no training sink); returns 200 but does no work |
 
 ## Summary
-- done: 0 | partial: 91 | stub: 2 | missing: 0 | total: 93
+- done: 44 | partial: 47 | stub: 2 | missing: 0 | total: 93
