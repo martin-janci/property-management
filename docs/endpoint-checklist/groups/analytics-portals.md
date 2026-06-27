@@ -1,0 +1,203 @@
+# Analytics & Portals
+
+_Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_performance, investor_portal, government_portal, esg_reporting._
+
+## owner_analytics.rs  (mount: /api/v1/owner-analytics)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| GET | /api/v1/owner-analytics/units/{unit_id}/valuation | get_unit_valuation | done | owner_analytics_cross_org_idor_tests.rs | T3 happy-path OK (same-org); T1/T4 are IDOR/401 |
+| POST | /api/v1/owner-analytics/units/{unit_id}/valuation | create_valuation | partial | — | no test hits success path |
+| GET | /api/v1/owner-analytics/valuations/{valuation_id} | get_valuation_with_comparables | partial | — | |
+| POST | /api/v1/owner-analytics/valuations/{valuation_id}/comparables | add_comparable | partial | — | |
+| GET | /api/v1/owner-analytics/units/{unit_id}/value-history | get_value_history | partial | owner_analytics_cross_org_idor_tests.rs | T2 only asserts no-leak under `if status==OK`; not a guaranteed happy-path |
+| GET | /api/v1/owner-analytics/units/{unit_id}/value-trend | get_value_trend | partial | — | |
+| POST | /api/v1/owner-analytics/units/{unit_id}/roi | calculate_roi | partial | — | |
+| GET | /api/v1/owner-analytics/units/{unit_id}/cash-flow | get_cash_flow_breakdown | partial | — | |
+| GET | /api/v1/owner-analytics/units/{unit_id}/roi-dashboard | get_roi_dashboard | partial | — | |
+| GET | /api/v1/owner-analytics/portfolio | get_portfolio_summary | partial | — | |
+| POST | /api/v1/owner-analytics/portfolio/compare | compare_properties | partial | — | |
+| GET | /api/v1/owner-analytics/expense-rules | list_auto_approval_rules | partial | — | |
+| POST | /api/v1/owner-analytics/expense-rules | create_auto_approval_rule | partial | — | |
+| PUT | /api/v1/owner-analytics/expense-rules/{id} | update_auto_approval_rule | partial | — | |
+| DELETE | /api/v1/owner-analytics/expense-rules/{id} | delete_auto_approval_rule | partial | — | |
+| POST | /api/v1/owner-analytics/expenses/submit | submit_expense | partial | — | |
+| GET | /api/v1/owner-analytics/expenses | list_expense_requests | partial | — | |
+| POST | /api/v1/owner-analytics/expenses/{id}/review | review_expense | partial | — | |
+
+## portfolio_analytics.rs  (mount: /api/v1/portfolio-analytics)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| GET | /api/v1/portfolio-analytics/summary | get_portfolio_summary | partial | — | no test file references this prefix |
+| GET | /api/v1/portfolio-analytics/benchmarks | list_benchmarks | partial | — | |
+| POST | /api/v1/portfolio-analytics/benchmarks | create_benchmark | partial | — | |
+| GET | /api/v1/portfolio-analytics/benchmarks/{id} | get_benchmark | partial | — | |
+| PUT | /api/v1/portfolio-analytics/benchmarks/{id} | update_benchmark | partial | — | |
+| DELETE | /api/v1/portfolio-analytics/benchmarks/{id} | delete_benchmark | partial | — | |
+| GET | /api/v1/portfolio-analytics/properties/metrics | list_property_metrics | partial | — | |
+| POST | /api/v1/portfolio-analytics/properties/metrics | upsert_property_metrics | partial | — | |
+| GET | /api/v1/portfolio-analytics/properties/{building_id}/metrics | get_property_metrics | partial | — | |
+| GET | /api/v1/portfolio-analytics/metrics | get_portfolio_metrics | partial | — | |
+| POST | /api/v1/portfolio-analytics/metrics/calculate | calculate_portfolio_metrics | partial | — | |
+| GET | /api/v1/portfolio-analytics/comparisons | list_comparisons | partial | — | |
+| POST | /api/v1/portfolio-analytics/comparisons | create_comparison | partial | — | |
+| GET | /api/v1/portfolio-analytics/comparisons/{id} | get_comparison | partial | — | |
+| DELETE | /api/v1/portfolio-analytics/comparisons/{id} | delete_comparison | partial | — | |
+| GET | /api/v1/portfolio-analytics/trends | get_trends | partial | — | |
+| POST | /api/v1/portfolio-analytics/trends | record_trend | partial | — | |
+| GET | /api/v1/portfolio-analytics/alerts/rules | list_alert_rules | partial | — | |
+| POST | /api/v1/portfolio-analytics/alerts/rules | create_alert_rule | partial | — | |
+| GET | /api/v1/portfolio-analytics/alerts/rules/{id} | get_alert_rule | partial | — | |
+| PUT | /api/v1/portfolio-analytics/alerts/rules/{id} | update_alert_rule | partial | — | |
+| DELETE | /api/v1/portfolio-analytics/alerts/rules/{id} | delete_alert_rule | partial | — | |
+| GET | /api/v1/portfolio-analytics/alerts | list_alerts | partial | — | |
+| GET | /api/v1/portfolio-analytics/alerts/stats | get_alert_stats | partial | — | |
+| GET | /api/v1/portfolio-analytics/alerts/{id} | get_alert | partial | — | |
+| POST | /api/v1/portfolio-analytics/alerts/{id}/acknowledge | acknowledge_alert | partial | — | |
+| POST | /api/v1/portfolio-analytics/alerts/{id}/resolve | resolve_alert | partial | — | |
+
+## portfolio_performance.rs  (mount: /api/v1/portfolio-performance)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| POST | /api/v1/portfolio-performance/portfolios | create_portfolio | partial | — | router_single_source_tests.rs references prefix only in a comment (route-table check), no handler path exercised |
+| GET | /api/v1/portfolio-performance/portfolios | list_portfolios | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id} | get_portfolio | partial | — | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id} | update_portfolio | partial | — | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id} | delete_portfolio | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/properties | add_property | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/properties | list_properties | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | get_property | partial | — | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | update_property | partial | — | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | remove_property | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/transactions | create_transaction | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions | list_transactions | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | get_transaction | partial | — | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | update_transaction | partial | — | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | delete_transaction | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | upsert_cash_flow | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | get_cash_flows | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/metrics/calculate | calculate_metrics | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/latest | get_latest_metrics | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/summary | get_metrics_summary | partial | — | |
+| POST | /api/v1/portfolio-performance/benchmarks | create_benchmark | partial | — | |
+| GET | /api/v1/portfolio-performance/benchmarks | list_benchmarks | partial | — | |
+| GET | /api/v1/portfolio-performance/benchmarks/{id} | get_benchmark | partial | — | |
+| PUT | /api/v1/portfolio-performance/benchmarks/{id} | update_benchmark | partial | — | |
+| DELETE | /api/v1/portfolio-performance/benchmarks/{id} | delete_benchmark | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/comparisons | create_comparison | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons | list_comparisons | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons/{comparison_id} | get_comparison | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/summary | get_dashboard_summary | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/property-cards | get_property_cards | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/cash-flow-trend | get_cash_flow_trend | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts | create_alert | partial | — | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/alerts | list_alerts | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/read | mark_alert_read | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/resolve | resolve_alert | partial | — | |
+
+## investor_portal.rs  (mount: /api/v1/investor-portal)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| GET | /api/v1/investor-portal/investors | list_investors | partial | — | |
+| POST | /api/v1/investor-portal/investors | create_investor | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id} | get_investor | partial | — | |
+| PUT | /api/v1/investor-portal/investors/{investor_id} | update_investor | partial | — | |
+| DELETE | /api/v1/investor-portal/investors/{investor_id} | delete_investor | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/summary | get_investor_summary | partial | — | |
+| GET | /api/v1/investor-portal/portfolios | list_portfolios | partial | — | |
+| POST | /api/v1/investor-portal/portfolios | create_portfolio | partial | — | |
+| GET | /api/v1/investor-portal/portfolios/{portfolio_id} | get_portfolio | partial | — | |
+| PUT | /api/v1/investor-portal/portfolios/{portfolio_id} | update_portfolio | partial | — | |
+| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id} | delete_portfolio | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/portfolios | list_investor_portfolios | partial | — | |
+| GET | /api/v1/investor-portal/portfolios/{portfolio_id}/properties | list_portfolio_properties | done | marketplace_voting_investor_cross_org_idor_tests.rs | own-org happy-path OK (list_portfolio_properties_for_own_org_succeeds) |
+| POST | /api/v1/investor-portal/portfolios/{portfolio_id}/properties | add_portfolio_property | partial | — | |
+| PUT | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | update_portfolio_property | partial | — | |
+| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | remove_portfolio_property | partial | — | |
+| GET | /api/v1/investor-portal/roi | list_roi_calculations | partial | — | |
+| POST | /api/v1/investor-portal/roi | create_roi_calculation | partial | — | |
+| GET | /api/v1/investor-portal/portfolios/{portfolio_id}/roi/latest | get_latest_roi | partial | — | |
+| POST | /api/v1/investor-portal/distributions | create_distribution | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/distributions | list_investor_distributions | partial | — | |
+| PUT | /api/v1/investor-portal/distributions/{distribution_id} | update_distribution | partial | — | |
+| POST | /api/v1/investor-portal/reports | create_report | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/reports | list_investor_reports | partial | — | |
+| GET | /api/v1/investor-portal/reports/{report_id} | get_report | partial | — | |
+| POST | /api/v1/investor-portal/capital-calls | create_capital_call | partial | — | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/capital-calls | list_investor_capital_calls | partial | — | |
+| PUT | /api/v1/investor-portal/capital-calls/{call_id} | update_capital_call | partial | — | |
+| GET | /api/v1/investor-portal/dashboard/{investor_id} | get_investor_dashboard | partial | — | |
+| POST | /api/v1/investor-portal/dashboard/{investor_id}/metrics | upsert_dashboard_metrics | partial | — | |
+
+## government_portal.rs  (mount: /api/v1/government-portal)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| GET | /api/v1/government-portal/connections | list_connections | partial | — | no test file references this prefix |
+| POST | /api/v1/government-portal/connections | create_connection | partial | — | |
+| GET | /api/v1/government-portal/connections/{id} | get_connection | partial | — | |
+| PUT | /api/v1/government-portal/connections/{id} | update_connection | partial | — | |
+| DELETE | /api/v1/government-portal/connections/{id} | delete_connection | partial | — | |
+| POST | /api/v1/government-portal/connections/{id}/test | test_connection | partial | — | |
+| GET | /api/v1/government-portal/templates | list_templates | partial | — | |
+| GET | /api/v1/government-portal/templates/{id} | get_template | partial | — | |
+| GET | /api/v1/government-portal/submissions | list_submissions | partial | — | |
+| POST | /api/v1/government-portal/submissions | create_submission | partial | — | |
+| GET | /api/v1/government-portal/submissions/{id} | get_submission | partial | — | |
+| PUT | /api/v1/government-portal/submissions/{id} | update_submission | partial | — | |
+| POST | /api/v1/government-portal/submissions/{id}/validate | validate_submission | partial | — | |
+| POST | /api/v1/government-portal/submissions/{id}/submit | submit_submission | partial | — | |
+| POST | /api/v1/government-portal/submissions/{id}/cancel | cancel_submission | partial | — | |
+| GET | /api/v1/government-portal/submissions/{id}/audit | get_submission_audit | partial | — | |
+| GET | /api/v1/government-portal/submissions/{id}/attachments | list_attachments | partial | — | |
+| POST | /api/v1/government-portal/submissions/{id}/attachments | add_attachment | partial | — | |
+| DELETE | /api/v1/government-portal/submissions/{submission_id}/attachments/{attachment_id} | delete_attachment | partial | — | |
+| GET | /api/v1/government-portal/schedules | list_schedules | partial | — | |
+| POST | /api/v1/government-portal/schedules | create_schedule | partial | — | |
+| GET | /api/v1/government-portal/schedules/{id} | get_schedule | partial | — | |
+| PUT | /api/v1/government-portal/schedules/{id} | update_schedule | partial | — | |
+| DELETE | /api/v1/government-portal/schedules/{id} | delete_schedule | partial | — | |
+| GET | /api/v1/government-portal/stats | get_stats | partial | — | |
+
+## esg_reporting.rs  (mount: /api/v1/esg)
+| Method | Path | Handler | Status | Tests | Notes |
+|---|---|---|---|---|---|
+| GET | /api/v1/esg/configuration | get_configuration | partial | — | |
+| POST | /api/v1/esg/configuration | upsert_configuration | partial | — | |
+| GET | /api/v1/esg/metrics | list_metrics | partial | — | |
+| POST | /api/v1/esg/metrics | create_metric | partial | — | |
+| GET | /api/v1/esg/metrics/{id} | get_metric | done | esg_reporting_cross_org_idor_tests.rs | T9 own-org happy-path OK (get_metric_for_own_org_succeeds) |
+| PUT | /api/v1/esg/metrics/{id} | update_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection (T3), no success path |
+| POST | /api/v1/esg/metrics/{id}/verify | verify_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
+| POST | /api/v1/esg/metrics/{id}/delete | delete_metric | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
+| GET | /api/v1/esg/carbon | list_carbon_footprints | partial | — | |
+| POST | /api/v1/esg/carbon | create_carbon_footprint | partial | — | |
+| GET | /api/v1/esg/carbon/summary/{year} | get_carbon_summary | partial | — | |
+| GET | /api/v1/esg/carbon/{id} | get_carbon_footprint | partial | — | |
+| POST | /api/v1/esg/carbon/{id}/delete | delete_carbon_footprint | partial | — | |
+| GET | /api/v1/esg/benchmarks | list_benchmarks | partial | — | |
+| POST | /api/v1/esg/benchmarks | create_benchmark | partial | — | |
+| POST | /api/v1/esg/benchmarks/{id}/delete | delete_benchmark | partial | — | |
+| GET | /api/v1/esg/targets | list_targets | partial | — | |
+| POST | /api/v1/esg/targets | create_target | partial | — | |
+| GET | /api/v1/esg/targets/{id} | get_target | partial | — | |
+| PUT | /api/v1/esg/targets/{id} | update_target | partial | — | |
+| POST | /api/v1/esg/targets/{id}/delete | delete_target | partial | — | |
+| GET | /api/v1/esg/reports | list_reports | partial | — | |
+| POST | /api/v1/esg/reports | create_report | partial | — | |
+| GET | /api/v1/esg/reports/{id} | get_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection (T6), no success path |
+| PUT | /api/v1/esg/reports/{id} | update_report | partial | — | |
+| POST | /api/v1/esg/reports/{id}/submit | submit_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
+| POST | /api/v1/esg/reports/{id}/approve | approve_report | partial | — | |
+| POST | /api/v1/esg/reports/{id}/delete | delete_report | partial | esg_reporting_cross_org_idor_tests.rs | only cross-org rejection |
+| GET | /api/v1/esg/eu-taxonomy | list_eu_taxonomy_assessments | partial | — | |
+| POST | /api/v1/esg/eu-taxonomy | create_eu_taxonomy_assessment | partial | — | |
+| GET | /api/v1/esg/eu-taxonomy/{id} | get_eu_taxonomy_assessment | partial | — | |
+| PUT | /api/v1/esg/eu-taxonomy/{id} | update_eu_taxonomy_assessment | partial | — | |
+| GET | /api/v1/esg/dashboard/{year} | get_dashboard | partial | — | |
+| POST | /api/v1/esg/dashboard/{year}/refresh | refresh_dashboard | partial | — | |
+| GET | /api/v1/esg/imports | list_import_jobs | partial | — | |
+| POST | /api/v1/esg/imports | create_import_job | partial | — | |
+| GET | /api/v1/esg/imports/{id} | get_import_job | partial | — | |
+| GET | /api/v1/esg/statistics | get_statistics | partial | — | |
+
+## Summary
+- done: 3 | partial: 170 | stub: 0 | missing: 0 | total: 173
