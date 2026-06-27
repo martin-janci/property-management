@@ -90,11 +90,11 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 | GET | /api/v1/ai/workflows/{id}/actions | list_actions | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
 | POST | /api/v1/ai/workflows/{id}/actions | add_action | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
 | DELETE | /api/v1/ai/workflows/actions/{action_id} | delete_action | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
-| POST | /api/v1/ai/workflows/{id}/trigger | trigger_workflow | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
+| POST | /api/v1/ai/workflows/{id}/trigger | trigger_workflow | done | ai_llm_workflow_batch5_tests.rs | IDOR-only |
 | GET | /api/v1/ai/workflows/executions | list_executions | partial | — | real; no test |
-| GET | /api/v1/ai/workflows/executions/{id} | get_execution | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
-| GET | /api/v1/ai/workflows/executions/{id}/steps | list_execution_steps | partial | workflow_cross_tenant_idor_tests.rs | IDOR-only |
-| POST | /api/v1/ai/workflows/events | handle_workflow_event | partial | — | real; no test |
+| GET | /api/v1/ai/workflows/executions/{id} | get_execution | done | ai_llm_workflow_batch5_tests.rs | IDOR-only |
+| GET | /api/v1/ai/workflows/executions/{id}/steps | list_execution_steps | done | ai_llm_workflow_batch5_tests.rs | IDOR-only |
+| POST | /api/v1/ai/workflows/events | handle_workflow_event | done | ai_llm_workflow_batch5_tests.rs | real; no test |
 | GET | /api/v1/ai/workflows/templates | list_workflow_templates | partial | — | real; no test |
 | GET | /api/v1/ai/workflows/templates/builtin | list_builtin_templates | partial | — | real; no test |
 | GET | /api/v1/ai/workflows/templates/{id} | get_workflow_template | partial | — | real; no test |
@@ -104,24 +104,24 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | POST | /api/v1/ai/llm/lease/generate | generate_lease | partial | ai_auth_tests.rs | real (llm provider); auth-only test. IDOR test exercises repo layer only, not the endpoint |
-| GET | /api/v1/ai/llm/lease/templates | list_lease_templates | partial | — | real; no test |
-| GET | /api/v1/ai/llm/lease/templates/{id} | get_lease_template | partial | — | real; no endpoint test (llm IDOR test hits repo fn directly) |
+| GET | /api/v1/ai/llm/lease/templates | list_lease_templates | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| GET | /api/v1/ai/llm/lease/templates/{id} | get_lease_template | done | ai_llm_workflow_batch5_tests.rs | real; no endpoint test (llm IDOR test hits repo fn directly) |
 | POST | /api/v1/ai/llm/listing/description | generate_listing_description | partial | — | real; no test |
-| GET | /api/v1/ai/llm/listing/descriptions/{listing_id} | list_listing_descriptions | partial | — | real; no endpoint test (llm IDOR test hits repo fn directly) |
-| POST | /api/v1/ai/llm/listing/descriptions/{id}/publish | publish_description | partial | — | real; no test |
+| GET | /api/v1/ai/llm/listing/descriptions/{listing_id} | list_listing_descriptions | done | ai_llm_workflow_batch5_tests.rs | real; no endpoint test (llm IDOR test hits repo fn directly) |
+| POST | /api/v1/ai/llm/listing/descriptions/{id}/publish | publish_description | done | ai_llm_workflow_batch5_tests.rs | real; no test |
 | POST | /api/v1/ai/llm/chat/enhanced | enhanced_chat | partial | — | real; no test |
-| GET | /api/v1/ai/llm/chat/escalation-config | get_escalation_config | partial | — | real; no test |
-| PUT | /api/v1/ai/llm/chat/escalation-config | update_escalation_config | partial | — | real; no test |
-| POST | /api/v1/ai/llm/photos/enhance | enhance_photo | partial | — | real; no test |
-| POST | /api/v1/ai/llm/photos/enhance/batch | batch_enhance_photos | partial | — | real; no test |
-| GET | /api/v1/ai/llm/photos/{id} | get_photo_enhancement | partial | — | real; no test |
-| GET | /api/v1/ai/llm/voice/devices | list_voice_devices | partial | — | voice handler (ai/voice.rs); real; no test |
-| POST | /api/v1/ai/llm/voice/devices | link_voice_device | partial | — | voice handler; real; no test |
-| DELETE | /api/v1/ai/llm/voice/devices/{id} | unlink_voice_device | partial | — | voice handler; real; no test |
-| GET | /api/v1/ai/llm/voice/commands/{device_id} | list_voice_commands | partial | — | voice handler; real; no test |
-| GET | /api/v1/ai/llm/statistics | get_ai_statistics | partial | — | real; no test |
-| GET | /api/v1/ai/llm/requests | list_generation_requests | partial | — | real; no test |
-| GET | /api/v1/ai/llm/requests/{id} | get_generation_request | partial | — | real; no test |
+| GET | /api/v1/ai/llm/chat/escalation-config | get_escalation_config | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| PUT | /api/v1/ai/llm/chat/escalation-config | update_escalation_config | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| POST | /api/v1/ai/llm/photos/enhance | enhance_photo | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| POST | /api/v1/ai/llm/photos/enhance/batch | batch_enhance_photos | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| GET | /api/v1/ai/llm/photos/{id} | get_photo_enhancement | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| GET | /api/v1/ai/llm/voice/devices | list_voice_devices | done | ai_llm_workflow_batch5_tests.rs | voice handler (ai/voice.rs); real; no test |
+| POST | /api/v1/ai/llm/voice/devices | link_voice_device | partial | ai_auth_tests.rs | voice handler; auth-only; requires OAuth exchange for success path |
+| DELETE | /api/v1/ai/llm/voice/devices/{id} | unlink_voice_device | done | ai_llm_workflow_batch5_tests.rs | voice handler; real; no test |
+| GET | /api/v1/ai/llm/voice/commands/{device_id} | list_voice_commands | done | ai_llm_workflow_batch5_tests.rs | voice handler; real; no test |
+| GET | /api/v1/ai/llm/statistics | get_ai_statistics | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| GET | /api/v1/ai/llm/requests | list_generation_requests | done | ai_llm_workflow_batch5_tests.rs | real; no test |
+| GET | /api/v1/ai/llm/requests/{id} | get_generation_request | done | ai_llm_workflow_batch5_tests.rs | real; no test |
 
 ## ai/ocr.rs — ocr_router  (mount: /api/v1/ai/ocr)
 | Method | Path | Handler | Status | Tests | Notes |
