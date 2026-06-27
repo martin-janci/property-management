@@ -18,7 +18,7 @@ different answers. Read both.
 | **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
 | Partial — real handler, **no** happy-path test | 1831 | 88.8% |
 | Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
-| Missing — in spec/use-case, no handler | 0 | 0.0% |
+| Missing — in spec/use-case, no handler | 0 | 0.0% ✓ confirmed by BIT-269 |
 | **Total endpoints** | **2063** | 100% |
 
 - **Test-verified DONE = 5.2%.** This is the strict number the ticket defines: an
@@ -48,11 +48,11 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
 | [org-property](./groups/org-property.md) | 94 | 3 | 91 | 0 | 3.2% | 100% |
 | [admin-platform](./groups/admin-platform.md) | 159 | 5 | 154 | 0 | 3.1% | 100% |
-| [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
+| [compliance-screening](./groups/compliance-screening.md) | 85 | 28 | 37 | 20 | 32.9% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **107** | **1831** | **125** | **5.2%** | **93.9%** |
+| **Total** | **2063** | **133** | **1805** | **125** | **6.4%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.
@@ -122,3 +122,10 @@ compliance-adjacent modules return mock data in production paths.
   notes.
 - Endpoint counts treat each `(method, path)` pair as one endpoint; dual-mounted
   routers (e.g. `market_pricing` at `/pricing` + `/market-pricing`) are counted once.
+- **`Missing=0` caveat resolved (BIT-269).** A spec→handler diff (`scripts/diff_endpoints_v3.py`)
+  surfaced 65 apparent gaps in the OpenAPI spec vs. mounted handlers. All 65 were
+  confirmed to be **path/method divergences** between a stale spec snapshot and the
+  settled implementation (e.g. `/votes` → `/voting`, flat `/units` → nested under
+  `/buildings/{id}/units`, `PATCH` → `PUT` throughout, `/reservations` → `/bookings`).
+  No operation in the spec or use-case catalog lacks a mounted handler. See
+  [`_SPEC_DIFF.md`](./_SPEC_DIFF.md) for the full breakdown.
