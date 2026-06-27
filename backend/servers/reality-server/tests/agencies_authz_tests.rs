@@ -46,7 +46,10 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 async fn list_agencies_unauthenticated_returns_non_401(pool: PgPool) {
     let app = agencies_router(pool);
     let status = send(&app, Method::GET, "/api/v1/agencies", None).await;
-    assert_ne!(status, 401, "list_agencies must not require auth (public directory)");
+    assert_ne!(
+        status, 401,
+        "list_agencies must not require auth (public directory)"
+    );
 }
 
 // ── get_agency (public) ───────────────────────────────────────────────────────
@@ -56,7 +59,10 @@ async fn get_agency_unauthenticated_returns_non_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = agencies_router(pool);
     let status = send(&app, Method::GET, &format!("/api/v1/agencies/{id}"), None).await;
-    assert_ne!(status, 401, "get_agency must not require auth (may return 404 for unknown id)");
+    assert_ne!(
+        status, 401,
+        "get_agency must not require auth (may return 404 for unknown id)"
+    );
 }
 
 // ── get_agency_by_slug (public) ───────────────────────────────────────────────
@@ -64,8 +70,17 @@ async fn get_agency_unauthenticated_returns_non_401(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_agency_by_slug_unauthenticated_returns_non_401(pool: PgPool) {
     let app = agencies_router(pool);
-    let status = send(&app, Method::GET, "/api/v1/agencies/by-slug/unknown-slug", None).await;
-    assert_ne!(status, 401, "get_agency_by_slug must not require auth (may return 404)");
+    let status = send(
+        &app,
+        Method::GET,
+        "/api/v1/agencies/by-slug/unknown-slug",
+        None,
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "get_agency_by_slug must not require auth (may return 404)"
+    );
 }
 
 // ── list_members (public) ─────────────────────────────────────────────────────
@@ -74,8 +89,17 @@ async fn get_agency_by_slug_unauthenticated_returns_non_401(pool: PgPool) {
 async fn list_members_unauthenticated_returns_non_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = agencies_router(pool);
-    let status = send(&app, Method::GET, &format!("/api/v1/agencies/{id}/members"), None).await;
-    assert_ne!(status, 401, "list_members must not require auth (may return empty list or 404)");
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/agencies/{id}/members"),
+        None,
+    )
+    .await;
+    assert_ne!(
+        status, 401,
+        "list_members must not require auth (may return empty list or 404)"
+    );
 }
 
 // ── create_agency (protected) ─────────────────────────────────────────────────
@@ -107,7 +131,10 @@ async fn create_agency_authenticated_returns_non_401(pool: PgPool) {
         json!({"name": "Test Agency", "slug": "test-agency"}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated create_agency must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated create_agency must not return 401"
+    );
 }
 
 // ── update_agency (protected) ─────────────────────────────────────────────────
@@ -141,7 +168,10 @@ async fn update_agency_authenticated_unknown_returns_non_401(pool: PgPool) {
         json!({"name": "Updated"}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated update_agency must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated update_agency must not return 401"
+    );
 }
 
 // ── create_invitation (protected) ────────────────────────────────────────────
@@ -158,7 +188,10 @@ async fn create_invitation_unauthenticated_returns_401(pool: PgPool) {
         json!({"email": "invite@example.com", "role": "agent"}),
     )
     .await;
-    assert_eq!(status, 401, "create_invitation must return 401 without auth");
+    assert_eq!(
+        status, 401,
+        "create_invitation must return 401 without auth"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -175,7 +208,10 @@ async fn create_invitation_authenticated_unknown_agency_returns_non_401(pool: Pg
         json!({"email": "invite@example.com", "role": "agent"}),
     )
     .await;
-    assert_ne!(status, 401, "authenticated create_invitation must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated create_invitation must not return 401"
+    );
 }
 
 // ── accept_invitation (protected) ────────────────────────────────────────────
@@ -190,7 +226,10 @@ async fn accept_invitation_unauthenticated_returns_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, 401, "accept_invitation must return 401 without auth");
+    assert_eq!(
+        status, 401,
+        "accept_invitation must return 401 without auth"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -205,5 +244,8 @@ async fn accept_invitation_authenticated_unknown_token_returns_non_401(pool: PgP
         Some(&token),
     )
     .await;
-    assert_ne!(status, 401, "authenticated accept_invitation must not return 401");
+    assert_ne!(
+        status, 401,
+        "authenticated accept_invitation must not return 401"
+    );
 }

@@ -100,7 +100,10 @@ async fn sso_logout_without_session_cookie_returns_401(pool: PgPool) {
     let app = sso_router(pool);
     // No portal_session cookie → handler returns 401 immediately
     let status = raw_send(&app, Method::POST, "/api/v1/sso/logout", None).await;
-    assert_eq!(status, 401, "sso_logout must return 401 without session cookie");
+    assert_eq!(
+        status, 401,
+        "sso_logout must return 401 without session cookie"
+    );
 }
 
 // ── get_session (Bearer-protected) ───────────────────────────────────────────
@@ -109,7 +112,10 @@ async fn sso_logout_without_session_cookie_returns_401(pool: PgPool) {
 async fn get_session_unauthenticated_returns_401(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::GET, "/api/v1/sso/session", None).await;
-    assert_eq!(status, 401, "GET /sso/session must return 401 without token");
+    assert_eq!(
+        status, 401,
+        "GET /sso/session must return 401 without token"
+    );
 }
 
 // ── refresh_session (Bearer-protected) ──────────────────────────────────────
@@ -118,7 +124,10 @@ async fn get_session_unauthenticated_returns_401(pool: PgPool) {
 async fn refresh_session_unauthenticated_returns_401(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::POST, "/api/v1/sso/refresh", None).await;
-    assert_eq!(status, 401, "POST /sso/refresh must return 401 without token");
+    assert_eq!(
+        status, 401,
+        "POST /sso/refresh must return 401 without token"
+    );
 }
 
 // ── create_mobile_sso_token (body-validated: PM access token required) ───────
@@ -128,7 +137,10 @@ async fn create_mobile_sso_token_without_body_returns_non_401(pool: PgPool) {
     let app = sso_router(pool);
     // Missing body → 422 (deserialization error), not 401
     let status = raw_send(&app, Method::POST, "/api/v1/sso/mobile/token", None).await;
-    assert_ne!(status, 401, "create_mobile_sso_token without body must not return 401");
+    assert_ne!(
+        status, 401,
+        "create_mobile_sso_token without body must not return 401"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -154,7 +166,10 @@ async fn create_mobile_sso_token_with_invalid_pm_token_returns_401(pool: PgPool)
 async fn validate_mobile_sso_token_without_body_returns_non_401(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::POST, "/api/v1/sso/mobile/validate", None).await;
-    assert_ne!(status, 401, "validate_mobile_sso_token without body must not return 401");
+    assert_ne!(
+        status, 401,
+        "validate_mobile_sso_token without body must not return 401"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -180,7 +195,10 @@ async fn validate_mobile_sso_token_with_invalid_token_returns_401(pool: PgPool) 
 async fn exchange_pm_token_without_body_returns_non_401(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::POST, "/api/v1/sso/exchange", None).await;
-    assert_ne!(status, 401, "exchange_pm_token without body must not return 401");
+    assert_ne!(
+        status, 401,
+        "exchange_pm_token without body must not return 401"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -232,5 +250,8 @@ async fn sync_session_with_invalid_pm_token_returns_401(pool: PgPool) {
 async fn get_mapped_roles_unauthenticated_returns_200(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::GET, "/api/v1/sso/roles", None).await;
-    assert_eq!(status, 200, "get_mapped_roles must return 200 without auth (static public endpoint)");
+    assert_eq!(
+        status, 200,
+        "get_mapped_roles must return 200 without auth (static public endpoint)"
+    );
 }

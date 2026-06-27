@@ -91,7 +91,10 @@ async fn create_listing_authenticated_returns_201(pool: PgPool) {
         }),
     )
     .await;
-    assert_eq!(status, 201, "authenticated create_listing with valid body must return 201");
+    assert_eq!(
+        status, 201,
+        "authenticated create_listing with valid body must return 201"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -116,7 +119,10 @@ async fn create_listing_authenticated_minimal_body_returns_201(pool: PgPool) {
         }),
     )
     .await;
-    assert_eq!(status, 201, "authenticated create_listing with minimal required body must return 201");
+    assert_eq!(
+        status, 201,
+        "authenticated create_listing with minimal required body must return 201"
+    );
 }
 
 // ── create_listing validation guards ─────────────────────────────────────────
@@ -142,7 +148,10 @@ async fn create_listing_invalid_property_type_returns_400(pool: PgPool) {
         }),
     )
     .await;
-    assert_eq!(status, 400, "create_listing with invalid propertyType must return 400");
+    assert_eq!(
+        status, 400,
+        "create_listing with invalid propertyType must return 400"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -166,5 +175,8 @@ async fn create_listing_invalid_transaction_type_returns_400(pool: PgPool) {
         }),
     )
     .await;
-    assert_eq!(status, 400, "create_listing with invalid transactionType must return 400");
+    assert_eq!(
+        status, 400,
+        "create_listing with invalid transactionType must return 400"
+    );
 }

@@ -72,7 +72,13 @@ async fn request_password_reset_unauthenticated_returns_non_401(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn confirm_password_reset_unauthenticated_returns_non_401(pool: PgPool) {
     let app = users_router(pool);
-    let status = send(&app, Method::POST, "/api/v1/users/password-reset/confirm", None).await;
+    let status = send(
+        &app,
+        Method::POST,
+        "/api/v1/users/password-reset/confirm",
+        None,
+    )
+    .await;
     assert_ne!(status, 401, "confirm_password_reset must not require auth");
 }
 
