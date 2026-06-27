@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 32 | partial: 163 | stub: 73 | missing: 0 | total: 268
 </content>
