@@ -8,8 +8,6 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::NaiveDate;
-use rust_decimal::Decimal;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -23,7 +21,7 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "finacc").await;
     let session = app.session(token, org_id);
 
-    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+    let _user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&app.pool)
         .await
@@ -426,7 +424,7 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/financial/invoices/{invoice_id}/send"))
-                .json(&json!({}))
+                .json(json!({}))
                 .build(),
         )
         .await;
@@ -640,7 +638,7 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
         .execute(
             session
                 .post("/api/v1/financial/payments/auto-match")
-                .json(&json!({ "organization_id": org_id }))
+                .json(json!({ "organization_id": org_id }))
                 .build(),
         )
         .await;
@@ -717,7 +715,7 @@ async fn financial_happy_path_config_and_reports(pool: PgPool) {
     // 2. FINANCIAL REPORTS
     // ========================================================================
 
-    let report_base = format!("/api/v1/financial/reports");
+    let report_base = "/api/v1/financial/reports".to_string();
 
     // 2.1 GET /api/v1/financial/reports/ar-aging -> get_ar_aging_report
     let resp = app
