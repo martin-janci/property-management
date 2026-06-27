@@ -7,7 +7,6 @@
 mod common;
 
 use axum::http::StatusCode;
-use rust_decimal::Decimal;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -71,7 +70,7 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
     .expect("seed contact A");
 
     // Seed Contact B in Org B
-    let contact_b_id = sqlx::query_scalar::<_, Uuid>(
+    let _contact_b_id = sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO contact (tenant_id, name, email, address)
            VALUES ($1, 'Contact B', 'contactb@test.example', '456 St B') RETURNING id"#,
     )
