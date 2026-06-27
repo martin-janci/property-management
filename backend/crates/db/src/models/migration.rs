@@ -358,7 +358,7 @@ pub struct ImportJobStatusResponse {
 }
 
 /// An error for a specific row.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ImportRowError {
     /// Row number (1-indexed)
     pub row_number: i32,
@@ -373,7 +373,7 @@ pub struct ImportRowError {
 }
 
 /// Import job history entry.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ImportJobHistory {
     /// Job ID
     pub id: Uuid,
