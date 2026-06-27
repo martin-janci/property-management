@@ -97,36 +97,36 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 ## investor_portal.rs  (mount: /api/v1/investor-portal)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/investor-portal/investors | list_investors | partial | — | |
-| POST | /api/v1/investor-portal/investors | create_investor | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id} | get_investor | partial | — | |
-| PUT | /api/v1/investor-portal/investors/{investor_id} | update_investor | partial | — | |
-| DELETE | /api/v1/investor-portal/investors/{investor_id} | delete_investor | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id}/summary | get_investor_summary | partial | — | |
-| GET | /api/v1/investor-portal/portfolios | list_portfolios | partial | — | |
-| POST | /api/v1/investor-portal/portfolios | create_portfolio | partial | — | |
-| GET | /api/v1/investor-portal/portfolios/{portfolio_id} | get_portfolio | partial | — | |
-| PUT | /api/v1/investor-portal/portfolios/{portfolio_id} | update_portfolio | partial | — | |
-| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id} | delete_portfolio | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id}/portfolios | list_investor_portfolios | partial | — | |
+| GET | /api/v1/investor-portal/investors | list_investors | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/investors | create_investor | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id} | get_investor | done | analytics_investor_portal_success_tests.rs | |
+| PUT | /api/v1/investor-portal/investors/{investor_id} | update_investor | done | analytics_investor_portal_success_tests.rs | |
+| DELETE | /api/v1/investor-portal/investors/{investor_id} | delete_investor | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/summary | get_investor_summary | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/portfolios | list_portfolios | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/portfolios | create_portfolio | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/portfolios/{portfolio_id} | get_portfolio | done | analytics_investor_portal_success_tests.rs | |
+| PUT | /api/v1/investor-portal/portfolios/{portfolio_id} | update_portfolio | done | analytics_investor_portal_success_tests.rs | |
+| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id} | delete_portfolio | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/portfolios | list_investor_portfolios | done | analytics_investor_portal_success_tests.rs | |
 | GET | /api/v1/investor-portal/portfolios/{portfolio_id}/properties | list_portfolio_properties | done | marketplace_voting_investor_cross_org_idor_tests.rs | own-org happy-path OK (list_portfolio_properties_for_own_org_succeeds) |
-| POST | /api/v1/investor-portal/portfolios/{portfolio_id}/properties | add_portfolio_property | partial | — | |
-| PUT | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | update_portfolio_property | partial | — | |
-| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | remove_portfolio_property | partial | — | |
-| GET | /api/v1/investor-portal/roi | list_roi_calculations | partial | — | |
-| POST | /api/v1/investor-portal/roi | create_roi_calculation | partial | — | |
-| GET | /api/v1/investor-portal/portfolios/{portfolio_id}/roi/latest | get_latest_roi | partial | — | |
-| POST | /api/v1/investor-portal/distributions | create_distribution | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id}/distributions | list_investor_distributions | partial | — | |
-| PUT | /api/v1/investor-portal/distributions/{distribution_id} | update_distribution | partial | — | |
-| POST | /api/v1/investor-portal/reports | create_report | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id}/reports | list_investor_reports | partial | — | |
-| GET | /api/v1/investor-portal/reports/{report_id} | get_report | partial | — | |
-| POST | /api/v1/investor-portal/capital-calls | create_capital_call | partial | — | |
-| GET | /api/v1/investor-portal/investors/{investor_id}/capital-calls | list_investor_capital_calls | partial | — | |
-| PUT | /api/v1/investor-portal/capital-calls/{call_id} | update_capital_call | partial | — | |
-| GET | /api/v1/investor-portal/dashboard/{investor_id} | get_investor_dashboard | partial | — | |
-| POST | /api/v1/investor-portal/dashboard/{investor_id}/metrics | upsert_dashboard_metrics | partial | — | |
+| POST | /api/v1/investor-portal/portfolios/{portfolio_id}/properties | add_portfolio_property | done | analytics_investor_portal_success_tests.rs | |
+| PUT | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | update_portfolio_property | done | analytics_investor_portal_success_tests.rs | |
+| DELETE | /api/v1/investor-portal/portfolios/{portfolio_id}/properties/{property_id} | remove_portfolio_property | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/roi | list_roi_calculations | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/roi | create_roi_calculation | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/portfolios/{portfolio_id}/roi/latest | get_latest_roi | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/distributions | create_distribution | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/distributions | list_investor_distributions | done | analytics_investor_portal_success_tests.rs | |
+| PUT | /api/v1/investor-portal/distributions/{distribution_id} | update_distribution | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/reports | create_report | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/reports | list_investor_reports | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/reports/{report_id} | get_report | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/capital-calls | create_capital_call | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/investors/{investor_id}/capital-calls | list_investor_capital_calls | done | analytics_investor_portal_success_tests.rs | |
+| PUT | /api/v1/investor-portal/capital-calls/{call_id} | update_capital_call | done | analytics_investor_portal_success_tests.rs | |
+| GET | /api/v1/investor-portal/dashboard/{investor_id} | get_investor_dashboard | done | analytics_investor_portal_success_tests.rs | |
+| POST | /api/v1/investor-portal/dashboard/{investor_id}/metrics | upsert_dashboard_metrics | done | analytics_investor_portal_success_tests.rs | |
 
 ## government_portal.rs  (mount: /api/v1/government-portal)
 | Method | Path | Handler | Status | Tests | Notes |
