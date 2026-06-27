@@ -260,7 +260,7 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK);
     let updated_item = resp.json_value();
     assert_eq!(updated_item["name"], "Elevator Routine Maintenance");
-    assert_eq!(updated_item["budgetedAmount"], "6000.00");
+    assert_eq!(updated_item["budgeted_amount"], "6000.00");
 
     // ========================================================================
     // 4. BUDGET PROGRESSION & WORKFLOW (Story 24.1 / 24.3)

@@ -54,6 +54,7 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
 
     // 2.1 POST /api/v1/accounting/invoices -> create_invoice
     let create_invoice_payload = json!({
+        "tenant_id": org_id,
         "contact_id": contact_id,
         "number": "INV-2026-0001",
         "issue_date": "2026-06-27",
