@@ -290,28 +290,6 @@
       "merge_attempted_at": "2026-06-24T00:18:49Z"
     },
     {
-      "task_id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs-dup",
-      "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-dup",
-      "status": "merged",
-      "claimed_at": "2026-06-23T20:14:00Z",
-      "last_updated": "2026-06-24T02:14:29Z",
-      "status_changed_at": "2026-06-24T02:14:29Z",
-      "pr_number": 1800,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1800",
-      "merged_at": "2026-06-24T00:12:49Z",
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=behavior-preserving-split-23routes-28bindings-rls-intact (self-approve blocked; posted as comment)",
-      "last_reviewed_oid": "bb9b774bdc093e8c0cfa875a4f55aa1561493453",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-24T00:18:49Z"
-    },
-    {
       "task_id": "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-201dce7f",
       "status": "merged",
@@ -596,6 +574,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-3e103658",
+      "status": "merged",
+      "claimed_at": "2026-06-23T20:14:00Z",
+      "last_updated": "2026-06-24T02:14:29Z",
+      "status_changed_at": "2026-06-24T02:14:29Z",
+      "pr_number": 1800,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1800",
+      "merged_at": "2026-06-24T00:12:49Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=behavior-preserving-split-23routes-28bindings-rls-intact (self-approve blocked; posted as comment)",
+      "last_reviewed_oid": "bb9b774bdc093e8c0cfa875a4f55aa1561493453",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-24T00:18:49Z"
     }
   ]
 }
