@@ -15,10 +15,15 @@ use uuid::Uuid;
 
 use common::{create_authenticated_user, seed_membership, seed_org, TestApp, TestUser};
 use db::models::{
-    ApproveImportRequest, ApproveImportResponse, ImportDataType, ImportJobStatus,
-    ImportJobStatusResponse, ImportPreviewResult, MigrationExportStatus,
-    MigrationExportStatusResponse, TemplateDetailResponse,
+    ApproveImportResponse, ImportJobStatus, ImportJobStatusResponse, ImportPreviewResult,
+    MigrationExportStatus, MigrationExportStatusResponse,
 };
+
+#[derive(serde::Deserialize)]
+struct TemplateDetailResponse {
+    name: String,
+    field_mappings: Vec<serde_json::Value>,
+}
 
 /// Helper to create a request with Bearer Auth and Tenant header
 fn request(
