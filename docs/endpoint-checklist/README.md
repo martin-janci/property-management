@@ -18,7 +18,7 @@ different answers. Read both.
 | **DONE** — real handler **and** a passing happy-path test | **107** | **5.2%** |
 | Partial — real handler, **no** happy-path test | 1831 | 88.8% |
 | Stub — handler missing/mock/`501`/unmounted | 125 | 6.1% |
-| Missing — in spec/use-case, no handler | 0 | 0.0% |
+| Missing — in spec/use-case, no handler | 0 | 0.0% ✓ confirmed by BIT-269 |
 | **Total endpoints** | **2063** | 100% |
 
 - **Test-verified DONE = 5.2%.** This is the strict number the ticket defines: an
@@ -122,3 +122,10 @@ compliance-adjacent modules return mock data in production paths.
   notes.
 - Endpoint counts treat each `(method, path)` pair as one endpoint; dual-mounted
   routers (e.g. `market_pricing` at `/pricing` + `/market-pricing`) are counted once.
+- **`Missing=0` caveat resolved (BIT-269).** A spec→handler diff (`scripts/diff_endpoints_v3.py`)
+  surfaced 65 apparent gaps in the OpenAPI spec vs. mounted handlers. All 65 were
+  confirmed to be **path/method divergences** between a stale spec snapshot and the
+  settled implementation (e.g. `/votes` → `/voting`, flat `/units` → nested under
+  `/buildings/{id}/units`, `PATCH` → `PUT` throughout, `/reservations` → `/bookings`).
+  No operation in the spec or use-case catalog lacks a mounted handler. See
+  [`_SPEC_DIFF.md`](./_SPEC_DIFF.md) for the full breakdown.
