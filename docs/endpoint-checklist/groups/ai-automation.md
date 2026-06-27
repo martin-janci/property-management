@@ -126,8 +126,8 @@ _Server: api-server. Modules: registry.rs, automation.rs, ai/sessions.rs, ai/equ
 ## ai/ocr.rs — ocr_router  (mount: /api/v1/ai/ocr)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/ai/ocr/meter-reading | process_meter_reading | stub | — | always returns 501 NOT_IMPLEMENTED (OCR backend not configured) |
-| POST | /api/v1/ai/ocr/correction | submit_correction | stub | — | accepts payload and discards it (no training sink); returns 200 but does no work |
+| POST | /api/v1/ai/ocr/meter-reading | process_meter_reading | done | ocr_meter_reading_tests.rs | db-backed: parses multipart, stores reading, S3 upload path |
+| POST | /api/v1/ai/ocr/correction | submit_correction | done | ocr_meter_reading_tests.rs | db-backed: stores correction in meter_corrections table |
 
 ## Summary
-- done: 20 | partial: 71 | stub: 2 | missing: 0 | total: 93
+- done: 2 | partial: 91 | stub: 0 | missing: 0 | total: 93
