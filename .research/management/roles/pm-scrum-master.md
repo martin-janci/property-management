@@ -1,42 +1,38 @@
-# Role: pm-scrum-master — 2026-05-29
+# pm-scrum-master
 
-> Delivery lead / coordinator. Always runs. Static read-only.
+<sub>Last run: 2026-06-27</sub>
 
 ## Summary
 
-This window (#717–#730 plus late-arriving #597/#657/#659/#685/#695/#706) delivered 4 app-gap PRs and confirmed the reports IDOR PR (#662) awaiting review; the bulk of activity was research/dispatcher infra. Coverage now reads 27 done / 22 partial / 0 not-started (49 stories), with `sprint-status.yaml` stale on 10b-3/10b-4/10b-6 (all delivered) and several test-hardening issues (#480–#487) still open and blocking story promotions.
-
-## Sprint progress
-
-- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth.
-- Epics done: 2 / 6 active (epic-8a, epic-9 fully done; epic-10b complete in coverage).
-
-## Shipped since last run
-
-- #718 fix(ios): gesture-mask + sheet-env (LocationManager) + SSO CSRF tests — closes #618/#625/#578
-- #719 gap-84-2 e-signature UI: manager/landlord signerParties + cs/de i18n — resolves all 6 PR#513 follow-ups
-- #720 gap-10b-3 admin Platform Health UI: MFA-interception test coverage
-- #724 gap-10a-4 OAuth scope picker (admin-web) + scope-grant audit trail
-- Late-merges below the prior cursor: #695 gap-10b-6 onboarding SQLx, #706 gap-10b-4 system-announcements CRUD+tests, #685 gap-81-1 CronPicker isNaN→Number.isNaN, #597 gap-8a-3 WebSocket sync confirmed, #657 JWT/RUST_ENV test-guard consolidation (#629), #659 reality-mobile screen agent-logs (#581)
+Sprint 'Epic 6, 7A, 8A & 10A' is materially ahead of its yaml labels: coverage.json (2026-06-23) confirms Epic 6 all 6 stories done, Epic 7A all 5 stories done, Epic 8A done, Epic 10B done — sprint-status.yaml is stale and needs reconciliation. The 11-day catch-up window (PRs #1567-#1856, 96 merges) delivered major work across Epics 3, 4, 6, 11, 16, 18, and messaging, but three high-severity bugs discovered in the saved-search-alerts drainer (Epic 16) and six open test-hardening gates (#480-#485, #487) are blocking story promotion for 10A and Epic 80 partials.
 
 ## Next actions
 
-1. [high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647) — owner: pm-security.
-2. [high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test) — owner: pm-security.
-3. [high] Promote draft #723 (gap-9-2 MFA recovery codes backend) to review/merge — owner: pm-backend.
-4. [medium] Sync sprint-status.yaml: 10b-3/10b-4/10b-6 done, 8a-3 WS done; epic-10b → done — owner: pm-scrum-master.
-5. [medium] Triage gap-82 drafts #639/#641/#705 to non-draft review — owner: pm-frontend (mobile-lag owner).
+- **[high]** Reconcile sprint-status.yaml: promote Epic 6 (all 6 stories), Epic 7A (all 5 stories), Epic 10B (all 7 stories) to done and flip epic statuses to done to match coverage.json 2026-06-23 ground truth (dep: none; DoD: sprint-status.yaml epic statuses and story development_status entries match coverage.json; sprint_progress reflects accurate epics_done count)
+- **[high]** Fix Epic 16 drainer HIGH bugs (row reservation + transactional enqueue) before the next alert worker deployment; assign rust-backend to author the patch and open a PR against dev (dep: pm-backend; DoD: PR merged on dev: SELECT FOR UPDATE skip-locked row reservation present, enqueue+watermark wrapped in single transaction, exponential backoff on retry loop)
+- **[high]** Close or defer test-hardening issues #481, #487 (OAuth backend) so 10a-1 and 10a-3 can be promoted; assign rust-backend to write refresh-token revocation regression test and MFA rate-limit test (dep: pm-backend; DoD: Issues #481 and #487 closed; 10a-1 and 10a-3 promoted to done in sprint-status.yaml)
+- **[medium]** Close test-hardening issue #482 (ProtectedRoute multi-tenant role fallback) so 10a-2 can be promoted; assign react-web to add ProtectedRoute unit tests covering multi-tenant users (dep: pm-frontend; DoD: Issue #482 closed; 10a-2 promoted to done in sprint-status.yaml)
+- **[medium]** Wire party submissions endpoints in ppt-web dispute-detail to unblock 80-3-mediation-resolution; update dispute-detail screen-map apiStatus from partial to complete after merge (dep: pm-frontend; DoD: dispute-detail screen apiStatus=complete; 80-3 promoted to done in sprint-status.yaml)
+- **[low]** Update sprint-status.yaml sprint_name and sprint_goal to reflect the active delivery scope (Epics 3, 4, 11, 16, 18, messaging) — current label reflects December 2025 planning, not 2026-Q2 reality (dep: none; DoD: sprint_name and sprint_goal updated; started_at reflects current sprint start date)
 
-## Blockers
+## Risks
 
-- **Epic 81 — Reports promotion:** cron_expression column missing (#616); 81-1/81-2 partial. (RBAC #614 + tenant-scope #624 closed by #643.)
-- **Test-hardening batch #480–#487:** open; gates 8a-3/10a-1/10a-3/7a-5/6-2/6-5 from done.
-- **80-2 dispute-filing-flow (partial):** EvidenceUploader.tsx + useDraftStorage.ts missing; no owner assigned.
+- **high/high**: Epic 16 saved-search-alerts drainer has two HIGH-severity concurrency bugs (duplicate emails/pushes under load, data loss on crash) that are already deployed to dev on merged PRs #1847-#1850 — mitigation: Expedite rust-backend patch with SELECT FOR UPDATE skip-locked + single-transaction enqueue; do not promote Epic 16 to done or cut a release including this code until patch merges
+- **high/medium**: sprint-status.yaml is 5+ weeks stale (last updated 2026-05-25) — team may make planning decisions off incorrect 'in-progress' counts, masking 3 fully-done epics and inflating the backlog — mitigation: Orchestrator should write the reconciled sprint-status.yaml immediately as part of this run's artifact output
+- **medium/high**: Six open test-hardening gates (#480-#485, #487) with no assigned owner or due date — OAuth stories (10a-1/2/3) stuck in ready-for-dev indefinitely — mitigation: Assign specific owner roles and target sprint for each gate; consider deferring low-severity ones (e.g. #483 voice-device IDOR tests) to reduce block count
+- **medium/high**: 11-day cursor lag in the daily research routine means 75+ post-merge reviewer issues accumulated without triage — security-themed follow-ups (sqlx checks, idempotency keys, IDOR) may age into real vulnerabilities — mitigation: Restore daily routine cadence; pm-security to triage the 75 'follow-up + from-merged-review' issues and promote actionable ones to the backlog
+- **medium/medium**: saved_search_alerts.rs and reality_portal.rs are churn hotspots (3 touches each in this run) — continued parallel edits risk merge conflicts and regression in a code path already known to have concurrency bugs — mitigation: Serialize drainer work through a single branch; add integration test coverage before the next feature touch
 
 ## Open questions
 
-- Are Epic 81 backend pause/resume/executions-download routes implemented or still missing?
-- Disposition of dependabot sqlx 0.8→0.9 (#665/#666) — compatibility pass needed before merge?
-- Is #723 (MFA recovery backend) reviewed yet or purely draft?
-- Is the 80-2 EvidenceUploader gap owned by anyone?
-- Do the 5 newly-closed follow-ups (#578/#581/#618/#625/#629) unblock any sprint-status gates?
+- Were the Epic 16 drainer bugs (duplicate alerts, crash-restart duplicates) introduced by PRs #1847-#1850 or were they pre-existing? Need commit-level blame to scope the fix.
+- Issue #480 (WebSocket JWT token in query param logged) is marked open and severity=high — has any security review been done or is this still unmitigated in production?
+- Is Epic 10A (OAuth Provider Foundation) still in-scope for the current sprint, or has it been deferred to a future sprint given the test-hardening blockers?
+- What is the correct started_at date for the current active sprint — the yaml shows 2025-12-21 but delivery pace suggests a re-plan occurred in Q1/Q2 2026?
+- PR #1821 (accounting epic) is non-draft and open — is this Epic 11 follow-on work, and who is the reviewer?
+
+## Decisions needed
+
+- Decide whether to defer test-hardening issues #483 (voice-device IDOR tests) and #484 (notification dispatch serial/FCM stub) to a hardening sprint rather than blocking OAuth story promotion — owner: pm-tech-lead
+- Decide whether Epic 16 saved-search-alerts code should be feature-flagged off in staging until the drainer concurrency patch lands — owner: pm-backend
+- Decide the scope and owner for the 5-step dispute-filing wizard redesign (80-2 redesignStatus: in-progress) — currently no PR in flight — owner: pm-frontend

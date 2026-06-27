@@ -1,0 +1,148 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 11d (last 2026-06-16). Cloud routine likely stalled — investigate scheduler/cron health. Dispatcher (separate loop on planning branch) was still ticking — 32 dispatcher commits in window.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 'revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)' — intentional reconciliation revert of the delegation feature re-introduction. Not a regression revert; PR #1690 was a partial wiring landed before retirement decision. No new bug to chase, but the score reflects revert-class evidence.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 'Leases nav link' closed unmerged — superseded by other Epic 3.3 unit management work.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 'mobile tsc typecheck exclusion' closed unmerged — typecheck issue resolved differently in PR #1748 (fix mobile node-types typecheck break).",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 'backend gate unblock for organizations/notification_event' closed unmerged — superseded by RLS gate baseline reclassification PRs #1728 and #1729.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 'Epic 3 story 3.2 unit management UI' closed unmerged — needs re-evaluation; story 3.2 unit management UI is still partial in coverage.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs touched 3x in PRs #1847/#1849/#1850 (Epic 16 saved-search alerts cluster). Sibling files services/search_alert_drainer.rs + services/favorite_alerts.rs also new — concentrated activity zone.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/reality-server/src/services/saved_search_alerts.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "Re-emit (cumulative type). reality_portal.rs touched 3x more this run (PRs #1847/#1849/#1850 saved-search-alerts repo support). hotspot_history will advance to runs_seen=2 — see repeated-churn signal below.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/src/repositories/reality_portal.rs"]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "evidence": "reality_portal.rs hit runs_seen=2 (last_seen 2026-06-12 → 2026-06-27). Saved-search-alerts feature work + Epic 16 cadence/drainer continues to mutate this repo file — instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/src/repositories/reality_portal.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/models/reality_portal.rs touched 3x in PRs #1847/#1849/#1850 (Epic 16 model additions — SearchAlert, SearchAlertQueueRow, FavoriteAlertQueueRow). New types being shaped during the Epic 16 build-out.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/src/models/reality_portal.rs"]
+    },
+    {
+      "id": "code-review-reality-server-drainer-no-row-reservation",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 — reality-server expert review",
+      "score_delta": 3,
+      "evidence": "search_alert_drainer.rs:244-326 — list_undelivered_search_alerts does plain SELECT (no FOR UPDATE SKIP LOCKED, no notify_started_at column) and mark_search_alert_notified runs only after transports finish. Two drainer instances (HA, rolling restart, or run_once latency > poll_interval=60s) both pick up the same WHERE notified_at IS NULL rows and double-send. Module doc claims at-least-once-via-status-column but status is owned by the in-app channel.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": ["backend/servers/reality-server/src/services/search_alert_drainer.rs"]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-enqueue-non-tx",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 — reality-server expert review",
+      "score_delta": 3,
+      "evidence": "saved_search_alerts.rs:216-240 — enqueue_search_alert (INSERT into search_alert_queue) + mark_saved_search_matched (UPDATE last_matched_at) issued as two separate statements on same connection, not in a transaction. Watermark error swallowed with `let _ = ...`. Worker kill between calls → next poll re-finds same listings (since unchanged) → duplicate in-app + email + push alerts. No UNIQUE(saved_search_id, listing_id) on search_alert_queue.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": ["backend/servers/reality-server/src/services/saved_search_alerts.rs"]
+    },
+    {
+      "id": "code-review-reality-server-drainer-no-backoff-rate-limit",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 — reality-server expert review",
+      "score_delta": 2,
+      "evidence": "search_alert_drainer.rs:122-174 — SearchAlertDrainerConfig exposes only poll_interval_secs + batch_size + max_attempts. record_search_alert_notify_failure bumps notify_attempts with no notify_retry_after column. A row whose email transport returns Err appears in very next 60s poll until max_attempts=5. Combined with no outbound rate-limit Semaphore, transient FCM/SMTP outage with N backlog rows yields 5*N immediate redelivery attempts in ~5min.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": ["backend/servers/reality-server/src/services/search_alert_drainer.rs"]
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "Dependabot bump: tower-http 0.6.11 → 0.7.0 in /backend axum group. Merged.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "Dependabot bump: gradle-minor-patch group in /mobile-native (2 updates). Merged.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [],
+  "auto_fix_actions": []
+}

@@ -85,3 +85,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+
+## 2026-06-27 — Decisions needed (pm rotation: pm-scrum-master + pm-security)
+
+- Decide whether to defer test-hardening issues #483 (voice-device IDOR tests) and #484 (notification dispatch serial/FCM stub) to a hardening sprint rather than blocking OAuth story promotion — owner: pm-tech-lead
+- Decide whether Epic 16 saved-search-alerts code should be feature-flagged off in staging until the drainer concurrency patch lands — owner: pm-backend
+- Decide the scope and owner for the 5-step dispute-filing wizard redesign (80-2 redesignStatus: in-progress) — currently no PR in flight — owner: pm-frontend
+- WebSocket auth mechanism: adopt short-lived one-time ticket endpoint vs. accept token-in-query-param with log-scrubbing mitigation — owner: rust-backend + pm-tech-lead
+- PII retention policy for guest ID-document OCR results: how long are raw images and extracted fields stored, and under which GDPR lawful basis — owner: pm-compliance + pm-tech-lead
+- Release gate policy: confirm that issues #480, #481, #487 must be closed before any Epic 10A story ships to prod (current sprint-status marks them as open gates but no prod-freeze date is set) — owner: pm-delivery
