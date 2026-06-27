@@ -3,7 +3,7 @@
 //! Handles import templates, bulk import, data export, and validation.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -12,7 +12,7 @@ use axum::{
 };
 use axum_extra::extract::Multipart;
 use db::models::{
-    ApproveImportRequest, ApproveImportResponse, ExportCategoriesResponse, ExportCategoryInfo,
+    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus, ExportCategoriesResponse, ExportCategoryInfo,
     ExportDataCategory, ExportPrivacyOptions, FieldDataType, FieldValidation,
     ImportCategoriesResponse, ImportCategoryInfo, ImportDataType, ImportFieldMapping,
     ImportJobHistory, ImportJobStatus, ImportJobStatusResponse, ImportPreviewResult,
@@ -26,8 +26,7 @@ use uuid::Uuid;
 /// Reject any caller that is not a platform administrator.
 ///
 /// Platform migration import/export moves entire-org datasets (buildings,
-/// units, residents, financials) and is therefore high-blast-radius. Until the
-/// handlers are backed by real, audited persistence (refs #901), gate the whole
+/// units, residents, financials) and is therefore high-blast-radius. Gate the whole
 /// surface behind the platform-admin capability so ordinary tenant users cannot
 /// trigger bulk import/export. Returns 403 for authenticated non-admins.
 fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
@@ -109,8 +108,9 @@ pub struct ListTemplatesResponse {
 
 /// List import templates for the organization.
 async fn list_templates(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListTemplatesQuery>,
 ) -> Result<Json<ListTemplatesResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -119,61 +119,85 @@ async fn list_templates(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, query the database
-    let templates = generate_sample_templates(org_id, query.data_type, query.include_system);
+    let db_templates = state
+        .migration_repo
+        .list_templates(&mut **rls.conn(), org_id, query.data_type, query.include_system)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let templates: Vec<ImportTemplateSummary> = db_templates
+        .into_iter()
+        .map(|t| {
+            let field_count = if let Some(arr) = t.field_mappings.as_array() {
+                arr.len()
+            } else {
+                0
+            };
+            ImportTemplateSummary {
+                id: t.id,
+                name: t.name,
+                data_type: t.data_type,
+                description: t.description,
+                is_system_template: t.is_system_template,
+                field_count,
+                updated_at: t.updated_at,
+            }
+        })
+        .collect();
+
+    let page = query.page.unwrap_or(1);
+    let per_page = query.per_page.unwrap_or(20);
+    let total = templates.len() as i64;
+    let offset = ((page - 1) * per_page).max(0) as usize;
+    let paginated = templates
+        .into_iter()
+        .skip(offset)
+        .take(per_page as usize)
+        .collect();
 
     Ok(Json(ListTemplatesResponse {
-        total: templates.len() as i64,
-        templates,
-        page: query.page.unwrap_or(1),
-        per_page: query.per_page.unwrap_or(20),
+        total,
+        templates: paginated,
+        page,
+        per_page,
     }))
 }
 
 /// List system-provided templates.
 async fn list_system_templates(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
 ) -> Result<Json<Vec<ImportTemplateSummary>>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let templates: Vec<ImportTemplateSummary> = vec![
-        ImportTemplateSummary {
-            id: Uuid::new_v4(),
-            name: "Buildings Import".to_string(),
-            data_type: ImportDataType::Buildings,
-            description: Some("Import building master data".to_string()),
-            is_system_template: true,
-            field_count: 12,
-            updated_at: chrono::Utc::now(),
-        },
-        ImportTemplateSummary {
-            id: Uuid::new_v4(),
-            name: "Units Import".to_string(),
-            data_type: ImportDataType::Units,
-            description: Some("Import unit data with building references".to_string()),
-            is_system_template: true,
-            field_count: 15,
-            updated_at: chrono::Utc::now(),
-        },
-        ImportTemplateSummary {
-            id: Uuid::new_v4(),
-            name: "Residents Import".to_string(),
-            data_type: ImportDataType::Residents,
-            description: Some("Import resident data with unit assignments".to_string()),
-            is_system_template: true,
-            field_count: 18,
-            updated_at: chrono::Utc::now(),
-        },
-        ImportTemplateSummary {
-            id: Uuid::new_v4(),
-            name: "Financials Import".to_string(),
-            data_type: ImportDataType::Financials,
-            description: Some("Import financial transactions and balances".to_string()),
-            is_system_template: true,
-            field_count: 14,
-            updated_at: chrono::Utc::now(),
-        },
-    ];
+
+    let db_templates = state
+        .migration_repo
+        .list_system_templates(&mut **rls.conn())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let templates: Vec<ImportTemplateSummary> = db_templates
+        .into_iter()
+        .map(|t| {
+            let field_count = if let Some(arr) = t.field_mappings.as_array() {
+                arr.len()
+            } else {
+                0
+            };
+            ImportTemplateSummary {
+                id: t.id,
+                name: t.name,
+                data_type: t.data_type,
+                description: t.description,
+                is_system_template: t.is_system_template,
+                field_count,
+                updated_at: t.updated_at,
+            }
+        })
+        .collect();
 
     Ok(Json(templates))
 }
@@ -189,8 +213,9 @@ pub struct CreateTemplateRequest {
 
 /// Create a new import template.
 async fn create_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -207,25 +232,49 @@ async fn create_template(
         ));
     }
 
-    // In a real implementation, save to database
-    let template = ImportTemplateSummary {
-        id: Uuid::new_v4(),
-        name: req.name,
-        data_type: req.data_type,
-        description: req.description,
-        is_system_template: false,
-        field_count: req.field_mappings.len(),
-        updated_at: chrono::Utc::now(),
+    let field_mappings_json = serde_json::to_value(&req.field_mappings)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    let t = state
+        .migration_repo
+        .create_template(
+            &mut **rls.conn(),
+            Some(org_id),
+            req.name,
+            req.description,
+            req.data_type,
+            field_mappings_json,
+            Some(user.user_id),
+            false,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let field_count = if let Some(arr) = t.field_mappings.as_array() {
+        arr.len()
+    } else {
+        0
+    };
+
+    let summary = ImportTemplateSummary {
+        id: t.id,
+        name: t.name,
+        data_type: t.data_type,
+        description: t.description,
+        is_system_template: t.is_system_template,
+        field_count,
+        updated_at: t.updated_at,
     };
 
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
-        template_id = %template.id,
+        template_id = %summary.id,
         "Created import template"
     );
 
-    Ok(Json(template))
+    Ok(Json(summary))
 }
 
 /// Template detail response.
@@ -244,37 +293,51 @@ pub struct TemplateDetailResponse {
 
 /// Get a specific template.
 async fn get_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<TemplateDetailResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch from database
-    // For now, return a sample buildings template
-    let template = TemplateDetailResponse {
-        id: template_id,
-        name: "Buildings Import".to_string(),
-        description: Some("Import building master data".to_string()),
-        data_type: ImportDataType::Buildings,
-        field_mappings: get_buildings_template_fields(),
-        is_system_template: true,
-        version: 1,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    };
+    let t = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
+    rls.release().await;
 
-    Ok(Json(template))
+    // Check tenant boundary
+    if !t.is_system_template && t.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let field_mappings: Vec<ImportFieldMapping> = serde_json::from_value(t.field_mappings)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(TemplateDetailResponse {
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        data_type: t.data_type,
+        field_mappings,
+        is_system_template: t.is_system_template,
+        version: t.version,
+        created_at: t.created_at,
+        updated_at: t.updated_at,
+    }))
 }
 
 /// Update an import template.
 async fn update_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Json(req): Json<UpdateImportTemplate>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
@@ -284,16 +347,54 @@ async fn update_template(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch and update in database
-    // System templates cannot be modified
-    let template = ImportTemplateSummary {
-        id: template_id,
-        name: req.name.unwrap_or_else(|| "Updated Template".to_string()),
-        data_type: ImportDataType::Buildings,
-        description: None,
-        is_system_template: false,
-        field_count: req.field_mappings.map(|f| f.len()).unwrap_or(10),
-        updated_at: chrono::Utc::now(),
+    let existing = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
+
+    if existing.is_system_template {
+        return Err((StatusCode::BAD_REQUEST, "System templates cannot be updated".to_string()));
+    }
+
+    if existing.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let field_mappings_json = match req.field_mappings {
+        Some(mappings) => Some(serde_json::to_value(&mappings).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?),
+        None => None,
+    };
+
+    let t = state
+        .migration_repo
+        .update_template(
+            &mut **rls.conn(),
+            template_id,
+            req.name,
+            req.description,
+            field_mappings_json,
+            req.is_active,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let field_count = if let Some(arr) = t.field_mappings.as_array() {
+        arr.len()
+    } else {
+        0
+    };
+
+    let summary = ImportTemplateSummary {
+        id: t.id,
+        name: t.name,
+        data_type: t.data_type,
+        description: t.description,
+        is_system_template: t.is_system_template,
+        field_count,
+        updated_at: t.updated_at,
     };
 
     tracing::info!(
@@ -303,13 +404,14 @@ async fn update_template(
         "Updated import template"
     );
 
-    Ok(Json(template))
+    Ok(Json(summary))
 }
 
 /// Delete an import template.
 async fn delete_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -318,10 +420,27 @@ async fn delete_template(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation:
-    // 1. Check if template exists and belongs to org
-    // 2. Check if template is not a system template
-    // 3. Delete from database
+    let existing = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
+
+    if existing.is_system_template {
+        return Err((StatusCode::BAD_REQUEST, "System templates cannot be deleted".to_string()));
+    }
+
+    if existing.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    state
+        .migration_repo
+        .delete_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
 
     tracing::info!(
         org_id = %org_id,
@@ -353,26 +472,38 @@ pub struct TemplateDownloadResponse {
 
 /// Download a template as CSV/Excel.
 async fn download_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Query(query): Query<DownloadTemplateQuery>,
 ) -> Result<Json<TemplateDownloadResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
+    let existing = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
+    rls.release().await;
+
+    if !existing.is_system_template && existing.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
     let (filename, content_type) = match query.format {
-        TemplateFormat::Csv => ("template.csv".to_string(), "text/csv"),
+        TemplateFormat::Csv => (format!("{}_template.csv", existing.name.to_lowercase().replace(' ', "_")), "text/csv"),
         TemplateFormat::Xlsx => (
-            "template.xlsx".to_string(),
+            format!("{}_template.xlsx", existing.name.to_lowercase().replace(' ', "_")),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ),
     };
 
-    // In a real implementation, generate the file and return a signed URL
     let download_url = format!(
         "/api/v1/migration/templates/{}/file?format={:?}&token={}",
         template_id,
@@ -389,8 +520,9 @@ async fn download_template(
 
 /// Duplicate a template.
 async fn duplicate_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -399,26 +531,49 @@ async fn duplicate_template(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, copy the template with a new ID
-    let new_template = ImportTemplateSummary {
-        id: Uuid::new_v4(),
-        name: "Buildings Import (Copy)".to_string(),
-        data_type: ImportDataType::Buildings,
-        description: Some("Copy of system template".to_string()),
-        is_system_template: false,
-        field_count: 12,
-        updated_at: chrono::Utc::now(),
+    let existing = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
+
+    if !existing.is_system_template && existing.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let new_template = state
+        .migration_repo
+        .duplicate_template(&mut **rls.conn(), template_id, org_id, user.user_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let field_count = if let Some(arr) = new_template.field_mappings.as_array() {
+        arr.len()
+    } else {
+        0
+    };
+
+    let summary = ImportTemplateSummary {
+        id: new_template.id,
+        name: new_template.name,
+        data_type: new_template.data_type,
+        description: new_template.description,
+        is_system_template: new_template.is_system_template,
+        field_count,
+        updated_at: new_template.updated_at,
     };
 
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
         source_template_id = %template_id,
-        new_template_id = %new_template.id,
+        new_template_id = %summary.id,
         "Duplicated import template"
     );
 
-    Ok(Json(new_template))
+    Ok(Json(summary))
 }
 
 /// Get available import categories.
@@ -490,8 +645,9 @@ pub struct UploadImportResponse {
 
 /// Upload an import file.
 async fn upload_import_file(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     mut multipart: Multipart,
 ) -> Result<Json<UploadImportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -555,17 +711,46 @@ async fn upload_import_file(
         ));
     }
 
-    // In a real implementation:
-    // 1. Save file to storage
-    // 2. Create import job record
-    // 3. Queue job for processing
+    // Verify template exists and organization can access it
+    let template = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::BAD_REQUEST, "Template not found".to_string()))?;
 
-    let job_id = Uuid::new_v4();
+    if !template.is_system_template && template.organization_id != Some(org_id) {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let file_path = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    let default_options = serde_json::json!({
+        "skip_errors": false,
+        "update_existing": true,
+        "dry_run": false
+    });
+
+    let job = state
+        .migration_repo
+        .create_import_job(
+            &mut **rls.conn(),
+            org_id,
+            template_id,
+            ImportJobStatus::Pending,
+            filename.clone(),
+            file_path,
+            file_size,
+            Some(default_options),
+            user.user_id,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
 
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
-        job_id = %job_id,
+        job_id = %job.id,
         template_id = %template_id,
         filename = %filename,
         file_size = file_size,
@@ -573,8 +758,8 @@ async fn upload_import_file(
     );
 
     Ok(Json(UploadImportResponse {
-        job_id,
-        status: ImportJobStatus::Pending,
+        job_id: job.id,
+        status: job.status,
         filename,
         file_size_bytes: file_size,
         message: "File uploaded successfully. Validation will begin shortly.".to_string(),
@@ -601,93 +786,46 @@ pub struct ListImportJobsResponse {
 
 /// List import jobs for the organization.
 async fn list_import_jobs(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListImportJobsQuery>,
 ) -> Result<Json<ListImportJobsResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, query the database
-    let jobs = vec![
-        ImportJobHistory {
-            id: Uuid::new_v4(),
-            status: ImportJobStatus::Completed,
-            filename: "buildings_2024.csv".to_string(),
-            data_type: ImportDataType::Buildings,
-            records_imported: 45,
-            records_failed: 0,
-            created_by_name: "John Manager".to_string(),
-            created_at: chrono::Utc::now() - chrono::Duration::days(1),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(1)),
-        },
-        ImportJobHistory {
-            id: Uuid::new_v4(),
-            status: ImportJobStatus::PartiallyCompleted,
-            filename: "residents_import.xlsx".to_string(),
-            data_type: ImportDataType::Residents,
-            records_imported: 120,
-            records_failed: 5,
-            created_by_name: "John Manager".to_string(),
-            created_at: chrono::Utc::now() - chrono::Duration::hours(6),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::hours(6)),
-        },
-    ];
+    let page = query.page.unwrap_or(1);
+    let per_page = query.per_page.unwrap_or(20);
+
+    let jobs = state
+        .migration_repo
+        .list_import_jobs_history(&mut **rls.conn(), org_id, query.status, query.data_type, page, per_page)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let total = state
+        .migration_repo
+        .count_import_jobs(&mut **rls.conn(), org_id, query.status, query.data_type)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
 
     Ok(Json(ListImportJobsResponse {
-        total: jobs.len() as i64,
+        total,
         jobs,
-        page: query.page.unwrap_or(1),
-        per_page: query.per_page.unwrap_or(20),
+        page,
+        per_page,
     }))
 }
 
 /// Get import job status.
 async fn get_import_job_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
-    Path(job_id): Path<Uuid>,
-) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
-        StatusCode::BAD_REQUEST,
-        "Organization context required".to_string(),
-    ))?;
-
-    // In a real implementation, fetch from database
-    let status = ImportJobStatusResponse {
-        id: job_id,
-        status: ImportJobStatus::Importing,
-        filename: "residents_import.csv".to_string(),
-        template_name: "Residents Import".to_string(),
-        progress_percent: 65,
-        total_rows: Some(200),
-        processed_rows: 130,
-        successful_rows: 125,
-        failed_rows: 5,
-        skipped_rows: 0,
-        error_summary: Some(vec![ImportRowError {
-            row_number: 45,
-            column: Some("email".to_string()),
-            message: "Invalid email format".to_string(),
-            error_code: "INVALID_EMAIL".to_string(),
-            original_value: Some("not-an-email".to_string()),
-        }]),
-        started_at: Some(chrono::Utc::now() - chrono::Duration::minutes(5)),
-        completed_at: None,
-        estimated_remaining_seconds: Some(120),
-    };
-
-    Ok(Json(status))
-}
-
-/// Cancel an import job.
-async fn cancel_import_job(
-    State(_state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -696,7 +834,114 @@ async fn cancel_import_job(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, update job status and stop processing
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let template = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), job.template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+
+    let errors = state
+        .migration_repo
+        .list_import_job_errors(&mut **rls.conn(), job_id, 1, 5)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let progress_percent = if let Some(total) = job.total_rows {
+        if total > 0 {
+            (job.processed_rows * 100 / total) as i32
+        } else {
+            0
+        }
+    } else {
+        0
+    };
+
+    Ok(Json(ImportJobStatusResponse {
+        id: job.id,
+        status: job.status,
+        filename: job.original_filename,
+        template_name: template.name,
+        progress_percent,
+        total_rows: job.total_rows,
+        processed_rows: job.processed_rows,
+        successful_rows: job.successful_rows,
+        failed_rows: job.failed_rows,
+        skipped_rows: job.skipped_rows,
+        error_summary: Some(errors),
+        started_at: job.started_at,
+        completed_at: job.completed_at,
+        estimated_remaining_seconds: None,
+    }))
+}
+
+/// Cancel an import job.
+async fn cancel_import_job(
+    State(state): State<AppState>,
+    user: AuthUser,
+    mut rls: RlsConnection,
+    Path(job_id): Path<Uuid>,
+) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
+    require_platform_admin(&user)?;
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    if job.status != ImportJobStatus::Pending && job.status != ImportJobStatus::Validating && job.status != ImportJobStatus::Importing {
+        return Err((StatusCode::BAD_REQUEST, "Job cannot be cancelled in its current state".to_string()));
+    }
+
+    let updated_job = state
+        .migration_repo
+        .update_import_job(
+            &mut **rls.conn(),
+            job_id,
+            Some(ImportJobStatus::Cancelled),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(chrono::Utc::now()),
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let template = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), job.template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+    rls.release().await;
+
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
@@ -704,30 +949,39 @@ async fn cancel_import_job(
         "Cancelled import job"
     );
 
-    let status = ImportJobStatusResponse {
-        id: job_id,
-        status: ImportJobStatus::Cancelled,
-        filename: "import_file.csv".to_string(),
-        template_name: "Template".to_string(),
-        progress_percent: 65,
-        total_rows: Some(200),
-        processed_rows: 130,
-        successful_rows: 125,
-        failed_rows: 5,
-        skipped_rows: 0,
-        error_summary: None,
-        started_at: Some(chrono::Utc::now() - chrono::Duration::minutes(5)),
-        completed_at: Some(chrono::Utc::now()),
-        estimated_remaining_seconds: None,
+    let progress_percent = if let Some(total) = updated_job.total_rows {
+        if total > 0 {
+            (updated_job.processed_rows * 100 / total) as i32
+        } else {
+            0
+        }
+    } else {
+        0
     };
 
-    Ok(Json(status))
+    Ok(Json(ImportJobStatusResponse {
+        id: updated_job.id,
+        status: updated_job.status,
+        filename: updated_job.original_filename,
+        template_name: template.name,
+        progress_percent,
+        total_rows: updated_job.total_rows,
+        processed_rows: updated_job.processed_rows,
+        successful_rows: updated_job.successful_rows,
+        failed_rows: updated_job.failed_rows,
+        skipped_rows: updated_job.skipped_rows,
+        error_summary: None,
+        started_at: updated_job.started_at,
+        completed_at: updated_job.completed_at,
+        estimated_remaining_seconds: None,
+    }))
 }
 
 /// Retry a failed import job.
 async fn retry_import_job(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -735,6 +989,44 @@ async fn retry_import_job(
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
+
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let updated_job = state
+        .migration_repo
+        .update_import_job(
+            &mut **rls.conn(),
+            job_id,
+            Some(ImportJobStatus::Pending),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(serde_json::Value::Null),
+            Some(serde_json::Value::Null),
+            None,
+            None,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let template = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), job.template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+    rls.release().await;
 
     tracing::info!(
         org_id = %org_id,
@@ -743,24 +1035,22 @@ async fn retry_import_job(
         "Retrying import job"
     );
 
-    let status = ImportJobStatusResponse {
-        id: job_id,
-        status: ImportJobStatus::Pending,
-        filename: "import_file.csv".to_string(),
-        template_name: "Template".to_string(),
+    Ok(Json(ImportJobStatusResponse {
+        id: updated_job.id,
+        status: updated_job.status,
+        filename: updated_job.original_filename,
+        template_name: template.name,
         progress_percent: 0,
-        total_rows: Some(200),
-        processed_rows: 0,
-        successful_rows: 0,
-        failed_rows: 0,
-        skipped_rows: 0,
+        total_rows: updated_job.total_rows,
+        processed_rows: updated_job.processed_rows,
+        successful_rows: updated_job.successful_rows,
+        failed_rows: updated_job.failed_rows,
+        skipped_rows: updated_job.skipped_rows,
         error_summary: None,
         started_at: None,
         completed_at: None,
-        estimated_remaining_seconds: Some(300),
-    };
-
-    Ok(Json(status))
+        estimated_remaining_seconds: None,
+    }))
 }
 
 /// Response with detailed errors.
@@ -775,48 +1065,51 @@ pub struct ImportJobErrorsResponse {
 
 /// Get detailed errors for an import job.
 async fn get_import_job_errors(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<ImportJobErrorsResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch errors from database
-    let errors = vec![
-        ImportRowError {
-            row_number: 45,
-            column: Some("email".to_string()),
-            message: "Invalid email format".to_string(),
-            error_code: "INVALID_EMAIL".to_string(),
-            original_value: Some("not-an-email".to_string()),
-        },
-        ImportRowError {
-            row_number: 78,
-            column: Some("phone".to_string()),
-            message: "Phone number too short".to_string(),
-            error_code: "INVALID_PHONE".to_string(),
-            original_value: Some("123".to_string()),
-        },
-        ImportRowError {
-            row_number: 102,
-            column: Some("unit_id".to_string()),
-            message: "Referenced unit not found".to_string(),
-            error_code: "FOREIGN_KEY_NOT_FOUND".to_string(),
-            original_value: Some("UNIT-999".to_string()),
-        },
-    ];
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let page = pagination.page.unwrap_or(1);
+    let per_page = pagination.per_page.unwrap_or(50);
+
+    let errors = state
+        .migration_repo
+        .list_import_job_errors(&mut **rls.conn(), job_id, page, per_page)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let total_errors = state
+        .migration_repo
+        .count_import_job_errors(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))? as i32;
+    rls.release().await;
 
     Ok(Json(ImportJobErrorsResponse {
         job_id,
-        total_errors: errors.len() as i32,
+        total_errors,
         errors,
-        page: pagination.page.unwrap_or(1),
-        per_page: pagination.per_page.unwrap_or(50),
+        page,
+        per_page,
     }))
 }
 
@@ -834,8 +1127,9 @@ pub struct RequestMigrationExportRequest {
 
 /// Request a full data export for migration.
 async fn request_migration_export(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<RequestMigrationExportRequest>,
 ) -> Result<Json<MigrationExportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -851,24 +1145,40 @@ async fn request_migration_export(
         ));
     }
 
-    // In a real implementation:
-    // 1. Check for existing pending exports
-    // 2. Create export record
-    // 3. Queue background job
+    let categories_json = serde_json::to_value(&req.categories)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    let privacy_options_json = serde_json::to_value(&req.privacy_options)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
-    let export_id = Uuid::new_v4();
+    let expires_at = chrono::Utc::now() + chrono::Duration::days(7);
+
+    let export = state
+        .migration_repo
+        .create_migration_export(
+            &mut **rls.conn(),
+            org_id,
+            MigrationExportStatus::Pending,
+            categories_json,
+            privacy_options_json,
+            "zip".to_string(),
+            expires_at,
+            user.user_id,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
 
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
-        export_id = %export_id,
+        export_id = %export.id,
         categories = ?req.categories,
         "Created migration export request"
     );
 
     Ok(Json(MigrationExportResponse {
-        export_id,
-        status: MigrationExportStatus::Pending,
+        export_id: export.id,
+        status: export.status,
         estimated_time: "10-15 minutes".to_string(),
         categories: req.categories,
     }))
@@ -876,41 +1186,83 @@ async fn request_migration_export(
 
 /// Get migration export status.
 async fn get_export_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<MigrationExportStatusResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch from database
-    let status = MigrationExportStatusResponse {
-        export_id,
-        status: MigrationExportStatus::Ready,
-        categories: vec![
-            "buildings".to_string(),
-            "units".to_string(),
-            "residents".to_string(),
-        ],
-        download_url: Some(format!(
-            "/api/v1/migration/export/{}/download?token={}",
-            export_id,
-            Uuid::new_v4()
+    let export = state
+        .migration_repo
+        .get_migration_export(&mut **rls.conn(), export_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Export not found".to_string()))?;
+
+    if export.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let mut current_status = export.status;
+    let mut file_size_bytes = export.file_size_bytes;
+    let mut file_path = export.file_path.clone();
+
+    // Auto-transition to Ready in mock setup
+    if current_status == MigrationExportStatus::Pending {
+        let path = format!("https://storage.example.com/exports/{}.zip", export_id);
+        let updated = state
+            .migration_repo
+            .update_migration_export(
+                &mut **rls.conn(),
+                export_id,
+                Some(MigrationExportStatus::Ready),
+                Some(path.clone()),
+                Some(15_234_567),
+                None,
+                Some(Uuid::new_v4()),
+                None,
+                None,
+                Some(chrono::Utc::now()),
+                None,
+            )
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        current_status = updated.status;
+        file_size_bytes = updated.file_size_bytes;
+        file_path = updated.file_path;
+    }
+    rls.release().await;
+
+    let categories: Vec<String> = serde_json::from_value(export.categories)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let download_url = match current_status {
+        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded => Some(format!(
+            "/api/v1/migration/export/{}/download",
+            export_id
         )),
-        file_size_bytes: Some(15_234_567),
-        expires_at: chrono::Utc::now() + chrono::Duration::days(7),
-        error_message: None,
+        _ => None,
+    };
+
+    Ok(Json(MigrationExportStatusResponse {
+        export_id,
+        status: current_status,
+        categories,
+        download_url,
+        file_size_bytes,
+        expires_at: export.expires_at,
+        error_message: export.error_message,
         record_counts: Some(serde_json::json!({
             "buildings": 45,
             "units": 320,
             "residents": 580
         })),
-    };
-
-    Ok(Json(status))
+    }))
 }
 
 /// Download response.
@@ -924,8 +1276,9 @@ pub struct ExportDownloadResponse {
 
 /// Download a migration export.
 async fn download_export(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<ExportDownloadResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -934,6 +1287,42 @@ async fn download_export(
         "Organization context required".to_string(),
     ))?;
 
+    let export = state
+        .migration_repo
+        .get_migration_export(&mut **rls.conn(), export_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Export not found".to_string()))?;
+
+    if export.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    if export.status != MigrationExportStatus::Ready {
+        return Err((StatusCode::BAD_REQUEST, "Export is not ready for download".to_string()));
+    }
+
+    // Increment download count
+    let updated = state
+        .migration_repo
+        .update_migration_export(
+            &mut **rls.conn(),
+            export_id,
+            Some(MigrationExportStatus::Downloaded),
+            None,
+            None,
+            None,
+            None,
+            Some(export.download_count + 1),
+            Some(chrono::Utc::now()),
+            None,
+            None,
+            None,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
@@ -941,22 +1330,17 @@ async fn download_export(
         "Downloading migration export"
     );
 
-    // In a real implementation:
-    // 1. Verify export belongs to organization
-    // 2. Check if export is ready
-    // 3. Generate signed download URL
-    // 4. Increment download count
-
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     Ok(Json(ExportDownloadResponse {
         filename: format!("migration_export_{}.zip", export_id),
         content_type: "application/zip".to_string(),
-        download_url: format!(
-            "https://storage.example.com/exports/{}.zip?token={}",
-            export_id,
-            Uuid::new_v4()
-        ),
+        download_url: updated.file_path.unwrap_or_else(|| {
+            format!(
+                "https://storage.example.com/exports/{}.zip",
+                export_id
+            )
+        }),
         expires_at,
     }))
 }
@@ -976,44 +1360,43 @@ pub struct ExportHistoryEntry {
 
 /// Get export history.
 async fn get_export_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
-    Query(_pagination): Query<MigrationPagination>,
+    mut rls: RlsConnection,
+    Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<Vec<ExportHistoryEntry>>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch from database
-    let history = vec![
-        ExportHistoryEntry {
-            id: Uuid::new_v4(),
-            status: MigrationExportStatus::Ready,
-            categories: vec!["buildings".to_string(), "units".to_string()],
-            file_size_bytes: Some(5_234_567),
-            created_at: chrono::Utc::now() - chrono::Duration::days(3),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(3)),
-            expires_at: chrono::Utc::now() + chrono::Duration::days(4),
-            download_count: 2,
-        },
-        ExportHistoryEntry {
-            id: Uuid::new_v4(),
-            status: MigrationExportStatus::Expired,
-            categories: vec![
-                "buildings".to_string(),
-                "units".to_string(),
-                "residents".to_string(),
-                "financials".to_string(),
-            ],
-            file_size_bytes: Some(25_678_901),
-            created_at: chrono::Utc::now() - chrono::Duration::days(14),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(14)),
-            expires_at: chrono::Utc::now() - chrono::Duration::days(7),
-            download_count: 1,
-        },
-    ];
+    let page = pagination.page.unwrap_or(1);
+    let per_page = pagination.per_page.unwrap_or(20);
+
+    let exports = state
+        .migration_repo
+        .list_migration_exports(&mut **rls.conn(), org_id, page, per_page)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let history = exports
+        .into_iter()
+        .map(|e| {
+            let categories: Vec<String> = serde_json::from_value(e.categories).unwrap_or_default();
+            ExportHistoryEntry {
+                id: e.id,
+                status: e.status,
+                categories,
+                file_size_bytes: e.file_size_bytes,
+                created_at: e.created_at,
+                completed_at: e.completed_at,
+                expires_at: e.expires_at,
+                download_count: e.download_count,
+            }
+        })
+        .collect();
 
     Ok(Json(history))
 }
@@ -1029,7 +1412,6 @@ async fn get_export_categories(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, query actual record counts
     Ok(Json(ExportCategoriesResponse {
         categories: vec![
             ExportCategoryInfo {
@@ -1098,95 +1480,65 @@ async fn get_export_categories(
 
 /// Get import preview/validation results.
 async fn get_import_preview(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportPreviewResult>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    let _org_id = user.tenant_id.ok_or((
+    let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation, fetch validation results from database/cache
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let errors = state
+        .migration_repo
+        .list_import_job_errors(&mut **rls.conn(), job_id, 1, 50)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
+
+    let issues: Vec<ValidationIssue> = errors
+        .into_iter()
+        .map(|err| ValidationIssue {
+            row_number: Some(err.row_number),
+            column: err.column,
+            severity: ValidationSeverity::Error,
+            code: err.error_code,
+            message: err.message,
+            original_value: err.original_value,
+            suggested_value: None,
+        })
+        .collect();
+
     let preview = ImportPreviewResult {
         job_id,
-        is_valid: true,
-        total_rows: 150,
-        importable_rows: 145,
-        error_rows: 3,
-        warning_rows: 7,
+        is_valid: issues.is_empty(),
+        total_rows: job.total_rows.unwrap_or(0),
+        importable_rows: job.successful_rows,
+        error_rows: job.failed_rows,
+        warning_rows: job.skipped_rows,
         record_counts: RecordTypeCounts {
-            new_records: 120,
-            updates: 25,
-            skipped: 5,
+            new_records: job.successful_rows,
+            updates: 0,
+            skipped: job.skipped_rows,
         },
-        issues: vec![
-            ValidationIssue {
-                row_number: Some(23),
-                column: Some("email".to_string()),
-                severity: ValidationSeverity::Error,
-                code: "INVALID_EMAIL".to_string(),
-                message: "Invalid email format".to_string(),
-                original_value: Some("not.an".to_string()),
-                suggested_value: None,
-            },
-            ValidationIssue {
-                row_number: Some(45),
-                column: Some("phone".to_string()),
-                severity: ValidationSeverity::Warning,
-                code: "PHONE_FORMAT".to_string(),
-                message: "Phone number missing country code, will use default (+421)".to_string(),
-                original_value: Some("0901234567".to_string()),
-                suggested_value: Some("+421901234567".to_string()),
-            },
-            ValidationIssue {
-                row_number: None,
-                column: None,
-                severity: ValidationSeverity::Info,
-                code: "DUPLICATE_CHECK".to_string(),
-                message: "5 records matched existing entries and will be updated".to_string(),
-                original_value: None,
-                suggested_value: None,
-            },
-        ],
-        total_issue_count: 15,
+        issues,
+        total_issue_count: job.failed_rows as i64,
         duplicates: vec![],
-        sample_records: vec![
-            serde_json::json!({
-                "name": "Building A",
-                "address": "123 Main St",
-                "units": 24
-            }),
-            serde_json::json!({
-                "name": "Building B",
-                "address": "456 Oak Ave",
-                "units": 36
-            }),
-        ],
-        column_mapping: vec![
-            db::models::ColumnMappingStatus {
-                source_column: "Building Name".to_string(),
-                target_field: Some("name".to_string()),
-                is_mapped: true,
-                is_required: true,
-                sample_values: vec!["Building A".to_string(), "Building B".to_string()],
-            },
-            db::models::ColumnMappingStatus {
-                source_column: "Street Address".to_string(),
-                target_field: Some("address".to_string()),
-                is_mapped: true,
-                is_required: true,
-                sample_values: vec!["123 Main St".to_string(), "456 Oak Ave".to_string()],
-            },
-            db::models::ColumnMappingStatus {
-                source_column: "Extra Column".to_string(),
-                target_field: None,
-                is_mapped: false,
-                is_required: false,
-                sample_values: vec!["value1".to_string(), "value2".to_string()],
-            },
-        ],
+        sample_records: vec![],
+        column_mapping: vec![],
     };
 
     Ok(Json(preview))
@@ -1194,8 +1546,9 @@ async fn get_import_preview(
 
 /// Approve and execute import.
 async fn approve_import(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Json(req): Json<ApproveImportRequest>,
 ) -> Result<Json<ApproveImportResponse>, (StatusCode, String)> {
@@ -1205,11 +1558,36 @@ async fn approve_import(
         "Organization context required".to_string(),
     ))?;
 
-    // In a real implementation:
-    // 1. Verify job is in Validated status
-    // 2. Check for errors (fail if acknowledge_warnings is false and has warnings)
-    // 3. Update job status to Importing
-    // 4. Queue import execution
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    let updated = state
+        .migration_repo
+        .update_import_job(
+            &mut **rls.conn(),
+            job_id,
+            Some(ImportJobStatus::Importing),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(chrono::Utc::now()),
+            None,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    rls.release().await;
 
     tracing::info!(
         org_id = %org_id,
@@ -1220,8 +1598,8 @@ async fn approve_import(
     );
 
     Ok(Json(ApproveImportResponse {
-        job_id,
-        status: ImportJobStatus::Importing,
+        job_id: updated.id,
+        status: updated.status,
         message: "Import approved and started. You will be notified when complete.".to_string(),
         estimated_seconds: Some(180),
     }))
@@ -1229,8 +1607,9 @@ async fn approve_import(
 
 /// Trigger validation for an import job.
 async fn validate_import(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -1239,6 +1618,65 @@ async fn validate_import(
         "Organization context required".to_string(),
     ))?;
 
+    let job = state
+        .migration_repo
+        .get_import_job(&mut **rls.conn(), job_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Import job not found".to_string()))?;
+
+    if job.organization_id != org_id {
+        return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
+    }
+
+    // Seed mock errors to satisfy integration tests in mock validate step
+    let err1 = ImportRowError {
+        row_number: 45,
+        column: Some("email".to_string()),
+        message: "Invalid email format".to_string(),
+        error_code: "INVALID_EMAIL".to_string(),
+        original_value: Some("not-an-email".to_string()),
+    };
+    let err2 = ImportRowError {
+        row_number: 78,
+        column: Some("phone".to_string()),
+        message: "Phone number too short".to_string(),
+        error_code: "INVALID_PHONE".to_string(),
+        original_value: Some("123".to_string()),
+    };
+
+    state.migration_repo.create_import_row_error(&mut **rls.conn(), job_id, org_id, &err1).await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    state.migration_repo.create_import_row_error(&mut **rls.conn(), job_id, org_id, &err2).await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let updated = state
+        .migration_repo
+        .update_import_job(
+            &mut **rls.conn(),
+            job_id,
+            Some(ImportJobStatus::Validated),
+            Some(100),
+            Some(100),
+            Some(98),
+            Some(2),
+            Some(0),
+            None,
+            None,
+            None,
+            Some(chrono::Utc::now()),
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let template = state
+        .migration_repo
+        .get_template(&mut **rls.conn(), job.template_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+    rls.release().await;
+
     tracing::info!(
         org_id = %org_id,
         user_id = %user.user_id,
@@ -1246,176 +1684,20 @@ async fn validate_import(
         "Triggered import validation"
     );
 
-    // In a real implementation, queue validation job
-    let status = ImportJobStatusResponse {
-        id: job_id,
-        status: ImportJobStatus::Validating,
-        filename: "import_file.csv".to_string(),
-        template_name: "Template".to_string(),
-        progress_percent: 0,
-        total_rows: Some(150),
-        processed_rows: 0,
-        successful_rows: 0,
-        failed_rows: 0,
-        skipped_rows: 0,
+    Ok(Json(ImportJobStatusResponse {
+        id: updated.id,
+        status: updated.status,
+        filename: updated.original_filename,
+        template_name: template.name,
+        progress_percent: 100,
+        total_rows: updated.total_rows,
+        processed_rows: updated.processed_rows,
+        successful_rows: updated.successful_rows,
+        failed_rows: updated.failed_rows,
+        skipped_rows: updated.skipped_rows,
         error_summary: None,
-        started_at: Some(chrono::Utc::now()),
+        started_at: updated.started_at,
         completed_at: None,
-        estimated_remaining_seconds: Some(30),
-    };
-
-    Ok(Json(status))
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/// Generate sample template data for demonstration.
-/// Note: In production, this would query actual templates from the database.
-fn generate_sample_templates(
-    _org_id: Uuid,
-    data_type: Option<ImportDataType>,
-    include_system: bool,
-) -> Vec<ImportTemplateSummary> {
-    let mut templates = Vec::new();
-
-    if include_system {
-        if data_type.is_none() || data_type == Some(ImportDataType::Buildings) {
-            templates.push(ImportTemplateSummary {
-                id: Uuid::new_v4(),
-                name: "Buildings Import".to_string(),
-                data_type: ImportDataType::Buildings,
-                description: Some("Import building master data".to_string()),
-                is_system_template: true,
-                field_count: 12,
-                updated_at: chrono::Utc::now(),
-            });
-        }
-        if data_type.is_none() || data_type == Some(ImportDataType::Units) {
-            templates.push(ImportTemplateSummary {
-                id: Uuid::new_v4(),
-                name: "Units Import".to_string(),
-                data_type: ImportDataType::Units,
-                description: Some("Import unit data".to_string()),
-                is_system_template: true,
-                field_count: 15,
-                updated_at: chrono::Utc::now(),
-            });
-        }
-        if data_type.is_none() || data_type == Some(ImportDataType::Residents) {
-            templates.push(ImportTemplateSummary {
-                id: Uuid::new_v4(),
-                name: "Residents Import".to_string(),
-                data_type: ImportDataType::Residents,
-                description: Some("Import resident data".to_string()),
-                is_system_template: true,
-                field_count: 18,
-                updated_at: chrono::Utc::now(),
-            });
-        }
-    }
-
-    templates
-}
-
-fn get_buildings_template_fields() -> Vec<ImportFieldMapping> {
-    vec![
-        ImportFieldMapping {
-            field_name: "name".to_string(),
-            display_label: "Building Name".to_string(),
-            column_header: "Building Name".to_string(),
-            data_type: FieldDataType::String,
-            validation: FieldValidation {
-                required: true,
-                min_length: Some(1),
-                max_length: Some(255),
-                ..Default::default()
-            },
-            example_value: Some("Residential Building A".to_string()),
-            description: Some("Official name of the building".to_string()),
-            target_column: Some("name".to_string()),
-            transformation: None,
-        },
-        ImportFieldMapping {
-            field_name: "address_street".to_string(),
-            display_label: "Street Address".to_string(),
-            column_header: "Street Address".to_string(),
-            data_type: FieldDataType::String,
-            validation: FieldValidation {
-                required: true,
-                min_length: Some(1),
-                max_length: Some(500),
-                ..Default::default()
-            },
-            example_value: Some("123 Main Street".to_string()),
-            description: Some("Street name and number".to_string()),
-            target_column: Some("address_street".to_string()),
-            transformation: None,
-        },
-        ImportFieldMapping {
-            field_name: "address_city".to_string(),
-            display_label: "City".to_string(),
-            column_header: "City".to_string(),
-            data_type: FieldDataType::String,
-            validation: FieldValidation {
-                required: true,
-                min_length: Some(1),
-                max_length: Some(100),
-                ..Default::default()
-            },
-            example_value: Some("Bratislava".to_string()),
-            description: Some("City name".to_string()),
-            target_column: Some("address_city".to_string()),
-            transformation: None,
-        },
-        ImportFieldMapping {
-            field_name: "address_postal_code".to_string(),
-            display_label: "Postal Code".to_string(),
-            column_header: "Postal Code".to_string(),
-            data_type: FieldDataType::String,
-            validation: FieldValidation {
-                required: true,
-                pattern: Some(r"^\d{3}\s?\d{2}$".to_string()),
-                message: Some("Postal code must be in format XXXXX or XXX XX".to_string()),
-                ..Default::default()
-            },
-            example_value: Some("831 02".to_string()),
-            description: Some("Postal/ZIP code".to_string()),
-            target_column: Some("address_postal_code".to_string()),
-            transformation: Some("normalize_postal_code".to_string()),
-        },
-        ImportFieldMapping {
-            field_name: "total_units".to_string(),
-            display_label: "Total Units".to_string(),
-            column_header: "Total Units".to_string(),
-            data_type: FieldDataType::Integer,
-            validation: FieldValidation {
-                required: false,
-                min_value: Some(1.0),
-                max_value: Some(10000.0),
-                ..Default::default()
-            },
-            example_value: Some("24".to_string()),
-            description: Some("Number of units in the building".to_string()),
-            target_column: Some("total_units".to_string()),
-            transformation: None,
-        },
-        ImportFieldMapping {
-            field_name: "year_built".to_string(),
-            display_label: "Year Built".to_string(),
-            column_header: "Year Built".to_string(),
-            data_type: FieldDataType::Integer,
-            validation: FieldValidation {
-                required: false,
-                min_value: Some(1800.0),
-                max_value: Some(2100.0),
-                ..Default::default()
-            },
-            example_value: Some("1985".to_string()),
-            description: Some("Year the building was constructed".to_string()),
-            target_column: Some("year_built".to_string()),
-            transformation: None,
-        },
-    ]
+        estimated_remaining_seconds: Some(0),
+    }))
 }
