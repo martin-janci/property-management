@@ -179,7 +179,7 @@ async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body: SlovakVotingConfig = serde_json::from_value(resp.json_value()).unwrap();
     assert_eq!(body.building_id, building_id);
-    assert_eq!(body.enabled, true);
+    assert!(body.enabled);
     assert_eq!(body.min_notice_days, 15);
 
     // 3. Get updated voting config
@@ -220,7 +220,7 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
         .iter()
         .find(|c| c.category == GdprConsentCategory::Essential)
         .unwrap();
-    assert_eq!(essential.granted, true);
+    assert!(essential.granted);
 
     // 2. Grant Marketing consent
     let record_payload = serde_json::json!({
@@ -253,7 +253,7 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
         .iter()
         .find(|c| c.category == GdprConsentCategory::Marketing)
         .unwrap();
-    assert_eq!(marketing.granted, true);
+    assert!(marketing.granted);
     assert_eq!(marketing.consent_version.as_deref(), Some("1.2"));
 
     // 4. Withdraw Marketing consent
@@ -287,5 +287,5 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
         .iter()
         .find(|c| c.category == GdprConsentCategory::Marketing)
         .unwrap();
-    assert_eq!(marketing.granted, false);
+    assert!(!marketing.granted);
 }
