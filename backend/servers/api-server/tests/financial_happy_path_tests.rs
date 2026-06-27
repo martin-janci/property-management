@@ -104,12 +104,7 @@ async fn financial_happy_path_accounts_transactions_ledger(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "get_account: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "get_account: {}", resp.text());
     assert_eq!(resp.json_value()["id"], acct["id"]);
 
     // ========================================================================
@@ -423,12 +418,7 @@ async fn financial_happy_path_invoices_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "get_invoice: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "get_invoice: {}", resp.text());
     assert_eq!(resp.json_value()["id"], inv["id"]);
 
     // 1.4 POST /api/v1/financial/invoices/{id}/send -> send_invoice
@@ -603,12 +593,7 @@ async fn financial_happy_path_payments_lifecycle(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "get_payment: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "get_payment: {}", resp.text());
     assert_eq!(resp.json_value()["id"], payment["id"]);
 
     // 1.5 POST /api/v1/financial/payments/{id}/allocate -> allocate_payment
