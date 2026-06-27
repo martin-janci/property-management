@@ -1,0 +1,226 @@
+{
+  "run_date": "2026-06-27",
+  "run_iso": "2026-06-27T04:00:00Z",
+  "lag_hours": 276,
+  "lag_days": 11,
+  "since_iso": "2026-06-16T03:25:00Z",
+  "cursors_before": {
+    "last_pr_seen": 1439,
+    "last_issue_seen": 1437,
+    "last_commit_sha": "4829015b"
+  },
+  "cursors_after": {
+    "last_pr_seen": 1864,
+    "last_issue_seen": 1854,
+    "last_commit_sha": "242b38f64891"
+  },
+  "observed": {
+    "merged_prs": 191,
+    "merged_pr_range": "#1548-#1864",
+    "open_prs_touched": 47,
+    "closed_not_merged": 8,
+    "new_or_updated_issues": 50,
+    "commits_on_dev": 100,
+    "untriaged_open_issues": 0
+  },
+  "signals": [
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 reverted PR #1690 (delegations frontend re-wire) — process gap: #1690 merged ~16min before CEO ruled delegations stay retired (BIT-213). Not a code bug, but tracking as a process signal.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-saved-search-alerts-rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+      "score_delta": 1,
+      "evidence": "Top-3 churn in 11d window (3 commits) — Story 16.3 alert_frequency cadence + Story 16.4 transport drainer; single-epic concentration so monitor only, not split candidate yet",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/db/src/repositories/reality_portal.rs",
+      "score_delta": 0,
+      "evidence": "Re-emit (cumulative): 3 churn this run; previously seen 2026-06-12. PR #1812 open draft to split this file.",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "cumulative_re_emit": true
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "backend/crates/db/src/repositories/reality_portal.rs",
+      "score_delta": 1,
+      "evidence": "Hotspot seen 2x now (2026-06-12 + 2026-06-27); split work in flight as PR #1812",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-unsafe-non-null-root-element",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/main.tsx:48",
+      "score_delta": 2,
+      "evidence": "Non-null assertion (!) on document.getElementById('root') with no guard — crashes at runtime if element missing or name typo. Phase 1.5 ppt-web-core review.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-unsafe-cast-websocket-payload",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:278",
+      "score_delta": 2,
+      "evidence": "Unsafe `as` cast on message.payload without runtime validation — payload is user-controlled WebSocket data and may not match expected shape. Phase 1.5 ppt-web-core review.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-swallows-error",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/App.tsx:75-78",
+      "score_delta": 2,
+      "evidence": "MFA verify callback returns boolean on catch block (line 77: return false) but also catches JSON.stringify errors — no distinction between network failure and bad token, masking real auth issues. Phase 1.5 ppt-web-core review.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16 03:25 UTC; 11d (276h) lag. Cloud cron likely throttled. Catch-up run done; cursors advanced to current state.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "skipped_signal_types": [
+    "hotfix-no-test (skipped — 191 PRs over 11d window made per-PR file-list lookups prohibitive; spot-check on top fix PRs deferred to next incremental run)",
+    "screen-map-drift (skipped — same reason; many route files touched but per-PR matching against doc updates needs 191 lookups)",
+    "fixme-in-merged-code (skipped — same reason)",
+    "stalled-review (skipped — REST PR-list does not include reviewDecision; needs GraphQL or per-PR `gh pr view`)"
+  ],
+  "code_review_slice": {
+    "segment_reviewed": "ppt-web-core",
+    "reason": "oldest-unreviewed (last reviewed 2026-06-05)",
+    "experts_run": "frontend",
+    "findings_count": 3,
+    "next_segment_candidate": "api-handlers (next oldest: 2026-06-10)"
+  },
+  "pm_rotation": {
+    "role_run": "pm-security",
+    "role_last_run_before": "2026-05-27",
+    "cursor_advanced": "5 → 6 (pm-data next)",
+    "coverage_cursor_advanced": "12 → 0 (epic-9 re-checked, wrap to epic-10a)"
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "true (no score > 8)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "vacuously true (0 new plans)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans (cap=2)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 non-.research/ files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0 secret matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "byte-identical regen",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "all 16 prior-run plan slugs present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive 7 ≥ HEAD 7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "byte-identical regen",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "EPICS=13 CC_NOW=0 CC_HEAD=12 PM_NOW=6 PM_HEAD=5",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0 Telegram token matches",
+      "expected": "0"
+    }
+  ]
+}
