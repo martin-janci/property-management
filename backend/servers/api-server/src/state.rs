@@ -15,7 +15,7 @@ use db::{
         BackgroundJobRepository, BoardMeetingRepository, BudgetRepository,
         BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
-        DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
+        DataResidencyRepository, DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
         DocumentTemplateRepository, ESignatureNonceRepository, EddRepository, EmergencyRepository,
         EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
         EsgReportingRepository, FacilityRepository, FaultRepository, FeatureAnalyticsRepository,
@@ -244,6 +244,7 @@ pub struct AppState {
     pub two_factor_repo: TwoFactorAuthRepository,
     pub audit_log_repo: AuditLogRepository,
     pub data_export_repo: DataExportRepository,
+    pub data_residency_repo: DataResidencyRepository,
     pub oauth_repo: OAuthRepository,
     pub platform_admin_repo: PlatformAdminRepository,
     pub feature_flag_repo: FeatureFlagRepository,
@@ -297,10 +298,10 @@ pub struct AppState {
     pub package_visitor_repo: PackageVisitorRepository,
     // Epic 61: External Integrations Suite
     pub integration_repo: IntegrationRepository,
-    // Epic 65: Energy & Sustainability Tracking
-    pub energy_repo: EnergyRepository,
     // Epic 66: Platform Migration & Data Import
     pub migration_repo: MigrationRepository,
+    // Epic 65: Energy & Sustainability Tracking
+    pub energy_repo: EnergyRepository,
     // Epic 64: Advanced AI & LLM Capabilities
     pub llm_document_repo: LlmDocumentRepository,
     // Epic 57: Pet & Vehicle Registry
@@ -443,6 +444,7 @@ impl AppState {
         let two_factor_repo = TwoFactorAuthRepository::new(db.clone());
         let audit_log_repo = AuditLogRepository::new(db.clone());
         let data_export_repo = DataExportRepository::new(db.clone());
+        let data_residency_repo = DataResidencyRepository::new(db.clone());
         let oauth_repo = OAuthRepository::new(db.clone());
         let platform_admin_repo = PlatformAdminRepository::new(db.clone());
         let feature_flag_repo = FeatureFlagRepository::new(db.clone());
@@ -496,10 +498,10 @@ impl AppState {
         let package_visitor_repo = PackageVisitorRepository::new(db.clone());
         // Epic 61: External Integrations Suite
         let integration_repo = IntegrationRepository::new(db.clone());
-        // Epic 65: Energy & Sustainability Tracking
-        let energy_repo = EnergyRepository::new(db.clone());
         // Epic 66: Platform Migration & Data Import
         let migration_repo = MigrationRepository::new(db.clone());
+        // Epic 65: Energy & Sustainability Tracking
+        let energy_repo = EnergyRepository::new(db.clone());
         // Epic 64: Advanced AI & LLM Capabilities
         let llm_document_repo = LlmDocumentRepository::new(db.clone());
         // Epic 57: Pet & Vehicle Registry
@@ -606,6 +608,7 @@ impl AppState {
             two_factor_repo,
             audit_log_repo,
             data_export_repo,
+            data_residency_repo,
             oauth_repo,
             platform_admin_repo,
             feature_flag_repo,
@@ -640,8 +643,8 @@ impl AppState {
             form_repo,
             package_visitor_repo,
             integration_repo,
-            energy_repo,
             migration_repo,
+            energy_repo,
             llm_document_repo,
             registry_repo,
             operations_repo,
