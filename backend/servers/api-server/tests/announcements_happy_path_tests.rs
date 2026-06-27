@@ -166,7 +166,10 @@ async fn list_announcements_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("announcements").is_some(), "response must include announcements");
+    assert!(
+        body.get("announcements").is_some(),
+        "response must include announcements"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +194,10 @@ async fn list_published_announcements_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert!(body.get("announcements").is_some(), "response must include announcements");
+    assert!(
+        body.get("announcements").is_some(),
+        "response must include announcements"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +440,9 @@ async fn delete_attachment_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             app.session(token, org_id)
-                .delete(&format!("/api/v1/announcements/{ann_id}/attachments/{att_id}"))
+                .delete(&format!(
+                    "/api/v1/announcements/{ann_id}/attachments/{att_id}"
+                ))
                 .build(),
         )
         .await;
@@ -601,7 +609,9 @@ async fn create_critical_notification_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             app.session(token, org_id)
-                .post(&format!("/api/v1/organizations/{org_id}/critical-notifications"))
+                .post(&format!(
+                    "/api/v1/organizations/{org_id}/critical-notifications"
+                ))
                 .json(json!({
                     "title": "Urgent: Water Shutoff",
                     "message": "Water will be shut off tomorrow at 8am."
@@ -630,7 +640,9 @@ async fn list_critical_notifications_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             app.session(token, org_id)
-                .get(&format!("/api/v1/organizations/{org_id}/critical-notifications"))
+                .get(&format!(
+                    "/api/v1/organizations/{org_id}/critical-notifications"
+                ))
                 .build(),
         )
         .await;
