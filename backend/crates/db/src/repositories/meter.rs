@@ -1131,4 +1131,84 @@ impl MeterRepository {
 
         Ok(anomalies)
     }
+
+    // ========================================================================
+    // OCR METER CORRECTIONS (Story 128.1)
+    // ========================================================================
+
+    /// Persist an OCR correction feedback record.
+    pub async fn create_ocr_correction(
+        &self,
+        user_id: Uuid,
+        data: crate::models::meter::CreateOcrCorrection,
+    ) -> Result<crate::models::meter::OcrMeterCorrection, SqlxError> {
+        sqlx::query_as::<_, crate::models::meter::OcrMeterCorrection>(
+            r#"
+            INSERT INTO ocr_meter_corrections (
+                organization_id, submitted_by, meter_reading_id,
+                original_value, corrected_value, image_url, bounding_box
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+            "#,
+        )
+        .bind(data.organization_id)
+        .bind(user_id)
+        .bind(data.meter_reading_id)
+        .bind(data.original_value)
+        .bind(data.corrected_value)
+        .bind(&data.image_url)
+        .bind(data.bounding_box)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Submit a meter reading with a photo URL and optional OCR value.
+    pub async fn submit_photo_reading(
+        &self,
+        user_id: Uuid,
+        meter_id: Uuid,
+        reading: rust_decimal::Decimal,
+        photo_url: String,
+        ocr_reading: Option<rust_decimal::Decimal>,
+    ) -> Result<MeterReading, SqlxError> {
+        let reading_date = Utc::now().date_naive();
+
+        let previous = sqlx::query_as::<_, MeterReading>(
+            r#"
+            SELECT * FROM meter_readings
+            WHERE meter_id = $1 AND status = 'approved'
+            ORDER BY reading_date DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(meter_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let consumption = previous.as_ref().map(|p| reading - p.reading);
+        let previous_reading_id = previous.map(|p| p.id);
+
+        sqlx::query_as::<_, MeterReading>(
+            r#"
+            INSERT INTO meter_readings (
+                meter_id, reading, reading_date, source,
+                photo_url, ocr_reading, status, consumption,
+                previous_reading_id, submitted_by
+            )
+            VALUES ($1, $2, $3, 'photo', $4, $5, 'pending', $6, $7, $8)
+            RETURNING *
+            "#,
+        )
+        .bind(meter_id)
+        .bind(reading)
+        .bind(reading_date)
+        .bind(&photo_url)
+        .bind(ocr_reading)
+        .bind(consumption)
+        .bind(previous_reading_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
 }
