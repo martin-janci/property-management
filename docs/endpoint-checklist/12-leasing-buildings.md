@@ -158,20 +158,6 @@
 | `POST /api/v1/vendors/invoices/{id}/approve` | `vendors.rs:approve_invoice` | partial | — | real handler, no test |
 | `POST /api/v1/vendors/invoices/{id}/reject` | `vendors.rs:reject_invoice` | partial | — | real handler, no test |
 | `POST /api/v1/vendors/invoices/{id}/payment` | `vendors.rs:record_payment` | partial | — | real handler, no test |
-| `GET /api/v1/vendor-portal/dashboard/stats` | `vendor_portal.rs:get_dashboard_stats` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/jobs` | `vendor_portal.rs:list_jobs` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/jobs/{job_id}` | `vendor_portal.rs:get_job_details` | stub | — | unmounted ROADMAP, 501 |
-| `POST /api/v1/vendor-portal/jobs/{job_id}/accept` | `vendor_portal.rs:accept_job` | stub | — | unmounted ROADMAP, 501 |
-| `POST /api/v1/vendor-portal/jobs/{job_id}/decline` | `vendor_portal.rs:decline_job` | stub | — | unmounted ROADMAP, 501 |
-| `POST /api/v1/vendor-portal/jobs/{job_id}/propose-time` | `vendor_portal.rs:propose_alternative_time` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/jobs/{job_id}/access` | `vendor_portal.rs:get_access_info` | stub | — | unmounted ROADMAP, 501 |
-| `POST /api/v1/vendor-portal/jobs/{job_id}/access/generate-code` | `vendor_portal.rs:generate_access_code` | stub | — | unmounted ROADMAP, 501 |
-| `POST /api/v1/vendor-portal/jobs/{job_id}/complete` | `vendor_portal.rs:submit_work_completion` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/jobs/{job_id}/completion` | `vendor_portal.rs:get_work_completion` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/invoices` | `vendor_portal.rs:list_invoices` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/profile` | `vendor_portal.rs:get_profile` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/feedback` | `vendor_portal.rs:list_feedback` | stub | — | unmounted ROADMAP, 501 |
-| `GET /api/v1/vendor-portal/earnings` | `vendor_portal.rs:get_earnings_summary` | stub | — | unmounted ROADMAP, 501 |
 | `GET /api/v1/property-valuations/dashboard` | `property_valuation.rs:get_dashboard` | partial | — | real handler, no test |
 | `GET /api/v1/property-valuations/expiring` | `property_valuation.rs:get_expiring_valuations` | partial | — | real handler, no test |
 | `GET /api/v1/property-valuations/models` | `property_valuation.rs:list_models` | partial | — | real handler, no test |
@@ -322,4 +308,4 @@
 | `GET /api/v1/visitors/buildings/{building_id}/statistics` | `package_visitor.rs:get_visitor_statistics` | partial | — | real handler, no test |
 
 ## Tally
-done: 19  partial: 285  stub: 14  missing: 0  total: 318
+done: 19  partial: 285  stub: 0  missing: 0  total: 304
