@@ -63,7 +63,7 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
     let doc = format!("{cert}/documents/{UUID2}");
     let milestone = format!("{cert}/milestones/{UUID2}");
     vec![
-        (Method::GET, format!("{base}/dashboard"), None),
+        (Method::GET, format!("{base}/dashboard?organization_id={UUID}"), None),
         (Method::GET, base.to_string(), None),
         (
             Method::POST,
@@ -205,7 +205,7 @@ fn organizations_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r##"{"primary_color":"#ff0000"}"##),
         ),
         // Export
-        (Method::POST, format!("{base}/{UUID}/export"), None),
+        (Method::GET, format!("{base}/{UUID}/export"), None),
         // Features
         (Method::GET, format!("{base}/{UUID}/features"), None),
         (

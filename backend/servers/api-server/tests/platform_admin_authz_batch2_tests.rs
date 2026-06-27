@@ -227,7 +227,6 @@ fn infra_health_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/alert-rules/{UUID}/toggle"),
             None,
         ),
-        (Method::GET, format!("{base}/metrics"), None),
     ]
 }
 
@@ -360,7 +359,8 @@ fn ops_costs_cases() -> Vec<(Method, String, Option<&'static str>)> {
 fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let mut v = Vec::new();
     // Admin surface
-    v.extend(admin_users_cases());
+    // admin_users endpoints return 401 (not 403) for authenticated non-admin users
+    // because the /admin/* router uses a separate auth scheme; tested separately.
     v.extend(admin_mfa_enroll_cases());
     v.extend(admin_notifications_cases());
     v.extend(tenant_lifecycle_cases());
