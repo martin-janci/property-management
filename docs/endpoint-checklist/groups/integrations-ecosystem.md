@@ -5,14 +5,14 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## marketplace.rs  (mount: /api/v1/marketplace)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/marketplace/providers | create_profile | partial | — | real handler, no test |
-| GET | /api/v1/marketplace/providers | search_providers | partial | — | |
-| GET | /api/v1/marketplace/providers/me | get_my_profile | partial | — | |
-| PATCH | /api/v1/marketplace/providers/me | update_my_profile | partial | — | |
-| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | partial | — | |
-| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | partial | — | |
-| GET | /api/v1/marketplace/providers/{id} | get_provider | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | partial | — | |
+| POST | /api/v1/marketplace/providers | create_profile | done | integrations_batch4_tests.rs | happy-path 201 |
+| GET | /api/v1/marketplace/providers | search_providers | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/me | get_my_profile | done | integrations_batch4_tests.rs | happy-path 200 |
+| PATCH | /api/v1/marketplace/providers/me | update_my_profile | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/{id} | get_provider | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | done | integrations_batch4_tests.rs | happy-path 200 |
 | POST | /api/v1/marketplace/rfqs | create_rfq | partial | — | |
 | GET | /api/v1/marketplace/rfqs | list_rfqs | partial | — | |
 | GET | /api/v1/marketplace/rfqs/{id} | get_rfq | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK (owner reads own RFQ) |
@@ -188,55 +188,55 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## migration.rs  (mount: /api/v1/migration)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/migration/templates | list_templates | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| POST | /api/v1/migration/templates | create_template | partial | — | |
-| GET | /api/v1/migration/templates/system | list_system_templates | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/templates/{template_id} | get_template | partial | — | |
-| PUT | /api/v1/migration/templates/{template_id} | update_template | partial | — | |
-| DELETE | /api/v1/migration/templates/{template_id} | delete_template | partial | — | |
-| GET | /api/v1/migration/templates/{template_id}/download | download_template | partial | — | |
-| POST | /api/v1/migration/templates/{template_id}/duplicate | duplicate_template | partial | — | |
-| GET | /api/v1/migration/categories/import | get_import_categories | partial | — | |
-| POST | /api/v1/migration/import/upload | upload_import_file | partial | — | |
-| GET | /api/v1/migration/import/jobs | list_import_jobs | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/import/jobs/{job_id} | get_import_job_status | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| POST | /api/v1/migration/import/jobs/{job_id}/cancel | cancel_import_job | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/retry | retry_import_job | partial | — | |
-| GET | /api/v1/migration/import/jobs/{job_id}/errors | get_import_job_errors | partial | — | |
-| POST | /api/v1/migration/export | request_migration_export | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/export/{export_id} | get_export_status | partial | — | |
-| GET | /api/v1/migration/export/{export_id}/download | download_export | partial | — | |
-| GET | /api/v1/migration/export/history | get_export_history | partial | infra_migration_platform_admin_tests.rs | authz-only (401/403) |
-| GET | /api/v1/migration/categories/export | get_export_categories | partial | — | |
-| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | partial | — | |
-| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | partial | — | |
+| GET | /api/v1/migration/templates | list_templates | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/templates | create_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/system | list_system_templates | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/{template_id} | get_template | done | migration_db_tests.rs | db-backed and tested |
+| PUT | /api/v1/migration/templates/{template_id} | update_template | done | migration_db_tests.rs | db-backed and tested |
+| DELETE | /api/v1/migration/templates/{template_id} | delete_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/templates/{template_id}/download | download_template | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/templates/{template_id}/duplicate | duplicate_template | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/categories/import | get_import_categories | done | migration_db_tests.rs | static metadata |
+| POST | /api/v1/migration/import/upload | upload_import_file | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs | list_import_jobs | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs/{job_id} | get_import_job_status | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/cancel | cancel_import_job | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/retry | retry_import_job | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/import/jobs/{job_id}/errors | get_import_job_errors | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/export | request_migration_export | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/{export_id} | get_export_status | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/{export_id}/download | download_export | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/export/history | get_export_history | done | migration_db_tests.rs | db-backed and tested |
+| GET | /api/v1/migration/categories/export | get_export_categories | done | migration_db_tests.rs | static metadata |
+| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | done | migration_db_tests.rs | db-backed and tested |
+| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | done | migration_db_tests.rs | db-backed and tested |
 
 ## feature_packages.rs  (mount: /api/v1/feature-packages; public_router nested at /public)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/feature-packages/ | list_packages | partial | — | router asserted in router_single_source_tests (static only) |
-| POST | /api/v1/feature-packages/ | create_package | partial | — | |
-| GET | /api/v1/feature-packages/{id} | get_package | partial | — | |
-| PUT | /api/v1/feature-packages/{id} | update_package | partial | — | |
-| DELETE | /api/v1/feature-packages/{id} | delete_package | partial | — | |
-| POST | /api/v1/feature-packages/{id}/features | add_features | partial | — | |
-| DELETE | /api/v1/feature-packages/{id}/features/{fid} | remove_feature | partial | — | |
-| GET | /api/v1/feature-packages/organizations/{org_id} | get_org_packages | partial | — | |
-| POST | /api/v1/feature-packages/organizations/{org_id}/assign | assign_package | partial | — | |
-| DELETE | /api/v1/feature-packages/organizations/{org_id}/packages/{pid} | deactivate_org_package | partial | — | |
-| GET | /api/v1/feature-packages/public/ | list_public_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/compare | compare_packages | partial | — | public_router |
-| GET | /api/v1/feature-packages/public/{id} | get_public_package | partial | — | public_router |
+| GET | /api/v1/feature-packages/ | list_packages | done | integrations_batch4_tests.rs | happy-path 200 (super_admin) |
+| POST | /api/v1/feature-packages/ | create_package | done | integrations_batch4_tests.rs | happy-path 201 |
+| GET | /api/v1/feature-packages/{id} | get_package | done | integrations_batch4_tests.rs | happy-path 200 |
+| PUT | /api/v1/feature-packages/{id} | update_package | done | integrations_batch4_tests.rs | happy-path 200 |
+| DELETE | /api/v1/feature-packages/{id} | delete_package | done | integrations_batch4_tests.rs | happy-path 204 |
+| POST | /api/v1/feature-packages/{id}/features | add_features | done | integrations_batch4_tests.rs | happy-path 201 |
+| DELETE | /api/v1/feature-packages/{id}/features/{fid} | remove_feature | done | integrations_batch4_tests.rs | happy-path 204 |
+| GET | /api/v1/feature-packages/organizations/{org_id} | get_org_packages | done | integrations_batch4_tests.rs | happy-path 200 |
+| POST | /api/v1/feature-packages/organizations/{org_id}/assign | assign_package | done | integrations_batch4_tests.rs | happy-path 201 |
+| DELETE | /api/v1/feature-packages/organizations/{org_id}/packages/{pid} | deactivate_org_package | done | integrations_batch4_tests.rs | happy-path 204 |
+| GET | /api/v1/feature-packages/public/ | list_public_packages | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
+| GET | /api/v1/feature-packages/public/compare | compare_packages | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
+| GET | /api/v1/feature-packages/public/{id} | get_public_package | done | integrations_batch4_tests.rs | happy-path 200 (no auth) |
 
 ## features.rs  (mount: /api/v1/features)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/features/resolved | get_resolved_features | partial | — | real handler, no test |
-| GET | /api/v1/features/{key}/check | check_feature | partial | — | |
-| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | partial | — | |
+| GET | /api/v1/features/resolved | get_resolved_features | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/features/{key}/check | check_feature | done | integrations_batch4_tests.rs | happy-path 200 |
+| GET | /api/v1/features/{key}/upgrade-options | get_upgrade_options | done | integrations_batch4_tests.rs | happy-path 200 |
 | POST | /api/v1/features/{key}/preference | set_feature_preference | partial | — | |
-| POST | /api/v1/features/analytics/event | log_feature_event | partial | — | |
+| POST | /api/v1/features/analytics/event | log_feature_event | done | integrations_batch4_tests.rs | happy-path 200 |
 | GET | /api/v1/features/analytics/{feature_id}/stats | get_feature_stats | partial | — | |
 
 ## integrations/install.rs  (mount: /api/v1/integrations)
@@ -331,5 +331,5 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | (unmounted)/video/meetings/{id}/start | start_video_meeting | stub | — | unmounted |
 
 ## Summary
-- done: 9 | partial: 186 | stub: 73 | missing: 0 | total: 268
+- done: 57 | partial: 138 | stub: 73 | missing: 0 | total: 268
 </content>
