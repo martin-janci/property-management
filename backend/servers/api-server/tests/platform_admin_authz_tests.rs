@@ -159,7 +159,9 @@ fn tenant_branding_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::PUT,
             base,
-            Some(r##"{"primary_color":"#fff","secondary_color":"#000","logo_url":null,"favicon_url":null,"custom_css":null}"##),
+            Some(
+                r##"{"primary_color":"#fff","secondary_color":"#000","logo_url":null,"favicon_url":null,"custom_css":null}"##,
+            ),
         ),
     ]
 }
