@@ -456,9 +456,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 3.9 GET /api/v1/financial/payments -> list_payments
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/payments?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/payments?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -510,7 +512,8 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED);
     let unallocated_payment = resp.json_value();
     let unallocated_payment_id_str = unallocated_payment["id"].as_str().expect("id missing");
-    let unallocated_payment_id = Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
+    let unallocated_payment_id =
+        Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
 
     // 4.1 GET /api/v1/financial/payments/unallocated -> list_unallocated_payments
     let resp = app
