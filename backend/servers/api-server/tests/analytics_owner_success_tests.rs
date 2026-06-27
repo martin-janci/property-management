@@ -1,7 +1,7 @@
 //! Happy-path tests for owner-analytics endpoints (Epic 74).
 //! Covers all 17 partial endpoints → promoted to done.
 use axum::http::StatusCode;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use sqlx::PgPool;
@@ -170,7 +170,7 @@ async fn oa_create_valuation_succeeds(pool: PgPool) {
         .post(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/valuation"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -192,7 +192,7 @@ async fn oa_get_valuation_with_comparables_succeeds(pool: PgPool) {
         .get(&format!(
             "/api/v1/owner-analytics/valuations/{valuation_id}"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -223,7 +223,7 @@ async fn oa_add_comparable_succeeds(pool: PgPool) {
         .post(&format!(
             "/api/v1/owner-analytics/valuations/{valuation_id}/comparables"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -244,7 +244,7 @@ async fn oa_get_value_history_succeeds(pool: PgPool) {
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/value-history"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -265,7 +265,7 @@ async fn oa_get_value_trend_succeeds(pool: PgPool) {
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/value-trend"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -291,7 +291,7 @@ async fn oa_calculate_roi_succeeds(pool: PgPool) {
 
     let resp = app
         .post(&format!("/api/v1/owner-analytics/units/{unit_id}/roi"))
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -312,7 +312,7 @@ async fn oa_get_cash_flow_succeeds(pool: PgPool) {
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/cash-flow?from_date=2024-01-01&to_date=2024-12-31"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -332,7 +332,7 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/roi-dashboard?from_date=2024-01-01&to_date=2024-12-31"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -348,7 +348,7 @@ async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
 
     let resp = app
         .get("/api/v1/owner-analytics/portfolio")
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -368,7 +368,7 @@ async fn oa_compare_properties_succeeds(pool: PgPool) {
 
     let resp = app
         .post("/api/v1/owner-analytics/portfolio/compare")
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -385,7 +385,7 @@ async fn oa_list_auto_approval_rules_succeeds(pool: PgPool) {
 
     let resp = app
         .get("/api/v1/owner-analytics/expense-rules")
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -408,7 +408,7 @@ async fn oa_create_auto_approval_rule_succeeds(pool: PgPool) {
 
     let resp = app
         .post("/api/v1/owner-analytics/expense-rules")
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -431,7 +431,7 @@ async fn oa_update_auto_approval_rule_succeeds(pool: PgPool) {
 
     let resp = app
         .put(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -449,7 +449,7 @@ async fn oa_delete_auto_approval_rule_succeeds(pool: PgPool) {
 
     let resp = app
         .delete(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -475,7 +475,7 @@ async fn oa_submit_expense_succeeds(pool: PgPool) {
 
     let resp = app
         .post("/api/v1/owner-analytics/expenses/submit")
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
@@ -492,7 +492,7 @@ async fn oa_list_expense_requests_succeeds(pool: PgPool) {
 
     let resp = app
         .get("/api/v1/owner-analytics/expenses")
-        .bearer_auth(&token)
+        .bearer(&token)
         .send()
         .await;
 
@@ -518,7 +518,7 @@ async fn oa_review_expense_succeeds(pool: PgPool) {
         .post(&format!(
             "/api/v1/owner-analytics/expenses/{expense_id}/review"
         ))
-        .bearer_auth(&token)
+        .bearer(&token)
         .json(&body)
         .send()
         .await;
