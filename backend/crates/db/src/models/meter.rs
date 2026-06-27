@@ -577,3 +577,36 @@ pub struct UtilityBillResponse {
     pub bill: UtilityBill,
     pub distributions: Vec<UtilityBillDistribution>,
 }
+
+// ============================================================================
+// OCR METER CORRECTIONS (Story 128.1)
+// ============================================================================
+
+/// Persisted OCR correction feedback record.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct OcrMeterCorrection {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub submitted_by: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meter_reading_id: Option<Uuid>,
+    pub original_value: Decimal,
+    pub corrected_value: Decimal,
+    pub image_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bounding_box: Option<serde_json::Value>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Request to persist an OCR correction.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct CreateOcrCorrection {
+    pub organization_id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meter_reading_id: Option<Uuid>,
+    pub original_value: Decimal,
+    pub corrected_value: Decimal,
+    pub image_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bounding_box: Option<serde_json::Value>,
+}
