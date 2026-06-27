@@ -27,21 +27,21 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 ## portfolio_analytics.rs  (mount: /api/v1/portfolio-analytics)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/portfolio-analytics/summary | get_portfolio_summary | partial | — | no test file references this prefix |
-| GET | /api/v1/portfolio-analytics/benchmarks | list_benchmarks | partial | — | |
-| POST | /api/v1/portfolio-analytics/benchmarks | create_benchmark | partial | — | |
-| GET | /api/v1/portfolio-analytics/benchmarks/{id} | get_benchmark | partial | — | |
-| PUT | /api/v1/portfolio-analytics/benchmarks/{id} | update_benchmark | partial | — | |
-| DELETE | /api/v1/portfolio-analytics/benchmarks/{id} | delete_benchmark | partial | — | |
-| GET | /api/v1/portfolio-analytics/properties/metrics | list_property_metrics | partial | — | |
-| POST | /api/v1/portfolio-analytics/properties/metrics | upsert_property_metrics | partial | — | |
-| GET | /api/v1/portfolio-analytics/properties/{building_id}/metrics | get_property_metrics | partial | — | |
-| GET | /api/v1/portfolio-analytics/metrics | get_portfolio_metrics | partial | — | |
-| POST | /api/v1/portfolio-analytics/metrics/calculate | calculate_portfolio_metrics | partial | — | |
-| GET | /api/v1/portfolio-analytics/comparisons | list_comparisons | partial | — | |
-| POST | /api/v1/portfolio-analytics/comparisons | create_comparison | partial | — | |
-| GET | /api/v1/portfolio-analytics/comparisons/{id} | get_comparison | partial | — | |
-| DELETE | /api/v1/portfolio-analytics/comparisons/{id} | delete_comparison | partial | — | |
+| GET | /api/v1/portfolio-analytics/summary | get_portfolio_summary | done | analytics_portfolio_success_tests.rs | no test file references this prefix |
+| GET | /api/v1/portfolio-analytics/benchmarks | list_benchmarks | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-analytics/benchmarks | create_benchmark | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-analytics/benchmarks/{id} | get_benchmark | done | analytics_portfolio_success_tests.rs | |
+| PUT | /api/v1/portfolio-analytics/benchmarks/{id} | update_benchmark | done | analytics_portfolio_success_tests.rs | |
+| DELETE | /api/v1/portfolio-analytics/benchmarks/{id} | delete_benchmark | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-analytics/properties/metrics | list_property_metrics | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-analytics/properties/metrics | upsert_property_metrics | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-analytics/properties/{building_id}/metrics | get_property_metrics | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-analytics/metrics | get_portfolio_metrics | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-analytics/metrics/calculate | calculate_portfolio_metrics | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-analytics/comparisons | list_comparisons | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-analytics/comparisons | create_comparison | partial | — | schema mismatch: property_comparisons columns differ from migration |
+| GET | /api/v1/portfolio-analytics/comparisons/{id} | get_comparison | partial | — | schema mismatch: property_comparisons columns differ from migration |
+| DELETE | /api/v1/portfolio-analytics/comparisons/{id} | delete_comparison | partial | — | schema mismatch: property_comparisons columns differ from migration |
 | GET | /api/v1/portfolio-analytics/trends | get_trends | partial | — | |
 | POST | /api/v1/portfolio-analytics/trends | record_trend | partial | — | |
 | GET | /api/v1/portfolio-analytics/alerts/rules | list_alert_rules | partial | — | |
@@ -58,41 +58,41 @@ _Server: api-server. Modules: owner_analytics, portfolio_analytics, portfolio_pe
 ## portfolio_performance.rs  (mount: /api/v1/portfolio-performance)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/portfolio-performance/portfolios | create_portfolio | partial | — | router_single_source_tests.rs references prefix only in a comment (route-table check), no handler path exercised |
-| GET | /api/v1/portfolio-performance/portfolios | list_portfolios | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id} | get_portfolio | partial | — | |
-| PUT | /api/v1/portfolio-performance/portfolios/{id} | update_portfolio | partial | — | |
-| DELETE | /api/v1/portfolio-performance/portfolios/{id} | delete_portfolio | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/properties | add_property | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/properties | list_properties | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | get_property | partial | — | |
-| PUT | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | update_property | partial | — | |
-| DELETE | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | remove_property | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/transactions | create_transaction | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions | list_transactions | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | get_transaction | partial | — | |
-| PUT | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | update_transaction | partial | — | |
-| DELETE | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | delete_transaction | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | upsert_cash_flow | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | get_cash_flows | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/metrics/calculate | calculate_metrics | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/latest | get_latest_metrics | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/summary | get_metrics_summary | partial | — | |
-| POST | /api/v1/portfolio-performance/benchmarks | create_benchmark | partial | — | |
-| GET | /api/v1/portfolio-performance/benchmarks | list_benchmarks | partial | — | |
-| GET | /api/v1/portfolio-performance/benchmarks/{id} | get_benchmark | partial | — | |
-| PUT | /api/v1/portfolio-performance/benchmarks/{id} | update_benchmark | partial | — | |
-| DELETE | /api/v1/portfolio-performance/benchmarks/{id} | delete_benchmark | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/comparisons | create_comparison | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons | list_comparisons | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons/{comparison_id} | get_comparison | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/summary | get_dashboard_summary | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/property-cards | get_property_cards | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/cash-flow-trend | get_cash_flow_trend | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts | create_alert | partial | — | |
-| GET | /api/v1/portfolio-performance/portfolios/{id}/alerts | list_alerts | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/read | mark_alert_read | partial | — | |
-| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/resolve | resolve_alert | partial | — | |
+| POST | /api/v1/portfolio-performance/portfolios | create_portfolio | done | analytics_portfolio_success_tests.rs | router_single_source_tests.rs references prefix only in a comment (route-table check), no handler path exercised |
+| GET | /api/v1/portfolio-performance/portfolios | list_portfolios | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id} | get_portfolio | done | analytics_portfolio_success_tests.rs | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id} | update_portfolio | done | analytics_portfolio_success_tests.rs | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id} | delete_portfolio | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/properties | add_property | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/properties | list_properties | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | get_property | done | analytics_portfolio_success_tests.rs | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | update_property | done | analytics_portfolio_success_tests.rs | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id}/properties/{property_id} | remove_property | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/transactions | create_transaction | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions | list_transactions | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | get_transaction | done | analytics_portfolio_success_tests.rs | |
+| PUT | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | update_transaction | done | analytics_portfolio_success_tests.rs | |
+| DELETE | /api/v1/portfolio-performance/portfolios/{id}/transactions/{transaction_id} | delete_transaction | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | upsert_cash_flow | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/cash-flows | get_cash_flows | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/metrics/calculate | calculate_metrics | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/latest | get_latest_metrics | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/metrics/summary | get_metrics_summary | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/benchmarks | create_benchmark | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/benchmarks | list_benchmarks | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/benchmarks/{id} | get_benchmark | done | analytics_portfolio_success_tests.rs | |
+| PUT | /api/v1/portfolio-performance/benchmarks/{id} | update_benchmark | done | analytics_portfolio_success_tests.rs | |
+| DELETE | /api/v1/portfolio-performance/benchmarks/{id} | delete_benchmark | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/comparisons | create_comparison | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons | list_comparisons | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/comparisons/{comparison_id} | get_comparison | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/summary | get_dashboard_summary | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/property-cards | get_property_cards | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/dashboard/cash-flow-trend | get_cash_flow_trend | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts | create_alert | done | analytics_portfolio_success_tests.rs | |
+| GET | /api/v1/portfolio-performance/portfolios/{id}/alerts | list_alerts | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/read | mark_alert_read | done | analytics_portfolio_success_tests.rs | |
+| POST | /api/v1/portfolio-performance/portfolios/{id}/alerts/{alert_id}/resolve | resolve_alert | done | analytics_portfolio_success_tests.rs | |
 
 ## investor_portal.rs  (mount: /api/v1/investor-portal)
 | Method | Path | Handler | Status | Tests | Notes |
