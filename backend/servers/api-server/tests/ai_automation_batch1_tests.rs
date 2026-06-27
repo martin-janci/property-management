@@ -46,8 +46,7 @@ async fn seed_unit(pool: &PgPool, building_id: Uuid) -> Uuid {
 async fn create_pet_registration_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-create").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-create").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -74,8 +73,7 @@ async fn create_pet_registration_returns_201(pool: PgPool) {
 async fn list_pet_registrations_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-list").await;
 
     let resp = app
         .execute(
@@ -94,8 +92,7 @@ async fn list_pet_registrations_returns_200(pool: PgPool) {
 async fn get_pet_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-get").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -129,15 +126,17 @@ async fn get_pet_registration_returns_200(pool: PgPool) {
         .await;
 
     assert_eq!(resp.status, StatusCode::OK);
-    assert_eq!(resp.json_value()["registration"]["id"].as_str().unwrap(), pet_id);
+    assert_eq!(
+        resp.json_value()["registration"]["id"].as_str().unwrap(),
+        pet_id
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_pet_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-update").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-update").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -178,8 +177,7 @@ async fn update_pet_registration_returns_200(pool: PgPool) {
 async fn delete_pet_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-delete").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-delete").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -219,8 +217,7 @@ async fn delete_pet_registration_returns_200(pool: PgPool) {
 async fn review_pet_registration_approve_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-pet-review").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-pet-review").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -265,8 +262,7 @@ async fn review_pet_registration_approve_returns_200(pool: PgPool) {
 async fn create_vehicle_registration_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-create").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-create").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -294,8 +290,7 @@ async fn create_vehicle_registration_returns_201(pool: PgPool) {
 async fn list_vehicle_registrations_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-list").await;
 
     let resp = app
         .execute(
@@ -314,8 +309,7 @@ async fn list_vehicle_registrations_returns_200(pool: PgPool) {
 async fn get_vehicle_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-get").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -360,8 +354,7 @@ async fn get_vehicle_registration_returns_200(pool: PgPool) {
 async fn update_vehicle_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-update").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-update").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -403,8 +396,7 @@ async fn update_vehicle_registration_returns_200(pool: PgPool) {
 async fn delete_vehicle_registration_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-delete").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-delete").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -445,8 +437,7 @@ async fn delete_vehicle_registration_returns_200(pool: PgPool) {
 async fn review_vehicle_registration_approve_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-veh-review").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-veh-review").await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
 
@@ -517,8 +508,7 @@ async fn create_parking_spot_returns_201(pool: PgPool) {
 async fn list_parking_spots_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-parking-list").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-parking-list").await;
 
     let resp = app
         .execute(
@@ -537,8 +527,7 @@ async fn list_parking_spots_returns_200(pool: PgPool) {
 async fn get_parking_spot_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-parking-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-parking-get").await;
     let building_id = seed_building(&pool, org_id).await;
 
     let create_resp = app
@@ -657,18 +646,15 @@ async fn delete_parking_spot_returns_200(pool: PgPool) {
 async fn get_registry_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-rules-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-rules-get").await;
     let building_id = seed_building(&pool, org_id).await;
 
     let resp = app
         .execute(
-            app.get(&format!(
-                "/api/v1/registry/buildings/{building_id}/rules"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org_id.to_string())
-            .build(),
+            app.get(&format!("/api/v1/registry/buildings/{building_id}/rules"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org_id.to_string())
+                .build(),
         )
         .await;
 
@@ -680,19 +666,16 @@ async fn get_registry_rules_returns_200(pool: PgPool) {
 async fn update_registry_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-rules-update").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-rules-update").await;
     let building_id = seed_building(&pool, org_id).await;
 
     let resp = app
         .execute(
-            app.put(&format!(
-                "/api/v1/registry/buildings/{building_id}/rules"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org_id.to_string())
-            .json(json!({"pets_allowed": false}))
-            .build(),
+            app.put(&format!("/api/v1/registry/buildings/{building_id}/rules"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org_id.to_string())
+                .json(json!({"pets_allowed": false}))
+                .build(),
         )
         .await;
 
@@ -703,8 +686,7 @@ async fn update_registry_rules_returns_200(pool: PgPool) {
 async fn get_registry_statistics_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) =
-        create_authenticated_user_with_org(&app, &user, "reg-stats-get").await;
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-stats-get").await;
     let building_id = seed_building(&pool, org_id).await;
 
     let resp = app
