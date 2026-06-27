@@ -6,8 +6,6 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::NaiveDate;
-use rust_decimal::Decimal;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
