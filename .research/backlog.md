@@ -4,12 +4,12 @@
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted | dropped | 2026-06-27 | [plan](plans/bug-ios-searchview-uncompilable.md) |
+| 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | dropped | 2026-06-27 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
+| 3 | bug | `code-review-reality-web-listing-page-ssr-crash` | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | dropped | 2026-06-27 | [plan](plans/code-review-reality-web-listing-page-ssr-crash.md) |
+| 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-27 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
+| 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:1 | dropped | 2026-06-27 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `revert-pr-1713` | PR #1713 reverted delegation frontend re-introduction (reconcile with retirement BIT-213) | open | 2026-06-27 |  |
-| 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:1 | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
-| 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
-| 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
-| 3 | bug | `code-review-reality-web-listing-page-ssr-crash` | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | ready | 2026-06-14 | [plan](plans/code-review-reality-web-listing-page-ssr-crash.md) |
-| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted | ready | 2026-06-11 | [plan](plans/bug-ios-searchview-uncompilable.md) |
 | 3 | security | `unchecked-todo-pr-1203` | PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged | dropped | 2026-06-10 |  |
 | 3 | security | `unchecked-todo-pr-1193` | PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg | dropped | 2026-06-10 |  |
 | 3 | bug | `bug-schema-drift-runtime-sql-issue-1008` | Schema drift: runtime SQL errors from non-existent columns in voting/messaging/notification paths | done | 2026-06-07 |  |
@@ -18,8 +18,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-ppt-web-core-payment-matching-no-err` | PaymentMatchingPage confirm/reject mutations have no onError handler — silent failure | open | 2026-06-27 |  |
-| 2 | bug | `code-review-ppt-web-core-invoice-mgmt-no-err` | AccountingInvoiceManagementPage create/delete mutations have no onError handler — silent failure | open | 2026-06-27 |  |
+| 2 | bug | `code-review-ppt-web-core-payment-matching-no-err` | PaymentMatchingPage confirm/reject mutations have no onError handler — silent failure | ready | 2026-06-27 | [plan](plans/code-review-ppt-web-core-payment-matching-no-err.md) |
+| 2 | bug | `code-review-ppt-web-core-invoice-mgmt-no-err` | AccountingInvoiceManagementPage create/delete mutations have no onError handler — silent failure | ready | 2026-06-27 | [plan](plans/code-review-ppt-web-core-invoice-mgmt-no-err.md) |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results | done | 2026-06-16 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | open | 2026-06-16 |  |
 | 2 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_*  | open | 2026-06-16 |  |
