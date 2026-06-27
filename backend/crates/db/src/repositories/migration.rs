@@ -15,6 +15,7 @@ use uuid::Uuid;
 /// Repository for platform migration operations.
 #[derive(Clone)]
 pub struct MigrationRepository {
+    #[allow(dead_code)]
     pool: DbPool,
 }
 
