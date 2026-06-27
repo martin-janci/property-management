@@ -7,7 +7,8 @@
     "phase_1_6": "ok",
     "phase_2": "ok",
     "phase_3": "ok",
-    "phase_4": "ok"
+    "phase_4": "ok",
+    "phase_1_5_followup": "ok (segment: ppt-web-core, 3 findings)"
   },
   "signals": [
     {
@@ -125,6 +126,52 @@
       "files": [
         "backend/servers/reality-server/src/services/saved_search_alerts.rs"
       ]
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-query-leak-on-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 \u2014 `AUTHED_QUERY_KEY_ROOTS` list omits `'accounting'`, but `queryKeys.accounting` (line 142) is the root for invoices/contacts/statements actively used in features/accounting (PaymentMatchingPage.tsx:38,43,49 + AccountingInvoiceManagementPage.tsx:25,30). On logout, AuthContext.tsx:541-543 iterates AUTHED_QUERY_KEY_ROOTS and calls removeQueries per root \u2014 accounting queries SURVIVE the purge and leak into the next user's session in the same tab. Fix: add `'accounting'` to the array. Exact bug class issue #712 was meant to prevent.",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-refreshed-token-not-applied",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 \u2014 useEffect deps `[auth.isAuthenticated, auth.accessToken]` fires `service.connect()` on token rotation (AuthContext.tsx:346-383 refresh flow). But WebSocketService.connect() at lib/websocket.ts:291-294 short-circuits with `if (this.socket && this.socket.readyState === WebSocket.OPEN) return;`. Auth token is baked into handshake URL via buildWebSocketUrl() (line 88-96) and never re-transmitted \u2192 already-OPEN socket keeps using the stale token until the server expires it, then closes 401/1008 \u2014 defeating the refresh. Fix: on token change while connected, disconnect+reconnect (mirror reconnect() at 324-330), or compare the token in connect() and force re-handshake when it differs.",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-main-nav-aria-label-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/App.tsx:116 \u2014 `<nav className=\"app-nav\" aria-label=\"Main navigation\">` uses hardcoded English aria-label even though useTranslation() is in scope at line 105 and every visible label inside is wrapped in `t(...)`. Screen-reader users on sk/cs/de locales hear English landmark while every link inside is localized \u2014 concrete a11y/i18n regression. Fix: `aria-label={t('nav.mainNavigation', { defaultValue: 'Main navigation' })}`.",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
     }
   ],
   "auto_fix_actions": [],
@@ -161,7 +208,7 @@
       "goal": "G5",
       "passed": true,
       "command": "score cap + decay applied (11 decayed, 26 dropped)",
-      "observed": "0 violations",
+      "observed": "0 violations; addendum signals not subject to decay",
       "expected": "0"
     },
     {
@@ -175,7 +222,7 @@
       "goal": "G7",
       "passed": true,
       "command": "1 new plan, all metadata + 11 headings + file paths exist",
-      "observed": "PASS",
+      "observed": "PASS (2 new plans now: drainer + accounting-query-leak)",
       "expected": "PASS"
     },
     {
@@ -249,5 +296,12 @@
       "expected": "0"
     }
   ],
-  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type reached confidence=high + score>=3 + not-in-history this run"
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type reached confidence=high + score>=3 + not-in-history this run",
+  "addendum": {
+    "trigger": "buffer-low fire-payload (claimable=1/72)",
+    "phase_1_5_followup_segment": "ppt-web-core",
+    "findings_added": 3,
+    "plans_promoted_in_addendum": 1,
+    "at": "2026-06-27T12:50:00Z"
+  }
 }

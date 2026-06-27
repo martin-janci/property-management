@@ -4118,6 +4118,70 @@
       "created_at": "2026-06-27",
       "updated_at": "2026-06-27",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-query-leak-on-logout",
+      "title": "Accounting query cache survives logout \u2014 leaks into next user (auth-scope gap)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 \u2014 `AUTHED_QUERY_KEY_ROOTS` list omits `'accounting'`, but `queryKeys.accounting` (line 142) is the root for invoices/contacts/statements actively used in features/accounting (PaymentMatchingPage.tsx:38,43,49 + AccountingInvoiceManagementPage.tsx:25,30). On logout, AuthContext.tsx:541-543 iterates AUTHED_QUERY_KEY_ROOTS and calls removeQueries per root \u2014 accounting queries SURVIVE the purge and leak into the next user's session in the same tab. Fix: add `'accounting'` to the array. Exact bug class issue #712 was meant to prevent."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "created_at": "2026-06-27",
+      "updated_at": "2026-06-27",
+      "plan": "plans/security-accounting-query-cache-leak-on-logout.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-refreshed-token-not-applied",
+      "title": "Ws Refreshed Token Not Applied",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-256 \u2014 useEffect deps `[auth.isAuthenticated, auth.accessToken]` fires `service.connect()` on token rotation (AuthContext.tsx:346-383 refresh flow). But WebSocketService.connect() at lib/websocket.ts:291-294 short-circuits with `if (this.socket && this.socket.readyState === WebSocket.OPEN) return;`. Auth token is baked into handshake URL via buildWebSocketUrl() (line 88-96) and never re-transmitted \u2192 already-OPEN socket keeps using the stale token until the server expires it, then closes 401/1008 \u2014 defeating the refresh. Fix: on token change while connected, disconnect+reconnect (mirror reconnect() at 324-330), or compare the token in connect() and force re-handshake when it differs."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-06-27",
+      "updated_at": "2026-06-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-main-nav-aria-label-hardcoded",
+      "title": "Main Nav Aria Label Hardcoded",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:116 \u2014 `<nav className=\"app-nav\" aria-label=\"Main navigation\">` uses hardcoded English aria-label even though useTranslation() is in scope at line 105 and every visible label inside is wrapped in `t(...)`. Screen-reader users on sk/cs/de locales hear English landmark while every link inside is localized \u2014 concrete a11y/i18n regression. Fix: `aria-label={t('nav.mainNavigation', { defaultValue: 'Main navigation' })}`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-27",
+      "updated_at": "2026-06-27",
+      "plan": null
     }
   ]
 }

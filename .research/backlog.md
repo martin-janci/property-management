@@ -6,6 +6,7 @@
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 3 | dx | `dx-revert-pr-1713` | Revert PR #1713: delegations re-add raced with retirement ruling | open | 2026-06-27 |  |
 | 3 | bug | `code-review-reality-server-drainer-dup-send` | Reality Server Drainer Dup Send | ready | 2026-06-27 | [plan](plans/bug-saved-search-drainer-duplicate-delivery.md) |
+| 3 | security | `code-review-ppt-web-core-accounting-query-leak-on-logout` | Accounting query cache survives logout — leaks into next user (auth-scope gap) | ready | 2026-06-27 | [plan](plans/security-accounting-query-cache-leak-on-logout.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.ts... | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -22,6 +23,7 @@
 | 2 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK... | done | 2026-06-27 |  |
 | 2 | test-gap | `test-gap-unchecked-todo-pr-1723` | Unchecked TODOs in PR #1723 body | open | 2026-06-27 |  |
 | 2 | bug | `code-review-reality-server-watermark-swallow` | Reality Server Watermark Swallow | open | 2026-06-27 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-refreshed-token-not-applied` | Ws Refreshed Token Not Applied | open | 2026-06-27 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results | done | 2026-06-16 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | open | 2026-06-16 |  |
 | 2 | bug | `code-review-mobile-rn-deeplink-init-unhandled` | useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → dupl... | open | 2026-06-16 |  |
@@ -70,6 +72,7 @@
 | 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-reality_portal-rs` | Churn hotspot: backend/crates/db/src/models/reality_portal.rs | open | 2026-06-27 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-repositories-reality_portal-rs` | Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs | open | 2026-06-27 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-servers-reality-server-src-services-saved_search_alerts-rs` | Churn hotspot: backend/servers/reality-server/src/services/saved_search_alerts | open | 2026-06-27 |  |
+| 1 | bug | `code-review-ppt-web-core-main-nav-aria-label-hardcoded` | Main Nav Aria Label Hardcoded | open | 2026-06-27 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-922-ppt` | Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-forms-rs` | Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) | open | 2026-06-16 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs` | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | open | 2026-06-16 |  |

@@ -5,7 +5,7 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-27T12:35:00Z",
+  "last_run_iso": "2026-06-27T12:50:00Z",
   "last_run_ms": 0,
   "last_pr_seen": 1857,
   "last_issue_seen": 1854,
@@ -435,7 +435,10 @@
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-vote-list-cast",
     "code-review-mobile-rn-vote-xform-untested",
+    "code-review-ppt-web-core-accounting-query-leak-on-logout",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "code-review-ppt-web-core-main-nav-aria-label-hardcoded",
+    "code-review-ppt-web-core-ws-refreshed-token-not-applied",
     "code-review-ppt-web-ui-announcer-stale-msg",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
@@ -581,15 +584,15 @@
     "api-core": "2026-06-15",
     "reality-server": "2026-06-27",
     "ppt-web-ui": "2026-06-11",
-    "ppt-web-core": "2026-06-05",
+    "ppt-web-core": "2026-06-27",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
     "runs": 41,
-    "vectors_created": 180,
-    "plans_created": 13,
+    "vectors_created": 183,
+    "plans_created": 14,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
