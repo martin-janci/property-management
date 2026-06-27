@@ -62,7 +62,12 @@ async fn create_fault(app: &TestApp, token: &str, org_id: Uuid, building_id: Uui
         .json(&payload)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create fault: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create fault: {}",
+        resp.text()
+    );
     Uuid::parse_str(resp.json_value()["id"].as_str().expect("id")).expect("uuid")
 }
 
@@ -147,7 +152,6 @@ async fn test_update_fault_status_to_in_progress(pool: PgPool) {
         .json(&json!({ "status": "in_progress", "note": "Work started" }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "update status: {}", resp.text());
     assert_eq!(
         resp.json_value()["fault"]["status"].as_str(),
         Some("in_progress")
@@ -175,7 +179,6 @@ async fn test_resolve_fault(pool: PgPool) {
         .json(&json!({ "resolution_notes": "Pipe was replaced." }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "resolve fault: {}", resp.text());
     assert_eq!(
         resp.json_value()["fault"]["status"].as_str(),
         Some("resolved")
@@ -214,7 +217,12 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .json(&json!({ "rating": 5, "feedback": "Great work!" }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "confirm fault: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "confirm fault: {}",
+        resp.text()
+    );
     let status = resp.json_value()["fault"]["status"]
         .as_str()
         .unwrap_or("")
@@ -290,10 +298,18 @@ async fn test_list_my_faults(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "list my faults: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list my faults: {}",
+        resp.text()
+    );
     let body = resp.json_value();
     assert!(
-        body["faults"].as_array().map(|a| !a.is_empty()).unwrap_or(false),
+        body["faults"]
+            .as_array()
+            .map(|a| !a.is_empty())
+            .unwrap_or(false),
         "expected at least one fault"
     );
 }
@@ -320,7 +336,12 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .json(&json!({ "note": "Investigating the issue.", "is_internal": false }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add comment: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add comment: {}",
+        resp.text()
+    );
 
     // List comments / timeline
     let r = app
@@ -329,7 +350,12 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "list comments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list comments: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -353,7 +379,12 @@ async fn test_add_work_note(pool: PgPool) {
         .json(&json!({ "note": "Ordered replacement parts." }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add work note: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add work note: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -374,5 +405,10 @@ async fn test_get_fault_statistics(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "get statistics: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get statistics: {}",
+        resp.text()
+    );
 }

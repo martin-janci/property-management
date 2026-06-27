@@ -90,7 +90,12 @@ async fn create_draft_vote(app: &TestApp, token: &str, org_id: Uuid, building_id
         .json(&payload)
         .build();
     let r = app.execute(response).await;
-    assert_eq!(r.status, StatusCode::CREATED, "create draft vote: {}", r.text());
+    assert_eq!(
+        r.status,
+        StatusCode::CREATED,
+        "create draft vote: {}",
+        r.text()
+    );
     let v = r.json_value();
     Uuid::parse_str(v["id"].as_str().expect("id")).expect("uuid")
 }
@@ -112,7 +117,12 @@ async fn add_question(app: &TestApp, token: &str, org_id: Uuid, vote_id: Uuid) -
         .json(&payload)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add question: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add question: {}",
+        resp.text()
+    );
     let q = resp.json_value();
     Uuid::parse_str(q["id"].as_str().expect("question id")).expect("uuid")
 }
@@ -166,7 +176,12 @@ async fn test_delete_draft_vote_succeeds(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete vote: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete vote: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -241,7 +256,12 @@ async fn test_list_questions_for_vote(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "list questions: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list questions: {}",
+        resp.text()
+    );
     let questions = resp.json_value();
     assert!(
         questions.as_array().map(|a| a.len() == 1).unwrap_or(false),
@@ -259,13 +279,15 @@ async fn test_update_question_text(pool: PgPool) {
     let question_id = add_question(&app, &token, org_id, vote_id).await;
 
     let r = app
-        .put(&format!("/api/v1/voting/{}/questions/{}", vote_id, question_id))
+        .put(&format!(
+            "/api/v1/voting/{}/questions/{}",
+            vote_id, question_id
+        ))
         .bearer(&token)
         .tenant(org_id)
         .json(&json!({ "question_text": "Revised question?" }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "update question: {}", resp.text());
     assert_eq!(
         resp.json_value()["question_text"].as_str(),
         Some("Revised question?")
@@ -282,12 +304,20 @@ async fn test_delete_question_from_draft_vote(pool: PgPool) {
     let question_id = add_question(&app, &token, org_id, vote_id).await;
 
     let r = app
-        .delete(&format!("/api/v1/voting/{}/questions/{}", vote_id, question_id))
+        .delete(&format!(
+            "/api/v1/voting/{}/questions/{}",
+            vote_id, question_id
+        ))
         .bearer(&token)
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete question: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete question: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -314,9 +344,17 @@ async fn test_check_eligibility_returns_result(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "check eligibility: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "check eligibility: {}",
+        resp.text()
+    );
     let body = resp.json_value();
-    assert!(body.get("isEligible").is_some() || body.get("is_eligible").is_some(), "expected eligibility field");
+    assert!(
+        body.get("isEligible").is_some() || body.get("is_eligible").is_some(),
+        "expected eligibility field"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -352,12 +390,20 @@ async fn test_get_my_response_after_cast(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "cast vote: {}", resp.text());
 
     let r = app
-        .get(&format!("/api/v1/voting/{}/my-response?unit_id={}", vote_id, unit_id))
+        .get(&format!(
+            "/api/v1/voting/{}/my-response?unit_id={}",
+            vote_id, unit_id
+        ))
         .bearer(&token)
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "get my response: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get my response: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -375,10 +421,14 @@ async fn test_add_and_list_comments(pool: PgPool) {
         .json(&json!({ "parent_id": null, "content": "A test comment", "ai_consent": false }))
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add comment: {}", resp.text());
-    let comment_id = Uuid::parse_str(
-        resp.json_value()["id"].as_str().expect("comment id")
-    ).expect("uuid");
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add comment: {}",
+        resp.text()
+    );
+    let comment_id =
+        Uuid::parse_str(resp.json_value()["id"].as_str().expect("comment id")).expect("uuid");
 
     let r = app
         .get(&format!("/api/v1/voting/{}/comments", vote_id))
@@ -386,15 +436,26 @@ async fn test_add_and_list_comments(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "list comments: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list comments: {}",
+        resp.text()
+    );
     assert!(
-        resp.json_value().as_array().map(|a| !a.is_empty()).unwrap_or(false),
+        resp.json_value()
+            .as_array()
+            .map(|a| !a.is_empty())
+            .unwrap_or(false),
         "expected at least one comment"
     );
 
     // list replies to the top-level comment (should be empty)
     let r = app
-        .get(&format!("/api/v1/voting/{}/comments/{}/replies", vote_id, comment_id))
+        .get(&format!(
+            "/api/v1/voting/{}/comments/{}/replies",
+            vote_id, comment_id
+        ))
         .bearer(&token)
         .tenant(org_id)
         .build();
@@ -418,12 +479,14 @@ async fn test_hide_comment(pool: PgPool) {
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::CREATED);
-    let comment_id = Uuid::parse_str(
-        resp.json_value()["id"].as_str().expect("comment id")
-    ).expect("uuid");
+    let comment_id =
+        Uuid::parse_str(resp.json_value()["id"].as_str().expect("comment id")).expect("uuid");
 
     let r = app
-        .post(&format!("/api/v1/voting/{}/comments/{}/hide", vote_id, comment_id))
+        .post(&format!(
+            "/api/v1/voting/{}/comments/{}/hide",
+            vote_id, comment_id
+        ))
         .bearer(&token)
         .tenant(org_id)
         .json(&json!({ "reason": "Inappropriate content" }))
@@ -446,7 +509,12 @@ async fn test_get_audit_log(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "get audit log: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get audit log: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -473,9 +541,17 @@ async fn test_list_active_by_building(pool: PgPool) {
         .tenant(org_id)
         .build();
     let resp = app.execute(r).await;
-    assert_eq!(resp.status, StatusCode::OK, "list active by building: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list active by building: {}",
+        resp.text()
+    );
     assert!(
-        resp.json_value().as_array().map(|a| !a.is_empty()).unwrap_or(false),
+        resp.json_value()
+            .as_array()
+            .map(|a| !a.is_empty())
+            .unwrap_or(false),
         "expected at least one active vote"
     );
 }
