@@ -5,33 +5,33 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 ## marketplace.rs  (mount: /api/v1/marketplace)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/marketplace/providers | create_profile | partial | — | real handler, no test |
-| GET | /api/v1/marketplace/providers | search_providers | partial | — | |
-| GET | /api/v1/marketplace/providers/me | get_my_profile | partial | — | |
-| PATCH | /api/v1/marketplace/providers/me | update_my_profile | partial | — | |
-| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | partial | — | |
-| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | partial | — | |
-| GET | /api/v1/marketplace/providers/{id} | get_provider | partial | — | |
-| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | partial | — | |
-| POST | /api/v1/marketplace/rfqs | create_rfq | partial | — | |
-| GET | /api/v1/marketplace/rfqs | list_rfqs | partial | — | |
+| POST | /api/v1/marketplace/providers | create_profile | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers | search_providers | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers/me | get_my_profile | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| PATCH | /api/v1/marketplace/providers/me | update_my_profile | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers/me/dashboard | get_provider_dashboard | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers/statistics | get_marketplace_statistics | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers/{id} | get_provider | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/providers/{id}/complete | get_provider_complete | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| POST | /api/v1/marketplace/rfqs | create_rfq | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/rfqs | list_rfqs | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | GET | /api/v1/marketplace/rfqs/{id} | get_rfq | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK (owner reads own RFQ) |
-| PATCH | /api/v1/marketplace/rfqs/{id} | update_rfq | partial | — | |
+| PATCH | /api/v1/marketplace/rfqs/{id} | update_rfq | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | DELETE | /api/v1/marketplace/rfqs/{id} | delete_rfq | partial | — | |
-| GET | /api/v1/marketplace/rfqs/{id}/quotes | list_rfq_quotes | partial | — | |
+| GET | /api/v1/marketplace/rfqs/{id}/quotes | list_rfq_quotes | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | GET | /api/v1/marketplace/rfqs/{id}/compare | compare_quotes | partial | — | |
 | POST | /api/v1/marketplace/rfqs/{id}/award | award_quote | partial | — | |
 | POST | /api/v1/marketplace/rfqs/{id}/cancel | cancel_rfq | partial | — | |
-| POST | /api/v1/marketplace/quotes | submit_quote | partial | — | |
-| GET | /api/v1/marketplace/quotes/my | list_my_quotes | partial | — | |
-| GET | /api/v1/marketplace/quotes/{id} | get_quote | partial | — | |
+| POST | /api/v1/marketplace/quotes | submit_quote | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/quotes/my | list_my_quotes | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/quotes/{id} | get_quote | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | PATCH | /api/v1/marketplace/quotes/{id} | update_quote | partial | — | |
 | DELETE | /api/v1/marketplace/quotes/{id} | withdraw_quote | partial | — | |
-| GET | /api/v1/marketplace/invitations | list_my_invitations | partial | — | |
+| GET | /api/v1/marketplace/invitations | list_my_invitations | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | POST | /api/v1/marketplace/invitations/{id}/view | mark_invitation_viewed | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
 | POST | /api/v1/marketplace/invitations/{id}/decline | decline_invitation | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
-| POST | /api/v1/marketplace/verifications | submit_verification | partial | — | |
-| GET | /api/v1/marketplace/verifications | list_verifications | partial | — | |
+| POST | /api/v1/marketplace/verifications | submit_verification | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
+| GET | /api/v1/marketplace/verifications | list_verifications | done | marketplace_lifecycle_backfill_batch2_tests.rs | happy-path 200/201 OK |
 | GET | /api/v1/marketplace/verifications/queue | get_verification_queue | partial | — | |
 | GET | /api/v1/marketplace/verifications/expiring | get_expiring_verifications | partial | — | |
 | GET | /api/v1/marketplace/verifications/{id} | get_verification | done | marketplace_voting_investor_cross_org_idor_tests.rs | happy-path OK |
