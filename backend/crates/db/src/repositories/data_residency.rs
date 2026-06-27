@@ -2,11 +2,27 @@
 //!
 //! Handles configuration, region catalog, routing status,
 //! compliance verification results, and tamper-evident audit logs.
+//!
+//! # RLS Integration (Epic 8A / FORCE-RLS gate)
+//!
+//! The residency tables (`data_residency_config`, `residency_regions`,
+//! `cross_region_access_log`, `compliance_verification_result`,
+//! `residency_audit_log`) carry `FORCE ROW LEVEL SECURITY` with the canonical
+//! org policy. Under `FORCE` the api-server owner connection is no longer
+//! exempt, so any query issued on a connection without `app.current_org_id`
+//! set collapses to deny-all.
+//!
+//! This repository is therefore **stateless** — it holds no pool. Every method
+//! takes an executor whose connection already has RLS context set (org + user
+//! GUCs); in handlers this comes from the `RlsConnection` extractor via
+//! `&mut **rls.conn()`. Holding no pool means there is no way to issue a query
+//! that bypasses RLS. This mirrors the `board_meetings.rs` / `document.rs`
+//! precedent. By-id reads stay org-keyed as defense-in-depth.
 
 use crate::models::data_residency::*;
 use crate::DbPool;
 use chrono::Utc;
-use sqlx::{Error as SqlxError, Row};
+use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres, Row};
 use uuid::Uuid;
 
 /// Helper to convert DataRegion enum to database VARCHAR string
@@ -39,15 +55,21 @@ pub fn string_to_data_region(s: &str) -> DataRegion {
 }
 
 /// Repository for Data Residency operations.
-#[derive(Clone)]
-pub struct DataResidencyRepository {
-    pool: DbPool,
-}
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
+#[derive(Debug, Clone)]
+pub struct DataResidencyRepository;
 
 impl DataResidencyRepository {
     /// Create a new DataResidencyRepository.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: DbPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -55,22 +77,33 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// Get current configuration for an organization.
-    pub async fn get_config(&self, org_id: Uuid) -> Result<Option<DataResidencyConfig>, SqlxError> {
+    pub async fn get_config<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<Option<DataResidencyConfig>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DataResidencyConfig>(
             "SELECT * FROM data_residency_config WHERE organization_id = $1",
         )
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Upsert configuration for an organization.
-    pub async fn upsert_config(
+    pub async fn upsert_config<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         payload: ConfigureDataResidency,
         user_id: Uuid,
-    ) -> Result<DataResidencyConfig, SqlxError> {
+    ) -> Result<DataResidencyConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let primary_region_str = data_region_to_string(&payload.primary_region);
         let backup_region_str = payload.backup_region.as_ref().map(data_region_to_string);
         let overrides_json = payload
@@ -104,7 +137,7 @@ impl DataResidencyRepository {
         .bind(overrides_json)
         .bind(payload.compliance_notes)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(config)
@@ -115,7 +148,13 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// List all available reference regions.
-    pub async fn list_available_regions(&self) -> Result<Vec<RegionInfo>, SqlxError> {
+    pub async fn list_available_regions<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<RegionInfo>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let rows = sqlx::query(
             r#"
             SELECT region::TEXT as region_str, display_name, location_code, compliance_frameworks, available
@@ -124,7 +163,7 @@ impl DataResidencyRepository {
             ORDER BY region ASC
             "#
         )
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         let regions = rows
@@ -149,13 +188,17 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// Log a cross-region data access.
-    pub async fn log_cross_region_access(
+    pub async fn log_cross_region_access<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         payload: LogCrossRegionAccess,
         ip_address: Option<String>,
-    ) -> Result<CrossRegionAccessLog, SqlxError> {
+    ) -> Result<CrossRegionAccessLog, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let log = sqlx::query_as::<_, CrossRegionAccessLog>(
             r#"
             INSERT INTO cross_region_access_log (
@@ -176,31 +219,39 @@ impl DataResidencyRepository {
         .bind(payload.resource_id)
         .bind(payload.reason)
         .bind(ip_address)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(log)
     }
 
     /// List cross-region access logs for an organization.
-    pub async fn list_access_logs(
+    pub async fn list_access_logs<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<CrossRegionAccessLog>, SqlxError> {
+    ) -> Result<Vec<CrossRegionAccessLog>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CrossRegionAccessLog>(
             "SELECT * FROM cross_region_access_log WHERE organization_id = $1 ORDER BY accessed_at DESC"
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Count recent cross-region accesses.
-    pub async fn count_recent_cross_region_accesses(
+    pub async fn count_recent_cross_region_accesses<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days: i64,
-    ) -> Result<i64, SqlxError> {
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) FROM cross_region_access_log
@@ -210,17 +261,21 @@ impl DataResidencyRepository {
         )
         .bind(org_id)
         .bind(days.to_string())
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row.0)
     }
 
     /// Get cross-region access counts by type.
-    pub async fn get_cross_region_access_counts_by_type(
+    pub async fn get_cross_region_access_counts_by_type<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<AccessTypeCount>, SqlxError> {
+    ) -> Result<Vec<AccessTypeCount>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             r#"
             SELECT access_type, COUNT(*) as count
@@ -230,7 +285,7 @@ impl DataResidencyRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         let counts = rows
@@ -257,15 +312,20 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// Create compliance verification result.
-    pub async fn create_verification_result(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_verification_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         is_compliant: bool,
         data_locations: serde_json::Value,
         issues: Option<serde_json::Value>,
         details: Option<serde_json::Value>,
         verified_by: Uuid,
-    ) -> Result<ComplianceVerificationResult, SqlxError> {
+    ) -> Result<ComplianceVerificationResult, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ComplianceVerificationResult>(
             r#"
             INSERT INTO compliance_verification_result (
@@ -283,22 +343,43 @@ impl DataResidencyRepository {
         .bind(issues)
         .bind(details)
         .bind(verified_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get compliance verification result by ID.
-    pub async fn get_verification_result(
+    pub async fn get_verification_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         id: Uuid,
-    ) -> Result<Option<ComplianceVerificationResult>, SqlxError> {
+    ) -> Result<Option<ComplianceVerificationResult>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ComplianceVerificationResult>(
             "SELECT * FROM compliance_verification_result WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Get the most recent compliance verification result for an organization.
+    pub async fn get_latest_verification_result<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<Option<ComplianceVerificationResult>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, ComplianceVerificationResult>(
+            "SELECT * FROM compliance_verification_result WHERE organization_id = $1 ORDER BY verified_at DESC LIMIT 1",
+        )
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
@@ -307,9 +388,13 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// Create a new audit log entry with tamper-evident hashing.
+    ///
+    /// Performs a read (previous hash) then an insert on the same connection,
+    /// so it takes `&mut PgConnection` rather than a one-shot executor.
     #[allow(clippy::too_many_arguments)]
     pub async fn create_audit_entry(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         user_id: Option<Uuid>,
         event: ResidencyAuditEvent,
@@ -325,7 +410,7 @@ impl DataResidencyRepository {
             "SELECT record_hash FROM residency_audit_log WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1"
         )
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         let id = Uuid::new_v4();
@@ -365,15 +450,18 @@ impl DataResidencyRepository {
         .bind(record_hash)
         .bind(prev_hash)
         .bind(created_at)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(log)
     }
 
     /// List audit logs with pagination and filters.
+    ///
+    /// Runs a count and an entries query on the same connection.
     pub async fn list_audit_logs(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         query: AuditLogQuery,
     ) -> Result<(Vec<DataResidencyAuditLog>, i64), SqlxError> {
@@ -397,7 +485,7 @@ impl DataResidencyRepository {
         .bind(query.user_id)
         .bind(query.from_date)
         .bind(query.to_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Entries
@@ -420,34 +508,45 @@ impl DataResidencyRepository {
         .bind(query.to_date)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         Ok((entries, total.0))
     }
 
     /// Get specific audit entry.
-    pub async fn get_audit_entry(
+    pub async fn get_audit_entry<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         id: Uuid,
-    ) -> Result<Option<DataResidencyAuditLog>, SqlxError> {
+    ) -> Result<Option<DataResidencyAuditLog>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DataResidencyAuditLog>(
             "SELECT * FROM residency_audit_log WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Verify tamper-evident audit chain.
-    pub async fn verify_audit_chain(&self, org_id: Uuid) -> Result<serde_json::Value, SqlxError> {
+    pub async fn verify_audit_chain<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<serde_json::Value, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let logs = sqlx::query_as::<_, DataResidencyAuditLog>(
             "SELECT * FROM residency_audit_log WHERE organization_id = $1 ORDER BY created_at ASC",
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         let mut chain_valid = true;
