@@ -545,7 +545,8 @@ impl MigrationRepository {
                 .bind(org_id)
                 .fetch_one(executor)
                 .await?
-            };
+            }
+        };
         Ok(count.0)
     }
 
@@ -806,3 +807,4 @@ impl MigrationRepository {
         Ok(count.0)
     }
 }
+
