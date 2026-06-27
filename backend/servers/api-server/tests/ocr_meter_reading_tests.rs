@@ -13,7 +13,7 @@ mod common;
 
 use axum::http::{header, Method, Request, StatusCode};
 use serde_json::{json, Value};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use tower::ServiceExt;
 use uuid::Uuid;
 
@@ -173,18 +173,18 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
         Uuid::parse_str(body["reading_id"].as_str().unwrap()).expect("reading_id is a UUID");
 
     // Verify the row actually landed in the DB.
-    let row = sqlx::query!(
-        r#"SELECT source AS "source!", status AS "status!", photo_url
-           FROM meter_readings WHERE id = $1"#,
-        reading_id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("reading must exist in DB");
+    let row = sqlx::query("SELECT source, status, photo_url FROM meter_readings WHERE id = $1")
+        .bind(reading_id)
+        .fetch_one(&pool)
+        .await
+        .expect("reading must exist in DB");
 
-    assert_eq!(row.source, "photo", "source must be 'photo'");
-    assert_eq!(row.status, "pending", "status must be 'pending'");
-    assert!(row.photo_url.is_some(), "photo_url must be set");
+    let source: String = row.get("source");
+    let status: String = row.get("status");
+    let photo_url: Option<String> = row.get("photo_url");
+    assert_eq!(source, "photo", "source must be 'photo'");
+    assert_eq!(status, "pending", "status must be 'pending'");
+    assert!(photo_url.is_some(), "photo_url must be set");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -309,18 +309,19 @@ async fn submit_correction_persists_record(pool: PgPool) {
     let correction_id = Uuid::parse_str(body["id"].as_str().unwrap()).expect("id is a UUID");
 
     // Round-trip: verify the row is in the DB with correct values.
-    let row = sqlx::query!(
-        r#"SELECT original_value, corrected_value, image_url
-           FROM ocr_meter_corrections WHERE id = $1"#,
-        correction_id
+    let row = sqlx::query(
+        "SELECT original_value, corrected_value, image_url FROM ocr_meter_corrections WHERE id = $1",
     )
+    .bind(correction_id)
     .fetch_one(&pool)
     .await
     .expect("correction must exist in DB");
 
-    assert_eq!(row.image_url, "https://example.com/meter.jpg");
+    let image_url: String = row.get("image_url");
+    let corrected_value: rust_decimal::Decimal = row.get("corrected_value");
+    assert_eq!(image_url, "https://example.com/meter.jpg");
     assert_eq!(
-        row.corrected_value,
+        corrected_value,
         rust_decimal::Decimal::try_from(105.5_f64).unwrap()
     );
 }
