@@ -297,7 +297,12 @@ async fn test_get_listing_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get listing → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get listing → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -628,7 +633,12 @@ async fn test_get_photos_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get photos → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get photos → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

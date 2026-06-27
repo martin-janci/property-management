@@ -215,7 +215,12 @@ async fn test_rental_statistics_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "statistics → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "statistics → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -238,7 +243,12 @@ async fn test_rental_sync_status_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "sync-status → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "sync-status → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -261,7 +271,12 @@ async fn test_list_connections_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "list connections → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list connections → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -292,7 +307,12 @@ async fn test_create_connection_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create connection → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create connection → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -321,7 +341,12 @@ async fn test_update_connection_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update connection → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update connection → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -377,7 +402,12 @@ async fn test_get_unit_connections_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "unit connections → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "unit connections → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -404,7 +434,12 @@ async fn test_list_bookings_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "list bookings → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list bookings → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -437,7 +472,12 @@ async fn test_create_booking_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create booking → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create booking → 201; body: {}",
+        resp.text()
+    );
     let json = resp.json_value();
     assert!(json.get("id").is_some(), "response must include id");
 }
@@ -465,7 +505,12 @@ async fn test_get_booking_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get booking → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get booking → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -494,7 +539,12 @@ async fn test_update_booking_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update booking → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update booking → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -523,7 +573,12 @@ async fn test_update_booking_status_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update booking status → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update booking status → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -549,7 +604,12 @@ async fn test_get_booking_with_guests_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "booking guests → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "booking guests → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -580,7 +640,12 @@ async fn test_get_calendar_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get calendar → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get calendar → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -607,7 +672,12 @@ async fn test_check_availability_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "check availability → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "check availability → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -713,7 +783,12 @@ async fn test_create_guest_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create guest → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create guest → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -740,7 +815,12 @@ async fn test_get_guest_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get guest → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get guest → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -770,7 +850,12 @@ async fn test_update_guest_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update guest → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update guest → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -797,7 +882,12 @@ async fn test_delete_guest_returns_204(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete guest → 204; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "delete guest → 204; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -825,7 +915,12 @@ async fn test_register_guest_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "register guest → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "register guest → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -852,7 +947,12 @@ async fn test_get_checkin_reminders_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "checkin-reminders → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "checkin-reminders → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -879,7 +979,12 @@ async fn test_list_reports_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "list reports → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list reports → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -910,7 +1015,12 @@ async fn test_generate_report_preview_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "report preview → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "report preview → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -943,7 +1053,12 @@ async fn test_create_report_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create report → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create report → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -968,7 +1083,12 @@ async fn test_get_report_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "get report → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get report → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -994,7 +1114,12 @@ async fn test_submit_report_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "submit report → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "submit report → 200; body: {}",
+        resp.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1029,7 +1154,12 @@ async fn test_create_ical_feed_returns_201(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::CREATED, "create ical feed → 201; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create ical feed → 201; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1058,7 +1188,12 @@ async fn test_update_ical_feed_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "update ical feed → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update ical feed → 200; body: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -1114,5 +1249,10 @@ async fn test_get_unit_ical_feeds_returns_200(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(resp.status, StatusCode::OK, "unit ical feeds → 200; body: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "unit ical feeds → 200; body: {}",
+        resp.text()
+    );
 }
