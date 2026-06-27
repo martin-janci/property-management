@@ -12,8 +12,8 @@ use axum::{
 };
 use axum_extra::extract::Multipart;
 use db::models::{
-    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus, ExportCategoriesResponse, ExportCategoryInfo,
-    ExportDataCategory, ExportPrivacyOptions, FieldDataType, FieldValidation,
+    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus, ExportCategoriesResponse,
+    ExportCategoryInfo, ExportDataCategory, ExportPrivacyOptions, FieldDataType, FieldValidation,
     ImportCategoriesResponse, ImportCategoryInfo, ImportDataType, ImportFieldMapping,
     ImportJobHistory, ImportJobStatus, ImportJobStatusResponse, ImportPreviewResult,
     ImportRowError, ImportTemplateSummary, MigrationExportResponse, MigrationExportStatus,
@@ -121,7 +121,12 @@ async fn list_templates(
 
     let db_templates = state
         .migration_repo
-        .list_templates(&mut **rls.conn(), org_id, query.data_type, query.include_system)
+        .list_templates(
+            &mut **rls.conn(),
+            org_id,
+            query.data_type,
+            query.include_system,
+        )
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     rls.release().await;
@@ -355,7 +360,10 @@ async fn update_template(
         .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
 
     if existing.is_system_template {
-        return Err((StatusCode::BAD_REQUEST, "System templates cannot be updated".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "System templates cannot be updated".to_string(),
+        ));
     }
 
     if existing.organization_id != Some(org_id) {
@@ -363,7 +371,10 @@ async fn update_template(
     }
 
     let field_mappings_json = match req.field_mappings {
-        Some(mappings) => Some(serde_json::to_value(&mappings).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?),
+        Some(mappings) => Some(
+            serde_json::to_value(&mappings)
+                .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?,
+        ),
         None => None,
     };
 
@@ -428,7 +439,10 @@ async fn delete_template(
         .ok_or((StatusCode::NOT_FOUND, "Template not found".to_string()))?;
 
     if existing.is_system_template {
-        return Err((StatusCode::BAD_REQUEST, "System templates cannot be deleted".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "System templates cannot be deleted".to_string(),
+        ));
     }
 
     if existing.organization_id != Some(org_id) {
@@ -497,9 +511,18 @@ async fn download_template(
     }
 
     let (filename, content_type) = match query.format {
-        TemplateFormat::Csv => (format!("{}_template.csv", existing.name.to_lowercase().replace(' ', "_")), "text/csv"),
+        TemplateFormat::Csv => (
+            format!(
+                "{}_template.csv",
+                existing.name.to_lowercase().replace(' ', "_")
+            ),
+            "text/csv",
+        ),
         TemplateFormat::Xlsx => (
-            format!("{}_template.xlsx", existing.name.to_lowercase().replace(' ', "_")),
+            format!(
+                "{}_template.xlsx",
+                existing.name.to_lowercase().replace(' ', "_")
+            ),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ),
     };
@@ -802,7 +825,14 @@ async fn list_import_jobs(
 
     let jobs = state
         .migration_repo
-        .list_import_jobs_history(&mut **rls.conn(), org_id, query.status, query.data_type, page, per_page)
+        .list_import_jobs_history(
+            &mut **rls.conn(),
+            org_id,
+            query.status,
+            query.data_type,
+            page,
+            per_page,
+        )
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -850,7 +880,10 @@ async fn get_import_job_status(
         .get_template(&mut **rls.conn(), job.template_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+        .ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Job template not found".to_string(),
+        ))?;
 
     let errors = state
         .migration_repo
@@ -911,8 +944,14 @@ async fn cancel_import_job(
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    if job.status != ImportJobStatus::Pending && job.status != ImportJobStatus::Validating && job.status != ImportJobStatus::Importing {
-        return Err((StatusCode::BAD_REQUEST, "Job cannot be cancelled in its current state".to_string()));
+    if job.status != ImportJobStatus::Pending
+        && job.status != ImportJobStatus::Validating
+        && job.status != ImportJobStatus::Importing
+    {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Job cannot be cancelled in its current state".to_string(),
+        ));
     }
 
     let updated_job = state
@@ -939,7 +978,10 @@ async fn cancel_import_job(
         .get_template(&mut **rls.conn(), job.template_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+        .ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Job template not found".to_string(),
+        ))?;
     rls.release().await;
 
     tracing::info!(
@@ -1025,7 +1067,10 @@ async fn retry_import_job(
         .get_template(&mut **rls.conn(), job.template_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+        .ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Job template not found".to_string(),
+        ))?;
     rls.release().await;
 
     tracing::info!(
@@ -1101,7 +1146,8 @@ async fn get_import_job_errors(
         .migration_repo
         .count_import_job_errors(&mut **rls.conn(), job_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))? as i32;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        as i32;
     rls.release().await;
 
     Ok(Json(ImportJobErrorsResponse {
@@ -1242,10 +1288,9 @@ async fn get_export_status(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let download_url = match current_status {
-        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded => Some(format!(
-            "/api/v1/migration/export/{}/download",
-            export_id
-        )),
+        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded => {
+            Some(format!("/api/v1/migration/export/{}/download", export_id))
+        }
         _ => None,
     };
 
@@ -1299,7 +1344,10 @@ async fn download_export(
     }
 
     if export.status != MigrationExportStatus::Ready {
-        return Err((StatusCode::BAD_REQUEST, "Export is not ready for download".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Export is not ready for download".to_string(),
+        ));
     }
 
     // Increment download count
@@ -1335,12 +1383,9 @@ async fn download_export(
     Ok(Json(ExportDownloadResponse {
         filename: format!("migration_export_{}.zip", export_id),
         content_type: "application/zip".to_string(),
-        download_url: updated.file_path.unwrap_or_else(|| {
-            format!(
-                "https://storage.example.com/exports/{}.zip",
-                export_id
-            )
-        }),
+        download_url: updated
+            .file_path
+            .unwrap_or_else(|| format!("https://storage.example.com/exports/{}.zip", export_id)),
         expires_at,
     }))
 }
@@ -1645,9 +1690,15 @@ async fn validate_import(
         original_value: Some("123".to_string()),
     };
 
-    state.migration_repo.create_import_row_error(&mut **rls.conn(), job_id, org_id, &err1).await
+    state
+        .migration_repo
+        .create_import_row_error(&mut **rls.conn(), job_id, org_id, &err1)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    state.migration_repo.create_import_row_error(&mut **rls.conn(), job_id, org_id, &err2).await
+    state
+        .migration_repo
+        .create_import_row_error(&mut **rls.conn(), job_id, org_id, &err2)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let updated = state
@@ -1674,7 +1725,10 @@ async fn validate_import(
         .get_template(&mut **rls.conn(), job.template_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Job template not found".to_string()))?;
+        .ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Job template not found".to_string(),
+        ))?;
     rls.release().await;
 
     tracing::info!(

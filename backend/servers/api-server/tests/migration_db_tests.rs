@@ -69,7 +69,13 @@ async fn test_import_template_lifecycle(pool: PgPool) {
     let (token, tenant_id) = create_platform_admin(&app, &user, "migtemp").await;
 
     // 1. List templates initially (should contain the seeded system templates)
-    let list_req = request(&token, tenant_id, Method::GET, "/api/v1/migration/templates", None);
+    let list_req = request(
+        &token,
+        tenant_id,
+        Method::GET,
+        "/api/v1/migration/templates",
+        None,
+    );
     let list_resp = app.execute(list_req).await;
     assert_eq!(list_resp.status, StatusCode::OK);
     let list_json = list_resp.json_value();
@@ -106,11 +112,12 @@ async fn test_import_template_lifecycle(pool: PgPool) {
     let template_id = Uuid::parse_str(created["id"].as_str().unwrap()).unwrap();
 
     // Verify it is persisted in the database
-    let db_exists: (bool,) = sqlx::query_as("SELECT EXISTS(SELECT 1 FROM import_templates WHERE id = $1)")
-        .bind(template_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let db_exists: (bool,) =
+        sqlx::query_as("SELECT EXISTS(SELECT 1 FROM import_templates WHERE id = $1)")
+            .bind(template_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     assert!(db_exists.0, "Template should be persisted in database");
 
     // 3. Retrieve detailed template
@@ -176,12 +183,16 @@ async fn test_import_template_lifecycle(pool: PgPool) {
     assert_eq!(delete_resp.status, StatusCode::NO_CONTENT);
 
     // Assert deleted in DB
-    let db_exists_after: (bool,) = sqlx::query_as("SELECT EXISTS(SELECT 1 FROM import_templates WHERE id = $1)")
-        .bind(template_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-    assert!(!db_exists_after.0, "Template should be removed from database");
+    let db_exists_after: (bool,) =
+        sqlx::query_as("SELECT EXISTS(SELECT 1 FROM import_templates WHERE id = $1)")
+            .bind(template_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert!(
+        !db_exists_after.0,
+        "Template should be removed from database"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -191,7 +202,13 @@ async fn test_import_job_execution_flow(pool: PgPool) {
     let (token, tenant_id) = create_platform_admin(&app, &user, "migjob").await;
 
     // Retrieve system template to initiate a job
-    let list_req = request(&token, tenant_id, Method::GET, "/api/v1/migration/templates/system", None);
+    let list_req = request(
+        &token,
+        tenant_id,
+        Method::GET,
+        "/api/v1/migration/templates/system",
+        None,
+    );
     let list_resp = app.execute(list_req).await;
     assert_eq!(list_resp.status, StatusCode::OK);
     let list_json = list_resp.json_value();
@@ -204,7 +221,7 @@ async fn test_import_job_execution_flow(pool: PgPool) {
             id, organization_id, template_id, status, original_filename,
             file_path, file_size_bytes, total_rows, created_by
         ) VALUES ($1, $2, $3, 'pending', 'test_data.csv', 'imports/test_data.csv', 1024, 100,
-          (SELECT id FROM users LIMIT 1))"#
+          (SELECT id FROM users LIMIT 1))"#,
     )
     .bind(job_id)
     .bind(tenant_id)
@@ -320,11 +337,12 @@ async fn test_migration_exports(pool: PgPool) {
     let export_id = Uuid::parse_str(export_json["export_id"].as_str().unwrap()).unwrap();
 
     // Verify it exists in DB as pending
-    let db_status: (String,) = sqlx::query_as("SELECT status::text FROM migration_exports WHERE id = $1")
-        .bind(export_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let db_status: (String,) =
+        sqlx::query_as("SELECT status::text FROM migration_exports WHERE id = $1")
+            .bind(export_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     assert_eq!(db_status.0, "pending");
 
     // 2. Get export status (auto-transitions to ready in mock setup)
@@ -353,10 +371,14 @@ async fn test_migration_exports(pool: PgPool) {
     assert_eq!(download_resp.status, StatusCode::OK);
 
     // Verify download count is incremented in DB
-    let db_download_count: (i32,) = sqlx::query_as("SELECT download_count FROM migration_exports WHERE id = $1")
-        .bind(export_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-    assert_eq!(db_download_count.0, 1, "Download count should be 1 after download");
+    let db_download_count: (i32,) =
+        sqlx::query_as("SELECT download_count FROM migration_exports WHERE id = $1")
+            .bind(export_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        db_download_count.0, 1,
+        "Download count should be 1 after download"
+    );
 }
