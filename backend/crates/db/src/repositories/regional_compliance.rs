@@ -2,8 +2,8 @@
 
 use crate::models::regional_compliance::{
     ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr, ConfigureSlovakVoting,
-    CzechSvjConfig, GdprConsentCategory, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig,
-    SlovakDecisionType, SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
+    CzechSvjConfig, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig, SlovakDecisionType,
+    SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
 };
 use crate::DbPool;
 use chrono::NaiveDate;
@@ -451,7 +451,7 @@ impl RegionalComplianceRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        let (payment_count, total_collected): (i64, Option<Decimal>) = sqlx::query_as(
+        let (payment_count, _total_collected): (i64, Option<Decimal>) = sqlx::query_as(
             r#"
             SELECT COUNT(*), SUM(amount)
             FROM payments

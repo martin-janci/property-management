@@ -5,7 +5,7 @@
 
 use crate::models::data_residency::*;
 use crate::DbPool;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use sqlx::{Error as SqlxError, Row};
 use uuid::Uuid;
 
@@ -307,6 +307,7 @@ impl DataResidencyRepository {
     // ========================================================================
 
     /// Create a new audit log entry with tamper-evident hashing.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_audit_entry(
         &self,
         org_id: Uuid,
