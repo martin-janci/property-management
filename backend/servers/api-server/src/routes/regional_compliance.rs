@@ -10,7 +10,7 @@ use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use api_core::extractors::TenantExtractor;
+use api_core::extractors::{RlsConnection, TenantExtractor};
 use common::errors::ErrorResponse;
 use db::models::regional_compliance::*;
 use db::models::vote::VoteResults;
@@ -135,13 +135,13 @@ async fn get_slovak_voting_config(
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/voting/validate", tag = "Regional Compliance", request_body = ValidateSlovakVote, responses((status = 200, description = "Validation result", body = SlovakVoteValidation)))]
 async fn validate_slovak_vote(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ValidateSlovakVote>,
 ) -> Result<Json<SlovakVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&state.db, payload.vote_id)
+        .find_poll_by_id_rls(&mut **rls.conn(), payload.vote_id)
         .await
         .map_err(|e| {
             (
@@ -207,7 +207,7 @@ async fn validate_slovak_vote(
     let quorum_met = actual_participation >= required_quorum;
     let is_valid = quorum_met && approval_percentage >= required_quorum;
 
-    Ok(Json(SlovakVoteValidation {
+    let result = Ok(Json(SlovakVoteValidation {
         vote_id: payload.vote_id,
         decision_type: payload.decision_type,
         required_quorum_percentage: required_quorum,
@@ -219,18 +219,20 @@ async fn validate_slovak_vote(
         legal_reference,
         validation_notes: vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()],
         validated_at: Utc::now(),
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/voting/minutes/{vote_id}", tag = "Regional Compliance", params(("vote_id" = Uuid, Path, description = "Vote ID")), responses((status = 200, description = "Minutes", body = SlovakVoteMinutes)))]
 async fn get_slovak_vote_minutes(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Path(vote_id): Path<Uuid>,
 ) -> Result<Json<SlovakVoteMinutes>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&state.db, vote_id)
+        .find_poll_by_id_rls(&mut **rls.conn(), vote_id)
         .await
         .map_err(|e| {
             (
@@ -257,7 +259,7 @@ async fn get_slovak_vote_minutes(
         })?
         .unwrap_or((Decimal::new(5001, 2), "SS 14 ods. 1 zakona 182/1993 Z.z.".to_string()));
 
-    Ok(Json(SlovakVoteMinutes {
+    let result = Ok(Json(SlovakVoteMinutes {
         vote_id,
         building_id: vote.building_id,
         meeting_date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
@@ -277,7 +279,9 @@ async fn get_slovak_vote_minutes(
         participants: vec![],
         questions: vec![],
         generated_at: Utc::now(),
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/accounting/config", tag = "Regional Compliance", request_body = ConfigureSlovakAccounting, responses((status = 200, description = "Config saved", body = SlovakAccountingConfig)))]
@@ -574,13 +578,13 @@ async fn get_czech_svj_config(
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/czech/svj/validate", tag = "Regional Compliance", request_body = ValidateCzechVote, responses((status = 200, description = "Validation result", body = CzechVoteValidation)))]
 async fn validate_czech_vote(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ValidateCzechVote>,
 ) -> Result<Json<CzechVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&state.db, payload.vote_id)
+        .find_poll_by_id_rls(&mut **rls.conn(), payload.vote_id)
         .await
         .map_err(|e| {
             (
@@ -651,7 +655,7 @@ async fn validate_czech_vote(
         CzechDecisionType::ThreeQuartersMajority | CzechDecisionType::AllOwners
     );
 
-    Ok(Json(CzechVoteValidation {
+    let result = Ok(Json(CzechVoteValidation {
         vote_id: payload.vote_id,
         decision_type: payload.decision_type,
         required_quorum_percentage: required_quorum,
@@ -664,18 +668,20 @@ async fn validate_czech_vote(
         requires_notary,
         validation_notes: vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()],
         validated_at: Utc::now(),
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/czech/svj/usneseni/{vote_id}", tag = "Regional Compliance", params(("vote_id" = Uuid, Path, description = "Vote ID")), responses((status = 200, description = "Usneseni", body = CzechSvjUsneseni)))]
 async fn get_czech_usneseni(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Path(vote_id): Path<Uuid>,
 ) -> Result<Json<CzechSvjUsneseni>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&state.db, vote_id)
+        .find_poll_by_id_rls(&mut **rls.conn(), vote_id)
         .await
         .map_err(|e| {
             (
@@ -702,7 +708,7 @@ async fn get_czech_usneseni(
         })?
         .unwrap_or((Decimal::new(5001, 2), "SS 1206 zakona 89/2012 Sb.".to_string()));
 
-    Ok(Json(CzechSvjUsneseni {
+    let result = Ok(Json(CzechSvjUsneseni {
         vote_id,
         building_id: vote.building_id,
         svj_name: "SVJ Hlavni 1".to_string(),
@@ -725,7 +731,9 @@ async fn get_czech_usneseni(
         participants: vec![],
         questions: vec![],
         generated_at: Utc::now(),
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/status", tag = "Regional Compliance", responses((status = 200, description = "Status", body = RegionalComplianceStatus)))]
