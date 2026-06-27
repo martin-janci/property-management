@@ -1,0 +1,192 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "evidence": [
+        "Cloud routine has not run since 2026-06-16T03:25:00Z (11d 16h). 264 merged PRs, 87 new issues, 433 commits accumulated. cron likely paused \u2014 escalate to operator."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-06-16..2026-06-27",
+      "score_delta": 1,
+      "evidence": [
+        "1474 added+deleted lines across 11-day window \u2014 top churn this run. Tenant-migration endpoint implementation (PR #1859, BIT-260). Watch for risky-churn if a fix PR lands without tests next run."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-migration-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-06-16..2026-06-27",
+      "score_delta": 1,
+      "evidence": [
+        "802 added+deleted lines across 11-day window \u2014 2nd top churn. Tenant-migration repository (PR #1859, BIT-260)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-services-search-alert-drainer-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-06-16..2026-06-27",
+      "score_delta": 1,
+      "evidence": [
+        "333 added+deleted lines across 11-day window \u2014 top reality-server churn. saved-search alert email/push drainer (PR #1849, BIT-139)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1713 reverts re-added delegations frontend (orig PR #1690) \u2014 intentional reconcile with BIT-213 retirement. Not a regression revert; vector=refactor, not bug. Score capped at +1 to reflect reconciliation intent (title: 'revert(delegations): remove re-added delegation frontend \u2014 reconcile with retirement')."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-27",
+      "type": "lag_warning",
+      "source": "stale-routine-check",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-06-16T03:25:00Z is 11d old; cloud routine appears paused. Dispatcher (separate loop) still ticking (15 chore(research) dispatcher commits in window \u2014 most recent c422832 today). Routine cron needs operator restart."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && H1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-id check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative-type allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score-cap + decay coverage",
+      "observed": "0 violations",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation on new plans",
+      "observed": "0 new plans -> vacuous",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + all required sections",
+      "observed": "0 \u2264 2",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity with regen",
+      "observed": "diff -q == 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phase honesty",
+      "observed": "no failed phases this run",
+      "expected": "all reported"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no missing slugs",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=11 >= head=7",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff -q == 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions, kill-switch unset",
+      "expected": "\u22643 actions, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (no-op when Phase 1.6 skipped)",
+      "observed": "Phase 1.6 skipped this run",
+      "expected": "vacuous when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
