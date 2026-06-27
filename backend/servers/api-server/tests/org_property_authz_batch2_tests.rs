@@ -162,14 +162,20 @@ fn organizations_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/{UUID}/members"),
-            Some(r#"{"user_id":"00000000-0000-0000-0000-000000000002","role_id":"00000000-0000-0000-0000-000000000003"}"#),
+            Some(
+                r#"{"user_id":"00000000-0000-0000-0000-000000000002","role_id":"00000000-0000-0000-0000-000000000003"}"#,
+            ),
         ),
         (
             Method::PUT,
             format!("{base}/{UUID}/members/{UUID2}"),
             Some(r#"{"role_id":"00000000-0000-0000-0000-000000000004"}"#),
         ),
-        (Method::DELETE, format!("{base}/{UUID}/members/{UUID2}"), None),
+        (
+            Method::DELETE,
+            format!("{base}/{UUID}/members/{UUID2}"),
+            None,
+        ),
         // Roles
         (Method::GET, format!("{base}/{UUID}/roles"), None),
         (

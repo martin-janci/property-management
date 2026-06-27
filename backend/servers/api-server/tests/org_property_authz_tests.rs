@@ -163,7 +163,9 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/"),
-            Some(r#"{"name":"Test Agency","organization_id":"00000000-0000-0000-0000-000000000001"}"#),
+            Some(
+                r#"{"name":"Test Agency","organization_id":"00000000-0000-0000-0000-000000000001"}"#,
+            ),
         ),
         (Method::GET, format!("{base}/{UUID}"), None),
         (
@@ -187,7 +189,11 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/{UUID}/members/{UUID2}/role"),
             Some(r#"{"role":"senior_agent"}"#),
         ),
-        (Method::DELETE, format!("{base}/{UUID}/members/{UUID2}"), None),
+        (
+            Method::DELETE,
+            format!("{base}/{UUID}/members/{UUID2}"),
+            None,
+        ),
         (
             Method::POST,
             format!("{base}/{UUID}/members/{UUID2}/reassign/{UUID}"),
@@ -213,11 +219,7 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/{UUID}/import"),
             Some(r#"{"source":"csv"}"#),
         ),
-        (
-            Method::GET,
-            format!("{base}/{UUID}/import/{UUID2}"),
-            None,
-        ),
+        (Method::GET, format!("{base}/{UUID}/import/{UUID2}"), None),
         (Method::GET, format!("{base}/{UUID}/import"), None),
     ]
 }
