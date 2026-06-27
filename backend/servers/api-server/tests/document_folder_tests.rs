@@ -1101,3 +1101,147 @@ async fn test_update_folder_name_only_preserves_parent(pool: PgPool) {
         "a name-only update must leave parent_id unchanged (absent != null)"
     );
 }
+
+// ---------------------------------------------------------------------------
+// BIT-268 wave-4 batch 1: folders happy-path (partial → done)
+// ---------------------------------------------------------------------------
+
+/// GET /api/v1/documents/folders — manager happy path → 200
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_folders_manager_succeeds(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org_f(&pool, "list-folders-ok").await;
+    let user_id = seed_user_f(&pool, "list-folders-ok-mgr").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_jwt_with_role(user_id, "manager");
+    let _ = seed_folder_f(&pool, org_id, None, "Alpha", user_id).await;
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/documents/folders")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org_id.to_string())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "GET /folders manager must return 200; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// GET /api/v1/documents/folders/tree — manager happy path → 200
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_folder_tree_manager_succeeds(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org_f(&pool, "folder-tree-ok").await;
+    let user_id = seed_user_f(&pool, "folder-tree-ok-mgr").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_jwt_with_role(user_id, "manager");
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/documents/folders/tree")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org_id.to_string())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "GET /folders/tree manager must return 200; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// GET /api/v1/documents/folders/{id} — manager happy path → 200
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_folder_manager_succeeds(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org_f(&pool, "get-folder-ok").await;
+    let user_id = seed_user_f(&pool, "get-folder-ok-mgr").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_jwt_with_role(user_id, "manager");
+    let folder_id = seed_folder_f(&pool, org_id, None, "Reports", user_id).await;
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::GET)
+                .uri(format!("/api/v1/documents/folders/{folder_id}"))
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org_id.to_string())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "GET /folders/{{id}} manager must return 200; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+    // Response shape: {"folder": {"id": "...", ...}}
+    let body = resp.json_value();
+    let id_str = body["folder"]["id"].as_str().expect("folder.id must be a string");
+    assert_eq!(
+        id_str,
+        folder_id.to_string().as_str(),
+        "response id must match seeded folder"
+    );
+}
+
+/// DELETE /api/v1/documents/folders/{id} — manager happy path → 204
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_folder_manager_succeeds(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org_f(&pool, "del-folder-ok").await;
+    let user_id = seed_user_f(&pool, "del-folder-ok-mgr").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_jwt_with_role(user_id, "manager");
+    let folder_id = seed_folder_f(&pool, org_id, None, "ToDelete", user_id).await;
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::DELETE)
+                .uri(format!("/api/v1/documents/folders/{folder_id}"))
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org_id.to_string())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "DELETE /folders/{{id}} manager must return 204; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let exists: bool = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM document_folders WHERE id = $1 AND deleted_at IS NULL)",
+    )
+    .bind(folder_id)
+    .fetch_one(&pool)
+    .await
+    .expect("check deleted");
+    assert!(!exists, "folder must be soft-deleted");
+}
