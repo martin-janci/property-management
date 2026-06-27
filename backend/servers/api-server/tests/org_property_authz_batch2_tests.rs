@@ -196,7 +196,7 @@ fn organizations_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::PUT,
             format!("{base}/{UUID}/branding"),
-            Some(r#"{"primary_color":"#ff0000"}"#),
+            Some(r##"{"primary_color":"#ff0000"}"##),
         ),
         // Export
         (Method::POST, format!("{base}/{UUID}/export"), None),

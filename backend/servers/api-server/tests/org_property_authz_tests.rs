@@ -174,7 +174,7 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::PUT,
             format!("{base}/{UUID}/branding"),
-            Some(r#"{"primary_color":"#fff"}"#),
+            Some(r##"{"primary_color":"#fff"}"##),
         ),
         (Method::GET, format!("{base}/{UUID}/members"), None),
         (
