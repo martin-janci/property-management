@@ -1255,7 +1255,6 @@ async fn get_export_status(
 
     let mut current_status = export.status;
     let mut file_size_bytes = export.file_size_bytes;
-    let mut file_path = export.file_path.clone();
 
     // Auto-transition to Ready in mock setup
     if current_status == MigrationExportStatus::Pending {
@@ -1280,7 +1279,6 @@ async fn get_export_status(
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
         current_status = updated.status;
         file_size_bytes = updated.file_size_bytes;
-        file_path = updated.file_path;
     }
     rls.release().await;
 
