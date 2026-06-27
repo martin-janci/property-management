@@ -1,10 +1,10 @@
 # Faults & Maintenance
 
-_Server: api-server. Modules: faults.rs, work_orders.rs, facilities.rs, predictive_maintenance.rs, meters.rs, outages.rs, energy.rs, insurance.rs, vendor_portal.rs, emergency/, iot/, vendors/._
+_Server: api-server. Modules: faults.rs, work_orders.rs, facilities.rs, predictive_maintenance.rs, meters.rs, outages.rs, energy.rs, insurance.rs, emergency/, iot/, vendors/._
 
 Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 - faults → `/api/v1/faults` · work_orders → `/api/v1/work-orders` · facilities → `/api/v1` · predictive_maintenance → `/api/v1/predictive-maintenance` · meters → `/api/v1/meters` · outages → `/api/v1/outages` · energy → `/api/v1/energy` · insurance → `/api/v1/insurance` · emergency → `/api/v1/emergency` · iot::sensor_router → `/api/v1/iot/sensors` · vendors → `/api/v1/vendors`
-- **vendor_portal → UNMOUNTED** (ROADMAP(PAP-24), lib.rs:329). Module is a pure 501 stub.
+- **vendor_portal → DELETED** in [BIT-257](/BIT/issues/BIT-257). Was an unmounted pure-501 ROADMAP stub (14 endpoints); `vendors/` (`/api/v1/vendors`) is the live surface.
 
 > Coverage note: nearly all tests in this group are cross-org/IDOR or auth-only suites. Per spec, a test that only asserts 4xx/`assert_ne!(OK)` does NOT prove the success path. Only endpoints with an explicit same-org `assert_eq!(StatusCode::OK|CREATED)` happy-path are marked `done`.
 
@@ -207,23 +207,9 @@ Mount prefixes (from `backend/servers/api-server/src/lib.rs`):
 | DELETE | /api/v1/insurance/claims/{claim_id}/documents/{document_id} | remove_claim_document | partial | — | |
 | GET | /api/v1/insurance/statistics | get_statistics | partial | — | |
 
-## vendor_portal.rs  (mount: UNMOUNTED — ROADMAP(PAP-24))
-| Method | Path | Handler | Status | Tests | Notes |
-|---|---|---|---|---|---|
-| GET | /api/v1/vendor-portal/dashboard/stats | get_dashboard_stats | stub | vendor_portal_stub_removal_tests.rs | router unmounted; handler returns 501; test asserts 404/not-200 |
-| GET | /api/v1/vendor-portal/jobs | list_jobs | stub | vendor_portal_stub_removal_tests.rs | 501 / unmounted |
-| GET | /api/v1/vendor-portal/jobs/{job_id} | get_job_details | stub | vendor_portal_stub_removal_tests.rs | 501 / unmounted |
-| POST | /api/v1/vendor-portal/jobs/{job_id}/accept | accept_job | stub | — | 501 / unmounted |
-| POST | /api/v1/vendor-portal/jobs/{job_id}/decline | decline_job | stub | — | 501 / unmounted |
-| POST | /api/v1/vendor-portal/jobs/{job_id}/propose-time | propose_alternative_time | stub | — | 501 / unmounted |
-| GET | /api/v1/vendor-portal/jobs/{job_id}/access | get_access_info | stub | — | 501 / unmounted |
-| POST | /api/v1/vendor-portal/jobs/{job_id}/access/generate-code | generate_access_code | stub | — | 501 / unmounted |
-| POST | /api/v1/vendor-portal/jobs/{job_id}/complete | submit_work_completion | stub | — | 501 / unmounted |
-| GET | /api/v1/vendor-portal/jobs/{job_id}/completion | get_work_completion | stub | — | 501 / unmounted |
-| GET | /api/v1/vendor-portal/invoices | list_invoices | stub | vendor_portal_stub_removal_tests.rs | 501 / unmounted |
-| GET | /api/v1/vendor-portal/profile | get_profile | stub | vendor_portal_stub_removal_tests.rs | 501 / unmounted |
-| GET | /api/v1/vendor-portal/feedback | list_feedback | stub | — | 501 / unmounted |
-| GET | /api/v1/vendor-portal/earnings | get_earnings_summary | stub | — | 501 / unmounted |
+## vendor_portal.rs  (DELETED — BIT-257)
+
+_Deleted in [BIT-257](/BIT/issues/BIT-257): 14 unmounted `/api/v1/vendor-portal/*` ROADMAP stubs (all returned 501). The live vendor surface is `vendors.rs` at `/api/v1/vendors`. The HTTP-level `vendor_portal_stub_removal_tests.rs` still passes (deleted routes 404)._
 
 ## emergency/  (mount: /api/v1/emergency)
 | Method | Path | Handler | Status | Tests | Notes |

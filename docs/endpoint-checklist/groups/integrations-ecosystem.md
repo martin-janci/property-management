@@ -1,6 +1,6 @@
 # Integrations & Ecosystem
 
-_Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, portal_webhooks.rs, voice_webhooks.rs, migration.rs, feature_packages.rs, features.rs, integrations/ (install, oauth, webhook, booking_channel, token_rotation, airbnb_connections; sync = unmounted)._
+_Server: api-server. Modules: marketplace.rs, api_ecosystem.rs, portal_webhooks.rs, voice_webhooks.rs, migration.rs, feature_packages.rs, features.rs, integrations/ (install, oauth, webhook, booking_channel, token_rotation, airbnb_connections; sync = unmounted)._
 
 ## marketplace.rs  (mount: /api/v1/marketplace)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -51,52 +51,9 @@ _Server: api-server. Modules: marketplace.rs, public_api.rs, api_ecosystem.rs, p
 | POST | /api/v1/marketplace/reviews/{id}/helpful | mark_review_helpful | partial | — | |
 | GET | /api/v1/marketplace/dashboard | get_manager_dashboard | partial | — | |
 
-## public_api.rs  (mount: UNMOUNTED — ROADMAP(PAP-24) /api/v1/developer not nested in lib.rs)
-| Method | Path | Handler | Status | Tests | Notes |
-|---|---|---|---|---|---|
-| POST | (/api/v1/developer)/accounts | create_developer_account | stub | — | unmounted; roadmap stub returns 501 |
-| GET | (/api/v1/developer)/accounts/me | get_my_developer_account | stub | — | unmounted |
-| PATCH | (/api/v1/developer)/accounts/me | update_my_developer_account | stub | — | unmounted |
-| GET | (/api/v1/developer)/accounts/me/usage | get_my_usage_summary | stub | — | unmounted |
-| POST | (/api/v1/developer)/keys | create_api_key | stub | — | unmounted |
-| GET | (/api/v1/developer)/keys | list_api_keys | stub | — | unmounted |
-| GET | (/api/v1/developer)/keys/{id} | get_api_key | stub | — | unmounted |
-| PATCH | (/api/v1/developer)/keys/{id} | update_api_key | stub | — | unmounted |
-| DELETE | (/api/v1/developer)/keys/{id} | revoke_api_key | stub | — | unmounted |
-| POST | (/api/v1/developer)/keys/{id}/rotate | rotate_api_key | stub | — | unmounted |
-| GET | (/api/v1/developer)/keys/{id}/usage | get_api_key_usage | stub | — | unmounted |
-| GET | (/api/v1/developer)/docs/endpoints | list_api_endpoints | stub | — | unmounted |
-| GET | (/api/v1/developer)/docs/endpoints/{id} | get_api_endpoint | stub | — | unmounted |
-| GET | (/api/v1/developer)/docs/changelog | list_api_changelog | stub | — | unmounted |
-| GET | (/api/v1/developer)/docs/openapi | get_openapi_spec | stub | — | unmounted |
-| POST | (/api/v1/developer)/sandbox | create_sandbox | stub | — | unmounted |
-| POST | (/api/v1/developer)/sandbox/test | test_sandbox_request | stub | — | unmounted |
-| GET | (/api/v1/developer)/sandbox/{id} | get_sandbox | stub | — | unmounted |
-| DELETE | (/api/v1/developer)/sandbox/{id} | delete_sandbox | stub | — | unmounted |
-| POST | (/api/v1/developer)/webhooks | create_webhook | stub | — | unmounted |
-| GET | (/api/v1/developer)/webhooks | list_webhooks | stub | — | unmounted |
-| GET | (/api/v1/developer)/webhooks/{id} | get_webhook | stub | — | unmounted |
-| PATCH | (/api/v1/developer)/webhooks/{id} | update_webhook | stub | — | unmounted |
-| DELETE | (/api/v1/developer)/webhooks/{id} | delete_webhook | stub | — | unmounted |
-| POST | (/api/v1/developer)/webhooks/{id}/test | test_webhook | stub | — | unmounted |
-| POST | (/api/v1/developer)/webhooks/{id}/rotate-secret | rotate_webhook_secret | stub | — | unmounted |
-| GET | (/api/v1/developer)/webhooks/{id}/deliveries | list_webhook_deliveries | stub | — | unmounted |
-| GET | (/api/v1/developer)/webhooks/events | list_webhook_event_types | stub | — | unmounted |
-| GET | (/api/v1/developer)/rate-limits/status | get_rate_limit_status | stub | — | unmounted |
-| GET | (/api/v1/developer)/rate-limits/tiers | list_rate_limit_tiers | stub | — | unmounted |
-| GET | (/api/v1/developer)/sdks | list_sdk_languages | stub | — | unmounted |
-| GET | (/api/v1/developer)/sdks/{language} | get_sdk_info | stub | — | unmounted |
-| GET | (/api/v1/developer)/sdks/{language}/download | download_sdk | stub | — | unmounted |
-| GET | (/api/v1/developer)/sdks/{language}/versions | list_sdk_versions | stub | — | unmounted |
-| GET | (/api/v1/developer)/admin/developers | list_developers | stub | — | unmounted |
-| GET | (/api/v1/developer)/admin/developers/{id} | get_developer | stub | — | unmounted |
-| PATCH | (/api/v1/developer)/admin/developers/{id} | update_developer | stub | — | unmounted |
-| POST | (/api/v1/developer)/admin/developers/{id}/verify | verify_developer | stub | — | unmounted |
-| POST | (/api/v1/developer)/admin/developers/{id}/suspend | suspend_developer | stub | — | unmounted |
-| POST | (/api/v1/developer)/admin/rate-limits | create_rate_limit_config | stub | — | unmounted |
-| PATCH | (/api/v1/developer)/admin/rate-limits/{id} | update_rate_limit_config | stub | — | unmounted |
-| GET | (/api/v1/developer)/admin/stats | get_portal_stats | stub | — | unmounted |
-| GET | (/api/v1/developer)/admin/request-logs | list_request_logs | stub | — | unmounted |
+## public_api.rs  (DELETED — BIT-257)
+
+_Deleted in [BIT-257](/BIT/issues/BIT-257): 43 unmounted `/api/v1/developer/*` ROADMAP stubs (all returned 501) plus the orphaned `db::models::public_api` model. No near-term product commitment; recoverable from git history if the Developer API is revived._
 
 ## api_ecosystem.rs  (mount: /api/v1/ecosystem)
 | Method | Path | Handler | Status | Tests | Notes |
