@@ -1,0 +1,624 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-27",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Routine has not run for 11d 5h since 2026-06-16T03:25:00Z",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-27",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 2026-06-16 is 11d old; cloud routine may be paused",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/document.rs",
+      "type": "churn-hotspot",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Top churn file this run: 3308 lines across 10 commits",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/crates/db/src/repositories/document.rs",
+      "cumulative": true
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/document.rs",
+      "type": "repeated-churn",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Repeated hotspot: 2 runs seen, 3308 lines this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/crates/db/src/repositories/document.rs",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa.rs",
+      "type": "churn-hotspot",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Top churn file this run: 2691 lines across 1 commits",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/aml_dsa.rs",
+      "cumulative": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa.rs",
+      "type": "repeated-churn",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Repeated hotspot: 2 runs seen, 2691 lines this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/aml_dsa.rs",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/forms.rs",
+      "type": "churn-hotspot",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Top churn file this run: 2385 lines across 3 commits",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/forms.rs",
+      "cumulative": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/forms.rs",
+      "type": "repeated-churn",
+      "source": "commit log since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "Repeated hotspot: 3 runs seen, 2385 lines this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/forms.rs",
+      "cumulative": true
+    },
+    {
+      "id": "unchecked-todo-pr-1717",
+      "type": "unchecked-todo",
+      "source": "PR #1717",
+      "score_delta": 2,
+      "evidence": "PR #1717 merged with 7 unchecked TODOs in body: \"feat(financial): income statement, balance sheet, cash flow + PDF/xlsx export (S\"",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1642",
+      "type": "unchecked-todo",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": "PR #1642 merged with 7 unchecked TODOs in body: \"feat(epic-15): portal-user listing CRUD \u2014 owner/realtor edit (#986)\"",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1468",
+      "type": "unchecked-todo",
+      "source": "PR #1468",
+      "score_delta": 3,
+      "evidence": "PR #1468 merged with 6 unchecked TODOs in body: \"fix(disputes): watch subscription + flush-on-unmount + i18n keys (GH #1364, #140\"",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1709",
+      "type": "unchecked-todo",
+      "source": "PR #1709",
+      "score_delta": 2,
+      "evidence": "PR #1709 merged with 5 unchecked TODOs in body: \"feat(scheduler): payment reminders + auto-overdue transitions (Story 11.6 / BIT-\"",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1641",
+      "type": "unchecked-todo",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 merged with 5 unchecked TODOs in body: \"feat(ppt-web): Sentiment &amp; Predictive Maintenance dashboards (Epic 13, Story\"",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1507",
+      "type": "unchecked-todo",
+      "source": "PR #1507",
+      "score_delta": 3,
+      "evidence": "PR #1507 merged with 5 unchecked TODOs in body: \"fix(tests): restore user_memberships seed + fix platform principal for IDOR test\"",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1492",
+      "type": "unchecked-todo",
+      "source": "PR #1492",
+      "score_delta": 3,
+      "evidence": "PR #1492 merged with 5 unchecked TODOs in body: \"fix(db): cast remaining rental enum readers \u2014 GUEST/CALENDAR_BLOCK/ICAL_FEED_COL\"",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1471",
+      "type": "unchecked-todo",
+      "source": "PR #1471",
+      "score_delta": 2,
+      "evidence": "PR #1471 merged with 5 unchecked TODOs in body: \"test(db): RLS-routing test coverage \u2014 ESG FORCE policy, webhook repo, public pla\"",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 revert(delegations): removed re-added delegation frontend from #1690 \u2014 reconciles with retirement",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1749",
+      "score_delta": 1,
+      "evidence": "PR #1749 closed unmerged: \"fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev fro\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1727",
+      "score_delta": 1,
+      "evidence": "PR #1727 closed unmerged: \"fix(ci): unblock backend gate \u2014 organizations fmt + notification_event RLS basel\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1720",
+      "score_delta": 1,
+      "evidence": "PR #1720 closed unmerged: \"fix(ppt-web): add Leases nav link + home tile (#977)\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1698",
+      "score_delta": 1,
+      "evidence": "PR #1698 closed unmerged: \"feat(epic-3): story 3.2 - unit management UI (BIT-188)\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "PR #1647 closed unmerged: \"feat(iot): sensor register + edit + standalone list [BIT-147]\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "PR #1636 closed unmerged: \"fix(reality-server): reconcile portal import authz + dedup principal extractor (\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1634",
+      "score_delta": 1,
+      "evidence": "PR #1634 closed unmerged: \"[PM #1627] saved-search alerts list: signal truncation past LIMIT 100\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "evidence": "PR #1511 closed unmerged: \"fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting r\"",
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "Dep bump: \"chore(deps): bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group\"",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "Dep bump: \"chore(deps): bump the gradle-minor-patch group in /mobile-native with 2 updates\"",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "evidence": "Dep bump: \"chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-m\"",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "evidence": "Dep bump: \"chore(deps): bump the cargo-minor-patch group across 1 directory with 3 updates\"",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "Dep bump: \"chore(deps): bump androidx.compose:compose-bom from 2026.05.01 to 2026.06.00 in \"",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "screen-map-drift-pr-1418-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1418",
+      "score_delta": 2,
+      "evidence": "PR #1418 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": "PR #1611 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "PR #1654 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": "PR #1685 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1690-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1690",
+      "score_delta": 2,
+      "evidence": "PR #1690 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1694-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1694",
+      "score_delta": 2,
+      "evidence": "PR #1694 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1696-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1696",
+      "score_delta": 2,
+      "evidence": "PR #1696 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1713-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1713",
+      "score_delta": 2,
+      "evidence": "PR #1713 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1733-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1733",
+      "score_delta": 2,
+      "evidence": "PR #1733 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1737-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1737",
+      "score_delta": 2,
+      "evidence": "PR #1737 touched ppt-web routes without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": "PR #1453 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": "PR #1642 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1677-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1677",
+      "score_delta": 2,
+      "evidence": "PR #1677 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": "PR #1746 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1822-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1822",
+      "score_delta": 2,
+      "evidence": "PR #1822 touched reality-web routes without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-27.md && head -1 matches '^# 2026-06-27$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev cursor diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative score_delta=0 on re-emit",
+      "observed": "no non-cumulative double-counts; cumulative re-emits zeroed",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score <= 8 cap + decay applied",
+      "observed": "true; 37 decay actions applied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; adversarial pass N/A",
+      "observed": "no new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep on staged diff (baseline-docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure-honesty (no phase failed)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan-slug coverage HEAD vs working tree",
+      "observed": "no missing slugs",
+      "expected": "no missing slugs"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count working_tree >= HEAD",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + kill-switch + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3 total, <=1 each category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor invariants (Phase 1.6 skipped \u2192 no-op)",
+      "observed": "pm_cursor.next_index=5; coverage_cursor.next_index=12",
+      "expected": "in range"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
