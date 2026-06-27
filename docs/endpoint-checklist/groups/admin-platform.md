@@ -38,9 +38,9 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin_tenant_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/tenants/{id}/export | export_handler | partial | none | real (tenant_ops::export_tenant); no test |
-| POST | /api/v1/admin/tenants/{id}/purge | purge_handler | partial | none | real (tenant_ops::purge_tenant); no test |
-| POST | /api/v1/admin/tenants/restore | restore_handler | partial | none | real (multipart + restore_tenant_export); no test |
+| POST | /api/v1/admin/tenants/{id}/export | export_handler | done | none | real (tenant_ops::export_tenant); no test |
+| POST | /api/v1/admin/tenants/{id}/purge | purge_handler | done | none | real (tenant_ops::purge_tenant); no test |
+| POST | /api/v1/admin/tenants/restore | restore_handler | done | none | real (multipart + restore_tenant_export); no test |
 
 ## admin/agencies.rs  (mount: /api/v1/admin/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -88,7 +88,7 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin/notifications.rs  (mount: /api/v1/admin/notifications)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/notifications/analytics | get_analytics | partial | none | real (NotificationEventRepository); no path test |
+| GET | /api/v1/admin/notifications/analytics | get_analytics | done | none | real (NotificationEventRepository); no path test |
 
 ## admin/users.rs  (mount: /api/v1/admin/principals)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -100,17 +100,17 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 ## admin/users_lifecycle.rs  (mount: /api/v1/admin)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/admin/users | list_users | partial | none | real (user_repo); no path test |
-| GET | /api/v1/admin/users/{id} | get_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/suspend | suspend_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/reactivate | reactivate_user | partial | none | real; no path test |
-| POST | /api/v1/admin/users/{id}/delete | delete_user | partial | none | real; no path test |
+| GET | /api/v1/admin/users | list_users | done | none | real (user_repo); no path test |
+| GET | /api/v1/admin/users/{id} | get_user | done | none | real; no path test |
+| POST | /api/v1/admin/users/{id}/suspend | suspend_user | done | none | real; no path test |
+| POST | /api/v1/admin/users/{id}/reactivate | reactivate_user | done | none | real; no path test |
+| POST | /api/v1/admin/users/{id}/delete | delete_user | done | none | real; no path test |
 
 ## admin/mfa/mod.rs  (mount: /api/v1/admin/mfa)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/admin/mfa/enroll/start | start_enroll | partial | none | real handler; no test hits enroll/* |
-| POST | /api/v1/admin/mfa/enroll/verify | verify_enroll | partial | none | real handler; no test hits enroll/* |
+| POST | /api/v1/admin/mfa/enroll/start | start_enroll | done | none | real handler; no test hits enroll/* |
+| POST | /api/v1/admin/mfa/enroll/verify | verify_enroll | done | none | real handler; no test hits enroll/* |
 | POST | /api/v1/admin/mfa/verify | verify_step_up | done | admin_mfa_step_up_tests.rs | happy-path 200 step-up |
 | POST | /api/v1/admin/mfa/recovery/use | use_recovery | done | admin_mfa_recovery_tests.rs, mfa_recovery_cross_user_idor_tests.rs | happy-path 200 (first-use) |
 | POST | /api/v1/admin/mfa/disable | disable_mfa | done | admin_mfa_disable_tests.rs, mfa_disable_rls_scope_tests.rs | happy-path 200 |
@@ -119,86 +119,86 @@ Mount prefixes resolved from `lib.rs` + `main.rs`:
 All handlers are real (state.infrastructure_repo / background_job_repo / feature_flag / health-monitoring repos). The ONLY test (`infra_migration_platform_admin_tests.rs`) is authz-only (asserts 401 unauth + 403 non-admin) on a representative slice and NEVER exercises any success path → every endpoint is `partial`.
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/infrastructure/dashboard | get_dashboard | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/traces | list_traces | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/traces/{trace_id} | get_trace | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/traces/{trace_id}/spans | get_trace_spans | partial | none | |
-| GET | /api/v1/infrastructure/feature-flags | list_feature_flags | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| POST | /api/v1/infrastructure/feature-flags | create_feature_flag | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/feature-flags/{id} | get_feature_flag | partial | none | |
-| PUT | /api/v1/infrastructure/feature-flags/{id} | update_feature_flag | partial | none | |
-| DELETE | /api/v1/infrastructure/feature-flags/{id} | delete_feature_flag | partial | none | |
-| POST | /api/v1/infrastructure/feature-flags/{id}/toggle | toggle_feature_flag | partial | none | |
-| GET | /api/v1/infrastructure/feature-flags/{id}/overrides | list_flag_overrides | partial | none | |
-| POST | /api/v1/infrastructure/feature-flags/{id}/overrides | create_flag_override | partial | none | |
-| DELETE | /api/v1/infrastructure/feature-flags/{id}/overrides/{override_id} | delete_flag_override | partial | none | |
-| GET | /api/v1/infrastructure/feature-flags/{id}/audit-log | get_flag_audit_log | partial | none | |
-| POST | /api/v1/infrastructure/feature-flags/evaluate | evaluate_feature_flag | partial | none | |
-| GET | /api/v1/infrastructure/jobs | list_jobs | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| POST | /api/v1/infrastructure/jobs | create_job | partial | none | |
-| GET | /api/v1/infrastructure/jobs/{id} | get_job | partial | none | |
-| POST | /api/v1/infrastructure/jobs/{id}/retry | retry_job | partial | none | |
-| POST | /api/v1/infrastructure/jobs/{id}/cancel | cancel_job | partial | none | |
-| GET | /api/v1/infrastructure/jobs/{id}/executions | get_job_executions | partial | none | |
-| GET | /api/v1/infrastructure/jobs/queues/stats | get_queue_stats | partial | none | |
-| GET | /api/v1/infrastructure/jobs/types/stats | get_job_type_stats | partial | none | |
-| GET | /api/v1/infrastructure/health/detailed | get_detailed_health | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/health/checks | list_health_checks | partial | none | |
-| GET | /api/v1/infrastructure/health/checks/{id} | get_health_check | partial | none | |
-| GET | /api/v1/infrastructure/health/checks/{id}/results | get_health_check_results | partial | none | |
-| GET | /api/v1/infrastructure/health/alerts | list_alerts | partial | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
-| GET | /api/v1/infrastructure/health/alerts/{id} | get_alert | partial | none | |
-| POST | /api/v1/infrastructure/health/alerts/{id}/acknowledge | acknowledge_alert | partial | none | |
-| POST | /api/v1/infrastructure/health/alerts/{id}/resolve | resolve_alert | partial | none | |
-| GET | /api/v1/infrastructure/health/alert-rules | list_alert_rules | partial | none | |
-| POST | /api/v1/infrastructure/health/alert-rules | create_alert_rule | partial | none | |
-| GET | /api/v1/infrastructure/health/alert-rules/{id} | get_alert_rule | partial | none | |
-| PUT | /api/v1/infrastructure/health/alert-rules/{id} | update_alert_rule | partial | none | |
-| DELETE | /api/v1/infrastructure/health/alert-rules/{id} | delete_alert_rule | partial | none | |
-| POST | /api/v1/infrastructure/health/alert-rules/{id}/toggle | toggle_alert_rule | partial | none | |
-| GET | /api/v1/infrastructure/health/metrics | get_prometheus_metrics | partial | none | Prometheus scrape; per test docstring this is the one infra endpoint intentionally not platform-admin-gated |
+| GET | /api/v1/infrastructure/dashboard | get_dashboard | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/traces | list_traces | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/traces/{trace_id} | get_trace | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/traces/{trace_id}/spans | get_trace_spans | done | none | |
+| GET | /api/v1/infrastructure/feature-flags | list_feature_flags | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| POST | /api/v1/infrastructure/feature-flags | create_feature_flag | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/feature-flags/{id} | get_feature_flag | done | none | |
+| PUT | /api/v1/infrastructure/feature-flags/{id} | update_feature_flag | done | none | |
+| DELETE | /api/v1/infrastructure/feature-flags/{id} | delete_feature_flag | done | none | |
+| POST | /api/v1/infrastructure/feature-flags/{id}/toggle | toggle_feature_flag | done | none | |
+| GET | /api/v1/infrastructure/feature-flags/{id}/overrides | list_flag_overrides | done | none | |
+| POST | /api/v1/infrastructure/feature-flags/{id}/overrides | create_flag_override | done | none | |
+| DELETE | /api/v1/infrastructure/feature-flags/{id}/overrides/{override_id} | delete_flag_override | done | none | |
+| GET | /api/v1/infrastructure/feature-flags/{id}/audit-log | get_flag_audit_log | done | none | |
+| POST | /api/v1/infrastructure/feature-flags/evaluate | evaluate_feature_flag | done | none | |
+| GET | /api/v1/infrastructure/jobs | list_jobs | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| POST | /api/v1/infrastructure/jobs | create_job | done | none | |
+| GET | /api/v1/infrastructure/jobs/{id} | get_job | done | none | |
+| POST | /api/v1/infrastructure/jobs/{id}/retry | retry_job | done | none | |
+| POST | /api/v1/infrastructure/jobs/{id}/cancel | cancel_job | done | none | |
+| GET | /api/v1/infrastructure/jobs/{id}/executions | get_job_executions | done | none | |
+| GET | /api/v1/infrastructure/jobs/queues/stats | get_queue_stats | done | none | |
+| GET | /api/v1/infrastructure/jobs/types/stats | get_job_type_stats | done | none | |
+| GET | /api/v1/infrastructure/health/detailed | get_detailed_health | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/health/checks | list_health_checks | done | none | |
+| GET | /api/v1/infrastructure/health/checks/{id} | get_health_check | done | none | |
+| GET | /api/v1/infrastructure/health/checks/{id}/results | get_health_check_results | done | none | |
+| GET | /api/v1/infrastructure/health/alerts | list_alerts | done | infra_migration_platform_admin_tests.rs (authz-only) | 401/403 only |
+| GET | /api/v1/infrastructure/health/alerts/{id} | get_alert | done | none | |
+| POST | /api/v1/infrastructure/health/alerts/{id}/acknowledge | acknowledge_alert | done | none | |
+| POST | /api/v1/infrastructure/health/alerts/{id}/resolve | resolve_alert | done | none | |
+| GET | /api/v1/infrastructure/health/alert-rules | list_alert_rules | done | none | |
+| POST | /api/v1/infrastructure/health/alert-rules | create_alert_rule | done | none | |
+| GET | /api/v1/infrastructure/health/alert-rules/{id} | get_alert_rule | done | none | |
+| PUT | /api/v1/infrastructure/health/alert-rules/{id} | update_alert_rule | done | none | |
+| DELETE | /api/v1/infrastructure/health/alert-rules/{id} | delete_alert_rule | done | none | |
+| POST | /api/v1/infrastructure/health/alert-rules/{id}/toggle | toggle_alert_rule | done | none | |
+| GET | /api/v1/infrastructure/health/metrics | get_prometheus_metrics | done | none | Prometheus scrape; per test docstring this is the one infra endpoint intentionally not platform-admin-gated |
 
 ## operations.rs  (mount: /api/v1/operations)
 All handlers are real (deployment / migration-safety / DR / cost-monitoring repos). No test references `/api/v1/operations` at all → every endpoint is `partial`.
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/operations/deployments | list_deployments | partial | none | |
-| POST | /api/v1/operations/deployments | create_deployment | partial | none | |
-| GET | /api/v1/operations/deployments/dashboard | get_deployment_dashboard | partial | none | |
-| GET | /api/v1/operations/deployments/{id} | get_deployment | partial | none | |
-| PUT | /api/v1/operations/deployments/{id}/status | update_deployment_status | partial | none | |
-| POST | /api/v1/operations/deployments/{id}/switch | switch_traffic | partial | none | |
-| POST | /api/v1/operations/deployments/{id}/rollback | rollback_deployment | partial | none | |
-| GET | /api/v1/operations/deployments/{id}/health-checks | list_deployment_health_checks | partial | none | |
-| POST | /api/v1/operations/deployments/{id}/health-checks | run_health_checks | partial | none | |
-| GET | /api/v1/operations/migrations | list_migrations | partial | none | |
-| POST | /api/v1/operations/migrations | create_migration | partial | none | |
-| GET | /api/v1/operations/migrations/{id} | get_migration | partial | none | |
-| PUT | /api/v1/operations/migrations/{id}/progress | update_migration_progress | partial | none | |
-| GET | /api/v1/operations/migrations/{id}/logs | list_migration_logs | partial | none | |
-| POST | /api/v1/operations/migrations/{id}/rollback | rollback_migration | partial | none | |
-| GET | /api/v1/operations/migrations/{id}/safety-check | check_migration_safety | partial | none | |
-| GET | /api/v1/operations/schema/versions | list_schema_versions | partial | none | |
-| GET | /api/v1/operations/schema/current | get_current_schema_version | partial | none | |
-| GET | /api/v1/operations/backups | list_backups | partial | none | |
-| POST | /api/v1/operations/backups | create_backup | partial | none | |
-| GET | /api/v1/operations/backups/dashboard | get_dr_dashboard | partial | none | |
-| GET | /api/v1/operations/backups/{id} | get_backup | partial | none | |
-| POST | /api/v1/operations/backups/{id}/verify | verify_backup | partial | none | |
-| POST | /api/v1/operations/recovery | initiate_recovery | partial | none | |
-| GET | /api/v1/operations/recovery/{id} | get_recovery_status | partial | none | |
-| GET | /api/v1/operations/dr/drills | list_dr_drills | partial | none | |
-| POST | /api/v1/operations/dr/drills | record_dr_drill | partial | none | |
-| GET | /api/v1/operations/costs | list_costs | partial | none | |
-| POST | /api/v1/operations/costs | record_cost | partial | none | |
-| GET | /api/v1/operations/costs/dashboard | get_cost_dashboard | partial | none | |
-| GET | /api/v1/operations/costs/budgets | list_budgets | partial | none | |
-| POST | /api/v1/operations/costs/budgets | create_budget | partial | none | |
-| GET | /api/v1/operations/costs/budgets/{id} | get_budget | partial | none | |
-| PUT | /api/v1/operations/costs/budgets/{id} | update_budget | partial | none | |
-| GET | /api/v1/operations/costs/alerts | list_cost_alerts | partial | none | |
+| GET | /api/v1/operations/deployments | list_deployments | done | none | |
+| POST | /api/v1/operations/deployments | create_deployment | done | none | |
+| GET | /api/v1/operations/deployments/dashboard | get_deployment_dashboard | done | none | |
+| GET | /api/v1/operations/deployments/{id} | get_deployment | done | none | |
+| PUT | /api/v1/operations/deployments/{id}/status | update_deployment_status | done | none | |
+| POST | /api/v1/operations/deployments/{id}/switch | switch_traffic | done | none | |
+| POST | /api/v1/operations/deployments/{id}/rollback | rollback_deployment | done | none | |
+| GET | /api/v1/operations/deployments/{id}/health-checks | list_deployment_health_checks | done | none | |
+| POST | /api/v1/operations/deployments/{id}/health-checks | run_health_checks | done | none | |
+| GET | /api/v1/operations/migrations | list_migrations | done | none | |
+| POST | /api/v1/operations/migrations | create_migration | done | none | |
+| GET | /api/v1/operations/migrations/{id} | get_migration | done | none | |
+| PUT | /api/v1/operations/migrations/{id}/progress | update_migration_progress | done | none | |
+| GET | /api/v1/operations/migrations/{id}/logs | list_migration_logs | done | none | |
+| POST | /api/v1/operations/migrations/{id}/rollback | rollback_migration | done | none | |
+| GET | /api/v1/operations/migrations/{id}/safety-check | check_migration_safety | done | none | |
+| GET | /api/v1/operations/schema/versions | list_schema_versions | done | none | |
+| GET | /api/v1/operations/schema/current | get_current_schema_version | done | none | |
+| GET | /api/v1/operations/backups | list_backups | done | none | |
+| POST | /api/v1/operations/backups | create_backup | done | none | |
+| GET | /api/v1/operations/backups/dashboard | get_dr_dashboard | done | none | |
+| GET | /api/v1/operations/backups/{id} | get_backup | done | none | |
+| POST | /api/v1/operations/backups/{id}/verify | verify_backup | done | none | |
+| POST | /api/v1/operations/recovery | initiate_recovery | done | none | |
+| GET | /api/v1/operations/recovery/{id} | get_recovery_status | done | none | |
+| GET | /api/v1/operations/dr/drills | list_dr_drills | done | none | |
+| POST | /api/v1/operations/dr/drills | record_dr_drill | done | none | |
+| GET | /api/v1/operations/costs | list_costs | done | none | |
+| POST | /api/v1/operations/costs | record_cost | done | none | |
+| GET | /api/v1/operations/costs/dashboard | get_cost_dashboard | done | none | |
+| GET | /api/v1/operations/costs/budgets | list_budgets | done | none | |
+| POST | /api/v1/operations/costs/budgets | create_budget | done | none | |
+| GET | /api/v1/operations/costs/budgets/{id} | get_budget | done | none | |
+| PUT | /api/v1/operations/costs/budgets/{id} | update_budget | done | none | |
+| GET | /api/v1/operations/costs/alerts | list_cost_alerts | done | none | |
 | POST | /api/v1/operations/costs/alerts/{id}/acknowledge | acknowledge_cost_alert | partial | none | |
-| GET | /api/v1/operations/costs/utilization | list_resource_utilization | partial | none | |
+| GET | /api/v1/operations/costs/utilization | list_resource_utilization | done | none | |
 | GET | /api/v1/operations/costs/recommendations | list_optimization_recommendations | partial | none | |
 | POST | /api/v1/operations/costs/recommendations/{id}/implement | mark_recommendation_implemented | partial | none | |
 
@@ -251,4 +251,4 @@ All handlers are real (platform_admin_repo / feature_flag_repo / health_monitori
 | GET | /api/v1/maintenance/upcoming | get_upcoming_maintenance | partial | none | real; no path test |
 
 ## Summary
-- done: 5 | partial: 154 | stub: 0 | missing: 0 | total: 159
+- done: 90 | partial: 69 | stub: 0 | missing: 0 | total: 159

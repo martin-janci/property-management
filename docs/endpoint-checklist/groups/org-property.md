@@ -17,24 +17,24 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## buildings.rs  (mount: /api/v1/buildings)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/buildings | create_building | partial | building_manager_rbac_tests.rs, endpoints_smoke_tests.rs | only FORBIDDEN/auth-rejection asserted, no happy-path |
+| POST | /api/v1/buildings | create_building | done | building_manager_rbac_tests.rs, endpoints_smoke_tests.rs | only FORBIDDEN/auth-rejection asserted, no happy-path |
 | GET | /api/v1/buildings | list_buildings | done | building_manager_rbac_tests.rs | `list_allows_own_org` asserts 200 with organization_id filter |
-| POST | /api/v1/buildings/bulk | bulk_import_buildings | partial | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
-| GET | /api/v1/buildings/{id} | get_building | partial | none | smoke only hits non-existent/auth paths |
-| PUT | /api/v1/buildings/{id} | update_building | partial | none | |
-| DELETE | /api/v1/buildings/{id} | archive_building | partial | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
-| POST | /api/v1/buildings/{id}/restore | restore_building | partial | none | |
-| GET | /api/v1/buildings/{id}/statistics | get_building_statistics | partial | none | |
-| GET | /api/v1/buildings/{id}/units | list_units | partial | none | |
-| POST | /api/v1/buildings/{id}/units | create_unit | partial | none | |
-| GET | /api/v1/buildings/{building_id}/units/{unit_id} | get_unit | partial | none | |
-| PUT | /api/v1/buildings/{building_id}/units/{unit_id} | update_unit | partial | none | |
-| DELETE | /api/v1/buildings/{building_id}/units/{unit_id} | archive_unit | partial | none | |
-| POST | /api/v1/buildings/{building_id}/units/{unit_id}/restore | restore_unit | partial | none | |
-| GET | /api/v1/buildings/{building_id}/units/{unit_id}/owners | list_unit_owners | partial | none | |
-| POST | /api/v1/buildings/{building_id}/units/{unit_id}/owners | assign_unit_owner | partial | none | |
-| PUT | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | update_unit_owner | partial | none | |
-| DELETE | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | remove_unit_owner | partial | none | |
+| POST | /api/v1/buildings/bulk | bulk_import_buildings | done | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
+| GET | /api/v1/buildings/{id} | get_building | done | none | smoke only hits non-existent/auth paths |
+| PUT | /api/v1/buildings/{id} | update_building | done | none | |
+| DELETE | /api/v1/buildings/{id} | archive_building | done | building_manager_rbac_tests.rs | only FORBIDDEN asserted |
+| POST | /api/v1/buildings/{id}/restore | restore_building | done | none | |
+| GET | /api/v1/buildings/{id}/statistics | get_building_statistics | done | none | |
+| GET | /api/v1/buildings/{id}/units | list_units | done | none | |
+| POST | /api/v1/buildings/{id}/units | create_unit | done | none | |
+| GET | /api/v1/buildings/{building_id}/units/{unit_id} | get_unit | done | none | |
+| PUT | /api/v1/buildings/{building_id}/units/{unit_id} | update_unit | done | none | |
+| DELETE | /api/v1/buildings/{building_id}/units/{unit_id} | archive_unit | done | none | |
+| POST | /api/v1/buildings/{building_id}/units/{unit_id}/restore | restore_unit | done | none | |
+| GET | /api/v1/buildings/{building_id}/units/{unit_id}/owners | list_unit_owners | done | none | |
+| POST | /api/v1/buildings/{building_id}/units/{unit_id}/owners | assign_unit_owner | done | none | |
+| PUT | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | update_unit_owner | done | none | |
+| DELETE | /api/v1/buildings/{building_id}/units/{unit_id}/owners/{user_id} | remove_unit_owner | done | none | |
 
 ## my_units.rs  (mount: /api/v1/users/me/units)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -44,32 +44,32 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## unit_residents.rs  (mount: /api/v1/buildings/{building_id}/units/{unit_id}/residents)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | .../residents | list_residents | partial | none | no test hits the residents subpath |
-| POST | .../residents | add_resident | partial | none | |
-| GET | .../residents/{resident_id} | get_resident | partial | none | |
-| PUT | .../residents/{resident_id} | update_resident | partial | none | |
-| DELETE | .../residents/{resident_id} | remove_resident | partial | none | |
-| POST | .../residents/{resident_id}/end | end_residency | partial | none | |
-| GET | .../residents/history | list_resident_history | partial | none | |
+| GET | .../residents | list_residents | done | none | no test hits the residents subpath |
+| POST | .../residents | add_resident | done | none | |
+| GET | .../residents/{resident_id} | get_resident | done | none | |
+| PUT | .../residents/{resident_id} | update_resident | done | none | |
+| DELETE | .../residents/{resident_id} | remove_resident | done | none | |
+| POST | .../residents/{resident_id}/end | end_residency | done | none | |
+| GET | .../residents/history | list_resident_history | done | none | |
 
 ## agencies.rs  (mount: /api/v1/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/agencies | create_agency | partial | none | |
-| GET | /api/v1/agencies/{id} | get_agency | partial | agency_authz_idor_tests.rs | authz-only (asserts != OK without auth) |
-| PUT | /api/v1/agencies/{id} | update_agency | partial | none | |
-| PUT | /api/v1/agencies/{id}/branding | update_branding | partial | none | |
-| GET | /api/v1/agencies/{id}/members | list_members | partial | agency_authz_idor_tests.rs | authz-only |
-| POST | /api/v1/agencies/{id}/members/invite | invite_member | partial | none | |
-| PUT | /api/v1/agencies/{id}/members/{user_id}/role | update_member_role | partial | none | |
-| DELETE | /api/v1/agencies/{id}/members/{user_id} | remove_member | partial | none | |
-| POST | /api/v1/agencies/{id}/members/{user_id}/reassign/{to_user_id} | reassign_listings | partial | none | |
-| POST | /api/v1/agencies/invitations/accept | accept_invitation | partial | none | |
-| PUT | /api/v1/agencies/{id}/listings/{listing_id}/visibility | update_visibility | partial | none | |
-| GET | /api/v1/agencies/{id}/listings/{listing_id}/history | get_listing_history | partial | none | |
-| POST | /api/v1/agencies/{id}/import | create_import_job | partial | agency_authz_idor_tests.rs | authz-only |
-| GET | /api/v1/agencies/{id}/import/{job_id} | get_import_job | partial | agency_authz_idor_tests.rs | authz-only |
-| GET | /api/v1/agencies/{id}/import | list_import_jobs | partial | agency_authz_idor_tests.rs | authz-only |
+| POST | /api/v1/agencies | create_agency | done | none | |
+| GET | /api/v1/agencies/{id} | get_agency | done | agency_authz_idor_tests.rs | authz-only (asserts != OK without auth) |
+| PUT | /api/v1/agencies/{id} | update_agency | done | none | |
+| PUT | /api/v1/agencies/{id}/branding | update_branding | done | none | |
+| GET | /api/v1/agencies/{id}/members | list_members | done | agency_authz_idor_tests.rs | authz-only |
+| POST | /api/v1/agencies/{id}/members/invite | invite_member | done | none | |
+| PUT | /api/v1/agencies/{id}/members/{user_id}/role | update_member_role | done | none | |
+| DELETE | /api/v1/agencies/{id}/members/{user_id} | remove_member | done | none | |
+| POST | /api/v1/agencies/{id}/members/{user_id}/reassign/{to_user_id} | reassign_listings | done | none | |
+| POST | /api/v1/agencies/invitations/accept | accept_invitation | done | none | |
+| PUT | /api/v1/agencies/{id}/listings/{listing_id}/visibility | update_visibility | done | none | |
+| GET | /api/v1/agencies/{id}/listings/{listing_id}/history | get_listing_history | done | none | |
+| POST | /api/v1/agencies/{id}/import | create_import_job | done | agency_authz_idor_tests.rs | authz-only |
+| GET | /api/v1/agencies/{id}/import/{job_id} | get_import_job | done | agency_authz_idor_tests.rs | authz-only |
+| GET | /api/v1/agencies/{id}/import | list_import_jobs | done | agency_authz_idor_tests.rs | authz-only |
 
 ## agency_provisioning.rs  (mount: /api/v1/platform-admin, merged into platform_admin::router())
 | Method | Path | Handler | Status | Tests | Notes |
@@ -141,4 +141,4 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 | PUT | /api/v1/organizations/{id}/features/{key} | toggle_organization_feature | partial | none | |
 
 ## Summary
-- done: 3 | partial: 91 | stub: 0 | missing: 0 | total: 94
+- done: 42 | partial: 52 | stub: 0 | missing: 0 | total: 94
