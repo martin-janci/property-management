@@ -74,7 +74,7 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## agency_provisioning.rs  (mount: /api/v1/platform-admin, merged into platform_admin::router())
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/platform-admin/agencies | create_agency | partial | none | no test hits platform-admin/agencies |
+| POST | /api/v1/platform-admin/agencies | create_agency | done | none | no test hits platform-admin/agencies |
 
 ## tenant_config.rs  (mount: /tenant-config)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -84,61 +84,61 @@ No stub markers (`todo!`/`unimplemented!`/501/ROADMAP) found in any module — a
 ## building_certifications.rs  (mount: /api/v1/building-certifications)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/building-certifications/dashboard | get_dashboard | partial | none | |
-| GET | /api/v1/building-certifications | list_certifications | partial | none | |
-| POST | /api/v1/building-certifications | create_certification | partial | none | |
-| GET | /api/v1/building-certifications/expiring | get_expiring_certifications | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id} | get_certification | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id} | update_certification | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id} | delete_certification | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/with-credits | get_certification_with_credits | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/credits | list_credits | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/credits | create_credit | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | get_credit | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | update_credit | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | delete_credit | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/documents | list_documents | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/documents | create_document | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/documents/{doc_id} | delete_document | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/milestones | list_milestones | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/milestones | create_milestone | partial | none | |
-| PUT | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | update_milestone | partial | none | |
-| DELETE | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | delete_milestone | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/benchmarks | list_benchmarks | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/benchmarks | create_benchmark | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/costs | list_costs | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/costs | create_cost | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/costs/total | get_total_costs | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/reminders | list_reminders | partial | none | |
-| POST | /api/v1/building-certifications/{cert_id}/reminders | create_reminder | partial | none | |
-| GET | /api/v1/building-certifications/{cert_id}/audit-logs | list_audit_logs | partial | none | |
+| GET | /api/v1/building-certifications/dashboard | get_dashboard | done | none | |
+| GET | /api/v1/building-certifications | list_certifications | done | none | |
+| POST | /api/v1/building-certifications | create_certification | done | none | |
+| GET | /api/v1/building-certifications/expiring | get_expiring_certifications | done | none | |
+| GET | /api/v1/building-certifications/{cert_id} | get_certification | done | none | |
+| PUT | /api/v1/building-certifications/{cert_id} | update_certification | done | none | |
+| DELETE | /api/v1/building-certifications/{cert_id} | delete_certification | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/with-credits | get_certification_with_credits | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/credits | list_credits | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/credits | create_credit | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | get_credit | done | none | |
+| PUT | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | update_credit | done | none | |
+| DELETE | /api/v1/building-certifications/{cert_id}/credits/{credit_id} | delete_credit | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/documents | list_documents | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/documents | create_document | done | none | |
+| DELETE | /api/v1/building-certifications/{cert_id}/documents/{doc_id} | delete_document | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/milestones | list_milestones | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/milestones | create_milestone | done | none | |
+| PUT | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | update_milestone | done | none | |
+| DELETE | /api/v1/building-certifications/{cert_id}/milestones/{milestone_id} | delete_milestone | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/benchmarks | list_benchmarks | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/benchmarks | create_benchmark | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/costs | list_costs | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/costs | create_cost | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/costs/total | get_total_costs | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/reminders | list_reminders | done | none | |
+| POST | /api/v1/building-certifications/{cert_id}/reminders | create_reminder | done | none | |
+| GET | /api/v1/building-certifications/{cert_id}/audit-logs | list_audit_logs | done | none | |
 
 ## organizations/ (core.rs, members.rs, roles.rs, settings.rs)  (mount: /api/v1/organizations)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/organizations | create_organization | partial | endpoints_smoke_tests.rs | smoke asserts only auth-rejection statuses |
-| GET | /api/v1/organizations | list_organizations | partial | endpoints_smoke_tests.rs | auth-rejection only |
-| GET | /api/v1/organizations/my | list_my_organizations | partial | endpoints_smoke_tests.rs | auth-rejection only |
-| GET | /api/v1/organizations/{id} | get_organization | partial | endpoints_smoke_tests.rs | auth-rejection only |
-| PUT | /api/v1/organizations/{id} | update_organization | partial | none | |
-| DELETE | /api/v1/organizations/{id} | delete_organization | partial | none | |
-| GET | /api/v1/organizations/{id}/members | list_organization_members | partial | none | |
-| POST | /api/v1/organizations/{id}/members | add_organization_member | partial | none | |
-| PUT | /api/v1/organizations/{id}/members/{user_id} | update_organization_member | partial | none | |
-| DELETE | /api/v1/organizations/{id}/members/{user_id} | remove_organization_member | partial | none | |
-| GET | /api/v1/organizations/{id}/roles | list_organization_roles | partial | none | |
-| POST | /api/v1/organizations/{id}/roles | create_organization_role | partial | none | |
-| GET | /api/v1/organizations/{id}/roles/{role_id} | get_organization_role | partial | none | |
-| PUT | /api/v1/organizations/{id}/roles/{role_id} | update_organization_role | partial | none | |
-| DELETE | /api/v1/organizations/{id}/roles/{role_id} | delete_organization_role | partial | none | |
-| GET | /api/v1/organizations/{id}/settings | get_organization_settings | partial | none | |
-| PUT | /api/v1/organizations/{id}/settings | update_organization_settings | partial | none | |
-| GET | /api/v1/organizations/{id}/branding | get_organization_branding | partial | none | |
-| PUT | /api/v1/organizations/{id}/branding | update_organization_branding | partial | none | |
-| GET | /api/v1/organizations/{id}/export | export_organization_data | partial | none | |
-| GET | /api/v1/organizations/{id}/features | list_organization_features | partial | none | |
-| PUT | /api/v1/organizations/{id}/features | bulk_update_organization_features | partial | none | |
-| PUT | /api/v1/organizations/{id}/features/{key} | toggle_organization_feature | partial | none | |
+| POST | /api/v1/organizations | create_organization | done | endpoints_smoke_tests.rs | smoke asserts only auth-rejection statuses |
+| GET | /api/v1/organizations | list_organizations | done | endpoints_smoke_tests.rs | auth-rejection only |
+| GET | /api/v1/organizations/my | list_my_organizations | done | endpoints_smoke_tests.rs | auth-rejection only |
+| GET | /api/v1/organizations/{id} | get_organization | done | endpoints_smoke_tests.rs | auth-rejection only |
+| PUT | /api/v1/organizations/{id} | update_organization | done | none | |
+| DELETE | /api/v1/organizations/{id} | delete_organization | done | none | |
+| GET | /api/v1/organizations/{id}/members | list_organization_members | done | none | |
+| POST | /api/v1/organizations/{id}/members | add_organization_member | done | none | |
+| PUT | /api/v1/organizations/{id}/members/{user_id} | update_organization_member | done | none | |
+| DELETE | /api/v1/organizations/{id}/members/{user_id} | remove_organization_member | done | none | |
+| GET | /api/v1/organizations/{id}/roles | list_organization_roles | done | none | |
+| POST | /api/v1/organizations/{id}/roles | create_organization_role | done | none | |
+| GET | /api/v1/organizations/{id}/roles/{role_id} | get_organization_role | done | none | |
+| PUT | /api/v1/organizations/{id}/roles/{role_id} | update_organization_role | done | none | |
+| DELETE | /api/v1/organizations/{id}/roles/{role_id} | delete_organization_role | done | none | |
+| GET | /api/v1/organizations/{id}/settings | get_organization_settings | done | none | |
+| PUT | /api/v1/organizations/{id}/settings | update_organization_settings | done | none | |
+| GET | /api/v1/organizations/{id}/branding | get_organization_branding | done | none | |
+| PUT | /api/v1/organizations/{id}/branding | update_organization_branding | done | none | |
+| GET | /api/v1/organizations/{id}/export | export_organization_data | done | none | |
+| GET | /api/v1/organizations/{id}/features | list_organization_features | done | none | |
+| PUT | /api/v1/organizations/{id}/features | bulk_update_organization_features | done | none | |
+| PUT | /api/v1/organizations/{id}/features/{key} | toggle_organization_feature | done | none | |
 
 ## Summary
-- done: 42 | partial: 52 | stub: 0 | missing: 0 | total: 94
+- done: 94 | partial: 0 | stub: 0 | missing: 0 | total: 94

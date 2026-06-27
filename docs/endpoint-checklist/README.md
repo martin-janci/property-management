@@ -46,13 +46,13 @@ primarily a **happy-path integration-test** effort, not a build effort.
 | [leasing](./groups/leasing.md) | 84 | 3 | 80 | 1 | 3.6% | 98.8% |
 | [finance](./groups/finance.md) | 234 | 8 | 226 | 0 | 3.4% | 100% |
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 9 | 186 | 73 | 3.4% | 72.8% |
-| [org-property](./groups/org-property.md) | 94 | 42 | 52 | 0 | 44.7% | 100% |
-| [admin-platform](./groups/admin-platform.md) | 159 | 90 | 69 | 0 | 56.6% | 100% |
+| [org-property](./groups/org-property.md) | 94 | 94 | 0 | 0 | 100.0% | 100% |
+| [admin-platform](./groups/admin-platform.md) | 159 | 132 | 27 | 0 | 83.0% | 100% |
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 2 | 63 | 20 | 2.4% | 76.5% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
 | [ai-automation](./groups/ai-automation.md) | 93 | 0 | 91 | 2 | 0.0% | 97.8% |
-| **Total** | **2063** | **231** | **1707** | **125** | **11.2%** | **93.9%** |
+| **Total** | **2063** | **325** | **1613** | **125** | **15.7%** | **93.9%** |
 
 Auth-identity leads on test coverage (35%) — unsurprising, since auth got the earliest
 and deepest test investment. AI/automation has **zero** happy-path coverage.
