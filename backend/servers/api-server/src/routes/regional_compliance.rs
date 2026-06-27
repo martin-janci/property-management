@@ -10,7 +10,7 @@ use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use api_core::extractors::{RlsConnection, TenantExtractor};
+use api_core::extractors::RlsConnection;
 use common::errors::ErrorResponse;
 use db::models::regional_compliance::*;
 use db::models::vote::VoteResults;
@@ -54,69 +54,79 @@ pub fn router() -> Router<AppState> {
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/jurisdiction", tag = "Regional Compliance", responses((status = 200, description = "Current jurisdiction", body = Jurisdiction)))]
 async fn get_jurisdiction(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
 ) -> Result<Json<Jurisdiction>, (StatusCode, Json<ErrorResponse>)> {
-    let jurisdiction = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .get_jurisdiction(_ctx.tenant_id)
+        .get_jurisdiction(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(jurisdiction))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(put, path = "/api/v1/regional-compliance/jurisdiction", tag = "Regional Compliance", request_body = SetJurisdiction, responses((status = 200, description = "Jurisdiction updated", body = Jurisdiction)))]
 async fn set_jurisdiction(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<SetJurisdiction>,
 ) -> Result<Json<Jurisdiction>, (StatusCode, Json<ErrorResponse>)> {
-    let jurisdiction = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .set_jurisdiction(_ctx.tenant_id, payload.jurisdiction)
+        .set_jurisdiction(&mut **rls.conn(), org_id, payload.jurisdiction)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(jurisdiction))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/voting/config", tag = "Regional Compliance", request_body = ConfigureSlovakVoting, responses((status = 200, description = "Config saved", body = SlovakVotingConfig)))]
 async fn configure_slovak_voting(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ConfigureSlovakVoting>,
 ) -> Result<Json<SlovakVotingConfig>, (StatusCode, Json<ErrorResponse>)> {
-    let config = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .configure_slovak_voting(_ctx.tenant_id, payload)
+        .configure_slovak_voting(&mut **rls.conn(), org_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(config))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/voting/config/{building_id}", tag = "Regional Compliance", params(("building_id" = Uuid, Path, description = "Building ID")), responses((status = 200, description = "Config", body = SlovakVotingConfig)))]
 async fn get_slovak_voting_config(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<SlovakVotingConfig>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let config = state
         .regional_compliance_repo
-        .get_slovak_voting_config(_ctx.tenant_id, building_id)
+        .get_slovak_voting_config(&mut **rls.conn(), org_id, building_id)
         .await
         .map_err(|e| {
             (
@@ -130,6 +140,7 @@ async fn get_slovak_voting_config(
                 Json(ErrorResponse::new("NOT_FOUND", "Slovak voting config not found")),
             )
         })?;
+    rls.release().await;
     Ok(Json(config))
 }
 
@@ -159,6 +170,7 @@ async fn validate_slovak_vote(
     let rule = state
         .regional_compliance_repo
         .get_quorum_rule(
+            &mut **rls.conn(),
             Jurisdiction::Slovakia,
             payload.decision_type.legal_reference(),
         )
@@ -249,7 +261,7 @@ async fn get_slovak_vote_minutes(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Slovakia, "simple_majority")
+        .get_quorum_rule(&mut **rls.conn(), Jurisdiction::Slovakia, "simple_majority")
         .await
         .map_err(|e| {
             (
@@ -286,31 +298,35 @@ async fn get_slovak_vote_minutes(
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/accounting/config", tag = "Regional Compliance", request_body = ConfigureSlovakAccounting, responses((status = 200, description = "Config saved", body = SlovakAccountingConfig)))]
 async fn configure_slovak_accounting(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ConfigureSlovakAccounting>,
 ) -> Result<Json<SlovakAccountingConfig>, (StatusCode, Json<ErrorResponse>)> {
-    let config = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .configure_slovak_accounting(_ctx.tenant_id, payload)
+        .configure_slovak_accounting(&mut **rls.conn(), org_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(config))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/accounting/config", tag = "Regional Compliance", responses((status = 200, description = "Config", body = SlovakAccountingConfig)))]
 async fn get_slovak_accounting_config(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
 ) -> Result<Json<SlovakAccountingConfig>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let config = state
         .regional_compliance_repo
-        .get_slovak_accounting_config(_ctx.tenant_id)
+        .get_slovak_accounting_config(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -324,12 +340,13 @@ async fn get_slovak_accounting_config(
                 Json(ErrorResponse::new("NOT_FOUND", "Slovak accounting config not found")),
             )
         })?;
+    rls.release().await;
     Ok(Json(config))
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/accounting/export", tag = "Regional Compliance", request_body = ExportSlovakAccounting, responses((status = 200, description = "Export", body = SlovakAccountingExport)))]
 async fn export_slovak_accounting(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ExportSlovakAccounting>,
 ) -> Result<Json<SlovakAccountingExport>, (StatusCode, Json<ErrorResponse>)> {
@@ -342,7 +359,12 @@ async fn export_slovak_accounting(
         total_payables,
     ) = state
         .regional_compliance_repo
-        .get_accounting_metrics(payload.organization_id, payload.from_date, payload.to_date)
+        .get_accounting_metrics(
+            &mut **rls.conn(),
+            payload.organization_id,
+            payload.from_date,
+            payload.to_date,
+        )
         .await
         .map_err(|e| {
             (
@@ -353,7 +375,7 @@ async fn export_slovak_accounting(
 
     let journal_entry_count = invoice_count + payment_count;
 
-    Ok(Json(SlovakAccountingExport {
+    let result = Ok(Json(SlovakAccountingExport {
         export_id: Uuid::new_v4(),
         organization_id: payload.organization_id,
         from_date: payload.from_date,
@@ -372,36 +394,42 @@ async fn export_slovak_accounting(
         )),
         export_data: None,
         generated_at: Utc::now(),
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/gdpr/config", tag = "Regional Compliance", request_body = ConfigureSlovakGdpr, responses((status = 200, description = "Config saved", body = SlovakGdprConfig)))]
 async fn configure_slovak_gdpr(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ConfigureSlovakGdpr>,
 ) -> Result<Json<SlovakGdprConfig>, (StatusCode, Json<ErrorResponse>)> {
-    let config = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .configure_slovak_gdpr(_ctx.tenant_id, payload)
+        .configure_slovak_gdpr(&mut **rls.conn(), org_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(config))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/gdpr/config", tag = "Regional Compliance", responses((status = 200, description = "Config", body = SlovakGdprConfig)))]
 async fn get_slovak_gdpr_config(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
 ) -> Result<Json<SlovakGdprConfig>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let config = state
         .regional_compliance_repo
-        .get_slovak_gdpr_config(_ctx.tenant_id)
+        .get_slovak_gdpr_config(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -415,36 +443,43 @@ async fn get_slovak_gdpr_config(
                 Json(ErrorResponse::new("NOT_FOUND", "Slovak GDPR config not found")),
             )
         })?;
+    rls.release().await;
     Ok(Json(config))
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/gdpr/consent", tag = "Regional Compliance", request_body = RecordGdprConsent, responses((status = 200, description = "Consent recorded", body = SlovakGdprConsent)))]
 async fn record_gdpr_consent(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<RecordGdprConsent>,
 ) -> Result<Json<SlovakGdprConsent>, (StatusCode, Json<ErrorResponse>)> {
-    let consent = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let result = state
         .regional_compliance_repo
-        .record_gdpr_consent(Some(_ctx.tenant_id), _ctx.user_id, payload)
+        .record_gdpr_consent(&mut **rls.conn(), Some(org_id), user_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(consent))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/gdpr/consent/status", tag = "Regional Compliance", responses((status = 200, description = "Status", body = GdprConsentStatus)))]
 async fn get_gdpr_consent_status(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
 ) -> Result<Json<GdprConsentStatus>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let gdpr_config = state
         .regional_compliance_repo
-        .get_slovak_gdpr_config(_ctx.tenant_id)
+        .get_slovak_gdpr_config(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -471,7 +506,7 @@ async fn get_gdpr_consent_status(
 
     let db_consents = state
         .regional_compliance_repo
-        .get_gdpr_consents_for_user(Some(_ctx.tenant_id), _ctx.user_id)
+        .get_gdpr_consents_for_user(&mut **rls.conn(), Some(org_id), user_id)
         .await
         .map_err(|e| {
             (
@@ -504,62 +539,72 @@ async fn get_gdpr_consent_status(
 
     let last_updated = db_consents.iter().map(|c| c.consented_at).max();
 
-    Ok(Json(GdprConsentStatus {
-        user_id: _ctx.user_id,
+    let result = Ok(Json(GdprConsentStatus {
+        user_id,
         consents,
         dpo_contact,
         processing_purposes,
         last_updated,
-    }))
+    }));
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/gdpr/consent/withdraw", tag = "Regional Compliance", request_body = RecordGdprConsent, responses((status = 200, description = "Withdrawn", body = SlovakGdprConsent)))]
 async fn withdraw_gdpr_consent(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<RecordGdprConsent>,
 ) -> Result<Json<SlovakGdprConsent>, (StatusCode, Json<ErrorResponse>)> {
-    let consent = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let result = state
         .regional_compliance_repo
-        .withdraw_gdpr_consent(Some(_ctx.tenant_id), _ctx.user_id, payload)
+        .withdraw_gdpr_consent(&mut **rls.conn(), Some(org_id), user_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(consent))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(post, path = "/api/v1/regional-compliance/czech/svj/config", tag = "Regional Compliance", request_body = ConfigureCzechSvj, responses((status = 200, description = "Config saved", body = CzechSvjConfig)))]
 async fn configure_czech_svj(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Json(payload): Json<ConfigureCzechSvj>,
 ) -> Result<Json<CzechSvjConfig>, (StatusCode, Json<ErrorResponse>)> {
-    let config = state
+    let org_id = rls.tenant_id();
+    let result = state
         .regional_compliance_repo
-        .configure_czech_svj(_ctx.tenant_id, payload)
+        .configure_czech_svj(&mut **rls.conn(), org_id, payload)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
-        })?;
-    Ok(Json(config))
+        })
+        .map(Json);
+    rls.release().await;
+    result
 }
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/czech/svj/config/{building_id}", tag = "Regional Compliance", params(("building_id" = Uuid, Path, description = "Building ID")), responses((status = 200, description = "Config", body = CzechSvjConfig)))]
 async fn get_czech_svj_config(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<CzechSvjConfig>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let config = state
         .regional_compliance_repo
-        .get_czech_svj_config(_ctx.tenant_id, building_id)
+        .get_czech_svj_config(&mut **rls.conn(), org_id, building_id)
         .await
         .map_err(|e| {
             (
@@ -573,6 +618,7 @@ async fn get_czech_svj_config(
                 Json(ErrorResponse::new("NOT_FOUND", "Czech SVJ config not found")),
             )
         })?;
+    rls.release().await;
     Ok(Json(config))
 }
 
@@ -602,6 +648,7 @@ async fn validate_czech_vote(
     let rule = state
         .regional_compliance_repo
         .get_quorum_rule(
+            &mut **rls.conn(),
             Jurisdiction::Czechia,
             payload.decision_type.legal_reference(),
         )
@@ -698,7 +745,7 @@ async fn get_czech_usneseni(
 
     let rule = state
         .regional_compliance_repo
-        .get_quorum_rule(Jurisdiction::Czechia, "simple_majority")
+        .get_quorum_rule(&mut **rls.conn(), Jurisdiction::Czechia, "simple_majority")
         .await
         .map_err(|e| {
             (
@@ -738,12 +785,13 @@ async fn get_czech_usneseni(
 
 #[utoipa::path(get, path = "/api/v1/regional-compliance/status", tag = "Regional Compliance", responses((status = 200, description = "Status", body = RegionalComplianceStatus)))]
 async fn get_compliance_status(
-    _ctx: TenantExtractor,
+    mut rls: RlsConnection,
     State(state): State<AppState>,
 ) -> Result<Json<RegionalComplianceStatus>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let jurisdiction = state
         .regional_compliance_repo
-        .get_jurisdiction(_ctx.tenant_id)
+        .get_jurisdiction(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -754,7 +802,7 @@ async fn get_compliance_status(
 
     let configured_buildings = state
         .regional_compliance_repo
-        .get_configured_buildings(_ctx.tenant_id)
+        .get_configured_buildings(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -767,7 +815,7 @@ async fn get_compliance_status(
 
     let slovak_accounting_configured = state
         .regional_compliance_repo
-        .get_slovak_accounting_config(_ctx.tenant_id)
+        .get_slovak_accounting_config(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -779,7 +827,7 @@ async fn get_compliance_status(
 
     let slovak_gdpr_configured = state
         .regional_compliance_repo
-        .get_slovak_gdpr_config(_ctx.tenant_id)
+        .get_slovak_gdpr_config(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -791,8 +839,8 @@ async fn get_compliance_status(
 
     let czech_svj_configured = !configured_buildings.is_empty() && matches!(jurisdiction, Jurisdiction::Czechia);
 
-    Ok(Json(RegionalComplianceStatus {
-        organization_id: _ctx.tenant_id,
+    let result = Ok(Json(RegionalComplianceStatus {
+        organization_id: org_id,
         jurisdiction,
         slovak_voting_enabled,
         slovak_accounting_configured,
@@ -800,5 +848,7 @@ async fn get_compliance_status(
         czech_svj_configured,
         configured_buildings,
         last_checked_at: Some(Utc::now()),
-    }))
+    }));
+    rls.release().await;
+    result
 }

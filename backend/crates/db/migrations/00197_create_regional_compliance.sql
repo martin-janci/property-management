@@ -134,3 +134,57 @@ CREATE TABLE IF NOT EXISTS czech_svj_configs (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, building_id)
 );
+
+-- ============================================================================
+-- Enable RLS on all tenant-scoped tables
+-- ============================================================================
+ALTER TABLE regional_compliance_configs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE regional_compliance_configs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE slovak_voting_configs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slovak_voting_configs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE slovak_accounting_configs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slovak_accounting_configs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE slovak_gdpr_configs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slovak_gdpr_configs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE slovak_gdpr_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slovak_gdpr_consents FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE czech_svj_configs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE czech_svj_configs FORCE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- RLS policies: tenant isolation on all org-scoped tables
+-- ============================================================================
+CREATE POLICY regional_compliance_configs_tenant_isolation ON regional_compliance_configs
+    FOR ALL
+    USING (is_super_admin() OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id = get_current_org_id());
+
+CREATE POLICY slovak_voting_configs_tenant_isolation ON slovak_voting_configs
+    FOR ALL
+    USING (is_super_admin() OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id = get_current_org_id());
+
+CREATE POLICY slovak_accounting_configs_tenant_isolation ON slovak_accounting_configs
+    FOR ALL
+    USING (is_super_admin() OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id = get_current_org_id());
+
+CREATE POLICY slovak_gdpr_configs_tenant_isolation ON slovak_gdpr_configs
+    FOR ALL
+    USING (is_super_admin() OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id = get_current_org_id());
+
+CREATE POLICY slovak_gdpr_consents_tenant_isolation ON slovak_gdpr_consents
+    FOR ALL
+    USING (is_super_admin() OR organization_id IS NULL OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id IS NULL OR organization_id = get_current_org_id());
+
+CREATE POLICY czech_svj_configs_tenant_isolation ON czech_svj_configs
+    FOR ALL
+    USING (is_super_admin() OR organization_id = get_current_org_id())
+    WITH CHECK (is_super_admin() OR organization_id = get_current_org_id());

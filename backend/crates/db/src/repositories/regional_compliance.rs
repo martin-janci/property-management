@@ -8,43 +8,49 @@ use crate::models::regional_compliance::{
 use crate::DbPool;
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
-use sqlx::Error as SqlxError;
+use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 /// Repository for regional legal compliance features.
-#[derive(Clone)]
-pub struct RegionalComplianceRepository {
-    pool: DbPool,
-}
+#[derive(Debug, Clone)]
+pub struct RegionalComplianceRepository;
 
 impl RegionalComplianceRepository {
-    /// Create a new RegionalComplianceRepository.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+    pub fn new(_pool: DbPool) -> Self {
+        Self
     }
 
     // ========================================================================
     // JURISDICTION & GENERAL STATUS
     // ========================================================================
 
-    /// Get current jurisdiction for an organization.
-    pub async fn get_jurisdiction(&self, organization_id: Uuid) -> Result<Jurisdiction, SqlxError> {
+    pub async fn get_jurisdiction<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+    ) -> Result<Jurisdiction, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row: Option<(Jurisdiction,)> = sqlx::query_as(
             "SELECT jurisdiction FROM regional_compliance_configs WHERE organization_id = $1",
         )
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(row.map(|r| r.0).unwrap_or(Jurisdiction::Slovakia))
     }
 
-    /// Set jurisdiction for an organization.
-    pub async fn set_jurisdiction(
+    pub async fn set_jurisdiction<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         jurisdiction: Jurisdiction,
-    ) -> Result<Jurisdiction, SqlxError> {
+    ) -> Result<Jurisdiction, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             INSERT INTO regional_compliance_configs (organization_id, jurisdiction, updated_at)
@@ -56,17 +62,20 @@ impl RegionalComplianceRepository {
         )
         .bind(organization_id)
         .bind(jurisdiction)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(jurisdiction)
     }
 
-    /// List all configured buildings for an organization.
-    pub async fn get_configured_buildings(
+    pub async fn get_configured_buildings<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<Uuid>, SqlxError> {
+    ) -> Result<Vec<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let buildings = sqlx::query_scalar::<_, Uuid>(
             r#"
             SELECT building_id FROM slovak_voting_configs WHERE organization_id = $1 AND enabled = true
@@ -75,18 +84,21 @@ impl RegionalComplianceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(buildings)
     }
 
-    /// Get a static rule (quorum/legal reference) from the database.
-    pub async fn get_quorum_rule(
+    pub async fn get_quorum_rule<'e, E>(
         &self,
+        executor: E,
         jurisdiction: Jurisdiction,
         decision_type: &str,
-    ) -> Result<Option<(Decimal, String)>, SqlxError> {
+    ) -> Result<Option<(Decimal, String)>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query_as::<_, (Decimal, String)>(
             r#"
             SELECT required_quorum_percentage, legal_reference
@@ -96,7 +108,7 @@ impl RegionalComplianceRepository {
         )
         .bind(jurisdiction)
         .bind(decision_type)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(row)
@@ -106,27 +118,33 @@ impl RegionalComplianceRepository {
     // SLOVAK VOTING CONFIG
     // ========================================================================
 
-    /// Get slovak voting config for a building.
-    pub async fn get_slovak_voting_config(
+    pub async fn get_slovak_voting_config<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         building_id: Uuid,
-    ) -> Result<Option<SlovakVotingConfig>, SqlxError> {
+    ) -> Result<Option<SlovakVotingConfig>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, SlovakVotingConfig>(
             "SELECT * FROM slovak_voting_configs WHERE organization_id = $1 AND building_id = $2",
         )
         .bind(organization_id)
         .bind(building_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Configure Slovak voting for a building.
-    pub async fn configure_slovak_voting(
+    pub async fn configure_slovak_voting<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         config: ConfigureSlovakVoting,
-    ) -> Result<SlovakVotingConfig, SqlxError> {
+    ) -> Result<SlovakVotingConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let default_decision_type = config
             .default_decision_type
             .unwrap_or(SlovakDecisionType::SimpleMajority)
@@ -157,7 +175,7 @@ impl RegionalComplianceRepository {
         .bind(config.use_ownership_weight)
         .bind(config.min_notice_days)
         .bind(config.allow_proxy_voting)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
@@ -167,25 +185,31 @@ impl RegionalComplianceRepository {
     // SLOVAK ACCOUNTING CONFIG
     // ========================================================================
 
-    /// Get Slovak accounting config for an organization.
-    pub async fn get_slovak_accounting_config(
+    pub async fn get_slovak_accounting_config<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Option<SlovakAccountingConfig>, SqlxError> {
+    ) -> Result<Option<SlovakAccountingConfig>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, SlovakAccountingConfig>(
             "SELECT * FROM slovak_accounting_configs WHERE organization_id = $1",
         )
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Configure Slovak accounting for an organization.
-    pub async fn configure_slovak_accounting(
+    pub async fn configure_slovak_accounting<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         config: ConfigureSlovakAccounting,
-    ) -> Result<SlovakAccountingConfig, SqlxError> {
+    ) -> Result<SlovakAccountingConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let account_mapping = config
             .account_mapping
             .unwrap_or_else(|| serde_json::json!({"cash": "211", "bank": "221"}));
@@ -214,7 +238,7 @@ impl RegionalComplianceRepository {
         .bind(config.ic_dph)
         .bind(config.default_iban)
         .bind(account_mapping)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
@@ -224,25 +248,31 @@ impl RegionalComplianceRepository {
     // SLOVAK GDPR CONFIG & CONSENT
     // ========================================================================
 
-    /// Get Slovak GDPR config for an organization.
-    pub async fn get_slovak_gdpr_config(
+    pub async fn get_slovak_gdpr_config<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Option<SlovakGdprConfig>, SqlxError> {
+    ) -> Result<Option<SlovakGdprConfig>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, SlovakGdprConfig>(
             "SELECT * FROM slovak_gdpr_configs WHERE organization_id = $1",
         )
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Configure Slovak GDPR for an organization.
-    pub async fn configure_slovak_gdpr(
+    pub async fn configure_slovak_gdpr<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         config: ConfigureSlovakGdpr,
-    ) -> Result<SlovakGdprConfig, SqlxError> {
+    ) -> Result<SlovakGdprConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let processing_purposes = config
             .processing_purposes
             .unwrap_or_else(|| serde_json::json!([]));
@@ -274,18 +304,21 @@ impl RegionalComplianceRepository {
         .bind(config.org_address)
         .bind(processing_purposes)
         .bind(consent_texts)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
     }
 
-    /// Get all GDPR consents for a user.
-    pub async fn get_gdpr_consents_for_user(
+    pub async fn get_gdpr_consents_for_user<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         user_id: Uuid,
-    ) -> Result<Vec<SlovakGdprConsent>, SqlxError> {
+    ) -> Result<Vec<SlovakGdprConsent>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, SlovakGdprConsent>(
             r#"
             SELECT * FROM slovak_gdpr_consents
@@ -294,17 +327,20 @@ impl RegionalComplianceRepository {
         )
         .bind(user_id)
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Record GDPR consent.
-    pub async fn record_gdpr_consent(
+    pub async fn record_gdpr_consent<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         user_id: Uuid,
         consent: RecordGdprConsent,
-    ) -> Result<SlovakGdprConsent, SqlxError> {
+    ) -> Result<SlovakGdprConsent, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query_as::<_, SlovakGdprConsent>(
             r#"
             INSERT INTO slovak_gdpr_consents (
@@ -325,19 +361,22 @@ impl RegionalComplianceRepository {
         .bind(consent.category.to_string())
         .bind(consent.granted)
         .bind(consent.consent_version)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
     }
 
-    /// Withdraw GDPR consent.
-    pub async fn withdraw_gdpr_consent(
+    pub async fn withdraw_gdpr_consent<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         user_id: Uuid,
         consent: RecordGdprConsent,
-    ) -> Result<SlovakGdprConsent, SqlxError> {
+    ) -> Result<SlovakGdprConsent, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query_as::<_, SlovakGdprConsent>(
             r#"
             INSERT INTO slovak_gdpr_consents (
@@ -356,7 +395,7 @@ impl RegionalComplianceRepository {
         .bind(organization_id)
         .bind(consent.category.to_string())
         .bind(consent.consent_version)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
@@ -366,27 +405,34 @@ impl RegionalComplianceRepository {
     // CZECH SVJ CONFIG
     // ========================================================================
 
-    /// Get Czech SVJ config.
-    pub async fn get_czech_svj_config(
+    pub async fn get_czech_svj_config<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         building_id: Uuid,
-    ) -> Result<Option<CzechSvjConfig>, SqlxError> {
+    ) -> Result<Option<CzechSvjConfig>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CzechSvjConfig>(
             "SELECT * FROM czech_svj_configs WHERE organization_id = $1 AND building_id = $2",
         )
         .bind(organization_id)
         .bind(building_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Configure Czech SVJ.
-    pub async fn configure_czech_svj(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn configure_czech_svj<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         config: ConfigureCzechSvj,
-    ) -> Result<CzechSvjConfig, SqlxError> {
+    ) -> Result<CzechSvjConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let has_stanovy = config.stanovy_document_id.is_some();
         let default_decision_type = config
             .default_decision_type
@@ -425,15 +471,15 @@ impl RegionalComplianceRepository {
         .bind(default_decision_type)
         .bind(config.use_ownership_weight)
         .bind(config.notary_threshold_czk)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(row)
     }
 
-    /// Calculate real accounting metrics for Slovak accounting exports
     pub async fn get_accounting_metrics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         from_date: NaiveDate,
         to_date: NaiveDate,
@@ -448,7 +494,7 @@ impl RegionalComplianceRepository {
         .bind(organization_id)
         .bind(from_date)
         .bind(to_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (payment_count, _total_collected): (i64, Option<Decimal>) = sqlx::query_as(
@@ -461,7 +507,7 @@ impl RegionalComplianceRepository {
         .bind(organization_id)
         .bind(from_date)
         .bind(to_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (total_receivables,): (Option<Decimal>,) = sqlx::query_as(
@@ -474,10 +520,9 @@ impl RegionalComplianceRepository {
         .bind(organization_id)
         .bind(from_date)
         .bind(to_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
-        // Fallbacks for Option<Decimal>
         let total_revenue = total_revenue.unwrap_or(Decimal::ZERO);
         let total_receivables = total_receivables.unwrap_or(Decimal::ZERO);
 
@@ -485,9 +530,9 @@ impl RegionalComplianceRepository {
             invoice_count as i32,
             payment_count as i32,
             total_revenue,
-            Decimal::ZERO, // total_expenses
+            Decimal::ZERO,
             total_receivables,
-            Decimal::ZERO, // total_payables
+            Decimal::ZERO,
         ))
     }
 }
