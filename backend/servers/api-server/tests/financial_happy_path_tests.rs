@@ -83,7 +83,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_account should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_account should succeed: {}",
+        resp.text()
+    );
     let account = resp.json_value();
     let account_id_str = account["id"].as_str().expect("id field missing");
     let account_id = Uuid::parse_str(account_id_str).expect("invalid uuid");
@@ -112,14 +117,19 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 1.2 GET /api/v1/financial/accounts -> list_accounts
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/accounts?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/accounts?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let accounts_list = resp.json_value();
-    assert!(accounts_list.as_array().map(|arr| arr.len() >= 2).unwrap_or(false));
+    assert!(accounts_list
+        .as_array()
+        .map(|arr| arr.len() >= 2)
+        .unwrap_or(false));
 
     // 1.3 GET /api/v1/financial/accounts/{id} -> get_account
     let resp = app
@@ -143,10 +153,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     });
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/financial/accounts/{account_id}/transactions"))
-                .bearer(&token)
-                .json(&create_tx_payload)
-                .build(),
+            app.post(&format!(
+                "/api/v1/financial/accounts/{account_id}/transactions"
+            ))
+            .bearer(&token)
+            .json(&create_tx_payload)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::CREATED);
@@ -154,14 +166,19 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 1.5 GET /api/v1/financial/accounts/{id}/transactions -> list_transactions
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/accounts/{account_id}/transactions"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/accounts/{account_id}/transactions"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let tx_list = resp.json_value();
-    assert!(tx_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(tx_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 1.6 GET /api/v1/financial/units/{unit_id}/ledger -> get_unit_ledger
     let resp = app
@@ -171,7 +188,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "get_unit_ledger should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "get_unit_ledger should succeed: {}",
+        resp.text()
+    );
     let ledger_details = resp.json_value();
     assert_eq!(ledger_details["account"]["accountType"], "unit_ledger");
 
@@ -223,7 +245,10 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let schedules_list = resp.json_value();
-    assert!(schedules_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(schedules_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 2.3 GET /api/v1/financial/fee-schedules/{id} -> get_fee_schedule
     let resp = app
@@ -254,14 +279,19 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 2.5 GET /api/v1/financial/units/{unit_id}/fees -> get_unit_fees
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/units/{unit_id}/fees?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/units/{unit_id}/fees?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let unit_fees_list = resp.json_value();
-    assert!(unit_fees_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(unit_fees_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // ========================================================================
     // 3. INVOICES & PAYMENTS (Story 11.3, 11.4, 11.5)
@@ -290,7 +320,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_invoice should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_invoice should succeed: {}",
+        resp.text()
+    );
     let invoice = resp.json_value();
     let invoice_id_str = invoice["invoice"]["id"].as_str().expect("id missing");
     let invoice_id = Uuid::parse_str(invoice_id_str).expect("invalid invoice uuid");
@@ -298,9 +333,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 3.2 GET /api/v1/financial/invoices -> list_invoices
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/invoices?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/invoices?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -318,9 +355,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 3.4 GET /api/v1/financial/units/{unit_id}/invoices -> list_unit_invoices
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/units/{unit_id}/invoices?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/units/{unit_id}/invoices?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -333,7 +372,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "send_invoice should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "send_invoice should succeed: {}",
+        resp.text()
+    );
 
     // 3.6 GET /api/v1/financial/invoices/{id}/pdf -> get_invoice_pdf
     let resp = app
@@ -345,7 +389,9 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     assert_eq!(
-        resp.headers.get(axum::http::header::CONTENT_TYPE).and_then(|h| h.to_str().ok()),
+        resp.headers
+            .get(axum::http::header::CONTENT_TYPE)
+            .and_then(|h| h.to_str().ok()),
         Some("application/pdf")
     );
 
@@ -367,7 +413,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "checkout initiation should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "checkout initiation should succeed: {}",
+        resp.text()
+    );
     let checkout_res = resp.json_value();
     assert_eq!(
         checkout_res["checkoutUrl"],
@@ -392,7 +443,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "record_payment should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "record_payment should succeed: {}",
+        resp.text()
+    );
     let payment = resp.json_value();
     let payment_id_str = payment["id"].as_str().expect("id missing");
     let payment_id = Uuid::parse_str(payment_id_str).expect("invalid payment uuid");
@@ -400,9 +456,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 3.9 GET /api/v1/financial/payments -> list_payments
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/payments?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/payments?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -420,9 +478,11 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     // 3.11 GET /api/v1/financial/units/{unit_id}/payments -> list_unit_payments
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/units/{unit_id}/payments?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/units/{unit_id}/payments?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -452,20 +512,25 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED);
     let unallocated_payment = resp.json_value();
     let unallocated_payment_id_str = unallocated_payment["id"].as_str().expect("id missing");
-    let unallocated_payment_id = Uuid::parse_str(unallocated_payment_id_str)
-        .expect("invalid payment uuid");
+    let unallocated_payment_id =
+        Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
 
     // 4.1 GET /api/v1/financial/payments/unallocated -> list_unallocated_payments
     let resp = app
         .execute(
-            app.get(&format!("/api/v1/financial/payments/unallocated?organization_id={org_id}"))
-                .bearer(&token)
-                .build(),
+            app.get(&format!(
+                "/api/v1/financial/payments/unallocated?organization_id={org_id}"
+            ))
+            .bearer(&token)
+            .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let unallocated_list = resp.json_value();
-    assert!(unallocated_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(unallocated_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // Create a second invoice for manual allocation
     let create_invoice2_payload = json!({
@@ -503,13 +568,20 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     });
     let resp = app
         .execute(
-            app.post(&format!("/api/v1/financial/payments/{unallocated_payment_id}/allocate"))
-                .bearer(&token)
-                .json(&allocate_payload)
-                .build(),
+            app.post(&format!(
+                "/api/v1/financial/payments/{unallocated_payment_id}/allocate"
+            ))
+            .bearer(&token)
+            .json(&allocate_payload)
+            .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "allocate_payment should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "allocate_payment should succeed: {}",
+        resp.text()
+    );
 
     // 4.3 POST /api/v1/financial/payments/auto-match -> auto_match_payments
     // We create a third unallocated payment and a third unpaid invoice, both matching 30.00 EUR
@@ -567,7 +639,12 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "auto_match_payments should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "auto_match_payments should succeed: {}",
+        resp.text()
+    );
     let auto_match_res = resp.json_value();
     assert!(auto_match_res["matched"].as_i64().expect("matched missing") >= 1);
 }

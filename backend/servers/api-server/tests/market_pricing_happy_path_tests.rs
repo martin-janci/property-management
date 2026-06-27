@@ -295,15 +295,14 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
         "create_cma: unexpected {}",
         resp.status
     );
-    let cma_id: Option<Uuid> = if resp.status == StatusCode::OK
-        || resp.status == StatusCode::CREATED
-    {
-        resp.json_value()["id"]
-            .as_str()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    } else {
-        None
-    };
+    let cma_id: Option<Uuid> =
+        if resp.status == StatusCode::OK || resp.status == StatusCode::CREATED {
+            resp.json_value()["id"]
+                .as_str()
+                .and_then(|s| Uuid::parse_str(s).ok())
+        } else {
+            None
+        };
 
     // 6.2 GET /cma -> list_cmas
     let resp = app

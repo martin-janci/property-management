@@ -73,11 +73,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 1.3 GET /api/v1/multi-currency/config -> get_currency_config
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/config")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/config").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -129,11 +125,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 2.4 GET /api/v1/multi-currency/properties -> list_property_currency_configs
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/properties")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/properties").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -199,14 +191,14 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 3.5 POST /api/v1/multi-currency/rates/fetch -> fetch_exchange_rates
     let resp = app
-        .execute(
-            session
-                .post("/api/v1/multi-currency/rates/fetch")
-                .build(),
-        )
+        .execute(session.post("/api/v1/multi-currency/rates/fetch").build())
         .await;
     // Allow either success or bad gateway/internal error depending on offline status
-    assert!(resp.status == StatusCode::OK || resp.status == StatusCode::BAD_GATEWAY || resp.status == StatusCode::INTERNAL_SERVER_ERROR);
+    assert!(
+        resp.status == StatusCode::OK
+            || resp.status == StatusCode::BAD_GATEWAY
+            || resp.status == StatusCode::INTERNAL_SERVER_ERROR
+    );
 
     // ========================================================================
     // 4. CROSS-CURRENCY TRANSACTIONS
@@ -262,11 +254,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 4.4 GET /api/v1/multi-currency/transactions -> list_transactions
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/transactions")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/transactions").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -327,11 +315,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 5.4 GET /api/v1/multi-currency/cross-border -> list_cross_border_leases
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/cross-border")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/cross-border").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -426,21 +410,13 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 7.1 GET /api/v1/multi-currency/dashboard -> get_dashboard
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/dashboard")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/dashboard").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
     // 7.2 GET /api/v1/multi-currency/statistics -> get_statistics
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/multi-currency/statistics")
-                .build(),
-        )
+        .execute(session.get("/api/v1/multi-currency/statistics").build())
         .await;
     resp.assert_status(StatusCode::OK);
 }

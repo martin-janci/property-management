@@ -61,7 +61,11 @@ fn tenant_feature_flag_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = format!("/admin/tenants/{UUID}/feature-flags");
     vec![
         (Method::GET, base.clone(), None),
-        (Method::PUT, base, Some(r#"{"key":"some-flag","enabled":true}"#)),
+        (
+            Method::PUT,
+            base,
+            Some(r#"{"key":"some-flag","enabled":true}"#),
+        ),
     ]
 }
 
@@ -93,7 +97,11 @@ fn agency_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}"), None),
         (Method::GET, format!("{base}/{UUID}"), None),
         (Method::POST, format!("{base}/{UUID}/suspend"), None),
-        (Method::POST, format!("{base}/{UUID}/domains"), Some(r#"{"domain":"example.com"}"#)),
+        (
+            Method::POST,
+            format!("{base}/{UUID}/domains"),
+            Some(r#"{"domain":"example.com"}"#),
+        ),
     ]
 }
 
@@ -113,8 +121,16 @@ fn capability_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}/registry"), None),
         (Method::GET, format!("{base}/me"), None),
         (Method::GET, format!("{base}/users/{UUID}"), None),
-        (Method::POST, format!("{base}/users/{UUID}/grant"), Some(r#"{"capability":"AuditRead"}"#)),
-        (Method::DELETE, format!("{base}/users/{UUID}/grant/{UUID}"), None),
+        (
+            Method::POST,
+            format!("{base}/users/{UUID}/grant"),
+            Some(r#"{"capability":"AuditRead"}"#),
+        ),
+        (
+            Method::DELETE,
+            format!("{base}/users/{UUID}/grant/{UUID}"),
+            None,
+        ),
     ]
 }
 
@@ -144,7 +160,9 @@ fn membership_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/accept"),
-            Some(r#"{"token":"invite-token","user_id":"00000000-0000-0000-0000-000000000001","email":"test@example.com"}"#),
+            Some(
+                r#"{"token":"invite-token","user_id":"00000000-0000-0000-0000-000000000001","email":"test@example.com"}"#,
+            ),
         ),
         (Method::DELETE, format!("{base}/{UUID}"), None),
         (Method::GET, format!("{base}/merge-collisions"), None),
@@ -153,12 +171,20 @@ fn membership_cases() -> Vec<(Method, String, Option<&'static str>)> {
 
 /// admin/metrics
 fn metrics_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    vec![(Method::GET, "/api/v1/admin/metrics/summary".to_string(), None)]
+    vec![(
+        Method::GET,
+        "/api/v1/admin/metrics/summary".to_string(),
+        None,
+    )]
 }
 
 /// admin/notifications
 fn notifications_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    vec![(Method::GET, "/api/v1/admin/notifications/analytics".to_string(), None)]
+    vec![(
+        Method::GET,
+        "/api/v1/admin/notifications/analytics".to_string(),
+        None,
+    )]
 }
 
 /// admin/principals (users.rs)

@@ -135,12 +135,7 @@ async fn property_valuation_endpoints_happy_path(pool: PgPool) {
         "valid_until": "2027-06-01"
     });
     let resp = app
-        .execute(
-            session
-                .post(base)
-                .json(&create_valuation_payload)
-                .build(),
-        )
+        .execute(session.post(base).json(&create_valuation_payload).build())
         .await;
     assert!(
         resp.status == StatusCode::OK || resp.status == StatusCode::CREATED,
@@ -152,9 +147,7 @@ async fn property_valuation_endpoints_happy_path(pool: PgPool) {
         .and_then(|s| Uuid::parse_str(s).ok());
 
     // 3.2 GET / -> list_valuations
-    let resp = app
-        .execute(session.get(base).build())
-        .await;
+    let resp = app.execute(session.get(base).build()).await;
     resp.assert_status(StatusCode::OK);
 
     if let Some(vid) = valuation_id {
@@ -193,11 +186,7 @@ async fn property_valuation_endpoints_happy_path(pool: PgPool) {
 
         // 3.6 GET /{valuation_id}/audit-logs -> get_audit_logs
         let resp = app
-            .execute(
-                session
-                    .get(&format!("{base}/{vid}/audit-logs"))
-                    .build(),
-            )
+            .execute(session.get(&format!("{base}/{vid}/audit-logs")).build())
             .await;
         resp.assert_status(StatusCode::OK);
 

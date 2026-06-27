@@ -34,11 +34,7 @@ async fn accounting_matches_statements_happy_path(pool: PgPool) {
 
     // 1.1 GET /api/v1/accounting/statements -> list_statements
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/accounting/statements")
-                .build(),
-        )
+        .execute(session.get("/api/v1/accounting/statements").build())
         .await;
     resp.assert_status(StatusCode::OK);
     let stmts = resp.json_value();
@@ -87,7 +83,10 @@ async fn accounting_matches_statements_happy_path(pool: PgPool) {
         resp2.assert_status(StatusCode::OK);
         resp.assert_status(StatusCode::OK);
         let lines = resp.json_value();
-        assert!(lines.is_array(), "list_statement_lines must return an array");
+        assert!(
+            lines.is_array(),
+            "list_statement_lines must return an array"
+        );
 
         if let Some(line_id) = line_id_opt {
             // ================================================================
@@ -194,9 +193,7 @@ async fn accounting_matches_statements_happy_path(pool: PgPool) {
                     let resp = app
                         .execute(
                             session
-                                .post(&format!(
-                                    "/api/v1/accounting/matches/{m2_id}/confirm"
-                                ))
+                                .post(&format!("/api/v1/accounting/matches/{m2_id}/confirm"))
                                 .json(&json!({}))
                                 .build(),
                         )

@@ -55,7 +55,12 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_category should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_category should succeed: {}",
+        resp.text()
+    );
     let category = resp.json_value();
     let category_id_str = category["id"].as_str().expect("id missing");
     let category_id = Uuid::parse_str(category_id_str).expect("invalid category uuid");
@@ -64,13 +69,18 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/budgets/categories?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/budgets/categories?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let categories_list = resp.json_value();
-    assert!(categories_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(categories_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 1.3 PUT /api/v1/budgets/categories/{id} -> update_category
     let update_cat_payload = json!({
@@ -111,7 +121,12 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_budget should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_budget should succeed: {}",
+        resp.text()
+    );
     let budget = resp.json_value();
     let budget_id_str = budget["id"].as_str().expect("id missing");
     let budget_id = Uuid::parse_str(budget_id_str).expect("invalid budget uuid");
@@ -133,7 +148,10 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         )
         .await;
     assert_eq!(resp_temp.status, StatusCode::CREATED);
-    let temp_budget_id_str = resp_temp.json_value()["id"].as_str().expect("id missing").to_string();
+    let temp_budget_id_str = resp_temp.json_value()["id"]
+        .as_str()
+        .expect("id missing")
+        .to_string();
     let temp_budget_id = Uuid::parse_str(&temp_budget_id_str).unwrap();
 
     // 2.2 GET /api/v1/budgets -> list_budgets
@@ -146,13 +164,18 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let budgets_list = resp.json_value();
-    assert!(budgets_list.as_array().map(|arr| arr.len() >= 2).unwrap_or(false));
+    assert!(budgets_list
+        .as_array()
+        .map(|arr| arr.len() >= 2)
+        .unwrap_or(false));
 
     // 2.3 GET /api/v1/budgets/{id} -> get_budget
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/budgets/{budget_id}?organization_id={org_id}"))
+                .get(&format!(
+                    "/api/v1/budgets/{budget_id}?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -198,7 +221,12 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "add_budget_item should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "add_budget_item should succeed: {}",
+        resp.text()
+    );
     let item = resp.json_value();
     let item_id_str = item["id"].as_str().expect("id missing");
     let item_id = Uuid::parse_str(item_id_str).expect("invalid item uuid");
@@ -213,7 +241,10 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let items_list = resp.json_value();
-    assert!(items_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(items_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 3.3 PUT /api/v1/budgets/items/{item_id} -> update_budget_item
     let update_item_payload = json!({
@@ -241,11 +272,18 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/budgets/{budget_id}/submit?organization_id={org_id}"))
+                .post(&format!(
+                    "/api/v1/budgets/{budget_id}/submit?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "submit_budget should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "submit_budget should succeed: {}",
+        resp.text()
+    );
     let submitted_budget = resp.json_value();
     assert_eq!(submitted_budget["status"], "pending_approval");
 
@@ -253,7 +291,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"))
+                .post(&format!(
+                    "/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -265,7 +305,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/budgets/{budget_id}/activate?organization_id={org_id}"))
+                .post(&format!(
+                    "/api/v1/budgets/{budget_id}/activate?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -291,7 +333,12 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "record_actual should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "record_actual should succeed: {}",
+        resp.text()
+    );
     let actual = resp.json_value();
     let actual_id_str = actual["id"].as_str().expect("id missing");
     let actual_id = Uuid::parse_str(actual_id_str).expect("invalid actual uuid");
@@ -306,7 +353,10 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let actuals_list = resp.json_value();
-    assert!(actuals_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(actuals_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // Record an over-budget actual to trigger an alert
     // Budgeted amount: 6000.00. Current actuals: 1500.00. Adding 5000.00 -> 6500.00 (108% of budget).
@@ -335,7 +385,7 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let alerts_list = resp.json_value();
-    
+
     // If there is an alert generated, let's acknowledge it
     if let Some(alerts_arr) = alerts_list.as_array() {
         if !alerts_arr.is_empty() {
@@ -354,7 +404,12 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
                         .build(),
                 )
                 .await;
-            assert_eq!(resp_ack.status, StatusCode::OK, "acknowledge_alert should succeed: {}", resp_ack.text());
+            assert_eq!(
+                resp_ack.status,
+                StatusCode::OK,
+                "acknowledge_alert should succeed: {}",
+                resp_ack.text()
+            );
         }
     }
 
@@ -385,13 +440,18 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let variance = resp.json_value();
-    assert!(variance.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(variance
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
 
     // 6.3 GET /api/v1/budgets/dashboard -> get_dashboard
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/budgets/dashboard?organization_id={org_id}&building_id={building_id}"))
+                .get(&format!(
+                    "/api/v1/budgets/dashboard?organization_id={org_id}&building_id={building_id}"
+                ))
                 .build(),
         )
         .await;
@@ -407,7 +467,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/budgets/{budget_id}/close?organization_id={org_id}"))
+                .post(&format!(
+                    "/api/v1/budgets/{budget_id}/close?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -419,7 +481,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .delete(&format!("/api/v1/budgets/{budget_id}?organization_id={org_id}"))
+                .delete(&format!(
+                    "/api/v1/budgets/{budget_id}?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -429,7 +493,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .delete(&format!("/api/v1/budgets/{temp_budget_id}?organization_id={org_id}"))
+                .delete(&format!(
+                    "/api/v1/budgets/{temp_budget_id}?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;
@@ -439,7 +505,9 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .delete(&format!("/api/v1/budgets/categories/{category_id}?organization_id={org_id}"))
+                .delete(&format!(
+                    "/api/v1/budgets/categories/{category_id}?organization_id={org_id}"
+                ))
                 .build(),
         )
         .await;

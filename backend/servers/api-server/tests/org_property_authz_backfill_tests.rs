@@ -107,11 +107,7 @@ fn buildings_units_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"unit_number":"101"}"#),
         ),
         (Method::GET, unit.clone(), None),
-        (
-            Method::PUT,
-            unit.clone(),
-            Some(r#"{"unit_number":"102"}"#),
-        ),
+        (Method::PUT, unit.clone(), Some(r#"{"unit_number":"102"}"#)),
         (Method::DELETE, unit.clone(), None),
         (Method::POST, format!("{unit}/restore"), None),
     ]
@@ -146,11 +142,7 @@ fn buildings_units_residents_cases() -> Vec<(Method, String, Option<&'static str
             Some(r#"{"user_id":"00000000-0000-0000-0000-000000000003"}"#),
         ),
         (Method::GET, resident.clone(), None),
-        (
-            Method::PUT,
-            resident.clone(),
-            Some(r#"{"note":"updated"}"#),
-        ),
+        (Method::PUT, resident.clone(), Some(r#"{"note":"updated"}"#)),
         (Method::DELETE, resident.clone(), None),
         (Method::POST, format!("{resident}/end"), None),
         (Method::GET, format!("{unit}/residents/history"), None),
@@ -230,15 +222,13 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
         (
             Method::POST,
             base.to_string(),
-            Some(r#"{"building_id":"00000000-0000-0000-0000-000000000001","certification_type":"breeam"}"#),
+            Some(
+                r#"{"building_id":"00000000-0000-0000-0000-000000000001","certification_type":"breeam"}"#,
+            ),
         ),
         (Method::GET, format!("{base}/expiring"), None),
         (Method::GET, cert.clone(), None),
-        (
-            Method::PUT,
-            cert.clone(),
-            Some(r#"{"status":"active"}"#),
-        ),
+        (Method::PUT, cert.clone(), Some(r#"{"status":"active"}"#)),
         (Method::DELETE, cert.clone(), None),
         (Method::GET, format!("{cert}/with-credits"), None),
         (Method::GET, format!("{cert}/credits"), None),
@@ -248,11 +238,7 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
             Some(r#"{"credit_type":"energy","points":5}"#),
         ),
         (Method::GET, credit.clone(), None),
-        (
-            Method::PUT,
-            credit.clone(),
-            Some(r#"{"points":6}"#),
-        ),
+        (Method::PUT, credit.clone(), Some(r#"{"points":6}"#)),
         (Method::DELETE, credit.clone(), None),
         (Method::GET, format!("{cert}/documents"), None),
         (
@@ -338,7 +324,13 @@ async fn buildings_endpoints_reject_non_member(pool: PgPool) {
 
     for (method, uri, body) in cases {
         let resp = app
-            .execute(authed_tenant(&outsider_token, &org_str, method.clone(), &uri, body))
+            .execute(authed_tenant(
+                &outsider_token,
+                &org_str,
+                method.clone(),
+                &uri,
+                body,
+            ))
             .await;
         assert_eq!(
             resp.status,
@@ -354,7 +346,10 @@ async fn agencies_endpoints_reject_unprivileged_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _) = create_authenticated_user(&app, &TestUser::new()).await;
 
-    for (method, uri, body) in agencies_cases().into_iter().chain(platform_admin_agency_cases()) {
+    for (method, uri, body) in agencies_cases()
+        .into_iter()
+        .chain(platform_admin_agency_cases())
+    {
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;

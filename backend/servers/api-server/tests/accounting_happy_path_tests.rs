@@ -40,15 +40,14 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
 
     // 1.1 GET /api/v1/accounting/contacts -> list_contacts
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/accounting/contacts")
-                .build(),
-        )
+        .execute(session.get("/api/v1/accounting/contacts").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let contacts_list = resp.json_value();
-    assert!(contacts_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(contacts_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
     assert_eq!(contacts_list[0]["name"], "John Doe CRM");
 
     // ========================================================================
@@ -81,7 +80,12 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::CREATED, "create_invoice should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create_invoice should succeed: {}",
+        resp.text()
+    );
     let invoice = resp.json_value();
     let invoice_id_str = invoice["id"].as_str().expect("id missing");
     let invoice_id = Uuid::parse_str(invoice_id_str).expect("invalid invoice uuid");
@@ -112,20 +116,22 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
         )
         .await;
     assert_eq!(resp_temp.status, StatusCode::CREATED);
-    let temp_invoice_id_str = resp_temp.json_value()["id"].as_str().expect("id missing").to_string();
+    let temp_invoice_id_str = resp_temp.json_value()["id"]
+        .as_str()
+        .expect("id missing")
+        .to_string();
     let temp_invoice_id = Uuid::parse_str(&temp_invoice_id_str).unwrap();
 
     // 2.2 GET /api/v1/accounting/invoices -> list_invoices
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/accounting/invoices")
-                .build(),
-        )
+        .execute(session.get("/api/v1/accounting/invoices").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let invoices_list = resp.json_value();
-    assert!(invoices_list.as_array().map(|arr| arr.len() >= 2).unwrap_or(false));
+    assert!(invoices_list
+        .as_array()
+        .map(|arr| arr.len() >= 2)
+        .unwrap_or(false));
 
     // 2.3 GET /api/v1/accounting/invoices/{id} -> get_invoice
     let resp = app
@@ -149,7 +155,10 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK);
     let items_list = resp.json_value();
-    assert!(items_list.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
+    assert!(items_list
+        .as_array()
+        .map(|arr| !arr.is_empty())
+        .unwrap_or(false));
     assert_eq!(items_list[0]["description"], "Property Management Fee");
 
     // 2.5 PATCH /api/v1/accounting/invoices/{id} -> update_invoice
@@ -166,7 +175,12 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "update_invoice should succeed: {}", resp.text());
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "update_invoice should succeed: {}",
+        resp.text()
+    );
     let updated_invoice = resp.json_value();
     assert_eq!(updated_invoice["number"], "INV-2026-0001-REV");
     assert_eq!(updated_invoice["status"], "issued");

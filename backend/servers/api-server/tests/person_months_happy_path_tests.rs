@@ -44,9 +44,7 @@ async fn person_months_endpoints_happy_path(pool: PgPool) {
     // 1. UNIT-LEVEL PERSON MONTHS
     // ========================================================================
 
-    let unit_pm_base = format!(
-        "/api/v1/buildings/{building_id}/units/{unit_id}/person-months"
-    );
+    let unit_pm_base = format!("/api/v1/buildings/{building_id}/units/{unit_id}/person-months");
 
     // 1.1 POST (upsert) -> upsert_person_month
     let create_payload = json!({
@@ -139,9 +137,7 @@ async fn person_months_endpoints_happy_path(pool: PgPool) {
     let bldg_pm_base = format!("/api/v1/buildings/{building_id}/person-months");
 
     // 2.1 GET / -> list_building_person_months
-    let resp = app
-        .execute(session.get(&bldg_pm_base).build())
-        .await;
+    let resp = app.execute(session.get(&bldg_pm_base).build()).await;
     resp.assert_status(StatusCode::OK);
 
     // 2.2 GET /summary -> get_building_summary

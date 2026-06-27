@@ -104,22 +104,19 @@ async fn reports_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    let job_id: Option<Uuid> = if resp.status == StatusCode::OK || resp.status == StatusCode::ACCEPTED {
-        resp.json_value()["job_id"]
-            .as_str()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    } else {
-        None
-    };
+    let job_id: Option<Uuid> =
+        if resp.status == StatusCode::OK || resp.status == StatusCode::ACCEPTED {
+            resp.json_value()["job_id"]
+                .as_str()
+                .and_then(|s| Uuid::parse_str(s).ok())
+        } else {
+            None
+        };
 
     // 2.2 GET /export/{job_id}/status -> get_export_job_status
     if let Some(jid) = job_id {
         let resp = app
-            .execute(
-                session
-                    .get(&format!("{base}/export/{jid}/status"))
-                    .build(),
-            )
+            .execute(session.get(&format!("{base}/export/{jid}/status")).build())
             .await;
         resp.assert_status(StatusCode::OK);
     }

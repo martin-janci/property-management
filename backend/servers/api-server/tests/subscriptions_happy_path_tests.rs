@@ -121,11 +121,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 1.2 GET /api/v1/subscriptions/plans -> list_plans
     let resp = app
-        .execute(
-            admin_session
-                .get("/api/v1/subscriptions/plans")
-                .build(),
-        )
+        .execute(admin_session.get("/api/v1/subscriptions/plans").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -165,11 +161,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 1.6 GET /api/v1/subscriptions/plans/public -> list_public_plans
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions/plans/public")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions/plans/public").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -201,11 +193,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 2.2 GET /api/v1/subscriptions/payment-methods -> list_payment_methods
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions/payment-methods")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions/payment-methods").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -213,7 +201,9 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post(&format!("/api/v1/subscriptions/payment-methods/{pm_id}/default"))
+                .post(&format!(
+                    "/api/v1/subscriptions/payment-methods/{pm_id}/default"
+                ))
                 .build(),
         )
         .await;
@@ -244,21 +234,13 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 3.2 GET /api/v1/subscriptions/ -> get_subscription
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
     // 3.3 GET /api/v1/subscriptions/with-plan -> get_subscription_with_plan
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions/with-plan")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions/with-plan").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -338,11 +320,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 4.2 GET /api/v1/subscriptions/usage/summary -> get_usage_summary
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions/usage/summary")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions/usage/summary").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -383,11 +361,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 5.2 GET /api/v1/subscriptions/coupons -> list_coupons
     let resp = app
-        .execute(
-            admin_session
-                .get("/api/v1/subscriptions/coupons")
-                .build(),
-        )
+        .execute(admin_session.get("/api/v1/subscriptions/coupons").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -439,11 +413,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
 
     // 6.1 GET /api/v1/subscriptions/invoices -> list_invoices
     let resp = app
-        .execute(
-            session
-                .get("/api/v1/subscriptions/invoices")
-                .build(),
-        )
+        .execute(session.get("/api/v1/subscriptions/invoices").build())
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -461,7 +431,9 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!("/api/v1/subscriptions/invoices/{invoice_id}/line-items"))
+                .get(&format!(
+                    "/api/v1/subscriptions/invoices/{invoice_id}/line-items"
+                ))
                 .build(),
         )
         .await;

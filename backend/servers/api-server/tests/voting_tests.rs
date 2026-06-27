@@ -346,10 +346,7 @@ mod happy_path {
         let response = app.execute(request).await;
         assert_eq!(response.status, StatusCode::OK);
         let votes = response.json_value();
-        assert!(votes
-            .as_array()
-            .map(|arr| !arr.is_empty())
-            .unwrap_or(false));
+        assert!(votes.as_array().map(|arr| !arr.is_empty()).unwrap_or(false));
 
         // 3. Add a question (POST /api/v1/voting/{id}/questions)
         let question_payload = json!({
@@ -423,4 +420,3 @@ mod happy_path {
         assert_eq!(results["participationCount"].as_i64(), Some(1));
     }
 }
-
