@@ -7,8 +7,6 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::NaiveDate;
-use rust_decimal::Decimal;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -341,7 +339,7 @@ async fn budgets_endpoints_happy_path(pool: PgPool) {
     );
     let actual = resp.json_value();
     let actual_id_str = actual["id"].as_str().expect("id missing");
-    let actual_id = Uuid::parse_str(actual_id_str).expect("invalid actual uuid");
+    let _actual_id = Uuid::parse_str(actual_id_str).expect("invalid actual uuid");
 
     // 5.2 GET /api/v1/budgets/items/{item_id}/actuals -> list_actuals
     let resp = app
