@@ -4,8 +4,8 @@
 //! was, until now, only exercised on its **authorization-denial** edge
 //! (`platform_admin_authz_tests.rs` asserts 401/403 for anon / non-platform /
 //! ungranted principals). This file is the additive **happy-path** half: it
-//! drives a fully-provisioned platform principal — platform `principal_kind`
-//! + MFA enrolled + an active `capability_grants` row — through each read
+//! drives a fully-provisioned platform principal (platform `principal_kind`,
+//! MFA enrolled, an active `capability_grants` row) through each read
 //! surface and asserts a `2xx`.
 //!
 //! The provisioning recipe mirrors the shipped, passing pattern in
