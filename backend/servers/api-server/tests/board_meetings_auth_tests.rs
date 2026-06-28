@@ -9,7 +9,8 @@
 //! No DB seeding: `AuthUser` rejects a request with no bearer token at the
 //! extractor.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

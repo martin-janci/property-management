@@ -64,7 +64,8 @@
 //!   cargo test -p api-server -- preference_update_publishes_realtime_event --include-ignored
 //! ```
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

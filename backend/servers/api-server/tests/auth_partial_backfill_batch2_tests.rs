@@ -23,7 +23,8 @@
 //!   - GET  /api/v1/help/categories/{slug}
 //!   - GET  /api/v1/help/tooltips/{key}
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

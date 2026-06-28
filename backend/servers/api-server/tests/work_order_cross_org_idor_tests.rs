@@ -48,7 +48,8 @@
 //! gate is bypassed at the DB layer here because the `#[sqlx::test]` pool
 //! connects as a superuser, so `FORCE` RLS does not bind).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

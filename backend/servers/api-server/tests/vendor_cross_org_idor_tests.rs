@@ -22,7 +22,8 @@
 //!   2. Org B's member probes Org A's vendor → rejected (4xx); no leak / write.
 //!   3. Org A's member reads its own vendor → allowed (2xx).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::{Method, StatusCode};

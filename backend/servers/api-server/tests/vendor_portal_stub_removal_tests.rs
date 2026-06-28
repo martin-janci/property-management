@@ -36,7 +36,8 @@
 //!     the IDOR fix lives in the WHERE clause; see
 //!     `ai_llm_cross_tenant_idor_tests.rs` for the same rationale.)
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

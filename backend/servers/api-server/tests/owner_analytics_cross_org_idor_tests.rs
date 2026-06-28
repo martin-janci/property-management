@@ -19,7 +19,8 @@
 //!   2. Org B's member probes Org A's unit/valuation → must NOT 200.
 //!   3. Org A's member reads its own unit's valuation → 200 with the row.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

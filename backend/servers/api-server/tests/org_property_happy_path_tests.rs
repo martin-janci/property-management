@@ -28,7 +28,8 @@
 //! the dependent calls, so every assertion exercises a genuine row rather than
 //! a synthetic UUID.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

@@ -21,7 +21,8 @@
 //! valid token is NOT rejected at the auth layer (status is never 401/403),
 //! while an unauthenticated or org-less request IS rejected before any work.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

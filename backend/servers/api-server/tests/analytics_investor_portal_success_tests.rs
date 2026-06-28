@@ -34,7 +34,8 @@
 //!   GET    /investor-portal/dashboard/{investor_id}
 //!   POST   /investor-portal/dashboard/{investor_id}/metrics
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

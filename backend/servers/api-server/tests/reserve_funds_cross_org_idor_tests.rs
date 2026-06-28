@@ -26,7 +26,8 @@
 //!   - Org A's token reading Org A's fund -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's fund -> 404 (cross-org is blocked).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

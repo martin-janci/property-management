@@ -6,9 +6,9 @@
 //!   * `/api/v1/infrastructure/**` — traces, feature-flags, jobs, health/alerts
 //!   * `/api/v1/operations/**`     — deployments, migrations, schema, backups, DR, costs
 //!   * `/api/v1/platform-admin/**` — orgs, stats, feature-flags, health, announcements,
-//!                                   maintenance, support
+//!     maintenance, support
 //!   * `/api/v1/admin/**`          — user lifecycle, MFA enroll, notifications,
-//!                                   tenant lifecycle/branding/feature-flags, agencies
+//!     tenant lifecycle/branding/feature-flags, agencies
 //!
 //! All of these are gated for platform operators. We assert the security invariant:
 //!   1. unauthenticated  → 401 (also guards route existence);
@@ -27,7 +27,8 @@
 //! scrape — returns 2xx anonymously by design) and `POST /api/v1/platform-admin/agencies`
 //! (body validation returns 4xx before the auth gate, so it is not a clean auth probe).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

@@ -4,7 +4,8 @@
 //! All previous tests in this group were auth-only (401/403); this file
 //! asserts that authenticated requests get 2xx responses.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

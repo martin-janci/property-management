@@ -15,7 +15,8 @@
 //! makes them an active `org_admin` of a fresh org, so `ValidatedTenantExtractor`
 //! resolves the tenant. Every request carries `.bearer(token)` + `.tenant(org_id)`.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

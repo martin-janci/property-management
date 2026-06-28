@@ -20,7 +20,8 @@
 //!   - Org A's token reading Org A's violation -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's violation -> 404 (cross-org blocked).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

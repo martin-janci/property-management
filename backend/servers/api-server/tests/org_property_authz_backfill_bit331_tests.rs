@@ -35,7 +35,8 @@
 //! (`GET /organizations/my`) — are intentionally excluded: they return 2xx by design
 //! and are covered by their own happy-path tests, not by an authz-denial sweep.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

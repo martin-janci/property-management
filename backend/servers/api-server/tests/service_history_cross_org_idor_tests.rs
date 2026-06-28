@@ -12,7 +12,8 @@
 //! Each test also has a same-org "golden path" variant to ensure the guard
 //! does not over-block legitimate callers.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

@@ -13,7 +13,8 @@
 //!   - Confirmed -> Confirmed / Rejected -> Rejected : idempotent no-op
 //!   - Rejected  -> Confirmed  : ILLEGAL -> 409 Conflict
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use api_server::services::accounting::AccountingService;
@@ -107,7 +108,7 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
     set_ctx(&mut conn, org).await;
 
     // Suggested -> Confirmed: applies the full amount.
-    svc.confirm_match(&mut *conn, org, match_id, user)
+    svc.confirm_match(&mut conn, org, match_id, user)
         .await
         .expect("confirm suggested match");
     let (paid, status) = invoice_state(&pool, invoice).await;
@@ -115,7 +116,7 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
     assert_eq!(status, InvoiceStatus::Paid, "fully paid invoice is 'paid'");
 
     // Confirmed -> Rejected: unapplies the amount and reverts status.
-    svc.reject_match(&mut *conn, match_id, user)
+    svc.reject_match(&mut conn, match_id, user)
         .await
         .expect("reject confirmed match");
     let (paid, status) = invoice_state(&pool, invoice).await;
@@ -132,7 +133,7 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
 
     // Rejected -> Confirmed: ILLEGAL. Must 409 and must NOT re-apply.
     let err = svc
-        .confirm_match(&mut *conn, org, match_id, user)
+        .confirm_match(&mut conn, org, match_id, user)
         .await
         .expect_err("confirming a rejected match must fail");
     assert!(
@@ -157,10 +158,10 @@ async fn double_confirm_is_idempotent(pool: PgPool) {
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
-    svc.confirm_match(&mut *conn, org, match_id, user)
+    svc.confirm_match(&mut conn, org, match_id, user)
         .await
         .expect("first confirm");
-    svc.confirm_match(&mut *conn, org, match_id, user)
+    svc.confirm_match(&mut conn, org, match_id, user)
         .await
         .expect("second confirm is a no-op");
 
@@ -183,10 +184,10 @@ async fn double_reject_is_idempotent(pool: PgPool) {
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
-    svc.reject_match(&mut *conn, match_id, user)
+    svc.reject_match(&mut conn, match_id, user)
         .await
         .expect("first reject");
-    svc.reject_match(&mut *conn, match_id, user)
+    svc.reject_match(&mut conn, match_id, user)
         .await
         .expect("second reject is a no-op");
 

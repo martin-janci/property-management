@@ -30,7 +30,8 @@
 //! - GET  /api/v1/marketplace/verifications/expiring — get_expiring_verifications
 //! - GET  /api/v1/marketplace/dashboard          — get_manager_dashboard
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

@@ -30,7 +30,8 @@
 //! - POST   /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/acknowledge
 //! - GET    /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/stats
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

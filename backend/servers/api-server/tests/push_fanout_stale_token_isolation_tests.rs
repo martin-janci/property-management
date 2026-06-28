@@ -18,7 +18,8 @@
 //! 3. Direct DB isolation: `delete_stale_token`-equivalent DELETE with a
 //!    mismatched `user_id` does NOT remove the token row.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

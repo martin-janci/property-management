@@ -18,7 +18,8 @@
 //! and performs the full HTTP/1.1 upgrade + subsequent WS frames over it, so
 //! the session loop in `handle_ws_session` actually runs.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::extract::connect_info::MockConnectInfo;

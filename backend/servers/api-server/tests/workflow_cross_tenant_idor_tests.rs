@@ -34,7 +34,8 @@
 //! tighten the assertion back to 404; for now this matches the same
 //! gap flagged in `automation_auth_tests.rs`.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

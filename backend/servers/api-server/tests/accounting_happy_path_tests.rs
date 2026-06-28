@@ -23,7 +23,8 @@
 //!  10. POST   /api/v1/accounting/matches/{id}/reject      (reject_match)
 //!  11. DELETE /api/v1/accounting/invoices/{id}            (delete_invoice)
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -200,7 +201,7 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
             app.patch(&format!("/api/v1/accounting/invoices/{invoice_id}"))
                 .bearer(&token)
                 .header("X-Tenant-ID", &tenant)
-                .json(&json!({ "variable_symbol": "VS12345" }))
+                .json(json!({ "variable_symbol": "VS12345" }))
                 .build(),
         )
         .await;

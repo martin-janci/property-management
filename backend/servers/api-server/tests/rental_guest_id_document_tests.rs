@@ -13,7 +13,8 @@
 //! `X-Tenant-ID` header, with `organization_members` seeded so the manager gate
 //! resolves a real role.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::body::Body;

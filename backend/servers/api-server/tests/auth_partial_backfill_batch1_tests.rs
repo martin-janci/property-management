@@ -13,7 +13,8 @@
 //!   - GET  /api/v1/auth/me
 //!   - PATCH /api/v1/auth/me
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

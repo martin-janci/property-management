@@ -61,7 +61,8 @@
 //!     POST   /portfolio-performance/portfolios/{id}/alerts/{alert_id}/read
 //!     POST   /portfolio-performance/portfolios/{id}/alerts/{alert_id}/resolve
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

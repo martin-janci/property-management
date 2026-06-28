@@ -14,7 +14,8 @@
 //! - POST   /api/v1/documents/{id}/shares (create_share)
 //! - DELETE /api/v1/documents/{id}/shares/{share_id} (revoke_share)
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

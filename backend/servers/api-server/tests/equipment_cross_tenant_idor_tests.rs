@@ -27,7 +27,8 @@
 //! returns in production. Both are 4xx — the security contract (cross-tenant
 //! request is never applied to the row) is satisfied either way.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

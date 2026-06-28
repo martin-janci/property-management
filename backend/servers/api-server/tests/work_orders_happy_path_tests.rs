@@ -18,7 +18,8 @@
 //! client-supplied `organization_id` (create/list/query) is set to the caller's
 //! own org so `verify_org_access` passes.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

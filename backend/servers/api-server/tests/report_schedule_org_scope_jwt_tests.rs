@@ -40,7 +40,8 @@
 //! still validates membership against `organization_members`, which the
 //! fixtures seed below.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

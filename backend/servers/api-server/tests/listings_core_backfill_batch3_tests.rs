@@ -5,7 +5,8 @@
 //! - Syndication (publish, global-publish, global-unpublish, dashboard, org-stats, syndications, status)
 //! - Photos (get, add, reorder, delete)
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

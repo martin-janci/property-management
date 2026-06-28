@@ -40,7 +40,8 @@
 //! status code, and we keep multi-tenant positive-path tests under `#[ignore]`
 //! until a fixture builder that wires `host_tenant_middleware` is available.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

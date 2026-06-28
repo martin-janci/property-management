@@ -26,7 +26,8 @@
 //! - POST   /api/v1/news/{id}/view                        record_view
 //! - GET    /api/v1/news/statistics                       get_statistics
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
