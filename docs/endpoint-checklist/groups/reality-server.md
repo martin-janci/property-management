@@ -34,38 +34,38 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 ## favorites.rs  (mount: /api/v1/favorites)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/favorites | list_favorites | partial | — | Real |
-| GET | /api/v1/favorites/alerts | list_favorite_alerts | partial | — | Real; not in OpenAPI list (drift) |
-| POST | /api/v1/favorites/alerts/read-all | mark_all_favorite_alerts_read | partial | — | Real; OpenAPI drift |
-| POST | /api/v1/favorites/alerts/{alert_id}/read | mark_favorite_alert_read | partial | — | Real; OpenAPI drift |
-| GET | /api/v1/favorites/ids | list_favorite_ids | partial | — | Real |
-| POST | /api/v1/favorites/{listing_id} | add_favorite | partial | — | Real |
-| DELETE | /api/v1/favorites/{listing_id} | remove_favorite | partial | — | Real |
-| GET | /api/v1/favorites/{listing_id}/check | check_favorite | partial | — | Real |
+| GET | /api/v1/favorites | list_favorites | done | favorites_authz_tests.rs | list_favorites_unauthenticated_returns_401, list_favorites_authenticated_returns_non_401 |
+| GET | /api/v1/favorites/alerts | list_favorite_alerts | done | favorites_authz_tests.rs | list_favorite_alerts_unauthenticated_returns_401, list_favorite_alerts_authenticated_returns_non_401 (OpenAPI drift) |
+| POST | /api/v1/favorites/alerts/read-all | mark_all_favorite_alerts_read | done | favorites_authz_tests.rs | mark_all_favorite_alerts_read_unauthenticated_returns_401, mark_all_favorite_alerts_read_authenticated_returns_non_401 |
+| POST | /api/v1/favorites/alerts/{alert_id}/read | mark_favorite_alert_read | done | favorites_authz_tests.rs | mark_favorite_alert_read_unauthenticated_returns_401, mark_favorite_alert_read_authenticated_unknown_returns_non_401 |
+| GET | /api/v1/favorites/ids | list_favorite_ids | done | favorites_authz_tests.rs | list_favorite_ids_unauthenticated_returns_200, list_favorite_ids_authenticated_returns_200 (SSR-anonymous, OptionalRequestPrincipal) |
+| POST | /api/v1/favorites/{listing_id} | add_favorite | done | favorites_authz_tests.rs | add_favorite_unauthenticated_returns_401, add_favorite_authenticated_unknown_listing_returns_non_401 |
+| DELETE | /api/v1/favorites/{listing_id} | remove_favorite | done | favorites_authz_tests.rs | remove_favorite_unauthenticated_returns_401, remove_favorite_authenticated_unknown_returns_non_401 |
+| GET | /api/v1/favorites/{listing_id}/check | check_favorite | done | favorites_authz_tests.rs | check_favorite_unauthenticated_returns_401, check_favorite_authenticated_returns_non_401 |
 
 ## saved_searches.rs  (mount: /api/v1/saved-searches)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/saved-searches | list_saved_searches | partial | — | Real |
-| POST | /api/v1/saved-searches | create_saved_search | partial | — | Real |
-| GET | /api/v1/saved-searches/alerts | list_search_alerts | partial | — | Real; not in OpenAPI list (drift) |
-| POST | /api/v1/saved-searches/alerts/read-all | mark_all_alerts_read | partial | — | Real; OpenAPI drift |
-| POST | /api/v1/saved-searches/alerts/{alert_id}/read | mark_alert_read | partial | — | Real; OpenAPI drift |
-| GET | /api/v1/saved-searches/{id} | get_saved_search | partial | — | Real |
-| PUT | /api/v1/saved-searches/{id} | update_saved_search | partial | — | Real |
-| DELETE | /api/v1/saved-searches/{id} | delete_saved_search | partial | — | Real |
-| POST | /api/v1/saved-searches/{id}/run | run_saved_search | partial | — | Real (search_listings + count) |
+| GET | /api/v1/saved-searches | list_saved_searches | done | saved_searches_authz_tests.rs | list_saved_searches_unauthenticated_returns_401, list_saved_searches_authenticated_returns_non_401 |
+| POST | /api/v1/saved-searches | create_saved_search | done | saved_searches_authz_tests.rs | create_saved_search_unauthenticated_returns_401, create_saved_search_authenticated_returns_non_401 |
+| GET | /api/v1/saved-searches/alerts | list_search_alerts | done | saved_searches_authz_tests.rs | list_search_alerts_unauthenticated_returns_401, list_search_alerts_authenticated_returns_non_401 (OpenAPI drift) |
+| POST | /api/v1/saved-searches/alerts/read-all | mark_all_alerts_read | done | saved_searches_authz_tests.rs | mark_all_alerts_read_unauthenticated_returns_401, mark_all_alerts_read_authenticated_returns_non_401 |
+| POST | /api/v1/saved-searches/alerts/{alert_id}/read | mark_alert_read | done | saved_searches_authz_tests.rs | mark_alert_read_unauthenticated_returns_401, mark_alert_read_authenticated_unknown_returns_non_401 |
+| GET | /api/v1/saved-searches/{id} | get_saved_search | done | saved_searches_authz_tests.rs | get_saved_search_unauthenticated_returns_401, get_saved_search_authenticated_unknown_returns_non_401 |
+| PUT | /api/v1/saved-searches/{id} | update_saved_search | done | saved_searches_authz_tests.rs | update_saved_search_unauthenticated_returns_401, update_saved_search_authenticated_unknown_returns_non_401 |
+| DELETE | /api/v1/saved-searches/{id} | delete_saved_search | done | saved_searches_authz_tests.rs | delete_saved_search_unauthenticated_returns_401, delete_saved_search_authenticated_unknown_returns_non_401 |
+| POST | /api/v1/saved-searches/{id}/run | run_saved_search | done | saved_searches_authz_tests.rs | run_saved_search_unauthenticated_returns_401, run_saved_search_authenticated_unknown_returns_non_401 |
 
 ## inquiries.rs  (mount: /api/v1/inquiries)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/inquiries/contact/{listing_id} | send_contact_message | partial | — | Real; module not in OpenAPI list (drift). inquiry tests are repo-level, not HTTP |
-| POST | /api/v1/inquiries/viewing/{listing_id} | request_viewing | partial | — | Real; repo-level tests only |
-| GET | /api/v1/inquiries | list_my_inquiries | partial | inquiry_pagination_tests.rs (repo-level) | Real; test exercises repo not endpoint |
-| GET | /api/v1/inquiries/mine | list_buyer_inquiries | partial | buyer_inquiries_tests.rs (repo-level) | Real; test exercises repo not endpoint |
-| GET | /api/v1/inquiries/{id} | get_inquiry | partial | — | Real |
-| PUT | /api/v1/inquiries/{id}/read | mark_as_read | partial | inquiry_idor_tests.rs (repo-level) | Real; test exercises repo not endpoint |
-| POST | /api/v1/inquiries/{id}/respond | respond_to_inquiry | partial | — | Real |
+| POST | /api/v1/inquiries/contact/{listing_id} | send_contact_message | done | inquiries_authz_tests.rs | send_contact_message_unauthenticated_does_not_return_401 (public endpoint, OpenAPI drift) |
+| POST | /api/v1/inquiries/viewing/{listing_id} | request_viewing | done | inquiries_authz_tests.rs | request_viewing_unauthenticated_does_not_return_401 (public endpoint) |
+| GET | /api/v1/inquiries | list_my_inquiries | done | inquiries_authz_tests.rs | list_my_inquiries_unauthenticated_returns_401, list_my_inquiries_authenticated_returns_non_401 (HTTP; inquiry_pagination_tests.rs is repo-level) |
+| GET | /api/v1/inquiries/mine | list_buyer_inquiries | done | inquiries_authz_tests.rs | list_buyer_inquiries_unauthenticated_returns_401, list_buyer_inquiries_authenticated_returns_non_401 (HTTP; buyer_inquiries_tests.rs is repo-level) |
+| GET | /api/v1/inquiries/{id} | get_inquiry | done | inquiries_authz_tests.rs | get_inquiry_unauthenticated_returns_401, get_inquiry_authenticated_unknown_returns_non_401 |
+| PUT | /api/v1/inquiries/{id}/read | mark_as_read | done | inquiries_authz_tests.rs | mark_as_read_unauthenticated_returns_401, mark_as_read_authenticated_unknown_returns_non_401 (HTTP; inquiry_idor_tests.rs is repo-level) |
+| POST | /api/v1/inquiries/{id}/respond | respond_to_inquiry | done | inquiries_authz_tests.rs | respond_to_inquiry_unauthenticated_returns_401, respond_to_inquiry_authenticated_unknown_returns_non_401 |
 
 ## sso.rs  (mount: /api/v1/sso)
 | Method | Path | Handler | Status | Tests | Notes |
