@@ -179,12 +179,20 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
         .await
         .expect("reading must exist in DB");
 
-    let source: String = row.get("source");
-    let status: String = row.get("status");
-    let photo_url: Option<String> = row.get("photo_url");
-    assert_eq!(source, "photo", "source must be 'photo'");
-    assert_eq!(status, "pending", "status must be 'pending'");
-    assert!(photo_url.is_some(), "photo_url must be set");
+    assert_eq!(
+        row.get::<String, _>("source"),
+        "photo",
+        "source must be 'photo'"
+    );
+    assert_eq!(
+        row.get::<String, _>("status"),
+        "pending",
+        "status must be 'pending'"
+    );
+    assert!(
+        row.get::<Option<String>, _>("photo_url").is_some(),
+        "photo_url must be set"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -317,11 +325,12 @@ async fn submit_correction_persists_record(pool: PgPool) {
     .await
     .expect("correction must exist in DB");
 
-    let image_url: String = row.get("image_url");
-    let corrected_value: rust_decimal::Decimal = row.get("corrected_value");
-    assert_eq!(image_url, "https://example.com/meter.jpg");
     assert_eq!(
-        corrected_value,
+        row.get::<String, _>("image_url"),
+        "https://example.com/meter.jpg"
+    );
+    assert_eq!(
+        row.get::<rust_decimal::Decimal, _>("corrected_value"),
         rust_decimal::Decimal::try_from(105.5_f64).unwrap()
     );
 }
