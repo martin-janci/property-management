@@ -114,7 +114,7 @@ fn mint_platform_token(user_id: Uuid, email: &str) -> String {
         email,
         "BIT357 Admin Test",
         None,
-        None,
+        Some(vec!["super_admin".to_string()]),
         Some("platform".to_string()),
     )
     .expect("mint token")
