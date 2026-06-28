@@ -231,3 +231,4 @@ async fn test_data_residency_cross_tenant_isolation(pool: PgPool) {
     // member validator blocks requests where caller user is not a member of the X-Tenant-ID header org
     assert_eq!(resp.status, StatusCode::FORBIDDEN);
 }
+
