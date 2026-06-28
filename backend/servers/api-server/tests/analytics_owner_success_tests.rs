@@ -1,5 +1,7 @@
 //! Happy-path tests for owner-analytics endpoints (Epic 74).
 //! Covers all 17 partial endpoints → promoted to done.
+#![allow(dead_code)]
+
 use axum::http::StatusCode;
 use chrono::Utc;
 use jsonwebtoken::{encode, EncodingKey, Header};

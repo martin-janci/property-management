@@ -20,6 +20,8 @@
 //! Uses `#[sqlx::test(migrator = "db::MIGRATOR")]` — the same harness as the
 //! IDOR suite in this directory.
 
+#![allow(dead_code)]
+
 use db::models::CreateListingInquiry;
 use db::repositories::RealityPortalRepository;
 use sqlx::PgPool;

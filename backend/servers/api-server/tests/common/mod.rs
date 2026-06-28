@@ -6,6 +6,8 @@
 //! - Response extractors
 //! - Test fixtures for users and organizations
 
+#![allow(dead_code)]
+
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},

@@ -8,6 +8,8 @@
 //! list_favorite_ids uses OptionalRequestPrincipal (SSR-anonymous), so it
 //! returns 200 with an empty list for unauthenticated callers.
 
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{http::Method, Router};

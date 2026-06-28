@@ -7,6 +7,8 @@
 //! - list_my_inquiries, list_buyer_inquiries, get_inquiry, mark_as_read,
 //!   respond_to_inquiry: AUTHENTICATED — no token → 401.
 
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{http::Method, Router};

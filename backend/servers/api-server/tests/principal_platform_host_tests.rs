@@ -14,6 +14,8 @@
 //! `sub` (Phase 2 contract: tenant_id / role JWT claims are NEVER trusted) and
 //! seed users with the requested `principal_kind` directly.
 
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use api_core::extractors::principal::RequestPrincipal;

@@ -36,6 +36,8 @@
 //! migrated database — the same harness as every other integration test in
 //! this suite.
 
+#![allow(dead_code)]
+
 use db::repositories::RealityPortalRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
