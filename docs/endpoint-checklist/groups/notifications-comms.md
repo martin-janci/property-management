@@ -67,28 +67,28 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 ## news_articles.rs  (mount: /api/v1/news)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/news | list_articles | partial | none | real handler (repo.list by tenant); no test |
-| POST | /api/v1/news | create_article | partial | none | no test |
-| GET | /api/v1/news/{id} | get_article | partial | none | no test |
-| PUT | /api/v1/news/{id} | update_article | partial | none | no test |
-| DELETE | /api/v1/news/{id} | delete_article | partial | none | no test |
-| POST | /api/v1/news/{id}/publish | publish_article | partial | none | no test |
-| POST | /api/v1/news/{id}/archive | archive_article | partial | none | no test |
-| POST | /api/v1/news/{id}/restore | restore_article | partial | none | no test |
-| POST | /api/v1/news/{id}/pin | pin_article | partial | none | no test |
-| GET | /api/v1/news/{id}/media | list_media | partial | none | no test |
-| POST | /api/v1/news/{id}/media | add_media | partial | none | no test |
-| DELETE | /api/v1/news/{id}/media/{media_id} | delete_media | partial | none | no test |
-| POST | /api/v1/news/{id}/reactions | toggle_reaction | partial | none | no test |
-| GET | /api/v1/news/{id}/reactions/counts | get_reaction_counts | partial | none | no test |
-| GET | /api/v1/news/{id}/comments | list_comments | partial | none | no test |
-| POST | /api/v1/news/{id}/comments | create_comment | partial | none | no test |
-| PUT | /api/v1/news/{id}/comments/{comment_id} | update_comment | partial | none | no test |
-| DELETE | /api/v1/news/{id}/comments/{comment_id} | delete_comment | partial | none | no test |
-| POST | /api/v1/news/{id}/comments/{comment_id}/moderate | moderate_comment | partial | none | no test |
-| GET | /api/v1/news/{id}/comments/{comment_id}/replies | list_comment_replies | partial | none | no test |
-| POST | /api/v1/news/{id}/view | record_view | partial | none | no test |
-| GET | /api/v1/news/statistics | get_statistics | partial | none | no test |
+| GET | /api/v1/news | list_articles | done | news_articles_tests.rs | 200 happy-path asserts count>=2 (seeded) |
+| POST | /api/v1/news | create_article | done | news_articles_tests.rs | 201 happy-path (id+message); 401 unauth |
+| GET | /api/v1/news/{id} | get_article | done | news_articles_tests.rs | 200 happy-path (article.id); 404 not-found |
+| PUT | /api/v1/news/{id} | update_article | done | news_articles_tests.rs | 200 happy-path (article.title updated) |
+| DELETE | /api/v1/news/{id} | delete_article | done | news_articles_tests.rs | 200 happy-path; subsequent GET 404 |
+| POST | /api/v1/news/{id}/publish | publish_article | done | news_articles_tests.rs | 200 happy-path (status=published) |
+| POST | /api/v1/news/{id}/archive | archive_article | done | news_articles_tests.rs | 200 happy-path (status=archived) |
+| POST | /api/v1/news/{id}/restore | restore_article | done | news_articles_tests.rs | 200 happy-path (status=draft) |
+| POST | /api/v1/news/{id}/pin | pin_article | done | news_articles_tests.rs | 200 happy-path (pinned=true) |
+| GET | /api/v1/news/{id}/media | list_media | done | news_articles_tests.rs | 200 happy-path (media len=1) |
+| POST | /api/v1/news/{id}/media | add_media | done | news_articles_tests.rs | 201 happy-path (id+media_type) |
+| DELETE | /api/v1/news/{id}/media/{media_id} | delete_media | done | news_articles_tests.rs | 200 happy-path |
+| POST | /api/v1/news/{id}/reactions | toggle_reaction | done | news_articles_tests.rs | 200 happy-path (added=true+counts) |
+| GET | /api/v1/news/{id}/reactions/counts | get_reaction_counts | done | news_articles_tests.rs | 200 happy-path |
+| GET | /api/v1/news/{id}/comments | list_comments | done | news_articles_tests.rs | 200 happy-path (count>=1) |
+| POST | /api/v1/news/{id}/comments | create_comment | done | news_articles_tests.rs | 201 happy-path (id+content) |
+| PUT | /api/v1/news/{id}/comments/{comment_id} | update_comment | done | news_articles_tests.rs | 200 happy-path (content edited) |
+| DELETE | /api/v1/news/{id}/comments/{comment_id} | delete_comment | done | news_articles_tests.rs | 200 happy-path (soft delete) |
+| POST | /api/v1/news/{id}/comments/{comment_id}/moderate | moderate_comment | done | news_articles_tests.rs | 200 happy-path (manager) |
+| GET | /api/v1/news/{id}/comments/{comment_id}/replies | list_comment_replies | done | news_articles_tests.rs | 200 happy-path (count=1) |
+| POST | /api/v1/news/{id}/view | record_view | done | news_articles_tests.rs | 200 happy-path |
+| GET | /api/v1/news/statistics | get_statistics | done | news_articles_tests.rs | 200 happy-path (statistics object) |
 
 ## announcements/ (mount: /api/v1/announcements)
 
