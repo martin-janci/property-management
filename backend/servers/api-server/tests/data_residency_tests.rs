@@ -10,7 +10,6 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
-use db::models::data_residency::{AccessType, DataRegion, DataTypeCategory, ResidencyAuditEvent};
 
 #[derive(Serialize)]
 struct TestClaims {
