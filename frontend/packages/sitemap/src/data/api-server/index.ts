@@ -1116,4 +1116,37 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     auth: { required: true },
     feature: 'Epic-10B-2',
   },
+
+  // Notification Preferences (Epic 8A, Story 8A.1)
+  {
+    operationId: 'notification_preferences_list',
+    server: 'api-server',
+    method: 'GET',
+    path: '/api/v1/users/me/notification-preferences',
+    description: 'Get all notification channel preferences for the current user',
+    tags: ['Notification Preferences'],
+    responses: [
+      { statusCode: 200, description: 'Preferences retrieved' },
+      { statusCode: 401, description: 'Not authenticated' },
+    ],
+    auth: { required: true },
+    feature: 'Epic-8A',
+  },
+  {
+    operationId: 'notification_preference_update',
+    server: 'api-server',
+    method: 'PATCH',
+    path: '/api/v1/users/me/notification-preferences/:channel',
+    description:
+      'Enable/disable a single notification channel (push / email / in_app); requires confirmDisableAll to turn off the last active channel',
+    tags: ['Notification Preferences'],
+    pathParams: [{ name: 'channel', type: 'string', required: true }],
+    responses: [
+      { statusCode: 200, description: 'Preference updated' },
+      { statusCode: 401, description: 'Not authenticated' },
+      { statusCode: 409, description: 'Confirmation required to disable all channels' },
+    ],
+    auth: { required: true },
+    feature: 'Epic-8A',
+  },
 ];

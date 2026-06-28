@@ -19,6 +19,8 @@ epics:
 relatedScreens:
   - id: ppt/accessibility-settings
     rel: sibling
+  - id: ppt/notification-settings
+    rel: sibling
 sharedComponents:
   - section-card
   - banner
