@@ -64,10 +64,7 @@ async fn login_unauthenticated_returns_non_401(pool: PgPool) {
 async fn request_password_reset_unauthenticated_returns_non_401(pool: PgPool) {
     let app = users_router(pool);
     let status = send(&app, Method::POST, "/api/v1/users/password-reset", None).await;
-    assert_ne!(
-        status, 401,
-        "request_password_reset must not require auth"
-    );
+    assert_ne!(status, 401, "request_password_reset must not require auth");
 }
 
 // ── confirm_password_reset (public) ─────────────────────────────────────────
@@ -100,10 +97,7 @@ async fn logout_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = users_router(pool);
     let status = send(&app, Method::POST, "/api/v1/users/logout", Some(&token)).await;
-    assert_ne!(
-        status, 401,
-        "authenticated logout must not return 401"
-    );
+    assert_ne!(status, 401, "authenticated logout must not return 401");
 }
 
 // ── get_me (protected) ───────────────────────────────────────────────────────
@@ -121,10 +115,7 @@ async fn get_me_authenticated_returns_non_401(pool: PgPool) {
     let token = mint_token(user);
     let app = users_router(pool);
     let status = send(&app, Method::GET, "/api/v1/users/me", Some(&token)).await;
-    assert_ne!(
-        status, 401,
-        "authenticated GET /me must not return 401"
-    );
+    assert_ne!(status, 401, "authenticated GET /me must not return 401");
 }
 
 // ── update_me (protected) ────────────────────────────────────────────────────
@@ -156,8 +147,5 @@ async fn update_me_authenticated_returns_non_401(pool: PgPool) {
         json!({"name": "Updated Name"}),
     )
     .await;
-    assert_ne!(
-        status, 401,
-        "authenticated PUT /me must not return 401"
-    );
+    assert_ne!(status, 401, "authenticated PUT /me must not return 401");
 }
