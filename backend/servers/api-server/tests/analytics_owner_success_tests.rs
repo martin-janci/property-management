@@ -167,15 +167,16 @@ async fn oa_create_valuation_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/valuation"
         ))
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -189,14 +190,15 @@ async fn oa_get_valuation_with_comparables_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-gvc@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get(&format!(
             "/api/v1/owner-analytics/valuations/{valuation_id}"
         ))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -220,15 +222,16 @@ async fn oa_add_comparable_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post(&format!(
             "/api/v1/owner-analytics/valuations/{valuation_id}/comparables"
         ))
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -241,14 +244,15 @@ async fn oa_get_value_history_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-vh@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/value-history"
         ))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -262,14 +266,15 @@ async fn oa_get_value_trend_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-vt@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/value-trend"
         ))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -290,13 +295,14 @@ async fn oa_calculate_roi_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post(&format!("/api/v1/owner-analytics/units/{unit_id}/roi"))
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -309,14 +315,15 @@ async fn oa_get_cash_flow_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-cf@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/cash-flow?from_date=2024-01-01&to_date=2024-12-31"
         ))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -329,14 +336,15 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-rd@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get(&format!(
             "/api/v1/owner-analytics/units/{unit_id}/roi-dashboard?from_date=2024-01-01&to_date=2024-12-31"
         ))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -347,12 +355,13 @@ async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-ps@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get("/api/v1/owner-analytics/portfolio")
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -367,13 +376,14 @@ async fn oa_compare_properties_succeeds(pool: PgPool) {
     let body = serde_json::json!({ "unit_ids": [unit_id] });
 
     let resp = app
+        .execute(app
         .post("/api/v1/owner-analytics/portfolio/compare")
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -384,12 +394,13 @@ async fn oa_list_auto_approval_rules_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-lr@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get("/api/v1/owner-analytics/expense-rules")
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -407,13 +418,14 @@ async fn oa_create_auto_approval_rule_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post("/api/v1/owner-analytics/expense-rules")
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -430,13 +442,14 @@ async fn oa_update_auto_approval_rule_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .put(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -448,12 +461,13 @@ async fn oa_delete_auto_approval_rule_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-dr@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .delete(&format!("/api/v1/owner-analytics/expense-rules/{rule_id}"))
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::NO_CONTENT);
+    assert_eq!(resp.status, StatusCode::NO_CONTENT);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -474,13 +488,14 @@ async fn oa_submit_expense_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post("/api/v1/owner-analytics/expenses/submit")
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -491,12 +506,13 @@ async fn oa_list_expense_requests_succeeds(pool: PgPool) {
     let token = mint(user_id, "oa-le@oa.test", org_id);
 
     let resp = app
+        .execute(app
         .get("/api/v1/owner-analytics/expenses")
         .bearer(&token)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -515,13 +531,14 @@ async fn oa_review_expense_succeeds(pool: PgPool) {
     });
 
     let resp = app
+        .execute(app
         .post(&format!(
             "/api/v1/owner-analytics/expenses/{expense_id}/review"
         ))
         .bearer(&token)
         .json(&body)
-        .send()
+        .build())
         .await;
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status, StatusCode::OK);
 }
