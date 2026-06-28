@@ -85,3 +85,6 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+- **NEW (2026-06-28, pm-security):** Should PR #1857 be treated as a prod release blocker (hold all prod deploys until merged) or only block the LLM/AI document feature flag? — owner: tech-lead / product
+- **NEW (2026-06-28, pm-security):** Message attachment IDOR (#1791) has no milestone or assignee — assign as sprint blocker for current messaging story set or defer to a hardening sprint? — owner: tech-lead
+- **NEW (2026-06-28, pm-security):** Issue #480 (WS JWT in logs): adopt one-time ticket approach or strip at middleware layer? Architecture decision required before implementation — owner: rust-backend lead

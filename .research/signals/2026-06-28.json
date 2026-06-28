@@ -1,0 +1,303 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-28",
+      "type": "lag_warning",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": "routine has not run in 12 days (last 2026-06-16T03:25:00Z; now 2026-06-28T10:32Z) \u2014 log only, no scoring",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-06-28",
+      "type": "stale_routine_alert",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 12 days old \u2014 cloud routine cron likely paused; dispatcher (separate loop on planning branch) has been ticking and produced 50 commits on dev in the interim",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16 (origin/dev)",
+      "score_delta": 1,
+      "evidence": "2933 lines this run (#1 churn) \u2014 rental.rs (rental_bookings/rental_guests CRUD + enum cast + RLS rework via #1486/#1489/#1492/#1494/#1505/#1537 enum decode hardening + #1750 guest ID-document fields)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2921 lines this run (#2 churn) \u2014 tenant-migration route NEW from #1859 (23 endpoints \u2014 templates, import jobs, exports, BIT-260)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2818 lines this run (#3 churn) \u2014 booking integration module growth (OTA push/pull, channel mgmt)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2718 lines this run; runs_seen=3 (was 2, last 2026-06-02) \u2014 OAuth integration test churn continues via #1197/#1502/#1507/#1517",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-oauth-rs",
+      "type": "repeated-churn",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "1197 lines this run; runs_seen=3 (was 2, last 2026-06-06) \u2014 OAuth route still churning via #1460 FORCE RLS + #1539 public-client gate + #1744 token verification refactor",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend-apps-mobile-src-App-tsx",
+      "type": "repeated-churn",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "511 lines this run; runs_seen=3 (was 2, last 2026-06-03) \u2014 RN App.tsx auth-gate + deep-link wiring churn (#1391/#1392/#1401/#1402/#1447/#1477)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/App.tsx"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend-apps-mobile-src-screens-announcements-AnnouncementsScreen-tsx",
+      "type": "repeated-churn",
+      "source": "local git numstat since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "481 lines this run; runs_seen=3 (was 2, last 2026-06-05) \u2014 AnnouncementsScreen still churning despite #1543 stabilization fix",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1858",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1858 closed 2026-06-27 (superseded by open #1863)",
+      "score_delta": 1,
+      "evidence": "PR #1858 (chore(api-server): remove 59 unmounted ROADMAP routers + orphaned public_api db) closed without merging \u2014 superseded by open #1863 same scope",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1902",
+      "type": "closed-not-merged-pr",
+      "source": "PRs #1899/#1900/#1901/#1902 all closed 2026-06-28",
+      "score_delta": 1,
+      "evidence": "OCR meter reading test fix thrash \u2014 4 distinct repair PRs closed unmerged today all targeting ocr_meter_reading_tests.rs sqlx::query! issue; final fix landed via direct commit 2cabec6. Dispatcher thrashed.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/tests/ocr_meter_reading_tests.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1866-deny-rustsec",
+      "type": "hotfix-no-test",
+      "source": "PR #1866 merged 2026-06-28",
+      "score_delta": 2,
+      "evidence": "fix(deny): ignore RUSTSEC-2026-0187 \u2014 backend/deny.toml only, no test/source change. Documented in-toml as blocked-upstream (genpdf 0.2.0 pins lopdf ^0.26 vs advisory patched in 0.42.0). Tracking: BIT-279 follow-up. Defensive workaround, not a true gap.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/deny.toml"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-introspect-public-client-auth",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 \u2014 api-handlers review by security",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/oauth.rs:569 \u2014 introspect calls validate_client_credentials unconditionally vs /token at L313-340 which special-cases is_confidential for public clients. Public-client introspect runs verify_password on empty client_secret_hash \u2192 InternalError \u2192 invalid_client 401, masking real bug + inconsistent vs /token.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-lease-abs-asref-unwrap-fragile",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 \u2014 api-handlers review by rust",
+      "score_delta": 1,
+      "evidence": "lease_abstraction.rs:774,867 \u2014 building.as_ref().unwrap().organization_id guarded only by `||` short-circuit on is_none(). One predicate reorder away from per-request 500 panic. Idiomatic fix: let-else.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/lease_abstraction.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-agencies-asref-unwrap-fragile",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 \u2014 api-handlers review by rust",
+      "score_delta": 1,
+      "evidence": "agencies.rs:747 \u2014 same member.as_ref().unwrap() short-circuit pattern inside verify_listing_access (called from POST listing routes L497, L533). One-line refactor away from panic on listing-access permission check.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/agencies.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup (with cumulative carve-out)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; vacuously passes",
+      "observed": "N/A",
+      "expected": "each new plan has adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans (cap=2)",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secret scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed",
+      "expected": "failed phases listed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converged",
+      "observed": "all 5 prior plans still in plans/ (4 now resolved-on-evidence, archived later by implementer; 1 (security-llm-doc-idor) still ready)",
+      "expected": "all prior plans in plans/ or _archive/"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=3 with sub-caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor liveness",
+      "observed": "pm_cursor.next_index=6 (in [0,7]); coverage_cursor=0 (advanced from 12, valid in [0,13)); both advanced this run",
+      "expected": "valid + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar \u2014 no signal hit confidence=high + score>=3 + allowlist this run. hotfix-no-test-pr-1866-deny-rustsec (high/2/security) does not match allowlist (genpdf upgrade is not doc-stub / orphan-remove / lockfile-bump shape, blocked upstream). screen-map drift / orphan signals did not fire. stalled-review only #1857 which is already in dispatcher review."
+}

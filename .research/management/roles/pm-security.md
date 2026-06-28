@@ -1,62 +1,59 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-28
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Last run: 2026-05-27 (32d stale). Sprint: Epic 6, 7A, 8A & 10A. Static read; no compile/run._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+The sprint's highest-severity open issues are unresolved OAuth refresh-token revocation bypass (#481, open, gates 10a-1 and 10a-3) and WebSocket JWT token exposure in access logs (#480, open, severity high). PR #1857 (IDOR fix for LLM document context) cannot be verified via gh API due to proxy GraphQL restriction — its merge-readiness is a blocker that must be confirmed through the web UI or direct repo access.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+| # | Action | Priority | Dependency | DoD |
+|---|--------|----------|------------|-----|
+| 1 | Verify and merge PR #1857 (security-llm-doc-idor IDOR fix) — confirm CI green and no outstanding review comments before prod | high | none | PR #1857 merged to dev; IDOR on LLM document context confirmed remediated |
+| 2 | Resolve issue #481: integration test in oauth_integration_tests.rs replays a revoked refresh token and asserts 401; gate 10a-1 / 10a-3 promotion on it | high | rust-backend | Test in CI; #481 closed |
+| 3 | Resolve issue #480: strip JWT from WebSocket query-param before access log; re-validate JWT on long-lived WS connection expiry | high | rust-backend | WS upgrade no longer logs bearer token; expiry re-check added; #480 closed |
+| 4 | Fix OCR auth gap (#1772): mount OCR routes behind the global auth middleware layer in addition to AuthUser extractor; add 401 regression test | high | rust-backend | Unauthenticated request returns 401; regression test in CI |
+| 5 | Enforce server-side Stripe idempotency on checkout session creation (#1785) — not just webhook settlement | medium | rust-backend | #1785 closed; duplicate creation within window returns 409 or cached response |
+| 6 | Mask PII fields (guest email, phone) in Booking.com integration tracing in `backend/crates/integrations/src/booking/mod.rs` | medium | rust-backend | No guest PII at info/debug level |
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+| # | Risk | P | I | Mitigation |
+|---|------|---|---|------------|
+| 1 | Issue #481 (OAuth revocation bypass) is open and gates 10a-1 / 10a-3 — RFC 9700 violation if shipped | medium | high | Code at auth.rs:1126 checks `revoked_at.is_some()` correctly, but issue is open because a test proving the path is missing — add replay test, close issue, block prod deploy of Epic 10A |
+| 2 | PR #1857 DRAFT/pending after 12-day routine lag; LLM document endpoints exploitable cross-tenant until merged | high | high | Prioritize merge this week; do not expose LLM doc endpoints to non-internal traffic until merged |
+| 3 | Message attachment IDOR (#1791) — object-store ref checks missing; cross-tenant attachment enumeration | medium | high | Add org_id ownership check before presigned URL generation in messaging attachment handler; release blocker |
+| 4 | WS JWT in query param (#480) lands in access logs / Loki / CloudWatch — bearer credentials leaked to anyone with log read | high | high | Move WS auth to short-lived ticket OR strip token at Tower middleware before logging |
+| 5 | oauth_integration_tests.rs is the highest-churn file this run (2718 LOC, REPEAT) — unstable auth test suite masks regressions | medium | high | Assign single owner to stabilize the file; require CI green on it before any Epic 10A `done` promotion |
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+1. PR #1857 merge-readiness could not be confirmed via gh API (GraphQL proxy disabled). What is the current review/CI status of #1857 and who is the designated approver?
+2. For issue #1772 (OCR endpoints unauthenticated): the OCR router uses AuthUser extractors per-handler but it is unclear whether it is mounted inside a global auth middleware layer or relies solely on extractor-level 401. Which mount point applies?
+3. Issue #1791 (message attachment IDOR) has no associated PR. Is there an active fix branch, or is it unassigned?
+4. The `routes/migration.rs` tenant-boundary check compares `organization_id != Some(org_id)` for non-system templates, but skips the check for system templates. Is cross-org access to system templates intentional and documented, or a latent privilege escalation path?
+5. Issue #1786 (sensor WebSocket authz integration tests missing): was #1737 (sensor WS auth PR) reviewed for **authz** correctness in addition to authn, or only authentication?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Should PR #1857 be treated as a prod release blocker (hold all prod deploys until merged) or only block the LLM/AI document feature flag? — owner: tech-lead / product
+- Message attachment IDOR (#1791) has no milestone or assignee — assign as sprint blocker for current messaging story set or defer to a hardening sprint? — owner: tech-lead
+- Issue #480 (WS JWT in logs): adopt one-time ticket approach or strip at middleware layer? Architecture decision required before implementation — owner: rust-backend lead
+
+## Raw role JSON
+
+```json
+{
+  "role": "pm-security",
+  "summary": "The sprint's highest-severity open issues are unresolved OAuth refresh-token revocation bypass (#481, open, gates 10a-1 and 10a-3) and WebSocket JWT token exposure in access logs (#480, open, severity high). PR #1857 (IDOR fix for LLM document context) cannot be verified via gh API due to proxy GraphQL restriction — its merge-readiness is a blocker that must be confirmed through the web UI or direct repo access.",
+  "next_actions": [
+    {"action":"Verify and merge PR #1857 (security-llm-doc-idor IDOR fix)","priority":"high","dependency":"none","definition_of_done":"PR #1857 merged to dev with all CI gates green; IDOR on LLM document context endpoints confirmed remediated"},
+    {"action":"Resolve issue #481 (OAuth refresh-token revocation bypass) by adding replay test; block 10a-1/10a-3 promotion","priority":"high","dependency":"rust-backend","definition_of_done":"Integration test in oauth_integration_tests.rs covers revoked-token replay; issue #481 closed"},
+    {"action":"Resolve issue #480 (WS JWT in access logs) — strip token + re-validate on JWT expiry","priority":"high","dependency":"rust-backend","definition_of_done":"WS upgrade no longer emits bearer token to access log; expiry re-check added; issue #480 closed"},
+    {"action":"Fix OCR auth gap (#1772) — confirm middleware mount + add 401 regression test","priority":"high","dependency":"rust-backend","definition_of_done":"Unauthenticated request to both OCR endpoints returns 401; regression test in CI"},
+    {"action":"Enforce server-side Stripe idempotency on checkout session creation (#1785)","priority":"medium","dependency":"rust-backend","definition_of_done":"Issue #1785 closed; duplicate checkout creation within idempotency window returns 409 or cached response"},
+    {"action":"Mask PII fields in Booking.com integration tracing","priority":"medium","dependency":"rust-backend","definition_of_done":"No guest.email or guest.phone values appear in tracing output at info/debug level in backend/crates/integrations/src/booking/mod.rs"}
+  ]
+}
+```
