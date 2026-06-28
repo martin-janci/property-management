@@ -33,7 +33,10 @@ interface ThreadWithPreview {
   id: string;
   organizationId: string;
   participantIds: string[];
-  otherParticipant: ParticipantInfo;
+  /** All other participants (everyone except the current user). For a 2-party
+   *  thread this is a single entry; for group threads ([BIT-206]) it is the
+   *  full list. Matches `ThreadWithPreview.participants` on the api-server. */
+  participants: ParticipantInfo[];
   lastMessage: MessagePreview | null;
   unreadCount: number;
   createdAt: string;
@@ -62,6 +65,17 @@ function participantName(p: ParticipantInfo): string {
   return full || p.email;
 }
 
+/** Title for a thread row, derived from its `participants` list. 2-party →
+ *  the other person's name; group ([BIT-206]) → "Name +N"; empty/malformed →
+ *  a safe fallback (never throws on an unexpected shape). */
+function threadTitle(thread: ThreadWithPreview): string {
+  const people = thread.participants ?? [];
+  if (people.length === 0) return 'Conversation';
+  const [first, ...rest] = people;
+  const name = participantName(first);
+  return rest.length > 0 ? `${name} +${rest.length}` : name;
+}
+
 interface MessagesScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -85,7 +99,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
     const needle = search.trim().toLowerCase();
     if (!needle) return threads;
     return threads.filter((t) =>
-      `${participantName(t.otherParticipant)} ${t.lastMessage?.content ?? ''}`
+      `${threadTitle(t)} ${t.lastMessage?.content ?? ''}`
         .toLowerCase()
         .includes(needle)
     );
@@ -147,7 +161,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
               >
                 <View style={s.cardHeader}>
                   <Text style={s.cardTitle} numberOfLines={1}>
-                    {participantName(thread.otherParticipant)}
+                    {threadTitle(thread)}
                   </Text>
                   <Text style={s.cardMeta}>{formatRelative(lastAt)}</Text>
                 </View>
