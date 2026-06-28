@@ -6,40 +6,40 @@ _Server: api-server. Modules: signatures.rs, templates.rs, legal.rs, lease_abstr
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | POST | /api/v1/documents/upload | upload_document | done | document_upload_tests.rs | CREATED happy path; 50 MiB body limit sub-router |
-| POST | /api/v1/documents | create_document | partial | — | no test hits POST / |
-| GET | /api/v1/documents | list_documents | partial | — | no test hits GET / |
+| POST | /api/v1/documents | create_document | done | documents_core_crud_tests.rs | CREATED happy path (create_document_succeeds) |
+| GET | /api/v1/documents | list_documents | done | documents_core_crud_tests.rs | OK happy path (list_documents_succeeds) |
 | GET | /api/v1/documents/{id} | get_document | done | document_upload_tests.rs | GET-back after upload asserts 200 |
-| PUT | /api/v1/documents/{id} | update_document | partial | — | no happy-path test |
-| DELETE | /api/v1/documents/{id} | delete_document | partial | — | no happy-path test |
+| PUT | /api/v1/documents/{id} | update_document | done | documents_core_crud_tests.rs | OK happy path (update_document_succeeds) |
+| DELETE | /api/v1/documents/{id} | delete_document | done | documents_core_crud_tests.rs | NO_CONTENT + soft-delete verified (delete_document_succeeds) |
 | POST | /api/v1/documents/{id}/move | move_document | done | document_folder_tests.rs | OK happy path (line 865) |
-| PUT | /api/v1/documents/{id}/access | update_document_access | partial | — | no happy-path test |
+| PUT | /api/v1/documents/{id}/access | update_document_access | done | documents_core_crud_tests.rs | OK happy path (update_document_access_succeeds) |
 | GET | /api/v1/documents/{id}/download | get_download_url | done | document_download_preview_tests.rs | OK happy path (line 870) + auth/IDOR |
 | GET | /api/v1/documents/{id}/preview | get_preview_url | done | document_download_preview_tests.rs | OK happy path (line 887) + auth/IDOR |
 
 ## documents/versions.rs  (mount: /api/v1/documents)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/documents/{id}/versions | get_version_history | partial | — | no test |
-| POST | /api/v1/documents/{id}/versions | create_version | partial | — | no test |
-| GET | /api/v1/documents/{id}/versions/{version_id} | get_version | partial | — | no test |
-| POST | /api/v1/documents/{id}/versions/{version_id}/restore | restore_version | partial | — | no test |
+| GET | /api/v1/documents/{id}/versions | get_version_history | done | documents_core_crud_tests.rs | OK happy path (get_version_history_succeeds) |
+| POST | /api/v1/documents/{id}/versions | create_version | done | documents_core_crud_tests.rs | CREATED happy path (create_version_succeeds) |
+| GET | /api/v1/documents/{id}/versions/{version_id} | get_version | done | documents_core_crud_tests.rs | OK happy path (get_version_succeeds) |
+| POST | /api/v1/documents/{id}/versions/{version_id}/restore | restore_version | done | documents_core_crud_tests.rs | CREATED happy path (restore_version_succeeds) |
 
 ## documents/folders.rs  (mount: /api/v1/documents)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/documents/folders | list_folders | partial | document_folder_tests.rs | only auth (401) assertion, no happy path |
+| GET | /api/v1/documents/folders | list_folders | done | document_folder_tests.rs | OK happy path (list_folders_manager_succeeds) |
 | POST | /api/v1/documents/folders | create_folder | done | document_folder_tests.rs | CREATED happy path (test_create_folder_manager_succeeds) |
-| GET | /api/v1/documents/folders/tree | get_folder_tree | partial | document_folder_tests.rs | only auth (401) assertion |
-| GET | /api/v1/documents/folders/{id} | get_folder | partial | document_folder_tests.rs | only auth/IDOR (401/404) |
+| GET | /api/v1/documents/folders/tree | get_folder_tree | done | document_folder_tests.rs | OK happy path (get_folder_tree_manager_succeeds) |
+| GET | /api/v1/documents/folders/{id} | get_folder | done | document_folder_tests.rs | OK happy path (get_folder_manager_succeeds) |
 | PUT | /api/v1/documents/folders/{id} | update_folder | done | document_folder_tests.rs | OK happy path (lines 1039/1086) |
-| DELETE | /api/v1/documents/folders/{id} | delete_folder | partial | document_folder_tests.rs | only auth/IDOR (401/404) |
+| DELETE | /api/v1/documents/folders/{id} | delete_folder | done | document_folder_tests.rs | NO_CONTENT + soft-delete verified (delete_folder_manager_succeeds) |
 
 ## documents/shares.rs  (mount: /api/v1/documents authenticated_router + public_router merged at root via documents::public_router())
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/documents/{id}/shares | list_shares | partial | — | no test |
-| POST | /api/v1/documents/{id}/shares | create_share | partial | — | no test |
-| DELETE | /api/v1/documents/{id}/shares/{share_id} | revoke_share | partial | — | no test |
+| GET | /api/v1/documents/{id}/shares | list_shares | done | documents_core_crud_tests.rs | OK happy path (list_shares_succeeds) |
+| POST | /api/v1/documents/{id}/shares | create_share | done | documents_core_crud_tests.rs | CREATED happy path (create_share_succeeds) |
+| DELETE | /api/v1/documents/{id}/shares/{share_id} | revoke_share | done | documents_core_crud_tests.rs | NO_CONTENT + revoked_at verified (revoke_share_succeeds) |
 | GET | /shared/{token} | access_shared_document | done | document_share_access_tests.rs | OK happy path; public (no-auth), merged at root not under /api/v1 |
 | POST | /shared/{token}/access | access_protected_share | done | document_share_access_tests.rs | OK happy path; public_router merged in lib.rs |
 
@@ -169,4 +169,4 @@ _Server: api-server. Modules: signatures.rs, templates.rs, legal.rs, lease_abstr
 | POST | /api/v1/forms/{id}/download | record_download | partial | form_cross_org_idor_tests.rs | only IDOR (404), no happy path |
 
 ## Summary
-- done: 15 | partial: 103 | stub: 0 | missing: 0 | total: 118
+- done: 31 | partial: 87 | stub: 0 | missing: 0 | total: 118
