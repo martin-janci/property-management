@@ -412,7 +412,7 @@
       "specialist": "rust-backend",
       "implementer_summary": "pr=1810 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=move-only split of sensor.rs (962 LOC) into 7 cohesive submodules; 29 methods byte-identical; fmt/check/clippy clean",
       "reviewer_summary": "verdict=approve note=move-only-split-verified-symbol-parity-exact-no-sql-change-scope-clean (self-approve blocked; posted as comment)",
-      "last_reviewed_oid": "73c52c5688e17ddb0c1 a9b72fd12b0f4d7ee",
+      "last_reviewed_oid": "73c52c5688e17ddb0c1ac7eb9a72fd12b0f4d7ee",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
