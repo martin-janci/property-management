@@ -199,8 +199,11 @@ impl Ctx {
         let resp = self
             .app
             .execute(
-                self.post(&format!("/api/v1/board-meetings/{meeting_id}/motions"), body)
-                    .build(),
+                self.post(
+                    &format!("/api/v1/board-meetings/{meeting_id}/motions"),
+                    body,
+                )
+                .build(),
             )
             .await;
         assert_eq!(
@@ -244,8 +247,11 @@ impl Ctx {
         let resp = self
             .app
             .execute(
-                self.post(&format!("/api/v1/board-meetings/{meeting_id}/actions"), body)
-                    .build(),
+                self.post(
+                    &format!("/api/v1/board-meetings/{meeting_id}/actions"),
+                    body,
+                )
+                .build(),
             )
             .await;
         assert_eq!(
@@ -300,7 +306,8 @@ impl Ctx {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_dashboard_succeeds(pool: PgPool) {
     let ctx = setup(pool, "dash").await;
-    ctx.assert_ok(ctx.get("/api/v1/board-meetings/dashboard")).await;
+    ctx.assert_ok(ctx.get("/api/v1/board-meetings/dashboard"))
+        .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -324,7 +331,8 @@ async fn motion_status_counts_succeeds(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_board_members_succeeds(pool: PgPool) {
     let ctx = setup(pool, "memlist").await;
-    ctx.assert_ok(ctx.get("/api/v1/board-meetings/members")).await;
+    ctx.assert_ok(ctx.get("/api/v1/board-meetings/members"))
+        .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -513,7 +521,8 @@ async fn create_motion_succeeds(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_motions_succeeds(pool: PgPool) {
     let ctx = setup(pool, "motlist").await;
-    ctx.assert_ok(ctx.get("/api/v1/board-meetings/motions")).await;
+    ctx.assert_ok(ctx.get("/api/v1/board-meetings/motions"))
+        .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -672,7 +681,8 @@ async fn create_action_item_succeeds(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_action_items_succeeds(pool: PgPool) {
     let ctx = setup(pool, "actlist").await;
-    ctx.assert_ok(ctx.get("/api/v1/board-meetings/actions")).await;
+    ctx.assert_ok(ctx.get("/api/v1/board-meetings/actions"))
+        .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
