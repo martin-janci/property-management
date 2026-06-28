@@ -24,10 +24,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use super::sync::OrgIdPath;
+use super::sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath};
 use crate::state::AppState;
 use common::errors::ErrorResponse;
-use common::TenantRole;
 
 /// Maximum number of availability/rate updates accepted in a single
 /// `listing-push` request.
@@ -252,35 +251,13 @@ pub async fn push_booking_listing(
         "Pushing listing to Booking.com"
     );
 
-    // BLOCKING-1: Ensure caller belongs to this org (defense-in-depth alongside RLS).
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "You do not have access to this organization",
-            )),
-        ));
-    }
-
-    // BLOCKING-2: Require an administrative role to manage integrations.
-    let role = auth.role.unwrap_or(TenantRole::Guest);
-    let allowed = matches!(
-        role,
-        TenantRole::SuperAdmin
-            | TenantRole::PlatformAdmin
-            | TenantRole::OrgAdmin
-            | TenantRole::Manager
-    );
-    if !allowed {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Insufficient permissions to manage integrations",
-            )),
-        ));
-    }
+    // SECURITY (#1787, mirrors #1525): authorize against the caller's DB
+    // membership + role for the PATH org — not the JWT `role`/`tenant_id` claim,
+    // which is tied to X-Tenant-ID and can diverge from the caller's actual role
+    // in path.org_id (a manager in org A could otherwise mutate org B's OTA
+    // integration). Matches the canonical airbnb_connections / oauth pattern.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Validate the payload before any DB lookup or OTA XML generation so a
     // malformed batch fails fast with a 400 instead of producing invalid XML.
@@ -562,35 +539,13 @@ pub async fn get_booking_conflicts(
         "Checking Booking.com reservation conflicts"
     );
 
-    // BLOCKING-1: Ensure caller belongs to this org (defense-in-depth alongside RLS).
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "You do not have access to this organization",
-            )),
-        ));
-    }
-
-    // BLOCKING-2: Require an administrative role to manage integrations.
-    let role = auth.role.unwrap_or(TenantRole::Guest);
-    let allowed = matches!(
-        role,
-        TenantRole::SuperAdmin
-            | TenantRole::PlatformAdmin
-            | TenantRole::OrgAdmin
-            | TenantRole::Manager
-    );
-    if !allowed {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Insufficient permissions to manage integrations",
-            )),
-        ));
-    }
+    // SECURITY (#1787, mirrors #1525): authorize against the caller's DB
+    // membership + role for the PATH org — not the JWT `role`/`tenant_id` claim,
+    // which is tied to X-Tenant-ID and can diverge from the caller's actual role
+    // in path.org_id (a manager in org A could otherwise mutate org B's OTA
+    // integration). Matches the canonical airbnb_connections / oauth pattern.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
