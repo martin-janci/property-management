@@ -112,9 +112,9 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 1.1 POST /api/v1/multi-currency/config -> create_or_update_currency_config (200)
     let create_config_payload = json!({
-        "base_currency": "EUR",
-        "enabled_currencies": ["EUR", "USD", "CZK"],
-        "display_currency": "USD",
+        "base_currency": "E_U_R",
+        "enabled_currencies": ["E_U_R", "U_S_D", "C_Z_K"],
+        "display_currency": "U_S_D",
         "show_original_amount": true,
         "decimal_places": 2,
         "exchange_rate_source": "ecb",
@@ -163,7 +163,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     // 2.1 POST /api/v1/multi-currency/properties -> create_property_currency_config (200)
     let create_prop_payload = json!({
         "building_id": building_id,
-        "default_currency": "USD",
+        "default_currency": "U_S_D",
         "country": "SK",
         "vat_rate": "20.00",
         "requires_local_reporting": true,
@@ -180,7 +180,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 2.2 PUT /api/v1/multi-currency/properties/{building_id} -> update_property_currency_config (200)
     let update_prop_payload = json!({
-        "default_currency": "EUR"
+        "default_currency": "E_U_R"
     });
     let resp = app
         .execute(
@@ -218,8 +218,8 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 3.1 POST /api/v1/multi-currency/rates -> create_exchange_rate (200)
     let create_rate_payload = json!({
-        "from_currency": "EUR",
-        "to_currency": "USD",
+        "from_currency": "E_U_R",
+        "to_currency": "U_S_D",
         "rate": "1.10",
         "rate_date": "2026-06-27",
         "source": "ecb"
@@ -237,7 +237,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     // 3.2 GET /api/v1/multi-currency/rates -> list_exchange_rates (200)
     let resp = app
         .execute(
-            app.get("/api/v1/multi-currency/rates?from_currency=EUR&to_currency=USD")
+            app.get("/api/v1/multi-currency/rates?from_currency=E_U_R&to_currency=U_S_D")
                 .bearer(&token)
                 .build(),
         )
@@ -247,7 +247,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     // 3.3 GET /api/v1/multi-currency/rates/latest -> get_latest_exchange_rate (200)
     let resp = app
         .execute(
-            app.get("/api/v1/multi-currency/rates/latest?from_currency=EUR&to_currency=USD")
+            app.get("/api/v1/multi-currency/rates/latest?from_currency=E_U_R&to_currency=U_S_D")
                 .bearer(&token)
                 .build(),
         )
@@ -256,8 +256,8 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 3.4 POST /api/v1/multi-currency/rates/override -> override_exchange_rate (200)
     let override_payload = json!({
-        "from_currency": "EUR",
-        "to_currency": "USD",
+        "from_currency": "E_U_R",
+        "to_currency": "U_S_D",
         "rate": "1.15",
         "rate_date": "2026-06-27",
         "reason": "Test Override"
@@ -301,7 +301,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         "building_id": building_id,
         "source_type": "invoice",
         "source_id": source_id,
-        "original_currency": "USD",
+        "original_currency": "U_S_D",
         "original_amount": "100.00",
         "override_rate": "1.10",
         "override_reason": "Override Rate"
@@ -362,12 +362,12 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let create_lease_payload = json!({
         "lease_id": lease_id,
         "property_country": "SK",
-        "property_currency": "EUR",
+        "property_currency": "E_U_R",
         "tenant_country": "CZ",
         "tenant_tax_id": "CZ12345678",
         "tenant_vat_number": "CZ12345678",
-        "lease_currency": "EUR",
-        "payment_currency": "CZK",
+        "lease_currency": "E_U_R",
+        "payment_currency": "C_Z_K",
         "convert_at_invoice_date": true,
         "convert_at_payment_date": false,
         "local_vat_applicable": true,
@@ -436,7 +436,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let create_report_config_payload = json!({
         "name": "Consolidated EU Report",
         "description": "Monthly consolidation in EUR",
-        "report_currency": "EUR",
+        "report_currency": "E_U_R",
         "show_original_currencies": true,
         "show_conversion_details": true,
         "rate_date_type": "end_of_period",
@@ -470,7 +470,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let generate_payload = json!({
         "period_start": "2026-06-01",
         "period_end": "2026-06-30",
-        "report_currency": "EUR",
+        "report_currency": "E_U_R",
         "config_id": report_config_id
     });
     let resp = app

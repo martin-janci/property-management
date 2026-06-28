@@ -7,17 +7,62 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::Utc;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::Serialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user_with_org, TestApp, TestUser};
+use common::{create_authenticated_user_with_org, TestApp, TestConfig, TestUser};
+
+// market-pricing handlers read the org from `AuthUser.tenant_id` (the JWT
+// `tenant_id` claim), not the `X-Tenant-ID` header — a login token carries no
+// such claim, so we mint one directly (same pattern as the multi-currency tests).
+#[derive(Serialize)]
+struct TestClaims {
+    sub: Uuid,
+    exp: i64,
+    iat: i64,
+    token_type: String,
+    tenant_id: Option<Uuid>,
+    role: Option<String>,
+    email: String,
+    name: String,
+}
+
+fn mint(user_id: Uuid, email: &str, org_id: Uuid) -> String {
+    let now = Utc::now().timestamp();
+    let claims = TestClaims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("manager".to_string()),
+        email: email.to_string(),
+        name: "Market Pricing Happy User".to_string(),
+    };
+    let secret = TestConfig::default().jwt_secret;
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode test JWT")
+}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "mphappy").await;
+    let (_login_token, org_id) = create_authenticated_user_with_org(&app, &user, "mphappy").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let token = mint(user_id, &user.email, org_id);
     let session = app.session(token, org_id);
 
     // Seed building and unit for price history / current-rent routes

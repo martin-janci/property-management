@@ -7,11 +7,61 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::Utc;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::Serialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user_with_org, TestApp, TestUser};
+use common::{create_authenticated_user_with_org, TestApp, TestConfig, TestUser};
+
+// `create_invoice` (and the other accounting mutations) read the org from
+// `AuthUser.tenant_id` (the JWT `tenant_id` claim) and require Manager+ via the
+// DB membership. A login token carries no tenant claim — so it 403s with an
+// empty body before the role check. We mint a tenant-scoped token; the
+// `org_admin` membership seeded by the helper (level 90 ≥ Manager 80) satisfies
+// the role gate.
+#[derive(Serialize)]
+struct TestClaims {
+    sub: Uuid,
+    exp: i64,
+    iat: i64,
+    token_type: String,
+    tenant_id: Option<Uuid>,
+    role: Option<String>,
+    email: String,
+    name: String,
+}
+
+fn mint(user_id: Uuid, email: &str, org_id: Uuid) -> String {
+    let now = Utc::now().timestamp();
+    let claims = TestClaims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("manager".to_string()),
+        email: email.to_string(),
+        name: "Accounting Happy User".to_string(),
+    };
+    let secret = TestConfig::default().jwt_secret;
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode test JWT")
+}
+
+async fn resolve_user_id(app: &TestApp, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id")
+}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
@@ -23,10 +73,14 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
 
     // Org A (Happy Path & Target)
     let user_a = TestUser::new();
-    let (token_a, org_a_id) = create_authenticated_user_with_org(&app, &user_a, "orga").await;
+    let (_login_a, org_a_id) = create_authenticated_user_with_org(&app, &user_a, "orga").await;
+    let user_a_id = resolve_user_id(&app, &user_a.email).await;
+    let token_a = mint(user_a_id, &user_a.email, org_a_id);
     // Org B (Attacker / Foreign Tenant)
     let user_b = TestUser::new();
-    let (token_b, org_b_id) = create_authenticated_user_with_org(&app, &user_b, "orgb").await;
+    let (_login_b, org_b_id) = create_authenticated_user_with_org(&app, &user_b, "orgb").await;
+    let user_b_id = resolve_user_id(&app, &user_b.email).await;
+    let token_b = mint(user_b_id, &user_b.email, org_b_id);
 
     // Seed Contact A in Org A
     let contact_a_id = sqlx::query_scalar::<_, Uuid>(
