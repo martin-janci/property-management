@@ -83,11 +83,7 @@ async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
 
 /// Register + log in a user and make them a wildcard-permission `manager`
 /// member of a fresh org. Returns `(token, org_id, user_id, role_id)`.
-async fn manager_with_org(
-    pool: &PgPool,
-    app: &TestApp,
-    slug: &str,
-) -> (String, Uuid, Uuid, Uuid) {
+async fn manager_with_org(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid, Uuid, Uuid) {
     let user = TestUser::new();
     let (token, _refresh) = create_authenticated_user(app, &user).await;
     let user_id = user_id_for(pool, &user.email).await;
@@ -229,10 +225,8 @@ async fn buildings_units_owners_residents_happy_path(pool: PgPool) {
 
     // --- Unit residents --------------------------------------------------
     app.execute(
-        sess.get(&format!(
-            "/api/v1/buildings/{bid}/units/{uid}/residents"
-        ))
-        .build(),
+        sess.get(&format!("/api/v1/buildings/{bid}/units/{uid}/residents"))
+            .build(),
     )
     .await
     .assert_status(StatusCode::OK);
@@ -316,10 +310,8 @@ async fn buildings_units_owners_residents_happy_path(pool: PgPool) {
     .assert_status(StatusCode::OK);
 
     app.execute(
-        sess.post(&format!(
-            "/api/v1/buildings/{bid}/units/{uid}/restore"
-        ))
-        .build(),
+        sess.post(&format!("/api/v1/buildings/{bid}/units/{uid}/restore"))
+            .build(),
     )
     .await
     .assert_status(StatusCode::OK);
