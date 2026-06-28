@@ -384,9 +384,10 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
         .await;
     assert_eq!(create_resp.status, StatusCode::CREATED, "create session");
 
-    let session_id = create_resp.json_value()["session"]["id"]
+    let create_json = create_resp.json_value();
+    let session_id = create_json["session"]["id"]
         .as_str()
-        .or_else(|| create_resp.json_value()["id"].as_str())
+        .or_else(|| create_json["id"].as_str())
         .expect("session id in response")
         .to_string();
 
@@ -419,9 +420,10 @@ async fn test_list_chat_messages_roundtrip(pool: PgPool) {
         "create session for message list"
     );
 
-    let session_id = create_resp.json_value()["session"]["id"]
+    let create_json = create_resp.json_value();
+    let session_id = create_json["session"]["id"]
         .as_str()
-        .or_else(|| create_resp.json_value()["id"].as_str())
+        .or_else(|| create_json["id"].as_str())
         .expect("session id")
         .to_string();
 
@@ -502,9 +504,10 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
         "create workflow for action test"
     );
 
-    let wf_id = create_resp.json_value()["workflow"]["id"]
+    let create_json = create_resp.json_value();
+    let wf_id = create_json["workflow"]["id"]
         .as_str()
-        .or_else(|| create_resp.json_value()["id"].as_str())
+        .or_else(|| create_json["id"].as_str())
         .expect("workflow id")
         .to_string();
 
