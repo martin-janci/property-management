@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-28T08:30:00Z",
+  "last_run_ms": 30000,
+  "last_pr_seen": 1917,
+  "last_issue_seen": 1906,
+  "last_commit_sha": "bd65198efd918f477712204e97f6b189c632c37c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -321,6 +321,26 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "frontend/packages/sitemap/src/data/api-server/index.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-28",
+      "recent_churn": 3
+    },
+    "backend/servers/api-server/src/state.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-28",
+      "recent_churn": 3
+    },
+    "backend/servers/api-server/src/routes/migration.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-28",
+      "recent_churn": 3
+    },
+    "backend/crates/db/src/repositories/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-28",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -553,7 +573,19 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-28",
+    "churn-hotspot-frontend-packages-sitemap-src-data-api-server-index-ts",
+    "churn-hotspot-backend-servers-api-server-src-state-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-mod-rs",
+    "unchecked-todo-pr-1861",
+    "unchecked-todo-pr-1859",
+    "untriaged-issue-1906",
+    "untriaged-issue-1905",
+    "untriaged-issue-1791",
+    "untriaged-issue-1764",
+    "untriaged-issue-1680"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,9 +599,9 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
-    "plans_created": 12,
+    "runs": 41,
+    "vectors_created": 184,
+    "plans_created": 13,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
@@ -597,6 +629,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

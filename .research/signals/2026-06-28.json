@@ -1,0 +1,243 @@
+{
+  "date": "2026-06-28",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar + allowlist",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-28",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z (12d ago)",
+      "score_delta": 0,
+      "candidate_vector": "dx",
+      "evidence": "Routine has not run since 2026-06-16; cloud cron likely paused while dispatcher kept ticking on a separate branch. Surfacing as P4 stale_routine_alert.",
+      "confidence": "high"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-sitemap-src-data-api-server-index-ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-28 origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "evidence": "3 touches in 12d window; endpoint catalog autogen \u2014 instability indicator.",
+      "confidence": "high"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-state-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-28 origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "evidence": "3 touches in 12d window; state.rs adjusted across regional-compliance + tenant-migration + dep work.",
+      "confidence": "high"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-28 origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "evidence": "3 touches in 12d window; tenant-migration routes (PR #1859 + follow-ups).",
+      "confidence": "high"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-28 origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "evidence": "3 touches in 12d window; repository module index churn from multiple split PRs.",
+      "confidence": "high"
+    },
+    {
+      "id": "unchecked-todo-pr-1861",
+      "type": "unchecked-todo",
+      "source": "PR #1861 (merged 2026-06-27)",
+      "score_delta": 3,
+      "candidate_vector": "security",
+      "evidence": "PR #1861 (fix(api-server): implement 19 regional-compliance endpoints, Epic 72) merged with PR-body CI/test checkboxes unchecked. Followed up by open issue #1906 flagging missing role checks and dead-code quorum lookup \u2014 confirms the unchecked items were real.",
+      "confidence": "high"
+    },
+    {
+      "id": "unchecked-todo-pr-1859",
+      "type": "unchecked-todo",
+      "source": "PR #1859 (merged 2026-06-27)",
+      "score_delta": 2,
+      "candidate_vector": "refactor",
+      "evidence": "PR #1859 (23 tenant-migration endpoints) merged with verification checkboxes unchecked. Follow-up issue #1905 flagged duplicate migration number + import/export gaps \u2014 confirms unchecked items were material.",
+      "confidence": "high"
+    },
+    {
+      "id": "untriaged-issue-1906",
+      "type": "untriaged-issue",
+      "source": "issue #1906 (opened 2026-06-28)",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "evidence": "Follow-up: regional-compliance quorum lookup is dead code + missing role checks/test gaps (PR #1861). No label yet.",
+      "confidence": "medium"
+    },
+    {
+      "id": "untriaged-issue-1905",
+      "type": "untriaged-issue",
+      "source": "issue #1905 (opened 2026-06-28)",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "evidence": "Follow-up: tenant-migration endpoints \u2014 duplicate migration number + import/export gaps. No label yet.",
+      "confidence": "medium"
+    },
+    {
+      "id": "untriaged-issue-1791",
+      "type": "untriaged-issue",
+      "source": "issue #1791 (opened 2026-06-23)",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "evidence": "Follow-up: message attachments \u2014 link trusts client-supplied file_key (IDOR) + upload validation gaps. Open, no label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "untriaged-issue-1764",
+      "type": "untriaged-issue",
+      "source": "issue #1764 (opened 2026-06-23)",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "evidence": "Follow-up: Stripe Checkout hardening \u2014 session-creation idempotency + webhook gaps. Open, no label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "untriaged-issue-1680",
+      "type": "untriaged-issue",
+      "source": "issue #1680 (opened 2026-06-23)",
+      "score_delta": 1,
+      "candidate_vector": "triage",
+      "evidence": "Research dispatcher: cron environment can't run core pipeline (fire-and-forget). Operational defect \u2014 would help close the 12d routine gap.",
+      "confidence": "medium"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-28.md && head -1 == '# 2026-06-28'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "plans/unchecked-todo-pr-1861.md \u00b7 adversarial pass: passed",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + metadata + 11 headings + capability + Mode + files exist",
+      "observed": "1 new plan, all checks pass",
+      "expected": "\u22642 + all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached non-.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-skip cursor invariance",
+      "observed": "review_cursor + pm_cursor unchanged (Phase 1.5 + 1.6 role-rotation skipped)",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans preserved",
+      "observed": "all plan slugs in HEAD still present in plans/ or _archive/",
+      "expected": "all preserved"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 \u2192 7",
+      "expected": ">= prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions (no candidate matched)",
+      "expected": "\u22643 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness",
+      "observed": "action-list/risks parse, project-state non-empty, pm_cursor=5 (Phase 1.6 skipped \u2192 no-op), coverage_cursor 12\u21920 (upkeep wraparound)",
+      "expected": "pass or no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token grep on added lines",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "QG11",
+      "passed": true,
+      "command": "placeholder-rot grep on plan + brief",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
