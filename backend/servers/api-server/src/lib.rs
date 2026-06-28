@@ -436,6 +436,18 @@ pub fn create_router(state: AppState) -> Router {
     // same chain from `main.rs::serve` via `attach_admin_extensions` so the
     // two paths cannot drift.
     attach_admin_extensions(route_table(), &admin_ext)
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer, CSP)
+        // on every response (#954). This layer is also applied by the
+        // production binary in `main.rs::apply_middleware`; it MUST be mirrored
+        // here so the integration-test path (which exercises `create_router`,
+        // not `main.rs::serve`) actually verifies the header wiring. Before
+        // PR #963's follow-up the layer lived only in `main.rs`, so every
+        // integration test ran without security headers and the wiring was
+        // never exercised end-to-end (regression guarded by
+        // `security_headers_tests.rs` + `router_single_source_tests.rs`).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration
