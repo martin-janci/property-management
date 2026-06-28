@@ -300,5 +300,12 @@
       "observed": "0 Telegram-token patterns matched",
       "expected": "0"
     }
+  ],
+  "dispatcher_payloads": [
+    {
+      "received_at": "2026-06-28T03:35:00Z",
+      "payload": "buffer-low: claimable=18/72 \u2014 coverage net-new exhausted, refill planner/regenerate coverage.json",
+      "action_taken": "logged-only; routine-prompt has no buffer-low trigger and the 2-plan-per-run cap is a hard rule. Recommend: (a) hand-author additional plans under .research/plans/; (b) fire routine with text:'deep' for a 30-day sweep; (c) run local /ppt-project-management scan to rebuild coverage.json + re-rank. This routine already promoted 2 plans (the cap) and committed."
+    }
   ]
 }
