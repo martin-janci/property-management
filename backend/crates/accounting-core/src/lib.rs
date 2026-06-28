@@ -24,6 +24,7 @@
 #![allow(unused)]
 
 pub mod audit;
+pub mod crypto;
 pub mod errors;
 pub mod money;
 pub mod numbering;

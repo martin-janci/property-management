@@ -20,3 +20,12 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 utoipa = { workspace = true }
+
+# Security primitives (UC-ACC-16.1 / 05.11): RFC-6238 TOTP + token hashing.
+hmac = { workspace = true }
+sha1 = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+hex = { workspace = true }
+data-encoding = { workspace = true }
+subtle = { workspace = true }
