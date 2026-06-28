@@ -34,19 +34,18 @@ async fn create_llm_tables(pool: &PgPool) {
         CREATE TABLE IF NOT EXISTS llm_generation_requests (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             organization_id UUID NOT NULL,
-            user_id UUID,
+            user_id UUID NOT NULL,
             request_type TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            model TEXT NOT NULL,
+            prompt_template_id UUID,
             status TEXT NOT NULL DEFAULT 'pending',
-            model TEXT,
-            provider TEXT,
             input_data JSONB NOT NULL DEFAULT '{}'::jsonb,
-            output_data JSONB,
-            error_message TEXT,
-            input_tokens INTEGER,
-            output_tokens INTEGER,
+            result JSONB,
+            tokens_used INTEGER,
+            latency_ms INTEGER,
             cost_cents INTEGER,
-            processing_time_ms INTEGER,
-            metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+            error_message TEXT,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             completed_at TIMESTAMPTZ
         )
@@ -61,13 +60,16 @@ async fn create_llm_tables(pool: &PgPool) {
         CREATE TABLE IF NOT EXISTS llm_prompt_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             organization_id UUID,
-            template_type TEXT NOT NULL,
+            request_type TEXT NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
-            prompt_template TEXT NOT NULL,
+            system_prompt TEXT NOT NULL DEFAULT '',
+            user_prompt_template TEXT NOT NULL DEFAULT '',
             variables JSONB NOT NULL DEFAULT '[]'::jsonb,
-            model TEXT,
             provider TEXT,
+            model TEXT,
+            temperature REAL,
+            max_tokens INTEGER,
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             is_system BOOLEAN NOT NULL DEFAULT FALSE,
             version INTEGER NOT NULL DEFAULT 1,
@@ -113,7 +115,7 @@ async fn create_llm_tables(pool: &PgPool) {
             confidence_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.7,
             escalation_email TEXT,
             escalation_webhook_url TEXT,
-            auto_escalate_topics TEXT[] NOT NULL DEFAULT '{}',
+            auto_escalate_topics JSONB NOT NULL DEFAULT '[]'::jsonb,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
@@ -200,30 +202,30 @@ async fn create_llm_tables(pool: &PgPool) {
 // Seed helpers
 // =============================================================================
 
-async fn seed_workflow(pool: &PgPool, org_id: Uuid) -> Uuid {
+async fn seed_workflow(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO workflows (organization_id, name, trigger_type, enabled, trigger_count)
-        VALUES ($1, 'Batch5 Test Workflow', 'manual', TRUE, 0)
+        INSERT INTO workflows (organization_id, name, trigger_type, enabled, trigger_count, created_by)
+        VALUES ($1, 'Batch5 Test Workflow', 'manual', TRUE, 0, $2)
         RETURNING id
         "#,
     )
     .bind(org_id)
+    .bind(user_id)
     .fetch_one(pool)
     .await
     .expect("seed workflow")
 }
 
-async fn seed_workflow_execution(pool: &PgPool, workflow_id: Uuid, org_id: Uuid) -> Uuid {
+async fn seed_workflow_execution(pool: &PgPool, workflow_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO workflow_executions (workflow_id, organization_id, trigger_event, status, started_at)
-        VALUES ($1, $2, '{"type":"manual"}'::jsonb, 'completed', NOW())
+        INSERT INTO workflow_executions (workflow_id, trigger_event, status, started_at)
+        VALUES ($1, '{"type":"manual"}'::jsonb, 'completed', NOW())
         RETURNING id
         "#,
     )
     .bind(workflow_id)
-    .bind(org_id)
     .fetch_one(pool)
     .await
     .expect("seed workflow execution")
@@ -260,15 +262,16 @@ async fn seed_voice_device(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     .expect("seed voice device")
 }
 
-async fn seed_generation_request(pool: &PgPool, org_id: Uuid) -> Uuid {
+async fn seed_generation_request(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO llm_generation_requests (organization_id, request_type, status, input_data)
-        VALUES ($1, 'lease_generation', 'completed', '{}'::jsonb)
+        INSERT INTO llm_generation_requests (organization_id, user_id, request_type, provider, model, status, input_data)
+        VALUES ($1, $2, 'lease_generation', 'openai', 'gpt-4', 'completed', '{}'::jsonb)
         RETURNING id
         "#,
     )
     .bind(org_id)
+    .bind(user_id)
     .fetch_one(pool)
     .await
     .expect("seed generation request")
@@ -277,8 +280,8 @@ async fn seed_generation_request(pool: &PgPool, org_id: Uuid) -> Uuid {
 async fn seed_prompt_template(pool: &PgPool) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO llm_prompt_templates (template_type, name, prompt_template, is_system)
-        VALUES ('lease_generation', 'Standard Lease Template', 'Generate a lease for {{unit}}', TRUE)
+        INSERT INTO llm_prompt_templates (request_type, name, system_prompt, user_prompt_template, is_system)
+        VALUES ('lease_generation', 'Standard Lease Template', 'You are a lease generator.', 'Generate a lease for {{unit}}', TRUE)
         RETURNING id
         "#,
     )
@@ -306,8 +309,9 @@ async fn trigger_workflow_returns_created(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-trigger").await;
     let session = app.session(token, org_id);
+    let user_id = user_id_for(&pool, &user.email).await;
 
-    let workflow_id = seed_workflow(&pool, org_id).await;
+    let workflow_id = seed_workflow(&pool, org_id, user_id).await;
 
     let resp = app
         .execute(
@@ -341,9 +345,10 @@ async fn get_workflow_execution_returns_ok(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-exec-get").await;
     let session = app.session(token, org_id);
+    let user_id = user_id_for(&pool, &user.email).await;
 
-    let workflow_id = seed_workflow(&pool, org_id).await;
-    let execution_id = seed_workflow_execution(&pool, workflow_id, org_id).await;
+    let workflow_id = seed_workflow(&pool, org_id, user_id).await;
+    let execution_id = seed_workflow_execution(&pool, workflow_id).await;
 
     let resp = app
         .execute(
@@ -372,9 +377,10 @@ async fn list_workflow_execution_steps_returns_ok(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "wf-exec-steps").await;
     let session = app.session(token, org_id);
+    let user_id = user_id_for(&pool, &user.email).await;
 
-    let workflow_id = seed_workflow(&pool, org_id).await;
-    let execution_id = seed_workflow_execution(&pool, workflow_id, org_id).await;
+    let workflow_id = seed_workflow(&pool, org_id, user_id).await;
+    let execution_id = seed_workflow_execution(&pool, workflow_id).await;
 
     let resp = app
         .execute(
@@ -860,8 +866,9 @@ async fn get_generation_request_returns_ok(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-request-get").await;
     let session = app.session(token, org_id);
+    let user_id = user_id_for(&pool, &user.email).await;
 
-    let request_id = seed_generation_request(&pool, org_id).await;
+    let request_id = seed_generation_request(&pool, org_id, user_id).await;
 
     let resp = app
         .execute(
