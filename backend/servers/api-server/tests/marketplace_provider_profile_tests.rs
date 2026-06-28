@@ -132,6 +132,7 @@ async fn seed_quote(pool: &PgPool, rfq_id: Uuid, provider_id: Uuid) -> Uuid {
     .expect("seed quote")
 }
 
+#[allow(dead_code)]
 async fn seed_verification(pool: &PgPool, provider_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO provider_verifications

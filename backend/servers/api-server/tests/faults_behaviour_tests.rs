@@ -121,7 +121,7 @@ async fn test_update_fault_title(pool: PgPool) {
         .put(&format!("/api/v1/faults/{}", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "title": "Updated Fault Title" }))
+        .json(json!({ "title": "Updated Fault Title" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "update fault: {}", resp.text());
@@ -149,7 +149,7 @@ async fn test_update_fault_status_to_in_progress(pool: PgPool) {
         .put(&format!("/api/v1/faults/{}/status", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "status": "in_progress", "note": "Work started" }))
+        .json(json!({ "status": "in_progress", "note": "Work started" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -176,7 +176,7 @@ async fn test_resolve_fault(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/resolve", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "resolution_notes": "Pipe was replaced." }))
+        .json(json!({ "resolution_notes": "Pipe was replaced." }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -204,7 +204,7 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/resolve", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "resolution_notes": "Fixed." }))
+        .json(json!({ "resolution_notes": "Fixed." }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -214,7 +214,7 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/confirm", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "rating": 5, "feedback": "Great work!" }))
+        .json(json!({ "rating": 5, "feedback": "Great work!" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -253,7 +253,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/resolve", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "resolution_notes": "Fixed temporarily." }))
+        .json(json!({ "resolution_notes": "Fixed temporarily." }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK);
@@ -263,7 +263,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/reopen", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "reason": "Problem recurred." }))
+        .json(json!({ "reason": "Problem recurred." }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "reopen fault: {}", resp.text());
@@ -333,7 +333,7 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/comments", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "note": "Investigating the issue.", "is_internal": false }))
+        .json(json!({ "note": "Investigating the issue.", "is_internal": false }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -376,7 +376,7 @@ async fn test_add_work_note(pool: PgPool) {
         .post(&format!("/api/v1/faults/{}/work-notes", fault_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "note": "Ordered replacement parts." }))
+        .json(json!({ "note": "Ordered replacement parts." }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
