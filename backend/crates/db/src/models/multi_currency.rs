@@ -56,6 +56,50 @@ impl std::fmt::Display for SupportedCurrency {
     }
 }
 
+/// Error returned when a string cannot be parsed into a [`SupportedCurrency`].
+///
+/// Carries the offending (uppercased) input so callers can build a helpful
+/// message. Kept intentionally small — it only signals "not a supported code".
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseSupportedCurrencyError(pub String);
+
+impl std::fmt::Display for ParseSupportedCurrencyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'{}' is not a supported ISO-4217 currency code", self.0)
+    }
+}
+
+impl std::error::Error for ParseSupportedCurrencyError {}
+
+impl std::str::FromStr for SupportedCurrency {
+    type Err = ParseSupportedCurrencyError;
+
+    /// Parse a case-insensitive ISO-4217 code into a [`SupportedCurrency`].
+    ///
+    /// Input is uppercased before matching so `"eur"` and `"EUR"` both resolve.
+    /// This mirrors the [`Display`](std::fmt::Display) impl above so the
+    /// supported set stays defined in exactly one place.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let upper = s.trim().to_ascii_uppercase();
+        match upper.as_str() {
+            "EUR" => Ok(SupportedCurrency::EUR),
+            "CZK" => Ok(SupportedCurrency::CZK),
+            "CHF" => Ok(SupportedCurrency::CHF),
+            "GBP" => Ok(SupportedCurrency::GBP),
+            "PLN" => Ok(SupportedCurrency::PLN),
+            "USD" => Ok(SupportedCurrency::USD),
+            "HUF" => Ok(SupportedCurrency::HUF),
+            "RON" => Ok(SupportedCurrency::RON),
+            "BGN" => Ok(SupportedCurrency::BGN),
+            "HRK" => Ok(SupportedCurrency::HRK),
+            "SEK" => Ok(SupportedCurrency::SEK),
+            "DKK" => Ok(SupportedCurrency::DKK),
+            "NOK" => Ok(SupportedCurrency::NOK),
+            _ => Err(ParseSupportedCurrencyError(upper)),
+        }
+    }
+}
+
 /// Exchange rate source
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[sqlx(type_name = "exchange_rate_source", rename_all = "snake_case")]

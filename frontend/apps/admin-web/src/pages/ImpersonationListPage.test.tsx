@@ -166,18 +166,17 @@ describe('ImpersonationListPage', () => {
   });
 
   // ------------------------------------------------------------------
-  // 3. 404 from active endpoint → page renders empty list (backend contract)
+  // 3. 404 from active endpoint → error alert. The endpoint now exists in
+  //    api-server, so a 404 is a genuine failure (the old "not implemented
+  //    yet → empty list" fallback was removed).
   // ------------------------------------------------------------------
-  it('treats 404 from /impersonation/active as an empty list', async () => {
+  it('renders an error alert when the active endpoint returns 404', async () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 404 } as Response);
 
     renderPage();
 
-    await waitFor(() =>
-      expect(screen.getByText(/No active impersonation sessions/i)).toBeDefined()
-    );
-    // The 404 path also logs a console.warn
-    expect(console.warn).toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('alert')).toBeDefined());
+    expect(screen.getByText(/404/)).toBeDefined();
   });
 
   // ------------------------------------------------------------------

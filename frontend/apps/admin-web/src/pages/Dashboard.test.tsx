@@ -70,12 +70,13 @@ describe('Dashboard', () => {
     vi.restoreAllMocks();
   });
 
-  // 1. Metrics endpoint 404 → tiles render with hardcoded zeros + console.warn fires
-  it('renders tiles with zero values and warns when metrics endpoint returns 404', async () => {
+  // 1. Metrics endpoint error → query errors, tiles fall back to zero via the
+  //    consumer's `?? 0` defaults (the dead "stub fallback" path was removed).
+  it('renders tiles with zero values when the metrics endpoint errors', async () => {
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = input.toString();
       if (url.includes('metrics/summary')) {
-        return { ok: false, status: 404 } as Response;
+        return { ok: false, status: 500 } as Response;
       }
       return { ok: false, status: 404 } as Response;
     });
@@ -85,15 +86,9 @@ describe('Dashboard', () => {
     // Wait for tiles to render (not skeleton anymore)
     await waitFor(() => expect(screen.getByText('Tenants active')).toBeDefined());
 
-    // All values should be 0 (stub fallback)
+    // No metrics data → tiles fall back to 0 via `metrics?.field ?? 0`.
     const values = screen.getAllByText('0');
     expect(values.length).toBeGreaterThanOrEqual(3);
-    // console.warn should have been called with a [Dashboard] message at some point
-    const warnCalls: unknown[][] = (console.warn as ReturnType<typeof vi.fn>).mock.calls;
-    const dashboardWarn = warnCalls.find(
-      (args) => typeof args[0] === 'string' && args[0].includes('[Dashboard]')
-    );
-    expect(dashboardWarn).toBeDefined();
   });
 
   // 2. Metrics endpoint 200 → tiles render with values
