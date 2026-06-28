@@ -148,7 +148,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 1.3 GET /api/v1/multi-currency/config -> get_currency_config (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/config").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/config")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -200,7 +204,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 2.4 GET /api/v1/multi-currency/properties -> list_property_currency_configs (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/properties").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/properties")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -266,7 +274,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 3.5 POST /api/v1/multi-currency/rates/fetch -> fetch_exchange_rates
     let resp = app
-        .execute(app.post("/api/v1/multi-currency/rates/fetch").bearer(&token).build())
+        .execute(
+            app.post("/api/v1/multi-currency/rates/fetch")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     // The handler logs the attempt and returns 200; allow gateway/internal too
     // in case an external dependency is wired up later.
@@ -333,7 +345,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 4.4 GET /api/v1/multi-currency/transactions -> list_transactions (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/transactions").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/transactions")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -394,7 +410,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 5.4 GET /api/v1/multi-currency/cross-border -> list_cross_border_leases (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/cross-border").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/cross-border")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -438,7 +458,11 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 6.2 GET /api/v1/multi-currency/reports/configs -> list_report_configs (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/reports/configs").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/reports/configs")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -461,13 +485,21 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 6.4 GET /api/v1/multi-currency/reports/snapshots -> list_report_snapshots (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/reports/snapshots").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/reports/snapshots")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
     // 6.5 GET /api/v1/multi-currency/reports/exposure -> get_currency_exposure (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/reports/exposure").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/reports/exposure")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
@@ -477,13 +509,21 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
 
     // 7.1 GET /api/v1/multi-currency/dashboard -> get_dashboard (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/dashboard").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/dashboard")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 
     // 7.2 GET /api/v1/multi-currency/statistics -> get_statistics (200)
     let resp = app
-        .execute(app.get("/api/v1/multi-currency/statistics").bearer(&token).build())
+        .execute(
+            app.get("/api/v1/multi-currency/statistics")
+                .bearer(&token)
+                .build(),
+        )
         .await;
     resp.assert_status(StatusCode::OK);
 }

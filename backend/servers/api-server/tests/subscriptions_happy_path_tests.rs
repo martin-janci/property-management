@@ -250,9 +250,7 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .get(&format!(
-                    "/api/v1/subscriptions?organization_id={org_id}"
-                ))
+                .get(&format!("/api/v1/subscriptions?organization_id={org_id}"))
                 .build(),
         )
         .await;
