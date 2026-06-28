@@ -141,7 +141,7 @@ mod test_handler {
 
     async fn host_in_verifying_state(pool: DbPool, host: &str) -> Result<bool, sqlx::Error> {
         let mut conn = pool.acquire().await?;
-        db::tenant_context::set_request_context(&mut *conn, None, None, true).await?;
+        db::tenant_context::set_request_context(&mut conn, None, None, true).await?;
         let result = sqlx::query_scalar::<_, Uuid>(
             r#"
             SELECT organization_id
@@ -150,10 +150,10 @@ mod test_handler {
             "#,
         )
         .bind(host)
-        .fetch_optional(&mut *conn)
+        .fetch_optional(&mut conn)
         .await
         .map(|r| r.is_some());
-        let _ = db::tenant_context::clear_request_context(&mut *conn).await;
+        let _ = db::tenant_context::clear_request_context(&mut conn).await;
         result
     }
 }

@@ -134,7 +134,7 @@ async fn publish_vote(app: &TestApp, token: &str, org_id: Uuid, vote_id: Uuid) {
         .post(&format!("/api/v1/voting/{}/publish", vote_id))
         .bearer(token)
         .tenant(org_id)
-        .json(&json!({ "start_at": null }))
+        .json(json!({ "start_at": null }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "publish vote: {}", resp.text());
@@ -156,7 +156,7 @@ async fn test_update_vote_title_succeeds(pool: PgPool) {
         .put(&format!("/api/v1/voting/{}", vote_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "title": "Updated Title" }))
+        .json(json!({ "title": "Updated Title" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "update vote: {}", resp.text());
@@ -207,7 +207,7 @@ async fn test_cancel_active_vote_succeeds(pool: PgPool) {
         .post(&format!("/api/v1/voting/{}/cancel", vote_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "reason": "Test cancellation" }))
+        .json(json!({ "reason": "Test cancellation" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "cancel vote: {}", resp.text());
@@ -286,7 +286,7 @@ async fn test_update_question_text(pool: PgPool) {
         ))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "question_text": "Revised question?" }))
+        .json(json!({ "question_text": "Revised question?" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -419,7 +419,7 @@ async fn test_add_and_list_comments(pool: PgPool) {
         .post(&format!("/api/v1/voting/{}/comments", vote_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "parent_id": null, "content": "A test comment", "ai_consent": false }))
+        .json(json!({ "parent_id": null, "content": "A test comment", "ai_consent": false }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(
@@ -476,7 +476,7 @@ async fn test_hide_comment(pool: PgPool) {
         .post(&format!("/api/v1/voting/{}/comments", vote_id))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "parent_id": null, "content": "To hide", "ai_consent": false }))
+        .json(json!({ "parent_id": null, "content": "To hide", "ai_consent": false }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::CREATED);
@@ -490,7 +490,7 @@ async fn test_hide_comment(pool: PgPool) {
         ))
         .bearer(&token)
         .tenant(org_id)
-        .json(&json!({ "reason": "Inappropriate content" }))
+        .json(json!({ "reason": "Inappropriate content" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "hide comment: {}", resp.text());

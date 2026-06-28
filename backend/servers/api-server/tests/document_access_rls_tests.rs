@@ -149,13 +149,13 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
 
     // ---- Reader IN building B1 and unit U1, with role `owner` ----
     let reader = Uuid::new_v4();
-    db::set_request_context(&mut *conn, Some(org_a), Some(reader), false)
+    db::set_request_context(&mut conn, Some(org_a), Some(reader), false)
         .await
         .expect("set context");
 
     let docs = repo
         .list_accessible_rls(
-            &mut *conn,
+            &mut conn,
             org_a,
             reader,
             &[building_b1],
@@ -199,13 +199,13 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
 
     // ---- Reader with NO building/unit membership and no roles ----
     let stranger = Uuid::new_v4();
-    db::set_request_context(&mut *conn, Some(org_a), Some(stranger), false)
+    db::set_request_context(&mut conn, Some(org_a), Some(stranger), false)
         .await
         .expect("set context");
 
     let docs = repo
         .list_accessible_rls(
-            &mut *conn,
+            &mut conn,
             org_a,
             stranger,
             &[],
@@ -237,7 +237,7 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
     // ---- check_access_rls single-document gate (same org) ----
     // In-scope building doc: granted.
     let in_scope = repo
-        .check_access_rls(&mut *conn, b1_doc, reader, &[building_b1], &[], &[])
+        .check_access_rls(&mut conn, b1_doc, reader, &[building_b1], &[], &[])
         .await
         .expect("check_access_rls in-scope");
     assert!(
@@ -247,7 +247,7 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
 
     // Out-of-scope building doc: denied.
     let out_of_scope = repo
-        .check_access_rls(&mut *conn, b2_doc, reader, &[building_b1], &[], &[])
+        .check_access_rls(&mut conn, b2_doc, reader, &[building_b1], &[], &[])
         .await
         .expect("check_access_rls out-of-scope");
     assert!(
@@ -342,13 +342,13 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
     seed_doc(&pool, org, manager, "Unit Doc", "unit", &[unit], &[]).await;
 
     let mut conn = pool.acquire().await.expect("acquire");
-    db::set_request_context(&mut *conn, Some(org), Some(manager), false)
+    db::set_request_context(&mut conn, Some(org), Some(manager), false)
         .await
         .expect("set context");
 
     // ---- Chokepoint: current resident resolves to the unit + building ----
     let (current_buildings, current_units) = repo
-        .user_scope_memberships_rls(&mut *conn, current)
+        .user_scope_memberships_rls(&mut conn, current)
         .await
         .expect("user_scope_memberships_rls (current)");
     assert!(
@@ -359,7 +359,7 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
 
     // ---- Chokepoint: ended resident resolves to NOTHING ----
     let (ended_buildings, ended_units) = repo
-        .user_scope_memberships_rls(&mut *conn, ended)
+        .user_scope_memberships_rls(&mut conn, ended)
         .await
         .expect("user_scope_memberships_rls (ended)");
     assert!(
@@ -371,7 +371,7 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
     // ---- End-to-end: current resident sees unit/building docs ----
     let current_titles: Vec<String> = repo
         .list_accessible_rls(
-            &mut *conn,
+            &mut conn,
             org,
             current,
             &current_buildings,
@@ -393,7 +393,7 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
     // ---- End-to-end: ended resident sees ONLY org-wide content ----
     let ended_titles: Vec<String> = repo
         .list_accessible_rls(
-            &mut *conn,
+            &mut conn,
             org,
             ended,
             &ended_buildings,
@@ -419,7 +419,7 @@ async fn user_scope_memberships_rls_revokes_on_move_out(pool: PgPool) {
     // ---- Historical records still readable by the manager (creator branch) ----
     let manager_titles: Vec<String> = repo
         .list_accessible_rls(
-            &mut *conn,
+            &mut conn,
             org,
             manager,
             &[],
