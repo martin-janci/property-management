@@ -164,14 +164,16 @@ async fn get_2xx(app: &TestApp, url: &str, token: &str, what: &str) {
 async fn admin_capabilities_registry_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "reg", "audit_read").await;
-    get_2xx(&app, "/api/v1/admin/capabilities/registry", &token, "registry").await;
+    let url = "/api/v1/admin/capabilities/registry";
+    get_2xx(&app, url, &token, "registry").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_capabilities_me_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = platform_principal_token(&pool, "me").await;
-    get_2xx(&app, "/api/v1/admin/capabilities/me", &token, "capabilities/me").await;
+    let url = "/api/v1/admin/capabilities/me";
+    get_2xx(&app, url, &token, "cap_me").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -179,28 +181,31 @@ async fn admin_capabilities_for_user_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _admin, granter) = authorized_admin(&pool, "capuser", "audit_read").await;
     let url = format!("/api/v1/admin/capabilities/users/{granter}");
-    get_2xx(&app, &url, &token, "capabilities/users/{id}").await;
+    get_2xx(&app, &url, &token, "cap_user").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_audit_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "audit", "audit_read").await;
-    get_2xx(&app, "/api/v1/admin/audit", &token, "audit").await;
+    let url = "/api/v1/admin/audit";
+    get_2xx(&app, url, &token, "audit").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_audit_csv_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "auditcsv", "audit_read").await;
-    get_2xx(&app, "/api/v1/admin/audit/csv", &token, "audit/csv").await;
+    let url = "/api/v1/admin/audit/csv";
+    get_2xx(&app, url, &token, "audit_csv").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_metrics_summary_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "metrics", "audit_read").await;
-    get_2xx(&app, "/api/v1/admin/metrics/summary", &token, "metrics/summary").await;
+    let url = "/api/v1/admin/metrics/summary";
+    get_2xx(&app, url, &token, "metrics").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -208,28 +213,31 @@ async fn admin_notifications_analytics_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "notif", "audit_read").await;
     let url = "/api/v1/admin/notifications/analytics";
-    get_2xx(&app, url, &token, "notifications/analytics").await;
+    get_2xx(&app, url, &token, "notif").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_agencies_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "agencies", "agencies_read").await;
-    get_2xx(&app, "/api/v1/admin/agencies", &token, "agencies").await;
+    let url = "/api/v1/admin/agencies";
+    get_2xx(&app, url, &token, "agencies").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_users_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "users", "users_read").await;
-    get_2xx(&app, "/api/v1/admin/users", &token, "users").await;
+    let url = "/api/v1/admin/users";
+    get_2xx(&app, url, &token, "users").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_principals_search_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "principals", "users_read").await;
-    get_2xx(&app, "/api/v1/admin/principals", &token, "principals").await;
+    let url = "/api/v1/admin/principals";
+    get_2xx(&app, url, &token, "principals").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -237,7 +245,7 @@ async fn admin_impersonation_active_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "imp", "users_impersonate").await;
     let url = "/api/v1/admin/impersonation/active";
-    get_2xx(&app, url, &token, "impersonation/active").await;
+    get_2xx(&app, url, &token, "imp_active").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -245,7 +253,7 @@ async fn admin_memberships_merge_collisions_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "merge", "memberships_grant").await;
     let url = "/api/v1/admin/memberships/merge-collisions";
-    get_2xx(&app, url, &token, "memberships/merge-collisions").await;
+    get_2xx(&app, url, &token, "merge").await;
 }
 
 // ─── /api/v1/platform-admin/* read surface ──────────────────────────────────
@@ -255,7 +263,7 @@ async fn platform_admin_organizations_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "orgs", "agencies_read").await;
     let url = "/api/v1/platform-admin/organizations";
-    get_2xx(&app, url, &token, "platform/organizations").await;
+    get_2xx(&app, url, &token, "orgs").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -264,14 +272,15 @@ async fn platform_admin_organization_get_2xx(pool: PgPool) {
     let token = authorized_admin_token(&pool, "org1", "agencies_read").await;
     let org = seed_org(&pool, "g1").await;
     let url = format!("/api/v1/platform-admin/organizations/{org}");
-    get_2xx(&app, &url, &token, "platform/organizations/{id}").await;
+    get_2xx(&app, &url, &token, "org_get").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_stats_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "stats", "audit_read").await;
-    get_2xx(&app, "/api/v1/platform-admin/stats", &token, "platform/stats").await;
+    let url = "/api/v1/platform-admin/stats";
+    get_2xx(&app, url, &token, "stats").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -279,7 +288,7 @@ async fn platform_admin_feature_flags_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "ff", "feature_flags_write").await;
     let url = "/api/v1/platform-admin/feature-flags";
-    get_2xx(&app, url, &token, "platform/feature-flags").await;
+    get_2xx(&app, url, &token, "feat_flags").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -287,7 +296,7 @@ async fn platform_admin_health_dashboard_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "hd", "audit_read").await;
     let url = "/api/v1/platform-admin/health/dashboard";
-    get_2xx(&app, url, &token, "platform/health/dashboard").await;
+    get_2xx(&app, url, &token, "health_dash").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -295,7 +304,7 @@ async fn platform_admin_health_alerts_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "ha", "audit_read").await;
     let url = "/api/v1/platform-admin/health/alerts";
-    get_2xx(&app, url, &token, "platform/health/alerts").await;
+    get_2xx(&app, url, &token, "health_alerts").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -303,7 +312,7 @@ async fn platform_admin_health_thresholds_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "ht", "audit_read").await;
     let url = "/api/v1/platform-admin/health/thresholds";
-    get_2xx(&app, url, &token, "platform/health/thresholds").await;
+    get_2xx(&app, url, &token, "thresholds").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -311,7 +320,7 @@ async fn platform_admin_announcements_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "ann", "site_settings_read").await;
     let url = "/api/v1/platform-admin/announcements";
-    get_2xx(&app, url, &token, "platform/announcements").await;
+    get_2xx(&app, url, &token, "announce").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -319,7 +328,7 @@ async fn platform_admin_maintenance_list_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "maint", "site_settings_read").await;
     let url = "/api/v1/platform-admin/maintenance";
-    get_2xx(&app, url, &token, "platform/maintenance").await;
+    get_2xx(&app, url, &token, "maint").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -327,7 +336,7 @@ async fn platform_admin_support_data_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "sd", "audit_read").await;
     let url = "/api/v1/platform-admin/support-data";
-    get_2xx(&app, url, &token, "platform/support-data").await;
+    get_2xx(&app, url, &token, "support_data").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -335,7 +344,7 @@ async fn platform_admin_onboarding_config_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let token = authorized_admin_token(&pool, "onb", "site_settings_read").await;
     let url = "/api/v1/platform-admin/onboarding-config";
-    get_2xx(&app, url, &token, "platform/onboarding-config").await;
+    get_2xx(&app, url, &token, "onboarding").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -343,7 +352,7 @@ async fn platform_admin_support_user_get_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _admin, granter) = authorized_admin(&pool, "su", "users_read").await;
     let url = format!("/api/v1/platform-admin/support/users/{granter}");
-    get_2xx(&app, &url, &token, "platform/support/users/{id}").await;
+    get_2xx(&app, &url, &token, "su_get").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -351,7 +360,7 @@ async fn platform_admin_support_user_memberships_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _admin, granter) = authorized_admin(&pool, "sm", "users_read").await;
     let url = format!("/api/v1/platform-admin/support/users/{granter}/memberships");
-    get_2xx(&app, &url, &token, "platform/support/users/{id}/memberships").await;
+    get_2xx(&app, &url, &token, "su_members").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -359,7 +368,7 @@ async fn platform_admin_support_user_sessions_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _admin, granter) = authorized_admin(&pool, "ss", "users_read").await;
     let url = format!("/api/v1/platform-admin/support/users/{granter}/sessions");
-    get_2xx(&app, &url, &token, "platform/support/users/{id}/sessions").await;
+    get_2xx(&app, &url, &token, "su_sessions").await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -367,5 +376,5 @@ async fn platform_admin_support_user_activity_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _admin, granter) = authorized_admin(&pool, "sa", "audit_read").await;
     let url = format!("/api/v1/platform-admin/support/users/{granter}/activity");
-    get_2xx(&app, &url, &token, "platform/support/users/{id}/activity").await;
+    get_2xx(&app, &url, &token, "su_activity").await;
 }
