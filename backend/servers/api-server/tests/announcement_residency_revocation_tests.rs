@@ -149,11 +149,11 @@ async fn published_announcements_revoke_on_move_out(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("acquire");
 
     // ---- Current resident sees org-wide + building + unit announcements ----
-    db::set_request_context(&mut conn, Some(org), Some(current), false)
+    db::set_request_context(&mut *conn, Some(org), Some(current), false)
         .await
         .expect("set context (current)");
     let current_titles: Vec<String> = repo
-        .list_published_rls(&mut conn, org, None, None)
+        .list_published_rls(&mut *conn, org, None, None)
         .await
         .expect("list (current)")
         .into_iter()
@@ -167,11 +167,11 @@ async fn published_announcements_revoke_on_move_out(pool: PgPool) {
     );
 
     // ---- Moved-out resident sees ONLY the org-wide announcement ----
-    db::set_request_context(&mut conn, Some(org), Some(ended), false)
+    db::set_request_context(&mut *conn, Some(org), Some(ended), false)
         .await
         .expect("set context (ended)");
     let ended_titles: Vec<String> = repo
-        .list_published_rls(&mut conn, org, None, None)
+        .list_published_rls(&mut *conn, org, None, None)
         .await
         .expect("list (ended)")
         .into_iter()
