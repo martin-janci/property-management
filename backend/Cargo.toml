@@ -7,9 +7,11 @@ members = [
     "crates/db",
     "crates/integrations",
     "crates/tenant-ops",
+    "crates/accounting-core",
     "servers/api-server",
     "servers/reality-server",
     "servers/deploy-server",
+    "servers/accounting-server",
 ]
 
 [workspace.package]
@@ -123,6 +125,7 @@ admin-core = { path = "crates/admin-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
 tenant-ops = { path = "crates/tenant-ops" }
+accounting-core = { path = "crates/accounting-core" }
 
 # Phase 1: deploy-server
 bollard = "0.16"

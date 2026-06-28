@@ -145,7 +145,11 @@ fn buildings_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"buildings":[]}"#),
         ),
         (Method::GET, format!("{base}/{BID}"), None),
-        (Method::PUT, format!("{base}/{BID}"), Some(r#"{"name":"Updated"}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{BID}"),
+            Some(r#"{"name":"Updated"}"#),
+        ),
         (Method::DELETE, format!("{base}/{BID}"), None),
         (Method::POST, format!("{base}/{BID}/restore"), None),
         (Method::GET, format!("{base}/{BID}/statistics"), None),
@@ -157,7 +161,11 @@ fn units_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let uid = format!("{ubase}/{UID}");
     vec![
         (Method::GET, ubase.clone(), None),
-        (Method::POST, ubase.clone(), Some(r#"{"unit_number":"101"}"#)),
+        (
+            Method::POST,
+            ubase.clone(),
+            Some(r#"{"unit_number":"101"}"#),
+        ),
         (Method::GET, uid.clone(), None),
         (Method::PUT, uid.clone(), Some(r#"{"unit_number":"102"}"#)),
         (Method::DELETE, uid.clone(), None),
@@ -194,9 +202,17 @@ fn unit_residents_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"user_id":"00000000-0000-0000-0000-000000000003","start_date":"2024-01-01"}"#),
         ),
         (Method::GET, rid.clone(), None),
-        (Method::PUT, rid.clone(), Some(r#"{"start_date":"2024-02-01"}"#)),
+        (
+            Method::PUT,
+            rid.clone(),
+            Some(r#"{"start_date":"2024-02-01"}"#),
+        ),
         (Method::DELETE, rid.clone(), None),
-        (Method::POST, format!("{rid}/end"), Some(r#"{"end_date":"2025-01-01"}"#)),
+        (
+            Method::POST,
+            format!("{rid}/end"),
+            Some(r#"{"end_date":"2025-01-01"}"#),
+        ),
         (Method::GET, format!("{base}/history"), None),
     ]
 }
@@ -244,7 +260,11 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
             format!("{cert}/milestones"),
             Some(r#"{"title":"Site audit","due_date":"2026-12-31"}"#),
         ),
-        (Method::PUT, milestone.clone(), Some(r#"{"title":"Updated"}"#)),
+        (
+            Method::PUT,
+            milestone.clone(),
+            Some(r#"{"title":"Updated"}"#),
+        ),
         (Method::DELETE, milestone.clone(), None),
         (Method::GET, format!("{cert}/benchmarks"), None),
         (Method::GET, format!("{cert}/costs"), None),
@@ -262,7 +282,11 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/agencies";
     vec![
         (Method::GET, format!("{base}/{BID}"), None),
-        (Method::PUT, format!("{base}/{BID}"), Some(r#"{"name":"Updated Agency"}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{BID}"),
+            Some(r#"{"name":"Updated Agency"}"#),
+        ),
         (
             Method::PUT,
             format!("{base}/{BID}/branding"),
@@ -290,7 +314,11 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/{BID}/listings/{UID}/visibility"),
             Some(r#"{"visible":true}"#),
         ),
-        (Method::GET, format!("{base}/{BID}/listings/{UID}/history"), None),
+        (
+            Method::GET,
+            format!("{base}/{BID}/listings/{UID}/history"),
+            None,
+        ),
         (Method::GET, format!("{base}/{BID}/import"), None),
         (Method::GET, format!("{base}/{BID}/import/{UID}"), None),
     ]
@@ -316,7 +344,11 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
     let base = "/api/v1/organizations";
     vec![
         (Method::GET, format!("{base}/{org}"), None),
-        (Method::PUT, format!("{base}/{org}"), Some(r#"{"name":"Updated Org"}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{org}"),
+            Some(r#"{"name":"Updated Org"}"#),
+        ),
         (Method::DELETE, format!("{base}/{org}"), None),
         (Method::GET, format!("{base}/{org}/members"), None),
         (
@@ -339,7 +371,11 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
             Some(r#"{"name":"Manager","permissions":[]}"#),
         ),
         (Method::GET, format!("{base}/{org}/roles/{PID}"), None),
-        (Method::PUT, format!("{base}/{org}/roles/{PID}"), Some(r#"{"name":"Senior"}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{org}/roles/{PID}"),
+            Some(r#"{"name":"Senior"}"#),
+        ),
         (Method::DELETE, format!("{base}/{org}/roles/{PID}"), None),
         (Method::GET, format!("{base}/{org}/settings"), None),
         (
@@ -355,7 +391,11 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
         ),
         (Method::GET, format!("{base}/{org}/export"), None),
         (Method::GET, format!("{base}/{org}/features"), None),
-        (Method::PUT, format!("{base}/{org}/features"), Some(r#"{"features":[]}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{org}/features"),
+            Some(r#"{"features":[]}"#),
+        ),
     ]
 }
 
@@ -366,8 +406,7 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn org_property_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
-    let (_t, org_id) =
-        create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
+    let (_t, org_id) = create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
     let org = org_id.to_string();
 
     let cases = all_tenant_scoped()

@@ -178,5 +178,158 @@
     "label": "Jazyk",
     "cs": "Čeština",
     "sk": "Slovenčina"
+  },
+  "app": {
+    "common": {
+      "loading": "Načítava sa…",
+      "error": "Niečo sa pokazilo. Skúste to znova.",
+      "retry": "Skúsiť znova",
+      "save": "Uložiť",
+      "cancel": "Zrušiť",
+      "delete": "Vymazať",
+      "edit": "Upraviť",
+      "create": "Vytvoriť",
+      "search": "Hľadať",
+      "actions": "Akcie",
+      "none": "—",
+      "confirm": "Potvrdiť",
+      "back": "Späť",
+      "required": "Povinné pole"
+    },
+    "nav": {
+      "invoices": "Faktúry",
+      "contacts": "Kontakty"
+    },
+    "invoices": {
+      "list": {
+        "title": "Faktúry",
+        "newInvoice": "Nová faktúra",
+        "empty": "Zatiaľ nemáte žiadne faktúry.",
+        "emptyHint": "Vystavte svoju prvú faktúru.",
+        "searchPlaceholder": "Hľadať podľa čísla alebo odberateľa",
+        "filterAll": "Všetky stavy",
+        "count": "{count, plural, one {# faktúra} few {# faktúry} other {# faktúr}}"
+      },
+      "columns": {
+        "number": "Číslo",
+        "contact": "Odberateľ",
+        "issueDate": "Vystavené",
+        "dueDate": "Splatnosť",
+        "total": "Suma",
+        "status": "Stav"
+      },
+      "status": {
+        "draft": "Koncept",
+        "issued": "Vystavená",
+        "sent": "Odoslaná",
+        "paid": "Zaplatená",
+        "partially_paid": "Čiastočne zaplatená",
+        "overdue": "Po splatnosti",
+        "cancelled": "Zrušená"
+      },
+      "form": {
+        "newTitle": "Nová faktúra",
+        "editTitle": "Upraviť faktúru",
+        "contact": "Odberateľ",
+        "contactPlaceholder": "Vyberte odberateľa",
+        "noContacts": "Najprv vytvorte kontakt.",
+        "currency": "Mena",
+        "issueDate": "Dátum vystavenia",
+        "dueDate": "Dátum splatnosti",
+        "supplyDate": "Dátum dodania (DUZP)",
+        "variableSymbol": "Variabilný symbol",
+        "note": "Poznámka",
+        "lines": "Položky",
+        "addLine": "Pridať položku",
+        "removeLine": "Odstrániť položku",
+        "saveDraft": "Uložiť koncept",
+        "issue": "Vystaviť faktúru",
+        "issuedReadOnly": "Vystavená faktúra je nemenná. Opravu vykonajte dobropisom.",
+        "lineColumns": {
+          "description": "Popis",
+          "qty": "Množstvo",
+          "unitPrice": "Cena/MJ",
+          "vatRate": "DPH %",
+          "lineTotal": "Spolu"
+        },
+        "linePlaceholder": "Popis položky",
+        "validation": {
+          "contactRequired": "Vyberte odberateľa.",
+          "lineRequired": "Pridajte aspoň jednu položku.",
+          "descriptionRequired": "Zadajte popis položky.",
+          "qtyPositive": "Množstvo musí byť kladné.",
+          "dueAfterIssue": "Splatnosť nemôže byť pred dátumom vystavenia."
+        }
+      },
+      "totals": {
+        "title": "Súhrn",
+        "net": "Základ",
+        "vat": "DPH",
+        "gross": "Spolu s DPH",
+        "vatBreakdown": "Rozpis DPH",
+        "rate": "Sadzba",
+        "base": "Základ",
+        "vatAmount": "DPH",
+        "rounding": "Zaokrúhlenie"
+      },
+      "detail": {
+        "title": "Faktúra {number}",
+        "duplicate": "Duplikovať",
+        "issue": "Vystaviť",
+        "items": "Položky",
+        "backToList": "Späť na zoznam"
+      }
+    },
+    "contacts": {
+      "list": {
+        "title": "Kontakty",
+        "newContact": "Nový kontakt",
+        "empty": "Zatiaľ nemáte žiadne kontakty.",
+        "emptyHint": "Vytvorte svoj prvý kontakt.",
+        "searchPlaceholder": "Hľadať podľa názvu, IČO alebo e-mailu",
+        "filterAll": "Všetky typy"
+      },
+      "columns": {
+        "name": "Názov",
+        "kind": "Typ",
+        "ico": "IČO",
+        "email": "E-mail",
+        "phone": "Telefón",
+        "active": "Aktívny"
+      },
+      "kind": {
+        "customer": "Odberateľ",
+        "supplier": "Dodávateľ",
+        "both": "Odberateľ aj dodávateľ"
+      },
+      "form": {
+        "newTitle": "Nový kontakt",
+        "editTitle": "Upraviť kontakt",
+        "sectionIdentity": "Identifikácia",
+        "sectionAddress": "Adresa",
+        "sectionDefaults": "Predvolené nastavenia",
+        "sectionTags": "Štítky",
+        "name": "Názov firmy alebo meno",
+        "kind": "Typ kontaktu",
+        "ico": "IČO",
+        "dic": "DIČ / IČ DPH",
+        "email": "E-mail",
+        "phone": "Telefón",
+        "address": "Adresa",
+        "iban": "IBAN",
+        "defaultCurrency": "Predvolená mena",
+        "defaultPriceLevel": "Cenová hladina",
+        "defaultPaymentTermsDays": "Splatnosť (dni)",
+        "defaultLanguage": "Jazyk dokumentov",
+        "tags": "Štítky",
+        "tagsPlaceholder": "Pridať štítok a stlačiť Enter",
+        "active": "Aktívny kontakt",
+        "deactivate": "Deaktivovať",
+        "validation": {
+          "nameRequired": "Zadajte názov kontaktu.",
+          "emailInvalid": "Zadajte platný e-mail."
+        }
+      }
+    }
   }
 }
