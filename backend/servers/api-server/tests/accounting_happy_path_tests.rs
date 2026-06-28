@@ -200,7 +200,7 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
             app.patch(&format!("/api/v1/accounting/invoices/{invoice_id}"))
                 .bearer(&token)
                 .header("X-Tenant-ID", &tenant)
-                .json(&json!({ "variable_symbol": "VS12345" }))
+                .json(json!({ "variable_symbol": "VS12345" }))
                 .build(),
         )
         .await;
