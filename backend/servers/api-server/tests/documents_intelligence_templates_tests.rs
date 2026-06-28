@@ -270,10 +270,7 @@ async fn list_templates_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-list").await;
     create_template(&app, &token, org_id).await;
 
-    let req = app
-        .session(token, org_id)
-        .get("/api/v1/templates")
-        .build();
+    let req = app.session(token, org_id).get("/api/v1/templates").build();
     let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
