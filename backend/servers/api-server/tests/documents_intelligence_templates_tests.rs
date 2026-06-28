@@ -67,12 +67,12 @@ async fn reprocess_ocr_succeeds(pool: PgPool) {
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post(&format!("/api/v1/documents/{doc_id}/ocr/reprocess"))
         .json(json!({}))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
 }
@@ -83,15 +83,15 @@ async fn search_documents_succeeds(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "intel-search").await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post("/api/v1/documents/search")
         .json(json!({
             "query": "contract",
             "limit": 10
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
     let body = res.json_value();
@@ -106,11 +106,11 @@ async fn get_classification_succeeds(pool: PgPool) {
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .get(&format!("/api/v1/documents/{doc_id}/classification"))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
 }
@@ -123,7 +123,7 @@ async fn submit_classification_feedback_succeeds(pool: PgPool) {
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post(&format!(
             "/api/v1/documents/{doc_id}/classification/feedback"
@@ -132,8 +132,8 @@ async fn submit_classification_feedback_succeeds(pool: PgPool) {
             "accepted": true,
             "correct_category": null
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
 }
@@ -146,13 +146,13 @@ async fn get_classification_history_succeeds(pool: PgPool) {
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .get(&format!(
             "/api/v1/documents/{doc_id}/classification/history"
         ))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
     let body = res.json_value();
@@ -167,12 +167,12 @@ async fn request_summarization_succeeds(pool: PgPool) {
     let user_id = user_id_for(&pool, &user.email).await;
     let doc_id = seed_document(&pool, org_id, user_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post(&format!("/api/v1/documents/{doc_id}/summarize"))
         .json(json!({}))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
 }
@@ -183,11 +183,11 @@ async fn get_intelligence_stats_succeeds(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "intel-stats").await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .get("/api/v1/documents/intelligence/stats")
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
 }
@@ -197,7 +197,7 @@ async fn get_intelligence_stats_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 async fn create_template(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
-    let res = app
+    let req = app
         .session(token.to_string(), org_id)
         .post("/api/v1/templates")
         .json(json!({
@@ -222,8 +222,8 @@ async fn create_template(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
                 }
             ]
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::CREATED);
     let body = res.json_value();
@@ -239,7 +239,7 @@ async fn create_template_succeeds(pool: PgPool) {
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-create").await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post("/api/v1/templates")
         .json(json!({
@@ -256,8 +256,8 @@ async fn create_template_succeeds(pool: PgPool) {
                 }
             ]
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::CREATED);
     res.assert_json_field("id");
@@ -270,11 +270,11 @@ async fn list_templates_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-list").await;
     create_template(&app, &token, org_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .get("/api/v1/templates")
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
     let body = res.json_value();
@@ -291,11 +291,11 @@ async fn get_template_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-get").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .get(&format!("/api/v1/templates/{tpl_id}"))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
     let body = res.json_value();
@@ -312,14 +312,14 @@ async fn update_template_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-update").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .put(&format!("/api/v1/templates/{tpl_id}"))
         .json(json!({
             "name": "Updated Lease Agreement Template"
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::OK);
     let body = res.json_value();
@@ -336,20 +336,20 @@ async fn delete_template_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-delete").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
-    let res = app
+    let req = app
         .session(token.clone(), org_id)
         .delete(&format!("/api/v1/templates/{tpl_id}"))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::NO_CONTENT);
 
     // Confirm deleted
-    let res2 = app
+    let req = app
         .session(token, org_id)
         .get(&format!("/api/v1/templates/{tpl_id}"))
-        .send()
-        .await;
+        .build();
+    let res2 = app.execute(req).await;
     res2.assert_status(StatusCode::NOT_FOUND);
 }
 
@@ -360,7 +360,7 @@ async fn generate_document_from_template_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-generate").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
-    let res = app
+    let req = app
         .session(token, org_id)
         .post(&format!("/api/v1/templates/{tpl_id}/generate"))
         .json(json!({
@@ -371,8 +371,8 @@ async fn generate_document_from_template_succeeds(pool: PgPool) {
             "title": "Generated Lease for John Doe",
             "category": "contracts"
         }))
-        .send()
-        .await;
+        .build();
+    let res = app.execute(req).await;
 
     res.assert_status(StatusCode::CREATED);
     res.assert_json_field("document_id");
