@@ -23,6 +23,7 @@ diagrams: []
 useCases: []
 epics:
   - "82"
+  - "85"
 designSources: []
 owner: reality-frontend
 ---
@@ -78,6 +79,41 @@ on top of. Findings are grounded in the static audit
   `AuthManager`, another in `DependencyContainer.shared.ssoService`; the two
   are independent and their session state can diverge.
 
+### Build configuration by environment (Epic 85, Story 85.2)
+
+Cross-platform build-config layer that sits alongside the iOS app-shell above.
+Verified shipped on `dev` by the 2026-06-28 coverage reconciliation.
+
+- [x] [m] **Android product flavors.**
+  `mobile-native/androidApp/build.gradle.kts` declares
+  `flavorDimensions += "environment"` with `development` / `staging` /
+  `production` flavors. Each sets `applicationIdSuffix` (`.dev` / `.staging`),
+  `versionNameSuffix`, a per-flavor `app_name` resValue
+  (`Reality (Dev)` / `Reality (Staging)` / `Reality Portal`), and
+  `API_BASE_URL` / `ENVIRONMENT` / `ENABLE_LOGGING` `buildConfigField`s.
+  Release `signingConfigs` read `KEYSTORE_FILE` / `KEYSTORE_PASSWORD` /
+  `KEY_ALIAS` / `KEY_PASSWORD` env vars; debug applies a `.debug` suffix.
+- [x] [m] **iOS schemes + xcconfig matrix.**
+  `iosApp/xcschemes/RealityPortal-{Dev,Staging,Prod}.xcscheme` pair with
+  `iosApp/Configurations/{Base,Development,Staging,Production}.xcconfig`
+  for per-environment `PRODUCT_BUNDLE_IDENTIFIER`, `BUNDLE_DISPLAY_NAME`,
+  `API_BASE_URL`, and `CODE_SIGN_STYLE = Automatic`.
+- [x] [m] **KMP shared module (variant-agnostic).** Under the AGP 9
+  `com.android.kotlin.multiplatform.library` plugin the shared module carries
+  no build types / flavors / BuildConfig; the iOS `framework` block targets
+  `iosX64` / `iosArm64` / `iosSimulatorArm64`.
+- [x] [m] **CLI build scripts.** `scripts/build-mobile.sh` (orchestrator) →
+  `scripts/build-android.sh` + `scripts/build-ios.sh`, each tagged
+  "Epic 85 - Story 85.2". (They live at repo-root `scripts/`, not under
+  `mobile-native/` — the original coverage gap was a false negative from
+  scanning only `mobile-native/`.)
+- [ ] [m] **GAP — per-flavor / per-scheme app-icon artwork.** Android per-flavor
+  `ic_launcher` mipmaps are not generated (only `src/development/res/xml`),
+  and the iOS `AppIcon`, `AppIcon-Dev`, `AppIcon-Staging` `.appiconset`
+  directories currently hold only `Contents.json` with no badge images.
+  Distinguishability (AC-4) is met via app name + bundle/app-id suffix today;
+  the DEV/STG badge artwork is a design-asset follow-up.
+
 ## States
 
 - **Cold launch**: `configureApp()` restores Keychain session + navigation
@@ -108,9 +144,16 @@ counterpart is the KMP `composeApp` shell; the shared KMP module under
 - Three non-blocking gaps recorded: tab titles unlocalized, `DependencyContainer`
   defaulting to unauthenticated repositories, and `SsoService` being
   instantiated twice. None block epic-82 functionality; tracked as follow-ups.
+- Story 85.2 (Build Configuration by Environment) verified shipped on `dev`
+  (2026-06-28 coverage reconciliation): Android product flavors, iOS schemes +
+  xcconfig matrix, variant-agnostic KMP shared module, and the
+  `scripts/build-{mobile,android,ios}.sh` CLI build scripts. One follow-up gap:
+  per-flavor / per-scheme app-icon badge artwork is not yet generated
+  (icon sets are scaffolded with `Contents.json` only).
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-06-28 — agent: extended this infra map to cover Epic 85 / Story 85.2 (Build Configuration by Environment) — added epic "85" to frontmatter and a "Build configuration by environment" functionality section documenting Android product flavors, iOS schemes + xcconfig matrix, the variant-agnostic KMP shared module, and the repo-root `scripts/build-{mobile,android,ios}.sh` CLI scripts (verified shipped on `dev`). Recorded one open gap: per-flavor / per-scheme app-icon badge artwork not yet generated. Chose to extend the existing project-setup infra map rather than create an orphan screen-map for non-visible build infrastructure. The earlier "AC-5 build scripts not found under mobile-native" coverage gap was a false negative — the scripts live at repo-root `scripts/`.
 - 2026-06-17 — agent: created the missing Story-82.1 (SwiftUI Project Setup & App Shell) infrastructure screen-map. Reality-mobile had maps for all 11 visible screens + the 82.2 navigation infra, but no map for the 82.1 project-setup layer. Content grounded in the 2026-05-25 static audit (`docs/superpowers/plans/gap-82-1-swiftui-audit.md`): bundle/xcconfig/Info.plist config, KMP bridge, Keychain, localization, `@main` entry. Carried over the three audit gaps (unlocalized tab titles, unauthenticated default repositories, duplicate `SsoService`).
