@@ -355,7 +355,11 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
         ),
         (Method::GET, format!("{base}/{org}/export"), None),
         (Method::GET, format!("{base}/{org}/features"), None),
-        (Method::PUT, format!("{base}/{org}/features"), Some(r#"{"features":[]}"#)),
+        (
+            Method::PUT,
+            format!("{base}/{org}/features"),
+            Some(r#"{"features":[]}"#),
+        ),
     ]
 }
 
@@ -366,8 +370,7 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn org_property_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
-    let (_t, org_id) =
-        create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
+    let (_t, org_id) = create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
     let org = org_id.to_string();
 
     let cases = all_tenant_scoped()
