@@ -12,6 +12,7 @@
 //! - PUT    /api/v1/registry/pets/{id}
 //! - DELETE /api/v1/registry/pets/{id}
 //! - POST   /api/v1/registry/pets/{id}/review
+//!
 //! Vehicles:
 //! - POST   /api/v1/registry/vehicles
 //! - GET    /api/v1/registry/vehicles
@@ -19,12 +20,14 @@
 //! - PUT    /api/v1/registry/vehicles/{id}
 //! - DELETE /api/v1/registry/vehicles/{id}
 //! - POST   /api/v1/registry/vehicles/{id}/review
+//!
 //! Parking spots:
 //! - POST   /api/v1/registry/parking-spots
 //! - GET    /api/v1/registry/parking-spots
 //! - GET    /api/v1/registry/parking-spots/{id}
 //! - PUT    /api/v1/registry/parking-spots/{id}
 //! - DELETE /api/v1/registry/parking-spots/{id}
+//!
 //! Rules + statistics:
 //! - GET    /api/v1/registry/buildings/{building_id}/rules
 //! - PUT    /api/v1/registry/buildings/{building_id}/rules
@@ -32,7 +35,6 @@
 
 #![allow(dead_code)]
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

@@ -21,7 +21,6 @@
 // `RUSTFLAGS=-Dwarnings`. Matches every other test file in this directory.
 #![allow(dead_code)]
 
-#[allow(dead_code)]
 mod common;
 
 use common::{cleanup_test_user, verify_user_email, TestApp, TestUser};

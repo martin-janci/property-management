@@ -26,7 +26,6 @@
 
 #![allow(dead_code)]
 
-#[allow(dead_code)]
 mod common;
 
 use argon2::{password_hash::PasswordHasher, Argon2};

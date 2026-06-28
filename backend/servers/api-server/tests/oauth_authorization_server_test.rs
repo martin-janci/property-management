@@ -29,7 +29,6 @@
 
 #![allow(dead_code)]
 
-#[allow(dead_code)]
 mod common;
 
 use api_server::services::AuthService;
