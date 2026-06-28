@@ -10,6 +10,8 @@
 //! `RequestPrincipal` rejects a request with no `Authorization` header with
 //! 401, so these tests need no DB seeding — they assert the auth gate fires.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

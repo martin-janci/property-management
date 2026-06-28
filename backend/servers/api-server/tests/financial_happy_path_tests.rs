@@ -3,6 +3,8 @@
 //! Exercises 24 different endpoints covering financial accounts, transactions,
 //! fee schedules, invoices, payments, and allocation/reconciliation.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

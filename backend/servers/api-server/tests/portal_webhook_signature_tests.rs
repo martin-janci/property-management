@@ -25,6 +25,8 @@
 //! under `SQLX_OFFLINE=true` with no DB the harness skips them, and CI runs
 //! them against an ephemeral migrated database.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -15,6 +15,8 @@
 //! They need a `PgPool` because `TestApp` builds the full `AppState`; CI runs
 //! them against an ephemeral migrated database.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

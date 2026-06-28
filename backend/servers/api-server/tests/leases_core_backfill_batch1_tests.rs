@@ -10,6 +10,8 @@
 //! - Reminders (create, list)
 //! - Dashboard (expiring, statistics)
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

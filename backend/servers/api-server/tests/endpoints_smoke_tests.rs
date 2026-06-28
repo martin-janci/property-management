@@ -13,6 +13,8 @@
 //! flows are covered by feature-specific test files that build complete
 //! organization + membership fixtures.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

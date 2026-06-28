@@ -27,6 +27,8 @@
 //! exercised end to end. Seeding/harness helpers mirror
 //! `oauth_integration_tests.rs` rather than re-deriving them.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

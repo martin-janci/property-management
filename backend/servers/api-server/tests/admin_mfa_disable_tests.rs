@@ -25,6 +25,8 @@
 //! per the established convention (e.g. `auth_policy_enforcement_tests.rs`).
 //! CI invokes them via `cargo test -- --ignored` against the dev DB.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

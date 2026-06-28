@@ -12,6 +12,8 @@
 //! runs. The security contract — no evidence persisted without auth — still
 //! holds and is what we assert.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

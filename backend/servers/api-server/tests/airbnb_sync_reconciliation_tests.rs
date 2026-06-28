@@ -64,6 +64,8 @@
 //! construction (`AirbnbAppConfig::from_env`). We seed it via a `Once` before
 //! the first `TestApp::new`, mirroring `airbnb_webhook_routes_tests.rs`.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

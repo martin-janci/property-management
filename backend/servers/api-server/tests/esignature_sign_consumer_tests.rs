@@ -21,6 +21,8 @@
 //! once (LazyLock); we pin that secret here and mint tokens with a provider
 //! that shares it, so server-side verification matches.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

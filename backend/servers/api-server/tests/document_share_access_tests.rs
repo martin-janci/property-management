@@ -24,6 +24,8 @@
 //! `argon2` default the create-share handler uses, so `verify_share_password`
 //! accepts it.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

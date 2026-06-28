@@ -36,6 +36,8 @@
 //!   - A legitimate member of Org A passes the guard (NOT `403`) — proving
 //!     the fix does not lock out authorized callers.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

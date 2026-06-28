@@ -49,6 +49,8 @@
 //!     with the `tenant_id` claim directly (same approach as
 //!     `reserve_funds_cross_org_idor_tests`).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

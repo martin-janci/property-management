@@ -19,6 +19,8 @@
 //! - DELETE /api/v1/templates/{id}                         (delete_template)
 //! - POST   /api/v1/templates/{id}/generate               (generate_document)
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

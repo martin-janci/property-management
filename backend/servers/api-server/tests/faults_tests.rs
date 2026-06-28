@@ -19,6 +19,8 @@
 //! code; they only pin the security contract: an unauthenticated request
 //! MUST be rejected with 4xx.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -28,6 +28,8 @@
 //! non-superuser role so the `announcement_comments` policy (migration 00016)
 //! actually runs.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -16,6 +16,8 @@
 //! up for the AI router. The contract these tests assert is the security
 //! contract: the request without proof of identity is rejected, full stop.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

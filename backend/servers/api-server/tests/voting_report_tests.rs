@@ -23,6 +23,8 @@
 //! exist`. Kept in a dedicated binary to isolate the heavy schema-full E2E flow
 //! from `voting_tests.rs`'s schema-less auth tests. (BIT-158, #1665)
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -27,6 +27,8 @@
 //! `main.rs`). The test documents the contract; future work can flip the
 //! `#[ignore]` once a multi-tenant fixture builder lands.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

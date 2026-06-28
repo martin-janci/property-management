@@ -25,6 +25,8 @@
 //! which is exactly where the sibling `faults_cross_org_idor_tests.rs` asserts
 //! them. Each test exercises the real query path against a migrated database.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

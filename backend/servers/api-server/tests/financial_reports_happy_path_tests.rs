@@ -17,6 +17,8 @@
 //!   7. GET /api/v1/financial/reports/cash-flow
 //!   8. GET /api/v1/financial/reports/income-statement/export
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

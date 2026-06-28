@@ -27,6 +27,8 @@
 //! scrape — returns 2xx anonymously by design) and `POST /api/v1/platform-admin/agencies`
 //! (body validation returns 4xx before the auth gate, so it is not a clean auth probe).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -11,6 +11,8 @@
 //!
 //! BIT-268 / BIT-304
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

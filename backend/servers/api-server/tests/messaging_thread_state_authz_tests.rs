@@ -15,6 +15,8 @@
 //! here is the handler-layer check, and the per-user list filtering is the
 //! repository SQL (`thread_participant_state` join) — both independent of RLS.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

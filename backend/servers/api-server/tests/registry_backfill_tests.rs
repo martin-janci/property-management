@@ -30,6 +30,8 @@
 //! - PUT    /api/v1/registry/buildings/{building_id}/rules
 //! - GET    /api/v1/registry/buildings/{building_id}/statistics
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

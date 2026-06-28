@@ -46,6 +46,8 @@
 //! in #624/#646/#647). Both must keep passing for the security contract to
 //! hold end-to-end.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

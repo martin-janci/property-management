@@ -3,6 +3,8 @@
 //! Asserts real database effects and round-trips for templates, import jobs,
 //! job validation errors, and exports.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

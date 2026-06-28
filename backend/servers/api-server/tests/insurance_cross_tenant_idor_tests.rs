@@ -39,6 +39,8 @@
 //! row) holds either way. The repo-layer tests below pin the positive path
 //! that the HTTP harness cannot reach.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -16,6 +16,8 @@
 //! HTTP status + response shape. All seeding uses static string literals
 //! (sqlx 0.9 SQL-injection lint: no `format!` / `&String` in query macros).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

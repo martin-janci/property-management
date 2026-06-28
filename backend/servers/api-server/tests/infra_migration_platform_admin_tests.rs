@@ -23,6 +23,8 @@
 //! A freshly registered user (`create_authenticated_user`) is an ordinary
 //! tenant user, never a platform admin, so it exercises the 403 path.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

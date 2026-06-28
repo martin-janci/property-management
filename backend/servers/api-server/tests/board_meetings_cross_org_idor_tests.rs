@@ -24,6 +24,8 @@
 //!      no write.
 //!   3. Org A's member reads its own meeting → allowed (2xx).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -8,6 +8,8 @@
 //! - Auth gates: unauthenticated requests are rejected; cross-tenant requests
 //!   (caller not in the meter's org) are rejected.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

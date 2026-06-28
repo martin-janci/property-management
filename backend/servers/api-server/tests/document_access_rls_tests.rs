@@ -36,6 +36,8 @@
 //! the application-level predicates inside the query; production additionally
 //! enforces the FORCE-RLS `document_tenant_isolation` policy on top.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

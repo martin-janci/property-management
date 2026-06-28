@@ -32,6 +32,8 @@
 //! contract is verified deterministically. The handler-wiring guards
 //! (auth/IDOR/route-mounted) are covered in `booking_oauth_routes_tests.rs`.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

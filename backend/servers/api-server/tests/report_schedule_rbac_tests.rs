@@ -39,6 +39,8 @@
 //! security mechanism stopped firing, because the outer JWT gate was still
 //! active (issue #696).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

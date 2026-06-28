@@ -23,6 +23,8 @@
 //! `AuthUser` extractor expects (`sub`, `exp`, `iat`, `token_type:"access"`,
 //! `email`, `name`), and supply the org via `X-Tenant-ID`.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

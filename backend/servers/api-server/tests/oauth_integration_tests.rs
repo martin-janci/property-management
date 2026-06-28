@@ -14,6 +14,8 @@
 //! is fully up-to-date, and uses `TestApp` so the real Axum router (with all
 //! middleware) is exercised end-to-end.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

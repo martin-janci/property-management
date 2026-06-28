@@ -28,6 +28,8 @@
 //! The CI/test database role bypasses RLS, so these assertions pin the
 //! application-level predicate inside the query.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

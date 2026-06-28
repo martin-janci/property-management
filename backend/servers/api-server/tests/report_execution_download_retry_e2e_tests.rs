@@ -25,6 +25,8 @@
 //! These run as a same-org authenticated **Manager** (retry requires
 //! manager-tier RBAC; download/list require only authentication + membership).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

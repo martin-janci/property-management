@@ -30,6 +30,8 @@
 //! "non-privileged / cross-tenant caller" the role and ownership gates must
 //! reject, so the HTTP tests assert the rejection direction.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -12,6 +12,8 @@
 //! A freshly registered user (`create_authenticated_user`) never holds any
 //! capability grant, so it exercises the 403 leg of every capability layer.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

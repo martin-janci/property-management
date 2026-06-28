@@ -12,6 +12,8 @@
 //! - POST /api/v1/messages/threads/{id}/archive
 //! - DELETE /api/v1/messages/threads/{id}/archive
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

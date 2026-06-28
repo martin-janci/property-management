@@ -7,6 +7,8 @@
 //!   - /api/v1/ai/equipment
 //!   - /api/v1/ai/workflows
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

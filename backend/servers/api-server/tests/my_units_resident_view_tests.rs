@@ -12,6 +12,8 @@
 //! needs only a valid JWT (no `X-Tenant-ID`); buildings/units/residencies are
 //! seeded directly.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

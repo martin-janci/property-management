@@ -5,6 +5,8 @@
 //!   confirm_fault, reopen_fault, list_my_faults,
 //!   list_comments, add_comment, add_work_note, get_statistics.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

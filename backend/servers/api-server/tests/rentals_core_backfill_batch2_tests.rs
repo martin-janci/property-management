@@ -9,6 +9,8 @@
 //! - Reports (list, preview, create, get, submit)
 //! - iCal feeds (create, update, delete, list-unit)
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

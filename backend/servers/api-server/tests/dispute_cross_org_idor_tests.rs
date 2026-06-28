@@ -23,6 +23,8 @@
 //! rejected with 4xx before reaching handler logic.  The security contract
 //! is still satisfied: cross-org mutations never reach the DB row.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

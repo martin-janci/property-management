@@ -27,6 +27,8 @@
 //! Every test uses `#[sqlx::test(migrator = "db::MIGRATOR")]` so the schema is
 //! current, and drives the full Axum router via `TestApp`.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

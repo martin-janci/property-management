@@ -23,6 +23,8 @@
 //!   - Org B's own valid context probing Org A's log -> 404 (org-scoped
 //!     lookup finds no row; cross-org blocked).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

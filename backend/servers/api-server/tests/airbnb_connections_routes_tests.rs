@@ -13,6 +13,8 @@
 //!
 //! These tests run fully offline — the route never calls the Airbnb API.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -25,6 +25,8 @@
 //!   - Org B's own valid context reading Org A's document -> 404 (org-scoped
 //!     query finds no row; cross-org is blocked).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

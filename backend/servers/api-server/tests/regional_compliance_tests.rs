@@ -1,5 +1,7 @@
 //! Integration tests for Regional Compliance controls (Epic 72).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -21,6 +21,8 @@
 //! at a closed port so `upload()` always returns an error, verifying that the
 //! handler returns 503 and does NOT create an orphan DB record.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

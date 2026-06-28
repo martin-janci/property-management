@@ -13,6 +13,8 @@
 //!   - Confirmed -> Confirmed / Rejected -> Rejected : idempotent no-op
 //!   - Rejected  -> Confirmed  : ILLEGAL -> 409 Conflict
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

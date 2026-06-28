@@ -5,6 +5,8 @@
 //!   - a non-manager tenant member (resident) gets 403
 //!   - a manager gets 200
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -11,6 +11,8 @@
 //!
 //! Mirrors `lease_review_rbac_tests`.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

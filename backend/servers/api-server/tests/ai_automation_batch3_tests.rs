@@ -6,6 +6,8 @@
 //! unless the provider adapter returns an error — in that case we accept
 //! any non-401 status.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

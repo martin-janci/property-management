@@ -11,6 +11,8 @@
 //! with 403 before reaching the repository; a **manager** must pass the role
 //! gate (proven by NOT getting a 403). See report_schedule_org_scope_jwt_tests.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

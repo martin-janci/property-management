@@ -16,6 +16,8 @@
 //! `RlsConnection` validates membership against `organization_members`, seeded
 //! below.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -21,6 +21,8 @@
 //! 10. GET /api/v1/help/tooltips/:key — returns 404 when no tooltip
 //! 11. POST /api/v1/help/articles/:slug/feedback — 401 without auth
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

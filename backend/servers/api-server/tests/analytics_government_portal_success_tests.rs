@@ -30,6 +30,8 @@
 //!   DELETE /government-portal/schedules/{id}
 //!   GET    /government-portal/stats
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -1,5 +1,7 @@
 //! Integration tests for Data Residency controls (Epic 146).
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

@@ -7,6 +7,8 @@
 //!   check_eligibility, get_my_response, add_comment, list_comments,
 //!   list_replies, hide_comment, get_audit_log, list_active_by_building.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

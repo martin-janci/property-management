@@ -37,6 +37,8 @@
 //! it is intentionally left to the per-request unit-level reasoning; the
 //! high-value signature / parse / dedup paths are all covered here.)
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 

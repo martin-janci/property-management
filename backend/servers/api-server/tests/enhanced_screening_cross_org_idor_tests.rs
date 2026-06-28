@@ -21,6 +21,8 @@
 //! happy path because `JwtService` emits an `org_id` claim under a different
 //! name than the `AuthUser` extractor reads.
 
+#![allow(dead_code)]
+
 #[allow(dead_code)]
 mod common;
 
