@@ -45,6 +45,7 @@ jest.mock('../../utils', () => ({
     originalBytes: 0,
     finalBytes: 0,
     compressed: false,
+    stillOverLimit: false,
   })),
   bytesToMb: (bytes: number) => String(bytes),
 }));

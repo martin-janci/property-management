@@ -130,6 +130,7 @@
     "buildingsLoadError": "Nem sikerült betölteni az épületeit",
     "photosCompressedTitle": "Fényképek tömörítve",
     "photosCompressedWarning": "A kiválasztott fényképek meghaladták a 10 MB-ot ({{original}} MB), ezért {{final}} MB-ra tömörítettük őket a gyorsabb feltöltés érdekében. A képminőség csökkenhet.",
+    "photosStillLargeWarning": "A tömörítés után is {{final}} MB a fényképek mérete (a 10 MB-os korlát felett), így a feltöltés lassú lehet vagy gyenge kapcsolat esetén meghiúsulhat.",
     "compressingPhotos": "Fényképek optimalizálása…",
     "queuedTitle": "Offline mentve",
     "queuedMessage": "Jelenleg offline van. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint újra online lesz.",
