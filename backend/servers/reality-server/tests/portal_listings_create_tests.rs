@@ -58,10 +58,7 @@ async fn create_listing_unauthenticated_returns_401(pool: PgPool) {
         }),
     )
     .await;
-    assert_eq!(
-        status, 401,
-        "create_listing must return 401 without auth"
-    );
+    assert_eq!(status, 401, "create_listing must return 401 without auth");
 }
 
 // ── create_listing happy path ─────────────────────────────────────────────────
