@@ -1,0 +1,231 @@
+{
+  "date": "2026-06-28",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-28",
+      "type": "lag_warning",
+      "source": "last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 12d 0h since 2026-06-16T03:25:00Z",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".research/state.json"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-06-28",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 12d old; cloud routine cron may be paused. Dispatcher has continued (last dispatcher commit b2e90ac at 2026-06-28T02:25Z on dev) \u2014 only the routine fell behind.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".research/state.json",
+        ".research/management/assignments.json"
+      ]
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) \u2014 reconcile with retirement (BIT-213). The reverted PR #1690 had re-introduced a frontend that the BIT-213 retirement track had explicitly removed.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2933 lines changed in backend/crates/db/src/repositories/rental.rs (window 2026-06-16\u21922026-06-28); top-3 code-only churn this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2921 lines changed in backend/servers/api-server/src/routes/migration.rs (window 2026-06-16\u21922026-06-28); top-3 code-only churn this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2818 lines changed in backend/crates/integrations/src/booking/mod.rs (window 2026-06-16\u21922026-06-28); top-3 code-only churn this run",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1\u21922 with 2648 LOC this run",
+      "score_delta": 1,
+      "evidence": "auth.rs runs_seen=2: 2026-05-30 (78 LOC) + 2026-06-28 (2648 LOC). Instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "2648 lines in backend/servers/api-server/src/routes/auth.rs (re-emit; cumulative). Drove repeated-churn signal.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq advanced-vs-HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-score on non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python comparison",
+      "observed": "0 fails",
+      "expected": "0 fails"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans \u2192 vacuous",
+      "observed": "0 new plans",
+      "expected": "0 or all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, 0 this run",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research staged paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret-grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "diff -q == 0",
+      "expected": "diff -q == 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (cursors unchanged)",
+      "observed": "review/pm/coverage cursors unchanged",
+      "expected": "match prev when phase skipped",
+      "remediation": "Phase 1.5 + Phase 1.6 listed in brief 'Phases that failed: phase-1.5-skipped-catchup, phase-1.6-skipped-catchup' and their cursors did not advance."
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present in plans/ or _archive/",
+      "observed": "ok=9 fail=0",
+      "expected": "fail=0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count grows",
+      "observed": "staged=11 head=7",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff -q == 0",
+      "expected": "diff -q == 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor in [0,7]; Phase 1.6 skipped \u2192 gate is no-op",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist"
+}
