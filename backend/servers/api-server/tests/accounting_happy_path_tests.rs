@@ -129,7 +129,10 @@ async fn accounting_endpoints_happy_path(pool: PgPool) {
         resp.text()
     );
     let invoice = resp.json_value();
-    let invoice_id = invoice["id"].as_str().expect("invoice id missing").to_string();
+    let invoice_id = invoice["id"]
+        .as_str()
+        .expect("invoice id missing")
+        .to_string();
 
     // ========================================================================
     // 2. GET /api/v1/accounting/invoices -> list_invoices
