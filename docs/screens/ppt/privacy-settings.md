@@ -19,6 +19,8 @@ epics:
 relatedScreens:
   - id: ppt/accessibility-settings
     rel: sibling
+  - id: ppt/notification-settings
+    rel: sibling
 sharedComponents:
   - section-card
   - banner
@@ -123,4 +125,3 @@ UC-23 GDPR + session management. The page bundles 4 distinct concerns: data expo
 
 - 2026-06-02 — agent (gap-sweep): fixed critical auth bug — page used bare `fetch('/api/v1/gdpr/*')` with no Authorization header (401 in prod). Added `features/privacy/gdprClient.ts` (base URL + bearer token) and routed all GDPR calls through it. Account deletion now sends the required `confirmation` (email) instead of `{}` (was always 400). Save now sends only backend-supported fields (profile_visibility, show_contact_info). Marketing/analytics consent still not persisted by backend — tracked as a follow-up issue; apiStatus stays `partial`.
 - 2026-05-09 — agent: design analyzed (pages/ppt-privacy-settings.html — 6 rows: loaded / export-3-state / delete-modal-2 / sessions-3 / consents-just-changed+audit / page-error); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections covering 6 destructive/non-destructive flows), all states + 6 destructive-flow variants, design-specific notes (confirm-typed-name + GDPR čl. 17 ods. 3 + IP masking + auto-save consent UX); declared 6 sharedComponents; added 1 relatedScreen (accessibility-settings sibling)
-- 2026-05-08 — init: created from scan (source: sitemap)
