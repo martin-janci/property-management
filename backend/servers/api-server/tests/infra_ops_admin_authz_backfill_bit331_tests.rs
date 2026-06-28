@@ -102,25 +102,39 @@ fn infrastructure_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"key":"test-flag","enabled":false}"#),
         ),
         (Method::GET, format!("{base}/feature-flags/{UUID}"), None),
-        (Method::PUT, format!("{base}/feature-flags/{UUID}"), Some(r#"{"enabled":true}"#)),
+        (
+            Method::PUT,
+            format!("{base}/feature-flags/{UUID}"),
+            Some(r#"{"enabled":true}"#),
+        ),
         (Method::DELETE, format!("{base}/feature-flags/{UUID}"), None),
         (
             Method::POST,
             format!("{base}/feature-flags/{UUID}/toggle"),
             Some(r#"{"enabled":true}"#),
         ),
-        (Method::GET, format!("{base}/feature-flags/{UUID}/overrides"), None),
+        (
+            Method::GET,
+            format!("{base}/feature-flags/{UUID}/overrides"),
+            None,
+        ),
         (
             Method::POST,
             format!("{base}/feature-flags/{UUID}/overrides"),
-            Some(r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"user","enabled":true}"#),
+            Some(
+                r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"user","enabled":true}"#,
+            ),
         ),
         (
             Method::DELETE,
             format!("{base}/feature-flags/{UUID}/overrides/{UUID}"),
             None,
         ),
-        (Method::GET, format!("{base}/feature-flags/{UUID}/audit-log"), None),
+        (
+            Method::GET,
+            format!("{base}/feature-flags/{UUID}/audit-log"),
+            None,
+        ),
         (
             Method::POST,
             format!("{base}/feature-flags/evaluate"),
@@ -134,7 +148,11 @@ fn infrastructure_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"job_type":"example","payload":{}}"#),
         ),
         (Method::GET, format!("{base}/jobs/{UUID}"), None),
-        (Method::POST, format!("{base}/jobs/{UUID}/retry"), Some(r#"{}"#)),
+        (
+            Method::POST,
+            format!("{base}/jobs/{UUID}/retry"),
+            Some(r#"{}"#),
+        ),
         (Method::POST, format!("{base}/jobs/{UUID}/cancel"), None),
         (Method::GET, format!("{base}/jobs/{UUID}/executions"), None),
         (Method::GET, format!("{base}/jobs/queues/stats"), None),
@@ -143,7 +161,11 @@ fn infrastructure_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}/health/detailed"), None),
         (Method::GET, format!("{base}/health/checks"), None),
         (Method::GET, format!("{base}/health/checks/{UUID}"), None),
-        (Method::GET, format!("{base}/health/checks/{UUID}/results"), None),
+        (
+            Method::GET,
+            format!("{base}/health/checks/{UUID}/results"),
+            None,
+        ),
         (Method::GET, format!("{base}/health/alerts"), None),
         (Method::GET, format!("{base}/health/alerts/{UUID}"), None),
         (
@@ -151,16 +173,34 @@ fn infrastructure_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/health/alerts/{UUID}/acknowledge"),
             Some(r#"{}"#),
         ),
-        (Method::POST, format!("{base}/health/alerts/{UUID}/resolve"), Some(r#"{}"#)),
+        (
+            Method::POST,
+            format!("{base}/health/alerts/{UUID}/resolve"),
+            Some(r#"{}"#),
+        ),
         (Method::GET, format!("{base}/health/alert-rules"), None),
         (
             Method::POST,
             format!("{base}/health/alert-rules"),
-            Some(r#"{"name":"x","condition":"cpu > 80","severity":"warning","notification_channels":[]}"#),
+            Some(
+                r#"{"name":"x","condition":"cpu > 80","severity":"warning","notification_channels":[]}"#,
+            ),
         ),
-        (Method::GET, format!("{base}/health/alert-rules/{UUID}"), None),
-        (Method::PUT, format!("{base}/health/alert-rules/{UUID}"), Some(r#"{}"#)),
-        (Method::DELETE, format!("{base}/health/alert-rules/{UUID}"), None),
+        (
+            Method::GET,
+            format!("{base}/health/alert-rules/{UUID}"),
+            None,
+        ),
+        (
+            Method::PUT,
+            format!("{base}/health/alert-rules/{UUID}"),
+            Some(r#"{}"#),
+        ),
+        (
+            Method::DELETE,
+            format!("{base}/health/alert-rules/{UUID}"),
+            None,
+        ),
         (
             Method::POST,
             format!("{base}/health/alert-rules/{UUID}/toggle"),
@@ -195,9 +235,21 @@ fn operations_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/deployments/{UUID}/switch"),
             Some(r#"{"deployment_id":"00000000-0000-0000-0000-000000000001"}"#),
         ),
-        (Method::POST, format!("{base}/deployments/{UUID}/rollback"), None),
-        (Method::GET, format!("{base}/deployments/{UUID}/health-checks"), None),
-        (Method::POST, format!("{base}/deployments/{UUID}/health-checks"), None),
+        (
+            Method::POST,
+            format!("{base}/deployments/{UUID}/rollback"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("{base}/deployments/{UUID}/health-checks"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("{base}/deployments/{UUID}/health-checks"),
+            None,
+        ),
         // Migrations
         (Method::GET, format!("{base}/migrations"), None),
         (
@@ -206,10 +258,22 @@ fn operations_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"name":"test_migration","version":"1"}"#),
         ),
         (Method::GET, format!("{base}/migrations/{UUID}"), None),
-        (Method::PUT, format!("{base}/migrations/{UUID}/progress"), Some(r#"{}"#)),
+        (
+            Method::PUT,
+            format!("{base}/migrations/{UUID}/progress"),
+            Some(r#"{}"#),
+        ),
         (Method::GET, format!("{base}/migrations/{UUID}/logs"), None),
-        (Method::POST, format!("{base}/migrations/{UUID}/rollback"), None),
-        (Method::GET, format!("{base}/migrations/{UUID}/safety-check"), None),
+        (
+            Method::POST,
+            format!("{base}/migrations/{UUID}/rollback"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("{base}/migrations/{UUID}/safety-check"),
+            None,
+        ),
         // Schema
         (Method::GET, format!("{base}/schema/versions"), None),
         (Method::GET, format!("{base}/schema/current"), None),
@@ -233,14 +297,18 @@ fn operations_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/dr/drills"),
-            Some(r#"{"drill_type":"x","is_successful":true,"rto_target_secs":1,"rto_actual_secs":1,"rpo_target_secs":1,"rpo_actual_secs":1}"#),
+            Some(
+                r#"{"drill_type":"x","is_successful":true,"rto_target_secs":1,"rto_actual_secs":1,"rpo_target_secs":1,"rpo_actual_secs":1}"#,
+            ),
         ),
         // Costs
         (Method::GET, format!("{base}/costs"), None),
         (
             Method::POST,
             format!("{base}/costs"),
-            Some(r#"{"service_type":"compute","service_name":"x","cost_amount":10.0,"usage_quantity":1.0,"period_start":"2026-01-01","period_end":"2026-01-02"}"#),
+            Some(
+                r#"{"service_type":"compute","service_name":"x","cost_amount":10.0,"usage_quantity":1.0,"period_start":"2026-01-01","period_end":"2026-01-02"}"#,
+            ),
         ),
         (Method::GET, format!("{base}/costs/dashboard"), None),
         (Method::GET, format!("{base}/costs/budgets"), None),
@@ -256,7 +324,11 @@ fn operations_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"name":"x","budget_amount":100.0,"period_type":"monthly"}"#),
         ),
         (Method::GET, format!("{base}/costs/alerts"), None),
-        (Method::POST, format!("{base}/costs/alerts/{UUID}/acknowledge"), None),
+        (
+            Method::POST,
+            format!("{base}/costs/alerts/{UUID}/acknowledge"),
+            None,
+        ),
         (Method::GET, format!("{base}/costs/utilization"), None),
         (Method::GET, format!("{base}/costs/recommendations"), None),
         (
@@ -278,11 +350,19 @@ fn admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::GET, format!("{base}/users"), None),
         (Method::GET, format!("{base}/users/{UUID}"), None),
         (Method::POST, format!("{base}/users/{UUID}/suspend"), None),
-        (Method::POST, format!("{base}/users/{UUID}/reactivate"), None),
+        (
+            Method::POST,
+            format!("{base}/users/{UUID}/reactivate"),
+            None,
+        ),
         (Method::POST, format!("{base}/users/{UUID}/delete"), None),
         // MFA enrollment
         (Method::POST, format!("{base}/mfa/enroll/start"), None),
-        (Method::POST, format!("{base}/mfa/enroll/verify"), Some(r#"{"code":"123456"}"#)),
+        (
+            Method::POST,
+            format!("{base}/mfa/enroll/verify"),
+            Some(r#"{"code":"123456"}"#),
+        ),
         // Notifications analytics
         (Method::GET, format!("{base}/notifications/analytics"), None),
         // Tenant lifecycle
@@ -290,8 +370,16 @@ fn admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (Method::POST, format!("{base}/tenants/{UUID}/purge"), None),
         // Tenant branding + feature-flags
         (Method::GET, format!("{base}/tenants/{UUID}/branding"), None),
-        (Method::PUT, format!("{base}/tenants/{UUID}/branding"), Some(r##"{"primary_color":"#fff"}"##)),
-        (Method::GET, format!("{base}/tenants/{UUID}/feature-flags"), None),
+        (
+            Method::PUT,
+            format!("{base}/tenants/{UUID}/branding"),
+            Some(r##"{"primary_color":"#fff"}"##),
+        ),
+        (
+            Method::GET,
+            format!("{base}/tenants/{UUID}/feature-flags"),
+            None,
+        ),
         (
             Method::PUT,
             format!("{base}/tenants/{UUID}/feature-flags"),
@@ -300,7 +388,11 @@ fn admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
         // Admin agencies
         (Method::GET, format!("{base}/agencies"), None),
         (Method::GET, format!("{base}/agencies/{UUID}"), None),
-        (Method::POST, format!("{base}/agencies/{UUID}/suspend"), None),
+        (
+            Method::POST,
+            format!("{base}/agencies/{UUID}/suspend"),
+            None,
+        ),
     ]
 }
 
@@ -315,28 +407,58 @@ fn platform_admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
         // Organizations
         (Method::GET, format!("{base}/organizations"), None),
         (Method::GET, format!("{base}/organizations/{UUID}"), None),
-        (Method::POST, format!("{base}/organizations/{UUID}/suspend"), None),
-        (Method::POST, format!("{base}/organizations/{UUID}/reactivate"), None),
+        (
+            Method::POST,
+            format!("{base}/organizations/{UUID}/suspend"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("{base}/organizations/{UUID}/reactivate"),
+            None,
+        ),
         // Stats
         (Method::GET, format!("{base}/stats"), None),
         // Feature flags
         (Method::GET, ff.clone(), None),
-        (Method::POST, ff.clone(), Some(r#"{"key":"pf-test","enabled":false}"#)),
+        (
+            Method::POST,
+            ff.clone(),
+            Some(r#"{"key":"pf-test","enabled":false}"#),
+        ),
         (Method::GET, format!("{ff}/{UUID}"), None),
-        (Method::PUT, format!("{ff}/{UUID}"), Some(r#"{"enabled":true}"#)),
+        (
+            Method::PUT,
+            format!("{ff}/{UUID}"),
+            Some(r#"{"enabled":true}"#),
+        ),
         (Method::DELETE, format!("{ff}/{UUID}"), None),
         (Method::POST, format!("{ff}/{UUID}/toggle"), None),
         (
             Method::POST,
             format!("{ff}/{UUID}/overrides"),
-            Some(r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"org","enabled":true}"#),
+            Some(
+                r#"{"entity_id":"00000000-0000-0000-0000-000000000002","entity_type":"org","enabled":true}"#,
+            ),
         ),
-        (Method::DELETE, format!("{ff}/{UUID}/overrides/{UUID2}"), None),
+        (
+            Method::DELETE,
+            format!("{ff}/{UUID}/overrides/{UUID2}"),
+            None,
+        ),
         // Health
         (Method::GET, format!("{base}/health/dashboard"), None),
-        (Method::GET, format!("{base}/health/metrics/cpu_usage/history"), None),
+        (
+            Method::GET,
+            format!("{base}/health/metrics/cpu_usage/history"),
+            None,
+        ),
         (Method::GET, format!("{base}/health/alerts"), None),
-        (Method::POST, format!("{base}/health/alerts/{UUID}/acknowledge"), None),
+        (
+            Method::POST,
+            format!("{base}/health/alerts/{UUID}/acknowledge"),
+            None,
+        ),
         (Method::GET, format!("{base}/health/thresholds"), None),
         (
             Method::PUT,
@@ -351,23 +473,45 @@ fn platform_admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
             Some(r#"{"title":"Maintenance","body":"Scheduled downtime","level":"info"}"#),
         ),
         (Method::GET, format!("{base}/announcements/{UUID}"), None),
-        (Method::PUT, format!("{base}/announcements/{UUID}"), Some(r#"{"title":"Updated"}"#)),
+        (
+            Method::PUT,
+            format!("{base}/announcements/{UUID}"),
+            Some(r#"{"title":"Updated"}"#),
+        ),
         (Method::DELETE, format!("{base}/announcements/{UUID}"), None),
         // Maintenance
         (Method::GET, format!("{base}/maintenance"), None),
         (
             Method::POST,
             format!("{base}/maintenance"),
-            Some(r#"{"title":"Upgrade","scheduled_at":"2025-01-01T02:00:00Z","duration_minutes":60}"#),
+            Some(
+                r#"{"title":"Upgrade","scheduled_at":"2025-01-01T02:00:00Z","duration_minutes":60}"#,
+            ),
         ),
         (Method::DELETE, format!("{base}/maintenance/{UUID}"), None),
         // Support
         (Method::GET, format!("{base}/support/users"), None),
         (Method::GET, format!("{base}/support/users/{UUID}"), None),
-        (Method::GET, format!("{base}/support/users/{UUID}/memberships"), None),
-        (Method::GET, format!("{base}/support/users/{UUID}/sessions"), None),
-        (Method::POST, format!("{base}/support/users/{UUID}/sessions/revoke"), None),
-        (Method::GET, format!("{base}/support/users/{UUID}/activity"), None),
+        (
+            Method::GET,
+            format!("{base}/support/users/{UUID}/memberships"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("{base}/support/users/{UUID}/sessions"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("{base}/support/users/{UUID}/sessions/revoke"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("{base}/support/users/{UUID}/activity"),
+            None,
+        ),
         // Misc
         (Method::GET, format!("{base}/support-data"), None),
         (Method::GET, format!("{base}/onboarding-config"), None),
