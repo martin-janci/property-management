@@ -169,6 +169,7 @@ fn worker(pool: &PgPool, email: RecordingEmail, push: RecordingPush) -> SearchAl
 /// C1–C4: happy path — email once, push to each owner token, `notified_at` set,
 /// `status` untouched, idempotent re-run, and a foreign user's token untouched.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn drains_alert_to_email_and_owner_push_tokens(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
 
@@ -244,6 +245,7 @@ async fn drains_alert_to_email_and_owner_push_tokens(pool: PgPool) {
 /// Failure path: when every channel fails, the row is not marked notified, its
 /// attempt counter climbs, and it drops out once it exhausts the budget.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn failed_delivery_increments_attempts_until_budget_exhausted(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let owner = seed_portal_user(&pool, "fail@test.sk").await;

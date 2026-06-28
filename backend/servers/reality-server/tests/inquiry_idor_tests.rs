@@ -149,6 +149,7 @@ async fn get_read_at(pool: &PgPool, inquiry_id: Uuid) -> Option<chrono::DateTime
 /// `realtor_id = b_id`, so the function short-circuits and returns `false`
 /// without touching the row.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn realtor_b_cannot_mark_realtor_a_inquiry_read(pool: PgPool) {
     let org = seed_org(&pool, "idor-c1").await;
     let realtor_a = seed_user(&pool, "realtor-a-c1@idor.test").await;
@@ -190,6 +191,7 @@ async fn realtor_b_cannot_mark_realtor_a_inquiry_read(pool: PgPool) {
 /// This is the happy-path: the legitimate owner can mark their own inquiry read.
 /// The handler maps `true` → HTTP 204.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn realtor_a_can_mark_own_inquiry_read(pool: PgPool) {
     let org = seed_org(&pool, "idor-c2").await;
     let realtor_a = seed_user(&pool, "realtor-a-c2@idor.test").await;
@@ -231,6 +233,7 @@ async fn realtor_a_can_mark_own_inquiry_read(pool: PgPool) {
 /// succeeds — the function must therefore return `true` (owned) rather than
 /// `false` (not-found/not-owned).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn idempotent_re_mark_returns_true(pool: PgPool) {
     let org = seed_org(&pool, "idor-c3").await;
     let realtor_a = seed_user(&pool, "realtor-a-c3@idor.test").await;

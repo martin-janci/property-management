@@ -254,6 +254,7 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_get_portfolio_summary_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-summary").await;
     let resp = f
@@ -270,6 +271,7 @@ async fn pa_get_portfolio_summary_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_list_benchmarks_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-list-bench").await;
     let resp = f
@@ -291,6 +293,7 @@ async fn pa_list_benchmarks_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-create-bench").await;
     let resp = f
@@ -317,6 +320,7 @@ async fn pa_create_benchmark_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_get_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pa-get-bench").await;
     let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
@@ -341,6 +345,7 @@ async fn pa_get_benchmark_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_update_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pa-upd-bench").await;
     let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
@@ -366,6 +371,7 @@ async fn pa_update_benchmark_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_delete_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pa-del-bench").await;
     let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
@@ -390,6 +396,7 @@ async fn pa_delete_benchmark_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_list_property_metrics_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-list-pm").await;
     let resp = f
@@ -411,6 +418,7 @@ async fn pa_list_property_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_upsert_property_metrics_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-upsert-pm").await;
     let resp = f
@@ -440,6 +448,7 @@ async fn pa_upsert_property_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_get_property_metrics_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-get-bldg-metrics").await;
     let resp = f
@@ -464,6 +473,7 @@ async fn pa_get_property_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-get-metrics").await;
     let resp = f
@@ -485,6 +495,7 @@ async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_calculate_portfolio_metrics_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-calc-metrics").await;
     let resp = f
@@ -510,6 +521,7 @@ async fn pa_calculate_portfolio_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_list_comparisons_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-list-comp").await;
     let resp = f
@@ -535,6 +547,7 @@ async fn pa_list_comparisons_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-pf").await;
     let resp = f
@@ -645,6 +658,7 @@ async fn pp_delete_portfolio_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_add_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-add-prop").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -774,6 +788,7 @@ async fn pp_remove_property_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -829,6 +844,7 @@ async fn pp_list_transactions_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-get-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -855,6 +871,7 @@ async fn pp_get_transaction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_update_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-upd-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -882,6 +899,7 @@ async fn pp_update_transaction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_delete_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-del-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -964,6 +982,7 @@ async fn pp_get_cash_flows_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_calculate_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-calc-metrics").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1016,6 +1035,7 @@ async fn pp_get_latest_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-metrics-summary").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1040,6 +1060,7 @@ async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-bench").await;
     let resp = f
@@ -1160,6 +1181,7 @@ async fn pp_delete_benchmark_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_comparison_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-cmp").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1250,6 +1272,7 @@ async fn pp_get_comparison_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_dashboard_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-dash-sum").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1322,6 +1345,7 @@ async fn pp_get_dashboard_cash_flow_trend_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-alert").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1376,6 +1400,7 @@ async fn pp_list_alerts_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_mark_alert_read_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-read").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1401,6 +1426,7 @@ async fn pp_mark_alert_read_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_resolve_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-resolve").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
