@@ -15,31 +15,24 @@
  * `scheduleToInitialCron`, the `stored && isValidCron(stored)` guard). #1368
  * pointed out the trap: the frontend `isValidCron` and the backend
  * `validate_cron_expression` (backend/servers/api-server/src/routes/reports.rs)
- * are independent reimplementations that DISAGREE on at least one combined
- * form. For any expression the backend accepts but the frontend rejects, the
- * read path silently falls back to lossy reconstruction — i.e. #616 comes back
+ * were independent reimplementations that DISAGREED on at least one combined
+ * form. For any expression the backend accepted but the frontend rejected, the
+ * read path silently fell back to lossy reconstruction — i.e. #616 came back
  * for that subset, invisibly (no error surfaced).
  *
- * This file is the regression net the #1368 "Tests" finding asked for. It does
- * two things, both load-bearing:
+ * STATUS: #1368 is now FIXED. `isValidCron` was rewritten to mirror the backend
+ * parse order (split each field on `,` FIRST, then `/`, then `-`), so the two
+ * validators agree on the combined forms. This file is the regression net that
+ * keeps them in lockstep:
  *
  *   1. Pins the verbatim round-trip for combined `,`/`/`/`-` expressions that
- *      BOTH validators currently accept, so the happy-path fix can't regress.
+ *      BOTH validators accept, so the happy-path can't regress.
  *
- *   2. Pins the KNOWN drift fixture (`1-5/2,10 * * * *`) as a documented
- *      cross-validator disagreement. This test is intentionally an assertion
- *      about the *current* (buggy-for-this-subset) behaviour: the moment
- *      anyone changes either validator OR the read-path guard, this test goes
- *      red and forces a deliberate decision — reconcile the validators and
- *      surface the stored cron, or update the contract on purpose. That is
- *      exactly what stops #616 from silently creeping back in.
- *
- * NOTE (QA scope): this guard does not change product behaviour. The proper
- * fix (#1368: make the backend the single validation authority and stop
- * gating the read path on a frontend false-negative) is owned by the frontend
- * specialist. When that fix lands, the `drift — current behaviour` block below
- * must be flipped to assert verbatim surfacing (the `EXPECTED AFTER FIX`
- * comments mark each line).
+ *   2. Pins the former drift fixture (`1-5/2,10 * * * *`) — now accepted by
+ *      BOTH validators and surfaced verbatim. If anyone changes either
+ *      validator OR the read-path guard such that they disagree again, this
+ *      test goes red and forces a deliberate decision. That is exactly what
+ *      stops #616 from silently creeping back in.
  */
 
 import type { ReportSchedule } from '@ppt/api-client';
@@ -120,6 +113,8 @@ describe('cron validator drift — #616 reintroduction guard (#1368)', () => {
       '5-15/3 * * * *', // range-with-step in the minute field
       '0,15,30,45 9-17 * * 1-5', // list minute + range hour + range dow
       '*/15 9-17 * * 1-5', // step + range (the canonical #616 custom expr)
+      '1-5/2,10 * * * *', // range-with-step + list member (former #1368 drift)
+      '0,15/3 * * * *', // single + range-with-step in one list (split-`,`-first)
     ])('surfaces %s verbatim (backend-valid AND frontend-valid)', (expr) => {
       // Precondition: both validators agree this is valid.
       expect(backendValidateCron(expr)).toBe(true);
@@ -137,36 +132,31 @@ describe('cron validator drift — #616 reintroduction guard (#1368)', () => {
     });
   });
 
-  describe('cross-validator drift fixture (the #1368 trap)', () => {
+  describe('cross-validator agreement on the former drift fixture (#1368 fixed)', () => {
     // `1-5/2,10` is accepted by the backend (splits on `,` first → `1-5/2` and
-    // `10`) but REJECTED by the frontend `isValidCron` (takes the `/` branch on
-    // the whole `2,10` token → Number("2,10") = NaN → false).
-    const DRIFT_EXPR = '1-5/2,10 * * * *';
+    // `10`). Before #1368 the frontend `isValidCron` took the `/` branch on the
+    // whole `2,10` token → Number("2,10") = NaN → false, a false-negative that
+    // silently flattened the persisted cron (reintroducing #616). The fix made
+    // `isValidCron` split on `,` first, mirroring the backend authority.
+    const FORMER_DRIFT_EXPR = '1-5/2,10 * * * *';
 
-    it('the two validators genuinely disagree on the drift fixture', () => {
-      expect(backendValidateCron(DRIFT_EXPR)).toBe(true);
-      // Frontend false-negative — this is the root cause of the silent #616
-      // reintroduction. Pinned so a future "fix" to either validator is
-      // forced to be deliberate.
-      expect(isValidCron(DRIFT_EXPR)).toBe(false);
+    it('the two validators now agree on the former drift fixture', () => {
+      expect(backendValidateCron(FORMER_DRIFT_EXPR)).toBe(true);
+      // Frontend now mirrors the backend parse order (split `,` first) — no
+      // more false-negative. If either validator drifts again this goes red.
+      expect(isValidCron(FORMER_DRIFT_EXPR)).toBe(true);
     });
 
-    it('CURRENT behaviour: a backend-accepted cron the frontend rejects is silently flattened (#616 reintroduced)', () => {
+    it('surfaces a backend-accepted combined cron verbatim — no silent flatten (#616 stays closed)', () => {
       const schedule = makeSchedule({
-        cron_expression: DRIFT_EXPR, // backend persisted this exact value
+        cron_expression: FORMER_DRIFT_EXPR, // backend persisted this exact value
         frequency: 'daily',
         time: '07:15',
       });
 
-      // EXPECTED AFTER #1368 FIX: scheduleToInitialCron should return DRIFT_EXPR
-      // verbatim (backend is the validation authority; never silently flatten a
-      // persisted cron). Until that fix lands, the read path flattens it back
-      // to the legacy time-derived expression — this assertion documents the
-      // live bug so the fix has a red→green target and so the regression can't
-      // slip back in unnoticed.
-      const flattened = scheduleToInitialCron(schedule);
-      expect(flattened).not.toBe(DRIFT_EXPR); // <-- flip to .toBe(DRIFT_EXPR) when #1368 is fixed
-      expect(flattened).toBe('15 7 * * *'); // lossy reconstruction from `time`
+      // With #1368 fixed the read path surfaces the persisted cron verbatim
+      // instead of falling back to the lossy `time`-derived reconstruction.
+      expect(scheduleToInitialCron(schedule)).toBe(FORMER_DRIFT_EXPR);
     });
   });
 });

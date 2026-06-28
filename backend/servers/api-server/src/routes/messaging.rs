@@ -55,7 +55,10 @@ pub struct ThreadListResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ThreadDetailResponse {
     pub thread: MessageThread,
-    pub other_participant: ParticipantInfo,
+    /// All other participants (everyone except the caller). For a 2-party thread
+    /// this is a single entry; for group threads ([BIT-206]) it is the full
+    /// list, ordered by name.
+    pub participants: Vec<ParticipantInfo>,
     pub messages: Vec<MessageWithSender>,
     pub message_count: i64,
 }
@@ -529,14 +532,14 @@ async fn start_thread(
             )
         })?;
 
-    // Get other participant info
-    let other_participant = get_other_participant(&mut rls, &thread, user_id).await?;
+    // Get all other participants' info ([BIT-206]).
+    let participants = get_participants(&mut rls, &thread, user_id).await?;
 
     rls.release().await;
 
     Ok(Json(ThreadDetailResponse {
         thread,
-        other_participant,
+        participants,
         messages,
         message_count,
     }))
@@ -630,8 +633,8 @@ async fn get_thread(
             )
         })?;
 
-    // Get other participant info
-    let other_participant = get_other_participant(&mut rls, &thread, user_id).await?;
+    // Get all other participants' info ([BIT-206]).
+    let participants = get_participants(&mut rls, &thread, user_id).await?;
 
     // Mark thread as read
     let _ = repo
@@ -642,7 +645,7 @@ async fn get_thread(
 
     Ok(Json(ThreadDetailResponse {
         thread,
-        other_participant,
+        participants,
         messages,
         message_count,
     }))
@@ -933,41 +936,37 @@ async fn send_message(
         ));
     }
 
-    // Check if blocked
-    let other_user_id = thread
+    // Check block status against EVERY other participant ([BIT-206]). A block
+    // by (or against) any participant prevents sending into the thread; the
+    // prior `find(!= me)` only checked one arbitrary other participant.
+    let other_user_ids: Vec<Uuid> = thread
         .participant_ids
         .iter()
-        .find(|&&uid| uid != user_id)
         .copied()
-        .ok_or_else(|| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
+        .filter(|&uid| uid != user_id)
+        .collect();
+
+    for &rid in &other_user_ids {
+        let is_blocked = repo
+            .is_blocked_rls(&mut **rls.conn(), user_id, rid)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+
+        if is_blocked {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new(
-                    "INVALID_THREAD",
-                    "Thread has invalid participants",
+                    "USER_BLOCKED",
+                    "Cannot message this user",
                 )),
-            )
-        })?;
-
-    let is_blocked = repo
-        .is_blocked_rls(&mut **rls.conn(), user_id, other_user_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if is_blocked {
-        rls.release().await;
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "USER_BLOCKED",
-                "Cannot message this user",
-            )),
-        ));
+            ));
+        }
     }
 
     // Send message
@@ -989,23 +988,23 @@ async fn send_message(
             )
         })?;
 
-    // A new inbound message un-hides the thread for the recipient if they had
-    // previously soft-deleted it (BIT-182). Best-effort: a failure here must not
-    // fail an otherwise-successful send.
-    let _ = repo
-        .unhide_thread_for_user(&mut **rls.conn(), id, other_user_id)
-        .await;
+    // A new inbound message un-hides the thread for any other participant who
+    // had previously soft-deleted it (BIT-182), generalized to N participants
+    // ([BIT-206]). Best-effort: a failure here must not fail an
+    // otherwise-successful send.
+    for &rid in &other_user_ids {
+        let _ = repo
+            .unhide_thread_for_user(&mut **rls.conn(), id, rid)
+            .await;
+    }
 
     rls.release().await;
 
-    // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
-    dispatch_new_message_event(
-        state.pubsub_service.as_ref(),
-        other_user_id,
-        &message,
-        user_id,
-    )
-    .await;
+    // Realtime fanout: notify every other participant's WebSocket channel
+    // (Epic 2B / 8A.3), generalized to N participants ([BIT-206]).
+    for &rid in &other_user_ids {
+        dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &message, user_id).await;
+    }
 
     Ok(Json(SendMessageResponse {
         message: "Message sent successfully".to_string(),
@@ -1894,36 +1893,34 @@ fn normalize_thread_search(search: Option<&str>) -> Option<&str> {
     search.map(str::trim).filter(|s| !s.is_empty())
 }
 
-/// Get the other participant's info from a thread.
-async fn get_other_participant(
+/// Get every other participant's info from a thread (everyone except the
+/// caller). For a 2-party thread this returns a single entry; for group threads
+/// ([BIT-206]) it returns the full list, ordered by name. An empty list is a
+/// valid (degenerate) result rather than an error.
+async fn get_participants(
     rls: &mut RlsConnection,
     thread: &MessageThread,
     current_user_id: Uuid,
-) -> Result<ParticipantInfo, (StatusCode, Json<ErrorResponse>)> {
-    let other_user_id = thread
+) -> Result<Vec<ParticipantInfo>, (StatusCode, Json<ErrorResponse>)> {
+    let other_ids: Vec<Uuid> = thread
         .participant_ids
         .iter()
-        .find(|&&uid| uid != current_user_id)
         .copied()
-        .ok_or_else(|| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INVALID_THREAD",
-                    "Thread has invalid participants",
-                )),
-            )
-        })?;
+        .filter(|&uid| uid != current_user_id)
+        .collect();
 
-    // Get user info. Issue #1008: `users` has a single `name` column — map it
-    // into first_name and leave last_name empty to keep the ParticipantInfo shape.
-    let user = sqlx::query_as::<_, (Uuid, String, String, String)>(
+    // Issue #1008: `users` has a single `name` column — map it into first_name
+    // and leave last_name empty to keep the ParticipantInfo shape.
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String)>(
         r#"
-        SELECT id, name AS first_name, '' AS last_name, email FROM users WHERE id = $1
+        SELECT id, name AS first_name, '' AS last_name, email
+        FROM users
+        WHERE id = ANY($1)
+        ORDER BY name
         "#,
     )
-    .bind(other_user_id)
-    .fetch_optional(&mut **rls.conn())
+    .bind(&other_ids)
+    .fetch_all(&mut **rls.conn())
     .await
     .map_err(|e| {
         (
@@ -1932,22 +1929,15 @@ async fn get_other_participant(
         )
     })?;
 
-    let (id, first_name, last_name, email) = user.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "USER_NOT_FOUND",
-                "Participant not found",
-            )),
-        )
-    })?;
-
-    Ok(ParticipantInfo {
-        id,
-        first_name,
-        last_name,
-        email,
-    })
+    Ok(rows
+        .into_iter()
+        .map(|(id, first_name, last_name, email)| ParticipantInfo {
+            id,
+            first_name,
+            last_name,
+            email,
+        })
+        .collect())
 }
 
 /// Build the realtime WebSocket event payload for a newly-sent direct message.

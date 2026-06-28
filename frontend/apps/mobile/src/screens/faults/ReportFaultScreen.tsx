@@ -97,6 +97,9 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionNotice, setCompressionNotice] = useState<string | null>(null);
+  // True when the photos are still over the 10 MB limit after compression
+  // (issue #1767) — drives a stronger "upload may be slow/fail" warning.
+  const [photosStillOverLimit, setPhotosStillOverLimit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [queuedOffline, setQueuedOffline] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -210,11 +213,16 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     try {
       const result = await compressImagesIfNeeded(next);
       setPhotos(result.uris);
+      setPhotosStillOverLimit(result.stillOverLimit);
       if (result.compressed) {
-        const notice = t('faults.photosCompressedWarning', {
-          original: bytesToMb(result.originalBytes),
-          final: bytesToMb(result.finalBytes),
-        });
+        // When the compressed total is still over the limit, lead with the
+        // stronger "still large" warning so the user isn't told it's now fine.
+        const notice = result.stillOverLimit
+          ? t('faults.photosStillLargeWarning', { final: bytesToMb(result.finalBytes) })
+          : t('faults.photosCompressedWarning', {
+              original: bytesToMb(result.originalBytes),
+              final: bytesToMb(result.finalBytes),
+            });
         setCompressionNotice(notice);
         Alert.alert(t('faults.photosCompressedTitle'), notice);
       } else {
@@ -230,6 +238,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       const next = prev.filter((_, i) => i !== index);
       if (next.length === 0) {
         setCompressionNotice(null);
+        setPhotosStillOverLimit(false);
       }
       return next;
     });
@@ -540,9 +549,21 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
             </View>
           )}
           {compressionNotice && (
-            <View style={styles.compressionNotice}>
-              <Text style={styles.compressionNoticeIcon}>🗜️</Text>
-              <Text style={styles.compressionNoticeText}>{compressionNotice}</Text>
+            <View
+              style={[
+                styles.compressionNotice,
+                photosStillOverLimit && styles.compressionNoticeOverLimit,
+              ]}
+            >
+              <Text style={styles.compressionNoticeIcon}>{photosStillOverLimit ? '⚠️' : '🗜️'}</Text>
+              <Text
+                style={[
+                  styles.compressionNoticeText,
+                  photosStillOverLimit && styles.compressionNoticeTextOverLimit,
+                ]}
+              >
+                {compressionNotice}
+              </Text>
             </View>
           )}
         </View>
@@ -802,6 +823,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.warningDark,
     lineHeight: 18,
+  },
+  // Stronger (danger) styling when the upload is still over the 10 MB limit
+  // after compression (issue #1767).
+  compressionNoticeOverLimit: {
+    backgroundColor: colors.dangerBg,
+  },
+  compressionNoticeTextOverLimit: {
+    color: colors.dangerDark,
   },
   offlineHint: {
     flexDirection: 'row',

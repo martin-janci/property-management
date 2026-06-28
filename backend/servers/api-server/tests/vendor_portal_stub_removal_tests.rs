@@ -12,9 +12,13 @@
 //! fully **unmounted** from the router (ROADMAP(PAP-24)/PAP-33): there is no
 //! `/api/v1/vendor-portal` route, so every path under it resolves to `404`
 //! instead of a "false 501" that would imply the feature is shipping on that
-//! exact path. The handlers remain in `routes/vendor_portal.rs` (returning
-//! `501` behind `require_vendor_principal`) for when the vendor-identity schema
-//! lands; the live, implemented vendor surface is `routes/vendors.rs`.
+//! exact path. The unmounted `routes/vendor_portal.rs` handlers were
+//! subsequently **deleted** as dead code (BIT-257/BIT-266); a vendor-scoped
+//! portal will be rebuilt when the vendor-identity schema lands. The live,
+//! implemented vendor surface is `routes/vendors.rs`. This regression test
+//! still pins the security invariant via the live router: every
+//! `/api/v1/vendor-portal/*` path resolves to `404`, never a `200` with
+//! fabricated PII.
 //!
 //! Two layers of assertion:
 //!

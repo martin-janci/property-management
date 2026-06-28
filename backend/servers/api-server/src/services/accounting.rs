@@ -193,8 +193,18 @@ impl AccountingService {
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
 
-        if p_match.state == PaymentMatchState::Confirmed {
-            return Ok(());
+        // PAP-325: enforce legal transitions. Only a `Suggested` match may be
+        // confirmed. Re-confirming an already-`Confirmed` match is an idempotent
+        // no-op (do NOT re-apply `paid_amount`). A `Rejected` match is terminal —
+        // confirming it would re-apply `paid_amount` and inflate the invoice.
+        match p_match.state {
+            PaymentMatchState::Confirmed => return Ok(()),
+            PaymentMatchState::Rejected => {
+                return Err(AppError::Conflict(format!(
+                    "Match {match_id} is rejected and cannot be confirmed"
+                )));
+            }
+            PaymentMatchState::Suggested => {}
         }
 
         let line = self
@@ -255,6 +265,16 @@ impl AccountingService {
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
 
+        // PAP-325: enforce legal transitions. Rejecting an already-`Rejected`
+        // match is an idempotent no-op. Rejecting a `Confirmed` match is an
+        // explicit "unapply" — we must subtract the previously-applied
+        // `paid_amount` so AR/paid totals stay consistent.
+        let was_confirmed = match p_match.state {
+            PaymentMatchState::Rejected => return Ok(()),
+            PaymentMatchState::Confirmed => true,
+            PaymentMatchState::Suggested => false,
+        };
+
         // 1. Update match state
         let mut updated_match = p_match.clone();
         updated_match.state = PaymentMatchState::Rejected;
@@ -265,7 +285,30 @@ impl AccountingService {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // 2. Update statement line state if no other suggested matches remain
+        // 2. Unapply a previously-confirmed payment: subtract the line amount
+        //    delta and recompute invoice status so paid totals revert.
+        if was_confirmed {
+            let line = self
+                .repo
+                .find_bank_statement_line_rls(&mut *executor, p_match.statement_line_id)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?
+                .ok_or_else(|| {
+                    AppError::Internal(format!(
+                        "Statement line {} not found",
+                        p_match.statement_line_id
+                    ))
+                })?;
+            self.repo
+                .update_invoice_payment_status_rls(&mut *executor, p_match.invoice_id, -line.amount)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Invoice {} not found", p_match.invoice_id))
+                })?;
+        }
+
+        // 3. Update statement line state if no other suggested matches remain
         let other_matches = self
             .repo
             .list_payment_matches_by_line_rls(&mut *executor, p_match.statement_line_id)

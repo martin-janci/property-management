@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ppt/accounting-api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
     "@ppt/ui-kit": "workspace:*",
     "@tanstack/react-query": "^5.101.0",
