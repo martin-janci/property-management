@@ -41,6 +41,8 @@
 //! so we can call it directly without constructing an HTTP request or going
 //! through the Axum router.
 
+#![allow(dead_code)]
+
 use sqlx::PgPool;
 use uuid::Uuid;
 use wiremock::{matchers, Mock, MockServer, ResponseTemplate};

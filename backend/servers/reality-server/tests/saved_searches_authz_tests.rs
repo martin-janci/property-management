@@ -5,6 +5,8 @@
 //! - No bearer token → 401
 //! - Valid token → non-401 (may be 200, 404, 400, etc.)
 
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{http::Method, Router};

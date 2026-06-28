@@ -24,6 +24,8 @@
 //! The test uses `#[sqlx::test]` for an isolated, migrated database (same
 //! harness as every other integration test in this workspace).
 
+#![allow(dead_code)]
+
 use api_core::PrincipalClaims;
 use axum::{
     body::Body,

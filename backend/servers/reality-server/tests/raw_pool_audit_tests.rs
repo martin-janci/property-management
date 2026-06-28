@@ -25,6 +25,8 @@
 //! so the test runner supplies a migrated, isolated pool consistent with the
 //! rest of the integration suite.
 
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use axum::{

@@ -23,6 +23,8 @@
 //! JWTs, and use `#[sqlx::test(migrator = "db::MIGRATOR")]` for an isolated,
 //! migrated database — the same harness as every other integration test here.
 
+#![allow(dead_code)]
+
 use api_core::PrincipalClaims;
 use axum::{
     body::Body,

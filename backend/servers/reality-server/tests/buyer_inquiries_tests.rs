@@ -20,6 +20,8 @@
 //! | B2 | Buyer B's inquiries are hidden from buyer A (isolation) |
 //! | B3 | `count_buyer_inquiries` returns the FULL count, not the page length (PR #919 regression) |
 
+#![allow(dead_code)]
+
 use db::repositories::RealityPortalRepository;
 use sqlx::PgPool;
 use uuid::Uuid;

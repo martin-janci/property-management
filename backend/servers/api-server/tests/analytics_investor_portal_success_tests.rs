@@ -202,7 +202,6 @@ struct Fixture {
     token: String,
     org_id: Uuid,
     building_id: Uuid,
-    user_id: Uuid,
 }
 
 async fn setup(pool: PgPool, slug: &str) -> Fixture {
@@ -218,7 +217,6 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
         token,
         org_id,
         building_id,
-        user_id,
     }
 }
 

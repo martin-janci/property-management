@@ -39,6 +39,8 @@
 //!    independent of that index; the encryption contract under test is
 //!    orthogonal to the upsert's conflict target.
 
+#![allow(dead_code)]
+
 use db::repositories::RentalRepository;
 use integrations::{decrypt_if_available, encrypt_required, IntegrationCrypto};
 use sqlx::PgPool;

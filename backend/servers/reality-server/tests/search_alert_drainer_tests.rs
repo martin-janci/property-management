@@ -23,6 +23,8 @@
 //! Run against a live Postgres (sqlx spins up a per-test database):
 //! `DATABASE_URL=... cargo test -p reality-server --test search_alert_drainer_tests`.
 
+#![allow(dead_code)]
+
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
