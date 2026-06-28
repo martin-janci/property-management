@@ -42,7 +42,7 @@ primarily a **happy-path integration-test** effort, not a build effort (BIT-256 
 | [notifications-comms](./groups/notifications-comms.md) | 87 | 12 | 75 | 0 | 13.8% | 100% |
 | [documents-forms](./groups/documents-forms.md) | 118 | 15 | 103 | 0 | 12.7% | 100% |
 | [reality-server](./groups/reality-server.md) | 96 | 4 | 91 | 1 | 4.2% | 99.0% |
-| [faults-maintenance](./groups/faults-maintenance.md) | 273 | 10 | 249 | 14 | 3.7% | 94.9% |
+| [faults-maintenance](./groups/faults-maintenance.md) | 259 | 10 | 249 | 0 | 3.9% | 100% |
 | [leasing](./groups/leasing.md) | 84 | 3 | 80 | 1 | 3.6% | 98.8% |
 | [finance](./groups/finance.md) | 234 | 8 | 226 | 0 | 3.4% | 100% |
 | [integrations-ecosystem](./groups/integrations-ecosystem.md) | 268 | 32 | 163 | 73 | 11.9% | 72.8% |
@@ -64,9 +64,11 @@ sentiment/equipment (covered by batch 4 PR pending merge).
 Stubs cluster into a small number of whole modules. Fixing these modules clears ~97% of
 the stub bucket.
 
+> [BIT-257](/BIT/issues/BIT-257) **deleted** the `public_api.rs` (43) and `vendor_portal.rs`
+> (14) unmounted ROADMAP scaffolds — they are no longer counted (was 125 stubs → now 68).
+
 | Module / surface | Stubs | Why | Owning epic / ref |
 |---|---|---|---|
-| `routes/public_api.rs` → `/api/v1/developer/*` | 43 | **Unmounted** roadmap scaffold; handlers return `501` | Epic 69, ROADMAP(PAP-24) |
 | `routes/integrations/sync.rs` (calendars/accounting/esign/video CRUD) | 30 | **Unmounted**; Epic-61 tables exist in no migration | Epic 61, PAP-122 |
 | `routes/vendor_portal.rs` | 14 | **Unmounted** (ROADMAP PAP-24); every handler `501`. `vendors/` is the live surface | Epic — vendor portal |
 | `routes/compliance.rs` `gdpr/data-exports` | 1 | Returns empty exports + zeroed counts ("for now" TODO) | GDPR |
@@ -114,9 +116,10 @@ DB-backed (BIT-256).
   without a clear `2xx` assertion is treated as **not** proving the success path.
 - Several test files exercise the **repository layer directly** rather than the HTTP
   endpoint (noted per group). Those do not count toward `done` for the endpoint.
-- A handful of routers are **dead code** (defined but never mounted, e.g.
+- A handful of routers were **dead code** (defined but never mounted, e.g.
   `signatures::document_signature_router`) — excluded from counts and flagged in group
-  notes.
+  notes. [BIT-257](/BIT/issues/BIT-257) **deleted** `signatures::document_signature_router`
+  and its `*_for_doc` handlers (the live `*_for_document` surface is unchanged).
 - Endpoint counts treat each `(method, path)` pair as one endpoint; dual-mounted
   routers (e.g. `market_pricing` at `/pricing` + `/market-pricing`) are counted once.
 - **`Missing=0` caveat resolved (BIT-269).** A spec→handler diff (`scripts/diff_endpoints_v3.py`)
