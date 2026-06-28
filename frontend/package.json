@@ -9,6 +9,7 @@
   "scripts": {
     "dev:ppt": "pnpm --filter @ppt/web dev",
     "dev:reality": "pnpm --filter @ppt/reality-web dev",
+    "dev:accounting": "pnpm --filter @ppt/accounting-web dev",
     "dev:mobile": "pnpm --filter @ppt/mobile start",
     "build": "pnpm -r build",
     "test": "pnpm -r test",

@@ -193,7 +193,7 @@ impl AccountingRepository {
         executor: E,
         id: Uuid,
         data: UpdateInvoice,
-    ) -> Result<Invoice, sqlx::Error>
+    ) -> Result<Option<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -227,7 +227,7 @@ impl AccountingRepository {
         .bind(data.status)
         .bind(data.paid_amount)
         .bind(id)
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await
     }
 
@@ -477,7 +477,7 @@ impl AccountingRepository {
         executor: E,
         id: Uuid,
         paid_amount_delta: Decimal,
-    ) -> Result<Invoice, sqlx::Error>
+    ) -> Result<Option<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -489,7 +489,10 @@ impl AccountingRepository {
                 status = CASE
                     WHEN paid_amount + $1 >= total_amount THEN 'paid'
                     WHEN paid_amount + $1 > 0 THEN 'partially_paid'
-                    ELSE status
+                    -- PAP-325: a negative delta (unapplying a confirmed match)
+                    -- can drive paid_amount back to 0; revert to 'issued' rather
+                    -- than leaving a stale 'paid'/'partially_paid' status.
+                    ELSE 'issued'
                 END,
                 updated_at = NOW()
             WHERE id = $2
@@ -498,7 +501,7 @@ impl AccountingRepository {
         )
         .bind(paid_amount_delta)
         .bind(id)
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await
     }
 }

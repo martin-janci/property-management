@@ -32,6 +32,8 @@
 //! These tests use the `ai_*` tables that ship migrations (`00042_create_ai_chat.sql`)
 //! so they run against `db::MIGRATOR` deterministically.
 
+#![allow(dead_code)]
+
 use db::models::ProvideFeedback;
 use db::repositories::{AiChatRepository, LlmDocumentRepository};
 use sqlx::PgPool;

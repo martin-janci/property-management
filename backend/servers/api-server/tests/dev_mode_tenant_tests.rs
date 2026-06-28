@@ -24,6 +24,8 @@
 //! database, `#[sqlx::test]` will skip/fail exactly like every other
 //! integration test in this crate.
 
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use axum::{

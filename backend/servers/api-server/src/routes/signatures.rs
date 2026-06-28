@@ -1492,31 +1492,3 @@ pub async fn submit_signature(
         message,
     }))
 }
-
-// Helper function to create document-scoped signature routes
-pub fn document_signature_router() -> Router<AppState> {
-    Router::new().route(
-        "/signature-requests",
-        get(list_signature_requests_for_doc).post(create_signature_request_for_doc),
-    )
-}
-
-/// Create a signature request for a specific document (nested route version).
-pub async fn create_signature_request_for_doc(
-    State(state): State<AppState>,
-    auth: AuthUser,
-    rls: RlsConnection,
-    Path(document_id): Path<Uuid>,
-    Json(request): Json<CreateSignatureRequest>,
-) -> Result<(StatusCode, Json<CreateSignatureRequestResponse>), (StatusCode, Json<ErrorResponse>)> {
-    create_signature_request(State(state), auth, rls, Path(document_id), Json(request)).await
-}
-
-/// List signature requests for a specific document (nested route version).
-pub async fn list_signature_requests_for_doc(
-    State(state): State<AppState>,
-    rls: RlsConnection,
-    Path(document_id): Path<Uuid>,
-) -> Result<Json<ListSignatureRequestsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    list_signature_requests(State(state), rls, Path(document_id)).await
-}

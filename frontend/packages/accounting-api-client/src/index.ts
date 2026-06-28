@@ -1,78 +1,57 @@
 /**
- * Accounting API Client
+ * Accounting Portal API Client (@ppt/accounting-api-client)
  *
- * Generated from OpenAPI specification, scoped to the Accounting tag.
- * Run `pnpm generate-accounting-api` to regenerate after API changes.
+ * Typed client for accounting-server (resource server on :8082, validates
+ * api-server-issued JWTs). Consumed by @ppt/accounting-web.
+ *
+ * The generated hey-api client is produced by `pnpm generate` from the
+ * server's OpenAPI (CONTRACT §8) into `./generated`. Until Phase 2 wires the
+ * real spec, the hand-typed fallback below provides the full typed surface so
+ * accounting-web typechecks. After generation, uncomment the generated
+ * re-export; the hook surface (useContacts/useInvoices/…) stays identical.
  */
 
-// Re-export client infrastructure
-export { client } from './generated/client.gen';
-export type { CreateClientConfig } from './generated/client.gen';
-export { createClient, createConfig } from './generated/client';
-export type { ClientOptions, Options } from './generated/types.gen';
+// Generated client + types (enabled in Phase 2 once the spec is exported):
+// export * from './generated';
 
-// Accounting SDK functions
+// Low-level transport + structured error.
+export { AccountingApiError, request } from './client';
+// Runtime config: base URL + Bearer-token wiring (host app calls
+// configureAccountingApi once at startup).
 export {
-  contactsApiList,
-  invoicesApiCreate,
-  invoicesApiDelete,
-  invoicesApiGet,
-  invoicesApiList,
-  invoicesApiListItems,
-  invoicesApiUpdate,
-} from './generated/sdk.gen';
+  API_PREFIX,
+  apiUrl,
+  authHeaders,
+  configureAccountingApi,
+  DEFAULT_ACCOUNTING_API_URL,
+  getApiBase,
+  getAuthToken,
+  resetAccountingApi,
+  type TokenProvider,
+} from './config';
+// Domain hooks.
+export * from './contacts';
+export * from './invoices';
+// tanstack-query keys.
+export { contactKeys, invoiceKeys } from './query-keys';
 
-// Accounting types
+// Hand-typed fallback domain types (superseded by ./generated in Phase 2).
 export type {
-  AccountingContact,
-  AccountingCreateInvoiceItem,
-  AccountingCreateInvoiceRequest,
-  AccountingInvoice,
-  AccountingInvoiceItem,
-  AccountingInvoiceStatus,
-  AccountingUpdateInvoiceRequest,
-  AccountingVatRate,
-  ContactsApiListData,
-  ContactsApiListError,
-  ContactsApiListErrors,
-  ContactsApiListResponse,
-  ContactsApiListResponses,
-  InvoicesApiCreateData,
-  InvoicesApiCreateError,
-  InvoicesApiCreateErrors,
-  InvoicesApiCreateResponse,
-  InvoicesApiCreateResponses,
-  InvoicesApiDeleteData,
-  InvoicesApiDeleteError,
-  InvoicesApiDeleteErrors,
-  InvoicesApiDeleteResponse,
-  InvoicesApiDeleteResponses,
-  InvoicesApiGetData,
-  InvoicesApiGetError,
-  InvoicesApiGetErrors,
-  InvoicesApiGetResponse,
-  InvoicesApiGetResponses,
-  InvoicesApiListData,
-  InvoicesApiListError,
-  InvoicesApiListErrors,
-  InvoicesApiListItemsData,
-  InvoicesApiListItemsError,
-  InvoicesApiListItemsErrors,
-  InvoicesApiListItemsResponse,
-  InvoicesApiListItemsResponses,
-  InvoicesApiListResponse,
-  InvoicesApiListResponses,
-  InvoicesApiUpdateData,
-  InvoicesApiUpdateError,
-  InvoicesApiUpdateErrors,
-  InvoicesApiUpdateResponse,
-  InvoicesApiUpdateResponses,
-} from './generated/types.gen';
+  Contact,
+  ContactKind,
+  ContactRequest,
+  CreateInvoice,
+  DecimalString,
+  DocType,
+  Invoice,
+  InvoiceItem,
+  InvoiceItemInput,
+  InvoiceStatus,
+  InvoiceWithItems,
+  Timestamp,
+  UpdateInvoice,
+  Uuid,
+} from './types';
 
-// Shared types needed by accounting consumers
-export type {
-  SharedErrorResponse,
-  SharedMoney,
-  SharedPaginationMeta,
-  SharedUuid,
-} from './generated/types.gen';
+/** SDK version marker (mirrors reality-api-client's version export). */
+export const ACCOUNTING_API_VERSION = '1.0.0';

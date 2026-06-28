@@ -46,8 +46,10 @@ context flows through auth.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:491`.
 - 2026-05-24 — api-integration: wired to POST /messages/threads (useStartThread) + GET neighbors for recipient list; API only supports single recipient per thread.
 - 2026-06-03 — bugfix (PR #922): recipient list now sourced from the user's first building via `useBuildings` (was `useMessageRecipients(undefined)` → empty/unusable). Added `?recipientId=` preselection passed through as `initialRecipientIds`. Loading state now also waits on the buildings query.
+- 2026-06-25 — group conversations (BIT-244): `toStartThreadRequest` now sends the **full** recipient set as snake_case `recipient_ids` (was collapsed to a single `recipientId`), so multi-select recipients open one N-party thread (UC-05.8 / BIT-183). Backend merge: PR #1848.
 
 ## Agent Log
+- 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `toStartThreadRequest` sends `recipient_ids: string[]` (snake_case wire); reconciled camelCase `recipientId` → snake_case to match backend `StartThreadRequest`. buildStatus/apiStatus unchanged (shipped/complete).
 - 2026-06-03 — agent: test-gap-screen-map-drift-pr-922-ppt — reconciled drift from PR #922 (dev-review rounds 1-5). NewMessagePageRoute now resolves buildingId via useBuildings + honors ?recipientId= preselection; updated Specific notes. buildStatus/apiStatus unchanged (shipped/complete).
 - 2026-05-24 — agent: promoted apiStatus stub→integrated; wired NewMessagePageRoute to useStartThread/useMessageRecipients hooks.
 - 2026-05-18 — agent: created stub for unmapped route.

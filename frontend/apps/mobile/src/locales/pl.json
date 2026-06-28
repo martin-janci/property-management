@@ -130,6 +130,7 @@
     "buildingsLoadError": "Nie udało się wczytać Twoich budynków",
     "photosCompressedTitle": "Zdjęcia skompresowane",
     "photosCompressedWarning": "Wybrane zdjęcia przekroczyły 10 MB ({{original}} MB) i zostały skompresowane do {{final}} MB, aby szybciej się przesłały. Jakość obrazu może być niższa.",
+    "photosStillLargeWarning": "Nawet po kompresji zdjęcia mają {{final}} MB (powyżej limitu 10 MB), więc przesyłanie może być wolne lub nie powieść się przy słabym połączeniu.",
     "compressingPhotos": "Optymalizowanie zdjęć…",
     "queuedTitle": "Zapisano offline",
     "queuedMessage": "Jesteś offline. Zgłoszenie zostało zapisane i zsynchronizuje się automatycznie po ponownym połączeniu.",

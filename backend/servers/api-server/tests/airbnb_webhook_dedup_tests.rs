@@ -13,6 +13,8 @@
 //! enqueue a second SYNC_EXTERNAL job. They require a `DATABASE_URL`; under
 //! `SQLX_OFFLINE=true` with no DB the harness skips them.
 
+#![allow(dead_code)]
+
 use sqlx::{PgPool, Row};
 
 /// Mirror of the dedup INSERT performed by `handle_airbnb_webhook` (step 4).

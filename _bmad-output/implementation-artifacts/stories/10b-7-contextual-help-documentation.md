@@ -1,6 +1,6 @@
 # Story 10B.7: Contextual Help & Documentation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -116,14 +116,29 @@ N/A
 
 ### Completion Notes List
 
-(To be filled during implementation)
+- Contextual help shipped across backend, admin-web, and mobile. Backend is an
+  article/FAQ/tooltip help system with full-text search and context-key lookup
+  (slightly different shape than the original draft AC, which proposed a
+  route-pattern + revisions model — the delivered design covers AC-1/AC-2/AC-3
+  via context-key resolution, search routes, and seeded published content).
+- Backend handlers (11 routes) were already fully implemented in `dev`; PR #844
+  (merged 2026-05-30) added the regression test coverage `help_tests.rs`.
+- Status reconciled to `done` on 2026-06-25 after verifying all stacks landed.
 
 ### File List
 
-(To be filled during implementation)
+- `backend/crates/db/migrations/00034_create_contextual_help.sql` — help_articles, help_categories, faq, tooltips, user_article_feedback
+- `backend/crates/db/src/repositories/help.rs` — HelpRepository (articles/FAQ/tooltips/categories/search/context-key/feedback)
+- `backend/servers/api-server/src/routes/help.rs` — 11 route handlers mounted at /api/v1/help (lib.rs:233)
+- `backend/servers/api-server/src/state.rs` — help_repo wired into AppState
+- `backend/servers/api-server/tests/help_tests.rs` — integration tests (PR #844)
+- `frontend/apps/admin-web/src/features/help/{HelpSidebar,HelpTooltip,useContextualHelp}.tsx` + `src/help/articles.ts`
+- `frontend/apps/mobile/src/screens/help/HelpCenterScreen.tsx`, `src/components/onboarding/ContextualHelp.tsx`
+- `docs/screens/ppt/admin-contextual-help.md` — screen-map (buildStatus: shipped)
 
 ## Change Log
 
 | Date | Change |
 |------|--------|
 | 2025-12-21 | Story created |
+| 2026-06-25 | Status reconciled ready-for-dev → done; backend + admin-web + mobile shipped, regression tests via PR #844 |
