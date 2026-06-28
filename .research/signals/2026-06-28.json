@@ -1,0 +1,268 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-28",
+      "type": "lag_warning",
+      "source": "routine-self (last_run_iso=2026-06-16T03:25:00Z)",
+      "score_delta": 0,
+      "evidence": [
+        "Routine has not run since 2026-06-16 (~12d gap, well > 36h)."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-28",
+      "type": "stale_routine_alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso is 12d old; cloud routine may be paused."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "2921 lines changed (+2338/-583) since 2026-06-16 across 91 merged PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "2228 lines changed (+2141/-87) since 2026-06-16 across 91 merged PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-data_residency-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "2050 lines changed (+1554/-496) since 2026-06-16 across 91 merged PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot: bump the gradle-minor-patch group in /mobile-native \u2014 merged 2026-06-22"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot: bump tower-http from 0.6.11 to 0.7.0 in /backend in the axum group \u2014 merged 2026-06-22"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "untriaged-issue-issue-1904",
+      "type": "untriaged-issue",
+      "source": "issue #1904",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up issue #1904: harden migration-version collision guard \u2014 add a test + auto-discover dirs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-issue-1905",
+      "type": "untriaged-issue",
+      "source": "issue #1905",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up issue #1905: tenant-migration endpoints \u2014 duplicate migration number + import/export still stubbed"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-issue-1906",
+      "type": "untriaged-issue",
+      "source": "issue #1906",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up issue #1906: regional-compliance quorum lookup is dead code + missing role checks/test gaps"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-issue-1851",
+      "type": "untriaged-issue",
+      "source": "issue #1851",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up issue #1851: harden PlatformAdminRepository against runtime-only SQL typos (use compile-time sqlx)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-issue-1852",
+      "type": "untriaged-issue",
+      "source": "issue #1852",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up issue #1852: favorite alert worker \u2014 use checked sqlx macros, batch per-org scans, tighten aborts"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score\u22653 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && header match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advancement check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "score\u22648; 11 decayed + 18 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached -- outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases (1.5/1.6 intentionally skipped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "all 9 prior plans present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7",
+      "expected": "now\u2265head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE byte-identity",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions, kill-switch respected",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged \u2192 no-op",
+      "observed": "pm_cursor stable",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
