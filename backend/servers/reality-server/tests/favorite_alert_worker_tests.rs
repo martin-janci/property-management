@@ -4,6 +4,8 @@
 //! alerts even though `portal_favorites` and `listing_price_history` are under
 //! FORCE RLS. The worker must iterate orgs and set tenant context explicitly.
 
+#![allow(dead_code)]
+
 use db::models::listing_status;
 use db::repositories::RealityPortalRepository;
 use reality_server::services::{FavoriteAlertConfig, FavoriteAlertWorker};

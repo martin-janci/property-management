@@ -12,6 +12,8 @@
 //! middleware here. Phase 1 has its own integration tests for that path
 //! (`dev_mode_tenant_tests.rs`); this file isolates the Phase 3 surface.
 
+#![allow(dead_code)]
+
 use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::body::to_bytes;
 use serde_json::Value;

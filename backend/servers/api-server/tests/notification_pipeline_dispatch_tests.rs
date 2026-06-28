@@ -15,6 +15,8 @@
 //! (`PushNotConfigured`, fail-closed — not a fake Sent), in-app = Sent (real DB
 //! write via `add_notification_to_group`).
 
+#![allow(dead_code)]
+
 use api_server::services::{EmailService, NotificationPipeline, PipelineConfig};
 use common::notifications::pipeline::DeliveryStatus;
 use common::notifications::{

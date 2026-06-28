@@ -20,6 +20,8 @@
 //! `(envelope_id, nonce)` pair, and the API translation is a trivial match
 //! once the `/sign` handler ships.
 
+#![allow(dead_code)]
+
 use db::repositories::{ESignatureNonceRepository, RecordNonceError};
 use sqlx::PgPool;
 use uuid::Uuid;
