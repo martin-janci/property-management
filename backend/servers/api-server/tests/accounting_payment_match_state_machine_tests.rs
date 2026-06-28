@@ -119,7 +119,11 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
         .await
         .expect("reject confirmed match");
     let (paid, status) = invoice_state(&pool, invoice).await;
-    assert_eq!(paid, dec!(0), "rejecting a confirmed match must unapply the amount");
+    assert_eq!(
+        paid,
+        dec!(0),
+        "rejecting a confirmed match must unapply the amount"
+    );
     assert_eq!(
         status,
         InvoiceStatus::Issued,
@@ -136,7 +140,11 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
         "rejected -> confirmed must be a 409 Conflict, got {err:?}"
     );
     let (paid, _) = invoice_state(&pool, invoice).await;
-    assert_eq!(paid, dec!(0), "a rejected match must never re-apply paid_amount");
+    assert_eq!(
+        paid,
+        dec!(0),
+        "a rejected match must never re-apply paid_amount"
+    );
 }
 
 /// Confirming an already-confirmed match is an idempotent no-op — it must not
@@ -157,7 +165,11 @@ async fn double_confirm_is_idempotent(pool: PgPool) {
         .expect("second confirm is a no-op");
 
     let (paid, _) = invoice_state(&pool, invoice).await;
-    assert_eq!(paid, dec!(100), "double-confirm must apply the amount exactly once");
+    assert_eq!(
+        paid,
+        dec!(100),
+        "double-confirm must apply the amount exactly once"
+    );
 }
 
 /// Rejecting an already-rejected match is an idempotent no-op (no double
@@ -179,5 +191,9 @@ async fn double_reject_is_idempotent(pool: PgPool) {
         .expect("second reject is a no-op");
 
     let (paid, _) = invoice_state(&pool, invoice).await;
-    assert_eq!(paid, dec!(0), "rejecting a suggested match never touches paid_amount");
+    assert_eq!(
+        paid,
+        dec!(0),
+        "rejecting a suggested match never touches paid_amount"
+    );
 }
