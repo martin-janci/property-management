@@ -323,13 +323,17 @@ jobs:
       # `--keep-going` makes cargo continue compiling the other independent test
       # targets after one fails and report ALL compile errors in a single run,
       # so a whole wave of broken files can be enumerated and fixed at once.
+      # NOTE: `--keep-going` is NOT accepted by `cargo test` in this toolchain
+      # (arg-parse error). `cargo build --workspace --tests --keep-going`
+      # compiles the same test targets (`--tests` => lib/bins-as-unittests +
+      # integration tests) and supports `--keep-going`.
       - name: Compile all test targets (enumerate every compile failure)
         if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
-        run: cargo test --workspace --no-run --keep-going
+        run: cargo build --workspace --tests --keep-going
 
       - name: Run tests
         if: needs.changes.outputs.backend == 'true'
