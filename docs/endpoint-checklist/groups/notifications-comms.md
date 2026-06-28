@@ -53,11 +53,11 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 ## critical_notifications.rs  (mount: /api/v1/organizations/{org_id}/critical-notifications)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/organizations/{org_id}/critical-notifications | create_notification | partial | none | real handler (admin gate + repo create); no test |
-| GET | /api/v1/organizations/{org_id}/critical-notifications | list_notifications | partial | none | no test |
-| GET | /api/v1/organizations/{org_id}/critical-notifications/unacknowledged | get_unacknowledged | partial | none | no test |
-| POST | /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/acknowledge | acknowledge | partial | none | no test |
-| GET | /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/stats | get_stats | partial | none | no test |
+| POST | /api/v1/organizations/{org_id}/critical-notifications | create_notification | done | announcements_happy_path_tests.rs | 201 happy-path (admin gate, repo create) |
+| GET | /api/v1/organizations/{org_id}/critical-notifications | list_notifications | done | announcements_happy_path_tests.rs | 200 happy-path |
+| GET | /api/v1/organizations/{org_id}/critical-notifications/unacknowledged | get_unacknowledged | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/acknowledge | acknowledge | done | announcements_happy_path_tests.rs | 200 happy-path |
+| GET | /api/v1/organizations/{org_id}/critical-notifications/{notification_id}/stats | get_stats | done | announcements_happy_path_tests.rs | 200 happy-path |
 
 ## ws_notifications.rs  (mount: /api/v1/users/me/notifications)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -95,31 +95,31 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 ### crud.rs
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/announcements | create_announcement | partial | endpoints_smoke_tests.rs | smoke = auth-only (assert_protected); no happy-path |
-| GET | /api/v1/announcements | list_announcements | partial | endpoints_smoke_tests.rs | smoke = auth-only; no happy-path |
-| GET | /api/v1/announcements/published | list_published_announcements | partial | none | no test |
-| GET | /api/v1/announcements/{id} | get_announcement | partial | none | no test |
-| PUT | /api/v1/announcements/{id} | update_announcement | partial | none | no test |
-| DELETE | /api/v1/announcements/{id} | delete_announcement | partial | none | no test |
+| POST | /api/v1/announcements | create_announcement | done | announcements_happy_path_tests.rs, endpoints_smoke_tests.rs | 201 happy-path |
+| GET | /api/v1/announcements | list_announcements | done | announcements_happy_path_tests.rs, endpoints_smoke_tests.rs | 200 happy-path |
+| GET | /api/v1/announcements/published | list_published_announcements | done | announcements_happy_path_tests.rs | 200 happy-path |
+| GET | /api/v1/announcements/{id} | get_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| PUT | /api/v1/announcements/{id} | update_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| DELETE | /api/v1/announcements/{id} | delete_announcement | done | announcements_happy_path_tests.rs | 200/204 happy-path |
 
 ### lifecycle.rs
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/announcements/{id}/publish | publish_announcement | partial | none | no test |
-| POST | /api/v1/announcements/{id}/schedule | schedule_announcement | partial | none | no test |
-| POST | /api/v1/announcements/{id}/archive | archive_announcement | partial | none | no test |
-| POST | /api/v1/announcements/{id}/pin | pin_announcement | partial | none | also accepts PATCH (same handler) |
-| PATCH | /api/v1/announcements/{id}/pin | pin_announcement | partial | none | same handler as POST /pin |
+| POST | /api/v1/announcements/{id}/publish | publish_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/announcements/{id}/schedule | schedule_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/announcements/{id}/archive | archive_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/announcements/{id}/pin | pin_announcement | done | announcements_happy_path_tests.rs | 200 happy-path |
+| PATCH | /api/v1/announcements/{id}/pin | pin_announcement | done | announcements_happy_path_tests.rs | 200 happy-path (same handler as POST /pin) |
 
 ### engagement.rs
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/announcements/{id}/attachments | list_attachments | partial | none | no test |
-| POST | /api/v1/announcements/{id}/attachments | add_attachment | partial | none | no test |
-| DELETE | /api/v1/announcements/{id}/attachments/{attachment_id} | delete_attachment | partial | none | no test |
-| POST | /api/v1/announcements/{id}/read | mark_read | partial | none | no test |
-| POST | /api/v1/announcements/{id}/acknowledge | acknowledge | partial | none | no test |
-| GET | /api/v1/announcements/{id}/acknowledgments | get_acknowledgments | partial | none | no test |
+| GET | /api/v1/announcements/{id}/attachments | list_attachments | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/announcements/{id}/attachments | add_attachment | done | announcements_happy_path_tests.rs | 201 happy-path |
+| DELETE | /api/v1/announcements/{id}/attachments/{attachment_id} | delete_attachment | done | announcements_happy_path_tests.rs | 200/204 happy-path |
+| POST | /api/v1/announcements/{id}/read | mark_read | done | announcements_happy_path_tests.rs | 200 happy-path |
+| POST | /api/v1/announcements/{id}/acknowledge | acknowledge | done | announcements_happy_path_tests.rs | 200 happy-path |
+| GET | /api/v1/announcements/{id}/acknowledgments | get_acknowledgments | done | announcements_happy_path_tests.rs | 200 happy-path |
 
 ### comments.rs
 | Method | Path | Handler | Status | Tests | Notes |
@@ -131,8 +131,8 @@ _Server: api-server. Modules: messaging.rs, notification_preferences.rs, granula
 ### stats.rs
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/announcements/statistics | get_statistics | partial | none | no test |
-| GET | /api/v1/announcements/unread-count | get_unread_count | partial | none | no test |
+| GET | /api/v1/announcements/statistics | get_statistics | done | announcements_happy_path_tests.rs | 200 happy-path |
+| GET | /api/v1/announcements/unread-count | get_unread_count | done | announcements_happy_path_tests.rs | 200 happy-path |
 
 ### ai_draft.rs
 | Method | Path | Handler | Status | Tests | Notes |
