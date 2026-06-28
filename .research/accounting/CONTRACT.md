@@ -29,7 +29,7 @@ cargo build -p db -p accounting-core -p accounting-server
    public signatures stable. Cite `UC-ACC-XX.Y` in code comments.
 5. There is **NO sqlx offline metadata** in this repo: wrong column names
    compile and pass CI. Verify every column against the migrations
-   (00184 + 00196/00197/00198) — exact names below.
+   (00184 + 00200/00201/00202) — exact names below.
 
 ---
 
@@ -38,9 +38,9 @@ cargo build -p db -p accounting-core -p accounting-server
 ### Backend crates
 ```
 backend/crates/db/
-  migrations/00196_acc_company_config.sql        # Foundation
-  migrations/00197_acc_catalog_contacts_ext.sql  # Foundation
-  migrations/00198_acc_invoicing_platform.sql    # Foundation
+  migrations/00200_acc_company_config.sql        # Foundation
+  migrations/00201_acc_catalog_contacts_ext.sql  # Foundation
+  migrations/00202_acc_invoicing_platform.sql    # Foundation
   src/models/mod.rs                              # Foundation (wiring)
   src/models/acc_config.rs                       # Foundation (structs)
   src/models/acc_catalog.rs                      # Foundation (structs)
@@ -332,9 +332,9 @@ Response shapes = the db models in §6 (serde camel/snake as emitted).
 
 ## 6. New db models (Foundation-built — REUSE, do not redefine)
 
-Column names are EXACT (verify against 00196/00197/00198).
+Column names are EXACT (verify against 00200/00201/00202).
 
-`db::models::acc_config` (00196):
+`db::models::acc_config` (00200):
 - `AccCompanySettings{ id, tenant_id, legal_name, ico?, dic?, vat_id?, address?,
   email?, phone?, web?, logo_url?, brand_color?, tax_mode, vat_payer,
   base_currency, rounding_mode, default_payment_terms_days, default_invoice_note?,
@@ -353,7 +353,7 @@ Column names are EXACT (verify against 00196/00197/00198).
 - `AccDocumentTemplate{ id, tenant_id, name, theme, accent_color?, show_logo,
   is_default, config(serde_json::Value), created_at, updated_at }`.
 
-`db::models::acc_catalog` (00197):
+`db::models::acc_catalog` (00201):
 - `AccItemCategory{ id, tenant_id, name, parent_id?, created_at, updated_at }`.
 - `AccCatalogItem{ id, tenant_id, code?, name, description?, kind, unit_id?,
   vat_rate(Decimal), unit_price(Decimal), price_is_gross, category_id?,
@@ -361,7 +361,7 @@ Column names are EXACT (verify against 00196/00197/00198).
 - `AccPriceLevel{ id, tenant_id, item_id, name, price(Decimal), price_is_gross,
   currency, created_at, updated_at }`.
 
-`db::models::acc_contacts_ext` (00197 — `contact` ALTERs):
+`db::models::acc_contacts_ext` (00201 — `contact` ALTERs):
 - `AccContactAddress{ id, tenant_id, contact_id, kind, label?, street?, city?,
   postal_code?, country?, is_default, created_at, updated_at }` — `kind ∈ {billing, delivery}`.
 - `AccContactTag{ id, tenant_id, contact_id, tag, created_at }`.
@@ -373,7 +373,7 @@ Column names are EXACT (verify against 00196/00197/00198).
   `is_active`(default true), the `default_*` cols, `vat_verified_*`,
   `credit_limit`, `notes`, `merged_into_id`.
 
-`db::models::acc_invoicing_ext` (00198 — `invoice` ALTERs):
+`db::models::acc_invoicing_ext` (00202 — `invoice` ALTERs):
 - `AccDocType` enum `{Invoice, Proforma, Advance, CreditNote}` (TEXT snake_case).
 - `AccDocumentLink{ id, tenant_id, from_invoice_id, to_invoice_id, relation,
   created_at }` — `relation ∈ {settles, corrects, converts, related}`.
@@ -385,7 +385,7 @@ Column names are EXACT (verify against 00196/00197/00198).
   bank_account_id? }`. Invoice `status` CHECK now allows
   `{draft, issued, sent, paid, partially_paid, overdue, cancelled}`.
 
-`db::models::acc_platform` (00198):
+`db::models::acc_platform` (00202):
 - `AccTag{ id, tenant_id, entity_type, entity_id, tag, created_at }`.
 - `AccShareLink{ id, tenant_id, invoice_id, token, expires_at?, revoked_at?,
   created_by?, created_at }`.
@@ -397,13 +397,13 @@ Column names are EXACT (verify against 00196/00197/00198).
 ---
 
 ## 7. Migrations added (Foundation)
-- `00196_acc_company_config.sql`: acc_company_settings, acc_numbering_series,
+- `00200_acc_company_config.sql`: acc_company_settings, acc_numbering_series,
   acc_unit, acc_vat_rate, acc_bank_account, acc_email_template,
   acc_document_template.
-- `00197_acc_catalog_contacts_ext.sql`: acc_item_category, acc_catalog_item,
+- `00201_acc_catalog_contacts_ext.sql`: acc_item_category, acc_catalog_item,
   acc_price_level; `contact` ALTERs (kind/is_active/default_*/vat_verified_*/
   credit_limit/notes/merged_into_id); acc_contact_address, acc_contact_tag.
-- `00198_acc_invoicing_platform.sql`: `invoice` ALTERs (doc_type/
+- `00202_acc_invoicing_platform.sql`: `invoice` ALTERs (doc_type/
   corrected_invoice_id/advance_settlement/settled_advance_id/exchange_rate/
   base_currency_amount/numbering_series_id/bank_account_id + relaxed status
   CHECK); acc_document_link, acc_attachment, acc_tag, acc_share_link,

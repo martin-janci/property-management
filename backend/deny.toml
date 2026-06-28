@@ -48,18 +48,24 @@ ignore = [
     # jsonwebtoken to the `aws_lc_rs` backend.
     "RUSTSEC-2023-0071",
 
-    # RUSTSEC-2026-0187 — stack overflow in `lopdf` (<= 0.26) when parsing
-    # deeply nested PDF objects. Pulled in transitively by `genpdf 0.2.0`
-    # (unmaintained, pins `lopdf 0.26`) via the `db` crate's PDF generation
-    # (voting / e-signature documents; also the accounting-server PDF export
-    # hooks). No fixed `lopdf` is reachable without replacing `genpdf`, which
-    # has no newer release.
+    # RUSTSEC-2026-0187 — stack overflow (DoS / SIGABRT) in `lopdf` < 0.42.0
+    # when *parsing* deeply nested PDF objects (~10k levels) without a recursion
+    # depth limit. Pulled in transitively by `genpdf 0.2.0` (-> `lopdf 0.26.0`
+    # and `printpdf 0.3.4` -> `lopdf 0.26.0`).
     #
-    # Reachability: we only GENERATE PDFs from our own trusted document models;
-    # we never parse untrusted/attacker-supplied PDFs through lopdf, so the
-    # deeply-nested-object DoS path is not exercised.
-    # Follow-up: replace `genpdf`/`lopdf` (dependency hygiene). Repo-wide, not
-    # ACC-specific — this advisory is new and currently red on dev too.
+    # No reachable fix: the advisory is patched only in lopdf 0.42.0, but
+    # `genpdf 0.2.0` (the latest published genpdf release) pins `lopdf ^0.26`.
+    # Reaching 0.42.0 means replacing genpdf entirely — a major PDF-stack
+    # migration, out of scope for clearing the deny job.
+    #
+    # Reachability: we only *generate* PDFs (genpdf builders for voting ballots
+    # in servers/api-server/src/routes/voting.rs and financial reports in
+    # routes/financial.rs); lopdf is used on the document-write path. The
+    # vulnerable code is the parser's recursive `Document::load`, which we never
+    # call — we ingest no untrusted PDF input. The crate is in the graph but the
+    # exploitable path is not exercised.
+    # Follow-up: BIT-279 — drop when genpdf ships a release on lopdf >= 0.42.0,
+    # or migrate off genpdf to a maintained PDF generator.
     "RUSTSEC-2026-0187",
 ]
 

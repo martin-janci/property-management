@@ -66,6 +66,10 @@ so child routes (e.g. `/identity/memberships/123`) inherit their parent's articl
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-06-25 — agent: 10b-7-reconcile — verified feature shipped across backend
+  (/api/v1/help + HelpRepository + migration 00034 + help_tests.rs via PR #844),
+  admin-web (HelpSidebar/HelpTooltip/useContextualHelp), and mobile
+  (HelpCenterScreen/ContextualHelp). Reconciled sprint-status + story to done.
 - 2026-05-26 — agent: gap-10b-7-contextual-help-ui — initial implementation of
   contextual help sidebar and inline tooltip components for admin-web; wired
   globally via AdminLayout; static article content for all 12 admin pages.

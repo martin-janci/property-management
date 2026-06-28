@@ -1,4 +1,4 @@
--- Migration: 00196_acc_company_config
+-- Migration: 00200_acc_company_config
 -- ACC MVP (EPIC-ACC-02 Company & Document Configuration): per-company settings
 -- that drive every document — profile/branding, tax mode, numbering series,
 -- units, VAT rates, bank accounts, email/document templates.

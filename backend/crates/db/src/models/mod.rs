@@ -485,13 +485,14 @@ pub use reality_portal::{
     AgencyMemberWithUser as RealityAgencyMemberWithUser, AgencySummary as RealityAgencySummary,
     AssignRealtorListing, CreateAgencyInvitation, CreateCrmConnection, CreateFeedSubscription,
     CreateImportJob as CreatePortalImportJob, CreateListingInquiry, CreatePortalSavedSearch,
-    CreateRealityAgency, CreateRealtorProfile, CrmConnection, FeedSubscription, ImportJobProgress,
-    InquiryMessage, InquiryWithListing, ListingAnalytics, ListingAnalyticsSummary, ListingInquiry,
-    ListingPriceHistory, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
-    PortalImportJobWithStats, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
-    RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
-    RealtorListing, RealtorProfile, SavedSearchAlert, ScheduleViewing, SearchAlertQueueEntry,
-    SendInquiryMessage, UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
+    CreateRealityAgency, CreateRealtorProfile, CrmConnection, FavoriteAlert, FeedSubscription,
+    ImportJobProgress, InquiryMessage, InquiryWithListing, ListingAnalytics,
+    ListingAnalyticsSummary, ListingInquiry, ListingPriceHistory, PortalFavorite,
+    PortalFavoriteWithListing, PortalImportJob, PortalImportJobWithStats, PortalSavedSearch,
+    PriceChangeAlert, PublicRealtorProfile, RealityAgency, RealityAgencyInvitation,
+    RealityAgencyMember, RealityFeedSubscription, RealtorListing, RealtorProfile, SavedSearchAlert,
+    ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage, UndeliveredSearchAlert,
+    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
     UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
     UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
 };
@@ -735,30 +736,6 @@ pub use marketplace::{
     ReviewQuery, ReviewStatistics, ReviewVerificationRequest, RfqInvitation, RfqQuery, RfqSummary,
     ServiceProviderProfile, UpdateProviderQuote, UpdateProviderReview, UpdateRequestForQuote,
     UpdateServiceProviderProfile, VerificationQuery, VerificationQueueItem,
-};
-
-// Epic 69: Public API & Developer Ecosystem
-pub mod public_api;
-
-pub use public_api::{
-    api_key_scope, api_key_status, rate_limit_tier, sdk_language,
-    webhook_delivery_status as public_api_webhook_delivery_status,
-    webhook_event_type as public_api_webhook_event_type, ApiChangelog, ApiEndpointDoc, ApiKey,
-    ApiKeyDisplay, ApiKeyQuery, ApiKeyUsageStats, ApiRequestLog, ApiRequestLogQuery, CreateApiKey,
-    CreateApiKeyResponse, CreateDeveloperAccount, CreateRateLimitConfig, CreateWebhookResponse,
-    CreateWebhookSubscription as CreatePublicApiWebhookSubscription, DeveloperAccount,
-    DeveloperPortalStats, DeveloperUsageSummary, EndpointUsage, PaginatedResponse, RateLimitConfig,
-    RateLimitHeaders, RateLimitStatus as PublicApiRateLimitStatus, RateLimitWindow,
-    RotateApiKeyResponse, RotateWebhookSecretResponse, SandboxEnvironment, SandboxTestRequest,
-    SandboxTestResponse, SdkDownloadInfo, SdkLanguageInfo, SdkVersion,
-    TestWebhookRequest as PublicApiTestWebhookRequest,
-    TestWebhookResponse as PublicApiTestWebhookResponse, TierUsage, UpdateApiKey,
-    UpdateDeveloperAccount, UpdateRateLimitConfig,
-    UpdateWebhookSubscription as UpdatePublicApiWebhookSubscription,
-    WebhookDelivery as PublicApiWebhookDelivery,
-    WebhookDeliveryQuery as PublicApiWebhookDeliveryQuery,
-    WebhookSubscription as PublicApiWebhookSubscription,
-    WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
 };
 
 // Epic 71: Cross-Cutting Infrastructure

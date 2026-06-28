@@ -1,5 +1,5 @@
 //! FORCE-RLS isolation tests for the ACC MVP tables added in migrations
-//! 00196/00197/00198 (EPIC-ACC-02/03/04/05/16). Companion to the base-MVP
+//! 00200/00201/00202 (EPIC-ACC-02/03/04/05/16). Companion to the base-MVP
 //! `accounting_rls_repo_tests.rs` (00184 tables). Verifies, against a live DB:
 //!   1. every new acc_* table has FORCE ROW LEVEL SECURITY + a tenant policy
 //!      bound to get_current_org_id() (structural — covers all 18 tables);

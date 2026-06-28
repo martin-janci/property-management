@@ -172,14 +172,12 @@ impl MessagingRepository {
                 t.last_message_at,
                 t.created_at,
                 t.updated_at,
-                -- Other participant (the one that's not the current user)
-                u.id as other_user_id,
-                -- Issue #1008: `users` has a single `name` column, not
-                -- first_name/last_name. Map the full name into *_first_name and
-                -- leave *_last_name empty to preserve the ParticipantInfo shape.
-                u.name as other_first_name,
-                '' as other_last_name,
-                u.email as other_email,
+                -- All other participants (everyone except the current user),
+                -- aggregated as a JSON array ([BIT-206]). Issue #1008: `users`
+                -- has a single `name` column, not first_name/last_name. Map the
+                -- full name into firstName and leave lastName empty to preserve
+                -- the ParticipantInfo (camelCase) shape.
+                p.participants,
                 -- Last message
                 tm.message_id as last_message_id,
                 tm.message_content as last_message_content,
@@ -189,11 +187,25 @@ impl MessagingRepository {
                 COALESCE(uc.unread, 0) as unread_count
             FROM message_threads t
             CROSS JOIN LATERAL (
-                SELECT id, name, email
-                FROM users
-                WHERE id = ANY(t.participant_ids) AND id != $1
-                LIMIT 1
-            ) u
+                -- Aggregate (no GROUP BY) always yields exactly one row, so this
+                -- never drops a thread — even a degenerate self-only thread
+                -- returns an empty participant list rather than disappearing.
+                SELECT
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', ou.id,
+                                'firstName', ou.name,
+                                'lastName', '',
+                                'email', ou.email
+                            ) ORDER BY ou.name
+                        ),
+                        '[]'::json
+                    ) AS participants,
+                    string_agg(ou.name, ' ') AS participant_names
+                FROM users ou
+                WHERE ou.id = ANY(t.participant_ids) AND ou.id != $1
+            ) p
             LEFT JOIN thread_messages tm ON tm.thread_id = t.id
             LEFT JOIN unread_counts uc ON uc.thread_id = t.id
             -- Per-participant view state for the current user (BIT-182).
@@ -201,7 +213,8 @@ impl MessagingRepository {
                 ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
-              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
+              -- Search matches ANY other participant ([BIT-206]).
+              AND ($3::text IS NULL OR p.participant_names ILIKE '%'||$3||'%')
               -- Never show threads this user soft-deleted for themselves.
               AND tps.deleted_at IS NULL
               -- Archived tab vs default inbox.
@@ -247,17 +260,18 @@ impl MessagingRepository {
             r#"
             SELECT COUNT(*)
             FROM message_threads t
-            CROSS JOIN LATERAL (
-                SELECT id, name, email
-                FROM users
-                WHERE id = ANY(t.participant_ids) AND id != $1
-                LIMIT 1
-            ) u
             LEFT JOIN thread_participant_state tps
                 ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
-              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
+              -- Search matches ANY other participant ([BIT-206]); mirrors the
+              -- string_agg ILIKE filter in list_threads_rls.
+              AND ($3::text IS NULL OR EXISTS (
+                    SELECT 1 FROM users ou
+                    WHERE ou.id = ANY(t.participant_ids)
+                      AND ou.id != $1
+                      AND ou.name ILIKE '%'||$3||'%'
+              ))
               AND tps.deleted_at IS NULL
               AND $4 = (tps.archived_at IS NOT NULL)
             "#,
