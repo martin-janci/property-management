@@ -1,0 +1,231 @@
+{
+  "date": "2026-06-28",
+  "meta": {
+    "phase_1_5_skipped": true,
+    "phase_1_6_skipped": true,
+    "reason": "catch-up run after 12-day routine lag \u2014 sub-skill agents (ppt-dev-review, ppt-project-management) deferred to next run to keep this run focused on state advancement"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-28",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25:00Z \u2014 12 days ago (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-28",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 12d old; cloud routine may be paused or broken \u2014 dispatcher (separate loop) is still ticking on planning branch"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-migration-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z -- backend/servers/api-server/src/routes/migration.rs",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs: 1500 lines changed across PRs merged 2026-06-16\u20262026-06-28 (tenant-migration / Epic 72 regional-compliance / data-residency rollout)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-data_residency-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z -- backend/servers/api-server/src/routes/data_residency.rs",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs: 1287 lines changed across PRs merged 2026-06-16\u20262026-06-28 (tenant-migration / Epic 72 regional-compliance / data-residency rollout)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional_compliance-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z -- backend/servers/api-server/src/routes/regional_compliance.rs",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs: 993 lines changed across PRs merged 2026-06-16\u20262026-06-28 (tenant-migration / Epic 72 regional-compliance / data-residency rollout)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: gradle-minor-patch group in /mobile-native"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: tower-http 0.6.11 \u2192 0.7.0 (axum group)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverts PR #1690 (delegation frontend re-added by mistake) \u2014 planned reconciliation with BIT-213 retirement, not an emergency back-out"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score\u22653 + allowlist) this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-28.md && head -1 starts # 2026-06-28",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json staged-vs-HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap\u22648, decay applied",
+      "observed": "cap=true, decay-fails=0",
+      "expected": "true,0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial-pass annotation",
+      "observed": "no new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, all required sections",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged diff",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases; 1.5 & 1.6 skipped (catch-up), surfaced in brief",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans still tracked",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive \u2265 HEAD count",
+      "observed": "7\u22657",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "\u22641+1+1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 no-op gate; pm_cursor unchanged",
+      "observed": "pm_now=5 pm_head=5",
+      "expected": "equal"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
