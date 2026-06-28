@@ -327,7 +327,7 @@ async fn trigger_workflow_returns_created(pool: PgPool) {
         "trigger workflow must return 201; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("execution_id").is_some(),
         "trigger response must include execution_id"
@@ -358,7 +358,7 @@ async fn get_workflow_execution_returns_ok(pool: PgPool) {
         "get execution must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("execution").is_some(),
         "execution response must include execution key"
@@ -391,7 +391,7 @@ async fn list_workflow_execution_steps_returns_ok(pool: PgPool) {
         "list execution steps must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("steps").is_some(),
         "steps response must include steps key"
@@ -424,7 +424,7 @@ async fn handle_workflow_event_returns_ok(pool: PgPool) {
         "handle workflow event must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("triggered_workflows").is_some(),
         "event response must include triggered_workflows count"
@@ -453,7 +453,7 @@ async fn list_lease_templates_returns_ok(pool: PgPool) {
         "list lease templates must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("templates").is_some(),
         "templates response must include templates key"
@@ -649,7 +649,7 @@ async fn enhance_photo_returns_created(pool: PgPool) {
         "enhance photo must return 201; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("id").is_some(),
         "enhance photo response must include id"
@@ -686,7 +686,7 @@ async fn batch_enhance_photos_returns_created(pool: PgPool) {
         "batch enhance photos must return 201; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert_eq!(
         body["total_photos"], 2,
         "batch response must reflect 2 photos"
@@ -742,7 +742,7 @@ async fn list_voice_devices_returns_ok(pool: PgPool) {
         "list voice devices must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("devices").is_some(),
         "voice devices response must include devices key"
@@ -845,7 +845,7 @@ async fn list_generation_requests_returns_ok(pool: PgPool) {
         "list generation requests must return 200; body={}",
         resp.text()
     );
-    let body = resp.json();
+    let body: serde_json::Value = resp.json();
     assert!(
         body.get("requests").is_some(),
         "requests response must include requests key"
