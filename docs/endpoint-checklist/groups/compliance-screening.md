@@ -5,10 +5,10 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 ## compliance.rs  (mount: /api/v1/compliance)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/compliance/audit-logs | get_audit_logs | partial | none | Real: audit_log_repo.query/count. SuperAdmin-gated. No test hits path. |
-| GET | /api/v1/compliance/audit-logs/summary | get_audit_summary | partial | none | Real: get_action_counts + verify_integrity. No test. |
-| GET | /api/v1/compliance/audit-logs/user/{user_id} | get_user_audit_logs | partial | none | Real: audit_log_repo.get_user_logs. No test. |
-| GET | /api/v1/compliance/audit-logs/integrity | verify_audit_integrity | partial | none | Real: audit_log_repo.verify_integrity. No test. |
+| GET | /api/v1/compliance/audit-logs | get_audit_logs | done | compliance_wave1b_tests.rs | Real: audit_log_repo.query/count. SuperAdmin-gated. No test hits path. |
+| GET | /api/v1/compliance/audit-logs/summary | get_audit_summary | done | compliance_wave1b_tests.rs | Real: get_action_counts + verify_integrity. No test. |
+| GET | /api/v1/compliance/audit-logs/user/{user_id} | get_user_audit_logs | done | compliance_wave1b_tests.rs | Real: audit_log_repo.get_user_logs. No test. |
+| GET | /api/v1/compliance/audit-logs/integrity | verify_audit_integrity | done | compliance_wave1b_tests.rs | Real: audit_log_repo.verify_integrity. No test. |
 | GET | /api/v1/compliance/gdpr/data-exports | get_data_export_report | stub | none | Ignores params; returns exports=[], completed_count=0, downloaded_count=0 with "For now, return a summary ... in production this would query with filters" comment. Only a pending count is real → mock/TODO data. |
 | GET | /api/v1/compliance/gdpr/deletion-requests | get_deletion_requests_report | partial | none | Real: raw SQL over users.scheduled_deletion_at. No test. |
 | GET | /api/v1/compliance/gdpr/privacy-report | get_privacy_settings_report | partial | none | Real: raw SQL aggregations over users. No test. |
@@ -43,33 +43,33 @@ _Server: api-server. Modules: compliance.rs, regional_compliance.rs, aml_dsa/, e
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | POST | /api/v1/aml-dsa/aml/assess | create_aml_assessment | partial | aml_dsa_authz_pap60_tests.rs | Real (edd_repo.create_aml_assessment). Authz-only test (403); no success path. |
-| GET | /api/v1/aml-dsa/aml/assessments | list_aml_assessments | partial | none | Real (edd_repo.list_aml_assessments). No test. |
-| GET | /api/v1/aml-dsa/aml/assessments/{id} | get_aml_assessment | partial | aml_dsa_cross_org_idor_tests.rs | Real. IDOR test hits repo directly, not handler. |
+| GET | /api/v1/aml-dsa/aml/assessments | list_aml_assessments | done | compliance_wave1b_tests.rs | Real (edd_repo.list_aml_assessments). No test. |
+| GET | /api/v1/aml-dsa/aml/assessments/{id} | get_aml_assessment | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real. IDOR test hits repo directly, not handler. |
 | POST | /api/v1/aml-dsa/aml/assessments/{id}/review | review_aml_assessment | done | aml_dsa_audit_logging_tests.rs | Real; HTTP test asserts 200 + audit row. |
-| GET | /api/v1/aml-dsa/aml/country-risks | get_country_risks | partial | none | Real (edd_repo.list_country_risks). No test. |
-| GET | /api/v1/aml-dsa/aml/thresholds | get_aml_thresholds | partial | none | Real handler; returns hardcoded constant thresholds (by design, not TODO). No test. |
-| POST | /api/v1/aml-dsa/edd | initiate_edd | partial | none | Real (edd_repo.create_edd + audit). No test. |
-| GET | /api/v1/aml-dsa/edd/{id} | get_edd_record | partial | aml_dsa_cross_org_idor_tests.rs | Real. IDOR test is repo-only. |
-| POST | /api/v1/aml-dsa/edd/{id}/documents | upload_edd_document | partial | none | Real (validation + edd_repo.upload_edd_document). Handler path untested. |
-| POST | /api/v1/aml-dsa/edd/{id}/documents/{doc_id}/verify | verify_edd_document | partial | none | Real (edd_repo.verify_edd_document + audit). No test. |
-| POST | /api/v1/aml-dsa/edd/{id}/notes | add_edd_note | partial | none | Real (edd_repo.add_compliance_note). No test. |
-| POST | /api/v1/aml-dsa/edd/{id}/complete | complete_edd | partial | none | Real (edd_repo.complete_edd + audit). No test. |
-| GET | /api/v1/aml-dsa/edd/pending | list_pending_edd | partial | none | Real (edd_repo.list_pending_edd). No test. |
-| GET | /api/v1/aml-dsa/dsa/reports | list_dsa_reports | partial | none | Real (compliance_repo.list_dsa_reports); breakdowns hardcoded empty. No test. |
-| POST | /api/v1/aml-dsa/dsa/reports | generate_dsa_report | partial | none | Real (validate period + compliance_repo.create_dsa_report). No test. |
-| GET | /api/v1/aml-dsa/dsa/reports/{id} | get_dsa_report | partial | none | Real (compliance_repo.get_dsa_report). No test. |
-| POST | /api/v1/aml-dsa/dsa/reports/{id}/publish | publish_dsa_report | partial | none | Real (compliance_repo.publish_dsa_report + audit). No test. |
+| GET | /api/v1/aml-dsa/aml/country-risks | get_country_risks | done | compliance_wave1b_tests.rs | Real (edd_repo.list_country_risks). No test. |
+| GET | /api/v1/aml-dsa/aml/thresholds | get_aml_thresholds | done | compliance_wave1b_tests.rs | Real handler; returns hardcoded constant thresholds (by design, not TODO). No test. |
+| POST | /api/v1/aml-dsa/edd | initiate_edd | done | compliance_wave1b_tests.rs | Real (edd_repo.create_edd + audit). No test. |
+| GET | /api/v1/aml-dsa/edd/{id} | get_edd_record | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real. IDOR test is repo-only. |
+| POST | /api/v1/aml-dsa/edd/{id}/documents | upload_edd_document | done | compliance_wave1b_tests.rs | Real (validation + edd_repo.upload_edd_document). Handler path untested. |
+| POST | /api/v1/aml-dsa/edd/{id}/documents/{doc_id}/verify | verify_edd_document | done | compliance_wave1b_tests.rs | Real (edd_repo.verify_edd_document + audit). No test. |
+| POST | /api/v1/aml-dsa/edd/{id}/notes | add_edd_note | done | compliance_wave1b_tests.rs | Real (edd_repo.add_compliance_note). No test. |
+| POST | /api/v1/aml-dsa/edd/{id}/complete | complete_edd | done | compliance_wave1b_tests.rs | Real (edd_repo.complete_edd + audit). No test. |
+| GET | /api/v1/aml-dsa/edd/pending | list_pending_edd | done | compliance_wave1b_tests.rs | Real (edd_repo.list_pending_edd). No test. |
+| GET | /api/v1/aml-dsa/dsa/reports | list_dsa_reports | done | compliance_wave1b_tests.rs | Real (compliance_repo.list_dsa_reports); breakdowns hardcoded empty. No test. |
+| POST | /api/v1/aml-dsa/dsa/reports | generate_dsa_report | done | compliance_wave1b_tests.rs | Real (validate period + compliance_repo.create_dsa_report). No test. |
+| GET | /api/v1/aml-dsa/dsa/reports/{id} | get_dsa_report | done | compliance_wave1b_tests.rs | Real (compliance_repo.get_dsa_report). No test. |
+| POST | /api/v1/aml-dsa/dsa/reports/{id}/publish | publish_dsa_report | done | compliance_wave1b_tests.rs | Real (compliance_repo.publish_dsa_report + audit). No test. |
 | GET | /api/v1/aml-dsa/dsa/reports/{id}/download | download_dsa_report | partial | dsa_report_download_tests.rs | Real; HTTP tests drive 401/403/404 + presigner-reached 503, but no 200 (no storage in CI). |
-| GET | /api/v1/aml-dsa/dsa/metrics | get_dsa_metrics | partial | none | Real (compliance_repo.get_platform_moderation_queue_stats). No test. |
-| GET | /api/v1/aml-dsa/moderation/queue | get_moderation_queue | partial | aml_dsa_cross_org_idor_tests.rs | Real; case data DB-backed (owner display fields placeholder). IDOR test is repo-only. |
-| GET | /api/v1/aml-dsa/moderation/queue/stats | get_moderation_stats | partial | none | Real (compliance_repo.get_moderation_queue_stats). No test. |
-| GET | /api/v1/aml-dsa/moderation/cases/{id} | get_moderation_case | partial | aml_dsa_cross_org_idor_tests.rs | Real. IDOR test is repo-only. |
-| POST | /api/v1/aml-dsa/moderation/cases/{id}/assign | assign_moderation_case | partial | aml_dsa_cross_org_idor_tests.rs | Real (org-member check + assign). IDOR test is repo-only. |
+| GET | /api/v1/aml-dsa/dsa/metrics | get_dsa_metrics | done | compliance_wave1b_tests.rs | Real (compliance_repo.get_platform_moderation_queue_stats). No test. |
+| GET | /api/v1/aml-dsa/moderation/queue | get_moderation_queue | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real; case data DB-backed (owner display fields placeholder). IDOR test is repo-only. |
+| GET | /api/v1/aml-dsa/moderation/queue/stats | get_moderation_stats | done | compliance_wave1b_tests.rs | Real (compliance_repo.get_moderation_queue_stats). No test. |
+| GET | /api/v1/aml-dsa/moderation/cases/{id} | get_moderation_case | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real. IDOR test is repo-only. |
+| POST | /api/v1/aml-dsa/moderation/cases/{id}/assign | assign_moderation_case | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real (org-member check + assign). IDOR test is repo-only. |
 | POST | /api/v1/aml-dsa/moderation/cases/{id}/action | take_moderation_action | done | aml_dsa_audit_logging_tests.rs | Real; HTTP test asserts 200 + audit row. |
 | POST | /api/v1/aml-dsa/moderation/cases/{id}/appeal | file_appeal | partial | aml_dsa_authz_pap60_tests.rs | Real (ownership-scoped). Only cross-tenant 404 HTTP test; no 200. |
-| POST | /api/v1/aml-dsa/moderation/cases/{id}/appeal/decide | decide_appeal | partial | aml_dsa_cross_org_idor_tests.rs | Real (compliance_repo.decide_appeal + audit). IDOR test is repo-only. |
+| POST | /api/v1/aml-dsa/moderation/cases/{id}/appeal/decide | decide_appeal | done | aml_dsa_cross_org_idor_tests.rs, compliance_wave1b_tests.rs | Real (compliance_repo.decide_appeal + audit). IDOR test is repo-only. |
 | POST | /api/v1/aml-dsa/moderation/report | report_content | partial | aml_dsa_authz_pap60_tests.rs | Real (resolve_content_owner + create_moderation_case). Only repo-level helper tested; no handler success test. |
-| GET | /api/v1/aml-dsa/moderation/templates | get_action_templates | partial | none | Real (compliance_repo.list_action_templates). No test. |
+| GET | /api/v1/aml-dsa/moderation/templates | get_action_templates | done | compliance_wave1b_tests.rs | Real (compliance_repo.list_action_templates). No test. |
 
 ## enhanced_tenant_screening/  (mount: /api/v1/tenant-screening)
 | Method | Path | Handler | Status | Tests | Notes |

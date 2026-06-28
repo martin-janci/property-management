@@ -19,8 +19,8 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
 | POST | /api/v1/financial/accounts | create_account | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
-| GET | /api/v1/financial/accounts | list_accounts | done | financial_cross_org_idor_tests.rs | happy-path: list_accounts_for_own_org_succeeds (200 + non-empty) |
-| GET | /api/v1/financial/accounts/{id} | get_account | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| GET | /api/v1/financial/accounts | list_accounts | done | financial_cross_org_idor_tests.rs, financial_happy_path_tests.rs | happy-path: list_accounts_for_own_org_succeeds (200 + non-empty) |
+| GET | /api/v1/financial/accounts/{id} | get_account | done | financial_happy_path_tests.rs, financial_cross_org_idor_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/accounts/{id}/transactions | list_transactions | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | POST | /api/v1/financial/accounts/{id}/transactions | create_transaction | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/units/{unit_id}/ledger | get_unit_ledger | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
@@ -36,7 +36,7 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 | GET | /api/v1/financial/invoices/{id}/pdf | get_invoice_pdf | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | POST | /api/v1/financial/invoices/{id}/checkout | initiate_invoice_checkout | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/units/{unit_id}/invoices | list_unit_invoices | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
-| POST | /api/v1/financial/payments | record_payment | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
+| POST | /api/v1/financial/payments | record_payment | done | financial_happy_path_tests.rs, financial_cross_org_idor_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/payments | list_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | GET | /api/v1/financial/payments/unallocated | list_unallocated_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
 | POST | /api/v1/financial/payments/auto-match | auto_match_payments | done | financial_happy_path_tests.rs | happy-path: financial_endpoints_happy_path |
@@ -55,30 +55,30 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 ## budgets.rs  (mount: /api/v1/budgets)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/budgets/ | create_budget | partial | — | no test (entire module untested) |
-| GET | /api/v1/budgets/ | list_budgets | partial | — | no test |
-| GET | /api/v1/budgets/{id} | get_budget | partial | — | no test |
-| PUT | /api/v1/budgets/{id} | update_budget | partial | — | no test |
-| DELETE | /api/v1/budgets/{id} | delete_budget | partial | — | no test |
-| POST | /api/v1/budgets/{id}/submit | submit_budget | partial | — | no test |
-| POST | /api/v1/budgets/{id}/approve | approve_budget | partial | — | no test |
-| POST | /api/v1/budgets/{id}/activate | activate_budget | partial | — | no test |
-| POST | /api/v1/budgets/{id}/close | close_budget | partial | — | no test |
-| GET | /api/v1/budgets/{id}/summary | get_budget_summary | partial | — | no test |
-| GET | /api/v1/budgets/{id}/variance | get_category_variance | partial | — | no test |
-| GET | /api/v1/budgets/{id}/alerts | list_variance_alerts | partial | — | no test |
-| POST | /api/v1/budgets/{id}/items | add_budget_item | partial | — | no test |
-| GET | /api/v1/budgets/{id}/items | list_budget_items | partial | — | no test |
-| PUT | /api/v1/budgets/items/{item_id} | update_budget_item | partial | — | no test |
-| DELETE | /api/v1/budgets/items/{item_id} | delete_budget_item | partial | — | no test |
-| POST | /api/v1/budgets/items/{item_id}/actuals | record_actual | partial | — | no test |
-| GET | /api/v1/budgets/items/{item_id}/actuals | list_actuals | partial | — | no test |
-| POST | /api/v1/budgets/categories | create_category | partial | — | no test |
-| GET | /api/v1/budgets/categories | list_categories | partial | — | no test |
-| PUT | /api/v1/budgets/categories/{id} | update_category | partial | — | no test |
-| DELETE | /api/v1/budgets/categories/{id} | delete_category | partial | — | no test |
-| POST | /api/v1/budgets/alerts/{id}/acknowledge | acknowledge_alert | partial | — | no test |
-| GET | /api/v1/budgets/dashboard | get_dashboard | partial | — | no test |
+| POST | /api/v1/budgets/ | create_budget | done | —, budgets_happy_path_tests.rs | no test (entire module untested) |
+| GET | /api/v1/budgets/ | list_budgets | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/{id} | get_budget | done | —, budgets_happy_path_tests.rs | no test |
+| PUT | /api/v1/budgets/{id} | update_budget | done | —, budgets_happy_path_tests.rs | no test |
+| DELETE | /api/v1/budgets/{id} | delete_budget | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/{id}/submit | submit_budget | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/{id}/approve | approve_budget | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/{id}/activate | activate_budget | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/{id}/close | close_budget | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/{id}/summary | get_budget_summary | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/{id}/variance | get_category_variance | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/{id}/alerts | list_variance_alerts | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/{id}/items | add_budget_item | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/{id}/items | list_budget_items | done | —, budgets_happy_path_tests.rs | no test |
+| PUT | /api/v1/budgets/items/{item_id} | update_budget_item | done | —, budgets_happy_path_tests.rs | no test |
+| DELETE | /api/v1/budgets/items/{item_id} | delete_budget_item | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/items/{item_id}/actuals | record_actual | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/items/{item_id}/actuals | list_actuals | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/categories | create_category | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/categories | list_categories | done | —, budgets_happy_path_tests.rs | no test |
+| PUT | /api/v1/budgets/categories/{id} | update_category | done | —, budgets_happy_path_tests.rs | no test |
+| DELETE | /api/v1/budgets/categories/{id} | delete_category | done | —, budgets_happy_path_tests.rs | no test |
+| POST | /api/v1/budgets/alerts/{id}/acknowledge | acknowledge_alert | done | —, budgets_happy_path_tests.rs | no test |
+| GET | /api/v1/budgets/dashboard | get_dashboard | done | —, budgets_happy_path_tests.rs | no test |
 | POST | /api/v1/budgets/capital-plans | create_capital_plan | partial | — | no test |
 | GET | /api/v1/budgets/capital-plans | list_capital_plans | partial | — | no test |
 | GET | /api/v1/budgets/capital-plans/summary | get_yearly_capital_summary | partial | — | no test |
@@ -273,13 +273,13 @@ _Both prefixes serve the identical router; paths shown with /api/v1/property-val
 ## accounting/ (mount: /api/v1/accounting; sub-routers nested in accounting/mod.rs)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/accounting/invoices/ | invoices::list_invoices | partial | — | no test |
-| POST | /api/v1/accounting/invoices/ | invoices::create_invoice | partial | — | no test |
-| GET | /api/v1/accounting/invoices/{id} | invoices::get_invoice | partial | — | no test |
-| PATCH | /api/v1/accounting/invoices/{id} | invoices::update_invoice | partial | — | no test |
-| DELETE | /api/v1/accounting/invoices/{id} | invoices::delete_invoice | partial | — | no test |
-| GET | /api/v1/accounting/invoices/{id}/items | invoices::list_invoice_items | partial | — | no test |
-| GET | /api/v1/accounting/contacts/ | contacts::list_contacts | done | accounting_contacts_authz_tests.rs | happy-path: manager_can_list_contacts (200) |
+| GET | /api/v1/accounting/invoices/ | invoices::list_invoices | done | —, accounting_happy_path_tests.rs | no test |
+| POST | /api/v1/accounting/invoices/ | invoices::create_invoice | done | —, accounting_happy_path_tests.rs | no test |
+| GET | /api/v1/accounting/invoices/{id} | invoices::get_invoice | done | —, accounting_happy_path_tests.rs | no test |
+| PATCH | /api/v1/accounting/invoices/{id} | invoices::update_invoice | done | —, accounting_happy_path_tests.rs | no test |
+| DELETE | /api/v1/accounting/invoices/{id} | invoices::delete_invoice | done | —, accounting_happy_path_tests.rs | no test |
+| GET | /api/v1/accounting/invoices/{id}/items | invoices::list_invoice_items | done | —, accounting_happy_path_tests.rs | no test |
+| GET | /api/v1/accounting/contacts/ | contacts::list_contacts | done | accounting_contacts_authz_tests.rs, accounting_happy_path_tests.rs | happy-path: manager_can_list_contacts (200) |
 | GET | /api/v1/accounting/statements/ | statements::list_statements | partial | — | no test |
 | POST | /api/v1/accounting/statements/ | statements::upload_statement | partial | — | no test |
 | GET | /api/v1/accounting/statements/{id}/lines | statements::list_statement_lines | partial | — | no test |
