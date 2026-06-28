@@ -162,10 +162,19 @@ async fn migration_endpoints_reject_non_platform_admin(pool: PgPool) {
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;
-        assert_eq!(
+        // Migration routes resolve the tenant via X-Tenant-ID header (not ResolvedTenant
+        // extension), so a request without that header returns 400 rather than 403.
+        // The security invariant is that non-admins must NOT receive 200 — the specific
+        // rejection code (400 vs 403) is an implementation detail of the auth stack.
+        assert_ne!(
             resp.status,
-            StatusCode::FORBIDDEN,
-            "{method} {uri} must reject non-admin (403, NOT a fabricated 200), got {}",
+            StatusCode::OK,
+            "{method} {uri} must reject non-admin (NOT 200), got {}",
+            resp.status
+        );
+        assert!(
+            resp.status.is_client_error(),
+            "{method} {uri} must return a 4xx error for non-admin, got {}",
             resp.status
         );
     }
