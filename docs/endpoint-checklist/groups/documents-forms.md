@@ -80,24 +80,24 @@ _Server: api-server. Modules: signatures.rs, templates.rs, legal.rs, lease_abstr
 ## legal.rs  (mount: /api/v1/legal)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/legal/documents | create_document | partial | — | docs seeded via SQL, not the API |
-| GET | /api/v1/legal/documents | list_documents | partial | — | no test |
+| POST | /api/v1/legal/documents | create_document | done | legal_insurance_wave1b_tests.rs | 201 with id/title/document_type |
+| GET | /api/v1/legal/documents | list_documents | done | legal_insurance_wave1b_tests.rs | 200 JSON array |
 | GET | /api/v1/legal/documents/summary | list_documents_summary | partial | — | no test |
-| GET | /api/v1/legal/documents/{id} | get_document | done | legal_cross_org_idor_tests.rs | same-org read asserts OK + body id |
-| PATCH | /api/v1/legal/documents/{id} | update_document | partial | legal_cross_org_idor_tests.rs | only IDOR (404, row unchanged), no happy path |
-| DELETE | /api/v1/legal/documents/{id} | delete_document | partial | legal_cross_org_idor_tests.rs | only IDOR (404, row still exists), no happy path |
-| POST | /api/v1/legal/documents/{id}/versions | add_version | partial | — | no test |
-| GET | /api/v1/legal/documents/{id}/versions | list_versions | partial | — | no test |
+| GET | /api/v1/legal/documents/{id} | get_document | done | legal_cross_org_idor_tests.rs, legal_insurance_wave1b_tests.rs | same-org 200 + cross-org 404 |
+| PATCH | /api/v1/legal/documents/{id} | update_document | done | legal_insurance_wave1b_tests.rs | 200 title changed |
+| DELETE | /api/v1/legal/documents/{id} | delete_document | done | legal_insurance_wave1b_tests.rs | 200 success=true + 404 re-read |
+| POST | /api/v1/legal/documents/{id}/versions | add_version | done | legal_insurance_wave1b_tests.rs | 201 with document_id/version_number |
+| GET | /api/v1/legal/documents/{id}/versions | list_versions | done | legal_insurance_wave1b_tests.rs | 200 JSON array |
 | GET | /api/v1/legal/documents/{id}/versions/{version} | get_version | partial | — | no test |
-| POST | /api/v1/legal/requirements | create_requirement | partial | — | no test |
-| GET | /api/v1/legal/requirements | list_requirements | partial | — | no test |
+| POST | /api/v1/legal/requirements | create_requirement | done | legal_insurance_wave1b_tests.rs | 201 with id/requirement_type |
+| GET | /api/v1/legal/requirements | list_requirements | done | legal_insurance_wave1b_tests.rs | 200 JSON array |
 | GET | /api/v1/legal/requirements/with-details | list_requirements_with_details | partial | — | no test |
 | GET | /api/v1/legal/requirements/statistics | get_compliance_statistics | partial | — | no test |
-| GET | /api/v1/legal/requirements/{id} | get_requirement | partial | — | no test |
-| PATCH | /api/v1/legal/requirements/{id} | update_requirement | partial | — | no test |
-| DELETE | /api/v1/legal/requirements/{id} | delete_requirement | partial | — | no test |
-| POST | /api/v1/legal/requirements/{id}/verify | create_verification | partial | — | no test |
-| GET | /api/v1/legal/requirements/{id}/verifications | list_verifications | partial | — | no test |
+| GET | /api/v1/legal/requirements/{id} | get_requirement | done | legal_insurance_wave1b_tests.rs | 200 same-org + 404 unknown |
+| PATCH | /api/v1/legal/requirements/{id} | update_requirement | done | legal_insurance_wave1b_tests.rs | 200 title changed |
+| DELETE | /api/v1/legal/requirements/{id} | delete_requirement | done | legal_insurance_wave1b_tests.rs | 200 success=true |
+| POST | /api/v1/legal/requirements/{id}/verify | create_verification | done | legal_insurance_wave1b_tests.rs | 201 with id/requirement_id |
+| GET | /api/v1/legal/requirements/{id}/verifications | list_verifications | done | legal_insurance_wave1b_tests.rs | 200 JSON array |
 | POST | /api/v1/legal/notices | create_notice | partial | — | no test |
 | GET | /api/v1/legal/notices | list_notices | partial | — | no test |
 | GET | /api/v1/legal/notices/with-recipients | list_notices_with_recipients | partial | — | no test |
