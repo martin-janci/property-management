@@ -197,27 +197,27 @@ impl TestApp {
 
     /// Create a JSON POST request.
     pub fn post(&self, uri: &str) -> RequestBuilder {
-        RequestBuilder::new(Method::POST, uri)
+        RequestBuilder::new(Method::POST, uri).with_router(self.router.clone())
     }
 
     /// Create a JSON GET request.
     pub fn get(&self, uri: &str) -> RequestBuilder {
-        RequestBuilder::new(Method::GET, uri)
+        RequestBuilder::new(Method::GET, uri).with_router(self.router.clone())
     }
 
     /// Create a JSON PUT request.
     pub fn put(&self, uri: &str) -> RequestBuilder {
-        RequestBuilder::new(Method::PUT, uri)
+        RequestBuilder::new(Method::PUT, uri).with_router(self.router.clone())
     }
 
     /// Create a JSON DELETE request.
     pub fn delete(&self, uri: &str) -> RequestBuilder {
-        RequestBuilder::new(Method::DELETE, uri)
+        RequestBuilder::new(Method::DELETE, uri).with_router(self.router.clone())
     }
 
     /// Create a JSON PATCH request.
     pub fn patch(&self, uri: &str) -> RequestBuilder {
-        RequestBuilder::new(Method::PATCH, uri)
+        RequestBuilder::new(Method::PATCH, uri).with_router(self.router.clone())
     }
 
     /// Create an authenticated session for the given token and org (Story 1370).
@@ -279,6 +279,7 @@ pub struct RequestBuilder {
     body: Option<Value>,
     auth_token: Option<String>,
     headers: Vec<(String, String)>,
+    router: Option<Router>,
 }
 
 impl RequestBuilder {
@@ -289,7 +290,18 @@ impl RequestBuilder {
             body: None,
             auth_token: None,
             headers: Vec::new(),
+            router: None,
         }
+    }
+
+    /// Bind the test router so this builder can `send()` itself.
+    ///
+    /// Set automatically by the `TestApp::{get,post,put,patch,delete}`
+    /// helpers; callers that construct a builder directly via
+    /// [`RequestBuilder::new`] keep using `app.execute(builder.build())`.
+    fn with_router(mut self, router: Router) -> Self {
+        self.router = Some(router);
+        self
     }
 
     /// Set JSON body.
@@ -344,6 +356,24 @@ impl RequestBuilder {
 
         builder.body(body).expect("Failed to build request")
     }
+
+    /// Build and execute this request against the bound test router.
+    ///
+    /// Convenience equivalent of `app.execute(builder.build())`. The router
+    /// is captured when the builder is created via a `TestApp` request helper
+    /// (`app.get(...)`, `app.post(...)`, …) or an `AuthenticatedSession`.
+    pub async fn send(self) -> TestResponse {
+        let router = self
+            .router
+            .clone()
+            .expect("send() requires a builder created via TestApp request helpers");
+        let request = self.build();
+        let response = router
+            .oneshot(request)
+            .await
+            .expect("Failed to execute request");
+        TestResponse::from_response(response).await
+    }
 }
 
 /// Test response wrapper with helpers for extracting data.
@@ -368,6 +398,11 @@ impl TestResponse {
             headers,
             body,
         }
+    }
+
+    /// Status code of the response.
+    pub fn status(&self) -> StatusCode {
+        self.status
     }
 
     /// Parse body as JSON.
