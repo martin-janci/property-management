@@ -15,9 +15,9 @@ different answers. Read both.
 
 | Metric | Count | % of all endpoints |
 |---|---|---|
-| **DONE** — real handler **and** a passing happy-path test | **165** | **8.0%** |
-| Partial — real handler, **no** happy-path test | 1808 | 87.6% |
-| Stub — handler missing/mock/`501`/unmounted | 90 | 4.4% |
+| **DONE** — real handler **and** a passing happy-path test | **186** | **9.0%** |
+| Partial — real handler, **no** happy-path test | 1785 | 86.5% |
+| Stub — handler missing/mock/`501`/unmounted | 92 | 4.5% |
 | Missing — in spec/use-case, no handler | 0 | 0.0% ✓ confirmed by BIT-269 |
 | **Total endpoints** | **2063** | 100% |
 
@@ -31,7 +31,7 @@ different answers. Read both.
 codebase's tests are **authorization / cross-org IDOR / RBAC rejection** suites that
 assert `401/403/404` and deliberately never reach a `2xx`. They harden the security
 boundary (which is the right first priority) but they do not prove the feature works,
-so they cannot promote an endpoint to `done`. Closing the 8.0% → high-90s gap is
+so they cannot promote an endpoint to `done`. Closing the 9.0% → high-90s gap is
 primarily a **happy-path integration-test** effort, not a build effort (BIT-256 closed 58 stubs: +23 migration, +19 regional_compliance, +14 data_residency, +2 OCR).
 
 ## Per-group summary
@@ -51,11 +51,13 @@ primarily a **happy-path integration-test** effort, not a build effort (BIT-256 
 | [compliance-screening](./groups/compliance-screening.md) | 85 | 21 | 63 | 1 | 24.7% | 98.8% |
 | [governance](./groups/governance.md) | 219 | 5 | 214 | 0 | 2.3% | 100% |
 | [analytics-portals](./groups/analytics-portals.md) | 173 | 3 | 170 | 0 | 1.7% | 100% |
-| [ai-automation](./groups/ai-automation.md) | 93 | 2 | 91 | 0 | 2.2% | 100% |
-| **Total** | **2063** | **165** | **1808** | **90** | **8.0%** | **95.6%** |
+| [ai-automation](./groups/ai-automation.md) | 93 | 23 | 68 | 2 | 24.7% | 97.8% |
+| **Total** | **2063** | **186** | **1785** | **92** | **9.0%** | **95.5%** |
 
 Auth-identity leads on test coverage (52.5%) — unsurprising, since auth got the earliest
-and deepest test investment. AI/automation now has 2 OCR endpoints tested (BIT-256).
+and deepest test investment. AI/automation raised from 2% to 24.7% in batch 3 (automation.rs
+10 endpoints + ai/workflows.rs 13 endpoints). Remaining 68 partial include registry/sessions/
+sentiment/equipment (covered by batch 4 PR pending merge).
 
 ## Gaps & stubs (the 90 not-implemented endpoints)
 
