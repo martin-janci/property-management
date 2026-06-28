@@ -28,6 +28,9 @@ importers:
       '@ppt/accounting-api-client':
         specifier: workspace:*
         version: link:../../packages/accounting-api-client
+      '@ppt/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@ppt/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -50,9 +53,15 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.0
       '@ppt/dev-panel':
         specifier: workspace:*
         version: link:../../packages/dev-panel
+      '@ppt/e2e':
+        specifier: workspace:*
+        version: link:../../packages/e2e
       '@ppt/vite-plugin-worktree':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-ppt-worktree
