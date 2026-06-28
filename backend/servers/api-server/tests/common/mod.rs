@@ -6,6 +6,8 @@
 //! - Response extractors
 //! - Test fixtures for users and organizations
 
+#![allow(dead_code)] // shared integration-test harness: not every test crate uses every helper
+
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
