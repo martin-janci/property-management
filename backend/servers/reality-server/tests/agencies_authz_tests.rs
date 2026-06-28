@@ -115,7 +115,10 @@ async fn create_agency_unauthenticated_returns_401(pool: PgPool) {
         json!({"name": "Test Agency", "slug": "test-agency"}),
     )
     .await;
-    assert_eq!(status, 401, "create_agency must return 401 without auth");
+    assert_eq!(
+        status, 401,
+        "create_agency must return 401 without auth"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -151,7 +154,10 @@ async fn update_agency_unauthenticated_returns_401(pool: PgPool) {
         json!({"name": "Updated"}),
     )
     .await;
-    assert_eq!(status, 401, "update_agency must return 401 without auth");
+    assert_eq!(
+        status, 401,
+        "update_agency must return 401 without auth"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

@@ -224,7 +224,10 @@ async fn exchange_pm_token_with_invalid_pm_token_returns_401(pool: PgPool) {
 async fn sync_session_without_body_returns_non_401(pool: PgPool) {
     let app = sso_router(pool);
     let status = raw_send(&app, Method::POST, "/api/v1/sso/sync", None).await;
-    assert_ne!(status, 401, "sync_session without body must not return 401");
+    assert_ne!(
+        status, 401,
+        "sync_session without body must not return 401"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
