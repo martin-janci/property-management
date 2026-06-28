@@ -1,4 +1,4 @@
--- Migration: 00194_fix_rag_statistics_view.sql
+-- Migration: 00203_fix_rag_statistics_view.sql
 -- Epic 103 / Story 103.5: pgvector migration for RAG
 --
 -- Fixes a latent column-name mismatch between the `v_rag_statistics` view
@@ -88,4 +88,4 @@ END $$;
 GRANT SELECT ON v_rag_statistics TO PUBLIC;
 
 COMMENT ON VIEW v_rag_statistics IS
-    'Story 103.5: RAG system statistics per organization (columns aligned with RagStatistics model in 00194)';
+    'Story 103.5: RAG system statistics per organization (columns aligned with RagStatistics model in 00203)';

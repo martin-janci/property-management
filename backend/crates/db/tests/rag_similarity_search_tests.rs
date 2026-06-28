@@ -17,9 +17,9 @@
 //! stats view shipped column names (`chunks_with_embedding`) that did not
 //! match the columns the repository SELECTs (`chunks_with_vector`,
 //! `chunks_pending_migration`) — so `get_rag_statistics` failed at runtime on
-//! any DB where the view existed. Migration `00194_fix_rag_statistics_view.sql`
+//! any DB where the view existed. Migration `00203_fix_rag_statistics_view.sql`
 //! realigns the view; the stats assertions below are the regression guard for
-//! that fix, and would fail on `dev` before 00194.
+//! that fix, and would fail on `dev` before 00203.
 //!
 //! CI runs against stock PostgreSQL **without** the pgvector extension, so
 //! these tests deliberately drive the JSONB-fallback code paths. They connect
@@ -108,7 +108,7 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 /// Sub-sections:
 ///   A. Similarity ranking & min_similarity floor (JSONB-fallback path)
 ///   B. Org-scoping: org A query must never surface org B chunks
-///   C. Stats view: regression guard for migration 00194
+///   C. Stats view: regression guard for migration 00203
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn rag_retrieval_correctness(pool: PgPool) {
     set_super_ctx(&pool).await;
@@ -256,8 +256,8 @@ async fn rag_retrieval_correctness(pool: PgPool) {
     );
 
     // -------------------------------------------------------------------------
-    // C. Stats view: regression guard for migration 00194
-    //    (pre-00194 view exposed `chunks_with_embedding`; repo SELECTs
+    // C. Stats view: regression guard for migration 00203
+    //    (pre-00203 view exposed `chunks_with_embedding`; repo SELECTs
     //     `chunks_with_vector` / `chunks_pending_migration` — name mismatch
     //     caused a runtime error)
     // -------------------------------------------------------------------------
@@ -303,7 +303,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
     .expect("chunk 2");
 
     // The load-bearing assertion: this call SELECTs the view columns the model
-    // declares. On the pre-00194 view it errors with
+    // declares. On the pre-00203 view it errors with
     // `column "chunks_with_vector" does not exist`.
     let stats = repo
         .get_rag_statistics(&mut conn, org_stats)
