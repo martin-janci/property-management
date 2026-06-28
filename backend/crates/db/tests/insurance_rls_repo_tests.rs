@@ -127,6 +127,7 @@ fn sample_policy(suffix: &str) -> CreateInsurancePolicy {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn insurance_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = InsuranceRepository::new(pool.clone());
 

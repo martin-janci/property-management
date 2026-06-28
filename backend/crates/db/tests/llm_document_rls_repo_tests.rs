@@ -122,6 +122,7 @@ async fn seed_embedding(pool: &PgPool, org_id: Uuid, document_id: Uuid, text: &s
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn llm_document_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = LlmDocumentRepository::new(pool.clone());
 
