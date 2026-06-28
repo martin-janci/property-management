@@ -186,7 +186,7 @@ async fn messaging_archive_unarchive(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "arc").await;
     let (alice, alice_email) = seed_user(&pool, "alice-arc").await;
-    let (bob, bob_email) = seed_user(&pool, "bob-arc").await;
+    let (bob, _bob_email) = seed_user(&pool, "bob-arc").await;
 
     seed_membership(&pool, org, alice, "org_admin").await;
     seed_membership(&pool, org, bob, "resident").await;
@@ -228,7 +228,7 @@ async fn messaging_block_list_unblock(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "blk").await;
     let (alice, alice_email) = seed_user(&pool, "alice-blk").await;
-    let (bob, bob_email) = seed_user(&pool, "bob-blk").await;
+    let (bob, _bob_email) = seed_user(&pool, "bob-blk").await;
 
     seed_membership(&pool, org, alice, "org_admin").await;
     seed_membership(&pool, org, bob, "resident").await;
@@ -303,7 +303,7 @@ async fn messaging_attachment_storage_routes(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "att").await;
     let (alice, alice_email) = seed_user(&pool, "alice-att").await;
-    let (bob, bob_email) = seed_user(&pool, "bob-att").await;
+    let (bob, _bob_email) = seed_user(&pool, "bob-att").await;
 
     seed_membership(&pool, org, alice, "org_admin").await;
     seed_membership(&pool, org, bob, "resident").await;
