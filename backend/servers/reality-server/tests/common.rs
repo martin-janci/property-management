@@ -70,6 +70,7 @@ pub async fn send(router: &Router, method: Method, path: &str, token: Option<&st
     response.status()
 }
 
+#[allow(dead_code)]
 pub async fn send_json(
     router: &Router,
     method: Method,
