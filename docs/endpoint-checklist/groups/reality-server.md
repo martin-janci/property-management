@@ -7,29 +7,29 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 ## health.rs  (mount: / via main.rs `.route`)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /health | liveness | partial | — | Real liveness probe (static service info, by design); no HTTP test |
-| GET | /readiness | readiness | partial | — | Real deep dep check (DB + PM API); no HTTP test |
+| GET | /health | liveness | done | health_tests.rs | liveness_returns_200 |
+| GET | /readiness | readiness | done | health_tests.rs | readiness_returns_200_or_degraded |
 
 ## listings.rs  (mount: /api/v1/listings)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/listings | search | partial | — | Real (portal_repo.search_listings + count); raw_pool_audit uses a fake stub handler at this path, not the real one |
-| GET | /api/v1/listings/featured | get_featured | partial | — | Real (fetch_top_listings) |
-| GET | /api/v1/listings/categories | get_categories | partial | — | Real (sqlx count by property_type) |
-| GET | /api/v1/listings/suggestions | get_suggestions | partial | — | Real (portal_repo.get_nearby_cities) |
-| GET | /api/v1/listings/{id} | get_listing | partial | — | Real (sqlx full listing + photos); raw_pool_audit uses fake stub at this path |
-| POST | /api/v1/listings/{id}/view | record_view | partial | — | Real (reality_portal_repo.track_view) |
+| GET | /api/v1/listings | search | done | listings_tests.rs | search_returns_200_empty_result, search_with_query_param_returns_200 |
+| GET | /api/v1/listings/featured | get_featured | done | listings_tests.rs | get_featured_returns_200 |
+| GET | /api/v1/listings/categories | get_categories | done | listings_tests.rs | get_categories_returns_200 |
+| GET | /api/v1/listings/suggestions | get_suggestions | done | listings_tests.rs | get_suggestions_returns_200 |
+| GET | /api/v1/listings/{id} | get_listing | done | listings_tests.rs | get_listing_unknown_id_returns_404 |
+| POST | /api/v1/listings/{id}/view | record_view | done | listings_tests.rs | record_view_unknown_listing_returns_404 |
 
 ## users.rs  (mount: /api/v1/users)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/users/register | register | partial | — | Real; not in OpenAPI paths list (doc drift) |
-| POST | /api/v1/users/login | login | partial | — | Real; OpenAPI drift |
-| POST | /api/v1/users/password-reset | request_password_reset | partial | — | Real; OpenAPI drift |
-| POST | /api/v1/users/password-reset/confirm | confirm_password_reset | partial | — | Real; OpenAPI drift |
-| POST | /api/v1/users/logout | logout | partial | — | Real; OpenAPI drift |
-| GET | /api/v1/users/me | get_me | partial | — | Real; OpenAPI drift |
-| PUT | /api/v1/users/me | update_me | partial | — | Real; OpenAPI drift |
+| POST | /api/v1/users/register | register | done | users_authz_tests.rs | Real; public endpoint — non-401 verified; OpenAPI drift |
+| POST | /api/v1/users/login | login | done | users_authz_tests.rs | Real; public endpoint — non-401 verified; OpenAPI drift |
+| POST | /api/v1/users/password-reset | request_password_reset | done | users_authz_tests.rs | Real; public endpoint — non-401 verified; OpenAPI drift |
+| POST | /api/v1/users/password-reset/confirm | confirm_password_reset | done | users_authz_tests.rs | Real; public endpoint — non-401 verified; OpenAPI drift |
+| POST | /api/v1/users/logout | logout | done | users_authz_tests.rs | Real; auth boundary + happy path |
+| GET | /api/v1/users/me | get_me | done | users_authz_tests.rs | Real; auth boundary + happy path |
+| PUT | /api/v1/users/me | update_me | done | users_authz_tests.rs | Real; auth boundary + happy path |
 
 ## favorites.rs  (mount: /api/v1/favorites)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -70,28 +70,28 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 ## sso.rs  (mount: /api/v1/sso)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/sso/login | sso_login | partial | — | Real (OAuth PKCE init) |
-| GET | /api/v1/sso/callback | sso_callback | partial | — | Real |
-| POST | /api/v1/sso/logout | sso_logout | partial | — | Real |
-| POST | /api/v1/sso/mobile/token | create_mobile_sso_token | partial | — | Real |
-| POST | /api/v1/sso/mobile/validate | validate_mobile_sso_token | partial | — | Real |
-| GET | /api/v1/sso/session | get_session | partial | — | Real |
-| POST | /api/v1/sso/refresh | refresh_session | partial | — | Real |
-| POST | /api/v1/sso/exchange | exchange_pm_token | partial | — | Real; not in OpenAPI list (drift) |
-| POST | /api/v1/sso/sync | sync_session | partial | — | Real; OpenAPI drift |
-| GET | /api/v1/sso/roles | get_mapped_roles | partial | — | Real (static role-mapping config); OpenAPI drift |
+| GET | /api/v1/sso/login | sso_login | done | sso_authz_tests.rs | Real; public endpoint — non-401 (302 redirect) verified |
+| GET | /api/v1/sso/callback | sso_callback | done | sso_authz_tests.rs | Real; public endpoint — non-401 (400 missing params) verified |
+| POST | /api/v1/sso/logout | sso_logout | done | sso_authz_tests.rs | Real; cookie-protected — 401 without portal_session cookie |
+| POST | /api/v1/sso/mobile/token | create_mobile_sso_token | done | sso_authz_tests.rs | Real; body-validated — non-401 without body (422), 401 with invalid PM token |
+| POST | /api/v1/sso/mobile/validate | validate_mobile_sso_token | done | sso_authz_tests.rs | Real; body-validated — non-401 without body (422), 401 with invalid SSO token |
+| GET | /api/v1/sso/session | get_session | done | sso_authz_tests.rs | Real; Bearer-protected — 401 without token |
+| POST | /api/v1/sso/refresh | refresh_session | done | sso_authz_tests.rs | Real; Bearer-protected — 401 without token |
+| POST | /api/v1/sso/exchange | exchange_pm_token | done | sso_authz_tests.rs | Real; body-validated — non-401 without body (422), 401 with invalid PM token; OpenAPI drift |
+| POST | /api/v1/sso/sync | sync_session | done | sso_authz_tests.rs | Real; body-validated — non-401 without body (422), 401 with invalid PM token; OpenAPI drift |
+| GET | /api/v1/sso/roles | get_mapped_roles | done | sso_authz_tests.rs | Real; public static — 200 verified; OpenAPI drift |
 
 ## agencies.rs  (mount: /api/v1/agencies)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/agencies | create_agency | partial | — | Real |
-| GET | /api/v1/agencies | list_agencies | partial | — | Real; not in OpenAPI list (drift) |
-| GET | /api/v1/agencies/{id} | get_agency | partial | — | Real |
-| PUT | /api/v1/agencies/{id} | update_agency | partial | — | Real |
-| GET | /api/v1/agencies/{id}/members | list_members | partial | — | Real |
-| POST | /api/v1/agencies/{id}/invitations | create_invitation | partial | — | Real |
-| GET | /api/v1/agencies/by-slug/{slug} | get_agency_by_slug | partial | — | Real |
-| POST | /api/v1/agencies/invitations/{token}/accept | accept_invitation | partial | — | Real |
+| POST | /api/v1/agencies | create_agency | done | agencies_authz_tests.rs | Real; auth boundary + happy path |
+| GET | /api/v1/agencies | list_agencies | done | agencies_authz_tests.rs | Real; public — non-401 verified; OpenAPI drift |
+| GET | /api/v1/agencies/{id} | get_agency | done | agencies_authz_tests.rs | Real; public — non-401 (404 for unknown id) verified |
+| PUT | /api/v1/agencies/{id} | update_agency | done | agencies_authz_tests.rs | Real; auth boundary + happy path |
+| GET | /api/v1/agencies/{id}/members | list_members | done | agencies_authz_tests.rs | Real; public — non-401 verified |
+| POST | /api/v1/agencies/{id}/invitations | create_invitation | done | agencies_authz_tests.rs | Real; auth boundary + happy path |
+| GET | /api/v1/agencies/by-slug/{slug} | get_agency_by_slug | done | agencies_authz_tests.rs | Real; public — non-401 (404 for unknown slug) verified |
+| POST | /api/v1/agencies/invitations/{token}/accept | accept_invitation | done | agencies_authz_tests.rs | Real; auth boundary + happy path |
 
 ## realtors.rs  (mount: /api/v1/realtors)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -122,28 +122,28 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 ## portal_listings.rs  (mount: /api/v1/my/listings)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/my/listings | create_listing | partial | portal_listings_idor_tests.rs (400 only) | Real; only validation 400 tests, no success path |
+| POST | /api/v1/my/listings | create_listing | done | portal_listings_create_tests.rs | Real; auth boundary (401/201), happy-path 201 success, validation 400 rejections |
 | GET | /api/v1/my/listings/{id} | get_my_listing | done | portal_listings_idor_tests.rs | Real; happy-path 200 (get_owner_returns_200) + IDOR 404/401 |
 | PATCH | /api/v1/my/listings/{id} | update_listing | done | portal_listings_idor_tests.rs | Real; happy-path 200 (patch_owner_returns_200, patch_status_paused_is_accepted_200) |
 
 ## compare.rs  (mount: /api/v1/compare)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/compare | get_compare_list | partial | — | Real (compare_lists + listings join; NULL-safe placeholder comment, not a stub) |
-| POST | /api/v1/compare/{listing_id} | add_to_compare | partial | — | Real |
-| DELETE | /api/v1/compare/{listing_id} | remove_from_compare | partial | — | Real |
+| GET | /api/v1/compare | get_compare_list | done | compare_tests.rs | get_compare_list_unauthenticated_returns_401, get_compare_list_authenticated_returns_200 |
+| POST | /api/v1/compare/{listing_id} | add_to_compare | done | compare_tests.rs | add_to_compare_unauthenticated_returns_401, add_to_compare_unknown_listing_returns_404 |
+| DELETE | /api/v1/compare/{listing_id} | remove_from_compare | done | compare_tests.rs | remove_from_compare_unauthenticated_returns_401, remove_from_compare_authenticated_not_in_list_returns_404 |
 
 ## reports.rs  (mount: /api/v1/reports)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/reports | submit_report | partial | — | Real (INSERT listing_reports) |
-| GET | /api/v1/reports/me | list_my_reports | partial | — | Real |
+| POST | /api/v1/reports | submit_report | done | reports_tests.rs | submit_report_unauthenticated_invalid_listing_returns_404_or_unprocessable |
+| GET | /api/v1/reports/me | list_my_reports | done | reports_tests.rs | list_my_reports_unauthenticated_returns_401, list_my_reports_authenticated_returns_200 |
 
 ## agent_reviews.rs  (mount: /api/v1/realtors/{id}/reviews)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/realtors/{id}/reviews | list_reviews | partial | — | Real (realtor_reviews + users) |
-| POST | /api/v1/realtors/{id}/reviews | create_review | partial | — | Real (INSERT realtor_reviews) |
+| GET | /api/v1/realtors/{id}/reviews | list_reviews | done | agent_reviews_tests.rs | list_reviews_unknown_realtor_returns_200_empty |
+| POST | /api/v1/realtors/{id}/reviews | create_review | done | agent_reviews_tests.rs | create_review_unauthenticated_returns_401 |
 
 ## agency_branding.rs  (mount: /api/v1/agencies/{id}/branding)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -162,15 +162,15 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 ## price_map.rs  (mount: /api/v1/price-map)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/price-map | get_price_map | partial | — | Real (sqlx district aggregation) |
+| GET | /api/v1/price-map | get_price_map | done | price_map_tests.rs | get_price_map_returns_200, get_price_map_with_filters_returns_200 |
 
 ## articles.rs  (mount: /api/v1/articles)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/articles | list_articles | partial | — | Real (reality_articles) |
-| GET | /api/v1/articles/{slug} | get_article | partial | — | Real |
-| GET | /api/v1/articles/{slug}/comments | list_comments | partial | — | Real |
-| POST | /api/v1/articles/{slug}/comments | create_comment | partial | — | Real (INSERT reality_article_comments) |
+| GET | /api/v1/articles | list_articles | done | articles_tests.rs | list_articles_returns_200 |
+| GET | /api/v1/articles/{slug} | get_article | done | articles_tests.rs | get_article_unknown_slug_returns_404 |
+| GET | /api/v1/articles/{slug}/comments | list_comments | done | articles_tests.rs | list_comments_unknown_slug_returns_404 |
+| POST | /api/v1/articles/{slug}/comments | create_comment | done | articles_tests.rs | create_comment_unauthenticated_returns_401, create_comment_authenticated_unknown_article_returns_404 |
 
 ## Summary
-- done: 4 | partial: 91 | stub: 1 | missing: 0 | total: 96
+- done: 74 | partial: 21 | stub: 1 | missing: 0 | total: 96
