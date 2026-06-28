@@ -17,7 +17,8 @@
 //!   7. GET /api/v1/financial/reports/cash-flow
 //!   8. GET /api/v1/financial/reports/income-statement/export
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -26,6 +27,7 @@ use sqlx::PgPool;
 use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn financial_reports_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

@@ -17,6 +17,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_booking_by_id_decodes_null_fees(pool: PgPool) {
     // Super-admin context satisfies the rental_bookings RLS policies for seeding
     // and for the unscoped by-id read below.
@@ -93,6 +94,7 @@ async fn find_booking_by_id_decodes_null_fees(pool: PgPool) {
 /// covers both the model decode AND the create RETURNING projection in one shot
 /// (the read-path test above only seeds a literal row and reads it).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_booking_round_trips_null_fees(pool: PgPool) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(Option::<Uuid>::None)

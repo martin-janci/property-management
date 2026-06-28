@@ -32,7 +32,8 @@
 //! ### Schema assertions (FK, column, table existence)
 //! ### Positive AC happy-path coverage (create / move / delete / cycle-guard) **[7A.2 verify]**
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

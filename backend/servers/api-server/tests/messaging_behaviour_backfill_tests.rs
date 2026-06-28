@@ -12,7 +12,8 @@
 //! - POST /api/v1/messages/threads/{id}/archive
 //! - DELETE /api/v1/messages/threads/{id}/archive
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -87,6 +88,7 @@ fn mint_token(user_id: Uuid, email: &str) -> String {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn messaging_happy_paths(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "beh").await;

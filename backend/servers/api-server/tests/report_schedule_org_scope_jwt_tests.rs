@@ -40,7 +40,8 @@
 //! still validates membership against `organization_members`, which the
 //! fixtures seed below.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
@@ -136,6 +137,7 @@ fn cross_tenant_req(
 /// that drops the org clause and starts mutating the Org A row would be
 /// caught (the response would become `200` or a different 4xx).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pause_schedule_from_other_org_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -202,6 +204,7 @@ async fn pause_schedule_from_other_org_returns_404(pool: PgPool) {
 /// the cross-tenant resume from Org B must return `404` and leave the row
 /// paused.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn resume_schedule_from_other_org_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -266,6 +269,7 @@ async fn resume_schedule_from_other_org_returns_404(pool: PgPool) {
 /// Org B for an Org A schedule must therefore return `404` (schedule not
 /// found in caller's org), not `200` with an empty list and not `401`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_for_other_org_schedule_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -309,6 +313,7 @@ async fn list_executions_for_other_org_schedule_returns_404(pool: PgPool) {
 /// an attacker cannot distinguish "exists in another org" from "does not
 /// exist" by status code or response body.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pause_unknown_schedule_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

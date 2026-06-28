@@ -39,7 +39,8 @@
 //! approach" finding (shared `oauth_common` helper). Every guard reachable
 //! without a live provider call is covered here.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

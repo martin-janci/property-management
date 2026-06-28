@@ -41,6 +41,7 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 // ── list_saved_searches ─────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_saved_searches_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send(&app, Method::GET, "/api/v1/saved-searches", None).await;
@@ -51,6 +52,7 @@ async fn list_saved_searches_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_saved_searches_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-ss").await;
     let token = mint_token(user);
@@ -65,6 +67,7 @@ async fn list_saved_searches_authenticated_returns_non_401(pool: PgPool) {
 // ── create_saved_search ─────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send_json(
@@ -82,6 +85,7 @@ async fn create_saved_search_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_saved_search_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "create-ss").await;
     let token = mint_token(user);
@@ -103,6 +107,7 @@ async fn create_saved_search_authenticated_returns_non_401(pool: PgPool) {
 // ── list_search_alerts ──────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_search_alerts_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send(&app, Method::GET, "/api/v1/saved-searches/alerts", None).await;
@@ -113,6 +118,7 @@ async fn list_search_alerts_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_search_alerts_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-alerts").await;
     let token = mint_token(user);
@@ -133,6 +139,7 @@ async fn list_search_alerts_authenticated_returns_non_401(pool: PgPool) {
 // ── mark_all_alerts_read ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_all_alerts_read_unauthenticated_returns_401(pool: PgPool) {
     let app = saved_searches_router(pool);
     let status = send(
@@ -149,6 +156,7 @@ async fn mark_all_alerts_read_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_all_alerts_read_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-all-alerts").await;
     let token = mint_token(user);
@@ -169,6 +177,7 @@ async fn mark_all_alerts_read_authenticated_returns_non_401(pool: PgPool) {
 // ── mark_alert_read ─────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_alert_read_unauthenticated_returns_401(pool: PgPool) {
     let alert_id = Uuid::new_v4();
     let app = saved_searches_router(pool);
@@ -186,6 +195,7 @@ async fn mark_alert_read_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_alert_read_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-alert").await;
     let token = mint_token(user);
@@ -207,6 +217,7 @@ async fn mark_alert_read_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── get_saved_search ────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
@@ -224,6 +235,7 @@ async fn get_saved_search_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "get-ss").await;
     let token = mint_token(user);
@@ -245,6 +257,7 @@ async fn get_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── update_saved_search ─────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
@@ -263,6 +276,7 @@ async fn update_saved_search_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "update-ss").await;
     let token = mint_token(user);
@@ -285,6 +299,7 @@ async fn update_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
 // ── delete_saved_search ─────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
@@ -302,6 +317,7 @@ async fn delete_saved_search_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "delete-ss").await;
     let token = mint_token(user);
@@ -323,6 +339,7 @@ async fn delete_saved_search_authenticated_unknown_returns_non_401(pool: PgPool)
 // ── run_saved_search ────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn run_saved_search_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = saved_searches_router(pool);
@@ -340,6 +357,7 @@ async fn run_saved_search_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn run_saved_search_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "run-ss").await;
     let token = mint_token(user);

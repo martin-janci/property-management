@@ -3,6 +3,8 @@
 //! Provides: env setup, JWT minting, AppState construction, and
 //! a convenience oneshot-request helper.
 
+#![allow(dead_code)]
+
 use api_core::{
     middleware::TenantRateLimiterSet, middleware::TenantResolutionCache, PrincipalClaims,
 };

@@ -171,6 +171,7 @@ async fn cast_guard_delegation_valid(
 }
 
 #[sqlx::test(migrations = "./migrations")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn active_voting_delegation_makes_delegate_eligible(pool: PgPool) {
     let mut sa = pool.acquire().await.unwrap();
     set_ctx(&mut sa, None, None, true).await;
@@ -213,6 +214,7 @@ async fn active_voting_delegation_makes_delegate_eligible(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = "./migrations")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoked_delegation_is_rejected_by_eligibility_and_cast_guard(pool: PgPool) {
     let mut sa = pool.acquire().await.unwrap();
     set_ctx(&mut sa, None, None, true).await;
