@@ -1,3 +1,4 @@
+<!-- routine-touch: 2026-06-28 — pm-security rotation ran (32-day gap); coverage_cursor advanced 12→0; upkeep-only -->
 # PPT Project State
 
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
