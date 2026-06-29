@@ -19,8 +19,10 @@ import type {
   MediationNote,
   MediationSession,
   PaginatedDisputes,
+  PartySubmission,
   ResolveDisputeRequest,
   ScheduleSessionRequest,
+  SubmitResponseRequest,
   TimelineEvent,
   TimelineQuery,
   UpdateDisputeStatusRequest,
@@ -247,6 +249,29 @@ export async function cancelSession(
 ): Promise<MediationSession> {
   return apiRequest<MediationSession>(`${API_BASE}/${disputeId}/sessions/${sessionId}/cancel`, {
     method: 'POST',
+  });
+}
+
+// ============================================
+// Party Submissions (Story 80.3)
+// ============================================
+
+/** List all party submissions for a dispute. */
+export async function listSubmissions(disputeId: string): Promise<PartySubmission[]> {
+  return apiRequest<PartySubmission[]>(`${API_BASE}/${disputeId}/submissions`);
+}
+
+/**
+ * Submit a party response/statement for a dispute. The backend resolves the
+ * submitting party from the authenticated user's membership in the dispute.
+ */
+export async function submitResponse(
+  disputeId: string,
+  data: SubmitResponseRequest
+): Promise<PartySubmission> {
+  return apiRequest<PartySubmission>(`${API_BASE}/${disputeId}/submissions`, {
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 }
 
