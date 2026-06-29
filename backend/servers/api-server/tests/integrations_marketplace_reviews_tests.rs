@@ -30,7 +30,6 @@
 //! - GET  /api/v1/feature-packages/public/compare        — compare_packages
 //! - GET  /api/v1/feature-packages/public/{id}           — get_public_package
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

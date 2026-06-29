@@ -42,7 +42,6 @@
 //!   * `moderate_review` runs org-access check on the review's org — uses a
 //!     seeded membership.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

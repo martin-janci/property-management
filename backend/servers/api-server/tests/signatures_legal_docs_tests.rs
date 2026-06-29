@@ -28,7 +28,6 @@
 //! - POST  /api/v1/legal/requirements/{id}/verify          (create_verification)
 //! - GET   /api/v1/legal/requirements/{id}/verifications   (list_verifications)
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

@@ -20,7 +20,6 @@
 //! - POST /granular/groups/read-all
 //! - GET  /granular/digests
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

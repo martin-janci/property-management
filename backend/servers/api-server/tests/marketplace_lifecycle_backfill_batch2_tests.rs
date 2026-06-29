@@ -20,7 +20,6 @@
 //! `JwtService`, which emits the org as `org_id`, not `tenant_id`) so the
 //! `tenant_id` claim lands where the extractors expect it.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;
