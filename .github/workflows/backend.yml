@@ -27,6 +27,16 @@ name: Backend
 
 on:
   push:
+    # Restrict push-event runs to the integration branches ONLY. Without this,
+    # `push` fired on every feature-branch push too, so each PR head SHA carried
+    # TWO runs reporting the same required contexts (`check`/`test`): the real
+    # pull_request run AND a push run. Because the push run no-op'd those
+    # contexts green (the `changes` plumbing bug below), GitHub's "latest wins"
+    # resolution among same-named contexts could let the green no-op satisfy the
+    # required gate — broken test code merged on a stale/raced no-op (BIT-346).
+    # Keying push to dev/main leaves the pull_request run as the sole producer of
+    # required contexts on a PR head SHA; push runs now only smoke dev/main tips.
+    branches: [dev, main]
     paths:
       - 'backend/**'
       # Trigger when the workflow itself changes — otherwise edits to
@@ -67,8 +77,17 @@ jobs:
   # suite (matches the pre-#1672 behaviour where those events always ran).
   changes:
     runs-on: ubuntu-latest
+    # Coalesce BOTH producers: on a PR the `filter` step sets the value and
+    # `force` is skipped (empty); on push/schedule/dispatch `filter` is skipped
+    # (empty) and `force` sets it. The previous output read ONLY
+    # steps.filter.outputs.backend, but the force step had no `id`, so its value
+    # never reached the job output — every non-PR event resolved `backend` to ""
+    # and the downstream `check`/`test` jobs silently took the NO-OP path and
+    # reported green WITHOUT compiling. That is the push-event gate bypass at the
+    # heart of BIT-346; the `||` below restores the documented "non-PR events
+    # always run the full suite" behaviour.
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
+      backend: ${{ steps.filter.outputs.backend || steps.force.outputs.backend }}
     steps:
       - uses: actions/checkout@v6
 
@@ -82,9 +101,11 @@ jobs:
               - 'backend/**'
               - '.github/workflows/backend.yml'
 
-      # Non-PR events (push to backend/**, weekly schedule, manual dispatch)
+      # Non-PR events (push to dev/main, weekly schedule, manual dispatch)
       # always exercise the full suite — there is no diff to filter against.
+      # The `id` is REQUIRED so the job output above can read this value.
       - name: Force backend=true for non-PR events
+        id: force
         if: github.event_name != 'pull_request'
         run: echo "backend=true" >> "$GITHUB_OUTPUT"
 
@@ -294,6 +315,25 @@ jobs:
             /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
           sudo docker image prune --all --force >/dev/null 2>&1 || true
           echo "Disk after cleanup:"; df -h /
+
+      # Compile EVERY test target before running anything. `--no-fail-fast`
+      # (below) only governs test *execution* — a *compile* error still aborts
+      # the build at the first broken binary, so broken test files surface one
+      # per ~15-min CI cycle and get peeled one merge at a time (BIT-346).
+      # `--keep-going` makes cargo continue compiling the other independent test
+      # targets after one fails and report ALL compile errors in a single run,
+      # so a whole wave of broken files can be enumerated and fixed at once.
+      # NOTE: `--keep-going` is NOT accepted by `cargo test` in this toolchain
+      # (arg-parse error). `cargo build --workspace --tests --keep-going`
+      # compiles the same test targets (`--tests` => lib/bins-as-unittests +
+      # integration tests) and supports `--keep-going`.
+      - name: Compile all test targets (enumerate every compile failure)
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+          RUST_ENV: development
+        run: cargo build --workspace --tests --keep-going
 
       - name: Run tests
         if: needs.changes.outputs.backend == 'true'
