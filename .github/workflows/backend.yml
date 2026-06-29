@@ -220,6 +220,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: [changes, check]
+    timeout-minutes: 180
 
     services:
       postgres:
@@ -304,7 +305,9 @@ jobs:
         # --no-fail-fast: report every failing test binary in one run.
         # Without it, one red binary masks all later ones (alphabetical
         # order), so the gate peels failures one merge at a time (PAP-123).
-        run: cargo test --workspace --no-fail-fast
+        # --test-threads=4: cap concurrent test binaries to avoid Postgres
+        # connection pool exhaustion that causes silent 4h+ hangs (BIT-334).
+        run: cargo test --workspace --no-fail-fast -- --test-threads=4
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
