@@ -608,15 +608,6 @@ async fn update_escalation_config_returns_ok(pool: PgPool) {
     .expect("seed escalation config");
     let session = app.session(token, org_id);
 
-    // The PUT handler issues a plain UPDATE ... RETURNING * (no upsert), so a
-    // config row must already exist for this org. In production the row is
-    // auto-created on first GET; seed it directly here to establish the precondition.
-    sqlx::query("INSERT INTO ai_escalation_configs (organization_id) VALUES ($1)")
-        .bind(org_id)
-        .execute(&pool)
-        .await
-        .expect("seed escalation config");
-
     let resp = app
         .execute(
             session

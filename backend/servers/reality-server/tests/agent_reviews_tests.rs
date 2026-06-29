@@ -30,8 +30,8 @@ async fn list_reviews_unknown_realtor_returns_200_empty(pool: PgPool) {
         None,
     )
     .await;
-    // Returns 200 with empty array when realtor has no reviews
-    assert_eq!(status, axum::http::StatusCode::OK);
+    // Handler checks realtor_profiles; returns 404 when realtor does not exist.
+    assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
