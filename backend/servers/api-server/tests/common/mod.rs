@@ -5,6 +5,12 @@
 //! - Request helpers
 //! - Response extractors
 //! - Test fixtures for users and organizations
+//!
+//! Helpers here are shared across many integration-test binaries; each binary
+//! `mod common;`-includes the whole module but uses only a subset, so unused
+//! items are expected per-binary. Allow dead_code so the shared harness does
+//! not trip the `-Dwarnings` test gate (BIT-345).
+#![allow(dead_code)]
 
 #![allow(dead_code)]
 
