@@ -39,7 +39,6 @@ async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
     let org = seed_org(&pool, "rules_fix").await;
     let building = seed_building(&pool, org, "rules_fix").await;
@@ -106,7 +105,6 @@ async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn registry_rules_decode_unknown_pet_type_variant_gracefully(pool: PgPool) {
     // GH #1363 / #1366 — audit of the allowed_pet_types enum decode path.
     //
@@ -195,7 +193,6 @@ async fn registry_rules_decode_unknown_pet_type_variant_gracefully(pool: PgPool)
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn registry_rules_insert_branch_none_booleans_use_schema_defaults(pool: PgPool) {
     // GH #1406 — the NOT-NULL COALESCE on the INSERT branch of upsert_registry_rules
     // (COALESCE($3, TRUE) / COALESCE($4, TRUE) / COALESCE($9, FALSE)) was added to

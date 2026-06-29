@@ -120,7 +120,6 @@ async fn seed_vehicle_registration(
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn details_does_not_leak_cross_tenant_parking_spot(pool: PgPool) {
     let org_a = seed_org(&pool, "registry-a").await;
     let org_b = seed_org(&pool, "registry-b").await;
@@ -154,7 +153,6 @@ async fn details_does_not_leak_cross_tenant_parking_spot(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn details_returns_same_tenant_parking_spot(pool: PgPool) {
     let org_a = seed_org(&pool, "registry-ok").await;
     let owner = seed_user(&pool, "owner@registry-ok.test").await;

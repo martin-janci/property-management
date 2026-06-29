@@ -318,7 +318,6 @@ async fn legal_list_versions_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_create_requirement_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-c").await;
     let sess = app.session(token, org_id);
@@ -364,7 +363,6 @@ async fn legal_list_requirements_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_get_requirement_200_and_404(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-g").await;
     let sess = app.session(token, org_id);
@@ -411,7 +409,6 @@ async fn legal_get_requirement_200_and_404(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_update_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-u").await;
     let sess = app.session(token, org_id);
@@ -441,7 +438,6 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_delete_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-d").await;
     let sess = app.session(token, org_id);
@@ -470,7 +466,6 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_create_verification_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-c").await;
     let sess = app.session(token, org_id);
@@ -508,7 +503,6 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legal_list_verifications_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-l").await;
     let sess = app.session(token, org_id);

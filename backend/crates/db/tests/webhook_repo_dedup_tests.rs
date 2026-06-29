@@ -16,7 +16,6 @@ use uuid::Uuid;
 
 /// First call returns `Ok(true)` (row inserted); redelivery returns `Ok(false)`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn record_airbnb_webhook_event_first_seen_and_redelivery(pool: PgPool) {
     let repo = RentalRepository::new(pool.clone());
 
@@ -58,7 +57,6 @@ async fn record_airbnb_webhook_event_first_seen_and_redelivery(pool: PgPool) {
 
 /// Distinct `event_id`s are independent — each records its own row.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn record_airbnb_webhook_event_distinct_ids_are_independent(pool: PgPool) {
     let repo = RentalRepository::new(pool.clone());
 

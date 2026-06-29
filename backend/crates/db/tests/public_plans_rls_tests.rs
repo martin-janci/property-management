@@ -52,7 +52,6 @@ async fn seed_plan(pool: &PgPool, name: &str, is_active: bool, is_public: bool) 
 /// `list_public_plans` returns only plans where `is_active AND is_public`,
 /// even on a connection with no RLS context set.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_public_plans_filters_correctly_without_rls_context(pool: PgPool) {
     // Seed four variants.
     let public_active = seed_plan(&pool, "plan-pub-act", true, true).await;
@@ -98,7 +97,6 @@ async fn list_public_plans_filters_correctly_without_rls_context(pool: PgPool) {
 /// `list_public_plans` still works when RLS context IS set (i.e., the
 /// cleared path is not the only path — authenticated callers can also see plans).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_public_plans_works_with_rls_context_set(pool: PgPool) {
     let public_active = seed_plan(&pool, "plan-ctx-pub-act", true, true).await;
 

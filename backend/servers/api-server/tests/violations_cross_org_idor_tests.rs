@@ -128,7 +128,6 @@ async fn seed_violation(pool: &PgPool, org_id: Uuid, number: &str) -> Uuid {
 /// A user whose JWT `tenant_id` matches the violation's organization can read
 /// it.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_violation_same_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -159,7 +158,6 @@ async fn get_violation_same_org_succeeds(pool: PgPool) {
 /// A user from Org B cannot read Org A's violation by id — the org-scoped
 /// query finds no row and the handler returns 404 (the core #850 IDOR).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_violation_cross_org_is_not_found(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

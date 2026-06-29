@@ -110,7 +110,6 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 ///   B. Org-scoping: org A query must never surface org B chunks
 ///   C. Stats view: regression guard for migration 00203
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn rag_retrieval_correctness(pool: PgPool) {
     set_super_ctx(&pool).await;
     let repo = LlmDocumentRepository::new(pool.clone());

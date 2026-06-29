@@ -172,7 +172,6 @@ fn assert_rejected(status: StatusCode, label: &str) {
 
 /// Unauthenticated request to pause a schedule must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pause_schedule_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "pause-noauth").await;
@@ -193,7 +192,6 @@ async fn pause_schedule_without_auth_is_rejected(pool: PgPool) {
 /// In TestApp (no JWT) the auth gate fires first → 401.
 /// Either way the cross-tenant mutation is never applied.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pause_schedule_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -235,7 +233,6 @@ async fn pause_schedule_cross_tenant_is_rejected(pool: PgPool) {
 
 /// Unauthenticated request to resume a schedule must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn resume_schedule_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "resume-noauth").await;
@@ -265,7 +262,6 @@ async fn resume_schedule_without_auth_is_rejected(pool: PgPool) {
 
 /// A cross-tenant request to resume another org's schedule must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn resume_schedule_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -320,7 +316,6 @@ async fn resume_schedule_cross_tenant_is_rejected(pool: PgPool) {
 
 /// Unauthenticated request to list executions must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "list-exec-noauth").await;
@@ -339,7 +334,6 @@ async fn list_executions_without_auth_is_rejected(pool: PgPool) {
 
 /// A cross-tenant request to list another org's execution history must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -370,7 +364,6 @@ async fn list_executions_cross_tenant_is_rejected(pool: PgPool) {
 
 /// Unauthenticated request to get an execution must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "get-exec-noauth").await;
@@ -390,7 +383,6 @@ async fn get_execution_without_auth_is_rejected(pool: PgPool) {
 
 /// A cross-tenant request to read another org's execution must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -420,7 +412,6 @@ async fn get_execution_cross_tenant_is_rejected(pool: PgPool) {
 
 /// Unauthenticated request to get a download URL must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_download_url_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "dl-url-noauth").await;
@@ -441,7 +432,6 @@ async fn get_execution_download_url_without_auth_is_rejected(pool: PgPool) {
 /// A cross-tenant request to get a download URL for another org's execution
 /// must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_download_url_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -471,7 +461,6 @@ async fn get_execution_download_url_cross_tenant_is_rejected(pool: PgPool) {
 
 /// Unauthenticated request to retry an execution must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_execution_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "retry-noauth").await;
@@ -492,7 +481,6 @@ async fn retry_execution_without_auth_is_rejected(pool: PgPool) {
 /// A cross-tenant request to retry another org's failed execution must be rejected,
 /// and the execution must remain in its original 'failed' state.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_execution_cross_tenant_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -555,7 +543,6 @@ async fn retry_execution_cross_tenant_is_rejected(pool: PgPool) {
 /// row, and the handler maps `AppError::NotFound` to `404 SCHEDULE_NOT_FOUND`.
 /// The Org A schedule must remain active.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pause_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -619,7 +606,6 @@ async fn pause_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
 /// schedule owned by `org_a`. Must hit the org-scoped WHERE and return 404.
 /// Org A's schedule must remain paused.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn resume_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -696,7 +682,6 @@ async fn resume_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
 /// lives in `org_a`), and returns 404 `SCHEDULE_NOT_FOUND` before any
 /// executions are listed.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -750,7 +735,6 @@ async fn list_executions_cross_tenant_authenticated_returns_404(pool: PgPool) {
 /// `report_schedules.organization_id`, finds no row, and returns 404
 /// `EXECUTION_NOT_FOUND`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -800,7 +784,6 @@ async fn get_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
 /// `get_execution_scoped(id, org_b)` before generating any URL, finds no row,
 /// and returns 404 `EXECUTION_NOT_FOUND` — no download URL is leaked.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_download_url_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -855,7 +838,6 @@ async fn get_execution_download_url_cross_tenant_authenticated_returns_404(pool:
 /// `AppError::NotFound` → `404 EXECUTION_NOT_FOUND`. The execution must
 /// remain in `failed` state (not reset to `pending`).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -927,7 +909,6 @@ async fn retry_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
 /// no row, and returns `AppError::NotFound` → `404 SCHEDULE_NOT_FOUND`.
 /// Org A's schedule recipients must be unchanged.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     use serde_json::json;
 

@@ -44,7 +44,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_flips_is_active_immediately(pool: PgPool) {
     let org_id = seed_org(&pool, "phase2-rev-1").await;
     let user_id = seed_user(&pool, "rev1@phase2.test").await;
@@ -79,7 +78,6 @@ async fn revoke_flips_is_active_immediately(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_on_other_org_does_not_affect_first(pool: PgPool) {
     let org_a = seed_org(&pool, "phase2-rev-a").await;
     let org_b = seed_org(&pool, "phase2-rev-b").await;
@@ -113,7 +111,6 @@ async fn revoke_on_other_org_does_not_affect_first(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn re_grant_after_revoke_works(pool: PgPool) {
     let org = seed_org(&pool, "phase2-rev-regrant").await;
     let user = seed_user(&pool, "regrant@phase2.test").await;

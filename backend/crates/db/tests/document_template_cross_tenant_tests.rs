@@ -77,7 +77,6 @@ async fn seed_template(repo: &DocumentTemplateRepository, org_id: Uuid, created_
 
 /// A caller in org B cannot read a template owned by org A by guessing its UUID.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_by_id_is_org_scoped(pool: PgPool) {
     let repo = DocumentTemplateRepository::new(pool.clone());
     let org_a = seed_org(&pool, "a-read").await;
@@ -114,7 +113,6 @@ async fn find_by_id_is_org_scoped(pool: PgPool) {
 
 /// A caller in org B cannot update a template owned by org A.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_is_org_scoped(pool: PgPool) {
     let repo = DocumentTemplateRepository::new(pool.clone());
     let org_a = seed_org(&pool, "a-upd").await;
@@ -152,7 +150,6 @@ async fn update_is_org_scoped(pool: PgPool) {
 
 /// A caller in org B cannot soft-delete a template owned by org A.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_is_org_scoped(pool: PgPool) {
     let repo = DocumentTemplateRepository::new(pool.clone());
     let org_a = seed_org(&pool, "a-del").await;

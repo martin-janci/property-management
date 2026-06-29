@@ -152,7 +152,6 @@ async fn visible_count(pool: &PgPool, repo: &AnnouncementRepository, org: Uuid, 
 }
 
 #[sqlx::test(migrations = "./migrations")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn published_feed_is_filtered_by_targeting(pool: PgPool) {
     // ---- seed everything under a super-admin context (bypasses RLS WITH CHECK) ----
     let mut sa = pool.acquire().await.unwrap();

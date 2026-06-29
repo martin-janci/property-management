@@ -32,7 +32,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn accounting_provider_connection_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     // Seed as superuser
     set_ctx(&pool, None, None, true).await;

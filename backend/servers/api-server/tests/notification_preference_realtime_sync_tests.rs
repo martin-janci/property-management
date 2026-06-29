@@ -101,7 +101,6 @@ use sqlx::PgPool;
 /// coupled to the realtime sync leg. This is the core #480–#487 concern: a
 /// missing/broken pubsub must never break preference updates.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn preference_update_succeeds_without_redis(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -131,7 +130,6 @@ async fn preference_update_succeeds_without_redis(pool: PgPool) {
 /// the realtime event went out. We re-read via the public GET endpoint to prove
 /// the write landed (the sync leg is fire-and-forget and never gates this).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn preference_update_persists_independently_of_sync(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -179,7 +177,6 @@ async fn preference_update_persists_independently_of_sync(pool: PgPool) {
 /// spurious `preference.updated` being emitted for a change that never landed —
 /// a realtime-sync correctness concern from the #480–#487 cluster.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -241,7 +238,6 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
 /// same persisted state rather than erroring. push + in_app stay enabled, so the
 /// disable-all guard never enters the picture for either apply.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn repeated_disable_is_idempotent(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -298,7 +294,6 @@ async fn repeated_disable_is_idempotent(pool: PgPool) {
 /// return 200 both times and leave the channel enabled — the enable path has no
 /// state-dependent rejection, making it unconditionally idempotent.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn repeated_enable_is_idempotent_and_never_conflicts(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -356,7 +351,6 @@ async fn repeated_enable_is_idempotent_and_never_conflicts(pool: PgPool) {
 /// must still return 200 — a replayed disable of an off channel is a pure no-op
 /// and must not be mistaken for "disabling the last channel". in_app stays on.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn redisable_of_off_channel_never_conflicts(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -417,7 +411,6 @@ async fn redisable_of_off_channel_never_conflicts(pool: PgPool) {
 /// test pins the baseline — GET on an untouched user returns exactly the three
 /// channels (push, email, in_app), each enabled, with no all-disabled warning.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn fresh_user_has_all_channels_enabled_by_default(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -480,7 +473,6 @@ async fn fresh_user_has_all_channels_enabled_by_default(pool: PgPool) {
 /// publish leg can never emit an event for a channel the system doesn't model,
 /// and leaves the user's real preferences untouched.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn unknown_channel_is_rejected_without_mutation(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -524,7 +516,6 @@ async fn unknown_channel_is_rejected_without_mutation(pool: PgPool) {
 /// and the persisted state must converge to enabled — proving the update leg
 /// the publish leg rides is a genuine state machine, not a one-way latch.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn disable_then_enable_restores_channel(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -590,7 +581,6 @@ async fn disable_then_enable_restores_channel(pool: PgPool) {
 /// response so a connected client can render the "you may miss updates" notice.
 /// This is the update-leg warning the publish leg notifies clients about.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn confirmed_disable_all_succeeds_with_warning(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -661,7 +651,6 @@ async fn confirmed_disable_all_succeeds_with_warning(pool: PgPool) {
 /// payload shape. A regression that drops the publish or changes the channel
 /// name / payload would now fail in CI rather than silently passing.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn patch_publishes_preference_updated_event(pool: PgPool) {
     let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
     let user = TestUser::new();
@@ -723,7 +712,6 @@ async fn patch_publishes_preference_updated_event(pool: PgPool) {
 /// change can never emit a spurious realtime event — assertable in CI without
 /// Redis.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn rejected_disable_all_records_no_event(pool: PgPool) {
     let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
     let user = TestUser::new();
@@ -789,7 +777,6 @@ async fn rejected_disable_all_records_no_event(pool: PgPool) {
 /// test will fail and force an explicit decision rather than a silent behaviour
 /// shift.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn replayed_disable_republishes_identical_event(pool: PgPool) {
     let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
     let user = TestUser::new();
@@ -1000,7 +987,6 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
 /// broker instead of a real Redis. Proves the event is published to the
 /// correct channel with the correct payload (Story 1376).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn preference_update_publishes_realtime_event_in_memory(pool: PgPool) {
     use integrations::{InMemoryBroker, PubSubService};
     use std::sync::Arc;

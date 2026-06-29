@@ -88,7 +88,6 @@ async fn seed_inquiry(pool: &PgPool, listing_id: Uuid, realtor_id: Uuid) -> Uuid
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn realtor_b_cannot_mark_realtor_a_inquiry_read(pool: PgPool) {
     let org_id = seed_org(&pool, "idor-inq").await;
     let pm_user = seed_pm_user(&pool, "inq-pm@idor.test").await;

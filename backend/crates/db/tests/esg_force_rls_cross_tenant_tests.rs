@@ -86,7 +86,6 @@ async fn seed_metric_raw(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
 /// produces deny-all when no RLS context is set — proving the primary policy
 /// boundary, independent of the `organization_id = $2` application-layer guard.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_metrics_force_rls_blocks_cross_tenant_and_deny_all(pool: PgPool) {
     let org_a = seed_org(&pool, "esg-rls-a").await;
     let org_b = seed_org(&pool, "esg-rls-b").await;

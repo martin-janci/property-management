@@ -47,7 +47,6 @@ async fn seed_saved_search(repo: &RealityPortalRepository, user_id: Uuid, name: 
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn search_alert_delivery_lifecycle(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let user = seed_portal_user(&pool, "alerts-lifecycle@test.sk").await;
@@ -99,7 +98,6 @@ async fn search_alert_delivery_lifecycle(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn search_alert_read_is_owner_scoped(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let owner = seed_portal_user(&pool, "alerts-owner@test.sk").await;
@@ -146,7 +144,6 @@ async fn search_alert_read_is_owner_scoped(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn search_alerts_paginate_with_limit_and_offset(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let user = seed_portal_user(&pool, "alerts-pagination@test.sk").await;

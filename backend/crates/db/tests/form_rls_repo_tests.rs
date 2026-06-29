@@ -152,7 +152,6 @@ async fn drop_rls_role(pool: &PgPool, role: &str) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = FormRepository::new(pool.clone());
 
@@ -352,7 +351,6 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 ///      is the enforcer) cannot `update` (errors `RowNotFound`) or `delete`
 ///      (0 rows) it, and org B's form is left fully intact.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn form_repo_force_rls_write_paths_and_cross_tenant(pool: PgPool) {
     let repo = FormRepository::new(pool.clone());
 

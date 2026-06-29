@@ -103,7 +103,6 @@ async fn seed_parking_spot(pool: &PgPool, org_id: Uuid, building_id: Uuid, spot:
 /// enum columns must decode into the `String` model fields, and `unit_number`
 /// must resolve from `units.designation`.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn registry_reads_decode_enums_and_resolve_designation(pool: PgPool) {
     let org = seed_org(&pool, "pap158").await;
     let owner = seed_user(&pool, "owner@pap158.test").await;
@@ -322,7 +321,6 @@ async fn seed_vehicle_registration_with_spot(
 /// the same leak PAP-143 closed on the by-id detail path. PAP-158 scopes the
 /// join; this test pins it (pre-fix: leaks "B-007"; post-fix: None).
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn vehicle_list_does_not_leak_cross_tenant_parking_spot(pool: PgPool) {
     let org_a = seed_org(&pool, "list-a").await;
     let org_b = seed_org(&pool, "list-b").await;

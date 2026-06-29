@@ -107,7 +107,6 @@ async fn invoice_balance(pool: &PgPool, invoice_id: Uuid) -> Decimal {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_payments_is_org_scoped_and_counted(pool: PgPool) {
     let repo = FinancialRepository::new(pool.clone());
     let org_a = seed_org(&pool, "list-a").await;
@@ -142,7 +141,6 @@ async fn list_payments_is_org_scoped_and_counted(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn unallocated_list_drops_a_payment_once_fully_allocated(pool: PgPool) {
     let repo = FinancialRepository::new(pool.clone());
     let org = seed_org(&pool, "unalloc").await;
@@ -169,7 +167,6 @@ async fn unallocated_list_drops_a_payment_once_fully_allocated(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn allocate_clamps_to_invoice_balance_and_is_org_scoped(pool: PgPool) {
     let repo = FinancialRepository::new(pool.clone());
     let org = seed_org(&pool, "alloc").await;
@@ -205,7 +202,6 @@ async fn allocate_clamps_to_invoice_balance_and_is_org_scoped(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn auto_match_allocates_oldest_first(pool: PgPool) {
     let repo = FinancialRepository::new(pool.clone());
     let org = seed_org(&pool, "auto").await;

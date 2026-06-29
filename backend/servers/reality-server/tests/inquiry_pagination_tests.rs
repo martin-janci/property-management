@@ -114,7 +114,6 @@ async fn seed_inquiries(
 // ============================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn count_returns_full_total_not_page_len(pool: PgPool) {
     let org = seed_org(&pool, "pag-c1").await;
     let realtor = seed_user(&pool, "realtor-c1@pag.test").await;
@@ -146,7 +145,6 @@ async fn count_returns_full_total_not_page_len(pool: PgPool) {
 // ============================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn count_respects_status_filter(pool: PgPool) {
     let org = seed_org(&pool, "pag-c2").await;
     let realtor = seed_user(&pool, "realtor-c2@pag.test").await;

@@ -112,7 +112,6 @@ async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid, name: &s
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn predictive_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = PredictiveMaintenanceRepository::new(pool.clone());
 

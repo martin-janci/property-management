@@ -406,7 +406,6 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn org_property_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (_t, org_id) = create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
@@ -422,7 +421,6 @@ async fn org_property_endpoints_require_auth(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn tenant_scoped_endpoints_reject_non_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     // org-alpha is owned by one user; the outsider is a member of nothing.
@@ -440,7 +438,6 @@ async fn tenant_scoped_endpoints_reject_non_member(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn organizations_endpoints_reject_non_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     // org-beta belongs to its owner; the outsider is not a member.

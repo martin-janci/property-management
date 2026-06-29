@@ -25,7 +25,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn missing_row_falls_back_to_default(pool: PgPool) {
     let org = seed_org(&pool, "default-fallback").await;
 
@@ -35,7 +34,6 @@ async fn missing_row_falls_back_to_default(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn empty_jsonb_falls_back_to_default(pool: PgPool) {
     let org = seed_org(&pool, "empty-jsonb").await;
 
@@ -52,7 +50,6 @@ async fn empty_jsonb_falls_back_to_default(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn full_override_loads_back_intact(pool: PgPool) {
     let org = seed_org(&pool, "full-override").await;
 
@@ -78,7 +75,6 @@ async fn full_override_loads_back_intact(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn partial_override_inherits_remaining_defaults(pool: PgPool) {
     let org = seed_org(&pool, "partial-override").await;
 
@@ -105,7 +101,6 @@ async fn partial_override_inherits_remaining_defaults(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn malformed_jsonb_falls_back_to_default(pool: PgPool) {
     let org = seed_org(&pool, "malformed").await;
 
@@ -124,7 +119,6 @@ async fn malformed_jsonb_falls_back_to_default(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn loader_does_not_leave_rls_context_dirty(pool: PgPool) {
     // The loader sets a super-admin RLS context for the read; it must clear
     // it before returning the connection to the pool. Otherwise subsequent

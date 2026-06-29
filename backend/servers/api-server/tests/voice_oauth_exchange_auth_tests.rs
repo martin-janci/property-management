@@ -88,7 +88,6 @@ fn exchange_body() -> serde_json::Value {
 // Test 1: no Authorization header -> 401, no device created.
 // ---------------------------------------------------------------------------
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn oauth_exchange_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -114,7 +113,6 @@ async fn oauth_exchange_without_auth_is_rejected(pool: PgPool) {
 // Test 2: garbage bearer token -> 401.
 // ---------------------------------------------------------------------------
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn oauth_exchange_invalid_token_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -141,7 +139,6 @@ async fn oauth_exchange_invalid_token_is_rejected(pool: PgPool) {
 // Test 3: authenticated but no org context (no tenant_id claim) -> 403.
 // ---------------------------------------------------------------------------
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn oauth_exchange_without_org_context_is_forbidden(pool: PgPool) {
     let config = TestConfig::default();
     let secret = config.jwt_secret.clone();
@@ -177,7 +174,6 @@ async fn oauth_exchange_without_org_context_is_forbidden(pool: PgPool) {
 // that is well past the security boundary this fix establishes.)
 // ---------------------------------------------------------------------------
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn oauth_exchange_with_valid_auth_passes_auth_gate(pool: PgPool) {
     let config = TestConfig::default();
     let secret = config.jwt_secret.clone();

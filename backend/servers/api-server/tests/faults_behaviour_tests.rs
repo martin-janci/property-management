@@ -77,7 +77,6 @@ async fn create_fault(app: &TestApp, token: &str, org_id: Uuid, building_id: Uui
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_get_fault_returns_detail(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -106,7 +105,6 @@ async fn test_get_fault_returns_detail(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_update_fault_title(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -135,7 +133,6 @@ async fn test_update_fault_title(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_update_fault_status_to_in_progress(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -163,7 +160,6 @@ async fn test_update_fault_status_to_in_progress(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_resolve_fault(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -191,7 +187,6 @@ async fn test_resolve_fault(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_confirm_fault_resolution(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -241,7 +236,6 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_reopen_resolved_fault(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -286,7 +280,6 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_my_faults(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -323,7 +316,6 @@ async fn test_list_my_faults(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_add_and_list_fault_comments(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -368,7 +360,6 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_add_work_note(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -398,7 +389,6 @@ async fn test_add_work_note(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_get_fault_statistics(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
