@@ -22,7 +22,6 @@
 //! `router_single_source_tests.rs` keeps the two chains from drifting again
 //! without needing a database (so it runs in every `cargo test`, DB or not).
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{

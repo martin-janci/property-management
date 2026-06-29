@@ -26,7 +26,6 @@
 //! - GET  /api/v1/legal/audit-trail                             (list_audit_trail)
 //! - POST /api/v1/legal/audit-trail                             (create_audit_entry)
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

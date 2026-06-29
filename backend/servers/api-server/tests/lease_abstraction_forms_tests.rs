@@ -41,7 +41,6 @@
 //! - POST  /api/v1/forms/{id}/submissions/{submission_id}/review       (review_submission)
 //! - POST  /api/v1/forms/{id}/download                                 (record_download)
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

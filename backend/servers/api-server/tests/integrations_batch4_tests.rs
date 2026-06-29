@@ -7,7 +7,6 @@
 //! - Feature packages public (list_public, get_public, compare)
 //! - Features (resolved, check, upgrade_options, log_event)
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{
