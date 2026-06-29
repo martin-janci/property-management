@@ -822,6 +822,43 @@ async fn triage_fault(
         })?;
 
     rls.release().await;
+
+    // #1793: notify the reporter (and the assigned technician, if triage set
+    // one) that the fault has been triaged — the first manager touch on a fault.
+    // Best-effort, mirroring the other transitions: a dispatch failure is logged
+    // and never fails the mutation.
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if fault.reporter_id != principal.user_id {
+        recipients.push(fault.reporter_id);
+    }
+    if let Some(assignee) = fault.assigned_to {
+        if assignee != principal.user_id && !recipients.contains(&assignee) {
+            recipients.push(assignee);
+        }
+    }
+    if !recipients.is_empty() {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault triaged: {}", fault.title),
+            "The fault has been triaged and prioritized.".to_string(),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+        }));
+        let results = state
+            .notification_pipeline
+            .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+            .await;
+        tracing::info!(
+            fault_id = %fault.id,
+            recipients = results.len(),
+            "FaultTriaged notifications dispatched"
+        );
+    }
+
     Ok(Json(FaultActionResponse {
         message: "Fault triaged successfully".to_string(),
         fault,
@@ -1141,6 +1178,57 @@ async fn confirm_fault(
                 )),
             )
         })?;
+
+    // #1793: the reporter has confirmed (and rated) the resolution — typically
+    // the closing transition. Notify the assignee who did the work plus the
+    // org's managers so the lifecycle gets a closure signal. Best-effort.
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if let Some(assignee) = fault.assigned_to {
+        if assignee != principal.user_id {
+            recipients.push(assignee);
+        }
+    }
+    match MembershipRepository::new(state.db.clone())
+        .list_manager_ids(tenant_id)
+        .await
+    {
+        Ok(manager_ids) => {
+            for mid in manager_ids {
+                if mid != principal.user_id && !recipients.contains(&mid) {
+                    recipients.push(mid);
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to load manager ids for FaultConfirmed notification"
+            );
+        }
+    }
+    if !recipients.is_empty() {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault resolution confirmed: {}", fault.title),
+            "The reporter has confirmed the fault resolution.".to_string(),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+        }));
+        let results = state
+            .notification_pipeline
+            .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+            .await;
+        tracing::info!(
+            fault_id = %fault.id,
+            recipients = results.len(),
+            "FaultConfirmed notifications dispatched"
+        );
+    }
 
     Ok(Json(FaultActionResponse {
         message: "Resolution confirmed successfully".to_string(),
