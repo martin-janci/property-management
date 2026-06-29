@@ -353,7 +353,14 @@ jobs:
         # --no-fail-fast: report every failing test binary in one run.
         # Without it, one red binary masks all later ones (alphabetical
         # order), so the gate peels failures one merge at a time (PAP-123).
-        run: cargo test --workspace --no-fail-fast
+        #
+        # --test-threads=2: each #[sqlx::test] provisions its own database and
+        # runs the full migration set; at the default per-binary parallelism
+        # (= runner core count) the concurrent DB-create + migrate + app-pool
+        # load on the single Postgres service induces spurious 500s ("no rows",
+        # tenant/RLS context races) that pass in isolation. Capping concurrency
+        # trades wall-clock for determinism on the consolidated test set.
+        run: cargo test --workspace --no-fail-fast -- --test-threads=2
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
