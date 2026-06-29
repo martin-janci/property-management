@@ -3,7 +3,6 @@
 //! Exercises regions, data points, recommendations, CMA (Comparative Market Analysis),
 //! and pricing history routes.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

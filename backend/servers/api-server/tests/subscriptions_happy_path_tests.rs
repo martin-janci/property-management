@@ -3,7 +3,6 @@
 //! Exercises 25+ different endpoints covering plans, coupons, payment methods, organization subscriptions,
 //! usage tracking, invoices, and statistics.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

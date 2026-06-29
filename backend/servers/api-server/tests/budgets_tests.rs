@@ -2,7 +2,6 @@
 //!
 //! Exercises the budgets, budget items, budget categories, actuals, alerts, and dashboard endpoints.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

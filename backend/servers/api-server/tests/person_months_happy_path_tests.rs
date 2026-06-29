@@ -3,7 +3,6 @@
 //! Exercises unit-level (`/api/v1/buildings/{bid}/units/{uid}/person-months`)
 //! and building-level (`/api/v1/buildings/{bid}/person-months`) routes.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

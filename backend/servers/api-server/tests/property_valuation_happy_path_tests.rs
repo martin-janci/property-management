@@ -10,7 +10,6 @@
 //! directly (mirroring `analytics_owner_success_tests.rs`) and seed the
 //! org + user + membership the principal needs.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

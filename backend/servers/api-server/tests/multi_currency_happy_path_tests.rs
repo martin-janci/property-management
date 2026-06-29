@@ -9,7 +9,6 @@
 //! login flow carries no tenant claim, so we mint one directly here (the same
 //! pattern as `analytics_owner_success_tests.rs`).
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

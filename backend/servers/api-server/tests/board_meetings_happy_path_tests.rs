@@ -12,7 +12,6 @@
 //! the motion id as a placeholder `board_member_id`, so a real 2xx requires
 //! production board-member resolution that does not exist yet.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

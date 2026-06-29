@@ -17,7 +17,6 @@
 //!   manager-tier role; `create_authenticated_user_with_org` seeds `org_admin`
 //!   which satisfies `is_manager()`.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;
