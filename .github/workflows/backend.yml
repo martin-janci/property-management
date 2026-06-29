@@ -89,7 +89,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend || steps.force.outputs.backend }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Detect backend changes
         id: filter
@@ -114,7 +114,7 @@ jobs:
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
@@ -156,7 +156,7 @@ jobs:
         run: |
           echo "Pure-frontend PR — no backend/** changes; backend 'check' job not required to run."
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: needs.changes.outputs.backend == 'true'
 
       - name: Install Rust
@@ -277,7 +277,7 @@ jobs:
         run: |
           echo "Pure-frontend PR — no backend/** changes; backend 'test' job not required to run."
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: needs.changes.outputs.backend == 'true'
 
       - name: Install Rust
@@ -370,7 +370,7 @@ jobs:
     if: needs.changes.outputs.backend == 'true'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
@@ -428,7 +428,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
@@ -525,7 +525,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
@@ -645,7 +645,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
@@ -688,7 +688,7 @@ jobs:
     # Not a required context; skips cleanly on pure-frontend PRs (#1672).
     if: needs.changes.outputs.backend == 'true'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: cargo deny check
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
