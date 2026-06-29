@@ -10,6 +10,8 @@
 //!   * Default-policy path: no `org_auth_policies` row → no email-verification
 //!     gate → grant proceeds for an unverified user (status quo).
 
+#![allow(dead_code)]
+
 use api_server::services::{AuthPolicyEnforcer, AuthPolicyError};
 use sqlx::PgPool;
 use uuid::Uuid;

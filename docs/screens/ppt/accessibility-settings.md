@@ -19,6 +19,8 @@ epics:
 relatedScreens:
   - id: ppt/privacy-settings
     rel: sibling
+  - id: ppt/notification-settings
+    rel: sibling
 sharedComponents:
   - switch
   - banner
@@ -108,7 +110,7 @@ UC-25 accessibility preferences. Per-user, server-synced across devices. The kil
 - Save bar is sticky at viewport bottom inside the content column (not full-window). 4 distinct visual states (idle / dirty / saving / error). Idle disables the save button via `disabled` attribute, not opacity.
 - Toast pattern: bottom-right anchored, surface bg + 1px subtle border, check icon in success-soft tile + ink. Auto-dismiss 4s; respects `prefers-reduced-motion: reduce` (no slide-in animation, fade only).
 - Sound-on-save behavior: the design states a short tone for success, a longer one for errors. Must be opt-in (default off) — do not auto-play sound. Use `Audio` API, not generated tones, to avoid violating user autoplay policies.
-- Settings side-nav has 5 items but only Accessibility is implemented in this artboard. Profile / Predvoľby (Preferences) / Súkromie / Upozornenia are placeholders pointing to other screen-maps (privacy-settings exists; profile + preferences + notifications are TBD per project scope).
+- Settings side-nav has 5 items but only Accessibility is implemented in this artboard. Profile / Predvoľby (Preferences) / Súkromie / Upozornenia are placeholders pointing to other screen-maps (privacy-settings + notification-settings exist; profile + preferences are TBD per project scope).
 - "Pred chvíľou" / "pred 14 minútami" relative-time strings need `Intl.RelativeTimeFormat` for sk/cs/de/en/pl/hu — match other screens.
 - Error fallback "stiahnite súbor s nastaveniami" generates a JSON download of the user's current preference state — important for accessibility users who can't lose 2 minutes of toggling. Implement before shipping.
 - Switch tokens: bg = `--bg-input`, on-bg = `--accent`, knob = white, knob-shadow `0 1px 3px rgba(0,0,0,.2)`. Disabled state must remain readable in dark mode.

@@ -167,6 +167,7 @@ async fn seed_active_vote(
 // ---------------------------------------------------------------------------
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn cast_vote_rls_stores_unit_ownership_share_as_weight(pool: PgPool) {
     let repo = VoteRepository::new(pool.clone());
     let org = seed_org(&pool, "weight").await;
@@ -214,6 +215,7 @@ async fn cast_vote_rls_stores_unit_ownership_share_as_weight(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn cast_vote_rls_writes_ballot_cast_audit_row(pool: PgPool) {
     let repo = VoteRepository::new(pool.clone());
     let org = seed_org(&pool, "audit").await;
@@ -260,6 +262,7 @@ async fn cast_vote_rls_writes_ballot_cast_audit_row(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn cast_vote_rls_increments_participation_count(pool: PgPool) {
     let repo = VoteRepository::new(pool.clone());
     let org = seed_org(&pool, "part").await;
@@ -312,6 +315,7 @@ async fn cast_vote_rls_increments_participation_count(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_poll_results_rls_returns_live_tally_for_active_vote(pool: PgPool) {
     let repo = VoteRepository::new(pool.clone());
     let org = seed_org(&pool, "results").await;

@@ -24,7 +24,8 @@
 //! gate before any energy query) is asserted for energy; the same-org success
 //! path is proven on the meter endpoints whose tables do exist.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

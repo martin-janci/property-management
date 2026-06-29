@@ -9,7 +9,7 @@ name: EAS Android Build
 #     - actions/checkout@v6        -> v6.0.3 (v6 major tag exists)
 #     - actions/setup-node@v6      -> v6.4.0 (v6 major tag exists)
 #     - pnpm/action-setup@v6       -> v6.0.9 (v6 major tag exists)
-#     - actions/cache@v5           -> v5.0.5 (v5 major tag exists)
+#     - actions/cache@v6           -> v5.0.5 (v5 major tag exists)
 #     - expo/expo-github-action@v9 -> 9.0.0  (v9 major tag exists)
 #   eas-cli is provisioned by expo/expo-github-action with `eas-version: latest`
 #   (no separate pin required). No fix needed — pins are valid as of this date.
@@ -98,7 +98,7 @@ jobs:
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Cache pnpm store
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-mobile-${{ hashFiles('frontend/pnpm-lock.yaml') }}

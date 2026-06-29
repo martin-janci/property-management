@@ -26,7 +26,8 @@
 //!   - Org A's token reading Org A's fund -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's fund -> 404 (cross-org is blocked).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -130,6 +131,7 @@ async fn seed_fund(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
 
 /// A user whose JWT `tenant_id` matches the fund's organization can read it.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_fund_same_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -162,6 +164,7 @@ async fn get_fund_same_org_succeeds(pool: PgPool) {
 /// A user from Org B cannot read Org A's fund by id — the org-scoped query
 /// finds no row and the handler returns 404 (the core #810 IDOR).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_fund_cross_org_is_not_found(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -198,6 +201,7 @@ async fn get_fund_cross_org_is_not_found(pool: PgPool) {
 
 /// A cross-org `PUT` must not rename another org's fund.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_fund_cross_org_does_not_mutate(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

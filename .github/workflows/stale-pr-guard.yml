@@ -1,0 +1,86 @@
+name: Stale-PR guard
+
+# Periodic "stranded done" alarm (BIT-325, remediation of BIT-324 F1/F2).
+#
+# `done` in Paperclip != merged on dev. When the merge pipeline stalls, ready
+# PRs age out and the "done" coverage is never realized. Nothing watched for
+# that — auto-rebase-stale-drafts.yml only unsticks *draft* conflicts. This job
+# runs .research/stale-pr-guard.sh daily, flags every open non-draft PR that is
+# open > STALE_DAYS or > BEHIND_LIMIT commits behind dev, and writes the list to
+# the run summary. Flag-only: it never merges, closes, or rebases.
+
+on:
+  schedule:
+    # 06:00 UTC daily — after the nightly auto-rebase (03:00) has had its pass.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      stale_days:
+        description: 'Flag PRs open longer than this many days'
+        required: false
+        default: '3'
+      behind_limit:
+        description: 'Flag PRs more than this many commits behind dev'
+        required: false
+        default: '200'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: stale-pr-guard
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          # Full history so `git rev-list --count <head>..origin/dev` is exact.
+          fetch-depth: 0
+
+      - name: Fetch dev + all PR head branches
+        # Pull every branch head so `git rev-list <prHead>..origin/dev` can
+        # compute commits-behind exactly. Without this, same-repo PR head shas
+        # may be absent and the guard degrades to age-only (still correct, just
+        # blind to the >BEHIND_LIMIT signal).
+        run: git fetch origin '+refs/heads/*:refs/remotes/origin/*' --quiet
+
+      - name: Self-test (offline fixture)
+        run: |
+          set -euo pipefail
+          bash .research/stale-pr-guard.test.sh
+
+      - name: Run guard
+        id: run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BASE: origin/dev
+          STALE_DAYS: ${{ github.event.inputs.stale_days || '3' }}
+          BEHIND_LIMIT: ${{ github.event.inputs.behind_limit || '200' }}
+        run: |
+          set -euo pipefail
+          # Record-only: the guard exits 0 even when it flags PRs (no GUARD_ENFORCE).
+          # stdout = flagged[] JSON; stderr = human table (-> the Actions log).
+          FLAGGED=$(./.research/stale-pr-guard.sh --json)
+          COUNT=$(echo "$FLAGGED" | jq 'length')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Stale-PR guard — $COUNT flagged"
+            echo
+            echo "Open non-draft PRs vs \`dev\` that are open > ${STALE_DAYS}d or > ${BEHIND_LIMIT} commits behind."
+            echo
+            if [ "$COUNT" -eq 0 ]; then
+              echo "_Nothing flagged — merge queue is healthy._"
+            else
+              echo "| PR | subtask | age (d) | behind | reasons | title |"
+              echo "|----|---------|---------|--------|---------|-------|"
+              echo "$FLAGGED" | jq -r '.[] | "| #\(.number) | \(.subtask // "—") | \(.ageDays) | \(if .commitsBehind < 0 then "?" else .commitsBehind|tostring end) | \(.reasons|join(", ")) | \(.title) |"'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

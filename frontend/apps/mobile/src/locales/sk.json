@@ -130,6 +130,7 @@
     "buildingsLoadError": "Nepodarilo sa načítať vaše budovy",
     "photosCompressedTitle": "Fotky komprimované",
     "photosCompressedWarning": "Vybrané fotky presiahli 10 MB ({{original}} MB) a boli komprimované na {{final}} MB, aby sa nahrali rýchlejšie. Kvalita obrázkov môže byť znížená.",
+    "photosStillLargeWarning": "Aj po kompresii majú fotky {{final}} MB (nad limitom 10 MB), takže nahrávanie môže byť pomalé alebo môže zlyhať pri slabom pripojení.",
     "compressingPhotos": "Optimalizujem fotky…",
     "queuedTitle": "Uložené offline",
     "queuedMessage": "Ste offline. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",

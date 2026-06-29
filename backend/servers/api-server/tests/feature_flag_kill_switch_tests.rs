@@ -9,6 +9,8 @@
 //!   by component-level tests; here we confirm the backend honors the
 //!   write.
 
+#![allow(dead_code)]
+
 use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::body::to_bytes;
 use serde_json::Value;

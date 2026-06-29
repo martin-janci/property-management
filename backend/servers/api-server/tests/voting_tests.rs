@@ -6,7 +6,8 @@
 //! membership. These tests focus on the negative paths so they can run
 //! without provisioning a full tenant + membership fixture.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

@@ -23,6 +23,61 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  apps/accounting-web:
+    dependencies:
+      '@ppt/accounting-api-client':
+        specifier: workspace:*
+        version: link:../../packages/accounting-api-client
+      '@ppt/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@ppt/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@ppt/ui-kit':
+        specifier: workspace:*
+        version: link:../../packages/ui-kit
+      '@tanstack/react-query':
+        specifier: ^5.101.0
+        version: 5.101.0(react@19.2.0)
+      next:
+        specifier: ^16.2.7
+        version: 16.2.9(@playwright/test@1.61.0)(react-dom@19.2.0)(react@19.2.0)
+      next-intl:
+        specifier: ^4.13.0
+        version: 4.13.0(next@16.2.9)(react@19.2.0)(typescript@5.9.3)
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: 19.2.0
+        version: 19.2.0(react@19.2.0)
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.0
+      '@ppt/dev-panel':
+        specifier: workspace:*
+        version: link:../../packages/dev-panel
+      '@ppt/e2e':
+        specifier: workspace:*
+        version: link:../../packages/e2e
+      '@ppt/vite-plugin-worktree':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-ppt-worktree
+      '@types/node':
+        specifier: ^25.0.5
+        version: 25.9.3
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
   apps/admin-web:
     dependencies:
       '@ppt/admin-ui':
@@ -446,6 +501,28 @@ importers:
       vitest:
         specifier: ^4.1.9
         version: 4.1.9(@types/node@25.9.3)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(msw@2.14.6)(vite@8.0.16)
+
+  packages/accounting-api-client:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.101.0
+        version: 5.101.0(react@19.2.0)
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
+    devDependencies:
+      '@hey-api/openapi-ts':
+        specifier: ^0.98.2
+        version: 0.98.2(typescript@5.9.3)
+      '@types/node':
+        specifier: ^25.9.3
+        version: 25.9.3
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@types/node@25.9.3)(vite@8.0.16)
 
   packages/admin-ui:
     dependencies:

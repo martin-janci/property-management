@@ -39,7 +39,8 @@
 //! `StoreUnavailable` and the callback relies on the stateless org-prefix +
 //! membership checks — exactly the path these tests pin.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
