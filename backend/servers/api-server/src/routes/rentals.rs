@@ -16,13 +16,13 @@ use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use common::tenant::TenantRole;
 use db::models::{
-    BookingListQuery, BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent,
-    ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateGuestIdDocument,
-    CreateICalFeed, CreatePlatformConnection, GenerateReport, ICalFeed, PlatformConnectionDetail,
-    PlatformConnectionSummary, PlatformSyncStatus, RentalBooking, RentalGuest,
-    RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection, RentalStatistics,
-    ReportPreview, ReportSummary, UpdateBooking, UpdateBookingStatus, UpdateGuest, UpdateICalFeed,
-    UpdatePlatformConnection,
+    AuditAction, BookingListQuery, BookingWithGuests, BookingsResponse, CalendarBlock,
+    CalendarEvent, ConnectionStatus, CreateAuditLog, CreateBooking, CreateCalendarBlock,
+    CreateGuest, CreateGuestIdDocument, CreateICalFeed, CreatePlatformConnection, GenerateReport,
+    ICalFeed, PlatformConnectionDetail, PlatformConnectionSummary, PlatformSyncStatus,
+    RentalBooking, RentalGuest, RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection,
+    RentalStatistics, ReportPreview, ReportSummary, UpdateBooking, UpdateBookingStatus,
+    UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -33,6 +33,32 @@ const MAX_ID_DOC_SIZE: usize = 10 * 1024 * 1024;
 
 /// MIME allowlist for ID-document uploads (#1687).
 const ALLOWED_ID_DOC_MIME: &[&str] = &["image/png", "image/jpeg", "application/pdf"];
+
+/// Sniff the leading magic bytes of an uploaded ID document and return the
+/// concrete content type, or `None` when the signature is not one of the
+/// allowed image/PDF formats (#1760/#1783 defence-in-depth).
+///
+/// The declared multipart `Content-Type` is attacker-controlled, so the
+/// allowlist check on the *declared* MIME alone lets a caller store arbitrary
+/// bytes labelled `image/png`. For a PII + (future Stage B) OCR pipeline we
+/// additionally require the bytes themselves to be a PNG/JPEG/PDF signature.
+/// Mirrors the inline signature precedent in `routes/forms/types.rs` and the
+/// `PDF_MAGIC` check in `routes/signatures.rs` — no new crate.
+fn sniff_id_doc_mime(bytes: &[u8]) -> Option<&'static str> {
+    const PNG_MAGIC: &[u8] = b"\x89PNG\r\n\x1a\n";
+    const JPEG_MAGIC: &[u8] = &[0xFF, 0xD8, 0xFF];
+    const PDF_MAGIC: &[u8] = b"%PDF-";
+
+    if bytes.starts_with(PNG_MAGIC) {
+        Some("image/png")
+    } else if bytes.starts_with(JPEG_MAGIC) {
+        Some("image/jpeg")
+    } else if bytes.starts_with(PDF_MAGIC) {
+        Some("application/pdf")
+    } else {
+        None
+    }
+}
 
 /// Create rentals router.
 pub fn router() -> Router<AppState> {
@@ -932,6 +958,14 @@ pub async fn update_guest(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateGuest>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1783): the guest write-path accepts identity PII (id_number,
+    // date_of_birth, nationality, id_document_url), so gate it to managers —
+    // matching the upload/extract endpoints. (The get_guest read-path parity is
+    // tracked separately in #1772/#1766.)
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
     // SECURITY (#804): org-scoped update — cross-tenant ids return 404.
     let guest = state
         .rental_repo
@@ -1170,6 +1204,23 @@ pub async fn upload_guest_id_document(
         ));
     }
 
+    // --- Validate the *actual* bytes (defence-in-depth, #1760/#1783) ---
+    // The declared MIME above is attacker-controlled; require the leading bytes
+    // to be a real PNG/JPEG/PDF signature AND to agree with the declared type so
+    // a caller cannot store arbitrary content labelled `image/png`.
+    match sniff_id_doc_mime(&bytes) {
+        Some(sniffed) if sniffed == resolved_mime => {}
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "UNSUPPORTED_FILE_TYPE",
+                    "File contents do not match an allowed type. Allowed: PNG, JPEG, PDF",
+                )),
+            ));
+        }
+    }
+
     // --- Build the storage key + best-effort S3 upload ---
     let file_key = format!(
         "id-documents/{}",
@@ -1219,6 +1270,28 @@ pub async fn upload_guest_id_document(
                 )),
             )
         })?;
+
+    // --- Audit the PII upload (#1760/#1783) ---
+    // Log who uploaded which guest's ID document and when. Best-effort: a
+    // failure to write the audit row must not fail the upload.
+    if let Err(e) = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(tenant.user_id),
+            action: AuditAction::RentalGuestIdDocumentUpload,
+            resource_type: Some("rental_guest_id_document".to_string()),
+            resource_id: Some(doc.id),
+            org_id: Some(org_id),
+            details: Some(serde_json::json!({ "guest_id": id })),
+            old_values: None,
+            new_values: None,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await
+    {
+        tracing::error!(error = %e, guest_id = %id, "Failed to write audit log for ID-document upload");
+    }
 
     // --- Point the guest record at the uploaded document ---
     let update = UpdateGuest {
@@ -1293,6 +1366,30 @@ pub async fn extract_guest_id_document(
                 )),
             )
         })?;
+
+    // --- Audit the PII access (#1760/#1783) ---
+    // The manager has resolved (and is about to read the bytes of) a guest's
+    // identity document for OCR extraction; record who accessed which document
+    // and when, independently of the OCR provider's outcome. Best-effort: an
+    // audit failure must not fail the request.
+    if let Err(e) = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(tenant.user_id),
+            action: AuditAction::RentalGuestIdDocumentExtract,
+            resource_type: Some("rental_guest_id_document".to_string()),
+            resource_id: Some(doc.id),
+            org_id: Some(org_id),
+            details: Some(serde_json::json!({ "guest_id": id })),
+            old_values: None,
+            new_values: None,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await
+    {
+        tracing::error!(error = %e, guest_id = %id, "Failed to write audit log for ID-document extract");
+    }
 
     // Fetch the bytes back from storage when available; the stub provider does
     // not read them, so an empty slice is fine when storage is unconfigured.

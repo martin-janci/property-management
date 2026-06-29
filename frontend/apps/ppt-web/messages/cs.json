@@ -590,6 +590,26 @@
       },
       "errors": {
         "detailsMinLength": "Podrobnosti musí obsahovat alespoň 10 znaků."
+      },
+      "tabSubmissions": "Podání",
+      "submissions": {
+        "title": "Podání stran",
+        "subtitle": "Vyjádření a reakce podané stranami tohoto sporu.",
+        "empty": "Zatím žádná podání.",
+        "privateNote": "Viditelné pouze pro mediátora",
+        "composerTitle": "Podat podání",
+        "typeLabel": "Typ podání",
+        "typeStatement": "Vyjádření",
+        "typeEvidence": "Důkaz",
+        "typeResponse": "Reakce",
+        "typeRequest": "Žádost",
+        "contentLabel": "Obsah",
+        "contentPlaceholder": "Napište své podání…",
+        "visibleToAll": "Viditelné pro všechny strany",
+        "submit": "Odeslat",
+        "submitting": "Odesílá se…",
+        "submittedSuccess": "Podání odesláno",
+        "submitError": "Podání se nepodařilo odeslat"
       }
     },
     "draftSavedAgo": "Návrh uložen · {{time}}",

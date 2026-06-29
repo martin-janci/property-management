@@ -99,9 +99,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
     const needle = search.trim().toLowerCase();
     if (!needle) return threads;
     return threads.filter((t) =>
-      `${threadTitle(t)} ${t.lastMessage?.content ?? ''}`
-        .toLowerCase()
-        .includes(needle)
+      `${threadTitle(t)} ${t.lastMessage?.content ?? ''}`.toLowerCase().includes(needle)
     );
   }, [threads, search]);
 

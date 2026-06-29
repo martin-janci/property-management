@@ -1525,6 +1525,37 @@ async fn link_message_attachment(
             )),
         ));
     }
+    // SECURITY (#1791/#1770): the file_key must be the opaque, thread-scoped key
+    // minted by the upload-url endpoint (`messages/{thread_id}/{uuid}`). Without
+    // this, a sender could link an arbitrary bucket object (another thread's
+    // attachment, or a `documents/<org>/…` key) to their own message and then
+    // mint a presigned GET for it via get_attachment_download_url — an IDOR over
+    // the entire bucket. We do not trust the client-supplied key.
+    let expected_prefix = format!("messages/{id}/");
+    if !body.file_key.starts_with(&expected_prefix) || body.file_key.contains("..") {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_KEY",
+                "file_key must reference an object uploaded to this thread",
+            )),
+        ));
+    }
+    // Defense-in-depth: mirror the content-type allowlist the upload-url
+    // endpoint enforces, so a client cannot persist a disallowed file_type
+    // (e.g. text/html) that would later drive the presigned download's
+    // Content-Type header.
+    if !integrations::is_allowed_content_type(&body.file_type) {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_CONTENT_TYPE",
+                "file_type is not an allowed attachment content type",
+            )),
+        ));
+    }
 
     let repo = MessagingRepository::new(state.db.clone());
     require_thread_participant(&repo, &mut rls, id, user_id, tenant_id).await?;
@@ -1543,10 +1574,11 @@ async fn link_message_attachment(
         )
         .await
         .map_err(|e| {
+            // Log the detail server-side; do not leak DB internals to the client.
             tracing::error!(error = %e, "Failed to link message attachment");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                Json(ErrorResponse::new("DB_ERROR", "Failed to link attachment")),
             )
         })?;
 
@@ -1637,9 +1669,10 @@ async fn get_attachment_download_url(
         .get_attachment_with_thread_rls(&mut **rls.conn(), attachment_id)
         .await
         .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load attachment for download");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load attachment")),
             )
         })?;
 
@@ -1653,6 +1686,22 @@ async fn get_attachment_download_url(
     // The attachment must belong to the thread named in the path. This stops a
     // participant of thread A from reading thread B's attachment by id.
     if attachment_thread_id != id {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+        ));
+    }
+
+    // SECURITY (#1770): defense-in-depth for any row linked before the
+    // file_key-prefix guard existed — never mint a presigned URL for a key
+    // outside this thread's namespace, even if the DB row points there.
+    if !attachment.file_key.starts_with(&format!("messages/{id}/")) {
+        tracing::warn!(
+            file_key = %attachment.file_key,
+            thread_id = %id,
+            "Refusing download URL for out-of-thread attachment key"
+        );
         rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,

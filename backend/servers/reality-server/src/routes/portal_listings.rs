@@ -26,10 +26,17 @@ pub fn router() -> Router<AppState> {
 }
 
 // ============================================================================
-// Enum allow-lists (mirror the inline comments in migration 00049_create_listings)
+// Enum allow-lists.
+//
+// These are the friendly `400` layer. The authoritative domains are also
+// enforced at the database via CHECK constraints (migration 00194,
+// `listings_*_check`) so an out-of-domain value cannot be persisted by any
+// caller. Keep these lists in sync with migration 00194 and the inline domain
+// comments in migration 00049_create_listings.
 // ============================================================================
 
 /// Allowed `property_type` values (`listings.property_type`).
+/// Keep in sync with migration 00194 (`listings_property_type_check`) and 00049.
 const ALLOWED_PROPERTY_TYPES: &[&str] = &[
     "apartment",
     "house",
@@ -41,9 +48,11 @@ const ALLOWED_PROPERTY_TYPES: &[&str] = &[
 ];
 
 /// Allowed `transaction_type` values (`listings.transaction_type`).
+/// Keep in sync with migration 00194 (`listings_transaction_type_check`) and 00049.
 const ALLOWED_TRANSACTION_TYPES: &[&str] = &["sale", "rent"];
 
 /// Allowed `currency` values (`listings.currency`).
+/// Keep in sync with migration 00194 (`listings_currency_check`) and 00049.
 const ALLOWED_CURRENCIES: &[&str] = &["EUR", "CZK"];
 
 /// Statuses an owner may set directly via create/update.
@@ -53,6 +62,11 @@ const ALLOWED_CURRENCIES: &[&str] = &["EUR", "CZK"];
 /// flip a listing into the publicly-visible `active` state, nor into any
 /// `published`/`approved`-style moderated state. They may only move a listing
 /// between its own draft/paused/sold/rented/archived lifecycle states.
+///
+/// Narrower than the DB `listings_status_check` (migration 00194), which also
+/// permits `active` — that moderation-only state is written by the moderation
+/// path, never by an owner, so it is intentionally excluded here. Keep the
+/// non-moderation values in sync with migration 00194 and 00049.
 const ALLOWED_OWNER_STATUSES: &[&str] = &["draft", "paused", "sold", "rented", "archived"];
 
 /// Validate an optional enum-like field against an allow-list.
@@ -206,6 +220,10 @@ pub async fn create_listing(
         ALLOWED_TRANSACTION_TYPES,
     )?;
     validate_enum("currency", body.currency.as_deref(), ALLOWED_CURRENCIES)?;
+    // NOTE: `status` is intentionally NOT accepted on create — `portal_create_listing`
+    // (migration 00186) hard-codes it to 'draft'. If a `status` field is ever added to
+    // `CreatePortalListingRequest`, it must also be guarded here via
+    // `validate_enum("status", ..., ALLOWED_OWNER_STATUSES)` so create matches update.
 
     let listing = state
         .reality_portal_repo

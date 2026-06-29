@@ -117,12 +117,29 @@ function EditWizardContent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [removedPhotos, setRemovedPhotos] = useState<Set<string>>(new Set());
+  // The 3-state status control (`active`/`inactive`/`draft`) cannot represent
+  // terminal backend states (`sold`/`rented`/`archived`), which all load as
+  // `draft`. We remember the loaded value so a save that did not deliberately
+  // toggle the control omits `status` entirely and preserves the real state.
+  const [initialStatus, setInitialStatus] = useState<ListingEditFormData['status']>('draft');
 
   useEffect(() => {
     if (!listingId) return;
     setLoading(true);
     getMyListing(listingId)
       .then((listing) => {
+        // Backend lifecycle statuses (`active`/`paused`/…) → the form's
+        // 3-state control; terminal/unknown values (`sold`/`rented`/`archived`)
+        // fall back to `draft` for display only.
+        const mappedStatus: ListingEditFormData['status'] =
+          listing.status === 'active'
+            ? 'active'
+            : listing.status === 'draft'
+              ? 'draft'
+              : listing.status === 'paused'
+                ? 'inactive'
+                : 'draft';
+        setInitialStatus(mappedStatus);
         setForm({
           transactionType: (listing.transactionType as 'sale' | 'rent') ?? 'sale',
           propertyType:
@@ -142,16 +159,7 @@ function EditWizardContent() {
           price: listing.price ?? '',
           currency: listing.currency ?? 'EUR',
           priceNegotiable: listing.isNegotiable ?? false,
-          // Backend lifecycle statuses (`active`/`paused`/…) → the form's
-          // 3-state control; unknown values fall back to `draft`.
-          status:
-            listing.status === 'active'
-              ? 'active'
-              : listing.status === 'draft'
-                ? 'draft'
-                : listing.status === 'paused'
-                  ? 'inactive'
-                  : 'draft',
+          status: mappedStatus,
         });
       })
       .catch((err) => {
@@ -167,11 +175,21 @@ function EditWizardContent() {
     setSaveError(null);
     try {
       const floor = typeof form.floor === 'number' ? form.floor : Number(form.floor) || undefined;
-      // Map the form's owner-intent status onto a backend-permitted lifecycle
-      // value. Publishing (`active`) is moderation-gated server-side, so we omit
-      // `status` in that case rather than send a value the API would reject.
-      const status: ListingDraft['status'] | undefined =
-        form.status === 'inactive' ? 'paused' : form.status === 'draft' ? 'draft' : undefined;
+      // Only emit `status` when the owner deliberately changed the 3-state
+      // control. Otherwise omit it so the backend preserves the listing's real
+      // lifecycle state — without this, editing any field on a sold/rented/
+      // archived listing (all displayed as `draft`) would COALESCE that `draft`
+      // back over the terminal state and silently downgrade it (#1762).
+      // Publishing (`active`) stays moderation-gated server-side, so it is never
+      // sent directly even on an explicit change.
+      const statusChanged = form.status !== initialStatus;
+      const status: ListingDraft['status'] | undefined = !statusChanged
+        ? undefined
+        : form.status === 'inactive'
+          ? 'paused'
+          : form.status === 'draft'
+            ? 'draft'
+            : undefined;
       await updateListing(listingId, {
         title: form.description?.slice(0, 80) || `${form.propertyType} ${form.city}`,
         description: form.description,

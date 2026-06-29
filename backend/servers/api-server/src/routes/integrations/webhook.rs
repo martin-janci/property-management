@@ -1512,6 +1512,44 @@ pub async fn handle_payment_webhook(
         return Ok(StatusCode::OK);
     }
 
+    // Defense-in-depth: settlement uses our server-stored `session.amount`/
+    // `currency` (never a client-supplied amount), but if the amount Stripe
+    // reports collecting disagrees with what we recorded, something is wrong —
+    // refuse to settle and ack (200) so Stripe stops retrying a mismatched
+    // event. Older payloads may omit these fields; when absent we keep the
+    // prior behaviour and settle on the stored amount.
+    {
+        use rust_decimal::prelude::ToPrimitive;
+        use rust_decimal::Decimal;
+
+        let factor = stripe::minor_unit_factor(&session.currency);
+        let expected_minor = (session.amount * Decimal::from(factor)).round().to_i64();
+
+        if let (Some(expected), Some(reported)) = (expected_minor, event.data.object.amount_total) {
+            if expected != reported {
+                tracing::warn!(
+                    session_id = %provider_session_id,
+                    expected_minor = expected,
+                    reported_minor = reported,
+                    "Stripe webhook amount_total disagrees with stored session amount — not settling"
+                );
+                return Ok(StatusCode::OK);
+            }
+        }
+
+        if let Some(reported_currency) = event.data.object.currency.as_deref() {
+            if !reported_currency.eq_ignore_ascii_case(&session.currency) {
+                tracing::warn!(
+                    session_id = %provider_session_id,
+                    expected_currency = %session.currency,
+                    reported_currency = %reported_currency,
+                    "Stripe webhook currency disagrees with stored session currency — not settling"
+                );
+                return Ok(StatusCode::OK);
+            }
+        }
+    }
+
     let invoice = match state.financial_repo.get_invoice(session.invoice_id).await {
         Ok(Some(inv)) => inv,
         Ok(None) => {

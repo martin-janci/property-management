@@ -592,6 +592,26 @@
       },
       "errors": {
         "detailsMinLength": "Podrobnosti musia obsahovať aspoň 10 znakov."
+      },
+      "tabSubmissions": "Podania",
+      "submissions": {
+        "title": "Podania strán",
+        "subtitle": "Vyjadrenia a reakcie podané stranami tohto sporu.",
+        "empty": "Zatiaľ žiadne podania.",
+        "privateNote": "Viditeľné len pre mediátora",
+        "composerTitle": "Podať podanie",
+        "typeLabel": "Typ podania",
+        "typeStatement": "Vyjadrenie",
+        "typeEvidence": "Dôkaz",
+        "typeResponse": "Reakcia",
+        "typeRequest": "Žiadosť",
+        "contentLabel": "Obsah",
+        "contentPlaceholder": "Napíšte svoje podanie…",
+        "visibleToAll": "Viditeľné pre všetky strany",
+        "submit": "Odoslať",
+        "submitting": "Odosiela sa…",
+        "submittedSuccess": "Podanie odoslané",
+        "submitError": "Podanie sa nepodarilo odoslať"
       }
     },
     "draftSavedAgo": "Návrh uložený · {{time}}",

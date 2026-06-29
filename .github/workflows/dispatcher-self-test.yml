@@ -18,7 +18,7 @@ jobs:
   self-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # GC2 (goal-check.sh) compares the current done-story count against
           # HEAD's coverage.json via `git show HEAD:…`. A shallow clone makes
