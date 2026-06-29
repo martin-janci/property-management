@@ -369,6 +369,13 @@ async fn export_slovak_accounting(
     State(state): State<AppState>,
     Json(payload): Json<ExportSlovakAccounting>,
 ) -> Result<Json<SlovakAccountingExport>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#1906): scope the export to the caller's validated tenant, never
+    // the client-supplied `payload.organization_id`. Every sibling handler in
+    // this module derives the org from `rls.tenant_id()`; this one trusted the
+    // request body, so a member of org A could request org B's accounting
+    // metrics by putting B's id in the body. The body field is now ignored for
+    // scoping.
+    let org_id = rls.tenant_id();
     let (
         invoice_count,
         payment_count,
@@ -378,12 +385,7 @@ async fn export_slovak_accounting(
         total_payables,
     ) = state
         .regional_compliance_repo
-        .get_accounting_metrics(
-            rls.conn(),
-            payload.organization_id,
-            payload.from_date,
-            payload.to_date,
-        )
+        .get_accounting_metrics(rls.conn(), org_id, payload.from_date, payload.to_date)
         .await
         .map_err(|e| {
             (
@@ -396,7 +398,7 @@ async fn export_slovak_accounting(
 
     let result = Ok(Json(SlovakAccountingExport {
         export_id: Uuid::new_v4(),
-        organization_id: payload.organization_id,
+        organization_id: org_id,
         from_date: payload.from_date,
         to_date: payload.to_date,
         format: payload.format,
