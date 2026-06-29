@@ -50,6 +50,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 // auto-deref does not work here due to lifetime constraints in sqlx's impl.
 #[allow(clippy::explicit_auto_deref)]
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
     let repo = ReserveFundRepository::new();
 

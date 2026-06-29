@@ -9,12 +9,16 @@ const isDev = process.env.NODE_ENV !== 'production';
 // via NEXT_PUBLIC_SITE_URL; the deploy-wiring task (#10 / PAP deploy issue)
 // owns the real subdomain + DNS.
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL;
+// accounting-server origin (:8082) — the @ppt/accounting-api-client SDK fetches
+// the authenticated invoice/contacts surface here. Browser blocks the
+// cross-origin fetch unless this origin is in connect-src.
+const accOrigin = process.env.NEXT_PUBLIC_ACCOUNTING_API_URL || 'http://localhost:8082';
 
 // Conservative CSP for a public marketing/signup surface. Mirrors the
 // reality-web posture but trimmed: this app has no maps/3rd-party embeds yet.
-// `connect-src` allows the configured api-server origin so the (future)
-// signup POST can reach it once the accounting-api-client (#2) is wired.
-const connectSrc = ["'self'", apiOrigin].filter(Boolean).join(' ');
+// `connect-src` allows the configured api-server origin and the accounting-server
+// origin so the SDK (and the future signup POST) can reach them.
+const connectSrc = ["'self'", apiOrigin, accOrigin].filter(Boolean).join(' ');
 
 const csp = [
   "default-src 'self'",
@@ -36,7 +40,7 @@ const nextConfig = {
   // Standalone output for the reality-web Docker pattern (deploy wiring = #10).
   output: 'standalone',
   reactStrictMode: true,
-  transpilePackages: ['@ppt/ui-kit', '@ppt/shared', '@ppt/dev-panel'],
+  transpilePackages: ['@ppt/ui-kit', '@ppt/shared', '@ppt/dev-panel', '@ppt/accounting-api-client'],
   async headers() {
     return [
       {

@@ -1,0 +1,22 @@
+[package]
+name = "accounting-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "accounting_core"
+path = "src/lib.rs"
+
+[dependencies]
+common = { workspace = true }
+db = { workspace = true }
+
+rust_decimal = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+utoipa = { workspace = true }

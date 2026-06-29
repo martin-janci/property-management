@@ -28,7 +28,7 @@ inside a single `REPEATABLE READ` transaction (consistent snapshot, see #628):
 |-------|----------------------|
 | `total_orgs` | `COUNT(*) FROM organizations` |
 | `total_users` / `active_users` / `pending_users` / `suspended_users` | `COUNT(*) FROM users GROUP BY status` |
-| `active_sessions` | `COUNT(*) FROM refresh_tokens WHERE is_revoked = false AND expires_at > NOW()` |
+| `active_sessions` | `COUNT(*) FROM refresh_tokens WHERE revoked_at IS NULL AND expires_at > NOW()` |
 | `total_faults` | `COUNT(*) FROM faults` |
 | `fault_by_status` | `COUNT(*) FROM faults GROUP BY status` |
 
@@ -45,7 +45,7 @@ These return row-level data for one user and **do contain PII**:
   `organization_name`, `role_name`, `joined_at` (from `organization_members`).
 - **Sessions** (`get_user_sessions`) — from `refresh_tokens`: `id`,
   `created_at`, `expires_at`, `last_used_at`, **`user_agent`**, **`ip_address`**.
-  Filtered to `is_revoked = false AND expires_at > NOW()` (active sessions only).
+  Filtered to `revoked_at IS NULL AND expires_at > NOW()` (active sessions only).
 - **Activity log** (`get_user_activity_log`) — from `audit_logs`: `id`,
   `action`, `resource_type`, `resource_id`, `details` (JSONB), `created_at`.
   Limited via the `limit` query param (default 50, clamped 1–500).
@@ -53,7 +53,7 @@ These return row-level data for one user and **do contain PII**:
 ### Mutating action (for completeness)
 
 `POST /api/v1/platform-admin/support/users/{id}/sessions/revoke`
-(`revoke_user_sessions`) sets `is_revoked = true` on all of the user's active
+(`revoke_user_sessions`) sets `revoked_at = NOW()` on all of the user's active
 refresh tokens. Not a read, but it operates on the same session data.
 
 ## Access control
@@ -99,7 +99,7 @@ resistant record of *who looked at what, when*.
 |----------|-------|---------------------|
 | Sessions | `refresh_tokens` | Token lifetime is **7 days** (`refresh_token_lifetime`, `services/jwt.rs`); access tokens are 15 min. A scheduled cleanup deletes rows where `expires_at < NOW() OR revoked_at < NOW() - INTERVAL '7 days'` — `SessionRepository::cleanup_expired_tokens`, invoked by the background scheduler `cleanup_sessions` (default tick every 60s, `services/scheduler.rs`). So expired/revoked sessions are purged within ~7 days. |
 | Activity log | `audit_logs` | **Append-only, no automated retention/expiry found.** Rows persist indefinitely; `user_id` is `ON DELETE SET NULL` so the entry survives user deletion (anonymised). Used for compliance (Epic 9 / Story 9.6). |
-| Support-tooling events | `support_tooling_events` | **Append-only, immutable, no automated retention found.** `admin_user_id` is `ON DELETE CASCADE`. |
+| Support-tooling events | `support_tooling_events` | **Append-only, immutable, no automated retention found.** `admin_user_id` is `ON DELETE RESTRICT` (migration `00165`) so the audit trail cannot be lost via admin-account deletion; RLS restricts the table to super-admins. |
 | Aggregate counts | n/a (computed) | Not stored; recomputed per request. |
 
 ## PII / GDPR considerations
@@ -137,15 +137,17 @@ Recommendations / gaps:
 
 ## Open questions (verify before relying on this doc)
 
-1. **`is_revoked` vs `revoked_at` column mismatch.** The only DDL for
+1. **`is_revoked` vs `revoked_at` column mismatch — RESOLVED.** The only DDL for
    `refresh_tokens` (migration `00002_create_refresh_tokens.sql`) and the model
    `crates/db/src/models/refresh_token.rs` use `revoked_at TIMESTAMPTZ` (nullable)
-   — but the Support Data queries (`get_user_sessions`, `revoke_user_sessions`,
-   `get_support_data`) reference `is_revoked` (and `updated_at`). No migration
-   adding `is_revoked`/`updated_at` to `refresh_tokens` was found, and these are
-   runtime `query_as` calls (not compile-time-checked, so absent from `.sqlx/`).
-   This may be a latent runtime bug **or** there is an undocumented schema change
-   not present in this checkout. Needs confirmation against the live schema.
+   and have no `updated_at` column. The Support Data queries (`get_user_sessions`,
+   `revoke_user_sessions`, `get_support_data`) previously referenced a
+   non-existent `is_revoked` boolean (and `updated_at`); because these are runtime
+   `query`/`query_as` calls (not compile-time-checked), the bug escaped
+   `cargo check` and would have raised `column "is_revoked" does not exist` at
+   request time. The queries now use `revoked_at IS NULL` / `SET revoked_at = NOW()`
+   to match the schema, covered by
+   `crates/db/tests/support_data_session_columns_tests.rs`.
 2. **`audit_logs` / `support_tooling_events` retention** — is indefinite
    retention an intentional compliance decision, or a missing cleanup job? (See
    recommendation 1.)

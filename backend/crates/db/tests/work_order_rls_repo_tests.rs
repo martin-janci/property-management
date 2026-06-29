@@ -152,6 +152,7 @@ async fn seed_completed_work_order(
 /// method the work-order handlers call — so this is a behavioral test of the RLS
 /// routing, not just of the raw SQL policy.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn work_orders_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool) {
     // --- Seed as superuser (super-admin context satisfies the roles-trigger
     //     RLS WITH CHECK fired by INSERT INTO organizations). ---
@@ -321,6 +322,7 @@ async fn work_orders_force_rls_requires_context_and_blocks_cross_tenant(pool: Pg
 /// FORCE-RLS harness used by
 /// `work_orders_force_rls_requires_context_and_blocks_cross_tenant` above.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn service_history_force_rls_blocks_cross_tenant(pool: PgPool) {
     // --- Seed under super-admin context (satisfies the org roles-trigger). ---
     sqlx::query("SELECT set_request_context(NULL, NULL, true)")

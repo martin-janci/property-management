@@ -142,7 +142,7 @@ describe('useStartThread (new thread → cache sync)', () => {
     const { invalidateSpy, wrapper } = setup();
 
     const { result } = renderHook(() => useStartThread(), { wrapper });
-    result.current.mutate({ recipientId: 'user-2', initialMessage: 'hi there' });
+    result.current.mutate({ recipient_ids: ['user-2'], initial_message: 'hi there' });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 

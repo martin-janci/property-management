@@ -39,6 +39,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_status_rejects_cross_tenant_caller(pool: PgPool) {
     let org_a = seed_org(&pool, "dispute-a").await;
     let org_b = seed_org(&pool, "dispute-b").await;

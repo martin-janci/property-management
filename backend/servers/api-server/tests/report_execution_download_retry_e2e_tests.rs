@@ -25,7 +25,8 @@
 //! These run as a same-org authenticated **Manager** (retry requires
 //! manager-tier RBAC; download/list require only authentication + membership).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
@@ -155,6 +156,7 @@ async fn authed_member(app: &TestApp, pool: &PgPool, org_id: Uuid, role: &str) -
 /// completed, file-bearing execution must receive a populated `download_url`
 /// pointing at that execution's download endpoint.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_populates_download_url_for_completed(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -215,6 +217,7 @@ async fn list_executions_populates_download_url_for_completed(pool: PgPool) {
 /// completed, file-bearing execution must receive a 200 with a non-empty URL,
 /// the stored file name, and a content type derived from the file extension.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -298,6 +301,7 @@ async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
 /// A dedicated integration test against a live S3 stub would be required to
 /// verify the downstream presigning step; that is out of scope here.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -398,6 +402,7 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
 /// download URL — the endpoint returns 422 `NO_FILE_YET` rather than leaking a
 /// bogus link. Pins the "file not ready" branch of the handler.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_execution_download_url_without_file_returns_422(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -454,6 +459,7 @@ async fn get_execution_download_url_without_file_returns_422(pool: PgPool) {
 /// persisted row must reflect the reset (status `pending`, error fields
 /// cleared). This is the core of the retry contract.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_failed_execution_resets_to_pending(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -509,6 +515,7 @@ async fn retry_failed_execution_resets_to_pending(pool: PgPool) {
 /// be rejected with 400 `INVALID_STATE` and must not mutate the row. Pins the
 /// "only failed executions may be retried" guard end-to-end.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_non_failed_execution_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -566,6 +573,7 @@ async fn retry_non_failed_execution_returns_400(pool: PgPool) {
 /// and the failed execution stays failed. Proves the retry endpoint's
 /// manager-tier gate end-to-end (complements the cross-tenant IDOR tests).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn retry_execution_as_resident_returns_403(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

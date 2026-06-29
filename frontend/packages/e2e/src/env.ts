@@ -7,7 +7,7 @@
  */
 
 /** Web apps that have an E2E suite. */
-export type AppName = 'ppt-web' | 'reality-web' | 'admin-web';
+export type AppName = 'ppt-web' | 'reality-web' | 'admin-web' | 'accounting-web';
 
 /**
  * Apps for which the {@link '@ppt/sitemap'} package ships route data.
@@ -33,6 +33,7 @@ const LOCAL_PORTS: Readonly<Record<AppName, number>> = {
   'ppt-web': 3000,
   'reality-web': 3001,
   'admin-web': 3100,
+  'accounting-web': 3002,
 } as const;
 
 /** Immutable base-URL matrix. dev/staging follow the *.rlt.sk convention. */
@@ -41,16 +42,19 @@ const BASE_URLS: BaseURLTable = {
     'ppt-web': `http://localhost:${LOCAL_PORTS['ppt-web']}`,
     'reality-web': `http://localhost:${LOCAL_PORTS['reality-web']}`,
     'admin-web': `http://localhost:${LOCAL_PORTS['admin-web']}`,
+    'accounting-web': `http://localhost:${LOCAL_PORTS['accounting-web']}`,
   },
   dev: {
     'ppt-web': 'https://staging.ppt.rlt.sk',
     'reality-web': 'https://staging.rlt.sk',
     'admin-web': 'https://admin.staging.rlt.sk',
+    'accounting-web': 'https://accounting.staging.ppt.rlt.sk',
   },
   staging: {
     'ppt-web': 'https://staging.ppt.rlt.sk',
     'reality-web': 'https://staging.rlt.sk',
     'admin-web': 'https://admin.staging.rlt.sk',
+    'accounting-web': 'https://accounting.staging.ppt.rlt.sk',
   },
 } as const;
 
@@ -71,6 +75,7 @@ const APP_URL_ENV: Readonly<Record<AppName, string>> = {
   'ppt-web': 'E2E_PPT_WEB_BASE_URL',
   'reality-web': 'E2E_REALITY_WEB_BASE_URL',
   'admin-web': 'E2E_ADMIN_WEB_BASE_URL',
+  'accounting-web': 'E2E_ACCOUNTING_WEB_BASE_URL',
 } as const;
 
 /**
