@@ -8,6 +8,8 @@
 //! This test wires the real `host_tenant_middleware` and the new
 //! `RequestPrincipal` extractor against a `#[sqlx::test]` pool.
 
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use api_core::extractors::principal::RequestPrincipal;

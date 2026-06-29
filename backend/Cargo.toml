@@ -7,9 +7,11 @@ members = [
     "crates/db",
     "crates/integrations",
     "crates/tenant-ops",
+    "crates/accounting-core",
     "servers/api-server",
     "servers/reality-server",
     "servers/deploy-server",
+    "servers/accounting-server",
 ]
 
 [workspace.package]
@@ -107,7 +109,7 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
 genpdf = "0.2.0"
-rust_xlsxwriter = "0.80"
+rust_xlsxwriter = "0.95"
 
 # i18n (Epic 111)
 fluent = "0.16"
@@ -123,6 +125,7 @@ admin-core = { path = "crates/admin-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
 tenant-ops = { path = "crates/tenant-ops" }
+accounting-core = { path = "crates/accounting-core" }
 
 # Phase 1: deploy-server
 bollard = "0.16"

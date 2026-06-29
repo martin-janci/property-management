@@ -6,7 +6,15 @@ import type React from 'react';
 import { forwardRef, useId } from 'react';
 import './Input.css';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+export type InputType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'tel'
+  | 'url'
+  | 'search'
+  | 'date';
 export type InputSize = 'sm' | 'md' | 'lg';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {

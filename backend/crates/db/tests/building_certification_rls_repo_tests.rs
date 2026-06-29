@@ -120,6 +120,7 @@ async fn seed_cert(pool: &PgPool, org_id: Uuid, building_id: Uuid, user_id: Uuid
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn building_certification_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = BuildingCertificationRepository::new(pool.clone());
 

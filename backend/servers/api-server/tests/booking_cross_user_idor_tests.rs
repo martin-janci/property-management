@@ -12,7 +12,8 @@
 //! tokens directly (matching `api_server`'s Claims shape). Only the booking
 //! *owner* needs to be a real user row (FK); the caller does not.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

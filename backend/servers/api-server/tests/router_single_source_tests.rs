@@ -12,6 +12,8 @@
 //! They are pure source/static checks: no database, no async runtime, so they
 //! run in every `cargo test` invocation regardless of DB availability.
 
+#![allow(dead_code)]
+
 use std::path::PathBuf;
 
 fn read_src(file: &str) -> String {

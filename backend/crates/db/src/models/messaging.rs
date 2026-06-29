@@ -31,8 +31,10 @@ pub struct ThreadWithPreview {
     pub id: Uuid,
     pub organization_id: Uuid,
     pub participant_ids: Vec<Uuid>,
-    /// Other participant's info
-    pub other_participant: ParticipantInfo,
+    /// All other participants (everyone except the current user). For a 2-party
+    /// thread this is a single entry; for group threads ([BIT-206]) it is the
+    /// full list, ordered by name.
+    pub participants: Vec<ParticipantInfo>,
     /// Last message preview
     pub last_message: Option<MessagePreview>,
     /// Number of unread messages in this thread
@@ -50,11 +52,9 @@ pub struct ThreadWithPreviewRow {
     pub last_message_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    // Other participant info
-    pub other_user_id: Option<Uuid>,
-    pub other_first_name: Option<String>,
-    pub other_last_name: Option<String>,
-    pub other_email: Option<String>,
+    // All other participants (everyone except the current user), aggregated as a
+    // JSON array by the query ([BIT-206]).
+    pub participants: sqlx::types::Json<Vec<ParticipantInfo>>,
     // Last message preview
     pub last_message_id: Option<Uuid>,
     pub last_message_content: Option<String>,
@@ -70,12 +70,7 @@ impl ThreadWithPreviewRow {
             id: self.id,
             organization_id: self.organization_id,
             participant_ids: self.participant_ids.clone(),
-            other_participant: ParticipantInfo {
-                id: self.other_user_id.unwrap_or(Uuid::nil()),
-                first_name: self.other_first_name.unwrap_or_default(),
-                last_name: self.other_last_name.unwrap_or_default(),
-                email: self.other_email.unwrap_or_default(),
-            },
+            participants: self.participants.0,
             last_message: self.last_message_id.map(|id| MessagePreview {
                 id,
                 content: truncate_preview(self.last_message_content.as_deref().unwrap_or("")),

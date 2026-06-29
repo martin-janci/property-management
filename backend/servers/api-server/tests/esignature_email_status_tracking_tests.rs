@@ -34,7 +34,8 @@
 //! so the requester completion/decline email send returns `Ok` without an SMTP
 //! server — exercising the send code path without external dependencies.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

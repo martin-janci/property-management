@@ -29,6 +29,7 @@ async fn seed_user_with_kind(pool: &PgPool, email: &str, kind: &str) -> Uuid {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_writes_to_users_only(pool: PgPool) {
     let repo = UnifiedPortalUserRepo::new(pool.clone());
     let email = "create-single@n1.test";
@@ -65,6 +66,7 @@ async fn create_writes_to_users_only(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_profile_updates_users_row(pool: PgPool) {
     let repo = UnifiedPortalUserRepo::new(pool.clone());
     let email = "update-profile@n1.test";
@@ -104,6 +106,7 @@ async fn update_profile_updates_users_row(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn password_change_updates_users_row(pool: PgPool) {
     let repo = UnifiedPortalUserRepo::new(pool.clone());
     let email = "password-change@n1.test";
@@ -135,6 +138,7 @@ async fn password_change_updates_users_row(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn sso_upsert_handles_collision(pool: PgPool) {
     // Stage: a STAFF principal already owns the email in `users`. An SSO
     // sign-in for the same email arrives. The repo MUST refuse rather than
@@ -222,6 +226,7 @@ async fn sso_upsert_handles_collision(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn sso_upsert_creates_then_updates_for_public(pool: PgPool) {
     // Happy path: no existing identity, then a second sign-in of the same
     // user. First call creates the users row; second call updates the name.

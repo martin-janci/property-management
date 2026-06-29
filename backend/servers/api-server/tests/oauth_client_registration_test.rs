@@ -37,7 +37,8 @@
 //! dedup at the service layer), the test documents the actual contract rather
 //! than asserting a validation that does not exist.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use api_server::services::JwtService;

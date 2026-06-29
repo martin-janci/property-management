@@ -1,0 +1,36 @@
+{
+  "name": "@ppt/accounting-web",
+  "private": true,
+  "description": "Accounting Portal Web Application (Next.js SSR) — public marketing/landing + signup",
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@ppt/accounting-api-client": "workspace:*",
+    "@ppt/api-client": "workspace:*",
+    "@ppt/shared": "workspace:*",
+    "@ppt/ui-kit": "workspace:*",
+    "@tanstack/react-query": "^5.101.0",
+    "next": "^16.2.7",
+    "next-intl": "^4.13.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@ppt/dev-panel": "workspace:*",
+    "@ppt/e2e": "workspace:*",
+    "@ppt/vite-plugin-worktree": "workspace:*",
+    "@types/node": "^25.0.5",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.3.0"
+  },
+  "version": "0.1.0"
+}
