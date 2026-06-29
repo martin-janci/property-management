@@ -45,7 +45,6 @@ async fn seed_user(pool: &PgPool, email: &str, name: &str) -> Uuid {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_board_members_and_motions_populate_joined_user_name(pool: PgPool) {
     let org = seed_org(&pool, "board-join").await;
     let user = seed_user(&pool, "director@board-join.test", "Jane Director").await;
