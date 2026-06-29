@@ -1766,7 +1766,7 @@ impl LlmDocumentRepository {
                 COUNT(*) FILTER (WHERE status = 'failed'),
                 COALESCE(SUM(tokens_used), 0),
                 COALESCE(SUM(cost_cents), 0),
-                COALESCE(AVG(latency_ms), 0)
+                COALESCE(AVG(latency_ms), 0)::float8
             FROM llm_generation_requests
             WHERE organization_id = $1
               AND created_at >= $2
@@ -1808,7 +1808,7 @@ impl LlmDocumentRepository {
                 COUNT(*),
                 COALESCE(SUM(tokens_used), 0),
                 COALESCE(SUM(cost_cents), 0),
-                COALESCE(AVG(latency_ms), 0)
+                COALESCE(AVG(latency_ms), 0)::float8
             FROM llm_generation_requests
             WHERE organization_id = $1
               AND created_at >= $2

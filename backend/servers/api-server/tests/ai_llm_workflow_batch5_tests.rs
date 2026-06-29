@@ -280,8 +280,8 @@ async fn seed_generation_request(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> 
 async fn seed_prompt_template(pool: &PgPool) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO llm_prompt_templates (request_type, name, system_prompt, user_prompt_template, is_system)
-        VALUES ('lease_generation', 'Standard Lease Template', 'You are a lease generator.', 'Generate a lease for {{unit}}', TRUE)
+        INSERT INTO llm_prompt_templates (request_type, name, system_prompt, user_prompt_template, is_system, provider, model)
+        VALUES ('lease_generation', 'Standard Lease Template', 'You are a lease generator.', 'Generate a lease for {{unit}}', TRUE, 'openai', 'gpt-4')
         RETURNING id
         "#,
     )
@@ -600,6 +600,15 @@ async fn update_escalation_config_returns_ok(pool: PgPool) {
     let (token, org_id) =
         create_authenticated_user_with_org(&app, &user, "llm-esc-config-put").await;
     let session = app.session(token, org_id);
+
+    // The PUT handler issues a plain UPDATE ... RETURNING * (no upsert), so a
+    // config row must already exist for this org. In production the row is
+    // auto-created on first GET; seed it directly here to establish the precondition.
+    sqlx::query("INSERT INTO ai_escalation_configs (organization_id) VALUES ($1)")
+        .bind(org_id)
+        .execute(&pool)
+        .await
+        .expect("seed escalation config");
 
     let resp = app
         .execute(
