@@ -236,7 +236,7 @@ async fn property_valuation_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.put(&format!("{base}/{valuation_id}/approve"))
                 .bearer(&token)
-                .json(&json!({}))
+                .json(json!({}))
                 .build(),
         )
         .await;
