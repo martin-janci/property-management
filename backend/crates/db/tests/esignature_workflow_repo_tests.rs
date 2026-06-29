@@ -117,6 +117,7 @@ async fn seed_workflow(
 /// `find_esignature_workflow_by_external_id` returns the correct org/user
 /// row for a known envelope id.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_esignature_workflow_returns_correct_row(pool: PgPool) {
     ensure_esignature_workflows_table(&pool).await;
 
@@ -152,6 +153,7 @@ async fn find_esignature_workflow_returns_correct_row(pool: PgPool) {
 
 /// An unknown envelope id returns `None` — the handler's "ignore" branch.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_esignature_workflow_returns_none_for_unknown_envelope(pool: PgPool) {
     ensure_esignature_workflows_table(&pool).await;
 

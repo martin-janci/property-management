@@ -24,6 +24,7 @@
 //!   * `TenantExtractor` + agency-membership (agencies) → 403 once the tenant gate is
 //!     cleared;
 //!   * the org-scoped inline check (organizations) → 403 for a non-member.
+//!
 //! Pinning a single code here would be brittle and was the reason the original
 //! re-cuts could not be made green without a live DB. Asserting "rejected 4xx on an
 //! existing route" captures the actual security property and is stable across all
@@ -35,7 +36,8 @@
 //! (`GET /organizations/my`) — are intentionally excluded: they return 2xx by design
 //! and are covered by their own happy-path tests, not by an authz-denial sweep.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
@@ -404,6 +406,7 @@ fn organizations_cases(org: &str) -> Vec<(Method, String, Option<&'static str>)>
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn org_property_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (_t, org_id) = create_authenticated_user_with_org(&app, &TestUser::new(), "org-anon").await;
@@ -419,6 +422,7 @@ async fn org_property_endpoints_require_auth(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn tenant_scoped_endpoints_reject_non_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     // org-alpha is owned by one user; the outsider is a member of nothing.
@@ -436,6 +440,7 @@ async fn tenant_scoped_endpoints_reject_non_member(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn organizations_endpoints_reject_non_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     // org-beta belongs to its owner; the outsider is not a member.

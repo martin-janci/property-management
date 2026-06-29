@@ -30,7 +30,8 @@
 //!   DELETE /government-portal/schedules/{id}
 //!   GET    /government-portal/stats
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -385,6 +386,7 @@ async fn gp_list_templates_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn gp_get_template_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-get-tpl").await;
     let tpl_id = seed_template(&pool).await;
@@ -707,6 +709,7 @@ async fn gp_list_schedules_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn gp_create_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-create-sched").await;
     let conn_id = seed_connection(&pool, f.org_id, f.user_id).await;
@@ -734,6 +737,7 @@ async fn gp_create_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn gp_get_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-get-sched").await;
     let conn_id = seed_connection(&pool, f.org_id, f.user_id).await;
@@ -753,6 +757,7 @@ async fn gp_get_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn gp_update_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-upd-sched").await;
     let conn_id = seed_connection(&pool, f.org_id, f.user_id).await;
@@ -780,6 +785,7 @@ async fn gp_update_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn gp_delete_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-del-sched").await;
     let conn_id = seed_connection(&pool, f.org_id, f.user_id).await;

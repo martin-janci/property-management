@@ -1075,6 +1075,11 @@ impl Scheduler {
                 })
                 .unwrap_or_else(chrono::Utc::now);
 
+            // Dedup per window (#1777): a resident on multiple unit-linked meters
+            // in the same building window must receive ONE reading reminder, not
+            // one per meter.
+            let mut notified = std::collections::HashSet::new();
+
             for meter in meters_page.meters.iter().filter(|m| m.unit_id.is_some()) {
                 let unit_id = match meter.unit_id {
                     Some(id) => id,
@@ -1094,6 +1099,11 @@ impl Scheduler {
                 };
 
                 for resident in &residents {
+                    // Skip residents already reminded for an earlier meter in
+                    // this window (#1777).
+                    if !notified.insert(resident.user_id) {
+                        continue;
+                    }
                     match self
                         .notification_service
                         .notify_meter_reading_due(
@@ -1172,6 +1182,7 @@ impl Scheduler {
                 .and_then(|dt| dt.and_local_timezone(chrono::Utc).single())
                 .unwrap_or_else(chrono::Utc::now);
 
+            let mut sent_for_invoice = 0u64;
             for user_id in &user_ids {
                 match self
                     .notification_service
@@ -1180,6 +1191,7 @@ impl Scheduler {
                 {
                     Ok(()) => {
                         total_sent += 1;
+                        sent_for_invoice += 1;
                         tracing::info!(
                             invoice_id = %invoice.id,
                             user_id = %user_id,
@@ -1194,6 +1206,24 @@ impl Scheduler {
                             "Failed to send payment reminder notification"
                         );
                     }
+                }
+            }
+
+            // Persistent dedup (#1790): once at least one reminder for this
+            // invoice has gone out, stamp it so the next ~60s tick skips it for
+            // 24h instead of re-spamming the unit. A fully-failed invoice is
+            // left unstamped so it is retried on the next tick.
+            if sent_for_invoice > 0 {
+                if let Err(e) = self
+                    .financial_repo
+                    .mark_payment_reminder_sent(invoice.id)
+                    .await
+                {
+                    tracing::warn!(
+                        invoice_id = %invoice.id,
+                        error = %e,
+                        "Failed to stamp last_payment_reminder_at — next tick may resend"
+                    );
                 }
             }
         }
@@ -1310,6 +1340,102 @@ impl Scheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::{HashMap, HashSet};
+    use uuid::Uuid;
+
+    /// Pure model of the per-window dedup performed inside
+    /// [`Scheduler::send_meter_reminders`] (#1777).
+    ///
+    /// The live fan-out iterates a building window's unit-linked meters in
+    /// order and, for each meter's unit, its residents — sending one reminder
+    /// per resident per window even if that resident is on multiple meters.
+    /// This helper mirrors that algorithm: walk `meters` in order, look up the
+    /// residents for each meter's `unit_id`, and collect every `user_id` exactly
+    /// once, preserving first-seen order. It lets the dedup decision be tested
+    /// deterministically without Postgres or a live `NotificationService`.
+    fn dedup_meter_reminder_targets(
+        meters: &[(Uuid, Uuid)],
+        residents_by_unit: &HashMap<Uuid, Vec<Uuid>>,
+    ) -> Vec<Uuid> {
+        let mut notified = HashSet::new();
+        let mut targets = Vec::new();
+        for (_meter_id, unit_id) in meters {
+            let Some(residents) = residents_by_unit.get(unit_id) else {
+                continue;
+            };
+            for &user_id in residents {
+                if notified.insert(user_id) {
+                    targets.push(user_id);
+                }
+            }
+        }
+        targets
+    }
+
+    #[test]
+    fn test_meter_reminder_dedup_same_unit_one_resident_one_reminder() {
+        // #1777: a resident on two unit-linked meters in the same window must
+        // receive exactly ONE reminder, not one per meter.
+        let unit_x = Uuid::new_v4();
+        let meter_a = Uuid::new_v4();
+        let meter_b = Uuid::new_v4();
+        let user_u = Uuid::new_v4();
+
+        let meters = vec![(meter_a, unit_x), (meter_b, unit_x)];
+        let mut residents_by_unit = HashMap::new();
+        residents_by_unit.insert(unit_x, vec![user_u]);
+
+        let targets = dedup_meter_reminder_targets(&meters, &residents_by_unit);
+        assert_eq!(targets.len(), 1, "resident reminded once across two meters");
+        assert_eq!(targets, vec![user_u]);
+    }
+
+    #[test]
+    fn test_meter_reminder_dedup_distinct_units_not_collapsed() {
+        // Cross-unit residents must NOT be collapsed: per-window scope is
+        // per-resident, not global, so two units with distinct residents both
+        // get reminded.
+        let unit_x = Uuid::new_v4();
+        let unit_y = Uuid::new_v4();
+        let meter_a = Uuid::new_v4();
+        let meter_b = Uuid::new_v4();
+        let user_1 = Uuid::new_v4();
+        let user_2 = Uuid::new_v4();
+
+        let meters = vec![(meter_a, unit_x), (meter_b, unit_y)];
+        let mut residents_by_unit = HashMap::new();
+        residents_by_unit.insert(unit_x, vec![user_1]);
+        residents_by_unit.insert(unit_y, vec![user_2]);
+
+        let targets = dedup_meter_reminder_targets(&meters, &residents_by_unit);
+        assert_eq!(targets.len(), 2);
+        assert!(targets.contains(&user_1));
+        assert!(targets.contains(&user_2));
+    }
+
+    #[test]
+    fn test_meter_reminder_dedup_shared_resident_across_units() {
+        // A resident occupying two units that each have a meter in the same
+        // window is still reminded only once.
+        let unit_x = Uuid::new_v4();
+        let unit_y = Uuid::new_v4();
+        let meter_a = Uuid::new_v4();
+        let meter_b = Uuid::new_v4();
+        let shared_user = Uuid::new_v4();
+
+        let meters = vec![(meter_a, unit_x), (meter_b, unit_y)];
+        let mut residents_by_unit = HashMap::new();
+        residents_by_unit.insert(unit_x, vec![shared_user]);
+        residents_by_unit.insert(unit_y, vec![shared_user]);
+
+        let targets = dedup_meter_reminder_targets(&meters, &residents_by_unit);
+        assert_eq!(
+            targets.len(),
+            1,
+            "same resident across two units reminded once"
+        );
+        assert_eq!(targets, vec![shared_user]);
+    }
 
     #[test]
     fn test_scheduler_config_default() {

@@ -543,6 +543,26 @@
       },
       "errors": {
         "detailsMinLength": "Details müssen mindestens 10 Zeichen enthalten."
+      },
+      "tabSubmissions": "Eingaben",
+      "submissions": {
+        "title": "Eingaben der Parteien",
+        "subtitle": "Stellungnahmen und Antworten der Parteien dieses Streitfalls.",
+        "empty": "Noch keine Eingaben.",
+        "privateNote": "Nur für Mediator sichtbar",
+        "composerTitle": "Eingabe einreichen",
+        "typeLabel": "Art der Eingabe",
+        "typeStatement": "Stellungnahme",
+        "typeEvidence": "Beweismittel",
+        "typeResponse": "Antwort",
+        "typeRequest": "Antrag",
+        "contentLabel": "Inhalt",
+        "contentPlaceholder": "Verfassen Sie Ihre Eingabe…",
+        "visibleToAll": "Für alle Parteien sichtbar",
+        "submit": "Einreichen",
+        "submitting": "Wird gesendet…",
+        "submittedSuccess": "Eingabe eingereicht",
+        "submitError": "Eingabe konnte nicht eingereicht werden"
       }
     },
     "draftSavedAgo": "Entwurf gespeichert · {{time}}",

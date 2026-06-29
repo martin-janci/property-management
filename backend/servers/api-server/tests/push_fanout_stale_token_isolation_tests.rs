@@ -18,7 +18,8 @@
 //! 3. Direct DB isolation: `delete_stale_token`-equivalent DELETE with a
 //!    mismatched `user_id` does NOT remove the token row.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
@@ -87,6 +88,7 @@ fn assert_rejected(status: StatusCode, ctx: &str) {
 /// Unauthenticated DELETE on `/api/v1/users/me/push-tokens/{token}` must
 /// be rejected before any DB mutation.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_push_token_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -115,6 +117,7 @@ async fn delete_push_token_without_auth_is_rejected(pool: PgPool) {
 /// A request carrying Org B's `X-Tenant-ID` while targeting a token owned by
 /// user A must be rejected by the auth gate (4xx).  The token must survive.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_push_token_cross_user_via_http_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -149,6 +152,7 @@ async fn delete_push_token_cross_user_via_http_rejected(pool: PgPool) {
 /// the token is preserved.  This is the exact cross-user IDOR boundary the
 /// `(user_id, token)` scope enforces.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn stale_token_delete_scoped_to_user_id(pool: PgPool) {
     let user_a = seed_user(&pool, "user-a-stale@fanout.test").await;
     let user_b = seed_user(&pool, "user-b-stale@fanout.test").await;

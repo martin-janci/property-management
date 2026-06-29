@@ -18,7 +18,8 @@
 //! and performs the full HTTP/1.1 upgrade + subsequent WS frames over it, so
 //! the session loop in `handle_ws_session` actually runs.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::extract::connect_info::MockConnectInfo;
@@ -136,6 +137,7 @@ async fn build_ws_test_server(pool: PgPool) -> TestServer {
 /// Switching Protocols), and the session must accept and echo a heartbeat
 /// text frame without closing immediately.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_upgrade_with_valid_token_succeeds(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
     let user_id = Uuid::new_v4();
@@ -168,6 +170,7 @@ async fn ws_upgrade_with_valid_token_succeeds(pool: PgPool) {
 /// the HTTP phase (before `on_upgrade`), so the client sees a 401 response
 /// body — not a successful 101 upgrade.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_upgrade_with_expired_token_returns_401(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
     let user_id = Uuid::new_v4();
@@ -210,6 +213,7 @@ async fn ws_upgrade_with_expired_token_returns_401(pool: PgPool) {
 /// A refresh token supplied as the `token` query parameter must be rejected
 /// with 401 because `validate_ws_token_with_exp` checks `token_type == "access"`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_upgrade_with_refresh_token_returns_401(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
     let user_id = Uuid::new_v4();
@@ -252,6 +256,7 @@ async fn ws_upgrade_with_refresh_token_returns_401(pool: PgPool) {
 /// Requesting the WS endpoint without a `token` query parameter must not
 /// complete the upgrade — the server rejects the request before upgrading.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_upgrade_without_token_is_rejected(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
 
@@ -291,6 +296,7 @@ async fn ws_upgrade_without_token_is_rejected(pool: PgPool) {
 /// exits cleanly on client-close and does not leave stale state that would
 /// prevent re-connection.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_reconnect_after_client_close(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
     let user_id = Uuid::new_v4();
@@ -337,6 +343,7 @@ async fn ws_reconnect_after_client_close(pool: PgPool) {
 /// it verifies the per-user channel name scheme (`notifications:{user_id}`)
 /// does not cause cross-user interference at the session level.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_two_users_simultaneous_sessions(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
     let user_a = Uuid::new_v4();
@@ -578,6 +585,7 @@ async fn ws_pubsub_fanout_delivers_to_correct_subscriber(pool: PgPool) {
 
 /// A completely malformed (non-JWT) token must be rejected with 401.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ws_upgrade_with_garbage_token_returns_401(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
 

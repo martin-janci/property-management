@@ -74,6 +74,11 @@ pub enum AuditAction {
     // per-user brute-force throttle. A DENIAL, distinct from the success
     // `MfaBackupCodeUsed`, so it does not pollute MFA-bypass success queries.
     MfaRecoveryRateLimited,
+    // GH #1760/#1783: guest ID-document (high-sensitivity, GDPR-relevant PII)
+    // upload + OCR access on the Story 18.2 seam. A dedicated action makes the
+    // PII access action-filterable in the audit log.
+    RentalGuestIdDocumentUpload,
+    RentalGuestIdDocumentExtract,
 }
 
 impl AuditAction {
@@ -132,6 +137,8 @@ impl AuditAction {
             Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
             Self::RefreshTokenReplayDetected => "RefreshTokenReplayDetected",
             Self::MfaRecoveryRateLimited => "MfaRecoveryRateLimited",
+            Self::RentalGuestIdDocumentUpload => "RentalGuestIdDocumentUpload",
+            Self::RentalGuestIdDocumentExtract => "RentalGuestIdDocumentExtract",
         }
     }
 }

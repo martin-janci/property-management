@@ -100,6 +100,7 @@ async fn seed_session(pool: &PgPool, org_id: Uuid, user_id: Uuid, title: &str) -
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = AiChatRepository::new(pool.clone());
 

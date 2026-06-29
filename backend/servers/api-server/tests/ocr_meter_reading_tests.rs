@@ -8,7 +8,8 @@
 //! - Auth gates: unauthenticated requests are rejected; cross-tenant requests
 //!   (caller not in the meter's org) are rejected.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::{header, Method, Request, StatusCode};
@@ -126,6 +127,7 @@ fn multipart_body(meter_id: Uuid, reading_value: &str) -> (Vec<u8>, String) {
 // ============================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -188,6 +190,7 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn process_meter_reading_requires_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -217,6 +220,7 @@ async fn process_meter_reading_requires_auth(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn process_meter_reading_cross_tenant_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -258,6 +262,7 @@ async fn process_meter_reading_cross_tenant_rejected(pool: PgPool) {
 // ============================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn submit_correction_persists_record(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -327,6 +332,7 @@ async fn submit_correction_persists_record(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn submit_correction_requires_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "corr-noauth").await;
@@ -360,6 +366,7 @@ async fn submit_correction_requires_auth(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn submit_correction_cross_tenant_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

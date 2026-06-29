@@ -855,13 +855,6 @@ const AuditPage: FC = () => {
         credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.status === 404) {
-        // TODO: endpoint not yet implemented
-        console.warn(
-          '[AuditPage] GET /api/v1/admin/audit returned 404 — endpoint not yet implemented'
-        );
-        return { items: [], next_cursor: undefined };
-      }
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }

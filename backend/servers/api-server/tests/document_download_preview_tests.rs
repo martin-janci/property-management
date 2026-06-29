@@ -23,7 +23,8 @@
 //! BEFORE storage, so they are asserted exactly. This keeps the suite
 //! deterministic and DB-only — no live S3 dependency.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

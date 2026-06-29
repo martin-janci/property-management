@@ -19,7 +19,8 @@
 //! superuser (bypasses FORCE RLS), so these tests specifically exercise the
 //! org-keyed SQL membership check, not the RLS policy.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

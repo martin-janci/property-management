@@ -48,7 +48,8 @@
 //!     exercises only the endpoint under audit and does not depend on TOTP
 //!     timing / encryption config.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

@@ -19,6 +19,11 @@
 //! clause. The workflow router already used this `_for_org` idiom (#791);
 //! these tests pin the same contract for the AI/LLM repo methods.
 //!
+//! Coverage in this file: chat-session read, feedback write, listing-description
+//! list read, listing-description PUBLISH (the cross-tenant mutate), and
+//! photo-enhancement read — the full LLM-document IDOR cluster from the
+//! `security-llm-doc-idor` plan.
+//!
 //! Why repo-layer and not HTTP-layer: `TestApp` mounts the router WITHOUT
 //! `host_tenant_middleware`, so `RequestPrincipal` can never resolve an
 //! `effective_org` in tests (see `equipment_cross_tenant_idor_tests.rs`'s
@@ -324,6 +329,192 @@ async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool
     assert_eq!(
         unscoped.len(),
         1,
+        "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (4) Listing-description PUBLISH is tenant-scoped — org B cannot publish (make
+//     public) org A's generated listing description by enumerating its id.
+//     This is the highest-severity vector in the cluster: a state-mutating
+//     cross-tenant write (the pre-fix `publish_description(id)` ran an
+//     `UPDATE … SET is_published = TRUE WHERE id = $1` with no org predicate).
+// ---------------------------------------------------------------------------
+
+/// Insert a description and return its id so the publish path can target it.
+async fn seed_listing_description_returning_id(
+    pool: &PgPool,
+    org_id: Uuid,
+    listing_id: Uuid,
+    user_id: Uuid,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO generated_listing_descriptions (
+            organization_id, listing_id, user_id, language,
+            original_description, property_details, generation_request_id
+        )
+        VALUES ($1, $2, $3, 'sk', 'secret copy', '{}'::jsonb, gen_random_uuid())
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(listing_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed listing description")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn publish_description_for_org_blocks_cross_tenant_mutate(pool: PgPool) {
+    create_generated_listing_descriptions_table(&pool).await;
+    let repo = LlmDocumentRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "pub-a").await;
+    let org_b = seed_org(&pool, "pub-b").await;
+    let user_a = seed_user(&pool, "pub-a@ai-idor.test").await;
+    let listing_in_a = Uuid::new_v4();
+    let desc_in_a = seed_listing_description_returning_id(&pool, org_a, listing_in_a, user_a).await;
+
+    // Cross-org publish (org B targeting org A's description) returns None and
+    // mutates nothing.
+    let cross = repo
+        .publish_description_for_org(&pool, desc_in_a, org_b)
+        .await
+        .expect("query ok");
+    assert!(
+        cross.is_none(),
+        "org B must NOT be able to publish org A's listing description"
+    );
+
+    let still_unpublished: bool =
+        sqlx::query_scalar("SELECT is_published FROM generated_listing_descriptions WHERE id = $1")
+            .bind(desc_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert!(
+        !still_unpublished,
+        "the description must remain unpublished after a cross-tenant publish attempt"
+    );
+
+    // Same-org publish (org A) succeeds and flips the flag.
+    let same = repo
+        .publish_description_for_org(&pool, desc_in_a, org_a)
+        .await
+        .expect("query ok");
+    assert!(
+        same.is_some(),
+        "org A must be able to publish its own listing description"
+    );
+
+    let now_published: bool =
+        sqlx::query_scalar("SELECT is_published FROM generated_listing_descriptions WHERE id = $1")
+            .bind(desc_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert!(
+        now_published,
+        "the description must be published after the same-org publish"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (5) Photo-enhancement read is tenant-scoped — org B cannot read org A's photo
+//     enhancement record (original/enhanced URLs, cost, metadata) by guessing
+//     its id. Pre-fix `find_photo_enhancement(id)` ran `SELECT * … WHERE id = $1`
+//     with no org predicate.
+//
+// As with `generated_listing_descriptions`, the LLM-document `photo_enhancements`
+// table is provisioned out-of-band (no migration in `db::MIGRATOR`), so we
+// create the minimal shape the repository's `SELECT *` maps onto.
+// ---------------------------------------------------------------------------
+
+async fn create_photo_enhancements_table(pool: &PgPool) {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS photo_enhancements (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            organization_id UUID NOT NULL,
+            listing_id UUID,
+            user_id UUID NOT NULL,
+            original_photo_url TEXT NOT NULL,
+            enhanced_photo_url TEXT,
+            thumbnail_url TEXT,
+            enhancement_type TEXT NOT NULL,
+            status TEXT NOT NULL,
+            error_message TEXT,
+            metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+            processing_time_ms INTEGER,
+            cost_cents INTEGER,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            completed_at TIMESTAMPTZ
+        )
+        "#,
+    )
+    .execute(pool)
+    .await
+    .expect("create photo_enhancements");
+}
+
+async fn seed_photo_enhancement(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO photo_enhancements (
+            organization_id, user_id, original_photo_url,
+            enhancement_type, status
+        )
+        VALUES ($1, $2, 'https://secret/photo.jpg', 'auto_enhance', 'completed')
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed photo enhancement")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn find_photo_enhancement_for_org_blocks_cross_tenant_read(pool: PgPool) {
+    create_photo_enhancements_table(&pool).await;
+    let repo = LlmDocumentRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "photo-a").await;
+    let org_b = seed_org(&pool, "photo-b").await;
+    let user_a = seed_user(&pool, "photo-a@ai-idor.test").await;
+    let enh_in_a = seed_photo_enhancement(&pool, org_a, user_a).await;
+
+    // Same-org read returns the row.
+    let same_org = repo
+        .find_photo_enhancement_for_org(&pool, enh_in_a, org_a)
+        .await
+        .expect("query ok");
+    assert!(
+        same_org.is_some(),
+        "org A must be able to read its own photo enhancement"
+    );
+
+    // Cross-org read returns None (the IDOR is blocked).
+    let cross_org = repo
+        .find_photo_enhancement_for_org(&pool, enh_in_a, org_b)
+        .await
+        .expect("query ok");
+    assert!(
+        cross_org.is_none(),
+        "org B must NOT be able to read org A's photo enhancement"
+    );
+
+    // Demonstrate the leak the org predicate closes: the unscoped lookup the
+    // pre-fix handler performed returns the row regardless of org.
+    let unscoped = repo
+        .find_photo_enhancement(&pool, enh_in_a)
+        .await
+        .expect("query ok");
+    assert!(
+        unscoped.is_some(),
         "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
     );
 }

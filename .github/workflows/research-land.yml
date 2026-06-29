@@ -39,7 +39,7 @@ jobs:
   land-on-dev:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # GITHUB_TOKEN can push to dev (unprotected — ruleset 11341260 covers
           # only main + release/*). Its push does NOT re-trigger push workflows,

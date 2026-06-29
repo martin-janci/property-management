@@ -8,17 +8,22 @@
 //! on. This module wraps [`PubSubService`] with a subscriber dispatch loop that,
 //! on handler error, retries with exponential backoff (1s, 2s, 4s by default) up
 //! to a capped number of retries, then dead-letters the event with structured
-//! logging.
+//! logging. Backoff sleeps are jittered by default ("full jitter": a uniform
+//! random delay in `[0, base * 2^(retry-1)]`) so that a shared-downstream blip
+//! does not make every subscriber and instance retry in lockstep (thundering
+//! herd). The deterministic [`ExponentialBackoff::schedule`] still describes the
+//! upper bound of each retry's delay.
 //!
 //! Pub/sub delivery itself remains at-most-once across the wire; durable,
 //! cross-restart redelivery would need an outbox/dead-letter table and is left
 //! as a follow-up. The dead-letter [`broadcast`] stream exposed here is the
 //! integration point for such durable persistence.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, Semaphore};
 
 use crate::redis::{CacheError, PubSubMessage, PubSubService};
 
@@ -33,6 +38,15 @@ pub const DEFAULT_BASE_DELAY: Duration = Duration::from_secs(1);
 
 /// Default upper bound on any single backoff delay.
 pub const DEFAULT_MAX_DELAY: Duration = Duration::from_secs(30);
+
+/// Default cap on the number of messages being dispatched (and possibly sleeping
+/// in backoff) concurrently per subscription.
+///
+/// Dispatch is fanned out across spawned tasks (see
+/// [`EventBus::subscribe_with_handler`]) so one slow/retrying message no longer
+/// head-of-line-blocks the whole channel; this semaphore bounds how many such
+/// tasks run at once to avoid unbounded task growth under sustained failure.
+pub const DEFAULT_MAX_IN_FLIGHT: usize = 16;
 
 /// Error returned by an [`EventHandler`] when it fails to process a message.
 #[derive(Debug, thiserror::Error)]
@@ -59,6 +73,11 @@ pub trait EventHandler: Send + Sync {
 
 /// Exponential backoff schedule: `base * 2^(retry-1)`, capped at `max_delay`,
 /// allowing up to `max_retries` retries after the initial attempt.
+///
+/// [`Self::delay_for_retry`] / [`Self::schedule`] return the deterministic
+/// (un-jittered) delay so the schedule is easy to reason about and assert on.
+/// The actual sleep performed between attempts is jittered when [`Self::jitter`]
+/// is `true` (the default) — see [`Self::jittered`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ExponentialBackoff {
     /// Delay before the first retry.
@@ -67,6 +86,12 @@ pub struct ExponentialBackoff {
     pub max_delay: Duration,
     /// Maximum number of retries after the initial attempt.
     pub max_retries: u32,
+    /// When `true` (default), apply full jitter to each sleep: a uniform random
+    /// delay in `[0, delay_for_retry(retry)]` instead of the deterministic
+    /// value. Spreads retries out so a recovered downstream is not hammered by
+    /// every subscriber at once. Set to `false` for deterministic timing in
+    /// tests.
+    pub jitter: bool,
 }
 
 impl Default for ExponentialBackoff {
@@ -75,18 +100,32 @@ impl Default for ExponentialBackoff {
             base: DEFAULT_BASE_DELAY,
             max_delay: DEFAULT_MAX_DELAY,
             max_retries: DEFAULT_MAX_RETRIES,
+            jitter: true,
         }
     }
 }
 
 impl ExponentialBackoff {
-    /// Construct a custom backoff schedule.
+    /// Construct a custom backoff schedule with jitter enabled.
     #[must_use]
     pub fn new(base: Duration, max_delay: Duration, max_retries: u32) -> Self {
         Self {
             base,
             max_delay,
             max_retries,
+            jitter: true,
+        }
+    }
+
+    /// Construct a custom backoff schedule with jitter disabled (deterministic
+    /// sleeps equal to [`Self::delay_for_retry`]). Primarily for tests.
+    #[must_use]
+    pub fn without_jitter(base: Duration, max_delay: Duration, max_retries: u32) -> Self {
+        Self {
+            base,
+            max_delay,
+            max_retries,
+            jitter: false,
         }
     }
 
@@ -114,6 +153,22 @@ impl ExponentialBackoff {
         (1..=self.max_retries)
             .filter_map(|r| self.delay_for_retry(r))
             .collect()
+    }
+
+    /// Apply jitter to a deterministic backoff delay.
+    ///
+    /// With [`Self::jitter`] disabled this returns `base` unchanged. With jitter
+    /// enabled it returns a uniform random delay in `[0, base]` ("full jitter"),
+    /// so concurrent retriers spread their wake-ups out instead of synchronizing
+    /// on a recovering downstream. Applied at sleep time only, so the
+    /// deterministic [`Self::schedule`] (used by tests) is unaffected.
+    #[must_use]
+    pub fn jittered(&self, base: Duration) -> Duration {
+        if !self.jitter || base.is_zero() {
+            return base;
+        }
+        let max_nanos = u64::try_from(base.as_nanos()).unwrap_or(u64::MAX);
+        Duration::from_nanos(rand::random_range(0..=max_nanos))
     }
 }
 
@@ -148,6 +203,7 @@ pub struct DeadLetter {
 pub struct EventBus {
     pubsub: PubSubService,
     backoff: ExponentialBackoff,
+    max_in_flight: usize,
 }
 
 impl EventBus {
@@ -157,13 +213,27 @@ impl EventBus {
         Self {
             pubsub,
             backoff: ExponentialBackoff::default(),
+            max_in_flight: DEFAULT_MAX_IN_FLIGHT,
         }
     }
 
     /// Create an event bus with a custom backoff schedule.
     #[must_use]
     pub fn with_backoff(pubsub: PubSubService, backoff: ExponentialBackoff) -> Self {
-        Self { pubsub, backoff }
+        Self {
+            pubsub,
+            backoff,
+            max_in_flight: DEFAULT_MAX_IN_FLIGHT,
+        }
+    }
+
+    /// Set the maximum number of messages dispatched concurrently per
+    /// subscription (see [`DEFAULT_MAX_IN_FLIGHT`]). A value of `0` is treated
+    /// as `1` (at least one in-flight dispatch).
+    #[must_use]
+    pub fn with_max_in_flight(mut self, max_in_flight: usize) -> Self {
+        self.max_in_flight = max_in_flight.max(1);
+        self
     }
 
     /// Access the underlying pub/sub service (for publishing).
@@ -176,9 +246,18 @@ impl EventBus {
     /// failed handling with exponential backoff before dead-lettering.
     ///
     /// Returns a [`broadcast::Receiver`] of [`DeadLetter`]s so callers can
-    /// observe or durably persist events that exhausted their retries. Messages
-    /// are processed sequentially: a message that is being retried delays
-    /// subsequent messages on the same subscription, preserving order.
+    /// observe or durably persist events that exhausted their retries.
+    ///
+    /// Dispatch is **concurrent, not strictly ordered** (#1765/#1792): each
+    /// received message is handled in its own spawned task, bounded by a
+    /// semaphore of [`Self::with_max_in_flight`] permits (default
+    /// [`DEFAULT_MAX_IN_FLIGHT`]). This means a single slow or retrying message
+    /// no longer head-of-line-blocks every later message on the channel while it
+    /// sleeps through its backoff. The trade-off is that handlers may observe
+    /// messages out of publish order; handlers are already required to be
+    /// idempotent, and if strict per-key ordering is later needed it should be
+    /// achieved by partitioning on an aggregate id rather than serializing the
+    /// whole channel.
     pub async fn subscribe_with_handler<H>(
         &self,
         channel: &str,
@@ -189,11 +268,67 @@ impl EventBus {
     {
         let mut rx = self.pubsub.subscribe(channel).await?;
         let backoff = self.backoff;
+        let channel_name = channel.to_string();
         let (dlq_tx, dlq_rx) = broadcast::channel::<DeadLetter>(100);
+        // Shared, ref-counted so each per-message dispatch task can hold it.
+        let handler = Arc::new(handler);
+        let semaphore = Arc::new(Semaphore::new(self.max_in_flight));
 
         tokio::spawn(async move {
-            while let Ok(message) = rx.recv().await {
-                dispatch_with_retry(&handler, &message, backoff, &dlq_tx).await;
+            loop {
+                match rx.recv().await {
+                    Ok(message) => {
+                        // Concurrent dispatch (#1765/#1792): handle each message
+                        // in its own task so a slow/retrying handler does not
+                        // stall later messages. Bounded by `semaphore` to cap
+                        // in-flight work. `acquire_owned` only errors if the
+                        // semaphore is closed, which we never do.
+                        let Ok(permit) = semaphore.clone().acquire_owned().await else {
+                            break;
+                        };
+                        let handler = handler.clone();
+                        let dlq_tx = dlq_tx.clone();
+                        tokio::spawn(async move {
+                            dispatch_with_retry(handler.as_ref(), &message, backoff, &dlq_tx).await;
+                            drop(permit);
+                        });
+                    }
+                    // SECURITY/RELIABILITY (#1792): a `while let Ok(..)` exits on
+                    // BOTH `Lagged` and `Closed`, so the first broadcast-buffer
+                    // overflow silently and permanently terminated the
+                    // subscription — defeating the at-least-once guarantee with
+                    // no log, no dead-letter, no recovery. Handle `Lagged`
+                    // explicitly: surface it loudly + as a synthetic dead-letter
+                    // for monitoring, then KEEP the subscription alive.
+                    Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                        tracing::error!(
+                            channel = %channel_name,
+                            skipped,
+                            "Event subscription lagged; broadcast buffer overflowed and \
+                             dropped messages (at-least-once violated for the gap)"
+                        );
+                        let _ = dlq_tx.send(DeadLetter {
+                            message: PubSubMessage::new(
+                                &channel_name,
+                                "event_bus.lagged",
+                                serde_json::json!({ "skipped_messages": skipped }),
+                            ),
+                            attempts: 0,
+                            last_error: format!(
+                                "subscription lagged: {skipped} message(s) dropped by \
+                                 broadcast buffer overflow"
+                            ),
+                        });
+                        continue;
+                    }
+                    Err(broadcast::error::RecvError::Closed) => {
+                        tracing::debug!(
+                            channel = %channel_name,
+                            "Event subscription channel closed; subscriber task exiting"
+                        );
+                        break;
+                    }
+                }
             }
         });
 
@@ -236,12 +371,17 @@ async fn dispatch_with_retry<H: EventHandler + ?Sized>(
 
                 retry += 1;
                 // Safe: retry is in 1..=max_retries here.
-                let delay = backoff.delay_for_retry(retry).unwrap_or(backoff.max_delay);
+                let scheduled = backoff.delay_for_retry(retry).unwrap_or(backoff.max_delay);
+                // Full jitter (#1765/#1792): randomize the actual sleep within
+                // `[0, scheduled]` so a shared-downstream blip does not make
+                // every subscriber and instance retry in lockstep.
+                let delay = backoff.jittered(scheduled);
                 tracing::warn!(
                     channel = %message.channel,
                     event_type = %message.event_type,
                     message_id = %message.id,
                     retry,
+                    scheduled_ms = scheduled.as_millis() as u64,
                     delay_ms = delay.as_millis() as u64,
                     error = %err,
                     "Event handler failed; retrying after backoff"
@@ -373,5 +513,128 @@ mod tests {
         assert_eq!(dead.attempts, 4);
         assert_eq!(dead.message.event_type, "test.event");
         assert!(dead.last_error.contains("boom"));
+    }
+
+    // ---- #1765 / #1792: jitter ----
+
+    #[test]
+    fn test_jittered_disabled_returns_base_unchanged() {
+        let backoff =
+            ExponentialBackoff::without_jitter(Duration::from_secs(1), Duration::from_secs(30), 3);
+        assert!(!backoff.jitter);
+        // No randomization: the sleep equals the deterministic schedule entry.
+        let base = Duration::from_secs(4);
+        for _ in 0..100 {
+            assert_eq!(backoff.jittered(base), base);
+        }
+    }
+
+    #[test]
+    fn test_jittered_enabled_stays_within_bounds_and_varies() {
+        let backoff = ExponentialBackoff::default();
+        assert!(backoff.jitter);
+        let base = Duration::from_secs(4);
+
+        let mut seen = std::collections::HashSet::new();
+        let mut saw_below_base = false;
+        for _ in 0..1_000 {
+            let d = backoff.jittered(base);
+            // Full jitter: always within [0, base].
+            assert!(d <= base, "jittered delay {d:?} exceeded base {base:?}");
+            if d < base {
+                saw_below_base = true;
+            }
+            seen.insert(d.as_nanos());
+        }
+        // Randomized: not a constant, and (almost surely) not always exactly base.
+        assert!(
+            seen.len() > 1,
+            "jitter produced a single constant value across 1000 samples"
+        );
+        assert!(
+            saw_below_base,
+            "jitter never produced a value below base — not actually jittering"
+        );
+
+        // Zero base is a no-op even with jitter enabled (avoids a 0..=0 sample).
+        assert_eq!(backoff.jittered(Duration::ZERO), Duration::ZERO);
+    }
+
+    // ---- #1765 / #1792: head-of-line blocking ----
+
+    /// Handler that blocks forever on messages whose event_type is "slow"
+    /// (until `release` is notified) and immediately reports completion of any
+    /// "fast" message via `fast_done`. Lets a test prove that a stuck message
+    /// does NOT prevent a later message from being processed.
+    struct GatedHandler {
+        release: Arc<tokio::sync::Notify>,
+        fast_done: tokio::sync::mpsc::UnboundedSender<()>,
+    }
+
+    #[async_trait]
+    impl EventHandler for GatedHandler {
+        async fn handle(&self, message: &PubSubMessage) -> Result<(), EventHandlerError> {
+            if message.event_type == "slow" {
+                // Block until the test explicitly releases us.
+                self.release.notified().await;
+            } else {
+                let _ = self.fast_done.send(());
+            }
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_dispatch_does_not_head_of_line_block() {
+        // Shared in-memory broker so a separate publisher instance's messages
+        // are not self-filtered by the subscriber instance.
+        let broker = Arc::new(crate::redis::InMemoryBroker::new());
+        let publisher = PubSubService::with_broker(broker.clone());
+        let bus = EventBus::new(PubSubService::with_broker(broker.clone()));
+
+        let release = Arc::new(tokio::sync::Notify::new());
+        let (fast_tx, mut fast_rx) = tokio::sync::mpsc::unbounded_channel();
+        let handler = GatedHandler {
+            release: release.clone(),
+            fast_done: fast_tx,
+        };
+
+        let _dlq = bus
+            .subscribe_with_handler("hol-test", handler)
+            .await
+            .expect("subscribe");
+
+        // Give the in-memory subscribe forwarder task a moment to wire up before
+        // publishing (broadcast has no replay for messages sent pre-subscribe).
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Publish the blocking message FIRST, then the fast one.
+        publisher
+            .publish(
+                "hol-test",
+                PubSubMessage::new("hol-test", "slow", serde_json::json!({})),
+            )
+            .await
+            .expect("publish slow");
+        publisher
+            .publish(
+                "hol-test",
+                PubSubMessage::new("hol-test", "fast", serde_json::json!({})),
+            )
+            .await
+            .expect("publish fast");
+
+        // The fast message must complete WHILE the slow one is still blocked.
+        // On the old sequential loop the slow dispatch blocks the recv loop, so
+        // the fast handler never runs and this times out.
+        let got_fast = tokio::time::timeout(Duration::from_secs(5), fast_rx.recv()).await;
+        assert!(
+            matches!(got_fast, Ok(Some(()))),
+            "fast message was not processed while a prior message was blocked — \
+             dispatch is head-of-line blocking"
+        );
+
+        // Unblock the slow handler so the spawned task can finish cleanly.
+        release.notify_one();
     }
 }

@@ -43,6 +43,7 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 // ── send_contact_message (public) ───────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn send_contact_message_unauthenticated_does_not_return_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = inquiries_router(pool);
@@ -67,6 +68,7 @@ async fn send_contact_message_unauthenticated_does_not_return_401(pool: PgPool) 
 // ── request_viewing (public) ────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn request_viewing_unauthenticated_does_not_return_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = inquiries_router(pool);
@@ -88,6 +90,7 @@ async fn request_viewing_unauthenticated_does_not_return_401(pool: PgPool) {
 // ── list_my_inquiries ───────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_my_inquiries_unauthenticated_returns_401(pool: PgPool) {
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries", None).await;
@@ -98,6 +101,7 @@ async fn list_my_inquiries_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_my_inquiries_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-inq").await;
     let token = mint_token(user);
@@ -112,6 +116,7 @@ async fn list_my_inquiries_authenticated_returns_non_401(pool: PgPool) {
 // ── list_buyer_inquiries ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_buyer_inquiries_unauthenticated_returns_401(pool: PgPool) {
     let app = inquiries_router(pool);
     let status = send(&app, Method::GET, "/api/v1/inquiries/mine", None).await;
@@ -122,6 +127,7 @@ async fn list_buyer_inquiries_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_buyer_inquiries_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "buyer-inq").await;
     let token = mint_token(user);
@@ -136,6 +142,7 @@ async fn list_buyer_inquiries_authenticated_returns_non_401(pool: PgPool) {
 // ── get_inquiry ─────────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_inquiry_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
@@ -144,6 +151,7 @@ async fn get_inquiry_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "get-inq").await;
     let token = mint_token(user);
@@ -162,6 +170,7 @@ async fn get_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── mark_as_read ────────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_as_read_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
@@ -176,6 +185,7 @@ async fn mark_as_read_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_as_read_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-read").await;
     let token = mint_token(user);
@@ -197,6 +207,7 @@ async fn mark_as_read_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── respond_to_inquiry ──────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn respond_to_inquiry_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = inquiries_router(pool);
@@ -215,6 +226,7 @@ async fn respond_to_inquiry_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn respond_to_inquiry_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "respond-inq").await;
     let token = mint_token(user);

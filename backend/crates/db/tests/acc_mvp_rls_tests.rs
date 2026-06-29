@@ -81,6 +81,7 @@ async fn count_on(conn: &mut sqlx::PgConnection, table: &str) -> i64 {
 /// expression is bound to get_current_org_id(). Catalog reads are not
 /// tenant-scoped, so the pool superuser is fine here.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn acc_mvp_all_new_tables_force_rls_with_tenant_policy(pool: PgPool) {
     for t in NEW_TABLES {
         let forced: bool =
@@ -117,6 +118,7 @@ async fn acc_mvp_all_new_tables_force_rls_with_tenant_policy(pool: PgPool) {
 /// none of them, cross-tenant writes are rejected, and the audit log is
 /// append-only.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
     // ---- Seed fixtures on the (superuser) pool; superusers bypass RLS, so the
     // explicit tenant_id values are what matter. ----

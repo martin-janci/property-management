@@ -24,7 +24,8 @@
 //! All tests are gated `#[ignore = "requires postgres + migrations"]` per
 //! the established convention.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

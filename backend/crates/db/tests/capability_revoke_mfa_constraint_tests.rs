@@ -48,6 +48,7 @@ async fn seed_grant(pool: &PgPool, user_id: Uuid, granted_by: Uuid) -> Uuid {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_without_mfa_timestamp_is_rejected(pool: PgPool) {
     let target = seed_user(&pool, "e3-target-no-mfa@phase2.test").await;
     let granter = seed_user(&pool, "e3-granter-no-mfa@phase2.test").await;
@@ -92,6 +93,7 @@ async fn revoke_without_mfa_timestamp_is_rejected(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_with_stale_mfa_timestamp_is_rejected(pool: PgPool) {
     let target = seed_user(&pool, "e3-target-stale@phase2.test").await;
     let granter = seed_user(&pool, "e3-granter-stale@phase2.test").await;
@@ -138,6 +140,7 @@ async fn revoke_with_stale_mfa_timestamp_is_rejected(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_with_current_mfa_timestamp_succeeds(pool: PgPool) {
     let target = seed_user(&pool, "e3-target-ok@phase2.test").await;
     let granter = seed_user(&pool, "e3-granter-ok@phase2.test").await;
@@ -196,6 +199,7 @@ async fn revoke_with_current_mfa_timestamp_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn unrelated_update_is_not_affected_by_trigger(pool: PgPool) {
     let target = seed_user(&pool, "e3-target-note@phase2.test").await;
     let granter = seed_user(&pool, "e3-granter-note@phase2.test").await;

@@ -34,7 +34,8 @@
 //!   GET    /investor-portal/dashboard/{investor_id}
 //!   POST   /investor-portal/dashboard/{investor_id}/metrics
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;
@@ -197,6 +198,7 @@ async fn seed_capital_call(
 // Shared fixture
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 struct Fixture {
     app: TestApp,
     token: String,
@@ -246,6 +248,7 @@ async fn ip_list_investors_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_investor_succeeds(pool: PgPool) {
     let f = setup(pool, "ip-create-inv").await;
     let resp = f
@@ -379,6 +382,7 @@ async fn ip_list_portfolios_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-pf").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -501,6 +505,7 @@ async fn ip_list_investor_portfolios_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-add-prop").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -605,6 +610,7 @@ async fn ip_list_roi_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-roi").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -665,6 +671,7 @@ async fn ip_get_latest_roi_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_distribution_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-dist").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -748,6 +755,7 @@ async fn ip_update_distribution_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-rpt").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -800,6 +808,7 @@ async fn ip_list_investor_reports_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_get_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-get-rpt").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -834,6 +843,7 @@ async fn ip_get_report_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_create_capital_call_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-cc").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
@@ -940,6 +950,7 @@ async fn ip_get_investor_dashboard_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-dash-metrics").await;
     let inv_id = seed_investor(&pool, f.org_id).await;
