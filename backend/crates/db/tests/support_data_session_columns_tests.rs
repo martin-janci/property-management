@@ -69,7 +69,6 @@ async fn seed_refresh_token(
 /// `get_user_sessions` must list only active (non-revoked, non-expired) tokens
 /// and must run without referencing a non-existent `is_revoked` column.
 #[sqlx::test(migrations = "./migrations")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_user_sessions_lists_only_active(pool: PgPool) {
     let user_id = seed_user(&pool, "sessions@example.com").await;
     seed_refresh_token(&pool, user_id, "active-1", false, false).await;
@@ -90,7 +89,6 @@ async fn get_user_sessions_lists_only_active(pool: PgPool) {
 /// `revoke_user_sessions` must revoke all currently-active tokens (and only
 /// those) by setting `revoked_at`, returning the affected-row count.
 #[sqlx::test(migrations = "./migrations")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoke_user_sessions_revokes_active_only(pool: PgPool) {
     let user_id = seed_user(&pool, "revoke@example.com").await;
     seed_refresh_token(&pool, user_id, "r-active-1", false, false).await;
@@ -116,7 +114,6 @@ async fn revoke_user_sessions_revokes_active_only(pool: PgPool) {
 /// `get_support_data().active_sessions` must count only active refresh tokens
 /// and must run without referencing a non-existent `is_revoked` column.
 #[sqlx::test(migrations = "./migrations")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn support_data_active_sessions_counts_active_only(pool: PgPool) {
     let user_id = seed_user(&pool, "support-data@example.com").await;
     seed_refresh_token(&pool, user_id, "sd-active-1", false, false).await;
