@@ -13,7 +13,7 @@ fn agent_reviews_router(pool: PgPool) -> Router {
     let state = common::make_app_state(pool);
     Router::new()
         .nest(
-            "/api/v1/realtors/:id/reviews",
+            "/api/v1/realtors/{id}/reviews",
             routes::agent_reviews::router(),
         )
         .with_state(state)

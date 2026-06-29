@@ -14,7 +14,6 @@
 //!   • POST /api/v1/ai/llm/chat/enhanced       (LLM call)
 //!   • POST /api/v1/ai/llm/voice/devices       (OAuth exchange)
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;
@@ -599,6 +598,14 @@ async fn update_escalation_config_returns_ok(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) =
         create_authenticated_user_with_org(&app, &user, "llm-esc-config-put").await;
+    // UPDATE … RETURNING * returns RowNotFound when no row exists; seed a default.
+    sqlx::query(
+        "INSERT INTO ai_escalation_configs (organization_id) VALUES ($1) ON CONFLICT DO NOTHING",
+    )
+    .bind(org_id)
+    .execute(&pool)
+    .await
+    .expect("seed escalation config");
     let session = app.session(token, org_id);
 
     // The PUT handler issues a plain UPDATE ... RETURNING * (no upsert), so a
