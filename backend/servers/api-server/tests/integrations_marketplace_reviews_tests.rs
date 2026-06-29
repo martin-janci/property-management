@@ -85,7 +85,7 @@ async fn seed_provider(app: &TestApp, org_id: Uuid, user_id: Uuid, prefix: &str)
         .header("X-Tenant-ID", &org_id.to_string())
         .json(json!({
             "organization_id": org_id,
-            "business_name": format!("{prefix} Business"),
+            "company_name": format!("{prefix} Business"),
             "service_categories": ["cleaning"],
             "description": "A test provider"
         }))
