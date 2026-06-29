@@ -6,10 +6,9 @@
 //! + building, mints a real HS256 access token, and sets `X-Tenant-ID` so the
 //! `ValidatedTenantExtractor` behind `RlsConnection` resolves the caller's
 //! organization (no `host_tenant_middleware` is mounted under `TestApp`, so the
-//! header is the only tenant source). Each test then asserts an HTTP-level 2xx
-//! on a voting handler.
-
-#[allow(dead_code)]
+//! header is the only tenant source).
+//!
+//! Each test asserts an HTTP-level 2xx on a voting handler.
 mod common;
 
 use axum::http::StatusCode;
