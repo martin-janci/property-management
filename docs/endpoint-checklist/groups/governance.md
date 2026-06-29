@@ -88,14 +88,14 @@ No stub markers (`todo!`/`unimplemented!`/`NOT_IMPLEMENTED`/`ROADMAP`) found in 
 ## delegations.rs  (mount: /api/v1/delegations)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| POST | /api/v1/delegations | create_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| GET | /api/v1/delegations | list_my_delegations | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| GET | /api/v1/delegations/received | list_received_delegations | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| GET | /api/v1/delegations/{id} | get_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| POST | /api/v1/delegations/{id}/accept | accept_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| POST | /api/v1/delegations/{id}/decline | decline_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| DELETE | /api/v1/delegations/{id}/revoke | revoke_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| GET | /api/v1/delegations/check/{unit_id}/{scope} | check_delegation | done | board_meetings_happy_path_tests.rs | happy-path 2xx (BIT-408) |
+| POST | /api/v1/delegations | create_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 201 create |
+| GET | /api/v1/delegations | list_my_delegations | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 list |
+| GET | /api/v1/delegations/received | list_received_delegations | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 list |
+| GET | /api/v1/delegations/{id} | get_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 get |
+| POST | /api/v1/delegations/{id}/accept | accept_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 accept |
+| POST | /api/v1/delegations/{id}/decline | decline_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 decline |
+| DELETE | /api/v1/delegations/{id}/revoke | revoke_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 revoke |
+| GET | /api/v1/delegations/check/{unit_id}/{scope} | check_delegation | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 check |
 
 ## violations.rs  (mount: /api/v1/violations)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -200,9 +200,9 @@ No stub markers (`todo!`/`unimplemented!`/`NOT_IMPLEMENTED`/`ROADMAP`) found in 
 ## neighbors.rs  (mount: /api/v1)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/buildings/{building_id}/neighbors | list_neighbors | done | community_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| GET | /api/v1/users/me/privacy | get_privacy_settings | done | community_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| PUT | /api/v1/users/me/privacy | update_privacy_settings | done | community_happy_path_tests.rs | happy-path 2xx (BIT-408) |
+| GET | /api/v1/buildings/{building_id}/neighbors | list_neighbors | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 (empty list ok) |
+| GET | /api/v1/users/me/privacy | get_privacy_settings | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 get |
+| PUT | /api/v1/users/me/privacy | update_privacy_settings | done | governance_delegations_neighbors_happy_path_tests.rs | happy-path 200 update |
 
 ## package_visitor.rs — packages (mount: /api/v1/packages)
 | Method | Path | Handler | Status | Tests | Notes |

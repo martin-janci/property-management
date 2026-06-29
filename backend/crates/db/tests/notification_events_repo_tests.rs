@@ -37,7 +37,6 @@ fn many(channel: &str, event: &str, n: usize, at: DateTime<Utc>) -> Vec<NewNotif
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn insert_aggregate_and_alert_fires(pool: PgPool) {
     let repo = NotificationEventRepository::new(pool.clone());
     let now = Utc::now();
@@ -94,7 +93,6 @@ async fn insert_aggregate_and_alert_fires(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn min_attempts_guard_suppresses_noisy_alert(pool: PgPool) {
     let repo = NotificationEventRepository::new(pool.clone());
     let now = Utc::now();
@@ -118,7 +116,6 @@ async fn min_attempts_guard_suppresses_noisy_alert(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn channel_filter_and_empty_window(pool: PgPool) {
     let repo = NotificationEventRepository::new(pool.clone());
     let now = Utc::now();
@@ -157,7 +154,6 @@ async fn channel_filter_and_empty_window(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn service_role_rls_allows_unset_guc_denies_user(pool: PgPool) {
     let now = Utc::now();
 

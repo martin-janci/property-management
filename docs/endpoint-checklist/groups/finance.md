@@ -59,7 +59,7 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 | GET | /api/v1/budgets/ | list_budgets | partial | — | no test |
 | GET | /api/v1/budgets/{id} | get_budget | partial | — | no test |
 | PUT | /api/v1/budgets/{id} | update_budget | partial | — | no test |
-| DELETE | /api/v1/budgets/{id} | delete_budget | partial | — | no test |
+| DELETE | /api/v1/budgets/{id} | delete_budget | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
 | POST | /api/v1/budgets/{id}/submit | submit_budget | partial | — | no test |
 | POST | /api/v1/budgets/{id}/approve | approve_budget | partial | — | no test |
 | POST | /api/v1/budgets/{id}/activate | activate_budget | partial | — | no test |
@@ -79,19 +79,19 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 | DELETE | /api/v1/budgets/categories/{id} | delete_category | partial | — | no test |
 | POST | /api/v1/budgets/alerts/{id}/acknowledge | acknowledge_alert | partial | — | no test |
 | GET | /api/v1/budgets/dashboard | get_dashboard | partial | — | no test |
-| POST | /api/v1/budgets/capital-plans | create_capital_plan | partial | — | no test |
-| GET | /api/v1/budgets/capital-plans | list_capital_plans | partial | — | no test |
-| GET | /api/v1/budgets/capital-plans/summary | get_yearly_capital_summary | partial | — | no test |
-| GET | /api/v1/budgets/capital-plans/{id} | get_capital_plan | partial | — | no test |
-| PUT | /api/v1/budgets/capital-plans/{id} | update_capital_plan | partial | — | no test |
-| DELETE | /api/v1/budgets/capital-plans/{id} | delete_capital_plan | partial | — | no test |
-| POST | /api/v1/budgets/capital-plans/{id}/start | start_capital_plan | partial | — | no test |
-| POST | /api/v1/budgets/capital-plans/{id}/complete | complete_capital_plan | partial | — | no test |
-| POST | /api/v1/budgets/forecasts | create_forecast | partial | — | no test |
-| GET | /api/v1/budgets/forecasts | list_forecasts | partial | — | no test |
-| GET | /api/v1/budgets/forecasts/{id} | get_forecast | partial | — | no test |
-| PUT | /api/v1/budgets/forecasts/{id} | update_forecast | partial | — | no test |
-| DELETE | /api/v1/budgets/forecasts/{id} | delete_forecast | partial | — | no test |
+| POST | /api/v1/budgets/capital-plans | create_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| GET | /api/v1/budgets/capital-plans | list_capital_plans | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| GET | /api/v1/budgets/capital-plans/summary | get_yearly_capital_summary | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| GET | /api/v1/budgets/capital-plans/{id} | get_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| PUT | /api/v1/budgets/capital-plans/{id} | update_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| DELETE | /api/v1/budgets/capital-plans/{id} | delete_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| POST | /api/v1/budgets/capital-plans/{id}/start | start_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| POST | /api/v1/budgets/capital-plans/{id}/complete | complete_capital_plan | done | budget_capital_forecast_tests.rs | happy-path: capital_plans_happy_path |
+| POST | /api/v1/budgets/forecasts | create_forecast | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
+| GET | /api/v1/budgets/forecasts | list_forecasts | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
+| GET | /api/v1/budgets/forecasts/{id} | get_forecast | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
+| PUT | /api/v1/budgets/forecasts/{id} | update_forecast | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
+| DELETE | /api/v1/budgets/forecasts/{id} | delete_forecast | done | budget_capital_forecast_tests.rs | happy-path: forecasts_and_budget_delete_happy_path |
 
 ## multi_currency.rs  (mount: /api/v1/multi-currency)
 | Method | Path | Handler | Status | Tests | Notes |
