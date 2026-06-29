@@ -46,7 +46,6 @@
 //! Secondary assertions: authorised callers get 200 with the expected body shape
 //! (keys present), and idempotent lookups return 404 for unknown IDs.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;

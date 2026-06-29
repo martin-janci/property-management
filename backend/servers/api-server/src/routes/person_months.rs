@@ -471,7 +471,7 @@ pub async fn upsert_person_month(
 
     let entry = state
         .person_month_repo
-        .upsert(data, auth.user_id)
+        .upsert(rls.conn(), data, auth.user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to upsert person month");
@@ -1249,7 +1249,7 @@ pub async fn bulk_upsert_person_months(
 
     let results = state
         .person_month_repo
-        .bulk_upsert(req.year, req.month, entries, auth.user_id)
+        .bulk_upsert(rls.conn(), req.year, req.month, entries, auth.user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to bulk upsert person months");
