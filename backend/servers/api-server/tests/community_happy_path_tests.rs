@@ -6,6 +6,7 @@
 //! harness does not provide:
 //!   1. a `ResolvedTenant` request extension (injected via `inject_tenant`), and
 //!   2. an active `user_memberships` row (seeded by `seed_user_membership`).
+//!
 //! This mirrors the proven `automation_workflow_batch3_tests.rs` setup.
 
 #![allow(dead_code)]
