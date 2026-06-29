@@ -67,7 +67,7 @@ async fn get_listing_unknown_id_returns_404(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn record_view_unknown_listing_returns_404(pool: PgPool) {
+async fn record_view_unknown_listing_returns_204(pool: PgPool) {
     let router = listings_router(pool);
     let id = Uuid::new_v4();
     let status = common::send(
@@ -77,5 +77,6 @@ async fn record_view_unknown_listing_returns_404(pool: PgPool) {
         None,
     )
     .await;
-    assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
+    // record_view is best-effort analytics — errors are logged, never surfaced.
+    assert_eq!(status, axum::http::StatusCode::NO_CONTENT);
 }

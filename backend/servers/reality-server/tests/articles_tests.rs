@@ -60,10 +60,13 @@ async fn create_comment_unauthenticated_returns_401(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_comment_authenticated_unknown_article_returns_404(pool: PgPool) {
     let user_id = Uuid::new_v4();
-    // RequestPrincipal looks up the user in the DB; seed it so auth passes.
+    // RequestPrincipal looks up the user in the DB; use principal_kind='platform'
+    // so the extractor resolves without needing a ResolvedTenant (no host
+    // middleware in the test router).  The handler then returns 404 for the
+    // unknown article slug.
     sqlx::query(
         "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
-         VALUES ($1, $2, 'x', 'Test User', 'public', 'active')",
+         VALUES ($1, $2, 'x', 'Test User', 'platform', 'active')",
     )
     .bind(user_id)
     .bind(format!("art-comment-{}@test.internal", user_id))

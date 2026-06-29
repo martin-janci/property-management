@@ -241,6 +241,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: [changes, check]
+    timeout-minutes: 180
     # Combining many integration-test binaries (each statically links the whole
     # server + deps) spikes peak memory during the parallel link step and the
     # runner OOM-kills the build (SIGTERM/143 with no compile error). Drop
@@ -353,14 +354,16 @@ jobs:
         # --no-fail-fast: report every failing test binary in one run.
         # Without it, one red binary masks all later ones (alphabetical
         # order), so the gate peels failures one merge at a time (PAP-123).
-        #
-        # --test-threads=2: each #[sqlx::test] provisions its own database and
-        # runs the full migration set; at the default per-binary parallelism
-        # (= runner core count) the concurrent DB-create + migrate + app-pool
-        # load on the single Postgres service induces spurious 500s ("no rows",
-        # tenant/RLS context races) that pass in isolation. Capping concurrency
-        # trades wall-clock for determinism on the consolidated test set.
-        run: cargo test --workspace --no-fail-fast -- --test-threads=2
+        # --test-threads=4: cap concurrent test binaries to avoid Postgres
+        # connection pool exhaustion that causes silent 4h+ hangs (BIT-334).
+        # Each #[sqlx::test] provisions its own DB and runs the full migration
+        # set; capping concurrency also reduces the DB-create/migrate/app-pool
+        # contention that induced spurious 500s on the consolidated suite.
+        # timeout --kill-after=1m 150m: SIGTERM at 150m, SIGKILL 1m later.
+        # Both job-level timeout-minutes and plain `timeout` failed to stop
+        # a hung cargo test binary (observed: test process ignores SIGTERM).
+        # SIGKILL cannot be ignored by any process.
+        run: timeout --kill-after=1m 150m cargo test --workspace --no-fail-fast -- --test-threads=4 || { echo "::error::Tests timed out or failed (exit $?)"; exit 1; }
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
