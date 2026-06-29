@@ -230,11 +230,20 @@ async fn violations_full_flow_happy_path(pool: PgPool) {
         .send()
         .await;
     ok(&evidence, "add_evidence");
+    let evidence_id = id_of(&evidence.json_value());
     ok(
         &ctx.get(&format!("/api/v1/violations/{violation_id}/evidence"))
             .send()
             .await,
         "list_evidence",
+    );
+    ok(
+        &ctx.delete(&format!(
+            "/api/v1/violations/{violation_id}/evidence/{evidence_id}",
+        ))
+        .send()
+        .await,
+        "delete_evidence",
     );
 
     // enforcement action + payment

@@ -112,7 +112,7 @@ No stub markers (`todo!`/`unimplemented!`/`NOT_IMPLEMENTED`/`ROADMAP`) found in 
 | POST | /api/v1/violations/{violation_id}/assign | assign_violation | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/violations/{violation_id}/evidence | list_evidence | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | POST | /api/v1/violations/{violation_id}/evidence | add_evidence | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| DELETE | /api/v1/violations/{violation_id}/evidence/{evidence_id} | delete_evidence | partial | — | no test |
+| DELETE | /api/v1/violations/{violation_id}/evidence/{evidence_id} | delete_evidence | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/violations/{violation_id}/actions | list_actions | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | POST | /api/v1/violations/{violation_id}/actions | create_action | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/violations/{violation_id}/actions/{action_id} | get_action | done | violations_happy_path_tests.rs | happy-path 2xx (BIT-408) |
@@ -146,7 +146,7 @@ No stub markers (`todo!`/`unimplemented!`/`NOT_IMPLEMENTED`/`ROADMAP`) found in 
 | POST | /api/v1/disputes/{id}/parties | add_party | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/disputes/{id}/evidence | list_evidence | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | POST | /api/v1/disputes/{id}/evidence | add_evidence | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
-| DELETE | /api/v1/disputes/{id}/evidence/{evidence_id} | delete_evidence | partial | — | no test |
+| DELETE | /api/v1/disputes/{id}/evidence/{evidence_id} | delete_evidence | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/disputes/{id}/activities | list_activities | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | GET | /api/v1/disputes/{id}/sessions | list_sessions | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |
 | POST | /api/v1/disputes/{id}/sessions | schedule_session | done | disputes_happy_path_tests.rs | happy-path 2xx (BIT-408) |

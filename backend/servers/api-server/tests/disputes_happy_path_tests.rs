@@ -205,8 +205,8 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
     );
 
     // evidence
-    ok(
-        &ctx.post(
+    let evidence = ctx
+        .post(
             &format!("/api/v1/disputes/{id}/evidence"),
             json!({
                 "filename": "dsp-evidence.pdf",
@@ -217,14 +217,20 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
             }),
         )
         .send()
-        .await,
-        "add_evidence",
-    );
+        .await;
+    ok(&evidence, "add_evidence");
+    let evidence_id = id_of(&evidence.json_value());
     ok(
         &ctx.get(&format!("/api/v1/disputes/{id}/evidence"))
             .send()
             .await,
         "list_evidence",
+    );
+    ok(
+        &ctx.delete(&format!("/api/v1/disputes/{id}/evidence/{evidence_id}",))
+            .send()
+            .await,
+        "delete_evidence",
     );
 
     // activities + submissions (filer is a party → submit allowed)
