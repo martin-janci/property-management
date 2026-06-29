@@ -24,6 +24,7 @@
 //!   * `TenantExtractor` + agency-membership (agencies) → 403 once the tenant gate is
 //!     cleared;
 //!   * the org-scoped inline check (organizations) → 403 for a non-member.
+//!
 //! Pinning a single code here would be brittle and was the reason the original
 //! re-cuts could not be made green without a live DB. Asserting "rejected 4xx on an
 //! existing route" captures the actual security property and is stable across all
