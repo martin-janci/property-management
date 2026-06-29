@@ -651,6 +651,26 @@
       },
       "errors": {
         "detailsMinLength": "Details must be at least 10 characters."
+      },
+      "tabSubmissions": "Submissions",
+      "submissions": {
+        "title": "Party Submissions",
+        "subtitle": "Statements and responses filed by the parties to this dispute.",
+        "empty": "No submissions yet.",
+        "privateNote": "Visible to mediator only",
+        "composerTitle": "File a submission",
+        "typeLabel": "Submission type",
+        "typeStatement": "Statement",
+        "typeEvidence": "Evidence",
+        "typeResponse": "Response",
+        "typeRequest": "Request",
+        "contentLabel": "Content",
+        "contentPlaceholder": "Write your submission…",
+        "visibleToAll": "Visible to all parties",
+        "submit": "Submit",
+        "submitting": "Submitting…",
+        "submittedSuccess": "Submission filed",
+        "submitError": "Failed to file submission"
       }
     },
     "draftSavedAgo": "Draft saved · {{time}}",

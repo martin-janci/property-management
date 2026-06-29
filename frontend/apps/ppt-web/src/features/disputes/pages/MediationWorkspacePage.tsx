@@ -21,10 +21,11 @@ import { MediationEscalateDialog } from '../components/MediationEscalateDialog';
 import { MediationResolutionForm } from '../components/MediationResolutionForm';
 import { MediationSessionDialog } from '../components/MediationSessionDialog';
 import { MediationSessionsPanel } from '../components/MediationSessionsPanel';
+import { MediationSubmissionsPanel } from '../components/MediationSubmissionsPanel';
 import { MediationTimelineView } from '../components/MediationTimelineView';
 import { formatDisputeReference } from '../utils/formatReference';
 
-type Tab = 'timeline' | 'chat' | 'resolve';
+type Tab = 'timeline' | 'chat' | 'submissions' | 'resolve';
 
 const statusColors: Record<string, string> = {
   filed: 'bg-blue-100 text-blue-800',
@@ -252,6 +253,7 @@ export function MediationWorkspacePage({
   const tabs: { id: Tab; label: string }[] = [
     { id: 'timeline', label: t('disputes.mediation.tabTimeline') },
     { id: 'chat', label: t('disputes.mediation.tabDiscussion') },
+    { id: 'submissions', label: t('disputes.mediation.tabSubmissions') },
     { id: 'resolve', label: t('disputes.mediation.tabResolution') },
   ];
 
@@ -469,6 +471,15 @@ export function MediationWorkspacePage({
                     </p>
                   )}
                 </>
+              )}
+
+              {activeTab === 'submissions' && (
+                <MediationSubmissionsPanel
+                  disputeId={disputeId}
+                  canSubmit={isParty}
+                  onToastSuccess={onToastSuccess}
+                  onToastError={onToastError}
+                />
               )}
 
               {activeTab === 'resolve' && (

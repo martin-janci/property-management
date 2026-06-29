@@ -22,6 +22,16 @@
 //! The tests drive the real production router (no mocking) with real HS256
 //! JWTs, and use `#[sqlx::test(migrator = "db::MIGRATOR")]` for an isolated,
 //! migrated database — the same harness as every other integration test here.
+//!
+//! # IG3 clarity (#1784)
+//!
+//! The cross-user `404` cases are **regression locks** for the #1642 ownership
+//! gate — they already held before #1746. The genuine *failing-on-main*
+//! behavior added by #1746 is the route-level `400` enum/status rejection. The
+//! `db_rejects_out_of_domain_status` test below is the failing-on-main proof for
+//! the #1784 DB-level defense-in-depth: it bypasses the route and calls the
+//! `SECURITY DEFINER` `portal_update_listing` directly, so the only thing under
+//! test is the migration-00194 `CHECK` constraint, not the route allow-list.
 
 #![allow(dead_code)]
 
@@ -414,5 +424,88 @@ async fn patch_status_paused_is_accepted_200(pool: PgPool) {
         status,
         StatusCode::OK,
         "permitted lifecycle status=paused must be accepted with 200, got {status}"
+    );
+}
+
+// ============================================================================
+// DB-level defense-in-depth (#1784) — the CHECK constraint rejects an
+// out-of-domain status independent of the route allow-list.
+// ============================================================================
+
+/// IG3 for #1784: call the `SECURITY DEFINER` `portal_update_listing` directly
+/// (bypassing the route's `ALLOWED_OWNER_STATUSES` guard) with a bogus status
+/// and assert the database itself rejects it with SQLSTATE `23514`
+/// (`check_violation`). Without the migration-00194 `listings_status_check`
+/// constraint, `status = COALESCE(p_status, status)` would happily persist the
+/// junk value — so this UPDATE succeeds on pre-00194 code and the test FAILS;
+/// with the CHECK it raises a `check_violation` and the test PASSES.
+///
+/// The function arg order (migration 00186) is:
+///   ($1=listing_id, $2=user_id, title, description, property_type,
+///    transaction_type, price, currency, street, city, postal_code, country,
+///    size_sqm, rooms, floor, total_floors, $3=status, is_negotiable)
+/// i.e. only listing_id, user_id and status are bound; everything else is NULL
+/// and skipped by the COALESCE.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn db_rejects_out_of_domain_status(pool: PgPool) {
+    let user = seed_portal_user(&pool, "db-bad-status").await;
+    let listing_id = seed_listing(&pool, user).await;
+
+    // Negative: an out-of-domain status must violate the CHECK constraint.
+    let result = sqlx::query(
+        "SELECT portal_update_listing($1, $2, NULL, NULL, NULL, NULL, NULL, NULL, \
+         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $3, NULL)",
+    )
+    .bind(listing_id)
+    .bind(user)
+    .bind("totally_bogus")
+    .execute(&pool)
+    .await;
+
+    let err = result.expect_err(
+        "out-of-domain status must be rejected by the DB CHECK constraint, but the UPDATE succeeded",
+    );
+    let sqlstate = err
+        .as_database_error()
+        .and_then(|e| e.code())
+        .map(|c| c.into_owned());
+    assert_eq!(
+        sqlstate.as_deref(),
+        Some("23514"),
+        "expected SQLSTATE 23514 (check_violation) from listings_status_check, got {err:?}"
+    );
+
+    // Defense-in-depth: the row's status must be unchanged (still `draft`).
+    let db_status: String = sqlx::query_scalar("SELECT status FROM listings WHERE id = $1")
+        .bind(listing_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        db_status, "draft",
+        "a rejected out-of-domain status must not mutate the row"
+    );
+
+    // Positive: a valid in-domain status still passes the CHECK (guards against
+    // an over-tight constraint).
+    sqlx::query(
+        "SELECT portal_update_listing($1, $2, NULL, NULL, NULL, NULL, NULL, NULL, \
+         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $3, NULL)",
+    )
+    .bind(listing_id)
+    .bind(user)
+    .bind("paused")
+    .execute(&pool)
+    .await
+    .expect("a valid in-domain status ('paused') must pass the CHECK constraint");
+
+    let db_status: String = sqlx::query_scalar("SELECT status FROM listings WHERE id = $1")
+        .bind(listing_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        db_status, "paused",
+        "a valid in-domain status must be applied"
     );
 }

@@ -69,8 +69,13 @@ hex = "0.4"
 
 # Crypto
 sha2 = "0.11"
+sha1 = "0.11"
 hmac = "0.13"
 base64 = "0.22"
+# base32 for RFC-6238 TOTP secrets (authenticator-app compatible)
+data-encoding = "2"
+# provably-constant-time equality (timing-safe secret compares)
+subtle = "2"
 
 # URL encoding
 urlencoding = "2.1"

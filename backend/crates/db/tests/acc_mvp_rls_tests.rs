@@ -236,7 +236,7 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
         .await
         .unwrap();
     sqlx::query(
-        "INSERT INTO acc_share_link (tenant_id, invoice_id, token) VALUES ($1, $2, 'tok-a')",
+        "INSERT INTO acc_share_link (tenant_id, invoice_id, token_hash) VALUES ($1, $2, 'tok-a')",
     )
     .bind(org_a)
     .bind(inv_a)
@@ -283,9 +283,23 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
         .await
         .expect("set role");
 
-    // Company B is fully isolated: sees none of A's rows.
+    // Company B is fully isolated: sees none of A's rows — with ONE intentional
+    // exception. `acc_share_link` carries a capability-read policy added in
+    // migration 00204 (`acc_share_link_capability_read`, FOR SELECT USING(true))
+    // so the PUBLIC share endpoint can resolve a link by its unguessable token
+    // hash WITHOUT a tenant context. SELECT is therefore capability-isolated, not
+    // tenant-isolated; the row exposes no secret (only the token HASH) and writes
+    // stay tenant-isolated (asserted below). So B *can* see A's share link by
+    // SELECT — that is the designed behavior, not a leak.
     set_request_ctx(&mut conn, Some(org_b), None, false).await;
     for t in NEW_TABLES {
+        if *t == "acc_share_link" {
+            assert!(
+                count_on(&mut conn, t).await >= 1,
+                "acc_share_link SELECT is capability-based (00204), readable cross-tenant by hash"
+            );
+            continue;
+        }
         assert_eq!(
             count_on(&mut conn, t).await,
             0,
@@ -327,8 +341,8 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
         "the audit row survives tamper attempts"
     );
 
-    // Cross-tenant write rejected (WITH CHECK). Done LAST: the failed statement
-    // aborts only its own implicit transaction.
+    // Cross-tenant write rejected (WITH CHECK). Done LAST: each failed statement
+    // aborts only its own implicit (autocommit) transaction.
     set_request_ctx(&mut conn, Some(org_b), None, false).await;
     let cross = sqlx::query("INSERT INTO acc_unit (tenant_id, code, name) VALUES ($1, 'x', 'x')")
         .bind(org_a)
@@ -337,6 +351,22 @@ async fn acc_mvp_force_rls_cross_tenant_isolation(pool: PgPool) {
     assert!(
         cross.is_err(),
         "WITH CHECK must reject a row whose tenant_id != current org"
+    );
+
+    // acc_share_link WRITES stay tenant-isolated despite the permissive SELECT:
+    // the capability-read policy is FOR SELECT only, so INSERT is still governed
+    // by the tenant_isolation FOR ALL policy's WITH CHECK. B cannot forge a link
+    // for A's tenant.
+    let cross_link = sqlx::query(
+        "INSERT INTO acc_share_link (tenant_id, invoice_id, token_hash) VALUES ($1, $2, 'tok-x')",
+    )
+    .bind(org_a)
+    .bind(inv_a)
+    .execute(&mut *conn)
+    .await;
+    assert!(
+        cross_link.is_err(),
+        "acc_share_link cross-tenant INSERT must be rejected by WITH CHECK"
     );
 
     sqlx::query("RESET ROLE").execute(&mut *conn).await.ok();

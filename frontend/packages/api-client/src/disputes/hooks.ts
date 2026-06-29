@@ -15,6 +15,7 @@ import type {
   EscalateDisputeRequest,
   ResolveDisputeRequest,
   ScheduleSessionRequest,
+  SubmitResponseRequest,
   TimelineQuery,
   UpdateDisputeStatusRequest,
   UpdateSessionRequest,
@@ -35,6 +36,7 @@ export const disputeKeys = {
   evidence: (id: string) => [...disputeKeys.detail(id), 'evidence'] as const,
   notes: (id: string) => [...disputeKeys.detail(id), 'notes'] as const,
   sessions: (id: string) => [...disputeKeys.detail(id), 'sessions'] as const,
+  submissions: (id: string) => [...disputeKeys.detail(id), 'submissions'] as const,
   statistics: (orgId: string) => [...disputeKeys.all, 'statistics', orgId] as const,
 };
 
@@ -137,6 +139,30 @@ export function useCancelSession(disputeId: string) {
     mutationFn: (sessionId: string) => api.cancelSession(disputeId, sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: disputeKeys.sessions(disputeId) });
+      queryClient.invalidateQueries({ queryKey: disputeKeys.timeline(disputeId) });
+    },
+  });
+}
+
+// ============================================
+// Party Submission Queries & Mutations (Story 80.3)
+// ============================================
+
+export function useDisputeSubmissions(disputeId: string) {
+  return useQuery({
+    queryKey: disputeKeys.submissions(disputeId),
+    queryFn: () => api.listSubmissions(disputeId),
+    enabled: !!disputeId,
+    staleTime: 30_000,
+  });
+}
+
+export function useSubmitResponse(disputeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SubmitResponseRequest) => api.submitResponse(disputeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: disputeKeys.submissions(disputeId) });
       queryClient.invalidateQueries({ queryKey: disputeKeys.timeline(disputeId) });
     },
   });

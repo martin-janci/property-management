@@ -1,7 +1,8 @@
 //! ACC platform / security models (EPIC-ACC-16).
 //!
-//! Structs match migration 00196 (`acc_tag`, `acc_share_link`, `acc_audit_log`,
-//! `acc_two_factor`). Column names verified against 00196.
+//! Structs match migration 00202 (`acc_tag`, `acc_share_link`, `acc_audit_log`,
+//! `acc_two_factor`), with `acc_share_link.token` renamed to `token_hash` in
+//! 00204. Column names verified against those migrations.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,9 @@ pub struct AccShareLink {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub invoice_id: Uuid,
-    pub token: String,
+    /// SHA-256 hash of the capability token (the raw token is shown once on
+    /// creation and never persisted in clear). Lookups hash the presented token.
+    pub token_hash: String,
     pub expires_at: Option<DateTime<Utc>>,
     pub revoked_at: Option<DateTime<Utc>>,
     pub created_by: Option<Uuid>,
