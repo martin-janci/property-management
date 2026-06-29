@@ -124,7 +124,7 @@ pub use llm::{
 // Story 84.2: E-Signature Email Integration
 pub use esignature::{
     DocusignClient, DocusignConfig, ESignatureError, ESignatureProvider, LightweightConfig,
-    LightweightProvider, SigningToken,
+    LightweightProvider, SigningToken, MIN_TOKEN_SECRET_LEN,
 };
 
 // Story 84.1: S3 Presigned URLs
