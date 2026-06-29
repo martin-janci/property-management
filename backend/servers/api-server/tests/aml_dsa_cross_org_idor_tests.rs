@@ -30,6 +30,8 @@
 //! These tests use tables that ship migrations (`00078_create_edd.sql`) so they
 //! run against `db::MIGRATOR` deterministically.
 
+#![allow(dead_code)]
+
 use db::repositories::{ComplianceRepository, EddRepository};
 use sqlx::PgPool;
 use uuid::Uuid;

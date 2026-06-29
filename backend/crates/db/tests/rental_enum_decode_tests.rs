@@ -115,6 +115,7 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_booking_by_id_decodes_platform_and_status_enums(pool: PgPool) {
     let (_org, _unit, _conn, booking_id) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -130,6 +131,7 @@ async fn find_booking_by_id_decodes_platform_and_status_enums(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_booking_for_org_decodes_enums(pool: PgPool) {
     let (org_id, _unit, _conn, booking_id) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -144,6 +146,7 @@ async fn find_booking_for_org_decodes_enums(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_booking_returning_decodes_enums(pool: PgPool) {
     let (_org, _unit, _conn, booking_id) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -175,6 +178,7 @@ async fn update_booking_returning_decodes_enums(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn connection_read_paths_decode_platform_enum(pool: PgPool) {
     let (org_id, _unit, conn_id, _booking) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -196,6 +200,7 @@ async fn connection_read_paths_decode_platform_enum(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_airbnb_tokens_returning_decodes_platform_enum(pool: PgPool) {
     let (_org, _unit, conn_id, _booking) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());

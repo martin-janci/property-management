@@ -11,7 +11,8 @@
 //! token, so a freshly-registered/logged-in user is a non-manager and must be
 //! rejected with 403.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

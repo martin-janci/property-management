@@ -1,0 +1,225 @@
+/* Authenticated ACC screens — shared styles for invoice & contact screens.
+   Tokens only (mirrors the marketing/signup CSS-module convention). */
+
+.page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--ppt-space-8) var(--ppt-space-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ppt-space-4);
+  margin-bottom: var(--ppt-space-6);
+  flex-wrap: wrap;
+}
+.title {
+  font-size: var(--ppt-font-size-2xl);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-neutral-900);
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  margin-top: var(--ppt-space-1);
+  color: var(--ppt-neutral-500);
+  font-size: var(--ppt-font-size-sm);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+  margin-bottom: var(--ppt-space-5);
+  flex-wrap: wrap;
+}
+.toolbarGrow {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
+.select {
+  height: 2.5rem;
+  padding: 0 var(--ppt-space-3);
+  border: 1px solid var(--ppt-neutral-300);
+  border-radius: var(--ppt-radius-md);
+  background: var(--ppt-neutral-0, #fff);
+  color: var(--ppt-neutral-900);
+  font-size: var(--ppt-font-size-sm);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--ppt-space-12) var(--ppt-space-6);
+  border: 1px dashed var(--ppt-neutral-300);
+  border-radius: var(--ppt-radius-lg);
+  color: var(--ppt-neutral-500);
+}
+.emptyTitle {
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-700);
+  margin-bottom: var(--ppt-space-2);
+}
+
+.state {
+  padding: var(--ppt-space-8);
+  text-align: center;
+  color: var(--ppt-neutral-500);
+}
+
+.numberCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--ppt-font-weight-medium);
+}
+.amountCell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rowLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ppt-primary-600, #2563eb);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ---- Form layout ---- */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ppt-space-4);
+}
+.formGridFull {
+  grid-column: 1 / -1;
+}
+.section {
+  margin-bottom: var(--ppt-space-6);
+}
+.sectionTitle {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-800);
+  margin-bottom: var(--ppt-space-3);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-1);
+}
+.label {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-neutral-700);
+}
+.fieldError {
+  color: var(--ppt-danger-600, #dc2626);
+  font-size: var(--ppt-font-size-xs);
+}
+
+/* ---- Line editor ---- */
+.lineTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.lineTable th {
+  text-align: left;
+  font-size: var(--ppt-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ppt-neutral-500);
+  padding: var(--ppt-space-2);
+}
+.lineTable td {
+  padding: var(--ppt-space-2);
+  vertical-align: top;
+}
+.lineInput {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 var(--ppt-space-2);
+  border: 1px solid var(--ppt-neutral-300);
+  border-radius: var(--ppt-radius-md);
+  font-size: var(--ppt-font-size-sm);
+}
+.lineNum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lineRemove {
+  background: none;
+  border: none;
+  color: var(--ppt-danger-600, #dc2626);
+  cursor: pointer;
+  font-size: var(--ppt-font-size-lg);
+  line-height: 1;
+}
+
+/* ---- Totals panel ---- */
+.totals {
+  margin-top: var(--ppt-space-4);
+  margin-left: auto;
+  max-width: 22rem;
+  border: 1px solid var(--ppt-neutral-200);
+  border-radius: var(--ppt-radius-lg);
+  padding: var(--ppt-space-4);
+  background: var(--ppt-neutral-50, #f9fafb);
+}
+.totalsRow {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--ppt-space-1) 0;
+  font-variant-numeric: tabular-nums;
+}
+.totalsGrand {
+  border-top: 1px solid var(--ppt-neutral-300);
+  margin-top: var(--ppt-space-2);
+  padding-top: var(--ppt-space-2);
+  font-weight: var(--ppt-font-weight-bold);
+  font-size: var(--ppt-font-size-lg);
+}
+.vatBreakdown {
+  margin-top: var(--ppt-space-3);
+  padding-top: var(--ppt-space-2);
+  border-top: 1px dashed var(--ppt-neutral-300);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-600);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--ppt-space-3);
+  justify-content: flex-end;
+  margin-top: var(--ppt-space-6);
+  flex-wrap: wrap;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ppt-space-2);
+  margin-top: var(--ppt-space-2);
+}
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-1);
+  padding: var(--ppt-space-1) var(--ppt-space-2);
+  border-radius: var(--ppt-radius-full);
+  background: var(--ppt-neutral-100, #f3f4f6);
+  font-size: var(--ppt-font-size-xs);
+}
+.tagChipRemove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ppt-neutral-500);
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

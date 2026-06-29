@@ -47,6 +47,26 @@ ignore = [
     # Follow-up: drop when `rsa` ships a constant-time fix, or switch
     # jsonwebtoken to the `aws_lc_rs` backend.
     "RUSTSEC-2023-0071",
+
+    # RUSTSEC-2026-0187 — stack overflow (DoS / SIGABRT) in `lopdf` < 0.42.0
+    # when *parsing* deeply nested PDF objects (~10k levels) without a recursion
+    # depth limit. Pulled in transitively by `genpdf 0.2.0` (-> `lopdf 0.26.0`
+    # and `printpdf 0.3.4` -> `lopdf 0.26.0`).
+    #
+    # No reachable fix: the advisory is patched only in lopdf 0.42.0, but
+    # `genpdf 0.2.0` (the latest published genpdf release) pins `lopdf ^0.26`.
+    # Reaching 0.42.0 means replacing genpdf entirely — a major PDF-stack
+    # migration, out of scope for clearing the deny job.
+    #
+    # Reachability: we only *generate* PDFs (genpdf builders for voting ballots
+    # in servers/api-server/src/routes/voting.rs and financial reports in
+    # routes/financial.rs); lopdf is used on the document-write path. The
+    # vulnerable code is the parser's recursive `Document::load`, which we never
+    # call — we ingest no untrusted PDF input. The crate is in the graph but the
+    # exploitable path is not exercised.
+    # Follow-up: BIT-279 — drop when genpdf ships a release on lopdf >= 0.42.0,
+    # or migrate off genpdf to a maintained PDF generator.
+    "RUSTSEC-2026-0187",
 ]
 
 [bans]

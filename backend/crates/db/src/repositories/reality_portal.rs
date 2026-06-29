@@ -11,6 +11,29 @@ use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, Postgres, Row};
 use uuid::Uuid;
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct FavoritePriceAlertCandidate {
+    pub favorite_id: Uuid,
+    pub user_id: Uuid,
+    pub listing_id: Uuid,
+    pub title: String,
+    pub old_price: Decimal,
+    pub new_price: Decimal,
+    pub currency: String,
+    pub change_percentage: Option<Decimal>,
+    pub changed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct FavoriteStatusAlertCandidate {
+    pub favorite_id: Uuid,
+    pub user_id: Uuid,
+    pub listing_id: Uuid,
+    pub title: String,
+    pub previous_status: Option<String>,
+    pub new_status: String,
+}
+
 /// Repository for Reality Portal Professional operations.
 #[derive(Clone)]
 pub struct RealityPortalRepository {
@@ -244,6 +267,90 @@ impl RealityPortalRepository {
         Ok(res.rows_affected())
     }
 
+    // ------------------------------------------------------------------------
+    // Saved-search alert transport drainer (BIT-139, Epic 16).
+    //
+    // The email/push drainer delivers alerts out-of-band and tracks its own
+    // progress via `notified_at` / `notify_attempts` (migration 00194), kept
+    // separate from the `status` column owned by the in-app read channel above.
+    // It runs service-role (no `app.current_user_id`); `search_alert_queue`,
+    // `portal_saved_searches`, and `users` are not RLS-gated, so it sees every
+    // tenant's pending alerts — that breadth is the whole point of a drainer and
+    // is why each row carries its own owner's contact details.
+    // ------------------------------------------------------------------------
+
+    /// Fetch alerts the transport drainer has not yet delivered, oldest first.
+    ///
+    /// Returns rows with `notified_at IS NULL` whose `notify_attempts` are still
+    /// under `max_attempts`, joined to the saved-search name and the recipient's
+    /// contact details. Rows that have exhausted their attempt budget are left
+    /// behind so one undeliverable alert can't wedge the queue.
+    pub async fn list_undelivered_search_alerts(
+        &self,
+        limit: i64,
+        max_attempts: i32,
+    ) -> Result<Vec<UndeliveredSearchAlert>, SqlxError> {
+        sqlx::query_as::<_, UndeliveredSearchAlert>(
+            r#"
+            SELECT
+                q.id,
+                q.saved_search_id,
+                q.user_id,
+                s.name           AS saved_search_name,
+                q.matching_listing_ids,
+                q.alert_type,
+                u.email          AS recipient_email,
+                u.name           AS recipient_name,
+                u.locale         AS recipient_locale
+            FROM search_alert_queue q
+            JOIN portal_saved_searches s ON s.id = q.saved_search_id
+            JOIN users u ON u.id = q.user_id
+            WHERE q.notified_at IS NULL
+              AND q.notify_attempts < $2
+            ORDER BY q.created_at ASC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .bind(max_attempts)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Mark an alert delivered by the transport drainer (`notified_at = now()`).
+    /// Idempotent: a row already notified is left untouched. Does **not** touch
+    /// `status`, so the in-app unread badge is unaffected.
+    pub async fn mark_search_alert_notified(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET notified_at = NOW()
+            WHERE id = $1 AND notified_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Record a failed transport-delivery attempt (`notify_attempts += 1`).
+    /// Once the count reaches the drainer's budget the row drops out of
+    /// [`list_undelivered_search_alerts`] and is no longer retried.
+    pub async fn record_search_alert_notify_failure(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET notify_attempts = notify_attempts + 1
+            WHERE id = $1 AND notified_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     // ========================================================================
     // Portal Favorites (Story 31.1, 31.4)
     // ========================================================================
@@ -257,8 +364,10 @@ impl RealityPortalRepository {
     ) -> Result<PortalFavorite, SqlxError> {
         sqlx::query_as::<_, PortalFavorite>(
             r#"
-            INSERT INTO portal_favorites (user_id, listing_id, notes, original_price)
-            SELECT $1, $2, $3, l.price
+            INSERT INTO portal_favorites (
+                user_id, listing_id, notes, original_price, last_seen_listing_status
+            )
+            SELECT $1, $2, $3, l.price, l.status
             FROM listings l WHERE l.id = $2
             RETURNING *
             "#,
@@ -423,6 +532,272 @@ impl RealityPortalRepository {
         .bind(user_id)
         .fetch_all(&self.pool)
         .await
+    }
+
+    /// List organization IDs that own listings. Workers use this to establish
+    /// an explicit org-scoped RLS loop instead of bypassing FORCE RLS.
+    pub async fn list_listing_org_ids(&self) -> Result<Vec<Uuid>, SqlxError> {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT DISTINCT organization_id
+            FROM listings
+            WHERE organization_id IS NOT NULL
+            ORDER BY organization_id
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Find pending favorite price alerts on a connection whose org context is
+    /// already set via `set_request_context`.
+    pub async fn list_pending_favorite_price_alerts<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<FavoritePriceAlertCandidate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, FavoritePriceAlertCandidate>(
+            r#"
+            SELECT
+                pf.id AS favorite_id,
+                pf.user_id,
+                l.id AS listing_id,
+                l.title,
+                lph.old_price,
+                lph.new_price,
+                lph.currency,
+                lph.change_percentage,
+                lph.changed_at
+            FROM portal_favorites pf
+            JOIN listings l ON l.id = pf.listing_id
+            JOIN listing_price_history lph ON lph.listing_id = l.id
+            WHERE pf.price_alert_enabled = true
+              AND lph.changed_at > COALESCE(pf.last_price_alert_at, pf.created_at)
+            ORDER BY lph.changed_at ASC, pf.created_at ASC
+            "#,
+        )
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Find favorite listing status transitions on an org-scoped executor.
+    pub async fn list_pending_favorite_status_alerts<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<FavoriteStatusAlertCandidate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, FavoriteStatusAlertCandidate>(
+            r#"
+            SELECT
+                pf.id AS favorite_id,
+                pf.user_id,
+                l.id AS listing_id,
+                l.title,
+                pf.last_seen_listing_status AS previous_status,
+                l.status AS new_status
+            FROM portal_favorites pf
+            JOIN listings l ON l.id = pf.listing_id
+            WHERE pf.last_seen_listing_status IS DISTINCT FROM l.status
+            ORDER BY pf.created_at ASC
+            "#,
+        )
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Queue a favorite price-change alert for later delivery.
+    pub async fn enqueue_favorite_price_alert<'e, E>(
+        &self,
+        executor: E,
+        alert: &FavoritePriceAlertCandidate,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            INSERT INTO favorite_alert_queue (
+                favorite_id, user_id, listing_id, alert_type,
+                old_price, new_price, currency, change_percentage, source_changed_at
+            )
+            VALUES ($1, $2, $3, 'price_change', $4, $5, $6, $7, $8)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(alert.favorite_id)
+        .bind(alert.user_id)
+        .bind(alert.listing_id)
+        .bind(alert.old_price)
+        .bind(alert.new_price)
+        .bind(&alert.currency)
+        .bind(alert.change_percentage)
+        .bind(alert.changed_at)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Queue a favorite back-on-market alert for later delivery.
+    pub async fn enqueue_favorite_status_alert<'e, E>(
+        &self,
+        executor: E,
+        alert: &FavoriteStatusAlertCandidate,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            INSERT INTO favorite_alert_queue (
+                favorite_id, user_id, listing_id, alert_type, previous_status, new_status
+            )
+            VALUES ($1, $2, $3, 'back_on_market', $4, $5)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(alert.favorite_id)
+        .bind(alert.user_id)
+        .bind(alert.listing_id)
+        .bind(&alert.previous_status)
+        .bind(&alert.new_status)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Advance the favorite's price watermark after processing a change.
+    pub async fn mark_favorite_price_alert_seen<'e, E>(
+        &self,
+        executor: E,
+        favorite_id: Uuid,
+        changed_at: DateTime<Utc>,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE portal_favorites
+            SET last_price_alert_at = GREATEST(COALESCE(last_price_alert_at, $2), $2)
+            WHERE id = $1
+            "#,
+        )
+        .bind(favorite_id)
+        .bind(changed_at)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Record the listing status snapshot after a worker evaluates it.
+    pub async fn mark_favorite_listing_status_seen<'e, E>(
+        &self,
+        executor: E,
+        favorite_id: Uuid,
+        status: &str,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE portal_favorites
+            SET last_seen_listing_status = $2
+            WHERE id = $1
+            "#,
+        )
+        .bind(favorite_id)
+        .bind(status)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// List a portal user's queued favorite alerts, newest first.
+    pub async fn get_favorite_alerts(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<FavoriteAlert>, SqlxError> {
+        sqlx::query_as::<_, FavoriteAlert>(
+            r#"
+            SELECT
+                q.id,
+                q.favorite_id,
+                q.listing_id,
+                l.title,
+                q.alert_type,
+                q.old_price,
+                q.new_price,
+                q.currency,
+                q.change_percentage,
+                q.previous_status,
+                q.new_status,
+                q.status,
+                q.created_at,
+                q.processed_at
+            FROM favorite_alert_queue q
+            JOIN listings l ON l.id = q.listing_id
+            WHERE q.user_id = $1
+            ORDER BY q.created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(user_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count a user's pending favorite alerts for unread badges.
+    pub async fn count_pending_favorite_alerts(&self, user_id: Uuid) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM favorite_alert_queue WHERE user_id = $1 AND status = 'pending'",
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Mark one favorite alert delivered (`pending` -> `sent`), scoped to the owner.
+    pub async fn mark_favorite_alert_read(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE favorite_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE id = $1 AND user_id = $2 AND status = 'pending'
+            "#,
+        )
+        .bind(id)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected() > 0)
+    }
+
+    /// Mark all of a user's pending favorite alerts delivered.
+    pub async fn mark_all_favorite_alerts_read(&self, user_id: Uuid) -> Result<u64, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE favorite_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE user_id = $1 AND status = 'pending'
+            "#,
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected())
     }
 
     // ========================================================================

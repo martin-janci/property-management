@@ -130,6 +130,7 @@
     "buildingsLoadError": "Couldn't load your buildings",
     "photosCompressedTitle": "Photos compressed",
     "photosCompressedWarning": "Selected photos exceeded 10 MB ({{original}} MB) and were compressed to {{final}} MB so they upload faster. Image quality may be reduced.",
+    "photosStillLargeWarning": "Even after compression the photos are still {{final}} MB (over the 10 MB limit), so the upload may be slow or fail on a weak connection.",
     "compressingPhotos": "Optimizing photos…",
     "queuedTitle": "Saved offline",
     "queuedMessage": "You're offline. Your report was saved and will sync automatically when you reconnect.",

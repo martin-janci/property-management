@@ -23,7 +23,8 @@
 //! `download_url` pointing back to the same path, so asserting 503 (not 200)
 //! is a clean regression guard.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

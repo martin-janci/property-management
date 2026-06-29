@@ -2,6 +2,13 @@
 //! Each repository handles database operations for a specific domain.
 
 pub mod accounting;
+// ACC Invoicing/Accounting MVP — per-epic repository files (one file per coder).
+pub mod acc_accounts;
+pub mod acc_catalog;
+pub mod acc_config;
+pub mod acc_contacts;
+pub mod acc_invoicing;
+pub mod acc_platform;
 pub mod accounting_provider;
 pub mod accounting_test;
 pub mod agency_branding;
@@ -70,6 +77,13 @@ pub mod agency;
 pub mod rental;
 
 pub use accounting::AccountingRepository;
+// ACC Invoicing/Accounting MVP — repository re-exports.
+pub use acc_accounts::{AccAccountsRepository, AccCompanyAccess};
+pub use acc_catalog::AccCatalogRepository;
+pub use acc_config::AccConfigRepository;
+pub use acc_contacts::AccContactsRepository;
+pub use acc_invoicing::AccInvoicingRepository;
+pub use acc_platform::AccPlatformRepository;
 pub use accounting_provider::AccountingProviderRepository;
 pub use ai_chat::AiChatRepository;
 pub use equipment::EquipmentRepository;
@@ -233,6 +247,11 @@ pub use news_article::NewsArticleRepository;
 pub mod integration;
 
 pub use integration::IntegrationRepository;
+
+// Epic 66: Platform Migration & Data Import
+pub mod migration;
+
+pub use migration::MigrationRepository;
 
 // Epic 65: Energy & Sustainability Tracking
 pub mod energy;
@@ -402,3 +421,13 @@ pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateP
 pub mod report_schedule;
 
 pub use report_schedule::ReportScheduleRepository;
+
+// Epic 146: Data Residency Controls
+pub mod data_residency;
+
+pub use data_residency::DataResidencyRepository;
+
+// Epic 72: Regional Legal Compliance
+pub mod regional_compliance;
+
+pub use regional_compliance::RegionalComplianceRepository;

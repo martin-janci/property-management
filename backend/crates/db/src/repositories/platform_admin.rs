@@ -401,7 +401,7 @@ impl PlatformAdminRepository {
             r#"
             SELECT id, created_at, expires_at, last_used_at, user_agent, ip_address
             FROM refresh_tokens
-            WHERE user_id = $1 AND is_revoked = false AND expires_at > NOW()
+            WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()
             ORDER BY created_at DESC
             "#,
         )
@@ -440,8 +440,8 @@ impl PlatformAdminRepository {
         let result = sqlx::query(
             r#"
             UPDATE refresh_tokens
-            SET is_revoked = true, updated_at = NOW()
-            WHERE user_id = $1 AND is_revoked = false
+            SET revoked_at = NOW()
+            WHERE user_id = $1 AND revoked_at IS NULL
             "#,
         )
         .bind(user_id)
@@ -538,7 +538,8 @@ impl PlatformAdminRepository {
     /// Runs five focused cross-tenant queries:
     ///   1. Total organisation count.
     ///   2. User counts grouped by `status`.
-    ///   3. Active session count (refresh tokens neither revoked nor expired).
+    ///   3. Active session count (refresh tokens with `revoked_at IS NULL` and
+    ///      not yet expired).
     ///   4. Total fault count.
     ///   5. Fault counts per `status` enum value.
     ///
@@ -592,7 +593,7 @@ impl PlatformAdminRepository {
             r#"
             SELECT COUNT(*)
             FROM refresh_tokens
-            WHERE is_revoked = false AND expires_at > NOW()
+            WHERE revoked_at IS NULL AND expires_at > NOW()
             "#,
         )
         .fetch_one(&mut *tx)

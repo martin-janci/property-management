@@ -316,7 +316,6 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/aml-dsa", routes::aml_dsa::router())
         // Marketplace routes
         .nest("/api/v1/marketplace", routes::marketplace::router())
-        // ROADMAP(PAP-24): /api/v1/developer (public_api) unmounted — roadmap stub, see routes/public_api.rs
         // Competitive Features routes removed (PAP-33): dead scaffold, no migration, no product backing
         // Infrastructure routes
         .nest("/api/v1/infrastructure", routes::infrastructure::router())
@@ -326,7 +325,6 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/owner-analytics", routes::owner_analytics::router())
         // Dispute Resolution routes
         .nest("/api/v1/disputes", routes::disputes::router())
-        // ROADMAP(PAP-24): /api/v1/vendor-portal unmounted — roadmap stub, see routes/vendor_portal.rs (vendors.rs is the live vendor surface)
         // Registry routes
         .nest("/api/v1/registry", routes::registry::router())
         // Multi-Currency routes (Epic 145)

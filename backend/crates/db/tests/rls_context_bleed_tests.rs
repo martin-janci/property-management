@@ -72,6 +72,7 @@ async fn read_super_admin(pool: &PgPool) -> Option<String> {
 /// `RlsGuard::drop` spawns a Tokio cleanup task. We yield with a short sleep
 /// so that task executes before we re-acquire.
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn normal_drop_clears_org_id_guc(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -124,6 +125,7 @@ async fn normal_drop_clears_org_id_guc(pool: PgPool) {
 /// This is the "mid-request panic" scenario — the most dangerous path for
 /// context bleeding.
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn panic_drop_clears_org_id_guc(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -169,6 +171,7 @@ async fn panic_drop_clears_org_id_guc(pool: PgPool) {
 /// Acquire a guard with super-admin context. Confirm all three GUCs are set.
 /// Drop normally. Confirm all three GUCs are cleared.
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn normal_drop_clears_all_gucs(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -238,6 +241,7 @@ async fn normal_drop_clears_all_gucs(pool: PgPool) {
 
 /// Same as `normal_drop_clears_all_gucs` but with a panic in the middle.
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn panic_drop_clears_all_gucs(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 

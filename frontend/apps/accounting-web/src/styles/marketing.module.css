@@ -1,0 +1,522 @@
+/* Marketing surface styles. Every value derives from @ppt/ui-kit tokens. */
+
+/* ─── Header ─────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--ppt-neutral-200);
+}
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+  gap: var(--ppt-space-6);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  font-size: var(--ppt-font-size-xl);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-neutral-900);
+  letter-spacing: -0.01em;
+}
+.brandMark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--ppt-radius-md);
+  background: var(--ppt-color-primary);
+  color: #fff;
+  font-weight: var(--ppt-font-weight-bold);
+  font-size: var(--ppt-font-size-base);
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-6);
+}
+.navLink {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-neutral-600);
+  transition: color 0.15s ease;
+}
+.navLink:hover {
+  color: var(--ppt-color-primary);
+}
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+}
+@media (max-width: 760px) {
+  .navLinks {
+    display: none;
+  }
+}
+
+/* ─── Section scaffold ───────────────────────────────────── */
+.section {
+  padding-block: var(--ppt-space-12);
+}
+.sectionTight {
+  padding-block: var(--ppt-space-10);
+}
+.sectionHead {
+  max-width: 42rem;
+  margin: 0 auto var(--ppt-space-10);
+  text-align: center;
+}
+.eyebrow {
+  display: inline-block;
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ppt-color-primary);
+  margin-bottom: var(--ppt-space-3);
+}
+.sectionTitle {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: var(--ppt-font-weight-bold);
+  line-height: var(--ppt-line-height-tight);
+  color: var(--ppt-neutral-900);
+  letter-spacing: -0.02em;
+}
+.sectionSubtitle {
+  margin-top: var(--ppt-space-4);
+  font-size: var(--ppt-font-size-lg);
+  color: var(--ppt-neutral-500);
+  line-height: var(--ppt-line-height-relaxed);
+}
+
+/* ─── Hero ───────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 80% at 80% -10%, var(--ppt-brand-100) 0%, transparent 60%),
+    linear-gradient(180deg, var(--ppt-brand-50) 0%, var(--ppt-neutral-0) 70%);
+  border-bottom: 1px solid var(--ppt-neutral-200);
+}
+.heroInner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: var(--ppt-space-12);
+  align-items: center;
+  padding-block: var(--ppt-space-12);
+}
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  background: var(--ppt-color-primary-light);
+  color: var(--ppt-color-primary-dark);
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  border-radius: var(--ppt-radius-full);
+  margin-bottom: var(--ppt-space-5);
+}
+.heroTitle {
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: var(--ppt-font-weight-bold);
+  line-height: var(--ppt-line-height-tight);
+  letter-spacing: -0.03em;
+  color: var(--ppt-neutral-900);
+}
+.heroSubtitle {
+  margin-top: var(--ppt-space-5);
+  font-size: var(--ppt-font-size-lg);
+  line-height: var(--ppt-line-height-relaxed);
+  color: var(--ppt-neutral-600);
+  max-width: 34rem;
+}
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ppt-space-3);
+  margin-top: var(--ppt-space-8);
+}
+.heroTrust {
+  margin-top: var(--ppt-space-5);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-500);
+}
+
+/* Hero visual: a stylised invoice card mock built from tokens. */
+.heroVisual {
+  position: relative;
+}
+.invoiceCard {
+  background: var(--ppt-neutral-0);
+  border: 1px solid var(--ppt-neutral-200);
+  border-radius: var(--ppt-radius-xl);
+  box-shadow: var(--ppt-shadow-xl);
+  padding: var(--ppt-space-6);
+}
+.invoiceTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--ppt-space-4);
+  border-bottom: 1px solid var(--ppt-neutral-100);
+}
+.invoiceLabel {
+  font-size: var(--ppt-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ppt-neutral-400);
+}
+.invoiceNo {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-neutral-900);
+}
+.invoicePaid {
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-color-success-dark);
+  background: var(--ppt-color-success-light);
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  border-radius: var(--ppt-radius-full);
+}
+.invoiceRow {
+  display: flex;
+  justify-content: space-between;
+  padding-block: var(--ppt-space-3);
+  border-bottom: 1px dashed var(--ppt-neutral-100);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-600);
+}
+.invoiceTotal {
+  display: flex;
+  justify-content: space-between;
+  padding-top: var(--ppt-space-4);
+  font-weight: var(--ppt-font-weight-bold);
+  font-size: var(--ppt-font-size-xl);
+  color: var(--ppt-neutral-900);
+}
+@media (max-width: 880px) {
+  .heroInner {
+    grid-template-columns: 1fr;
+    gap: var(--ppt-space-8);
+  }
+  .heroVisual {
+    display: none;
+  }
+}
+
+/* ─── Feature grid ───────────────────────────────────────── */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ppt-space-6);
+}
+.featureCard {
+  background: var(--ppt-neutral-0);
+  border: 1px solid var(--ppt-neutral-200);
+  border-radius: var(--ppt-radius-lg);
+  padding: var(--ppt-space-6);
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+.featureCard:hover {
+  box-shadow: var(--ppt-shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--ppt-brand-200);
+}
+.featureIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--ppt-radius-md);
+  background: var(--ppt-color-primary-light);
+  color: var(--ppt-color-primary);
+  margin-bottom: var(--ppt-space-4);
+}
+.featureTitle {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-900);
+  margin-bottom: var(--ppt-space-2);
+}
+.featureBody {
+  font-size: var(--ppt-font-size-sm);
+  line-height: var(--ppt-line-height-relaxed);
+  color: var(--ppt-neutral-500);
+}
+@media (max-width: 880px) {
+  .featureGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .featureGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Steps ──────────────────────────────────────────────── */
+.stepsBand {
+  background: var(--ppt-neutral-50);
+  border-block: 1px solid var(--ppt-neutral-200);
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ppt-space-8);
+  counter-reset: step;
+}
+.step {
+  position: relative;
+  padding-left: var(--ppt-space-12);
+}
+.stepNum {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--ppt-radius-full);
+  background: var(--ppt-color-primary);
+  color: #fff;
+  font-weight: var(--ppt-font-weight-bold);
+}
+.stepTitle {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-900);
+  margin-bottom: var(--ppt-space-2);
+}
+.stepBody {
+  font-size: var(--ppt-font-size-sm);
+  line-height: var(--ppt-line-height-relaxed);
+  color: var(--ppt-neutral-500);
+}
+@media (max-width: 760px) {
+  .steps {
+    grid-template-columns: 1fr;
+    gap: var(--ppt-space-6);
+  }
+}
+
+/* ─── Pricing ────────────────────────────────────────────── */
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ppt-space-6);
+  align-items: stretch;
+}
+.priceCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--ppt-neutral-0);
+  border: 1px solid var(--ppt-neutral-200);
+  border-radius: var(--ppt-radius-xl);
+  padding: var(--ppt-space-8) var(--ppt-space-6);
+}
+.priceCardFeatured {
+  border-color: var(--ppt-color-primary);
+  box-shadow: var(--ppt-shadow-lg);
+  position: relative;
+}
+.priceTag {
+  position: absolute;
+  top: calc(-1 * var(--ppt-space-3));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ppt-color-primary);
+  color: #fff;
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  border-radius: var(--ppt-radius-full);
+}
+.priceName {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-900);
+}
+.priceTagline {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-500);
+  margin-top: var(--ppt-space-1);
+}
+.priceAmount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ppt-space-1);
+  margin-block: var(--ppt-space-5);
+}
+.priceValue {
+  font-size: 2.5rem;
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-neutral-900);
+  letter-spacing: -0.02em;
+}
+.pricePeriod {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-400);
+}
+.priceFeatures {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-3);
+  margin-block: var(--ppt-space-5) var(--ppt-space-8);
+  flex: 1;
+}
+.priceFeature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ppt-space-2);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-600);
+}
+.priceCheck {
+  color: var(--ppt-color-success);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.priceNote {
+  margin-top: var(--ppt-space-6);
+  text-align: center;
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-neutral-400);
+}
+@media (max-width: 880px) {
+  .pricingGrid {
+    grid-template-columns: 1fr;
+    max-width: 28rem;
+    margin-inline: auto;
+  }
+}
+
+/* ─── Final CTA ──────────────────────────────────────────── */
+.ctaBand {
+  background: linear-gradient(135deg, var(--ppt-brand-700) 0%, var(--ppt-brand-900) 100%);
+}
+.ctaInner {
+  text-align: center;
+  padding-block: var(--ppt-space-12);
+  color: #fff;
+}
+.ctaTitle {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: var(--ppt-font-weight-bold);
+  letter-spacing: -0.02em;
+}
+.ctaSubtitle {
+  margin-top: var(--ppt-space-3);
+  font-size: var(--ppt-font-size-lg);
+  color: var(--ppt-brand-100);
+}
+.ctaActions {
+  margin-top: var(--ppt-space-8);
+  display: flex;
+  justify-content: center;
+}
+
+/* ─── Footer ─────────────────────────────────────────────── */
+.footer {
+  background: var(--ppt-neutral-900);
+  color: var(--ppt-neutral-300);
+  padding-block: var(--ppt-space-12) var(--ppt-space-8);
+}
+.footerGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: var(--ppt-space-8);
+}
+.footerBrand {
+  color: #fff;
+  font-size: var(--ppt-font-size-xl);
+  font-weight: var(--ppt-font-weight-bold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  margin-bottom: var(--ppt-space-3);
+}
+.footerTagline {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-400);
+  max-width: 22rem;
+  line-height: var(--ppt-line-height-relaxed);
+}
+.footerHeading {
+  font-size: var(--ppt-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ppt-neutral-500);
+  margin-bottom: var(--ppt-space-4);
+}
+.footerLinks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-3);
+}
+.footerLink {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-neutral-300);
+  transition: color 0.15s ease;
+}
+.footerLink:hover {
+  color: #fff;
+}
+.footerBottom {
+  margin-top: var(--ppt-space-10);
+  padding-top: var(--ppt-space-6);
+  border-top: 1px solid var(--ppt-neutral-700, #374151);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ppt-space-4);
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-neutral-500);
+}
+@media (max-width: 760px) {
+  .footerGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Locale switcher ────────────────────────────────────── */
+.localeSwitch {
+  display: inline-flex;
+  border: 1px solid var(--ppt-neutral-200);
+  border-radius: var(--ppt-radius-full);
+  overflow: hidden;
+  background: var(--ppt-neutral-0);
+}
+.localeOption {
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-neutral-500);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.localeOptionActive {
+  background: var(--ppt-color-primary);
+  color: #fff;
+}

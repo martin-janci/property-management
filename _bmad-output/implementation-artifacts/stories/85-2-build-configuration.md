@@ -1,6 +1,29 @@
 # Story 85.2: Build Configuration by Environment
 
-Status: pending
+Status: done
+
+> Reconciliation note (2026-06-28): implementation shipped on `dev` ahead of this
+> status flip. All five acceptance criteria are satisfied in source:
+> - **AC-1 Android flavors** — `mobile-native/androidApp/build.gradle.kts`
+>   (`flavorDimensions += "environment"`; `development`/`staging`/`production`
+>   flavors with `applicationIdSuffix`, `versionNameSuffix`, per-flavor
+>   `app_name` + `API_BASE_URL`/`ENVIRONMENT`/`ENABLE_LOGGING` `buildConfigField`s;
+>   release `signingConfigs` keyed off `KEYSTORE_*` env vars; debug `.debug` suffix).
+> - **AC-2 iOS schemes** — `mobile-native/iosApp/xcschemes/RealityPortal-{Dev,Staging,Prod}.xcscheme`
+>   + `mobile-native/iosApp/Configurations/{Base,Development,Staging,Production}.xcconfig`
+>   (per-config `PRODUCT_BUNDLE_IDENTIFIER`, `BUNDLE_DISPLAY_NAME`, `API_BASE_URL`,
+>   `CODE_SIGN_STYLE`).
+> - **AC-3 KMP variants** — `mobile-native/shared/build.gradle.kts`; under the AGP 9
+>   `com.android.kotlin.multiplatform.library` plugin the shared module is
+>   variant-agnostic (no BuildConfig), with the iOS `framework` block configured
+>   for `iosX64`/`iosArm64`/`iosSimulatorArm64`.
+> - **AC-4 distinguishability** — distinct app names (`Reality (Dev)`,
+>   `Reality (Staging)`, `Reality Portal`) + bundle/app-id suffixes per environment.
+> - **AC-5 build scripts** — `scripts/build-mobile.sh` (orchestrator),
+>   `scripts/build-android.sh`, `scripts/build-ios.sh` (each tagged
+>   "Epic 85 - Story 85.2"). Note: these live at repo-root `scripts/`, not under
+>   `mobile-native/` — an earlier coverage scan looked only under `mobile-native/`
+>   and reported a false-negative AC-5 gap.
 
 ## Story
 
@@ -44,38 +67,51 @@ So that **I can easily build and deploy to different environments with proper se
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Configure Android Build System (AC: 1, 4)
-  - [ ] 1.1 Set up product flavors (dev, staging, prod)
-  - [ ] 1.2 Configure application ID suffixes
-  - [ ] 1.3 Create app icons per flavor
-  - [ ] 1.4 Configure app names per flavor
-  - [ ] 1.5 Set up signing configs
+- [x] Task 1: Configure Android Build System (AC: 1, 4)
+  - [x] 1.1 Set up product flavors (dev, staging, prod)
+  - [x] 1.2 Configure application ID suffixes
+  - [~] 1.3 Create app icons per flavor — per-flavor `app_name` strings ship;
+    per-flavor `ic_launcher` mipmaps NOT yet generated (no `src/staging/res`,
+    no `src/development/res/mipmap-*`). Visual distinction is via app name only.
+  - [x] 1.4 Configure app names per flavor
+  - [x] 1.5 Set up signing configs
 
-- [ ] Task 2: Configure iOS Build System (AC: 2, 4)
-  - [ ] 2.1 Create build schemes (Development, Staging, Production)
-  - [ ] 2.2 Configure bundle ID per scheme
-  - [ ] 2.3 Create app icons per scheme
-  - [ ] 2.4 Configure display names per scheme
-  - [ ] 2.5 Set up provisioning profiles
+- [x] Task 2: Configure iOS Build System (AC: 2, 4)
+  - [x] 2.1 Create build schemes (Development, Staging, Production)
+  - [x] 2.2 Configure bundle ID per scheme
+  - [~] 2.3 Create app icons per scheme — `AppIcon`, `AppIcon-Dev`,
+    `AppIcon-Staging` `.appiconset` directories exist and are referenced via
+    `ASSETCATALOG_COMPILER_APPICON_NAME`, but the sets currently hold only
+    `Contents.json` (no badge image assets generated yet).
+  - [x] 2.4 Configure display names per scheme
+  - [~] 2.5 Set up provisioning profiles — `CODE_SIGN_STYLE = Automatic`;
+    no manual provisioning profiles committed (intentional for CI).
 
-- [ ] Task 3: Configure KMP Build Variants (AC: 3)
-  - [ ] 3.1 Set up Gradle build types
-  - [ ] 3.2 Configure shared module variants
-  - [ ] 3.3 Set up Android library variants
-  - [ ] 3.4 Configure iOS framework variants
+- [x] Task 3: Configure KMP Build Variants (AC: 3)
+  - [x] 3.1 Set up Gradle build types
+  - [x] 3.2 Configure shared module variants — under AGP 9
+    `com.android.kotlin.multiplatform.library` the shared module is
+    variant-agnostic by design (no build types / flavors / BuildConfig).
+  - [x] 3.3 Set up Android library variants
+  - [x] 3.4 Configure iOS framework variants
 
-- [ ] Task 4: Create App Icons and Assets (AC: 4)
-  - [ ] 4.1 Create development app icon (with "DEV" badge)
-  - [ ] 4.2 Create staging app icon (with "STG" badge)
-  - [ ] 4.3 Create production app icon
+- [~] Task 4: Create App Icons and Assets (AC: 4)
+  - [~] 4.1 Create development app icon (with "DEV" badge) — set scaffolded, image pending
+  - [~] 4.2 Create staging app icon (with "STG" badge) — set scaffolded, image pending
+  - [~] 4.3 Create production app icon — set scaffolded, image pending
   - [ ] 4.4 Generate all required sizes
+  - Note: icon-badge artwork is the only remaining piece; tracked as a
+    design-asset follow-up. App distinguishability (AC-4) is already met via
+    distinct app names + bundle/app-id suffixes per environment.
 
-- [ ] Task 5: Create Build Scripts (AC: 5)
-  - [ ] 5.1 Create Android build script
-  - [ ] 5.2 Create iOS build script
-  - [ ] 5.3 Create KMP build script
-  - [ ] 5.4 Create unified build script
-  - [ ] 5.5 Document build commands
+- [x] Task 5: Create Build Scripts (AC: 5)
+  - [x] 5.1 Create Android build script (`scripts/build-android.sh`)
+  - [x] 5.2 Create iOS build script (`scripts/build-ios.sh`)
+  - [x] 5.3 Create KMP build script — covered by `build-android.sh`
+    (`./gradlew` assemble) and `build-ios.sh` (framework link) which drive the
+    shared KMP module; no separate script needed.
+  - [x] 5.4 Create unified build script (`scripts/build-mobile.sh`)
+  - [x] 5.5 Document build commands (usage headers in each script)
 
 ## Dev Notes
 

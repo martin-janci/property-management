@@ -22,11 +22,11 @@
 use crate::state::AppState;
 use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{delete, get, post},
     Json, Router,
 };
-use db::models::{AddFavorite, PortalFavorite, PortalFavoriteWithListing};
+use db::models::{AddFavorite, FavoriteAlert, PortalFavorite, PortalFavoriteWithListing};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -35,6 +35,9 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_favorites))
+        .route("/alerts", get(list_favorite_alerts))
+        .route("/alerts/read-all", post(mark_all_favorite_alerts_read))
+        .route("/alerts/{alert_id}/read", post(mark_favorite_alert_read))
         // Static `/ids` declared before `/{listing_id}` so axum's matcher
         // prefers the literal segment over the UUID capture.
         .route("/ids", get(list_favorite_ids))
@@ -53,6 +56,30 @@ pub struct FavoritesResponse {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CheckFavoriteResponse {
     pub is_favorited: bool,
+}
+
+const ALERTS_DEFAULT_LIMIT: i64 = 100;
+const ALERTS_MAX_LIMIT: i64 = 200;
+
+#[derive(Debug, Deserialize)]
+pub struct FavoriteAlertsQuery {
+    #[serde(default)]
+    pub limit: Option<i64>,
+    #[serde(default)]
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct FavoriteAlertsResponse {
+    pub alerts: Vec<FavoriteAlert>,
+    pub unread_count: i64,
+    pub limit: i64,
+    pub offset: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MarkAllFavoriteAlertsReadResponse {
+    pub marked_read: u64,
 }
 
 /// List user's favorites.
@@ -179,6 +206,101 @@ pub async fn check_favorite(
         .map_err(|e| crate::util::errors::db_error("check favorite", e))?;
 
     Ok(Json(CheckFavoriteResponse { is_favorited }))
+}
+
+/// List the authenticated user's favorite alerts (newest first).
+#[utoipa::path(
+    get,
+    path = "/api/v1/favorites/alerts",
+    tag = "Favorites",
+    responses(
+        (status = 200, description = "Favorite alerts", body = FavoriteAlertsResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn list_favorite_alerts(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Query(query): Query<FavoriteAlertsQuery>,
+) -> Result<Json<FavoriteAlertsResponse>, (axum::http::StatusCode, String)> {
+    let limit = query
+        .limit
+        .unwrap_or(ALERTS_DEFAULT_LIMIT)
+        .clamp(1, ALERTS_MAX_LIMIT);
+    let offset = query.offset.unwrap_or(0).max(0);
+
+    let (alerts, unread_count) = tokio::try_join!(
+        state
+            .reality_portal_repo
+            .get_favorite_alerts(principal.user_id, limit, offset),
+        state
+            .reality_portal_repo
+            .count_pending_favorite_alerts(principal.user_id),
+    )
+    .map_err(|e| crate::util::errors::db_error("list favorite alerts", e))?;
+
+    Ok(Json(FavoriteAlertsResponse {
+        alerts,
+        unread_count,
+        limit,
+        offset,
+    }))
+}
+
+/// Mark a single favorite alert as read.
+#[utoipa::path(
+    post,
+    path = "/api/v1/favorites/alerts/{alert_id}/read",
+    tag = "Favorites",
+    params(("alert_id" = Uuid, Path, description = "Favorite alert queue ID")),
+    responses(
+        (status = 204, description = "Favorite alert marked read"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found")
+    )
+)]
+pub async fn mark_favorite_alert_read(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(alert_id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    let marked = state
+        .reality_portal_repo
+        .mark_favorite_alert_read(alert_id, principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("mark favorite alert read", e))?;
+
+    if marked {
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Alert not found".to_string(),
+        ))
+    }
+}
+
+/// Mark all of the authenticated user's pending favorite alerts as read.
+#[utoipa::path(
+    post,
+    path = "/api/v1/favorites/alerts/read-all",
+    tag = "Favorites",
+    responses(
+        (status = 200, description = "Favorite alerts marked read", body = MarkAllFavoriteAlertsReadResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn mark_all_favorite_alerts_read(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<MarkAllFavoriteAlertsReadResponse>, (axum::http::StatusCode, String)> {
+    let marked_read = state
+        .reality_portal_repo
+        .mark_all_favorite_alerts_read(principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("mark all favorite alerts read", e))?;
+
+    Ok(Json(MarkAllFavoriteAlertsReadResponse { marked_read }))
 }
 
 /// List the listing IDs that the current user has favorited.

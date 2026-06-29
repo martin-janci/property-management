@@ -9,6 +9,7 @@
   "scripts": {
     "dev:ppt": "pnpm --filter @ppt/web dev",
     "dev:reality": "pnpm --filter @ppt/reality-web dev",
+    "dev:accounting": "pnpm --filter @ppt/accounting-web dev",
     "dev:mobile": "pnpm --filter @ppt/mobile start",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
@@ -18,6 +19,7 @@
     "lint": "biome lint .",
     "generate-api": "pnpm --filter @ppt/api-client generate",
     "generate-reality-api": "pnpm --filter @ppt/reality-api-client generate",
+    "generate-accounting-api": "pnpm --filter @ppt/accounting-api-client generate",
     "typecheck": "pnpm -r typecheck",
     "test:e2e": "pnpm -r --filter './apps/*' e2e"
   },

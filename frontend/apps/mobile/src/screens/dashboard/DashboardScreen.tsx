@@ -50,6 +50,10 @@ interface ApiVoteListResponse {
 }
 
 interface ApiUnreadMessages {
+  // api-server serializes `UnreadMessagesResponse` with camelCase, so the wire
+  // field is `unreadCount` (BIT-239 wire-contract flip). The snake_case/`count`
+  // keys are kept only as defensive fallbacks for any stale cache.
+  unreadCount?: number;
   unread_count?: number;
   count?: number;
 }
@@ -101,7 +105,11 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       (faultsStatsQuery.data?.statistics?.in_progress_count ?? 0),
     unreadAnnouncements: announcements.length,
     activeVotes: (votesQuery.data?.votes ?? []).filter((v) => v.status === 'active').length,
-    unreadMessages: unreadMessagesQuery.data?.unread_count ?? unreadMessagesQuery.data?.count ?? 0,
+    unreadMessages:
+      unreadMessagesQuery.data?.unreadCount ??
+      unreadMessagesQuery.data?.unread_count ??
+      unreadMessagesQuery.data?.count ??
+      0,
     upcomingPayments: 0,
   };
 

@@ -23,7 +23,11 @@ pub struct AccountingProviderConnection {
     pub auth_flow: AccountingProviderAuthFlow,
     pub provider_account_name: String,
     pub client_id: String,
+    /// AES-256-GCM ciphertext — never serialize into an API response.
+    #[serde(skip_serializing)]
     pub client_secret_enc: Option<String>,
+    /// AES-256-GCM ciphertext — never serialize into an API response.
+    #[serde(skip_serializing)]
     pub refresh_token_enc: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -90,4 +94,46 @@ pub struct AccountingProviderPaymentMatchSnapshot {
     pub confidence: Decimal,
     pub amount: Decimal,
     pub matched_at: DateTime<Utc>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// PAP-321 F2: the AES-256-GCM ciphertext fields must never appear in a
+    /// serialized representation, so that a future provider-connection handler
+    /// (PAP-191) cannot accidentally leak encrypted secrets into a response.
+    #[test]
+    fn provider_connection_does_not_serialize_encrypted_secrets() {
+        let conn = AccountingProviderConnection {
+            tenant_id: Uuid::nil(),
+            auth_flow: AccountingProviderAuthFlow::Acf,
+            provider_account_name: "acme".to_string(),
+            client_id: "client-123".to_string(),
+            client_secret_enc: Some("CIPHERTEXT_SECRET".to_string()),
+            refresh_token_enc: Some("CIPHERTEXT_REFRESH".to_string()),
+            created_at: DateTime::from_timestamp(0, 0).unwrap(),
+            updated_at: DateTime::from_timestamp(0, 0).unwrap(),
+        };
+
+        let json = serde_json::to_string(&conn).expect("serialize");
+
+        assert!(
+            !json.contains("client_secret_enc"),
+            "client_secret_enc key must be skipped on serialize: {json}"
+        );
+        assert!(
+            !json.contains("refresh_token_enc"),
+            "refresh_token_enc key must be skipped on serialize: {json}"
+        );
+        assert!(
+            !json.contains("CIPHERTEXT_SECRET") && !json.contains("CIPHERTEXT_REFRESH"),
+            "encrypted secret values must not leak into serialized output: {json}"
+        );
+        // Non-secret fields are still serialized.
+        assert!(
+            json.contains("client-123"),
+            "client_id must still serialize"
+        );
+    }
 }
