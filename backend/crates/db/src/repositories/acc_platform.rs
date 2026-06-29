@@ -3,9 +3,11 @@
 //! RLS-aware, generic-executor pattern (see
 //! [`crate::repositories::accounting::AccountingRepository`]). Backs `acc_tag`,
 //! `acc_share_link`, `acc_audit_log` (append-only), `acc_two_factor`
-//! (migration 00196).
+//! (migration 00202).
 //!
-//! All column names verified against `00196_acc_invoicing_platform.sql`.
+//! All column names verified against `00202_acc_invoicing_platform.sql`
+//! and the `acc_share_link.token` → `token_hash` rename in
+//! `00204_acc_share_link_token_hash.sql`.
 //! RLS is set on the connection by the caller; SELECTs rely on the per-tenant
 //! policy (no explicit `tenant_id = $` clause needed), but INSERTs MUST set
 //! `tenant_id` to the request tenant. The `acc_audit_log` table is append-only
@@ -91,37 +93,40 @@ impl AccPlatformRepository {
     {
         sqlx::query_as::<_, AccShareLink>(
             "INSERT INTO acc_share_link \
-                 (tenant_id, invoice_id, token, expires_at, created_by) \
+                 (tenant_id, invoice_id, token_hash, expires_at, created_by) \
              VALUES ($1, $2, $3, $4, $5) \
              RETURNING *",
         )
         .bind(link.tenant_id)
         .bind(link.invoice_id)
-        .bind(&link.token)
+        .bind(&link.token_hash)
         .bind(link.expires_at)
         .bind(link.created_by)
         .fetch_one(executor)
         .await
     }
 
-    /// Resolve a share link by its opaque token (public, capability-based read).
-    /// Returns None if missing; the caller enforces revoked/expired so the public
-    /// endpoint can return a non-enumerating 404 for all three. (UC-ACC-05.11)
+    /// Resolve a share link by the SHA-256 hash of its opaque token (public,
+    /// capability-based read). The caller hashes the presented raw token and
+    /// passes the hash here; only hashes are stored, so a DB read never yields a
+    /// usable credential. Returns None if missing; the caller enforces
+    /// revoked/expired so the public endpoint can return a non-enumerating 404
+    /// for all three. (UC-ACC-05.11)
     ///
     /// NOTE: this is invoked from the PUBLIC share endpoint which has no tenant
-    /// RLS context, so the lookup is by the globally-unique token only. The token
-    /// is high-entropy and unguessable, which is the capability that authorizes
-    /// the read. The handler must NOT expose tenant-identifying data.
-    pub async fn find_share_link_by_token_rls<'e, E>(
+    /// RLS context, so the lookup is by the globally-unique token hash only. The
+    /// raw token is high-entropy and unguessable — that capability authorizes the
+    /// read. The handler must NOT expose tenant-identifying data.
+    pub async fn find_share_link_by_token_hash_no_rls<'e, E>(
         &self,
         executor: E,
-        token: &str,
+        token_hash: &str,
     ) -> Result<Option<AccShareLink>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, AccShareLink>("SELECT * FROM acc_share_link WHERE token = $1")
-            .bind(token)
+        sqlx::query_as::<_, AccShareLink>("SELECT * FROM acc_share_link WHERE token_hash = $1")
+            .bind(token_hash)
             .fetch_optional(executor)
             .await
     }

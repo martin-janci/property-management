@@ -198,6 +198,7 @@ async fn seed_capital_call(
 // Shared fixture
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 struct Fixture {
     app: TestApp,
     token: String,

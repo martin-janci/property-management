@@ -1121,6 +1121,10 @@ async fn initiate_invoice_checkout(
             )
         })?;
 
+    // Authorization is org-membership only by design: initiating a checkout
+    // merely produces a hosted payment URL for an invoice the member can
+    // already see, so any member may self-pay (or pay on behalf of the org).
+    // This is intentionally laxer than role-gated financial mutations.
     if !is_member_or_not_found(&state, auth.user_id, invoice.organization_id).await? {
         return Err((
             StatusCode::NOT_FOUND,
@@ -1160,6 +1164,33 @@ async fn initiate_invoice_checkout(
             )),
         )
     })?;
+
+    // The Stripe call carries an Idempotency-Key derived from the invoice, so a
+    // retried/double-submitted checkout for the same invoice replays the SAME
+    // session id rather than minting a new one. Mirror that idempotency in our
+    // store: if this gateway session was already recorded, return the existing
+    // row instead of inserting a duplicate `online_payment_sessions` record.
+    if let Some(existing) = state
+        .financial_repo
+        .get_payment_session_by_provider_id(&created.id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to look up existing payment session: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to record payment session",
+                )),
+            )
+        })?
+    {
+        return Ok(Json(InitiatePaymentResponse {
+            session_id: existing.id,
+            checkout_url: existing.checkout_url.unwrap_or(created.url),
+            expires_at: existing.expires_at.unwrap_or(existing.created_at),
+        }));
+    }
 
     let session = state
         .financial_repo

@@ -437,3 +437,177 @@ async fn non_manager_is_forbidden_on_both_endpoints(pool: PgPool) {
             .expect("count docs");
     assert_eq!(count, 0, "forbidden upload must not record a document");
 }
+
+// ---------------------------------------------------------------------------
+// (7) PII audit logging on upload + extract (#1760/#1783)
+//
+// IG3: on dev neither handler writes an audit_log row, so both COUNT(*)
+// assertions fail (the `rental_guest_id_document_*` enum values don't even
+// exist pre-migration). After the fix, upload and extract each emit an
+// `audit_logs` row scoped to the org + guest.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_and_extract_write_audit_log_rows(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org, guest) = seed_manager_with_guest(&pool, "audit").await;
+
+    // Upload a valid PNG-signed document.
+    let body = multipart_file(
+        "passport.png",
+        "image/png",
+        &[0x89, b'P', b'N', b'G', b'\r', b'\n', 0x1a, b'\n', 1, 2, 3],
+    );
+    let up = app.execute(upload_request(guest, &token, org, body)).await;
+    assert_eq!(
+        up.status,
+        StatusCode::CREATED,
+        "upload precondition: {}",
+        up.text()
+    );
+
+    // Trigger an extract (stub → 501, but the access is still audited).
+    let ex = app.execute(extract_request(guest, &token, org)).await;
+    assert_eq!(
+        ex.status,
+        StatusCode::NOT_IMPLEMENTED,
+        "extract precondition (stub 501): {}",
+        ex.text()
+    );
+
+    // An upload audit row scoped to this org exists.
+    let upload_rows: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM audit_logs \
+         WHERE org_id = $1 AND action::text = 'rental_guest_id_document_upload'",
+    )
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("count upload audit rows");
+    assert_eq!(
+        upload_rows, 1,
+        "ID-document upload must write exactly one audit_log row"
+    );
+
+    // An extract (PII access) audit row scoped to this org exists.
+    let extract_rows: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM audit_logs \
+         WHERE org_id = $1 AND action::text = 'rental_guest_id_document_extract'",
+    )
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("count extract audit rows");
+    assert_eq!(
+        extract_rows, 1,
+        "ID-document extract must write exactly one audit_log row"
+    );
+
+    // The upload row carries the guest_id in details so the access is
+    // attributable to a specific guest.
+    let detail_guest: Option<Uuid> = sqlx::query_scalar(
+        "SELECT (details->>'guest_id')::uuid FROM audit_logs \
+         WHERE org_id = $1 AND action::text = 'rental_guest_id_document_upload'",
+    )
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("read upload audit details");
+    assert_eq!(
+        detail_guest,
+        Some(guest),
+        "upload audit row should record the guest_id"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (8) magic-byte content sniffing (#1760/#1783)
+//
+// IG3: a payload whose declared Content-Type is image/png but whose bytes are
+// NOT a PNG/JPEG/PDF signature is stored on dev (only the declared header is
+// checked → 201). After the fix it is rejected 400 UNSUPPORTED_FILE_TYPE and
+// no row is recorded.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_rejects_content_type_spoof(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org, guest) = seed_manager_with_guest(&pool, "spoof").await;
+
+    // Declared image/png, but the bytes are a GIF signature (not allowed).
+    let body = multipart_file("not-really.png", "image/png", b"GIF89a\x00\x01evil");
+    let resp = app.execute(upload_request(guest, &token, org, body)).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "content-type spoof must be 400, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert!(
+        resp.text().contains("UNSUPPORTED_FILE_TYPE"),
+        "400 body should carry UNSUPPORTED_FILE_TYPE: {}",
+        resp.text()
+    );
+
+    // The spoofed upload recorded nothing and left the guest unlinked.
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM rental_guest_id_documents WHERE guest_id = $1")
+            .bind(guest)
+            .fetch_one(&pool)
+            .await
+            .expect("count docs");
+    assert_eq!(count, 0, "spoofed upload must not record a document");
+}
+
+// ---------------------------------------------------------------------------
+// (9) update_guest write-path is manager-gated (#1783)
+//
+// IG3: on dev PUT /rentals/guests/{id} is TenantExtractor-only, so a
+// non-manager member can write identity PII → 200. After the fix it is 403 and
+// the guest's id_number is unchanged.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_guest_is_manager_gated(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Seed a guest in an org, but authenticate as a non-manager (resident).
+    let org = seed_org(&pool, "updperm").await;
+    let resident = seed_user(&pool, &format!("updperm-{}@iddoc.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org, resident, "resident").await;
+    let building = seed_building(&pool, org, "updperm").await;
+    let unit = seed_unit(&pool, building, "UP-1").await;
+    let booking = seed_booking(&pool, org, unit).await;
+    let guest = seed_guest(&pool, org, booking).await;
+    let token = mint_access_token(resident, org);
+
+    let req = Request::builder()
+        .method(Method::PUT)
+        .uri(format!("/api/v1/rentals/guests/{guest}"))
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org.to_string())
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(r#"{"id_number":"AB1234567"}"#))
+        .unwrap();
+    let resp = app.execute(req).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "non-manager guest update must be 403, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    // The forbidden write must not have changed the guest's identity PII.
+    let id_number: Option<String> =
+        sqlx::query_scalar("SELECT id_number FROM rental_guests WHERE id = $1")
+            .bind(guest)
+            .fetch_one(&pool)
+            .await
+            .expect("read guest id_number");
+    assert_eq!(
+        id_number, None,
+        "forbidden update must not write the guest id_number"
+    );
+}

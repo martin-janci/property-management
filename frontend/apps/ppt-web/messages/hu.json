@@ -543,6 +543,26 @@
       },
       "errors": {
         "detailsMinLength": "A részleteknek legalább 10 karaktert kell tartalmazniuk."
+      },
+      "tabSubmissions": "Beadványok",
+      "submissions": {
+        "title": "Felek beadványai",
+        "subtitle": "A vita feleinek nyilatkozatai és válaszai.",
+        "empty": "Még nincsenek beadványok.",
+        "privateNote": "Csak a közvetítő számára látható",
+        "composerTitle": "Beadvány benyújtása",
+        "typeLabel": "Beadvány típusa",
+        "typeStatement": "Nyilatkozat",
+        "typeEvidence": "Bizonyíték",
+        "typeResponse": "Válasz",
+        "typeRequest": "Kérelem",
+        "contentLabel": "Tartalom",
+        "contentPlaceholder": "Írja meg beadványát…",
+        "visibleToAll": "Minden fél számára látható",
+        "submit": "Beküldés",
+        "submitting": "Beküldés folyamatban…",
+        "submittedSuccess": "Beadvány benyújtva",
+        "submitError": "A beadvány benyújtása sikertelen"
       }
     },
     "draftSavedAgo": "Piszkozat mentve · {{time}}",
