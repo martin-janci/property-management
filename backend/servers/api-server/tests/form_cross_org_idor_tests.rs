@@ -6,7 +6,8 @@
 //! same-org submit still works, while cross-org submit/download attempts
 //! return 404 and leave the target org's rows untouched.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

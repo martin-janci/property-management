@@ -78,7 +78,13 @@ describe('compressImagesIfNeeded', () => {
 
   it('treats an empty selection as nothing to compress', async () => {
     const result = await compressImagesIfNeeded([]);
-    expect(result).toEqual({ uris: [], originalBytes: 0, finalBytes: 0, compressed: false });
+    expect(result).toEqual({
+      uris: [],
+      originalBytes: 0,
+      finalBytes: 0,
+      compressed: false,
+      stillOverLimit: false,
+    });
     expect(mockGetInfoAsync).not.toHaveBeenCalled();
   });
 
@@ -88,6 +94,63 @@ describe('compressImagesIfNeeded', () => {
 
     const result = await compressImagesIfNeeded(['a.jpg'], { maxTotalBytes: 0.5 * MB });
     expect(result.compressed).toBe(true);
+  });
+
+  // issue #1767 §4: pin the manipulateAsync call shape. A `resize` op normalizes
+  // orientation and strips EXIF, and JPEG is the upload format — a regression in
+  // op order (e.g. dropping the resize) would silently ship rotated images.
+  it('compresses with a resize op and re-encodes as JPEG', async () => {
+    sizeEachFile(6 * MB); // 2 × 6 = 12 MB > limit
+    mockManipulateAsync.mockResolvedValue({ uri: 'out.jpg', width: 1920, height: 1080 });
+
+    await compressImagesIfNeeded(['a.jpg', 'b.jpg']);
+
+    expect(mockManipulateAsync).toHaveBeenCalledWith(
+      'a.jpg',
+      [{ resize: { width: 1920 } }],
+      expect.objectContaining({ format: 'jpeg', compress: expect.any(Number) })
+    );
+  });
+
+  // issue #1767 §3: a single fixed-quality pass is not guaranteed to land under
+  // the limit. When the compressed total is still over, the result must say so
+  // (stillOverLimit) so the UI warns the upload may be slow/fail.
+  it('signals stillOverLimit when the compressed total still exceeds the limit', async () => {
+    // 3 × 5 MB = 15 MB originals (> 10 MB → compress); each "compresses" to
+    // 4 MB, so 12 MB total still exceeds the 10 MB limit.
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 5 * MB })
+      .mockResolvedValueOnce({ exists: true, size: 5 * MB })
+      .mockResolvedValueOnce({ exists: true, size: 5 * MB })
+      .mockResolvedValue({ exists: true, size: 4 * MB });
+    mockManipulateAsync.mockImplementation(async (uri: string) => ({
+      uri: `${uri}.c`,
+      width: 1920,
+      height: 1080,
+    }));
+
+    const result = await compressImagesIfNeeded(['a.jpg', 'b.jpg', 'c.jpg']);
+
+    expect(result.compressed).toBe(true);
+    expect(result.finalBytes).toBe(12 * MB);
+    expect(result.stillOverLimit).toBe(true);
+  });
+
+  it('reports stillOverLimit=false when compression brings the total under the limit', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 6 * MB })
+      .mockResolvedValueOnce({ exists: true, size: 6 * MB }) // 12 MB originals
+      .mockResolvedValue({ exists: true, size: 1 * MB }); // 2 MB after compression
+    mockManipulateAsync.mockImplementation(async (uri: string) => ({
+      uri: `${uri}.c`,
+      width: 1,
+      height: 1,
+    }));
+
+    const result = await compressImagesIfNeeded(['a.jpg', 'b.jpg']);
+
+    expect(result.compressed).toBe(true);
+    expect(result.stillOverLimit).toBe(false);
   });
 });
 

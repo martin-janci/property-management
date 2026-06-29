@@ -67,43 +67,50 @@ const MINUTES = [
 // Helpers
 // ─────────────────────────────────────────────────────────────
 
-/** Validate a 5-field UNIX cron expression — mirrors backend logic. */
+/**
+ * Validate a 5-field UNIX cron expression — mirrors the backend authority
+ * `validate_cron_expression` (backend/servers/api-server/src/routes/reports.rs).
+ *
+ * Field-parse order is load-bearing and MUST match the backend exactly to avoid
+ * the #1368 cross-validator drift: split on `,` FIRST (a field is a list of
+ * parts), then on `/` (step), then on `-` (range). Parsing `/` before `,` makes
+ * the combined form `1-5/2,10` a false-negative — and because the read path
+ * (`scheduleToInitialCron`) gates surfacing the persisted cron on this
+ * validator, a false-negative silently flattens a backend-accepted expression
+ * back to the legacy `time`-derived form, reintroducing #616 for that subset.
+ */
 export function isValidCron(expr: string): boolean {
   const fields = expr.trim().split(/\s+/);
   if (fields.length !== 5) return false;
 
   function validField(field: string, min: number, max: number): boolean {
-    // wildcard
-    if (field === '*') return true;
+    // A field is a comma-separated list of parts (split on `,` FIRST — same as
+    // the backend). Each part is an optional `base/step`.
+    for (const part of field.split(',')) {
+      const slash = part.indexOf('/');
+      const base = slash === -1 ? part : part.slice(0, slash);
+      const step = slash === -1 ? undefined : part.slice(slash + 1);
 
-    // step: */n or x-y/n
-    if (field.includes('/')) {
-      const parts = field.split('/');
-      if (parts.length !== 2) return false;
-      const step = Number(parts[1]);
-      if (!Number.isInteger(step) || step <= 0) return false;
-      if (parts[0] !== '*') {
-        // range/step: 1-5/2
-        return validField(parts[0], min, max);
+      // step must be a positive integer when present
+      if (step !== undefined) {
+        const s = Number(step);
+        if (!Number.isInteger(s) || s <= 0) return false;
       }
-      return true;
-    }
 
-    // range: x-y
-    if (field.includes('-')) {
-      const [a, b] = field.split('-').map(Number);
-      if (Number.isNaN(a) || Number.isNaN(b) || a > b) return false;
-      return a >= min && b <= max;
+      if (base !== '*') {
+        if (base.includes('-')) {
+          // range: x-y
+          const [a, b] = base.split('-').map(Number);
+          if (!Number.isInteger(a) || !Number.isInteger(b) || a > b) return false;
+          if (a < min || b > max) return false;
+        } else {
+          // single number
+          const n = Number(base);
+          if (!Number.isInteger(n) || n < min || n > max) return false;
+        }
+      }
     }
-
-    // list: 1,2,3
-    if (field.includes(',')) {
-      return field.split(',').every((v) => validField(v, min, max));
-    }
-
-    // single number
-    const n = Number(field);
-    return Number.isInteger(n) && n >= min && n <= max;
+    return true;
   }
 
   return (

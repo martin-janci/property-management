@@ -120,7 +120,9 @@ impl DocumentRepository {
         let rows = sqlx::query(
             r#"
             SELECT
-                s.*,
+                s.id, s.document_id, s.share_type::text AS share_type, s.target_id,
+                s.target_role, s.shared_by, s.share_token, s.password_hash,
+                s.expires_at, s.revoked_at, s.created_at,
                 d.title as document_title,
                 u.name as shared_by_name
             FROM document_shares s

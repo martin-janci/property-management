@@ -17,7 +17,8 @@
 //! carrying `tenant_id` + `role` directly (see the note in
 //! reserve_funds_cross_org_idor_tests.rs).
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

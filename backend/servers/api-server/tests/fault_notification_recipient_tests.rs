@@ -14,6 +14,8 @@
 //! | resolve | reporter only (not the resolving manager) |
 //! | reopen | org managers (not the reopener) |
 
+#![allow(dead_code)]
+
 use api_server::services::{EmailService, NotificationPipeline, PipelineConfig};
 use common::notifications::{Notification, NotificationCategory};
 use db::repositories::MembershipRepository;

@@ -14,6 +14,8 @@
 //! All tests acquire a real Postgres pool via `#[sqlx::test]`, same pattern
 //! as `dev_mode_tenant_tests.rs`.
 
+#![allow(dead_code)]
+
 use axum::{
     body::Body,
     http::{Request, StatusCode},

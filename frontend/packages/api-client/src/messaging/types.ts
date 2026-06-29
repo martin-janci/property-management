@@ -40,7 +40,12 @@ export interface ThreadWithPreview {
   id: string;
   organizationId: string;
   participantIds: string[];
-  otherParticipant: ParticipantInfo;
+  /**
+   * All other participants (everyone except the current user). For a 2-party
+   * thread this is a single entry; for an N-party group conversation it lists
+   * every other participant ([BIT-206]).
+   */
+  participants: ParticipantInfo[];
   lastMessage: MessagePreview | null;
   unreadCount: number;
   createdAt: string;
@@ -101,10 +106,18 @@ export interface BlockWithUserInfo {
 // Request Types
 // ============================================================================
 
-/** Request for starting a new thread */
+/**
+ * Request for starting a new thread.
+ *
+ * The wire fields are snake_case (the backend `StartThreadRequest` does not
+ * rename to camelCase): `recipient_ids` carries the full set of recipients for
+ * both 2-party direct messages (one id) and N-party group conversations
+ * (UC-05.8 / [BIT-183]). The body is serialized verbatim, so these keys are the
+ * wire contract — do not rename to camelCase.
+ */
 export interface StartThreadRequest {
-  recipientId: string;
-  initialMessage?: string;
+  recipient_ids: string[];
+  initial_message?: string;
 }
 
 /** Request for sending a message */
@@ -161,7 +174,12 @@ export interface ThreadListResponse {
 /** Response for thread detail with messages */
 export interface ThreadDetailResponse {
   thread: MessageThread;
-  otherParticipant: ParticipantInfo;
+  /**
+   * All other participants (everyone except the caller). For a 2-party thread
+   * this is a single entry; for a group conversation it lists every other
+   * participant ([BIT-206]).
+   */
+  participants: ParticipantInfo[];
   messages: MessageWithSender[];
   messageCount: number;
 }

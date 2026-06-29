@@ -5,7 +5,7 @@ use crate::models::person_month::{
     PersonMonthWithUnit, UpdatePersonMonth, YearlyPersonMonthSummary,
 };
 use crate::DbPool;
-use sqlx::Error as SqlxError;
+use sqlx::{postgres::PgConnection, Error as SqlxError};
 use uuid::Uuid;
 
 /// Explicit column list for `PersonMonth` rows.
@@ -29,14 +29,20 @@ impl PersonMonthRepository {
     }
 
     /// Create or update a person month entry.
+    ///
+    /// Runs on the caller-supplied connection so the request's RLS context
+    /// (`app.current_user_id` / `app.current_org_id`) is in scope — the
+    /// `person_months_insert_manager` policy requires it. Pass
+    /// `&mut **rls.conn()` from the handler.
     pub async fn upsert(
         &self,
+        conn: &mut PgConnection,
         data: CreatePersonMonth,
         user_id: Uuid,
     ) -> Result<PersonMonth, SqlxError> {
         let entry = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(r#"
             INSERT INTO person_months (unit_id, year, month, count, source, notes, created_by, updated_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+            VALUES ($1, $2, $3, $4, $5::person_month_source, $6, $7, $7)
             ON CONFLICT (unit_id, year, month)
             DO UPDATE SET
                 count = EXCLUDED.count,
@@ -53,7 +59,7 @@ impl PersonMonthRepository {
         .bind(&data.source)
         .bind(&data.notes)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(conn)
         .await?;
 
         Ok(entry)
@@ -212,8 +218,12 @@ impl PersonMonthRepository {
     }
 
     /// Bulk upsert person months for a building.
+    ///
+    /// Runs on the caller-supplied RLS connection (see [`Self::upsert`]); the
+    /// connection is reborrowed per iteration. Pass `&mut **rls.conn()`.
     pub async fn bulk_upsert(
         &self,
+        conn: &mut PgConnection,
         year: i32,
         month: i32,
         entries: Vec<BulkPersonMonthEntry>,
@@ -224,6 +234,7 @@ impl PersonMonthRepository {
         for entry in entries {
             let pm = self
                 .upsert(
+                    &mut *conn,
                     CreatePersonMonth {
                         unit_id: entry.unit_id,
                         year,
@@ -253,7 +264,7 @@ impl PersonMonthRepository {
             UPDATE person_months
             SET
                 count = COALESCE($2, count),
-                source = COALESCE($3, source),
+                source = COALESCE($3::person_month_source, source),
                 notes = COALESCE($4, notes),
                 updated_by = $5,
                 updated_at = NOW()
@@ -337,7 +348,7 @@ impl PersonMonthRepository {
                    (pm.year = EXTRACT(YEAR FROM $3::date) AND pm.month >= EXTRACT(MONTH FROM $3::date)))
               AND (pm.year < EXTRACT(YEAR FROM $4::date) OR
                    (pm.year = EXTRACT(YEAR FROM $4::date) AND pm.month <= EXTRACT(MONTH FROM $4::date)))
-              AND pm.person_count > 0
+              AND pm.count > 0
             "#,
         )
         .bind(organization_id)
@@ -350,7 +361,7 @@ impl PersonMonthRepository {
         // Get total person months
         let (total_person_months,): (i64,) = sqlx::query_as(
             r#"
-            SELECT COALESCE(SUM(pm.person_count), 0) FROM person_months pm
+            SELECT COALESCE(SUM(pm.count), 0) FROM person_months pm
             JOIN units u ON pm.unit_id = u.id
             JOIN buildings b ON u.building_id = b.id
             WHERE b.organization_id = $1
@@ -371,7 +382,7 @@ impl PersonMonthRepository {
         // Get monthly totals
         let monthly_totals = sqlx::query_as::<_, crate::models::reports::ReportMonthlyCount>(
             r#"
-            SELECT pm.year, pm.month, SUM(pm.person_count)::int8 as count
+            SELECT pm.year, pm.month, SUM(pm.count)::int8 as count
             FROM person_months pm
             JOIN units u ON pm.unit_id = u.id
             JOIN buildings b ON u.building_id = b.id

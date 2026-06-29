@@ -295,6 +295,12 @@ pub struct DocumentEmbedding {
     pub document_id: Uuid,
     pub chunk_index: i32,
     pub chunk_text: String,
+    // The `embedding` column is JSONB (00081 — the JSONB fallback used when
+    // pgvector is absent), not a FLOAT4[]. Without `#[sqlx(json)]`, FromRow
+    // decodes `Vec<f32>` as FLOAT4[] and any `SELECT *`/`RETURNING *` fails with
+    // ColumnDecode (JSONB vs FLOAT4[]). `json(nullable)` maps a SQL NULL
+    // embedding (chunk not yet embedded) to `None`.
+    #[sqlx(json(nullable))]
     pub embedding: Option<Vec<f32>>,
     pub metadata: serde_json::Value,
     pub created_at: DateTime<Utc>,

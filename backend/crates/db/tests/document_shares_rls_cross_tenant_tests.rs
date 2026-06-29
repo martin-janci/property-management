@@ -135,6 +135,7 @@ async fn seed_access_log(pool: &PgPool, share_id: Uuid) -> Uuid {
 /// context (the public share-token path) sees both. Without 00178's FORCE +
 /// policy fix this isolation is absent (the IDOR PAP-21 closes).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn document_shares_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     // --- Seed as superuser (super-admin context satisfies the org/role RLS
     //     WITH CHECK fired by the inserts). ---

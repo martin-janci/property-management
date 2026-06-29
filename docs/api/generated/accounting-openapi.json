@@ -1,0 +1,3935 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Accounting API",
+    "description": "Invoicing & Accounting MVP API (ACC)",
+    "contact": {
+      "name": "PPT Team",
+      "email": "accounting@ppt.example.com"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8082",
+      "description": "Local development"
+    }
+  ],
+  "paths": {
+    "/api/v1/accounts/accountant-access": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Grant an accountant ongoing access to the active company (UC-ACC-01.7).\nAdmin-only. The accountant is a cross-company principal; this creates a\nper-company membership edge with a read+export role (default read-only). The\naccountant can then switch into this company alongside their other clients.",
+        "operationId": "grant_accountant_access",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAccountantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Access granted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden (admin required)"
+          },
+          "404": {
+            "description": "No account for that email"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/accountant-access/{user_id}": {
+      "delete": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Revoke an accountant's access to the ACTIVE company only (UC-ACC-01.7).\nAdmin-only. Immediate and isolated: the accountant keeps access to every\nother company that still grants it.",
+        "operationId": "revoke_accountant_access",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Accountant user id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Access revoked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden (admin required)"
+          },
+          "404": {
+            "description": "No such grant"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/billing": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Billing/plan overview with usage-vs-limits (UC-ACC-01.8). MVP stub: reports\nthe default plan + live usage (companies owned, members in active company)\nagainst the gate constants the create/invite handlers enforce, so the\ndisplayed limits match the enforced limits.",
+        "operationId": "get_billing",
+        "responses": {
+          "200": {
+            "description": "Plan + usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingOverviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/companies": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "List the companies (agendas) the authenticated user may operate\n(UC-ACC-01.2/.3/.7). Spans every company the principal actively belongs to;\na revoked accountant / deactivated user drops off immediately (the repo\nquery requires an active membership). `active_company_id` echoes the tenant\nthe current JWT is scoped to (the principal's \"last active company\").",
+        "operationId": "list_my_companies",
+        "responses": {
+          "200": {
+            "description": "Companies the principal can operate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCompaniesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Create a new company/agenda and make the caller its Owner/Admin\n(UC-ACC-01.1/.2). Enforces the plan company-count limit (UC-ACC-01.8) before\ncreation, derives/validates the slug, then provisions org + owner membership\nin one transaction and writes an audit entry. Returns the new company.",
+        "operationId": "create_company",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Company created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAccessDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "402": {
+            "description": "Plan company limit reached — upgrade required"
+          },
+          "409": {
+            "description": "Slug already taken"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/companies/{id}": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get the profile of a company by id within the principal's scope\n(UC-ACC-01.3). RLS-scoped: the connection is bound to the active company, so\na cross-company id returns 404 (the row is invisible) rather than leaking its\nexistence (UC-ACC-01.2 isolation).",
+        "operationId": "get_company",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Organization (company) id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAccessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/members/invite": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Invite a user (by email) into the ACTIVE company with a role\n(UC-ACC-01.4/.5). Admin-only (manage members). Enforces the per-company seat\nlimit (UC-ACC-01.8), resolves the email to an account, upserts a pending\nmembership, and audits. Re-inviting a previously deactivated user\nre-activates the invite while preserving their authored documents\n(UC-ACC-01.6).",
+        "operationId": "invite_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "402": {
+            "description": "Seat limit reached — upgrade required"
+          },
+          "403": {
+            "description": "Forbidden (admin required)"
+          },
+          "404": {
+            "description": "No account for that email"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/members/role": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Change a member's role within the active company (UC-ACC-01.5). Admin-only.",
+        "operationId": "set_member_role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMemberRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Role updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden (admin required)"
+          },
+          "404": {
+            "description": "Member not found"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/members/{user_id}": {
+      "delete": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Deactivate a member of the active company (UC-ACC-01.6). Admin-only. Revokes\naccess immediately (membership flips to 'removed', failing every subsequent\nrequest's membership check) while their authored documents remain intact\n(those reference the user id, not the membership row).",
+        "operationId": "deactivate_member",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User to deactivate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Member deactivated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden (admin required)"
+          },
+          "404": {
+            "description": "Member not found"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/switch-company": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Confirm the principal may switch to a company (UC-ACC-01.3). The actual\nactive-company selection is reflected in the next JWT/session issued by\napi-server; this validates access and returns 204 on success, 403 otherwise.\nThis is the cross-company isolation gate (NFR-ACC-01): a switch to a company\nthe principal does not actively belong to is denied.",
+        "operationId": "switch_company",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchCompanyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Access confirmed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "No access to that company"
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/categories": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List categories (UC-ACC-04.4).",
+        "operationId": "list_categories",
+        "responses": {
+          "200": {
+            "description": "Categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccItemCategory"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/items": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List catalog items (UC-ACC-04.1). Hides deactivated items from the picker.",
+        "operationId": "list_items",
+        "responses": {
+          "200": {
+            "description": "Catalog items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccCatalogItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Create a catalog item (UC-ACC-04.1/.8 inline quick-add). Persisting from a\ndocument line creates a FULL, reusable catalog item — the same path as an\nexplicit create.",
+        "operationId": "create_item",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccCatalogItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/items/{id}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Get a catalog item (UC-ACC-04.1).",
+        "operationId": "get_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccCatalogItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Update a catalog item (UC-ACC-04.1). Editing does NOT mutate past documents\n— those carry their own snapshotted line values.",
+        "operationId": "update_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccCatalogItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/items/{id}/price-levels": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List price levels for an item (UC-ACC-04.2).",
+        "operationId": "list_price_levels",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price levels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccPriceLevel"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/config/bank-accounts": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "List bank accounts (UC-ACC-02.10).",
+        "operationId": "list_bank_accounts",
+        "responses": {
+          "200": {
+            "description": "Bank accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccBankAccount"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/config/company": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "Get the company settings for the active company (UC-ACC-02.1).",
+        "operationId": "get_company_settings",
+        "responses": {
+          "200": {
+            "description": "Company settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccCompanySettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not configured yet"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "Upsert the company settings (UC-ACC-02.1/.2/.11).",
+        "operationId": "upsert_company_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCompanySettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Saved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccCompanySettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (validation)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/config/numbering": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "List numbering series (UC-ACC-02.3).",
+        "operationId": "list_numbering_series",
+        "responses": {
+          "200": {
+            "description": "Numbering series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccNumberingSeries"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "Create a numbering series (UC-ACC-02.3).",
+        "operationId": "create_numbering_series",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNumberingSeriesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccNumberingSeries"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (validation)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Series already exists for doc_type/year"
+          }
+        }
+      }
+    },
+    "/api/v1/config/units": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "List units (UC-ACC-02.8).",
+        "operationId": "list_units",
+        "responses": {
+          "200": {
+            "description": "Units",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccUnit"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/config/vat-rates": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "List VAT rates (UC-ACC-02.9).",
+        "operationId": "list_vat_rates",
+        "responses": {
+          "200": {
+            "description": "VAT rates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccVatRate"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List contacts for the active company (UC-ACC-03.1). Hides deactivated/merged\ncontacts so pickers only show live parties.",
+        "operationId": "list_contacts",
+        "responses": {
+          "200": {
+            "description": "Contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccContactExt"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Create a contact (UC-ACC-03.1). Persists + audits in one transaction.",
+        "operationId": "create_contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccContactExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/{id}": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Get a single contact (UC-ACC-03.1).",
+        "operationId": "get_contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Contact id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccContactExt"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Deactivate (soft-delete) a contact (UC-ACC-03.1). Never hard-deletes: the\ncontact is hidden from pickers but its historical documents stay intact.",
+        "operationId": "deactivate_contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Contact id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deactivated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Update a contact (UC-ACC-03.1/.9). Loads the current row, overlays the\nrequest fields, persists, and audits — all in one transaction.",
+        "operationId": "update_contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Contact id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccContactExt"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/{id}/addresses": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List a contact's addresses (UC-ACC-03.4).",
+        "operationId": "list_addresses",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Contact id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Addresses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccContactAddress"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/{id}/merge": {
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Merge a contact into another (UC-ACC-03.5). Re-points documents/history to\nthe surviving contact transactionally with no data loss, then marks the\nsource merged + inactive. The re-key, the flag, and the audit entry all live\nin one transaction.",
+        "operationId": "merge_contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Source contact id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Merged"
+          },
+          "400": {
+            "description": "Cannot merge a contact into itself"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "List invoices for the active company (UC-ACC-05.1).",
+        "operationId": "list_invoices",
+        "responses": {
+          "200": {
+            "description": "Invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccInvoiceExt"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Create a draft invoice with line items (UC-ACC-05.1/.2). Money/VAT computed +\nrounded by `AccountingRepository::create_invoice_rls` (the #1522 invariant:\nheader == Σ rounded line rows), which `accounting_core::money` mirrors.",
+        "operationId": "create_invoice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Get a single invoice (UC-ACC-05.1).",
+        "operationId": "get_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Delete a draft invoice (UC-ACC-05.1). Issued invoices cannot be deleted.",
+        "operationId": "delete_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden / issued cannot be deleted"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Update a draft invoice (UC-ACC-05.1). Issued invoices are immutable except via\na corrective document, so the update is rejected unless status is `draft`.",
+        "operationId": "update_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden / issued is immutable"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/credit-note": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Create a credit note against an issued invoice (UC-ACC-05.7).",
+        "description": "The original stays immutable. A new `doc_type='credit_note'` document is\ninserted with `corrected_invoice_id` set and SIGNED (negative) amounts: full\ncorrection (empty `items`) reverses the whole original; partial correction\nreverses only the supplied lines. VAT is reversed via the negated totals\n(`vat::reverse_groups` semantics) so the correction lands in the same VAT\nbuckets. A `corrects` document link is recorded (UC-ACC-05.15).",
+        "operationId": "create_credit_note",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Corrected invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Credit note created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Original not issued"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/duplicate": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Duplicate an invoice into a fresh draft (UC-ACC-05.16).",
+        "description": "Deep-copies the line items; resets dates to today, status to `draft`; carries\nover NO number, NO payments, NO links and NO doc-type extensions — exactly a\nfresh draft the user can edit and issue independently.",
+        "operationId": "duplicate_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Duplicated draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/exchange-rate": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Set/override the exchange rate on a foreign-currency invoice (UC-ACC-05.4).\nPersists the rate AND the base-currency equivalent (`base_currency_amount`)\ncomputed from the document total via `money::to_base_currency`, which drives\nVAT/reporting.",
+        "operationId": "set_exchange_rate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetExchangeRateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid rate"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/issue": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Issue a draft: allocate the next gapless number and lock it (UC-ACC-05.1).",
+        "description": "Issuance preconditions (blocked with 400 otherwise): the draft has a contact\nand at least one line. Number allocation is atomic + gapless: inside ONE\ntransaction we (1) resolve the doc_type's numbering series for the issue\nyear, (2) `allocate_next_number_rls` (single `UPDATE ... RETURNING`), (3)\n`numbering::format_number`, (4) `issue_invoice_rls` (status draft→issued),\n(5) audit. Concurrent issuance therefore can never skip or duplicate a\nnumber (legal requirement).",
+        "operationId": "issue_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Draft incomplete"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/items": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "List items for an invoice (UC-ACC-05.2).",
+        "operationId": "list_invoice_items",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/links": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "List typed document links from/to an invoice (UC-ACC-05.15).",
+        "operationId": "list_links",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccDocumentLink"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/2fa/confirm": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Confirm 2FA with a TOTP code, enabling it (UC-ACC-16.1).",
+        "operationId": "confirm_two_factor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "2FA enabled"
+          },
+          "400": {
+            "description": "Invalid code"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/2fa/enroll": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Begin 2FA enrollment: generate a secret + recovery codes (UC-ACC-16.1).\nStores the enrollment disabled (`enabled=false`) until confirmed.",
+        "operationId": "enroll_two_factor",
+        "responses": {
+          "200": {
+            "description": "Enrollment started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorEnrollResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/audit-log": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "List the audit log for the active company (UC-ACC-16.7).",
+        "operationId": "list_audit_log",
+        "responses": {
+          "200": {
+            "description": "Audit entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccAuditLog"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/share-links": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Create a capability-token share link for an invoice (UC-ACC-05.11).",
+        "operationId": "create_share_link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Share link created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccShareLink"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/share-links/{id}": {
+      "delete": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Revoke a share link (UC-ACC-05.11).",
+        "operationId": "revoke_share_link",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Share link id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/tags": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Add a tag to an entity (UC-ACC-05.14).",
+        "operationId": "add_tag",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Tag added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccTag"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/share/{token}": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "PUBLIC read-only view of a shared invoice by token (UC-ACC-05.11). No auth.\nReturns 404 for a missing/revoked/expired token (non-enumerating).",
+        "operationId": "view_shared_invoice",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Opaque share token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shared invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedInvoiceView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid / revoked / expired"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness probe. No I/O — process-alive only. Docker HEALTHCHECK target.",
+        "operationId": "liveness",
+        "responses": {
+          "200": {
+            "description": "Process alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readiness": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness probe (deep check). DB connectivity only; used by operator\ndashboards, NOT wired to Docker HEALTHCHECK.",
+        "operationId": "readiness",
+        "responses": {
+          "200": {
+            "description": "Service is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccAuditLog": {
+        "type": "object",
+        "description": "Append-only audit-trail entry (UC-ACC-16.7 / 01.10).",
+        "required": [
+          "id",
+          "tenant_id",
+          "action",
+          "entity_type",
+          "diff",
+          "created_at"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "diff": {
+            "type": "object"
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AccBankAccount": {
+        "type": "object",
+        "description": "Bank account shown on documents (UC-ACC-02.10).",
+        "required": [
+          "id",
+          "tenant_id",
+          "label",
+          "iban",
+          "currency",
+          "is_default",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "bank_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "iban": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string"
+          },
+          "swift": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccCatalogItem": {
+        "type": "object",
+        "description": "Reusable catalog item (UC-ACC-04.1/.3/.7).",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "kind",
+          "vat_rate",
+          "unit_price",
+          "price_is_gross",
+          "stock_tracked",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "category_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_is_gross": {
+            "type": "boolean"
+          },
+          "stock_tracked": {
+            "type": "boolean"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unit_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "unit_price": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vat_rate": {
+            "type": "string"
+          }
+        }
+      },
+      "AccCompanySettings": {
+        "type": "object",
+        "description": "Per-company settings driving every document (UC-ACC-02.1/.2/.11).",
+        "required": [
+          "id",
+          "tenant_id",
+          "legal_name",
+          "tax_mode",
+          "vat_payer",
+          "base_currency",
+          "rounding_mode",
+          "default_payment_terms_days",
+          "default_language",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_currency": {
+            "type": "string"
+          },
+          "brand_color": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "default_footer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_invoice_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_language": {
+            "type": "string"
+          },
+          "default_payment_terms_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ico": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "legal_name": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rounding_mode": {
+            "type": "string"
+          },
+          "tax_mode": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vat_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vat_payer": {
+            "type": "boolean"
+          },
+          "web": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AccContactAddress": {
+        "type": "object",
+        "description": "Billing/delivery address for a contact (UC-ACC-03.4).",
+        "required": [
+          "id",
+          "tenant_id",
+          "contact_id",
+          "kind",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postal_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "street": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccContactExt": {
+        "type": "object",
+        "description": "Extended contact projection including the per-contact default columns\nadded to `contact` by migration 00195 (UC-ACC-03.1/.5/.9).\n\nField order matches a `SELECT` from `contact` after the base 00184 columns;\nrepositories that need the extended fields query this type.",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "created_at",
+          "updated_at",
+          "kind",
+          "is_active"
+        ],
+        "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "credit_limit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_discount_pct": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_payment_terms_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "default_price_level": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "iban": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ico": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "merged_into_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vat_verified_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "vat_verified_valid": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "AccDocumentLink": {
+        "type": "object",
+        "description": "Typed relationship edge between two documents (UC-ACC-05.15).",
+        "required": [
+          "id",
+          "tenant_id",
+          "from_invoice_id",
+          "to_invoice_id",
+          "relation",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from_invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "to_invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AccInvoiceExt": {
+        "type": "object",
+        "description": "Extended invoice projection including the columns added to `invoice` by\nmigration 00196 (UC-ACC-05.4/.5/.6/.7/.15).\n\nField order matches a `SELECT` from `invoice` after the base 00184 columns.",
+        "required": [
+          "id",
+          "tenant_id",
+          "contact_id",
+          "number",
+          "issue_date",
+          "due_date",
+          "currency",
+          "total_amount",
+          "base_amount",
+          "vat_amount",
+          "status",
+          "paid_amount",
+          "created_at",
+          "updated_at",
+          "doc_type",
+          "advance_settlement"
+        ],
+        "properties": {
+          "advance_settlement": {
+            "type": "string"
+          },
+          "bank_account_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "base_amount": {
+            "type": "string"
+          },
+          "base_currency_amount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "corrected_invoice_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "doc_type": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "exchange_rate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "number": {
+            "type": "string"
+          },
+          "numbering_series_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "paid_amount": {
+            "type": "string"
+          },
+          "settled_advance_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "taxable_supply_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "total_amount": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "variable_symbol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vat_amount": {
+            "type": "string"
+          }
+        }
+      },
+      "AccItemCategory": {
+        "type": "object",
+        "description": "Catalog category (UC-ACC-04.4).",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccNumberingSeries": {
+        "type": "object",
+        "description": "Gapless numbering series per doc type/year (UC-ACC-02.3).",
+        "required": [
+          "id",
+          "tenant_id",
+          "doc_type",
+          "year",
+          "prefix",
+          "format",
+          "next_value",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "doc_type": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "next_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AccPriceLevel": {
+        "type": "object",
+        "description": "Named price level per catalog item (UC-ACC-04.2).",
+        "required": [
+          "id",
+          "tenant_id",
+          "item_id",
+          "name",
+          "price",
+          "price_is_gross",
+          "currency",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "price_is_gross": {
+            "type": "boolean"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccShareLink": {
+        "type": "object",
+        "description": "Capability-token share link for a read-only invoice view (UC-ACC-05.11).",
+        "required": [
+          "id",
+          "tenant_id",
+          "invoice_id",
+          "token",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AccTag": {
+        "type": "object",
+        "description": "Document tag (UC-ACC-05.14). Generic over an entity ref.",
+        "required": [
+          "id",
+          "tenant_id",
+          "entity_type",
+          "entity_id",
+          "tag",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AccUnit": {
+        "type": "object",
+        "description": "Unit of measure (UC-ACC-02.8).",
+        "required": [
+          "id",
+          "tenant_id",
+          "code",
+          "name",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccVatRate": {
+        "type": "object",
+        "description": "Configurable VAT rate (UC-ACC-02.9).",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "rate",
+          "is_default",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effective_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AddTagRequest": {
+        "type": "object",
+        "description": "Request to add a tag to an entity (UC-ACC-05.14).",
+        "required": [
+          "entity_type",
+          "entity_id",
+          "tag"
+        ],
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          }
+        }
+      },
+      "BillingOverviewResponse": {
+        "type": "object",
+        "description": "Billing/plan + usage-vs-limits view (UC-ACC-01.8). MVP stub backed by the\ndefault-plan constants + live usage counts. NEW DTO.",
+        "required": [
+          "plan",
+          "companies_used",
+          "companies_limit",
+          "members_used",
+          "members_limit"
+        ],
+        "properties": {
+          "companies_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "companies_used": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Companies the principal owns vs the plan's company limit."
+          },
+          "members_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "members_used": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Active+pending members in the active company vs the per-company limit."
+          },
+          "plan": {
+            "type": "string",
+            "description": "Plan identifier (MVP: always the default plan)."
+          }
+        }
+      },
+      "CatalogItemRequest": {
+        "type": "object",
+        "description": "Create/update payload for a catalog item (UC-ACC-04.1/.3).",
+        "required": [
+          "name",
+          "kind",
+          "vat_rate",
+          "unit_price",
+          "price_is_gross",
+          "stock_tracked"
+        ],
+        "properties": {
+          "category_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_is_gross": {
+            "type": "boolean"
+          },
+          "stock_tracked": {
+            "type": "boolean"
+          },
+          "unit_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "unit_price": {
+            "type": "string"
+          },
+          "vat_rate": {
+            "type": "string"
+          }
+        }
+      },
+      "CompanyAccessDto": {
+        "type": "object",
+        "description": "One company the current principal can operate (UC-ACC-01.2/.3).",
+        "required": [
+          "organization_id",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "ContactRequest": {
+        "type": "object",
+        "description": "Create/update payload for a contact (UC-ACC-03.1/.9).",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_payment_terms_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "default_price_level": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "iban": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ico": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateCompanyRequest": {
+        "type": "object",
+        "description": "Request to create a new company/agenda (UC-ACC-01.1/.2). NEW DTO.",
+        "required": [
+          "name",
+          "contact_email"
+        ],
+        "properties": {
+          "contact_email": {
+            "type": "string",
+            "description": "Billing/contact email for the company."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the company (agenda)."
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional URL slug; auto-derived from `name` when omitted."
+          }
+        }
+      },
+      "CreateCreditNoteRequest": {
+        "type": "object",
+        "description": "Request to create a credit note against an issued invoice (UC-ACC-05.7).",
+        "required": [
+          "items",
+          "issue_date"
+        ],
+        "properties": {
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateInvoiceItem"
+            },
+            "description": "Full vs partial: lines to reverse; empty = full correction."
+          }
+        }
+      },
+      "CreateInvoice": {
+        "type": "object",
+        "description": "Request to create a new invoice.",
+        "required": [
+          "tenant_id",
+          "contact_id",
+          "number",
+          "issue_date",
+          "due_date",
+          "currency",
+          "items"
+        ],
+        "properties": {
+          "contact_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateInvoiceItem"
+            }
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceStatus"
+              }
+            ]
+          },
+          "taxable_supply_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variable_symbol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateInvoiceItem": {
+        "type": "object",
+        "description": "Request to create a new invoice item.",
+        "required": [
+          "description",
+          "qty",
+          "unit_price",
+          "vat_rate"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "string"
+          },
+          "vat_rate": {
+            "type": "string"
+          },
+          "vat_rate_type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VatRate",
+                "description": "Optional named VAT rate (overrides vat_rate if provided based on tenant country)"
+              }
+            ]
+          }
+        }
+      },
+      "CreateLinkRequest": {
+        "type": "object",
+        "description": "Request to create a typed link between two documents (UC-ACC-05.15).",
+        "required": [
+          "to_invoice_id",
+          "relation"
+        ],
+        "properties": {
+          "relation": {
+            "type": "string"
+          },
+          "to_invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreateNumberingSeriesRequest": {
+        "type": "object",
+        "description": "Create payload for a numbering series (UC-ACC-02.3).",
+        "required": [
+          "doc_type",
+          "year",
+          "prefix",
+          "format"
+        ],
+        "properties": {
+          "doc_type": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateShareLinkRequest": {
+        "type": "object",
+        "description": "Request to create a share link for an invoice (UC-ACC-05.11).",
+        "required": [
+          "invoice_id"
+        ],
+        "properties": {
+          "expires_in_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional expiry in seconds from now; None = no expiry."
+          },
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DependencyHealth": {
+        "type": "object",
+        "description": "Dependency health check result.",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Error message if unhealthy."
+          },
+          "latency_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Response time in milliseconds.",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the dependency."
+          },
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "Health status."
+          }
+        }
+      },
+      "GrantAccountantRequest": {
+        "type": "object",
+        "description": "Request to grant an accountant cross-company access (UC-ACC-01.7). NEW DTO.",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email of the accountant's account."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional role override; defaults to \"read-only\" (read+export)."
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "description": "Deep readiness response.",
+        "required": [
+          "status",
+          "version",
+          "service",
+          "region",
+          "timestamp"
+        ],
+        "properties": {
+          "dependencies": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DependencyHealth"
+            },
+            "description": "Dependency health checks (Story 95.3)."
+          },
+          "region": {
+            "type": "string",
+            "description": "Region/deployment."
+          },
+          "service": {
+            "type": "string",
+            "description": "Service name."
+          },
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "Overall service status."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Current timestamp."
+          },
+          "version": {
+            "type": "string",
+            "description": "Service version."
+          }
+        }
+      },
+      "HealthStatus": {
+        "type": "string",
+        "description": "Health status enumeration.",
+        "enum": [
+          "healthy",
+          "degraded",
+          "unhealthy"
+        ]
+      },
+      "InviteUserRequest": {
+        "type": "object",
+        "description": "Request to invite a user into the active company with a role\n(UC-ACC-01.4/.5). NEW DTO.",
+        "required": [
+          "email",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email of the user to invite. Must already correspond to an account."
+          },
+          "role": {
+            "type": "string",
+            "description": "One of: \"admin\" | \"standard\" | \"read-only\" (UC-ACC-01.5)."
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "description": "Native issued invoice.",
+        "required": [
+          "id",
+          "tenant_id",
+          "contact_id",
+          "number",
+          "issue_date",
+          "due_date",
+          "currency",
+          "total_amount",
+          "base_amount",
+          "vat_amount",
+          "status",
+          "paid_amount",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "base_amount": {
+            "type": "string"
+          },
+          "contact_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "number": {
+            "type": "string"
+          },
+          "paid_amount": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "taxable_supply_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "total_amount": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "variable_symbol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vat_amount": {
+            "type": "string"
+          }
+        }
+      },
+      "InvoiceItem": {
+        "type": "object",
+        "description": "Line item for an invoice.",
+        "required": [
+          "id",
+          "invoice_id",
+          "tenant_id",
+          "description",
+          "qty",
+          "unit_price",
+          "vat_rate",
+          "total_amount",
+          "base_amount",
+          "vat_amount"
+        ],
+        "properties": {
+          "base_amount": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "qty": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "total_amount": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "string"
+          },
+          "vat_amount": {
+            "type": "string"
+          },
+          "vat_rate": {
+            "type": "string"
+          }
+        }
+      },
+      "InvoiceStatus": {
+        "type": "string",
+        "description": "Status of an issued invoice.",
+        "enum": [
+          "draft",
+          "issued",
+          "paid",
+          "partially_paid",
+          "overdue"
+        ]
+      },
+      "IssueInvoiceRequest": {
+        "type": "object",
+        "description": "Request to issue a draft invoice (allocate a gapless number) (UC-ACC-05.1).",
+        "properties": {
+          "numbering_series_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Numbering series to allocate from; if absent, the default for the\ninvoice's doc_type/year is used."
+          }
+        }
+      },
+      "LivenessResponse": {
+        "type": "object",
+        "description": "Minimal liveness probe response.",
+        "required": [
+          "status",
+          "service",
+          "version"
+        ],
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "MembershipMutationResponse": {
+        "type": "object",
+        "description": "Response after a membership mutation (invite / role / grant). NEW DTO.",
+        "required": [
+          "membership_id",
+          "organization_id",
+          "user_id",
+          "role"
+        ],
+        "properties": {
+          "membership_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "MergeContactRequest": {
+        "type": "object",
+        "description": "Request to merge a source contact into a target (UC-ACC-03.5).",
+        "required": [
+          "target_id"
+        ],
+        "properties": {
+          "target_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "MyCompaniesResponse": {
+        "type": "object",
+        "description": "Response listing the principal's companies.",
+        "required": [
+          "companies"
+        ],
+        "properties": {
+          "active_company_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The currently active company resolved from the JWT/session, if any."
+          },
+          "companies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanyAccessDto"
+            }
+          }
+        }
+      },
+      "PriceLevelRequest": {
+        "type": "object",
+        "description": "Create payload for a price level (UC-ACC-04.2).",
+        "required": [
+          "name",
+          "price",
+          "price_is_gross",
+          "currency"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "price_is_gross": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetExchangeRateRequest": {
+        "type": "object",
+        "description": "Request to set/override the FX rate on a foreign-currency invoice (UC-ACC-05.4).",
+        "required": [
+          "exchange_rate"
+        ],
+        "properties": {
+          "exchange_rate": {
+            "type": "string"
+          }
+        }
+      },
+      "SetMemberRoleRequest": {
+        "type": "object",
+        "description": "Request to change a member's role (UC-ACC-01.5). NEW DTO.",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "One of: \"admin\" | \"standard\" | \"read-only\"."
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SharedInvoiceView": {
+        "type": "object",
+        "description": "Public read-only view of a shared invoice (UC-ACC-05.11). No PII beyond the\ndocument itself; the coder shapes the exact fields.",
+        "required": [
+          "number",
+          "currency",
+          "total_amount",
+          "status"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total_amount": {
+            "type": "string"
+          }
+        }
+      },
+      "SwitchCompanyRequest": {
+        "type": "object",
+        "description": "Request to switch the active company (UC-ACC-01.3).",
+        "required": [
+          "organization_id"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "TwoFactorConfirmRequest": {
+        "type": "object",
+        "description": "Request to confirm 2FA with a TOTP code (UC-ACC-16.1).",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "TwoFactorEnrollResponse": {
+        "type": "object",
+        "description": "2FA enrollment-start response (UC-ACC-16.1).",
+        "required": [
+          "otpauth_uri",
+          "recovery_codes"
+        ],
+        "properties": {
+          "otpauth_uri": {
+            "type": "string",
+            "description": "otpauth:// URI / secret for the authenticator app."
+          },
+          "recovery_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One-time recovery codes shown ONCE."
+          }
+        }
+      },
+      "UpdateInvoice": {
+        "type": "object",
+        "description": "Request to update an existing invoice.",
+        "properties": {
+          "contact_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "issue_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_amount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceStatus"
+              }
+            ]
+          },
+          "taxable_supply_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "variable_symbol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpsertCompanySettingsRequest": {
+        "type": "object",
+        "description": "Upsert payload for company settings (UC-ACC-02.1/.2/.11).",
+        "required": [
+          "legal_name",
+          "tax_mode",
+          "vat_payer",
+          "base_currency",
+          "rounding_mode",
+          "default_payment_terms_days",
+          "default_language"
+        ],
+        "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_currency": {
+            "type": "string"
+          },
+          "default_language": {
+            "type": "string"
+          },
+          "default_payment_terms_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ico": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_name": {
+            "type": "string"
+          },
+          "rounding_mode": {
+            "type": "string"
+          },
+          "tax_mode": {
+            "type": "string"
+          },
+          "vat_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vat_payer": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VatRate": {
+        "type": "string",
+        "description": "VAT rate types for CZ/SK.",
+        "enum": [
+          "zero",
+          "reduced",
+          "first_reduced",
+          "standard"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Accounts",
+      "description": "Accounts, companies & access (EPIC-ACC-01)"
+    },
+    {
+      "name": "Config",
+      "description": "Company & document configuration (EPIC-ACC-02)"
+    },
+    {
+      "name": "Contacts",
+      "description": "Contacts & CRM (EPIC-ACC-03)"
+    },
+    {
+      "name": "Catalog",
+      "description": "Product & price-list catalog (EPIC-ACC-04)"
+    },
+    {
+      "name": "Invoices",
+      "description": "Sales invoicing (EPIC-ACC-05)"
+    },
+    {
+      "name": "Platform",
+      "description": "Security, audit, sharing & 2FA (EPIC-ACC-16)"
+    }
+  ]
+}

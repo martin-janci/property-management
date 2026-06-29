@@ -16,24 +16,52 @@
 //! On a search's first sighting (no watermark) it only sets the watermark — it
 //! does not alert on the entire back-catalogue.
 //!
+//! Cadence (Story 16.3 follow-up): each search carries an `alert_frequency`
+//! (`instant` / `daily` / `weekly`). The worker still polls on a fixed interval,
+//! but only *runs matching* for a search once its frequency window has elapsed
+//! since the last match run (`last_matched_at`): `instant` every poll, `daily`
+//! at most once per 24 h, `weekly` once per 7 days. After a due run the watermark
+//! always advances — even when nothing matched — so the next run starts a fresh
+//! window (otherwise a no-match daily search would rescan on every poll and the
+//! cadence would have no effect). An unrecognised frequency falls back to daily.
+//!
 //! Delivery (#983): queued rows are surfaced to the owning portal user as an
 //! in-app feed via `GET /api/v1/saved-searches/alerts` (+ `…/{id}/read` and
 //! `…/read-all`) — see `routes::saved_searches`. reality-server has no email
 //! transport, so in-app pull is the delivery channel; an email/push drainer off
 //! the same queue remains a future follow-up.
 //!
-//! Out of scope (documented follow-up, blocked on a privilege decision):
-//! - **Favorite price-drop alerts (16.2)**: `portal_favorites` and
-//!   `listing_price_history` are `FORCE ROW LEVEL SECURITY` org-isolated, so a
-//!   context-less worker reads nothing; that half needs per-org / super-admin
-//!   context, a deliberate privilege decision.
+//! Favorite price-drop / back-on-market delivery now lives in
+//! [`crate::services::favorite_alerts`] because those reads must run in an
+//! explicit per-org RLS loop rather than the global-read context used here.
 
 use std::time::Duration;
 
+use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use db::models::PublicListingQuery;
 use db::{repositories::RealityPortalRepository, DbPool};
 use tokio::time::interval;
 use tracing::Instrument;
+
+/// Minimum spacing between match runs for a saved search's `alert_frequency`.
+/// Unknown/missing frequencies fall back to `daily` (the create-time default).
+fn min_match_interval(frequency: &str) -> ChronoDuration {
+    match frequency {
+        "instant" => ChronoDuration::zero(),
+        "weekly" => ChronoDuration::weeks(1),
+        _ => ChronoDuration::days(1),
+    }
+}
+
+/// Whether a saved search is due for a match run given its last run watermark and
+/// the current time. A search with no watermark (first sighting) is always due —
+/// the worker uses that run to establish the watermark without alerting on history.
+fn is_due(frequency: &str, last_matched_at: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
+    match last_matched_at {
+        None => true,
+        Some(last) => now - last >= min_match_interval(frequency),
+    }
+}
 
 /// Configuration for the saved-search alert worker.
 #[derive(Debug, Clone)]
@@ -140,6 +168,7 @@ impl SavedSearchAlertWorker {
             }
         };
 
+        let now = Utc::now();
         let mut queued = 0usize;
         for search in searches {
             // First sighting: establish the watermark, don't alert on history.
@@ -150,6 +179,12 @@ impl SavedSearchAlertWorker {
                     .await;
                 continue;
             };
+
+            // Cadence: skip searches whose alert_frequency window hasn't elapsed
+            // since their last match run. `instant` is always due.
+            if !is_due(&search.alert_frequency, Some(since), now) {
+                continue;
+            }
 
             let query: PublicListingQuery = match serde_json::from_value(search.criteria.clone()) {
                 Ok(q) => q,
@@ -176,23 +211,33 @@ impl SavedSearchAlertWorker {
                 }
             };
 
-            if ids.is_empty() {
-                continue;
+            // Enqueue any new matches; on enqueue failure leave the watermark in
+            // place so the next due run retries the same window.
+            if !ids.is_empty() {
+                if let Err(e) = self
+                    .repo
+                    .enqueue_search_alert(
+                        &mut *conn,
+                        search.id,
+                        search.user_id,
+                        &ids,
+                        "new_listing",
+                    )
+                    .await
+                {
+                    tracing::warn!(id = %search.id, error = %e, "[#983] failed to enqueue alert; skipping watermark advance");
+                    continue;
+                }
+                queued += 1;
             }
 
-            if let Err(e) = self
-                .repo
-                .enqueue_search_alert(&mut *conn, search.id, search.user_id, &ids, "new_listing")
-                .await
-            {
-                tracing::warn!(id = %search.id, error = %e, "[#983] failed to enqueue alert; skipping watermark advance");
-                continue;
-            }
+            // Advance the watermark after every completed scan (matched or not)
+            // so the cadence window restarts; otherwise a no-match search would
+            // be due again on the very next poll, defeating daily/weekly spacing.
             let _ = self
                 .repo
                 .mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64)
                 .await;
-            queued += 1;
         }
 
         if queued > 0 {
@@ -201,5 +246,62 @@ impl SavedSearchAlertWorker {
                 "[#983] saved-search alerts queued"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod cadence_tests {
+    use super::{is_due, min_match_interval};
+    use chrono::{Duration as ChronoDuration, TimeZone, Utc};
+
+    #[test]
+    fn unknown_frequency_falls_back_to_daily() {
+        assert_eq!(min_match_interval("instant"), ChronoDuration::zero());
+        assert_eq!(min_match_interval("daily"), ChronoDuration::days(1));
+        assert_eq!(min_match_interval("weekly"), ChronoDuration::weeks(1));
+        // Anything unrecognised (or an empty/garbled value) behaves like daily.
+        assert_eq!(min_match_interval("hourly"), ChronoDuration::days(1));
+        assert_eq!(min_match_interval(""), ChronoDuration::days(1));
+    }
+
+    #[test]
+    fn first_sighting_is_always_due() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 25, 12, 0, 0).unwrap();
+        assert!(is_due("daily", None, now));
+        assert!(is_due("weekly", None, now));
+        assert!(is_due("instant", None, now));
+    }
+
+    #[test]
+    fn instant_is_due_on_every_poll() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 25, 12, 0, 0).unwrap();
+        // Even one second after the last run, an instant search is due.
+        let last = now - ChronoDuration::seconds(1);
+        assert!(is_due("instant", Some(last), now));
+        assert!(is_due("instant", Some(now), now));
+    }
+
+    #[test]
+    fn daily_throttles_within_24h_and_releases_after() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 25, 12, 0, 0).unwrap();
+        // 23h59m since last run -> not yet due.
+        assert!(!is_due(
+            "daily",
+            Some(now - ChronoDuration::hours(23) - ChronoDuration::minutes(59)),
+            now
+        ));
+        // Exactly 24h -> due (boundary inclusive).
+        assert!(is_due("daily", Some(now - ChronoDuration::hours(24)), now));
+        // Well past the window -> due.
+        assert!(is_due("daily", Some(now - ChronoDuration::days(3)), now));
+    }
+
+    #[test]
+    fn weekly_throttles_within_7d_and_releases_after() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 25, 12, 0, 0).unwrap();
+        // 6 days since last run -> not yet due (a daily-spaced poll must not fire).
+        assert!(!is_due("weekly", Some(now - ChronoDuration::days(6)), now));
+        // Exactly 7 days -> due.
+        assert!(is_due("weekly", Some(now - ChronoDuration::days(7)), now));
     }
 }

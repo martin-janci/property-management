@@ -10,7 +10,8 @@
 //! report_schedule_org_scope_jwt_tests.rs). A resident must get 403 before the
 //! mutation; the role gate runs after the org-membership check.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

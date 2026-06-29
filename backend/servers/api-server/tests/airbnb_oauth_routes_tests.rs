@@ -30,7 +30,8 @@
 //! Live end-to-end token exchange is covered by the manual QA checklist in
 //! `docs/api/README.md#airbnb-oauth-flow`.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
