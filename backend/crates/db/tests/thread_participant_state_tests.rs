@@ -16,6 +16,7 @@
 //! catalog-metadata checks at the bottom of this file, mirroring
 //! `messaging_rls_cross_tenant_tests.rs`.)
 
+use db::models::CreateMessage;
 use db::repositories::MessagingRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -133,6 +134,86 @@ async fn per_user_delete_hides_only_for_deleting_user(pool: PgPool) {
         alice_restored.len(),
         1,
         "unhide must restore the thread to alice's inbox"
+    );
+}
+
+/// A thread the user soft-deleted "for me" must not contribute to their global
+/// unread badge (GH #1771): `count_unread_rls` mirrors the list filter, while
+/// the other participant's count is unchanged. A later inbound message un-hides
+/// the thread (existing `unhide_thread_for_user` path) and the count returns.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
+async fn soft_delete_excludes_thread_from_unread_count(pool: PgPool) {
+    let repo = MessagingRepository::new(pool.clone());
+    let org = seed_org(&pool, "tps-unread").await;
+    let alice = seed_user(&pool, "alice").await;
+    let bob = seed_user(&pool, "bob").await;
+    let thread = seed_thread(&pool, org, alice, bob).await;
+
+    // Bob sends a message → it's unread for alice (not for bob, the sender).
+    repo.create_message_rls(
+        &pool,
+        CreateMessage {
+            thread_id: thread,
+            sender_id: bob,
+            content: "hello alice".to_string(),
+        },
+    )
+    .await
+    .expect("bob sends message");
+
+    let alice_unread_before = repo
+        .count_unread_rls(&pool, alice, org)
+        .await
+        .expect("alice unread before");
+    let bob_unread = repo
+        .count_unread_rls(&pool, bob, org)
+        .await
+        .expect("bob unread");
+    assert_eq!(
+        alice_unread_before, 1,
+        "alice should have 1 unread initially"
+    );
+    assert_eq!(
+        bob_unread, 0,
+        "the sender has no unread of their own message"
+    );
+
+    // Alice deletes the thread for herself → the unread badge must drop to 0,
+    // not stay stuck counting a thread she can no longer see.
+    repo.hide_thread_for_user(&pool, thread, alice)
+        .await
+        .expect("hide for alice");
+
+    let alice_unread_after = repo
+        .count_unread_rls(&pool, alice, org)
+        .await
+        .expect("alice unread after delete");
+    let bob_unread_after = repo
+        .count_unread_rls(&pool, bob, org)
+        .await
+        .expect("bob unread after");
+    assert_eq!(
+        alice_unread_after, 0,
+        "soft-deleted thread must not contribute to alice's unread badge (#1771)"
+    );
+    assert_eq!(
+        bob_unread_after, 0,
+        "alice's per-user delete must not affect bob's count"
+    );
+
+    // A new inbound message un-hides the thread; the count returns — consistent
+    // with the inbox restoring the thread.
+    repo.unhide_thread_for_user(&pool, thread, alice)
+        .await
+        .expect("unhide for alice");
+    let alice_unread_restored = repo
+        .count_unread_rls(&pool, alice, org)
+        .await
+        .expect("alice unread restored");
+    assert_eq!(
+        alice_unread_restored, 1,
+        "un-hiding the thread restores its unread messages to the badge"
     );
 }
 

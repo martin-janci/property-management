@@ -555,6 +555,15 @@ impl MessagingRepository {
     }
 
     /// Count unread messages for a user across all threads with RLS context.
+    ///
+    /// Mirrors the per-participant soft-delete filter applied by
+    /// [`list_threads_rls`] / [`count_threads_rls`] (BIT-182): messages in a
+    /// thread the user soft-deleted "for me" (`thread_participant_state.deleted_at`
+    /// set) are excluded, so the global unread badge can't get stuck counting
+    /// messages in a thread the user can no longer see (GH #1771). A later inbound
+    /// message un-hides the thread via `unhide_thread_for_user`, so the count
+    /// naturally returns — consistent with the inbox. Archived threads are left
+    /// counted (a product call: archive is not "dismiss").
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -569,11 +578,16 @@ impl MessagingRepository {
             SELECT COUNT(*)
             FROM messages m
             JOIN message_threads t ON t.id = m.thread_id
+            -- Per-participant view state for the current user (BIT-182, #1771).
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
               AND m.sender_id != $1
               AND m.read_at IS NULL
               AND m.deleted_at IS NULL
+              -- Don't count unread in threads this user soft-deleted for themselves.
+              AND tps.deleted_at IS NULL
             "#,
         )
         .bind(user_id)
