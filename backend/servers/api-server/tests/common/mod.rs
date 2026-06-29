@@ -12,8 +12,6 @@
 //! not trip the `-Dwarnings` test gate (BIT-345).
 #![allow(dead_code)]
 
-#![allow(dead_code)]
-
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
