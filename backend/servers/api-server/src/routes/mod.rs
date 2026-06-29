@@ -104,10 +104,6 @@ pub mod aml_dsa;
 // Epic 68: Service Provider Marketplace
 pub mod marketplace;
 
-// Epic 69: Public API & Developer Ecosystem
-// ROADMAP(PAP-24): roadmap stub — kept but unmounted in lib.rs (no /api/v1/developer route)
-pub mod public_api;
-
 // Epic 70: Competitive Feature Enhancements — removed (PAP-33): dead scaffold, no migration, no product backing
 
 // Epic 71: Cross-Cutting Infrastructure
@@ -124,10 +120,6 @@ pub mod owner_analytics;
 
 // Epic 77: Dispute Resolution
 pub mod disputes;
-
-// Epic 78: Vendor Operations Portal
-// ROADMAP(PAP-24): roadmap stub — kept but unmounted in lib.rs (no /api/v1/vendor-portal route); live vendor surface is vendors.rs
-pub mod vendor_portal;
 
 // Epic 93: Voice Assistant & OAuth Completion
 pub mod voice_webhooks;

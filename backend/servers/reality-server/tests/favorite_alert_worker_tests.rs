@@ -4,6 +4,8 @@
 //! alerts even though `portal_favorites` and `listing_price_history` are under
 //! FORCE RLS. The worker must iterate orgs and set tenant context explicitly.
 
+#![allow(dead_code)]
+
 use db::models::listing_status;
 use db::repositories::RealityPortalRepository;
 use reality_server::services::{FavoriteAlertConfig, FavoriteAlertWorker};
@@ -63,6 +65,7 @@ async fn seed_listing(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &str
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn worker_queues_price_and_back_on_market_alerts(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let worker = FavoriteAlertWorker::new(

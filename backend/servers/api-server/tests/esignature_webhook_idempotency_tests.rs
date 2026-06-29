@@ -21,7 +21,8 @@
 //! `X-Webhook-Secret` header validated against `ESIGN_WEBHOOK_SECRET`. We pin
 //! that env var so the handler accepts our forged-but-authentic deliveries.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

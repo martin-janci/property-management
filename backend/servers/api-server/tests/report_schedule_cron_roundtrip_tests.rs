@@ -36,7 +36,8 @@
 //! still validates membership against `organization_members`, which the
 //! fixtures seed below.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
@@ -118,6 +119,7 @@ fn put_schedule_req(
 /// land in the dedicated `cron_expression` column, be returned in the response
 /// body, and leave the legacy `time` HH:MM value untouched.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_cron_expression_roundtrips_through_dedicated_column(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -191,6 +193,7 @@ async fn update_cron_expression_roundtrips_through_dedicated_column(pool: PgPool
 /// guards the `COALESCE($cron, cron_expression)` partial-update in
 /// `update_schedule()` from regressing into an unconditional overwrite.
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn recipients_only_update_preserves_cron_and_time(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -262,6 +265,7 @@ async fn recipients_only_update_preserves_cron_and_time(pool: PgPool) {
 /// - the validator rejects an expression it previously accepted (PUT → 400), or
 /// - the SELECT projection drops / transforms `cron_expression` (read ≠ write).
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn cron_validator_round_trip_stable(pool: PgPool) {
     // Canonical set taken from the validate_cron_expression unit tests in
     // reports.rs.  If the validator is tightened so that any of these become

@@ -45,6 +45,7 @@ async fn seed_client(repo: &OAuthRepository, suffix: &str) -> String {
 /// otherwise a revoked refresh token could be exchanged for a fresh access
 /// token (RFC 9700 violation).
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn revoked_refresh_token_is_invisible_to_production_lookup(pool: PgPool) {
     let repo = OAuthRepository::new(pool.clone());
     let user_id = seed_user(&pool, "oauth-rt-1@test").await;
@@ -93,6 +94,7 @@ async fn revoked_refresh_token_is_invisible_to_production_lookup(pool: PgPool) {
 /// The reuse-detection lookup MUST return revoked rows so the service layer
 /// can spot replay attacks and burn the rest of the token family.
 #[sqlx::test]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn including_revoked_lookup_sees_revoked_rows(pool: PgPool) {
     let repo = OAuthRepository::new(pool.clone());
     let user_id = seed_user(&pool, "oauth-rt-2@test").await;

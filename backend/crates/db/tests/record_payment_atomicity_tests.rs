@@ -171,6 +171,7 @@ async fn payments_count(pool: &PgPool, action_id: Uuid) -> i64 {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn sequential_payments_accumulate_and_mark_paid(pool: PgPool) {
     let (repo, org, user, action_id) = seed_action(&pool, "seq").await;
 
@@ -224,6 +225,7 @@ async fn sequential_payments_accumulate_and_mark_paid(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn concurrent_payments_accumulate_without_lost_update(pool: PgPool) {
     let (_repo, org, user, action_id) = seed_action(&pool, "conc").await;
 

@@ -31,6 +31,8 @@ describe('PPT-Web Route Definitions', () => {
         'ppt-emergency',
         'ppt-settings-accessibility',
         'ppt-settings-privacy',
+        'ppt-settings-notifications',
+        'ppt-settings-notifications-advanced',
         'ppt-disputes',
         'ppt-dispute-new',
         'ppt-dispute-detail',
@@ -43,7 +45,7 @@ describe('PPT-Web Route Definitions', () => {
     });
 
     it('should have correct route count', () => {
-      expect(sitemap.routes[app].length).toBe(16);
+      expect(sitemap.routes[app].length).toBe(18);
     });
   });
 

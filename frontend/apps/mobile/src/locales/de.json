@@ -130,6 +130,7 @@
     "buildingsLoadError": "Ihre Gebäude konnten nicht geladen werden",
     "photosCompressedTitle": "Fotos komprimiert",
     "photosCompressedWarning": "Die ausgewählten Fotos überschritten 10 MB ({{original}} MB) und wurden auf {{final}} MB komprimiert, damit sie schneller hochgeladen werden. Die Bildqualität kann reduziert sein.",
+    "photosStillLargeWarning": "Auch nach der Komprimierung sind die Fotos noch {{final}} MB groß (über dem Limit von 10 MB), daher kann der Upload bei schwacher Verbindung langsam sein oder fehlschlagen.",
     "compressingPhotos": "Fotos werden optimiert…",
     "queuedTitle": "Offline gespeichert",
     "queuedMessage": "Sie sind offline. Ihre Meldung wurde gespeichert und wird automatisch synchronisiert, sobald Sie wieder online sind.",

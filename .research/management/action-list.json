@@ -457,11 +457,17 @@
       "action": "Coverage gap [mvp]: Announcement Viewing & Acknowledgment — verify and finish to done. Gaps: sprint-status ready-for-dev — code is ahead of label but story not marked done; announcements.md screen buildStatus=in-progress",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | dev-reconcile 2026-06-26T20:18:14Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "569fc6e0bfe5ffcb6b230f889343b63f55dec314",
+        "subject": "6-2-announcement-viewing-acknowledgment: reconcile screen-map + sprint-status to done (#1834)",
+        "at": "2026-06-26T20:18:14Z"
+      }
     },
     {
       "id": "6-3-announcement-comments-discussion",
@@ -502,11 +508,18 @@
       "action": "Coverage gap [mvp]: Direct Messaging — verify and finish to done. Gaps: sprint-status ready-for-dev — code is well ahead of the label but story not marked done",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-27T16:06:45Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1844,
+        "merged_at": "2026-06-25T12:22:13Z",
+        "at": "2026-06-27T16:06:45Z"
+      }
     },
     {
       "id": "79-1-api-client-integration",
@@ -575,6 +588,239 @@
         "subject": "10b-7-contextual-help-documentation: reconcile sprint-status to done (#1831)",
         "at": "2026-06-25T10:08:08Z"
       }
+    },
+    {
+      "id": "79-3-error-handling-toasts",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "7a-5-document-sharing",
+      "action": "Coverage gap [mvp]: Document Sharing — verify and finish to done. Gaps: Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input — non-blocking polish item",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "81-1-report-schedule-editing",
+      "action": "Coverage gap [phase2]: Report Schedule Editing — verify and finish to done. Gaps: sprint-status.yaml has no 81-1 key (only epic-80 keys present); classification driven by code+screen+PR consensus; Screen apiStatus: partial and several gap-81-1 follow-up PRs indicate minor edge-case/RBAC fixes were needed post-delivery",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-28T10:12:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1917,
+        "merged_at": "2026-06-28T04:24:55Z",
+        "at": "2026-06-28T10:12:48Z"
+      }
+    },
+    {
+      "id": "81-2-report-execution-history",
+      "action": "Coverage gap [phase2]: Report Execution History — verify and finish to done. Gaps: sprint-status.yaml has no 81-2 key (only epic-80 keys present); classification driven by code+screen+PR consensus; Screen apiStatus: partial — download/retry flow had a test-gap follow-up (d1785e5fb)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "82-1-swiftui-project-setup",
+      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "82-3-home-search-screens",
+      "action": "Coverage gap [phase4]: Home and Search Screens — verify and finish to done. Gaps: mobile-native KMP buildStatus still in-progress; SwiftUI iOS slice is a parallel port that lagged (bug-ios-searchview-uncompilable PR #1357 was a recent fix)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "82-5-inquiries-account",
+      "action": "Coverage gap [phase4]: Inquiries and Account — verify and finish to done. Gaps: Inline inquiry thread/conversation view noted as deferred in KMP agent log (inquiry-reply API + scheduling backend); iOS SendInquiryView present so iOS slice covered",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "83-2-booking-integration",
+      "action": "Coverage gap [phase4]: Booking.com OAuth and Sync — verify and finish to done. Gaps: Booking.com uses credential-based connect + OTA-XML rather than OAuth proper (matches Booking.com's real API model, not a true OAuth handshake like Airbnb)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "83-3-portal-webhooks",
+      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "84-4-notification-triggers",
+      "action": "Coverage gap [mvp]: Notification Trigger System — verify and finish to done. Gaps: No sprint-status entry to corroborate; trigger-specific unit/integration test not confirmed; no screen-map (orphan epic)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "85-1-environment-variables",
+      "action": "Coverage gap [mvp]: Environment Variable Setup — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-28T10:12:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1914,
+        "merged_at": "2026-06-28T04:25:06Z",
+        "at": "2026-06-28T10:12:48Z"
+      }
+    },
+    {
+      "id": "85-2-build-configuration",
+      "action": "Coverage gap [mvp]: Build Configuration by Environment — verify and finish to done. Gaps: AC-5 automated build scripts not found under mobile-native (no build*.sh located) — verify CLI build automation exists; Story markdown still Status: pending (stale vs. merged code); no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-28T10:12:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1916,
+        "merged_at": "2026-06-28T04:26:40Z",
+        "at": "2026-06-28T10:12:48Z"
+      }
+    },
+    {
+      "id": "8a-1-channel-level-notification-toggles",
+      "action": "Coverage gap [mvp]: Channel-Level Notification Toggles — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "8a-2-critical-notification-override",
+      "action": "Coverage gap [mvp]: Critical Notification Override — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-28T10:12:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1913,
+        "merged_at": "2026-06-28T04:27:06Z",
+        "at": "2026-06-28T10:12:48Z"
+      }
+    },
+    {
+      "id": "8a-3-notification-preference-sync",
+      "action": "Coverage gap [mvp]: Notification Preference Sync — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-06-28T10:12:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1915,
+        "merged_at": "2026-06-28T04:28:07Z",
+        "at": "2026-06-28T10:12:48Z"
+      }
+    },
+    {
+      "id": "10b-1-organization-management-dashboard",
+      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "10b-2-feature-flag-management",
+      "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "10b-6-user-onboarding-tour",
+      "action": "Coverage gap [mvp]: User Onboarding Tour — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }

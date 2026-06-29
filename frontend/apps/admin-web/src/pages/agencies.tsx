@@ -95,8 +95,6 @@ const AgenciesPage: React.FC = () => {
   );
 
   // N9+: Add Domain action — wired to POST /api/v1/admin/agencies/{id}/domains.
-  // The backend stub currently returns 501 NOT_IMPLEMENTED. The call is made
-  // so future delivery of the provisioning service auto-wires without a FE change.
   const handleAddDomain = useCallback(
     async (agency: Agency) => {
       const host = window.prompt(`Enter domain to add to ${agency.name}:`);
@@ -110,13 +108,7 @@ const AgenciesPage: React.FC = () => {
           credentials: 'include',
           body: JSON.stringify({ host }),
         });
-        if (res.status === 501) {
-          showToast({
-            type: 'warning',
-            title: t('admin.agencies.toast.notWiredTitle'),
-            message: t('admin.agencies.toast.notWiredMessage', { id: agency.id }),
-          });
-        } else if (res.ok) {
+        if (res.ok) {
           showToast({
             type: 'success',
             title: t('admin.agencies.toast.domainAddedTitle', { defaultValue: 'Domain added' }),

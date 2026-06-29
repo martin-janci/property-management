@@ -54,13 +54,6 @@ export default function ImpersonationListPage() {
         credentials: 'include',
       });
       if (!res.ok) {
-        if (res.status === 404) {
-          // Endpoint not yet implemented on backend — fall back to empty list
-          console.warn(
-            'GET /api/v1/admin/impersonation/active returned 404 — endpoint may not be implemented yet'
-          );
-          return { items: [] };
-        }
         throw new Error(`Failed to load impersonation sessions: ${res.status}`);
       }
       return res.json() as Promise<ActiveSessionsResponse>;

@@ -1,6 +1,12 @@
 //! Database models.
 
 pub mod accounting;
+// ACC Invoicing/Accounting MVP — Foundation-owned model files (EPIC-ACC-02/03/04/05/16).
+pub mod acc_catalog;
+pub mod acc_config;
+pub mod acc_contacts_ext;
+pub mod acc_invoicing_ext;
+pub mod acc_platform;
 pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
@@ -114,6 +120,16 @@ pub use accounting_provider::{
     AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
     AccountingProviderSyncCursor,
 };
+
+// ACC Invoicing/Accounting MVP — re-exports (EPIC-ACC-02/03/04/05/16).
+pub use acc_catalog::{AccCatalogItem, AccItemCategory, AccPriceLevel};
+pub use acc_config::{
+    AccBankAccount, AccCompanySettings, AccDocumentTemplate, AccEmailTemplate, AccNumberingSeries,
+    AccUnit, AccVatRate,
+};
+pub use acc_contacts_ext::{AccContactAddress, AccContactExt, AccContactTag};
+pub use acc_invoicing_ext::{AccAttachment, AccDocType, AccDocumentLink, AccInvoiceExt};
+pub use acc_platform::{AccAuditLog, AccShareLink, AccTag, AccTwoFactor};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,
@@ -720,30 +736,6 @@ pub use marketplace::{
     ReviewQuery, ReviewStatistics, ReviewVerificationRequest, RfqInvitation, RfqQuery, RfqSummary,
     ServiceProviderProfile, UpdateProviderQuote, UpdateProviderReview, UpdateRequestForQuote,
     UpdateServiceProviderProfile, VerificationQuery, VerificationQueueItem,
-};
-
-// Epic 69: Public API & Developer Ecosystem
-pub mod public_api;
-
-pub use public_api::{
-    api_key_scope, api_key_status, rate_limit_tier, sdk_language,
-    webhook_delivery_status as public_api_webhook_delivery_status,
-    webhook_event_type as public_api_webhook_event_type, ApiChangelog, ApiEndpointDoc, ApiKey,
-    ApiKeyDisplay, ApiKeyQuery, ApiKeyUsageStats, ApiRequestLog, ApiRequestLogQuery, CreateApiKey,
-    CreateApiKeyResponse, CreateDeveloperAccount, CreateRateLimitConfig, CreateWebhookResponse,
-    CreateWebhookSubscription as CreatePublicApiWebhookSubscription, DeveloperAccount,
-    DeveloperPortalStats, DeveloperUsageSummary, EndpointUsage, PaginatedResponse, RateLimitConfig,
-    RateLimitHeaders, RateLimitStatus as PublicApiRateLimitStatus, RateLimitWindow,
-    RotateApiKeyResponse, RotateWebhookSecretResponse, SandboxEnvironment, SandboxTestRequest,
-    SandboxTestResponse, SdkDownloadInfo, SdkLanguageInfo, SdkVersion,
-    TestWebhookRequest as PublicApiTestWebhookRequest,
-    TestWebhookResponse as PublicApiTestWebhookResponse, TierUsage, UpdateApiKey,
-    UpdateDeveloperAccount, UpdateRateLimitConfig,
-    UpdateWebhookSubscription as UpdatePublicApiWebhookSubscription,
-    WebhookDelivery as PublicApiWebhookDelivery,
-    WebhookDeliveryQuery as PublicApiWebhookDeliveryQuery,
-    WebhookSubscription as PublicApiWebhookSubscription,
-    WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
 };
 
 // Epic 71: Cross-Cutting Infrastructure

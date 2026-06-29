@@ -21,6 +21,8 @@
 //! (pre-fix) query would. Each test also runs the unscoped lookup to
 //! demonstrate the leak the `_for_org` variant closes.
 
+#![allow(dead_code)]
+
 use db::repositories::FaultRepository;
 use sqlx::PgPool;
 use uuid::Uuid;

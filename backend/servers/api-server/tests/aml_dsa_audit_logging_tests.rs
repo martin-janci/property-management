@@ -14,7 +14,8 @@
 //! in `audit_logs`. They cover the two handlers named in the PAP-42 acceptance
 //! criteria: `review_aml_assessment` and `take_moderation_action`.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{

@@ -25,7 +25,8 @@
 //!      test establishes real org/tenant context (the membership row), so the
 //!      cross-org rejection is NOT a trivial "no context" pass.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::http::StatusCode;

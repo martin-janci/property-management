@@ -23,7 +23,8 @@
 //! regression is `get_agency`, which previously returned 200 with the full
 //! agency record and now returns 4xx.
 
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 mod common;
 
 use axum::{
