@@ -188,6 +188,14 @@ jobs:
         working-directory: backend
         run: ./scripts/check-migration-versions.sh
 
+      # Regression test for the guard itself (GH #1904): a pure-shell gate with
+      # no test can silently rot. This is failing-on-main if the collision
+      # detection regresses, so the guard can't quietly stop catching collisions.
+      - name: Migration Version Guard Self-Test
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: ./scripts/check-migration-versions.test.sh
+
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
       # entire life of the repo (every `rg … || true` swallowed exit 127 and
