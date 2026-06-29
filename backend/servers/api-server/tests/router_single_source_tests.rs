@@ -116,3 +116,42 @@ fn route_table_contains_the_previously_diverged_routers() {
          truth (#867): {missing:?}"
     );
 }
+
+/// Middleware parity guard (#954 / PR #963 follow-up).
+///
+/// The route table is shared via `route_table()`, but middleware layers are
+/// applied separately in two places: the production binary
+/// (`main.rs::apply_middleware`) and the test-side `lib.rs::create_router`.
+/// Security-critical edge middleware that lives in only one of the two paths is
+/// the same drift failure mode #867 fixed for routes — the `security_headers`
+/// layer originally shipped in `main.rs` only, so integration tests ran without
+/// it and the wiring was never exercised.
+///
+/// This is a pure source check (no DB / no runtime) so it runs in every
+/// `cargo test`, complementing the DB-backed runtime assertions in
+/// `security_headers_tests.rs`.
+#[test]
+fn security_headers_layer_is_wired_into_both_router_paths() {
+    let main_src = read_src("main.rs");
+    let lib_src = read_src("lib.rs");
+
+    assert!(
+        main_src.contains("api_core::middleware::security_headers"),
+        "main.rs (production binary) must apply the `security_headers` layer (#954)."
+    );
+
+    // Pin the assertion to the `create_router` body so we are checking the
+    // actual served chain, not a stray mention elsewhere in lib.rs.
+    let start = lib_src
+        .find("pub fn create_router")
+        .expect("create_router must exist in lib.rs");
+    let create_router_body = &lib_src[start..];
+
+    assert!(
+        create_router_body.contains("api_core::middleware::security_headers"),
+        "lib.rs::create_router must apply the `security_headers` layer so the \
+         integration-test path matches production (#954). It previously lived \
+         only in main.rs, leaving every integration test running without \
+         security headers."
+    );
+}
