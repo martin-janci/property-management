@@ -2,13 +2,12 @@
 //!
 //! The existing `voting_tests.rs` only asserts the negative auth paths
 //! (`RlsConnection` rejects requests without a Bearer token / tenant context).
-//! This file drives the success paths end-to-end: it provisions an org + member
-//! + building, mints a real HS256 access token, and sets `X-Tenant-ID` so the
-//!   `ValidatedTenantExtractor` behind `RlsConnection` resolves the caller's
-//!   organization (no `host_tenant_middleware` is mounted under `TestApp`, so the
-//!   header is the only tenant source).
 //!
-//! Each test asserts an HTTP-level 2xx on a voting handler.
+//! This file drives the success paths end-to-end: it provisions an org, a
+//! member, and a building, mints a real HS256 access token, and sets
+//! `X-Tenant-ID` so `ValidatedTenantExtractor` behind `RlsConnection` resolves
+//! the caller's organization. Each test then asserts an HTTP-level 2xx on a
+//! voting handler.
 mod common;
 
 use axum::http::StatusCode;
