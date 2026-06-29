@@ -307,7 +307,9 @@ jobs:
         # order), so the gate peels failures one merge at a time (PAP-123).
         # --test-threads=4: cap concurrent test binaries to avoid Postgres
         # connection pool exhaustion that causes silent 4h+ hangs (BIT-334).
-        run: cargo test --workspace --no-fail-fast -- --test-threads=4
+        # timeout 150m: per-step hard kill in case job-level timeout-minutes
+        # does not fire (observed: GH runner does not always enforce it).
+        run: timeout 150m cargo test --workspace --no-fail-fast -- --test-threads=4 || { echo "::error::Tests timed out or failed (exit $?)"; exit 1; }
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
