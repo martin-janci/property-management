@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-23T09:59:19Z",
-  "scan_kind": "deep",
+  "generated": "2026-06-29T03:04:12Z",
+  "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
       "title": "Announcement Creation & Targeting",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -18,14 +18,13 @@
         "sprint-status: 6-1-announcement-creation-targeting: review -> partial",
         "Backend routes present: lifecycle.rs (publish/schedule/archive, '//! ... Story 6.1'), crud.rs, ai_draft.rs (target audience), repositories/announcement.rs",
         "ppt-web: features/announcements/components/TargetSelector.tsx + SchedulePicker.tsx + CreateAnnouncementPage.tsx + AnnouncementForm.tsx",
-        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)"
+        "screen-map: announcement-new.md buildStatus=shipped (but announcements.md still in-progress)",
+        "merged PR #1832 (6-1-announcement-creation-targeting: verify &amp; reconcile story to done)",
+        "sprint-status flipped to done (verified 2026-06-25) \u2014 upkeep 2026-06-29"
       ],
-      "gaps": [
-        "sprint-status still 'review' (not flipped to done) — verification/sign-off pending",
-        "announcements.md screen buildStatus=in-progress, not shipped"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/announcement-new",
@@ -51,7 +50,7 @@
       "id": "6-2-announcement-viewing-acknowledgment",
       "title": "Announcement Viewing & Acknowledgment",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -63,14 +62,13 @@
         "sprint-status: 6-2-announcement-viewing-acknowledgment: ready-for-dev -> partial",
         "ppt-web: ViewAnnouncementPage.tsx + AcknowledgmentStats.tsx + UnreadBadge.tsx + hooks/acknowledgment.test.tsx",
         "Backend: routes/announcements/engagement.rs (acknowledge/read tracking)",
-        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)"
+        "mobile: screens/announcements/AnnouncementDetailScreen.tsx + AnnouncementsScreen.tsx (+ test)",
+        "merged PR #1834 (6-2-announcement-viewing-acknowledgment: finish viewing/ack to done (docs/status reconcili)",
+        "sprint-status flipped to done (verified 2026-06-25) \u2014 upkeep 2026-06-29"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — code is ahead of label but story not marked done",
-        "announcements.md screen buildStatus=in-progress"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -84,7 +82,7 @@
       "id": "6-3-announcement-comments-discussion",
       "title": "Announcement Comments & Discussion",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -93,17 +91,15 @@
       "owner_role": "pm-backend",
       "evidence": [
         "sprint-status: 6-3-announcement-comments-discussion: ready-for-dev -> partial",
-        "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' — list/create/delete on /{id}/comments)",
+        "Backend: routes/announcements/comments.rs ('//! Announcement comment routes (Story 6.3)' \u2014 list/create/delete on /{id}/comments)",
         "ppt-web: features/announcements/components/AnnouncementComments.tsx (+CSS); useAnnouncementComments hooks wired in ViewAnnouncementPageInner",
-        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress"
+        "screen-map agent log: 2026-05-24 gap-6-3-comments-web-ui added comments component; ppt-web planned->in-progress",
+        "merged PR #1835 (6-3-announcement-comments-discussion: verify announcement comments &amp; discussion to don)",
+        "sprint-status flipped to done (verified 2026-06-25) \u2014 upkeep 2026-06-29"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — not marked done",
-        "announcements.md screen buildStatus still in-progress (not shipped)",
-        "No mobile comments UI observed"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -117,7 +113,7 @@
       "id": "6-4-pinned-announcements",
       "title": "Pinned Announcements",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -127,15 +123,13 @@
       "evidence": [
         "sprint-status: 6-4-pinned-announcements: ready-for-dev -> partial",
         "Backend: routes/announcements/lifecycle.rs pin route ('Story 6.1, 6.4'; .route(\"/{id}/pin\", post(pin_announcement).patch(...))",
-        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx"
+        "ppt-web: features/announcements/components/PinnedAnnouncementsBand.tsx + .css + PinnedAnnouncementsBand.test.tsx",
+        "merged PR #1843 (6-4-pinned-announcements: verify and reconcile to done)",
+        "sprint-status flipped to done (verified 2026-06-25) \u2014 upkeep 2026-06-29"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — not marked done",
-        "No mobile pinned-band UI observed",
-        "announcements.md screen buildStatus in-progress"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/announcements",
@@ -149,7 +143,7 @@
       "id": "6-5-direct-messaging",
       "title": "Direct Messaging",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -161,13 +155,13 @@
         "sprint-status: 6-5-direct-messaging: ready-for-dev -> partial",
         "Backend: routes/messaging.rs (CreateThread/CreateMessage/CreateBlock, ThreadList/ThreadDetail, StartThreadRequest)",
         "ppt-web: features/messaging/ pages MessagesPage/ThreadDetailPage/NewMessagePage + hooks/useMessaging.ts; mobile screens/messages/MessagesScreen.tsx",
-        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)"
+        "screen-map: message-thread.md=shipped, messages-new.md=shipped (PR #922)",
+        "merged PR #1844 (docs(epic-6): reconcile 6-5 direct-messaging status to done)",
+        "sprint-status flipped to done (verified 2026-06-25) \u2014 upkeep 2026-06-29"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — code is well ahead of the label but story not marked done"
-      ],
+      "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/messages",
@@ -203,13 +197,13 @@
       "owner_role": "pm-security",
       "evidence": [
         "sprint-status: 6-6-neighbor-information: done",
-        "Backend: routes/neighbors.rs (list_neighbors, GET/PUT /users/me/privacy, PrivacySettings/ProfileVisibility — privacy-aware)",
+        "Backend: routes/neighbors.rs (list_neighbors, GET/PUT /users/me/privacy, PrivacySettings/ProfileVisibility \u2014 privacy-aware)",
         "mobile: screens/neighbors/NeighborsScreen + index + test",
-        "Privacy/visibility model present (NeighborView, PrivacySettings, ProfileVisibility) — security-sensitive, note for pm-security"
+        "Privacy/visibility model present (NeighborView, PrivacySettings, ProfileVisibility) \u2014 security-sensitive, note for pm-security"
       ],
       "gaps": [],
       "epic": "epic-6",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/neighbors",
@@ -239,7 +233,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
@@ -263,7 +257,8 @@
         "coverage.json id=79-1: status=partial, confidence=high (axios client /lib/api.ts, queryKeys factory, useFaults/useDocuments hooks, 51 useQuery/useMutation instances)",
         "Code now wired: ppt-web/src/routes/groups/faults.tsx:210 uses useFaults(faultQuery) with isLoading/error/refetch; announcements.tsx:59 uses useAnnouncements(listParams)",
         "Merged commits 11aec3c30 / fd2ae26b0 / 626a9cd63 'feat(epic-79): story 79.1 - wire announcements/faults pages + inline error/retry'",
-        "Story file 79-1-api-client-integration.md still reads 'Status: pending'"
+        "Story file 79-1-api-client-integration.md still reads 'Status: pending'",
+        "merged PR #1830 (79-1-api-client-integration: reconcile story status to done (docs))"
       ],
       "gaps": [
         "coverage.json (last_checked 2026-05-23) still marks partial; promote commits not present on this worktree HEAD",
@@ -272,7 +267,7 @@
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -289,15 +284,16 @@
         "coverage.json id=79-2: status=partial, confidence=high (AuthContext login/logout/refresh, JWT + @ppt/api-client, ProtectedRoute.tsx auth gates)",
         "Code present: ppt-web/src/pages/AuthCallbackPage.tsx, LoginPage.tsx, components/ProtectedRoute.tsx (+ tests), AuthRequiredGate.tsx",
         "Merged work: PRs #568/#609 SSO /auth/callback wiring, #642 cookie-Path reconciliation with tests; commits d0cd098a4/556c513ce add SSO callback + token-refresh integration tests",
-        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD"
+        "Promote commits d42db7321/a4603e8a4 (partial->done) exist on dev/main but NOT in this worktree HEAD",
+        "merged PR #1822 (79-2-authentication-flow: reality-web SSO callback e2e coverage (gap-79-2-auth-callback-e2)"
       ],
       "gaps": [
         "coverage.json here still partial; gap-79-2-auth-callback-e2e tracked as open (full e2e verification remaining)",
         "story markdown frontmatter stale ('Status: pending')",
-        "security-sensitive (SSO/JWT/cookie Path) — note for pm-security on final sign-off"
+        "security-sensitive (SSO/JWT/cookie Path) \u2014 note for pm-security on final sign-off"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -327,13 +323,14 @@
         "coverage.json id=79-3: status=done, confidence=high, gaps=[]",
         "Code present: ppt-web/src/components/Toast.tsx (success/error/warning/info variants), ToastProvider exporting useToast",
         "Tests present: Toast.test.tsx + Toast.a11y.test.tsx; Toast.css styling",
-        "errorHandler.ts parses/formats errors; MAX_VISIBLE_TOASTS + auto-dismiss configured"
+        "errorHandler.ts parses/formats errors; MAX_VISIBLE_TOASTS + auto-dismiss configured",
+        "merged PR #1907 (79-3-error-handling-toasts: add screen-map for Error Handling &amp; Toast Notifications)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -354,7 +351,7 @@
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/messages",
@@ -390,7 +387,7 @@
       ],
       "gaps": [],
       "epic": "epic-7a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -426,7 +423,7 @@
       ],
       "gaps": [],
       "epic": "epic-7a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/document-folders",
@@ -458,11 +455,11 @@
         "Backend: PUT /{id}/access (update_document_access) in core.rs; document_access_test.rs, integration/document_access_tests.rs, db/documents_rls_cross_tenant_tests.rs (RLS enforced)",
         "Frontend: mobile DocumentPermissionsScreen.tsx; ppt-web access controls in documents feature",
         "Merged PRs #1311 verify-permission-based-document-access-promote-v2, #1427 document_access RLS text[] binding fix",
-        "Security-sensitive (RLS/tenant access) — note for pm-security; sprint-status=ready-for-dev (stale)"
+        "Security-sensitive (RLS/tenant access) \u2014 note for pm-security; sprint-status=ready-for-dev (stale)"
       ],
       "gaps": [],
       "epic": "epic-7a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/documents",
@@ -498,7 +495,7 @@
       ],
       "gaps": [],
       "epic": "epic-7a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/document-detail",
@@ -530,13 +527,14 @@
         "Backend: routes/documents/shares.rs full surface (list/create/revoke shares, GET /shared/{token}, POST /shared/{token}/access); tests/document_share_access_tests.rs",
         "Frontend: ppt-web DocumentSharePanel.tsx; mobile DocumentShareSheet.tsx + documentShare.ts",
         "Merged PRs #445 mobile share UI, #1184 enforce RLS on public share, #1036 honor membership expiry in share",
-        "sprint-status flags a UX/validation issue (window.confirm + no UUID validation) — minor follow-up, not blocking; classified done with that caveat"
+        "sprint-status flags a UX/validation issue (window.confirm + no UUID validation) \u2014 minor follow-up, not blocking; classified done with that caveat",
+        "merged PR #1908 (7a-5-document-sharing: regression-guard share panel UUID validation + ConfirmationDialog)"
       ],
       "gaps": [
-        "Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input — non-blocking polish item"
+        "Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input \u2014 non-blocking polish item"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/document-detail",
@@ -565,7 +563,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -589,14 +587,15 @@
         "sprint-status.yaml: `80-2-dispute-filing-flow: partial` (authoritative)",
         "Code present: FileDisputePage.tsx, EvidenceUploader.tsx, FileDisputePageRoute.tsx, useDraftStorage.ts + tests (FileDisputePage.test.tsx, FileDisputePageRoute.test.tsx, 82 vitest green)",
         "docs/screens/ppt/file-dispute.md buildStatus: shipped, apiStatus: complete; AC-1/2/3/4/5 implemented per agent log",
-        "Merged PRs: #530 (filing UI), #1359 (AC-4 draft auto-save), #1544 (draft autosave coverage), #1075/#1048 (AC coverage tests)"
+        "Merged PRs: #530 (filing UI), #1359 (AC-4 draft auto-save), #1544 (draft autosave coverage), #1075/#1048 (AC coverage tests)",
+        "merged PR #1845 (80-2-dispute-filing-flow: reconcile screen-map \u2014 i18n fast-follow closed, MVP shipped)"
       ],
       "gaps": [
-        "Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live",
+        "Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live",
         "Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))"
       ],
       "epic": "epic-80",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -626,15 +625,15 @@
       "evidence": [
         "sprint-status.yaml: `80-3-mediation-resolution: partial` (authoritative)",
         "Code present: MediationPage.tsx, MediationWorkspacePage.tsx, MediationResolutionForm.tsx, MediationSessionsPanel.tsx, ResolutionCard.tsx, MediationAssignDialog.tsx + tests; hooks useAssignMediator/useResolveDispute/useEscalateDispute wired (PR #514 added /resolve + escalations backend)",
-        "docs/screens/ppt/dispute-detail.md buildStatus: shipped but apiStatus: partial — party submissions endpoints remain unwired",
+        "docs/screens/ppt/dispute-detail.md buildStatus: shipped but apiStatus: partial \u2014 party submissions endpoints remain unwired",
         "Merged PRs: #514 (mediation-api /resolve), #1029 (mediation error state), #1128 (mediation spinner dedupe); sprint-status note: route wiring resolved 2026-05-25"
       ],
       "gaps": [
         "Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map)",
-        "Mediation-resolution flow not promoted to done in sprint-status — story remains partial pending submissions integration"
+        "Mediation-resolution flow not promoted to done in sprint-status \u2014 story remains partial pending submissions integration"
       ],
       "epic": "epic-80",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",
@@ -659,14 +658,15 @@
         "Backend reports.rs explicitly tagged 'Epic 81: Story 81.1' with update_schedule (PUT /schedules/{id}), pause_schedule, resume_schedule handlers incl. RBAC (manager-tier) + IDOR guard",
         "Frontend ppt-web reports feature: ScheduleForm.tsx, EditScheduleModal.tsx, CronPicker.tsx, ScheduleList.tsx, RecipientManager.tsx, ScheduleDetailPage.tsx + api-client reports hooks/types",
         "Screen-map docs/screens/ppt/reports.md buildStatus: shipped",
-        "Merged PRs: a139cde3e (gap-81-1 cron unit tests #853), b9b849fe3 (CronPicker fix #685), 89efb9beb (add cron_expression column), aa3b9d7e0 (route cron via dedicated column)"
+        "Merged PRs: a139cde3e (gap-81-1 cron unit tests #853), b9b849fe3 (CronPicker fix #685), 89efb9beb (add cron_expression column), aa3b9d7e0 (route cron via dedicated column)",
+        "merged PR #1917 (81-1-report-schedule-editing: reconcile frontend cron validator with backend (#1368))"
       ],
       "gaps": [
         "sprint-status.yaml has no 81-1 key (only epic-80 keys present); classification driven by code+screen+PR consensus",
         "Screen apiStatus: partial and several gap-81-1 follow-up PRs indicate minor edge-case/RBAC fixes were needed post-delivery"
       ],
       "epic": "epic-81",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -691,14 +691,15 @@
         "Backend reports.rs tagged 'Epic 81: Story 81.2' with list_schedule_executions (GET /schedules/{id}/executions), get_execution, get_execution_download_url, retry_execution handlers",
         "Frontend ppt-web ExecutionHistory.tsx (371 lines) + types ExecutionHistoryResponse, ReportExecution, ExecutionDownloadUrl in api-client",
         "Screen-map docs/screens/ppt/reports.md buildStatus: shipped",
-        "Merged PR d1785e5fb (e2e regression for report-exec-history download); api-client reports/api.ts+hooks.ts wired"
+        "Merged PR d1785e5fb (e2e regression for report-exec-history download); api-client reports/api.ts+hooks.ts wired",
+        "merged PR #1779 (gap-81-2-report-execution-history-download-verify: harden report presigned-download path)"
       ],
       "gaps": [
         "sprint-status.yaml has no 81-2 key (only epic-80 keys present); classification driven by code+screen+PR consensus",
-        "Screen apiStatus: partial — download/retry flow had a test-gap follow-up (d1785e5fb)"
+        "Screen apiStatus: partial \u2014 download/retry flow had a test-gap follow-up (d1785e5fb)"
       ],
       "epic": "epic-81",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -728,7 +729,7 @@
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -749,7 +750,7 @@
       ],
       "gaps": [],
       "epic": "epic-82",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality-mobile/home",
@@ -803,7 +804,7 @@
         "mobile-native KMP buildStatus still in-progress; SwiftUI iOS slice is a parallel port that lagged (bug-ios-searchview-uncompilable PR #1357 was a recent fix)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality-mobile/home",
@@ -837,7 +838,7 @@
       ],
       "gaps": [],
       "epic": "epic-82",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality-mobile/listing-detail",
@@ -873,7 +874,7 @@
         "Inline inquiry thread/conversation view noted as deferred in KMP agent log (inquiry-reply API + scheduling backend); iOS SendInquiryView present so iOS slice covered"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality-mobile/inquiries",
@@ -908,7 +909,7 @@
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality/agency-import",
@@ -939,7 +940,7 @@
         "Booking.com uses credential-based connect + OTA-XML rather than OAuth proper (matches Booking.com's real API model, not a true OAuth handshake like Airbnb)"
       ],
       "epic": "epic-83",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality/agency-import",
@@ -963,13 +964,13 @@
         "Backend route registered in lib.rs: /api/v1/webhooks/portals -> routes::portal_webhooks::router(); portal_webhooks.rs (28KB) with reality_portal/sreality/bezrealitky view+inquiry webhooks and HMAC-SHA256 signature verification (verify_webhook_signature, require_portal_webhook_verification)",
         "Additional inbound portal receivers in integrations/webhook.rs (portal/listing-site webhooks, public no-auth) with PortalInquiryWebhook/PortalViewWebhook models",
         "Merged PRs: #874 (fail closed on unverified portal webhooks), #1052 (HTTP-level portal webhook tests)",
-        "Security-sensitive (HMAC verification, fail-closed) — flag for pm-security review"
+        "Security-sensitive (HMAC verification, fail-closed) \u2014 flag for pm-security review"
       ],
       "gaps": [
         "Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect"
       ],
       "epic": "epic-83",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality/agency-import",
@@ -1005,7 +1006,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1034,7 +1035,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/document-detail",
@@ -1064,7 +1065,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "reality/listing-detail",
@@ -1101,7 +1102,7 @@
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1115,19 +1116,20 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "backend/crates/db/migrations/00081_create_pgvector.sql labeled 'Story 103.5: pgvector migration for RAG (Retrieval Augmented Generation)' — internal Epic 103 numbering matches the storage.rs Epic 103 label for this epic",
+        "backend/crates/db/migrations/00081_create_pgvector.sql labeled 'Story 103.5: pgvector migration for RAG (Retrieval Augmented Generation)' \u2014 internal Epic 103 numbering matches the storage.rs Epic 103 label for this epic",
         "Migration enables pgvector extension conditionally and adds vector column/index only if extension is available",
         "Graceful-degradation design: keeps a JSONB embedding fallback column 'when pgvector is not available', migration still succeeds without vector setup",
-        "No application-layer RAG retrieval surfaced (no embedding-write/cosine-search service or query handler found in routes/repositories)"
+        "No application-layer RAG retrieval surfaced (no embedding-write/cosine-search service or query handler found in routes/repositories)",
+        "merged PR #1833 (84-5-pgvector-rag: fix v_rag_statistics view contract + add RAG similarity-search tests)"
       ],
       "gaps": [
-        "RAG retrieval/query service (embedding generation + similarity search) not implemented — migration only",
+        "RAG retrieval/query service (embedding generation + similarity search) not implemented \u2014 migration only",
         "Vector path is conditional/optional (JSONB fallback) rather than a hard pgvector dependency",
         "No sprint-status entry and no test exercising vector similarity search",
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1145,13 +1147,14 @@
         "RN: frontend/apps/mobile/app.config.ts tagged 'Epic 85 - Story 85.1' loads .env.development/.staging/.production (all 4 .env files present) and injects API_URL/ENVIRONMENT",
         "KMP shared: mobile-native/shared/src/.../ApiConfig.kt + expect/actual PlatformConfig (androidMain reads BuildConfig, iosMain reads Info.plist via NSBundle, doc-tagged Story 85.1)",
         "iOS: Configurations/{Base,Development,Staging,Production}.xcconfig set API_BASE_URL/ENVIRONMENT/ENABLE_LOGGING per env",
-        "Merged PRs #93 (Epics 66-85) & #97 (Epic 79-85) plus feat(epic-85) commits (724639635, 42cd1b55f route mobile API_BASE_URL); story file still says Status: in-progress; epic-85 absent from sprint-status dev_status map"
+        "Merged PRs #93 (Epics 66-85) & #97 (Epic 79-85) plus feat(epic-85) commits (724639635, 42cd1b55f route mobile API_BASE_URL); story file still says Status: in-progress; epic-85 absent from sprint-status dev_status map",
+        "merged PR #1914 (85-1-environment-variables: add Story 85.1 Environment Variable Setup screen-map)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-85",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1168,15 +1171,16 @@
         "Android: mobile-native/androidApp/build.gradle.kts productFlavors dev/staging/production with flavorDimensions 'environment', applicationIdSuffix (.dev/.staging), buildConfigField API_BASE_URL/ENVIRONMENT/ENABLE_LOGGING, buildTypes debug (AC-1,4)",
         "iOS: mobile-native/iosApp/xcschemes/RealityPortal-{Dev,Staging,Prod}.xcscheme + Configurations/*.xcconfig mapping bundle IDs (AC-2)",
         "KMP: shared PlatformConfig expect/actual provides per-environment config to common code (AC-3)",
-        "Merged PRs #93/#97 + dedicated commit a1c9d9e74 'feat(epic-85): story 85.2'; story file says Status: pending and epic-85 not in sprint-status, but code+PRs agree implemented"
+        "Merged PRs #93/#97 + dedicated commit a1c9d9e74 'feat(epic-85): story 85.2'; story file says Status: pending and epic-85 not in sprint-status, but code+PRs agree implemented",
+        "merged PR #1916 (85-2-build-configuration: reconcile shipped build-config story + screen-map)"
       ],
       "gaps": [
-        "AC-5 automated build scripts not found under mobile-native (no build*.sh located) — verify CLI build automation exists",
+        "AC-5 automated build scripts not found under mobile-native (no build*.sh located) \u2014 verify CLI build automation exists",
         "Story markdown still Status: pending (stale vs. merged code)",
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-85",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1194,13 +1198,15 @@
         "sprint-status.yaml: 8a-1-channel-level-notification-toggles: done; notes 'Epic 8A all stories completed 2025-12-21, code review 2026-05-23'",
         "Backend routes present: api-server/src/routes/notification_preferences.rs and granular_notifications.rs",
         "Frontend UI present: frontend/apps/ppt-web/src/features/settings/notifications",
-        "Merged PR #1176 'feat-notification-preference-sync-frontend-wiring: wire ppt-web notification-preference UI to backend'"
+        "Merged PR #1176 'feat-notification-preference-sync-frontend-wiring: wire ppt-web notification-preference UI to backend'",
+        "merged PR #1918 (8a-1-channel-level-notification-toggles: add notification-settings screen-map + sitemap re)",
+        "merged PR #1915 (8a-3-notification-preference-sync: add screen-map for Notification Preferences)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1218,13 +1224,14 @@
         "sprint-status.yaml: 8a-2-critical-notification-override: done",
         "Backend route present: api-server/src/routes/critical_notifications.rs",
         "Frontend feature present: frontend/apps/ppt-web/src/features/critical-notifications",
-        "sprint notes: 'Story 8A.2 notification dispatch logic deferred - requires Epic 2B' (Epic 2B since delivered; pipeline service notification_pipeline.rs present)"
+        "sprint notes: 'Story 8A.2 notification dispatch logic deferred - requires Epic 2B' (Epic 2B since delivered; pipeline service notification_pipeline.rs present)",
+        "merged PR #1913 (8a-2-critical-notification-override: reconcile unwired-features registry (no screen-map by)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1243,13 +1250,14 @@
         "sprint-status.yaml: 8a-3-notification-preference-sync: done (WS realtime leg PR #472, merged 2026-05-25)",
         "Backend route present: api-server/src/routes/ws_notifications.rs; merged PR #472 'Epic 8A Story 3: WebSocket realtime notification sync'",
         "Mobile OS push (FCM/APNs) previously deferred is now landed: merged PR #1556 'wire APNs HTTP/2 delivery into mobile OS push' (2026-06-18) + PR #1450 mobile push",
-        "Backend test coverage PRs merged: #1295, #1324, #1395, #1077"
+        "Backend test coverage PRs merged: #1295, #1324, #1395, #1077",
+        "merged PR #1915 (8a-3-notification-preference-sync: add screen-map for Notification Preferences)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1271,7 +1279,7 @@
       ],
       "gaps": [],
       "epic": "epic-10a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -1300,7 +1308,7 @@
       ],
       "gaps": [],
       "epic": "epic-10a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -1329,7 +1337,7 @@
       ],
       "gaps": [],
       "epic": "epic-10a",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -1354,13 +1362,14 @@
         "sprint-status.yaml: 10b-1-organization-management-dashboard: done",
         "backend repo crates/db/src/repositories/organization.rs + servers/api-server/src/routes/organizations/",
         "admin-web pages (agencies.tsx, MembershipsPage.tsx, TenantLifecyclePage.tsx) cover org management",
-        "epic-10b stories_completed counter lists 10b-1 done (coverage.json 2026-05-29 high confidence)"
+        "epic-10b stories_completed counter lists 10b-1 done (coverage.json 2026-05-29 high confidence)",
+        "merged PR #1911 (10b-1-organization-management-dashboard: add Organization Management Dashboard screen-map)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1378,13 +1387,14 @@
         "sprint-status.yaml: 10b-2-feature-flag-management: done",
         "backend crates/db/src/repositories/feature_flag.rs + servers/api-server/src/routes/features.rs",
         "frontend admin-web/src/pages/feature-flags.tsx",
-        "epic-10b counter lists 10b-2 done"
+        "epic-10b counter lists 10b-2 done",
+        "merged PR #1912 (10b-2-feature-flag-management: add Feature Flag Management screen-map (orphan-epic closure)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1406,7 +1416,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-platform-health",
@@ -1435,7 +1445,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-system-announcements",
@@ -1460,15 +1470,16 @@
         "sprint-status.yaml: 10b-5-support-data-access: ready-for-dev (maps to partial)",
         "backend crates/db/src/repositories/platform_admin.rs get_support_data + migration 00163_create_support_tooling_events.sql",
         "admin-web/src/pages/SupportDataPage.tsx (+ .test.tsx)",
-        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)"
+        "merged PRs #854 (document support-data retention/privacy), #793 (wrap get_support_data in transaction, closes #628)",
+        "merged PR #1829 (10b-5-support-data-access: finish Support Data Access to done (fix refresh_tokens column b)"
       ],
       "gaps": [
-        "sprint-status still ready-for-dev though code+PRs landed — needs status reconciliation to done",
+        "sprint-status still ready-for-dev though code+PRs landed \u2014 needs status reconciliation to done",
         "support data access is privacy/security-sensitive: confirm retention + access-audit posture (pm-security)",
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1487,13 +1498,14 @@
         "sprint-status.yaml: 10b-6-user-onboarding-tour: done",
         "backend crates/db/src/repositories/onboarding.rs + routes/onboarding.rs mounted at /api/v1/onboarding",
         "admin-web onboarding feature (OnboardingToursPage, TourOverlay) + mobile onboarding/TourManager+TourOverlay",
-        "merged PRs #840 (sequence onboarding tour mutations), #994 (10b-6 done)"
+        "merged PRs #840 (sequence onboarding tour mutations), #994 (10b-6 done)",
+        "merged PR #1909 (10b-6-user-onboarding-tour: add screen-map for end-user onboarding tour)"
       ],
       "gaps": [
         "no screen-map (orphan epic)"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": []
     },
     {
@@ -1512,13 +1524,14 @@
         "sprint-status.yaml: 10b-7-contextual-help-documentation: ready-for-dev (maps to partial)",
         "backend crates/db/src/repositories/help.rs + routes/help.rs",
         "admin-web help feature (HelpSidebar, useContextualHelp, articles.ts) + mobile HelpCenter/HelpCenterScreen; screen admin-contextual-help.md buildStatus: shipped",
-        "merged PR #844 (gap-10b-7 contextual help handler regression tests)"
+        "merged PR #844 (gap-10b-7 contextual help handler regression tests)",
+        "merged PR #1831 (10b-7-contextual-help-documentation: reconcile sprint-status to done)"
       ],
       "gaps": [
-        "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed — needs reconciliation to done"
+        "sprint-status still ready-for-dev though backend+web+mobile code and PR #844 landed \u2014 needs reconciliation to done"
       ],
       "epic": "epic-10b",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-06-29",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-contextual-help",

@@ -1,0 +1,360 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-29",
+      "type": "lag_warning",
+      "source": "last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in ~13d (2026-06-16T03:25Z \u2192 2026-06-29T03:04Z); 96 merged real-code PRs in window"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-org-property-authz-backfill-bit331-tests-rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn in 5 commits this run",
+      "score_delta": 1,
+      "evidence": [
+        "5 commits touched `backend/servers/api-server/tests/org_property_authz_backfill_bit331_tests.rs` during 2026-06-16\u21922026-06-29 (top-3 by commit-count)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/org_property_authz_backfill_bit331_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs-endpoint-checklist-README-md",
+      "type": "churn-hotspot",
+      "source": "top-3 churn in 5 commits this run",
+      "score_delta": 1,
+      "evidence": [
+        "5 commits touched `docs/endpoint-checklist/README.md` during 2026-06-16\u21922026-06-29 (top-3 by commit-count)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "docs/endpoint-checklist/README.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-accounting-payment-match-state-machine-tests-rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn in 4 commits this run",
+      "score_delta": 1,
+      "evidence": [
+        "4 commits touched `backend/servers/api-server/tests/accounting_payment_match_state_machine_tests.rs` during 2026-06-16\u21922026-06-29 (top-3 by commit-count)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/accounting_payment_match_state_machine_tests.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1836",
+      "type": "dep-update-noise",
+      "source": "PR #1836",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump gradle-wrapper from 9.5.1 to 9.6.0 in /mobile-native"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1837",
+      "type": "dep-update-noise",
+      "source": "PR #1837",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump dtolnay/rust-toolchain 1.94.1\u21921.100.0 \u2014 broke backend CI, reverted by #1928"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1838",
+      "type": "dep-update-noise",
+      "source": "PR #1838",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump actions/cache from 5 to 6"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1839",
+      "type": "dep-update-noise",
+      "source": "PR #1839",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump dorny/paths-filter from 3 to 4"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1841",
+      "type": "dep-update-noise",
+      "source": "PR #1841",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump cargo-minor-patch group in /backend (3 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1842",
+      "type": "dep-update-noise",
+      "source": "PR #1842",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump rust_xlsxwriter from 0.80.0 to 0.95.0 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "hotfix-no-test-pr-1825",
+      "type": "hotfix-no-test",
+      "source": "PR #1825",
+      "score_delta": 2,
+      "evidence": [
+        "fix(api-server): tighten Booking.com listing-push currency validation (ISO-4217 allowlist) (#1759) \u2014 2 files, none test-shaped"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs",
+        "backend/servers/api-server/src/routes/integrations/booking_channel.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1807",
+      "type": "hotfix-no-test",
+      "source": "PR #1807",
+      "score_delta": 2,
+      "evidence": [
+        "fix(scheduler): one meter-reading reminder per resident per window (#1777) \u2014 1 files, none test-shaped"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1801",
+      "type": "hotfix-no-test",
+      "source": "PR #1801",
+      "score_delta": 2,
+      "evidence": [
+        "fix(event-bus): keep subscription alive on broadcast lag (at-least-once, #1792) \u2014 1 files, none test-shaped"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/integrations/src/event_bus.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1928",
+      "type": "hotfix-no-test",
+      "source": "PR #1928",
+      "score_delta": 2,
+      "evidence": [
+        "fix(ci): restore dtolnay/rust-toolchain @1.94.1 (unbreak backend CI repo-wide) \u2014 3 files, none test-shaped (CI-config-only fix; test coverage not applicable)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        ".github/workflows/backend-dev-push-gate.yml",
+        ".github/workflows/backend-fmt-clippy-gate.yml",
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1858",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1858",
+      "score_delta": 1,
+      "evidence": [
+        "chore(api-server): remove 59 unmounted ROADMAP routers + orphaned public_api db tables \u2014 closed unmerged"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-leak",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-06-29",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:142-151 \u2014 queryKeys.accounting.all uses root 'accounting'",
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 \u2014 AUTHED_QUERY_KEY_ROOTS omits 'accounting', so AuthContext.logout() (contexts/AuthContext.tsx:542-544) does NOT purge invoice / contact / statement / statement-line / line-match queries; cached accounting data leaks across user sessions on logout (sensitive financial data, regression of issue #712 scoping)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-stale-token-init",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-06-29",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389-424 \u2014 initializeAuth comment says 'Validate the token is not expired (basic check)' but no expiry check is performed; if a stale accessToken is in localStorage, setUser(storedUser) marks the app authenticated and the `else if (refreshTokenValue)` refresh branch is unreachable when both items happen to exist. The user lands on protected pages with a dead JWT and gets a 401 storm before refresh kicks in via the interceptor."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-401-no-refresh",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-06-29",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:180-217 \u2014 response interceptor fires onUnauthorizedCallback() on 401 but then rejects with transformError; it never attempts a token-refresh-and-retry. Combined with AuthContext.refreshToken() existing but not being wired into the axios instance, every 401 forces a hard logout/redirect instead of the documented refresh-once-retry pattern used by createAuthApi (@ppt/api-client). RETRYABLE_STATUS_CODES (line 76) excludes 401, so the retry branch can never recover an expired access token."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-29.md && head -1 matches '# 2026-06-29'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "max score <=8; decay applied (11 decayed, 25 dropped at 0)",
+      "observed": "0 over-cap",
+      "expected": "0 over-cap"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief mentions plans/<slug>.md + 'adversarial pass:'",
+      "observed": "match for 1 plan",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count + metadata + 11 headings + capability tick + Mode + Files exist",
+      "observed": "1 plan, all sections present, cloud-ok mode, both files exist",
+      "expected": "<=2 plans, all sections valid"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run",
+      "observed": "no failures",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present or archived",
+      "observed": "all 9 prior plans intact + 1 new",
+      "expected": "no silent deletion"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count this run vs HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length, idempotency, kill-switch",
+      "observed": "0 actions (no candidate met certainty bar)",
+      "expected": "<=3, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "epics=13 cc=0 pm=6",
+      "expected": "pm in 0..7, cc in 0..13 and advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

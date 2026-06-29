@@ -1,42 +1,104 @@
-# Role: pm-scrum-master — 2026-05-29
+# Role: pm-scrum-master — 2026-06-29
 
 > Delivery lead / coordinator. Always runs. Static read-only.
 
 ## Summary
 
-This window (#717–#730 plus late-arriving #597/#657/#659/#685/#695/#706) delivered 4 app-gap PRs and confirmed the reports IDOR PR (#662) awaiting review; the bulk of activity was research/dispatcher infra. Coverage now reads 27 done / 22 partial / 0 not-started (49 stories), with `sprint-status.yaml` stale on 10b-3/10b-4/10b-6 (all delivered) and several test-hardening issues (#480–#487) still open and blocking story promotions.
+Sprint "Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"
+saw a **major verification + test-quality remediation wave** this fortnight.
+All six Epic 6 stories flipped to done (verified 2026-06-25), and BIT-345/351/340/348/357/359
+unblocked the backend CI gate after **718 quarantined tests** were diagnosed and
+triaged. Epic 7A is the active delivery frontier with story 7a-2 stuck in
+review on a CI-red folder-tests gate, and three stories still ready-for-dev.
+Epic 10A remains fully blocked by four open test-hardening gate issues
+(#481 / #482 / #487 plus #480 / #484 for 8a-3).
 
 ## Sprint progress
 
-- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth.
-- Epics done: 2 / 6 active (epic-8a, epic-9 fully done; epic-10b complete in coverage).
+- **Sprint:** Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
+- **Epics done:** 3 / 6 (epic-6, epic-8a, epic-10b; epic-6 verified 6 / 6 this fortnight)
+- **Endpoint checklist:** 811 / ~2006 done (40.4 %); 926 projected after pending merges
 
-## Shipped since last run
+## Shipped since last run (2026-06-16 → 2026-06-29)
 
-- #718 fix(ios): gesture-mask + sheet-env (LocationManager) + SSO CSRF tests — closes #618/#625/#578
-- #719 gap-84-2 e-signature UI: manager/landlord signerParties + cs/de i18n — resolves all 6 PR#513 follow-ups
-- #720 gap-10b-3 admin Platform Health UI: MFA-interception test coverage
-- #724 gap-10a-4 OAuth scope picker (admin-web) + scope-grant audit trail
-- Late-merges below the prior cursor: #695 gap-10b-6 onboarding SQLx, #706 gap-10b-4 system-announcements CRUD+tests, #685 gap-81-1 CronPicker isNaN→Number.isNaN, #597 gap-8a-3 WebSocket sync confirmed, #657 JWT/RUST_ENV test-guard consolidation (#629), #659 reality-mobile screen agent-logs (#581)
+- **Epic 6 fully complete:** stories 6-1 through 6-5 verified done
+  (PRs #1832 / #1834 / #1835 / #1844, commits 2026-06-25).
+- **#1948 (BIT-351)** — quarantine 718 blind-CI failures; unblock backend dev test gate.
+- **#1945 (BIT-345)** — file-level `dead_code` sweep across 132 test files; restore
+  `-D warnings` build.
+- **#1932 (BIT-340)** — governance / voting happy-path 2xx coverage (+69 endpoints, Wave 5).
+- **#1944 (BIT-348)** — compliance / AML / EDD / DSA / moderation happy-path coverage
+  (+26 endpoints, Wave 1B re-cut after #1865 lost).
+- **#1953 (BIT-357)** — admin / platform-admin happy-path 2xx backfill (+26 endpoints).
+- **#1951 (BIT-359)** — `document_share_type` enum-cast runtime panic fix
+  (`get_shares_rls` cast to text).
+- **#1928** — CI toolchain fix: restore `dtolnay/rust-toolchain @1.94.1` (revert of bad
+  dependabot #1837 that broke every backend job).
+- **Screen-map reconciliations:** #1909 / #1914 / #1916 / #1918.
 
-## Next actions
+## Next up
 
-1. [high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647) — owner: pm-security.
-2. [high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test) — owner: pm-security.
-3. [high] Promote draft #723 (gap-9-2 MFA recovery codes backend) to review/merge — owner: pm-backend.
-4. [medium] Sync sprint-status.yaml: 10b-3/10b-4/10b-6 done, 8a-3 WS done; epic-10b → done — owner: pm-scrum-master.
-5. [medium] Triage gap-82 drafts #639/#641/#705 to non-draft review — owner: pm-frontend (mobile-lag owner).
+1. **HIGH — pm-backend:** resolve 7a-2 CI red on `document_folder_tests`
+   (FK/isolation). PR #1316 round-2 needed. DoD: green CI + merge.
+2. **HIGH — pm-backend:** deliver 7a-3 (permission-based access) — ready-for-dev,
+   on the critical path to Epic 7A done.
+3. **HIGH — pm-backend:** close or formally defer test-hardening gate issues
+   #481 (OAuth revocation) and #487 (MFA rate-limit) to unblock Epic 10A.
+4. **HIGH — pm-backend:** merge the open BIT-258 test-backfill wave PRs
+   (#1923 reality + ai-auto, #1934 financial, #1938 reality-server Wave 6,
+   #1921 integrations / docs / notifications) now that dev CI gate is green;
+   endpoint checklist crosses 926 done (46 %).
+5. **MEDIUM — pm-frontend:** wire dispute party-submissions endpoints for 80-3 (PR #1846
+   open) and complete 5-step wizard redesign for 80-2 to close both partial MVP stories.
+6. **MEDIUM:** flip sprint-status `epic-6.stories_completed` to 6 and `status` to `done`
+   to reflect verified ground truth; update `coverage.json` partial entries for 6-1
+   through 6-5.
 
 ## Blockers
 
-- **Epic 81 — Reports promotion:** cron_expression column missing (#616); 81-1/81-2 partial. (RBAC #614 + tenant-scope #624 closed by #643.)
-- **Test-hardening batch #480–#487:** open; gates 8a-3/10a-1/10a-3/7a-5/6-2/6-5 from done.
-- **80-2 dispute-filing-flow (partial):** EvidenceUploader.tsx + useDraftStorage.ts missing; no owner assigned.
+- **7a-2 folder organization** — CI red on `document_folder_tests` (FK / isolation fix in
+  PR #1316 round 1); story reverted from done → review pending green CI. Owner: pm-backend.
+- **10a-1 / 10a-3 OAuth** — gated by #481 (refresh revocation tests) and #487 (MFA rate-limit
+  coverage). Owner: pm-backend.
+- **10a-2 OAuth client reg** — gated by #482 (ProtectedRoute tenants[0] fallback). Owner: pm-frontend.
+- **7a-5 document sharing** — gated by #485 (share-panel UUID validation) + new cross-org
+  fan-out risk surfaced by pm-security this run. Owner: pm-security.
+- **Backend CI repair backlog (BIT-354)** — 60 RLS / IDOR / authz tests quarantined by BIT-351
+  with disposition = FIX (clusters A / B / C); no sprint slot assigned. Owner: pm-backend.
+
+## Risks
+
+- 718 quarantined tests (BIT-351) need cluster-by-cluster repair; without sprint slot,
+  coverage erosion compounds. **High / high.**
+- Epic 10A stories at ready-for-dev with 4 open gates; if gates persist at sprint end,
+  OAuth ships zero stories. **Medium / high.**
+- Epic 7A: 7a-2 blocking; if CI-red persists, 7a-3 / 4 / 5 sit idle. **Medium / medium.**
+- Open PR queue of 28 including 6 critical fix PRs (messaging IDOR #1799, payment-reminder
+  dedup #1804, N-party delivery #1802, OCR auth #1797, Stripe hardening #1824, rentals PII
+  #1823); merge-conflict + security exposure grows daily. **Medium / medium.**
+- sprint-status epic-6 header contradicts development_status (stale metadata = false
+  planning signals). **High / low.**
 
 ## Open questions
 
-- Are Epic 81 backend pause/resume/executions-download routes implemented or still missing?
-- Disposition of dependabot sqlx 0.8→0.9 (#665/#666) — compatibility pass needed before merge?
-- Is #723 (MFA recovery backend) reviewed yet or purely draft?
-- Is the 80-2 EvidenceUploader gap owned by anyone?
-- Do the 5 newly-closed follow-ups (#578/#581/#618/#625/#629) unblock any sprint-status gates?
+- Is `document_folder_tests` CI-red a schema migration gap or a logic regression?
+  Does repair require a live DB run?
+- Formal disposition of test-hardening gate issues #480 and #484 (notification pipeline
+  serial dispatch + FCM stub silent swallows) — deferred post-8a or actively scheduled?
+- Do the 60 quarantined RLS / IDOR / authz binaries (BIT-354 cluster A) require a
+  `NOSUPERUSER` role test-helper that doesn't yet exist in the db crate? Who builds it?
+- Is Epic 80 in-scope for the current sprint or scheduled as a separate epic sprint?
+- Endpoint checklist at 811 / ~2006 (40.4 %): committed target completion date for
+  BIT-258 wave coverage? Does it gate the next release cut?
+
+## Decisions needed
+
+- Gate issues #481 / #487 (OAuth security/quality) — close with fix this sprint or
+  formally defer to a dedicated security hardening sprint. Owner: pm-backend + tech lead.
+- Epic 7A sequencing — start 7a-3 / 4 / 5 in parallel with 7a-2 CI repair, or wait for 7a-2 merge.
+  Owner: pm-backend.
+- BIT-354 repair timeline — sprint slot + owner for each of clusters A / B / C.
+  Owner: pm-tech-lead.
+- Draft fix PRs #1797 / #1802 (OCR auth + N-party messaging IDOR, both high-severity) open
+  for 5+ days without review — approve merge or assign explicit reviewer.
+  Owner: pm-backend.
