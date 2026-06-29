@@ -260,7 +260,9 @@ async fn packages_happy_path(pool: PgPool) {
     // delete a fresh package so the lifecycle one above is untouched
     let del_id = ctx.create_package().await;
     ok(
-        &ctx.delete(&format!("/api/v1/packages/{del_id}")).send().await,
+        &ctx.delete(&format!("/api/v1/packages/{del_id}"))
+            .send()
+            .await,
         "delete_package",
     );
 }
@@ -323,7 +325,9 @@ async fn visitors_happy_path(pool: PgPool) {
     // delete a fresh visitor
     let (del_id, _) = ctx.create_visitor().await;
     ok(
-        &ctx.delete(&format!("/api/v1/visitors/{del_id}")).send().await,
+        &ctx.delete(&format!("/api/v1/visitors/{del_id}"))
+            .send()
+            .await,
         "delete_visitor",
     );
 

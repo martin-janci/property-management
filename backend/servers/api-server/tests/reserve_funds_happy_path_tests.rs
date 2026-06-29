@@ -164,7 +164,9 @@ async fn reserve_funds_core_happy_path(pool: PgPool) {
         "get_dashboard",
     );
     ok(
-        &ctx.get(&format!("/api/v1/reserve-funds/{fund_id}")).send().await,
+        &ctx.get(&format!("/api/v1/reserve-funds/{fund_id}"))
+            .send()
+            .await,
         "get_fund",
     );
     ok(
@@ -299,9 +301,11 @@ async fn reserve_funds_planning_happy_path(pool: PgPool) {
     ok(&projection, "create_projection");
     let projection_id = id_of(&projection.json_value());
     ok(
-        &ctx.get(&format!("/api/v1/reserve-funds/{fund_id}/projections/current"))
-            .send()
-            .await,
+        &ctx.get(&format!(
+            "/api/v1/reserve-funds/{fund_id}/projections/current"
+        ))
+        .send()
+        .await,
         "get_current_projection",
     );
     ok(
@@ -376,7 +380,10 @@ async fn reserve_funds_alerts_happy_path(pool: PgPool) {
     .await
     .expect("seed alert");
 
-    ok(&ctx.get("/api/v1/reserve-funds/alerts").send().await, "list_alerts");
+    ok(
+        &ctx.get("/api/v1/reserve-funds/alerts").send().await,
+        "list_alerts",
+    );
     ok(
         &ctx.post_empty(&format!(
             "/api/v1/reserve-funds/alerts/{alert_id}/acknowledge"

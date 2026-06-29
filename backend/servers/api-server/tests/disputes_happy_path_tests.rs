@@ -75,9 +75,16 @@ struct Ctx {
 async fn setup(pool: PgPool, tag: &str) -> Ctx {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, tag).await;
-    let user_id = seed_user(&pool, &format!("{tag}-a-{}@disputes-hp.test", Uuid::new_v4())).await;
-    let respondent_id =
-        seed_user(&pool, &format!("{tag}-b-{}@disputes-hp.test", Uuid::new_v4())).await;
+    let user_id = seed_user(
+        &pool,
+        &format!("{tag}-a-{}@disputes-hp.test", Uuid::new_v4()),
+    )
+    .await;
+    let respondent_id = seed_user(
+        &pool,
+        &format!("{tag}-b-{}@disputes-hp.test", Uuid::new_v4()),
+    )
+    .await;
     let token = mint_token(user_id, org_id);
     Ctx {
         app,
@@ -157,12 +164,17 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
         "list_disputes",
     );
     ok(
-        &ctx.get(&format!("/api/v1/disputes/statistics?organization_id={org}"))
-            .send()
-            .await,
+        &ctx.get(&format!(
+            "/api/v1/disputes/statistics?organization_id={org}"
+        ))
+        .send()
+        .await,
         "get_statistics",
     );
-    ok(&ctx.get(&format!("/api/v1/disputes/{id}")).send().await, "get_dispute");
+    ok(
+        &ctx.get(&format!("/api/v1/disputes/{id}")).send().await,
+        "get_dispute",
+    );
 
     // move into review so manager-only mutators / resolve transitions are legal
     ok(
@@ -186,7 +198,9 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
         "add_party",
     );
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/parties")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/parties"))
+            .send()
+            .await,
         "list_parties",
     );
 
@@ -207,13 +221,17 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
         "add_evidence",
     );
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/evidence")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/evidence"))
+            .send()
+            .await,
         "list_evidence",
     );
 
     // activities + submissions (filer is a party → submit allowed)
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/activities")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/activities"))
+            .send()
+            .await,
         "list_activities",
     );
     ok(
@@ -230,7 +248,9 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
         "submit_response",
     );
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/submissions")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/submissions"))
+            .send()
+            .await,
         "list_submissions",
     );
     ok(
@@ -269,7 +289,9 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
     ok(&resolution, "propose_resolution");
     let resolution_id = id_of(&resolution.json_value());
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/resolutions")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/resolutions"))
+            .send()
+            .await,
         "list_resolutions",
     );
     ok(
@@ -344,7 +366,9 @@ async fn dispute_actions_escalations_happy_path(pool: PgPool) {
     let action_id = id_of(&action.json_value());
 
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/actions")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/actions"))
+            .send()
+            .await,
         "list_action_items",
     );
     ok(
@@ -372,11 +396,9 @@ async fn dispute_actions_escalations_happy_path(pool: PgPool) {
         "complete_action_item",
     );
     ok(
-        &ctx.post_empty(&format!(
-            "/api/v1/disputes/{id}/actions/{action_id}/remind"
-        ))
-        .send()
-        .await,
+        &ctx.post_empty(&format!("/api/v1/disputes/{id}/actions/{action_id}/remind"))
+            .send()
+            .await,
         "send_action_reminder",
     );
 
@@ -391,7 +413,9 @@ async fn dispute_actions_escalations_happy_path(pool: PgPool) {
     ok(&escalation, "create_escalation");
     let escalation_id = id_of(&escalation.json_value());
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/escalations")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/escalations"))
+            .send()
+            .await,
         "list_escalations",
     );
     ok(
@@ -405,9 +429,11 @@ async fn dispute_actions_escalations_happy_path(pool: PgPool) {
     );
 
     ok(
-        &ctx.get(&format!("/api/v1/disputes/my-actions?organization_id={org}"))
-            .send()
-            .await,
+        &ctx.get(&format!(
+            "/api/v1/disputes/my-actions?organization_id={org}"
+        ))
+        .send()
+        .await,
         "get_my_actions",
     );
     ok(
@@ -430,7 +456,10 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
     let id = ctx.file_dispute().await;
 
     // find the complainant party id (the filer is auto-added)
-    let parties = ctx.get(&format!("/api/v1/disputes/{id}/parties")).send().await;
+    let parties = ctx
+        .get(&format!("/api/v1/disputes/{id}/parties"))
+        .send()
+        .await;
     ok(&parties, "list_parties");
     let party_id = parties.json_value()[0]["id"]
         .as_str()
@@ -454,7 +483,9 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
     let session_id = id_of(&session.json_value());
 
     ok(
-        &ctx.get(&format!("/api/v1/disputes/{id}/sessions")).send().await,
+        &ctx.get(&format!("/api/v1/disputes/{id}/sessions"))
+            .send()
+            .await,
         "list_sessions",
     );
     ok(

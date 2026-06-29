@@ -141,7 +141,10 @@ async fn violation_rules_crud_happy_path(pool: PgPool) {
     ok(&create, "create_rule");
     let rule_id = id_of(&create.json_value());
 
-    ok(&ctx.get("/api/v1/violations/rules").send().await, "list_rules");
+    ok(
+        &ctx.get("/api/v1/violations/rules").send().await,
+        "list_rules",
+    );
     ok(
         &ctx.get(&format!("/api/v1/violations/rules/{rule_id}"))
             .send()
@@ -189,7 +192,10 @@ async fn violations_full_flow_happy_path(pool: PgPool) {
     ok(&create, "create_violation");
     let violation_id = id_of(&create.json_value());
 
-    ok(&ctx.get("/api/v1/violations").send().await, "list_violations");
+    ok(
+        &ctx.get("/api/v1/violations").send().await,
+        "list_violations",
+    );
     ok(
         &ctx.get(&format!("/api/v1/violations/{violation_id}"))
             .send()

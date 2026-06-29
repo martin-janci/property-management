@@ -166,13 +166,19 @@ async fn community_groups_posts_happy_path(pool: PgPool) {
 
     // membership toggle (creator is already owner; join is idempotent)
     ok(
-        &ctx.exec(ctx.post(&format!("/api/v1/community/groups/{group_id}/join"), json!({})))
-            .await,
+        &ctx.exec(ctx.post(
+            &format!("/api/v1/community/groups/{group_id}/join"),
+            json!({}),
+        ))
+        .await,
         "join_group",
     );
     ok(
-        &ctx.exec(ctx.post(&format!("/api/v1/community/groups/{group_id}/leave"), json!({})))
-            .await,
+        &ctx.exec(ctx.post(
+            &format!("/api/v1/community/groups/{group_id}/leave"),
+            json!({}),
+        ))
+        .await,
         "leave_group",
     );
 }
