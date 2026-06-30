@@ -196,9 +196,7 @@ fn mint_manager_jwt(user_id: Uuid, org_id: Uuid) -> String {
 // Connections
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_rental_statistics_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "rstat").await;
@@ -227,7 +225,6 @@ async fn test_rental_statistics_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_rental_sync_status_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "rsync").await;
@@ -255,9 +252,7 @@ async fn test_rental_sync_status_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_list_connections_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lscon").await;
@@ -285,9 +280,7 @@ async fn test_list_connections_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_connection_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crcon").await;
@@ -324,7 +317,6 @@ async fn test_create_connection_returns_201(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_update_connection_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "upcon").await;
@@ -359,7 +351,6 @@ async fn test_update_connection_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_delete_connection_returns_204(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dlcon").await;
@@ -391,7 +382,6 @@ async fn test_delete_connection_returns_204(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_unit_connections_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "uccon").await;
@@ -425,9 +415,7 @@ async fn test_get_unit_connections_returns_200(pool: PgPool) {
 // Bookings
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_list_bookings_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lsbk").await;
@@ -455,9 +443,7 @@ async fn test_list_bookings_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_booking_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crbk").await;
@@ -498,7 +484,6 @@ async fn test_create_booking_returns_201(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_booking_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gtbk").await;
@@ -530,7 +515,6 @@ async fn test_get_booking_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_update_booking_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "upbk").await;
@@ -565,7 +549,6 @@ async fn test_update_booking_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_update_booking_status_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "bkst").await;
@@ -600,7 +583,6 @@ async fn test_update_booking_status_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_booking_with_guests_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "bkgs").await;
@@ -636,7 +618,6 @@ async fn test_get_booking_with_guests_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_calendar_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gcal").await;
@@ -669,7 +650,6 @@ async fn test_get_calendar_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_check_availability_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "avail").await;
@@ -701,9 +681,7 @@ async fn test_check_availability_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_calendar_block_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crblk").await;
@@ -742,7 +720,6 @@ async fn test_create_calendar_block_returns_201(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_delete_calendar_block_returns_204(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dlblk").await;
@@ -777,9 +754,7 @@ async fn test_delete_calendar_block_returns_204(pool: PgPool) {
 // Guests
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_guest_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crgs").await;
@@ -818,7 +793,6 @@ async fn test_create_guest_returns_201(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_guest_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gtgs").await;
@@ -851,7 +825,6 @@ async fn test_get_guest_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_update_guest_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "upgs").await;
@@ -887,7 +860,6 @@ async fn test_update_guest_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_delete_guest_returns_204(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dlgs").await;
@@ -920,7 +892,6 @@ async fn test_delete_guest_returns_204(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_register_guest_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "rgst").await;
@@ -957,9 +928,7 @@ async fn test_register_guest_returns_200(pool: PgPool) {
 // Check-in reminders
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_checkin_reminders_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cirem").await;
@@ -992,7 +961,6 @@ async fn test_get_checkin_reminders_returns_200(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_list_reports_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lsrep").await;
@@ -1021,7 +989,6 @@ async fn test_list_reports_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_generate_report_preview_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "rprev").await;
@@ -1057,9 +1024,7 @@ async fn test_generate_report_preview_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_report_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crrep").await;
@@ -1097,9 +1062,7 @@ async fn test_create_report_returns_201(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_report_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gtrep").await;
@@ -1129,9 +1092,7 @@ async fn test_get_report_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_submit_report_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "sbrep").await;
@@ -1166,9 +1127,7 @@ async fn test_submit_report_returns_200(pool: PgPool) {
 // iCal feeds
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_create_ical_feed_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crif").await;
@@ -1205,7 +1164,6 @@ async fn test_create_ical_feed_returns_201(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_update_ical_feed_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "upif").await;
@@ -1240,7 +1198,6 @@ async fn test_update_ical_feed_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_delete_ical_feed_returns_204(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dlif").await;
@@ -1272,7 +1229,6 @@ async fn test_delete_ical_feed_returns_204(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_unit_ical_feeds_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "uif").await;

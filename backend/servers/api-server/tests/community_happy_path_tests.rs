@@ -108,9 +108,7 @@ fn id_of(v: &Value) -> Uuid {
         .unwrap_or_else(|| panic!("expected id field in {v}"))
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn community_groups_posts_happy_path(pool: PgPool) {
     let ctx = setup(pool, "grp").await;
     let bid = ctx.building_id;
@@ -186,9 +184,7 @@ async fn community_groups_posts_happy_path(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn community_events_happy_path(pool: PgPool) {
     let ctx = setup(pool, "evt").await;
     let bid = ctx.building_id;
@@ -221,9 +217,7 @@ async fn community_events_happy_path(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn community_marketplace_happy_path(pool: PgPool) {
     let ctx = setup(pool, "mkt").await;
     let bid = ctx.building_id;

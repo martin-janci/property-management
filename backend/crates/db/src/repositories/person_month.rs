@@ -300,13 +300,12 @@ impl PersonMonthRepository {
         year: i32,
         month: i32,
     ) -> Result<i32, SqlxError> {
-        let count: (i64,) =
-            sqlx::query_as(r#"SELECT count_residents_for_month($1, $2, $3)::bigint"#)
-                .bind(unit_id)
-                .bind(year)
-                .bind(month)
-                .fetch_one(&self.pool)
-                .await?;
+        let count: (i64,) = sqlx::query_as(r#"SELECT count_residents_for_month($1, $2, $3)"#)
+            .bind(unit_id)
+            .bind(year)
+            .bind(month)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(count.0 as i32)
     }

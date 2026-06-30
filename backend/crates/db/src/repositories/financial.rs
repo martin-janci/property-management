@@ -1321,7 +1321,7 @@ impl FinancialRepository {
             r#"
             SELECT
                 u.id as unit_id,
-                u.designation AS unit_number,
+                u.unit_number,
                 COALESCE(SUM(CASE WHEN i.due_date >= $3 THEN i.balance_due ELSE 0 END), 0) as current,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 AND i.due_date >= $3 - INTERVAL '30 days' THEN i.balance_due ELSE 0 END), 0) as days_30,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 - INTERVAL '30 days' AND i.due_date >= $3 - INTERVAL '60 days' THEN i.balance_due ELSE 0 END), 0) as days_60,
@@ -1332,7 +1332,7 @@ impl FinancialRepository {
             LEFT JOIN invoices i ON i.unit_id = u.id AND i.balance_due > 0
             WHERE b.organization_id = $1
             AND ($2::uuid IS NULL OR b.id = $2)
-            GROUP BY u.id, u.designation
+            GROUP BY u.id, u.unit_number
             HAVING COALESCE(SUM(i.balance_due), 0) > 0
             ORDER BY total DESC
             "#,

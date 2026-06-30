@@ -151,8 +151,8 @@ impl MarketPricingRepository {
                 latitude, longitude, postal_code, district, listing_date, days_on_market,
                 is_furnished, amenities
             )
-            VALUES ($1, $2::pricing_source, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-            RETURNING id, region_id, collected_at, source::text AS source, source_reference, property_type, size_sqm,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+            RETURNING id, region_id, collected_at, source, source_reference, property_type, size_sqm,
                       rooms, bathrooms, floor, has_parking, has_balcony, has_elevator, year_built,
                       monthly_rent, currency, price_per_sqm, latitude, longitude, postal_code, district,
                       listing_date, days_on_market, is_furnished, amenities, created_at
@@ -197,7 +197,7 @@ impl MarketPricingRepository {
 
         let data_points = sqlx::query_as::<_, MarketDataPoint>(
             r#"
-            SELECT mdp.id, mdp.region_id, mdp.collected_at, mdp.source::text AS source, mdp.source_reference,
+            SELECT mdp.id, mdp.region_id, mdp.collected_at, mdp.source, mdp.source_reference,
                    mdp.property_type, mdp.size_sqm, mdp.rooms, mdp.bathrooms, mdp.floor,
                    mdp.has_parking, mdp.has_balcony, mdp.has_elevator, mdp.year_built,
                    mdp.monthly_rent, mdp.currency, mdp.price_per_sqm, mdp.latitude, mdp.longitude,

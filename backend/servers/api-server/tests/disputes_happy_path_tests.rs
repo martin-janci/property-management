@@ -151,9 +151,7 @@ fn id_of(v: &Value) -> Uuid {
 // Filing, listing, parties, evidence, submissions, resolutions, status
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn dispute_lifecycle_happy_path(pool: PgPool) {
     let ctx = setup(pool, "life").await;
     let id = ctx.file_dispute().await;
@@ -352,9 +350,7 @@ async fn dispute_lifecycle_happy_path(pool: PgPool) {
 // Action items + escalations + my/overdue dashboards
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn dispute_actions_escalations_happy_path(pool: PgPool) {
     let ctx = setup(pool, "act").await;
     let id = ctx.file_dispute().await;
@@ -460,9 +456,7 @@ async fn dispute_actions_escalations_happy_path(pool: PgPool) {
 // Mediation sessions
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn dispute_sessions_happy_path(pool: PgPool) {
     let ctx = setup(pool, "sess").await;
     let id = ctx.file_dispute().await;
@@ -555,9 +549,7 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
 // Withdraw (separate dispute so it doesn't collide with the lifecycle one)
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn dispute_withdraw_happy_path(pool: PgPool) {
     let ctx = setup(pool, "wd").await;
     let id = ctx.file_dispute().await;
