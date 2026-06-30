@@ -27,7 +27,6 @@ use sqlx::PgPool;
 use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn financial_reports_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
