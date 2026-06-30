@@ -382,7 +382,7 @@ impl MarketPricingRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, unit_id, generated_at, min_price, optimal_price, max_price, currency,
-                      confidence_score, status, expires_at, factors, comparables_count, market_stats_id,
+                      confidence_score, status::text AS status, expires_at, factors, comparables_count, market_stats_id,
                       accepted_price, accepted_at, accepted_by, rejection_reason, created_at, updated_at
             "#,
         )
