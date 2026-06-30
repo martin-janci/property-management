@@ -156,7 +156,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
         "property_type": "apartment",
         "size_sqm": "60.0",
         "monthly_rent": "750.0",
-        "price_per_sqm": 12.5,
+        "price_per_sqm": "12.5",
         "currency": "EUR",
         "source": "manual"
     });
