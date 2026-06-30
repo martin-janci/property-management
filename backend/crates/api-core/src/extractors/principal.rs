@@ -20,7 +20,9 @@
 //!    the resolved org (membership case) or `None` (platform-host case for
 //!    a platform principal).
 
-use crate::extractors::auth::{verify_access_token, AccessTokenClaims, TokenTypePolicy};
+use crate::extractors::auth::{
+    verify_access_token, AccessTokenClaims, AccessTokenError, TokenTypePolicy,
+};
 use crate::extractors::tenant::TenantMembershipProvider;
 use crate::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
@@ -122,13 +124,18 @@ fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static st
         &Validation::default(),
         TokenTypePolicy::LegacyTolerant,
     )
-    .map_err(|msg| {
+    .map_err(|e| {
         // Preserve the prior observability signal: a rejected non-access token
-        // is `warn!`-logged before the request is denied.
-        if msg == "Invalid token type for this endpoint" {
-            tracing::warn!("principal: rejected non-access token on access-only route");
+        // is `warn!`-logged before the request is denied — and now carries the
+        // offending `token_type` value again (GH #1782), restoring the
+        // structured field for alerting on replayed refresh/other tokens.
+        if let AccessTokenError::WrongType(token_type) = &e {
+            tracing::warn!(
+                token_type = %token_type,
+                "principal: rejected non-access token on access-only route"
+            );
         }
-        (StatusCode::UNAUTHORIZED, msg)
+        (StatusCode::UNAUTHORIZED, e.message())
     })?;
 
     Ok(claims.sub)
@@ -139,10 +146,16 @@ fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static st
 /// The `kind` claim in the JWT is informational only; both extractors re-derive
 /// it server-side (defense in depth — never trust the token's copy). A deleted
 /// or unknown user is rejected as `401`.
+///
+/// Returns both the parsed [`PrincipalKind`] and the **raw** `principal_kind`
+/// string from the row. Because [`PrincipalKind::parse`] collapses any
+/// unrecognized DB value to `Staff`, callers that log the parsed enum lose the
+/// real stored string exactly when the data is malformed; returning the raw
+/// value lets the warn arms log both (GH #1761, carry-over of #1675 finding-3).
 async fn resolve_principal_kind(
     pool: &sqlx::PgPool,
     user_id: Uuid,
-) -> Result<PrincipalKind, (StatusCode, &'static str)> {
+) -> Result<(PrincipalKind, String), (StatusCode, &'static str)> {
     let kind_str: Option<String> = sqlx::query_scalar(
         r#"SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'"#,
     )
@@ -162,7 +175,7 @@ async fn resolve_principal_kind(
         return Err((StatusCode::UNAUTHORIZED, "Unknown principal"));
     };
 
-    Ok(PrincipalKind::parse(&kind_str))
+    Ok((PrincipalKind::parse(&kind_str), kind_str))
 }
 
 /// The authoritative per-request principal. Built fresh on every request from
@@ -204,7 +217,7 @@ where
         // finding 4).
         let user_id = decode_bearer_subject(parts)?;
         let pool = state.db_pool();
-        let kind = resolve_principal_kind(pool, user_id).await?;
+        let (kind, raw_kind) = resolve_principal_kind(pool, user_id).await?;
 
         // ----- (3) Read host-resolved tenant (may be absent on platform host). -----
         let resolved = parts.extensions.get::<ResolvedTenant>().copied();
@@ -227,6 +240,7 @@ where
                 tracing::warn!(
                     user_id = %user_id,
                     kind = ?kind,
+                    raw_kind = %raw_kind,
                     "RequestPrincipal: non-platform principal on platform host"
                 );
                 return Err((
@@ -274,6 +288,7 @@ where
                 tracing::warn!(
                     user_id = %user_id,
                     kind = ?kind,
+                    raw_kind = %raw_kind,
                     "RequestPrincipal: no ResolvedTenant for non-platform principal"
                 );
                 return Err((StatusCode::FORBIDDEN, "tenant not resolved"));
@@ -393,7 +408,9 @@ where
         // repo layer by `user_id` keying (see the type docs above).
         let user_id = decode_bearer_subject(parts)?;
         let pool = state.db_pool();
-        let kind = resolve_principal_kind(pool, user_id).await?;
+        // PortalPrincipal has no kind-dependent warn arms, so the raw string is
+        // not needed here; the parsed enum is what `PortalPrincipal` carries.
+        let (kind, _raw_kind) = resolve_principal_kind(pool, user_id).await?;
 
         Ok(PortalPrincipal { user_id, kind })
     }
