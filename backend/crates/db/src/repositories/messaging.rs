@@ -157,13 +157,18 @@ impl MessagingRepository {
                 WHERE m.deleted_at IS NULL
                 ORDER BY m.thread_id, m.created_at DESC
             ),
+            -- Per-participant unread (#1773 finding-2): count messages newer
+            -- than THIS user's read watermark, not the shared messages.read_at
+            -- flag, so a group thread's unread is independent per participant.
             unread_counts AS (
-                SELECT thread_id, COUNT(*) as unread
-                FROM messages
-                WHERE sender_id != $1
-                  AND read_at IS NULL
-                  AND deleted_at IS NULL
-                GROUP BY thread_id
+                SELECT m.thread_id, COUNT(*) as unread
+                FROM messages m
+                LEFT JOIN thread_participant_state tps
+                    ON tps.thread_id = m.thread_id AND tps.user_id = $1
+                WHERE m.sender_id != $1
+                  AND m.deleted_at IS NULL
+                  AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
+                GROUP BY m.thread_id
             )
             SELECT
                 t.id,
@@ -527,15 +532,27 @@ impl MessagingRepository {
     }
 
     /// Mark all messages in a thread as read for a user with RLS context.
-    pub async fn mark_thread_read_rls<'e, E>(
+    ///
+    /// Two effects, both keyed to `reader_id` only (never the other
+    /// participants):
+    ///  1. stamps `messages.read_at` on this thread's still-unread inbound
+    ///     messages — the per-message read receipt (unchanged behaviour);
+    ///  2. advances this user's per-participant read watermark
+    ///     (`thread_participant_state.last_read_at`), which is what
+    ///     [`count_unread_rls`] / the inbox `unread_counts` now derive unread
+    ///     from. The watermark is per-(thread, user), so one participant reading
+    ///     a group thread no longer zeroes everyone else's unread count
+    ///     (#1773 finding-2). The upsert satisfies the table's owner-isolation
+    ///     RLS policy because `reader_id == app.current_user_id`.
+    ///
+    /// Takes `&mut PgConnection` (not a generic executor) so both statements run
+    /// on the same RLS-scoped connection.
+    pub async fn mark_thread_read_rls(
         &self,
-        executor: E,
+        conn: &mut sqlx::PgConnection,
         thread_id: Uuid,
         reader_id: Uuid,
-    ) -> Result<i64, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<i64, SqlxError> {
         let result = sqlx::query(
             r#"
             UPDATE messages
@@ -548,13 +565,39 @@ impl MessagingRepository {
         )
         .bind(thread_id)
         .bind(reader_id)
-        .execute(executor)
+        .execute(&mut *conn)
+        .await?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO thread_participant_state (thread_id, user_id, last_read_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (thread_id, user_id)
+            DO UPDATE SET last_read_at = NOW(), updated_at = NOW()
+            "#,
+        )
+        .bind(thread_id)
+        .bind(reader_id)
+        .execute(&mut *conn)
         .await?;
 
         Ok(result.rows_affected() as i64)
     }
 
     /// Count unread messages for a user across all threads with RLS context.
+    ///
+    /// Unread is derived from the caller's per-participant read watermark
+    /// (`thread_participant_state.last_read_at`), not the shared
+    /// `messages.read_at` flag: a message counts when it was created after the
+    /// caller's watermark (or the caller has no watermark row yet). This makes
+    /// group-thread unread counts independent per participant (#1773 finding-2)
+    /// — one member reading no longer clears everyone's badge.
+    ///
+    /// Note (#1771): this LEFT JOIN to `thread_participant_state` is also where
+    /// the per-participant soft-delete exclusion lives; see PR #1968 which adds
+    /// `tps.deleted_at IS NULL` on the same join. The two changes touch the same
+    /// query and should be reconciled at merge (combine both predicates on the
+    /// one join).
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -569,11 +612,13 @@ impl MessagingRepository {
             SELECT COUNT(*)
             FROM messages m
             JOIN message_threads t ON t.id = m.thread_id
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
               AND m.sender_id != $1
-              AND m.read_at IS NULL
               AND m.deleted_at IS NULL
+              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
             "#,
         )
         .bind(user_id)
@@ -961,7 +1006,11 @@ impl MessagingRepository {
         thread_id: Uuid,
         reader_id: Uuid,
     ) -> Result<i64, SqlxError> {
-        self.mark_thread_read_rls(&self.pool, thread_id, reader_id)
+        // `mark_thread_read_rls` now runs two statements (read receipt + read
+        // watermark upsert) on one connection, so acquire a pooled connection
+        // and pass it through. (This path is deprecated and non-RLS-scoped.)
+        let mut conn = self.pool.acquire().await?;
+        self.mark_thread_read_rls(&mut conn, thread_id, reader_id)
             .await
     }
 
