@@ -12,10 +12,56 @@ use uuid::Uuid;
 
 use api_core::extractors::RlsConnection;
 use common::errors::ErrorResponse;
+use common::tenant::TenantRole;
 use db::models::regional_compliance::*;
 use db::models::vote::VoteResults;
 
 use crate::state::AppState;
+
+/// Require the caller to hold a manager-tier role in `org_id` before a
+/// compliance-config WRITE (#1906 finding-5).
+///
+/// The regional-compliance routes use only `RlsConnection`, which proves tenant
+/// membership but not role — so without this gate any authenticated member
+/// (incl. a regular owner/tenant) could overwrite org-wide compliance config
+/// (jurisdiction, GDPR DPO, accounting IBAN/ICO/DIC, Czech SVJ). Mirrors
+/// `rentals::require_manager_in_org`: the decision derives from the canonical
+/// `TenantRole::is_manager`. Returns `403` for non-managers, `500` on lookup
+/// failure.
+async fn require_manager(
+    state: &AppState,
+    org_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up org role for compliance manager gate");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .map(|role| role.is_manager())
+        .unwrap_or(false);
+
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager-level access required to change compliance configuration",
+            )),
+        ));
+    }
+    Ok(())
+}
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -80,6 +126,7 @@ async fn set_jurisdiction(
     Json(payload): Json<SetJurisdiction>,
 ) -> Result<Json<Jurisdiction>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = rls.tenant_id();
+    require_manager(&state, org_id, rls.user_id()).await?;
     let result = state
         .regional_compliance_repo
         .set_jurisdiction(&mut **rls.conn(), org_id, payload.jurisdiction)
@@ -102,6 +149,7 @@ async fn configure_slovak_voting(
     Json(payload): Json<ConfigureSlovakVoting>,
 ) -> Result<Json<SlovakVotingConfig>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = rls.tenant_id();
+    require_manager(&state, org_id, rls.user_id()).await?;
     let result = state
         .regional_compliance_repo
         .configure_slovak_voting(&mut **rls.conn(), org_id, payload)
@@ -175,7 +223,10 @@ async fn validate_slovak_vote(
         .get_quorum_rule(
             &mut **rls.conn(),
             Jurisdiction::Slovakia,
-            payload.decision_type.legal_reference(),
+            // #1906 finding-1: look up by the snake_case decision-type KEY that
+            // jurisdiction_rules.decision_type is seeded with, not legal_reference()
+            // (which never matched, so the seeded quorum was dead code).
+            payload.decision_type.decision_type_key(),
         )
         .await
         .map_err(|e| {
@@ -319,6 +370,7 @@ async fn configure_slovak_accounting(
     Json(payload): Json<ConfigureSlovakAccounting>,
 ) -> Result<Json<SlovakAccountingConfig>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = rls.tenant_id();
+    require_manager(&state, org_id, rls.user_id()).await?;
     let result = state
         .regional_compliance_repo
         .configure_slovak_accounting(&mut **rls.conn(), org_id, payload)
@@ -427,6 +479,7 @@ async fn configure_slovak_gdpr(
     Json(payload): Json<ConfigureSlovakGdpr>,
 ) -> Result<Json<SlovakGdprConfig>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = rls.tenant_id();
+    require_manager(&state, org_id, rls.user_id()).await?;
     let result = state
         .regional_compliance_repo
         .configure_slovak_gdpr(&mut **rls.conn(), org_id, payload)
@@ -638,6 +691,7 @@ async fn configure_czech_svj(
     Json(payload): Json<ConfigureCzechSvj>,
 ) -> Result<Json<CzechSvjConfig>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = rls.tenant_id();
+    require_manager(&state, org_id, rls.user_id()).await?;
     let result = state
         .regional_compliance_repo
         .configure_czech_svj(&mut **rls.conn(), org_id, payload)
@@ -711,7 +765,10 @@ async fn validate_czech_vote(
         .get_quorum_rule(
             &mut **rls.conn(),
             Jurisdiction::Czechia,
-            payload.decision_type.legal_reference(),
+            // #1906 finding-1: look up by the snake_case decision-type KEY that
+            // jurisdiction_rules.decision_type is seeded with, not legal_reference()
+            // (which never matched, so the seeded quorum was dead code).
+            payload.decision_type.decision_type_key(),
         )
         .await
         .map_err(|e| {
