@@ -8,6 +8,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type CSSProperties, Suspense, useEffect, useState } from 'react';
 
+/**
+ * sessionStorage key holding the one-shot CSRF nonce issued when the SSO flow
+ * starts. Exported so the page and its tests single-source the contract (a
+ * rename here can't silently drift the test) — GH #1826 finding-3.
+ */
+export const SSO_STATE_KEY = 'sso_state';
+
 const styles: Record<string, CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -83,17 +90,25 @@ function SsoCallbackContent() {
       return;
     }
 
-    // Verify CSRF state token
+    // Verify CSRF state token.
+    //
+    // Whenever a nonce was issued at the start of the flow (`savedState`
+    // present), a matching `state` is REQUIRED: a missing or mismatched value
+    // is a failure, not a pass. The previous `state && savedState && …` form
+    // skipped the check entirely when `state` was absent/empty, so an
+    // attacker-supplied callback with no `state` bypassed the nonce check
+    // (GH #1826 finding-2). When no nonce was saved (server-cookie-only flow,
+    // nothing to verify) the check is correctly a no-op.
     const state = searchParams.get('state');
-    const savedState = sessionStorage.getItem('sso_state');
+    const savedState = sessionStorage.getItem(SSO_STATE_KEY);
 
-    if (state && savedState && state !== savedState) {
+    if (savedState && state !== savedState) {
       setError('Invalid state token. Please try logging in again.');
       return;
     }
 
     // Clear saved state
-    sessionStorage.removeItem('sso_state');
+    sessionStorage.removeItem(SSO_STATE_KEY);
 
     // Redirect to home - session cookie should already be set by the server.
     // Only accept same-origin relative paths to prevent open-redirect attacks:
