@@ -213,7 +213,12 @@ impl AccountingService {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| {
-                AppError::Internal(format!(
+                // 404, not 500 (#1827): a missing/RLS-excluded statement line is
+                // the same "caller pointed at a row that's gone" condition as the
+                // missing-invoice branch below (which already maps to NotFound).
+                // Both stem from a stale/cross-tenant id on the match, so they
+                // must map symmetrically to a client error, not a server error.
+                AppError::NotFound(format!(
                     "Statement line {} not found",
                     p_match.statement_line_id
                 ))
