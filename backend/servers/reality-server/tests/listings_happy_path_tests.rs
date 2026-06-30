@@ -92,7 +92,6 @@ async fn search_returns_2xx_on_empty_db(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn search_returns_2xx_with_seeded_listing(pool: PgPool) {
@@ -134,7 +133,6 @@ async fn get_suggestions_returns_2xx(pool: PgPool) {
 
 // ── get_listing (GET /{id}) ──────────────────────────────────────────────────
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_listing_returns_2xx_for_active(pool: PgPool) {
