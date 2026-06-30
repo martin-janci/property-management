@@ -489,7 +489,6 @@ async fn list_submissions_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_submission_succeeds(pool: PgPool) {
@@ -514,7 +513,6 @@ async fn get_submission_succeeds(pool: PgPool) {
     res.assert_json_field("submission");
 }
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn review_submission_succeeds(pool: PgPool) {
