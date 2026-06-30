@@ -17,7 +17,19 @@ pub enum AccountingProviderAuthFlow {
 }
 
 /// External accounting provider connection per tenant.
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+///
+/// This is the **storage** model (decoded via `FromRow`). It deliberately does
+/// NOT derive `ToSchema` (#1827 finding-2): deriving it would advertise the
+/// encrypted-secret fields (`client_secret_enc` / `refresh_token_enc`) in the
+/// generated OpenAPI schema even though `#[serde(skip_serializing)]` keeps them
+/// out of the JSON body — a leak vector `skip_serializing` alone doesn't close.
+/// When the PAP-191 provider-connection CRUD handler lands it must return a
+/// dedicated token-free response DTO (mirroring `PlatformConnectionDetail` /
+/// `impl From<RentalPlatformConnection>`), not this struct. The `skip_serializing`
+/// attributes remain as belt-and-suspenders for the serde path. The model is
+/// currently used only by the repository (decode), so dropping `ToSchema`
+/// removes the schema-leak surface with no caller impact.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AccountingProviderConnection {
     pub tenant_id: Uuid,
     pub auth_flow: AccountingProviderAuthFlow,
