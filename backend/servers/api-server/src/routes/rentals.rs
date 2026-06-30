@@ -462,6 +462,14 @@ pub async fn list_bookings(
     TenantExtractor(tenant): TenantExtractor,
     Query(query): Query<BookingListQuery>,
 ) -> Result<Json<BookingsResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): bookings carry guest identity PII (id_number,
+    // date_of_birth, nationality, id_document_url) once guests are attached.
+    // Gate the read paths to managers, matching update_guest and the
+    // upload/extract endpoints — a plain member must not enumerate guest PII.
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
     let (bookings, total) = state
         .rental_repo
         .list_bookings(tenant.tenant_id, query.clone())
@@ -548,6 +556,12 @@ pub async fn get_booking(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): gate guest-PII-bearing booking reads to managers
+    // (parity with update_guest / the upload-extract endpoints).
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's booking PII by guessing a UUID.
     let booking = state
@@ -667,6 +681,12 @@ pub async fn get_booking_with_guests(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingWithGuests>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): this is the primary guest-PII read (booking + every
+    // guest's identity document); gate it to managers like the write paths.
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's booking + guest PII by guessing a UUID.
     let result = state
@@ -917,6 +937,13 @@ pub async fn get_guest(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): the guest read-path returns identity PII (id_number,
+    // date_of_birth, nationality, id_document_url); gate it to managers to match
+    // update_guest (which already gates the write side).
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's guest PII by guessing a UUID.
     let guest = state
