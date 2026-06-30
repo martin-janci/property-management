@@ -1028,9 +1028,20 @@ impl Scheduler {
     // Story 12.2: Meter Reading Reminders
     // ========================================================================
 
-    /// Notify residents whose building has a submission window closing soon and
-    /// who have not yet submitted a reading for any unit-linked meter in that
-    /// window's building.
+    /// Notify residents of unit-linked meters whose building has a submission
+    /// window closing soon (within `meter_reminder_days_before`).
+    ///
+    /// Each resident receives at most ONE reminder per window per tick — the
+    /// per-window `notified` set dedupes a resident who sits on several meters in
+    /// the same building (#1777).
+    ///
+    /// Known limitation (#1772 finding-2): this does NOT yet skip residents who
+    /// have *already submitted* a reading for the window, nor dedupe across
+    /// scheduler ticks — a resident is re-reminded on each run until the window
+    /// closes. (An earlier version of this doc claimed "who have not yet
+    /// submitted a reading"; that filtering was never implemented, so the doc is
+    /// corrected here to match behavior.) Durable cross-tick dedup is tracked
+    /// alongside the sibling payment-reminder work (#1769 / #1790).
     async fn send_meter_reminders(&self) -> Result<(), sqlx::Error> {
         let windows = self
             .meter_repo
