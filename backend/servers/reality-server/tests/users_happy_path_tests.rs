@@ -82,7 +82,6 @@ async fn request_password_reset_returns_2xx(pool: PgPool) {
 
 // ── get_me (GET /me) ─────────────────────────────────────────────────────────
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_me_returns_2xx(pool: PgPool) {
@@ -95,7 +94,6 @@ async fn get_me_returns_2xx(pool: PgPool) {
 
 // ── update_me (PUT /me) ──────────────────────────────────────────────────────
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn update_me_returns_2xx(pool: PgPool) {

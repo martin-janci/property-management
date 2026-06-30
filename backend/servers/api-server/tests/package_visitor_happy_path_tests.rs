@@ -202,7 +202,6 @@ fn nested_id(v: &Value, key: &str) -> Uuid {
 // Packages
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn packages_happy_path(pool: PgPool) {
@@ -273,7 +272,6 @@ async fn packages_happy_path(pool: PgPool) {
 // Visitors
 // ---------------------------------------------------------------------------
 
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn visitors_happy_path(pool: PgPool) {
