@@ -618,6 +618,10 @@ impl MessagingRepository {
               AND t.organization_id = $2
               AND m.sender_id != $1
               AND m.deleted_at IS NULL
+              -- exclude threads this user soft-deleted ("delete for me"); they
+              -- vanish from the inbox list, so their unread messages must not
+              -- keep the global unread badge stuck non-zero (#1771).
+              AND tps.deleted_at IS NULL
               AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
             "#,
         )
@@ -761,6 +765,39 @@ impl MessagingRepository {
         .await?;
 
         Ok(exists)
+    }
+
+    /// Set-based block check for N-party thread creation (#1776).
+    ///
+    /// Returns the subset of `candidates` that have either blocked `caller` or
+    /// been blocked by `caller`, in a single query. Replaces the per-recipient
+    /// `is_blocked_rls` loop in `start_thread`, keeping that handler at a
+    /// constant number of round-trips regardless of participant count (matching
+    /// the already-set-based existence and org-membership checks alongside it).
+    pub async fn blocked_among_rls<'e, E>(
+        &self,
+        executor: E,
+        caller: Uuid,
+        candidates: &[Uuid],
+    ) -> Result<Vec<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT blocked_id AS other_id FROM user_blocks
+              WHERE blocker_id = $1 AND blocked_id = ANY($2)
+            UNION
+            SELECT blocker_id AS other_id FROM user_blocks
+              WHERE blocked_id = $1 AND blocker_id = ANY($2)
+            "#,
+        )
+        .bind(caller)
+        .bind(candidates)
+        .fetch_all(executor)
+        .await?;
+
+        Ok(rows.into_iter().map(|(id,)| id).collect())
     }
 
     /// List blocked users with their info with RLS context.
