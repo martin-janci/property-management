@@ -9,7 +9,7 @@
 //! This background worker drains the same queue out-of-band: for each alert it
 //! has not yet delivered it dispatches an email to the owning user and a push
 //! notification to each of their registered devices (`device_push_tokens`), then
-//! records delivery in `notified_at` (migration 00194). That column is tracked
+//! records delivery in `notified_at` (migration 00195). That column is tracked
 //! independently of `status` — which belongs to the in-app read channel — so the
 //! drainer never re-sends on every poll and never clobbers the unread badge.
 //!
