@@ -561,7 +561,7 @@ pub struct AccountsReceivableReport {
 #[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct ARReportEntry {
     pub unit_id: Uuid,
-    pub unit_number: String,
+    pub designation: String,
     pub current: Decimal,
     pub days_30: Decimal,
     pub days_60: Decimal,

@@ -510,7 +510,9 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::CREATED);
     let unallocated_payment = resp.json_value();
-    let unallocated_payment_id_str = unallocated_payment["id"].as_str().expect("id missing");
+    let unallocated_payment_id_str = unallocated_payment["payment"]["id"]
+        .as_str()
+        .expect("id missing");
     let unallocated_payment_id =
         Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
 
@@ -577,7 +579,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::CREATED,
         "allocate_payment should succeed: {}",
         resp.text()
     );
