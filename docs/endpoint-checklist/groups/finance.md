@@ -158,8 +158,8 @@ All handlers in this group are real (query repos/services); no `todo!()`/`unimpl
 | PATCH | /api/v1/subscriptions/coupons/{id} | update_coupon | done | subscriptions_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | POST | /api/v1/subscriptions/coupons/redeem | redeem_coupon | done | subscriptions_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | GET | /api/v1/subscriptions/statistics | get_statistics | done | subscriptions_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
-| GET | /api/v1/admin/subscriptions | list_all_subscriptions | partial | — | no test |
-| GET | /api/v1/admin/invoices | list_all_invoices | partial | — | no test |
+| GET | /api/v1/admin/subscriptions | list_all_subscriptions | done | subscriptions_admin_happy_path_tests.rs | happy-path: list_all_subscriptions_2xx (200) |
+| GET | /api/v1/admin/invoices | list_all_invoices | done | subscriptions_admin_happy_path_tests.rs | happy-path: list_all_invoices_2xx (200) |
 
 ## person_months.rs  (mount: nested under buildings — NOT in lib.rs)
 | Method | Path | Handler | Status | Tests | Notes |
@@ -228,13 +228,13 @@ _Both prefixes serve the identical router; paths shown with /api/v1/property-val
 | PUT | /api/v1/property-valuations/{valuation_id} | update_valuation | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | DELETE | /api/v1/property-valuations/{valuation_id} | delete_valuation | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | PUT | /api/v1/property-valuations/{valuation_id}/approve | approve_valuation | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
-| GET | /api/v1/property-valuations/{valuation_id}/comparables | list_comparables | partial | — | no test |
-| POST | /api/v1/property-valuations/{valuation_id}/comparables | create_comparable | partial | — | no test |
-| PUT | /api/v1/property-valuations/comparables/{comparable_id} | update_comparable | partial | — | no test |
-| DELETE | /api/v1/property-valuations/comparables/{comparable_id} | delete_comparable | partial | — | no test |
-| GET | /api/v1/property-valuations/comparables/{comparable_id}/adjustments | list_adjustments | partial | — | no test |
-| POST | /api/v1/property-valuations/comparables/{comparable_id}/adjustments | create_adjustment | partial | — | no test |
-| DELETE | /api/v1/property-valuations/adjustments/{adjustment_id} | delete_adjustment | partial | — | no test |
+| GET | /api/v1/property-valuations/{valuation_id}/comparables | list_comparables | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| POST | /api/v1/property-valuations/{valuation_id}/comparables | create_comparable | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| PUT | /api/v1/property-valuations/comparables/{comparable_id} | update_comparable | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| DELETE | /api/v1/property-valuations/comparables/{comparable_id} | delete_comparable | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| GET | /api/v1/property-valuations/comparables/{comparable_id}/adjustments | list_adjustments | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| POST | /api/v1/property-valuations/comparables/{comparable_id}/adjustments | create_adjustment | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| DELETE | /api/v1/property-valuations/adjustments/{adjustment_id} | delete_adjustment | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
 | GET | /api/v1/property-valuations/market-data | get_market_data | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | POST | /api/v1/property-valuations/market-data | create_market_data | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | PUT | /api/v1/property-valuations/market-data/{market_data_id} | update_market_data | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
@@ -243,14 +243,14 @@ _Both prefixes serve the identical router; paths shown with /api/v1/property-val
 | GET | /api/v1/property-valuations/requests | list_requests | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | POST | /api/v1/property-valuations/requests | create_request | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | GET | /api/v1/property-valuations/requests/{request_id} | get_request | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
-| PUT | /api/v1/property-valuations/requests/{request_id} | update_request | partial | — | no test |
-| GET | /api/v1/property-valuations/properties/{property_id}/features | get_features | partial | — | no test |
-| POST | /api/v1/property-valuations/properties/{property_id}/features | create_features | partial | — | no test |
-| PUT | /api/v1/property-valuations/features/{feature_id} | update_features | partial | — | no test |
-| GET | /api/v1/property-valuations/{valuation_id}/reports | list_reports | partial | — | no test |
-| POST | /api/v1/property-valuations/{valuation_id}/reports | create_report | partial | — | no test |
-| PUT | /api/v1/property-valuations/reports/{report_id} | update_report | partial | — | no test |
-| PUT | /api/v1/property-valuations/reports/{report_id}/sign | sign_report | partial | — | no test |
+| PUT | /api/v1/property-valuations/requests/{request_id} | update_request | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| GET | /api/v1/property-valuations/properties/{property_id}/features | get_features | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| POST | /api/v1/property-valuations/properties/{property_id}/features | create_features | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| PUT | /api/v1/property-valuations/features/{feature_id} | update_features | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| GET | /api/v1/property-valuations/{valuation_id}/reports | list_reports | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| POST | /api/v1/property-valuations/{valuation_id}/reports | create_report | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| PUT | /api/v1/property-valuations/reports/{report_id} | update_report | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
+| PUT | /api/v1/property-valuations/reports/{report_id}/sign | sign_report | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-420 bucket B) |
 | GET | /api/v1/property-valuations/{valuation_id}/audit-logs | get_audit_logs | done | property_valuation_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 
 ## reports.rs  (mount: /api/v1/reports)
@@ -266,7 +266,7 @@ _Both prefixes serve the identical router; paths shown with /api/v1/property-val
 | PUT | /api/v1/reports/schedules/{id}/pause | pause_schedule | done | reports_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | PUT | /api/v1/reports/schedules/{id}/resume | resume_schedule | done | reports_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | GET | /api/v1/reports/schedules/{id}/executions | list_schedule_executions | done | report_execution_download_retry_e2e_tests.rs | happy-path: same-org list returns 200 |
-| GET | /api/v1/reports/executions/{id} | get_execution | partial | report_schedule_sibling_scope_tests.rs | IDOR-only; no happy path |
+| GET | /api/v1/reports/executions/{id} | get_execution | done | reports_get_execution_happy_path_tests.rs | happy-path: get_execution_same_org_returns_200 |
 | GET | /api/v1/reports/executions/{id}/download | get_execution_download_url | done | report_execution_download_retry_e2e_tests.rs | happy-path: same-org presign returns 200 + non-empty URL |
 | POST | /api/v1/reports/executions/{id}/retry | retry_execution | done | report_execution_download_retry_e2e_tests.rs | happy-path: retry_failed_execution_resets_to_pending (200) |
 
@@ -281,13 +281,13 @@ _Both prefixes serve the identical router; paths shown with /api/v1/property-val
 | GET | /api/v1/accounting/invoices/{id}/items | invoices::list_invoice_items | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | GET | /api/v1/accounting/contacts/ | contacts::list_contacts | done | accounting_contacts_authz_tests.rs | happy-path: manager_can_list_contacts (200) |
 | GET | /api/v1/accounting/statements/ | statements::list_statements | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
-| POST | /api/v1/accounting/statements/ | statements::upload_statement | partial | — | no test |
+| POST | /api/v1/accounting/statements/ | statements::upload_statement | done | accounting_upload_statement_happy_path_tests.rs | happy-path: upload_statement_happy_path (200) |
 | GET | /api/v1/accounting/statements/{id}/lines | statements::list_statement_lines | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | GET | /api/v1/accounting/lines/{id}/matches | matches::list_matches | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | POST | /api/v1/accounting/matches/{id}/confirm | matches::confirm_match | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 | POST | /api/v1/accounting/matches/{id}/reject | matches::reject_match | done | accounting_happy_path_tests.rs | happy-path 2xx (BIT-415 reconcile) |
 
 ## Summary
-- done: 8 | partial: 226 | stub: 0 | missing: 0 | total: 234
+- done: 234 | partial: 0 | stub: 0 | missing: 0 | total: 234
 
 Per-module endpoint counts: financial 33, budgets 37, multi_currency 28, subscriptions 32 (30 + 2 admin), person_months 10 (7 unit + 3 building), market_pricing 31, property_valuation 37, reports 13, accounting 13.
