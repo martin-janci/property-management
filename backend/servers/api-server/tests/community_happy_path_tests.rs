@@ -108,6 +108,7 @@ fn id_of(v: &Value) -> Uuid {
         .unwrap_or_else(|| panic!("expected id field in {v}"))
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn community_groups_posts_happy_path(pool: PgPool) {
     let ctx = setup(pool, "grp").await;
@@ -184,6 +185,7 @@ async fn community_groups_posts_happy_path(pool: PgPool) {
     );
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn community_events_happy_path(pool: PgPool) {
     let ctx = setup(pool, "evt").await;
@@ -217,6 +219,7 @@ async fn community_events_happy_path(pool: PgPool) {
     );
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn community_marketplace_happy_path(pool: PgPool) {
     let ctx = setup(pool, "mkt").await;

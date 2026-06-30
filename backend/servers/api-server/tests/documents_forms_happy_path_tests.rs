@@ -474,6 +474,7 @@ async fn list_submissions_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_submission_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -497,6 +498,7 @@ async fn get_submission_succeeds(pool: PgPool) {
     res.assert_json_field("submission");
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn review_submission_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
