@@ -718,6 +718,42 @@ impl MessagingRepository {
         Ok(exists)
     }
 
+    /// Whether `caller` is blocked by — or has blocked — ANY of `candidates`,
+    /// in a single set-based query (#1776 / #1789).
+    ///
+    /// Replaces the per-recipient `is_blocked_rls` loop in `start_thread`: for an
+    /// N-party thread that loop issued N sequential round-trips (an N+1 pattern);
+    /// this keeps the block gate at one query regardless of N, matching the
+    /// set-based existence/membership checks already used in that handler. Same
+    /// bidirectional `user_blocks` predicate as [`is_blocked_rls`], with the
+    /// single peer replaced by `= ANY($2)`. `EXISTS` short-circuits — the caller
+    /// only needs "is anyone blocked", not the full set.
+    pub async fn any_blocked_among_rls<'e, E>(
+        &self,
+        executor: E,
+        caller: Uuid,
+        candidates: &[Uuid],
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let (exists,): (bool,) = sqlx::query_as(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM user_blocks
+                WHERE (blocker_id = $1 AND blocked_id = ANY($2))
+                   OR (blocked_id = $1 AND blocker_id = ANY($2))
+            )
+            "#,
+        )
+        .bind(caller)
+        .bind(candidates)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(exists)
+    }
+
     /// List blocked users with their info with RLS context.
     pub async fn list_blocked_users_rls<'e, E>(
         &self,
