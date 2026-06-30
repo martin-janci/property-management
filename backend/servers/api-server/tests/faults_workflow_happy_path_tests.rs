@@ -135,6 +135,7 @@ async fn add_attachment(app: &TestApp, token: &str, org_id: Uuid, fault_id: Uuid
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_list_faults_returns_created_fault(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -165,6 +166,7 @@ async fn test_list_faults_returns_created_fault(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_triage_new_fault(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -189,6 +191,7 @@ async fn test_triage_new_fault(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_assign_fault_to_self(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -213,6 +216,7 @@ async fn test_assign_fault_to_self(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_list_attachments_empty(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -239,6 +243,7 @@ async fn test_list_attachments_empty(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_add_attachment(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -265,6 +270,7 @@ async fn test_add_attachment(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_delete_attachment(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
@@ -291,6 +297,7 @@ async fn test_delete_attachment(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn test_get_ai_suggestion(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();

@@ -148,7 +148,7 @@ pub struct SavedSearchAlert {
 /// a notification without a second round-trip.
 ///
 /// Delivery here is tracked by `search_alert_queue.notified_at` /
-/// `notify_attempts` (migration 00194), independently of the `status` column,
+/// `notify_attempts` (migration 00195), independently of the `status` column,
 /// which belongs to the in-app pull/read channel ([`SavedSearchAlert`]).
 #[derive(Debug, Clone, FromRow)]
 pub struct UndeliveredSearchAlert {
