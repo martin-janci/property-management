@@ -28,6 +28,8 @@ export function SiteHeader() {
 
         <div className={styles.navActions}>
           <LocaleSwitcher />
+          {/* TODO(PAP-303 #3): point at /login once the login route lands; for
+              now the only public route is /signup. */}
           <Link href="/signup" className={`${styles.navLink} ${styles.navLinks}`}>
             {t('login')}
           </Link>
