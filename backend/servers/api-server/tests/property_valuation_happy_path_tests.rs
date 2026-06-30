@@ -383,3 +383,302 @@ async fn property_valuation_endpoints_happy_path(pool: PgPool) {
         .await;
     resp.assert_status(StatusCode::OK);
 }
+
+/// Happy-path coverage for the comparables / adjustments / features / reports /
+/// update-request endpoints (BIT-420, bucket B). These are the 15
+/// property-valuation endpoints that had no prior happy-path test. Auth is the
+/// same tenant-scoped `AuthUser` model as `property_valuation_endpoints_happy_path`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn property_valuation_comparables_features_reports_happy_path(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_id = seed_org(&pool, "pvext").await;
+    let email = format!("pvx-{}@pv.test", Uuid::new_v4());
+    let user_id = seed_user(&pool, &email).await;
+    seed_membership(&pool, org_id, user_id, "org_admin").await;
+    let token = mint(user_id, &email, org_id);
+
+    // Seed building + unit. `property_id` on avm_* tables FKs units(id).
+    let building_id = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO buildings (organization_id, street, city, postal_code, country)
+           VALUES ($1, 'Comparable Rd 2', 'Bratislava', '81102', 'SK') RETURNING id"#,
+    )
+    .bind(org_id)
+    .fetch_one(&pool)
+    .await
+    .expect("seed building");
+
+    let unit_id = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO units (building_id, designation, floor, unit_type)
+           VALUES ($1, '5A', 5, 'apartment') RETURNING id"#,
+    )
+    .bind(building_id)
+    .fetch_one(&pool)
+    .await
+    .expect("seed unit");
+
+    let base = "/api/v1/property-valuations";
+
+    // Parent valuation for comparables + reports.
+    let create_valuation_payload = json!({
+        "property_id": unit_id,
+        "building_id": building_id,
+        "valuation_date": "2026-06-01",
+        "effective_date": "2026-06-01",
+        "expiration_date": "2027-06-01",
+        "estimated_value": 300000.0,
+        "confidence_level": "high"
+    });
+    let resp = app
+        .execute(
+            app.post(base)
+                .bearer(&token)
+                .json(&create_valuation_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let valuation_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("valuation id"))
+        .expect("parse valuation id");
+
+    // ========================================================================
+    // 1. COMPARABLES
+    // ========================================================================
+
+    // 1.1 POST /{valuation_id}/comparables -> create_comparable (201).
+    // sale_date + sale_price are the only required fields; valuation_id is
+    // overridden from the path.
+    let create_comp_payload = json!({
+        "sale_date": "2026-03-01",
+        "sale_price": 240000.0,
+        "property_type": "apartment",
+        "total_area_sqm": 75.0,
+        "year_built": 2010
+    });
+    let resp = app
+        .execute(
+            app.post(&format!("{base}/{valuation_id}/comparables"))
+                .bearer(&token)
+                .json(&create_comp_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let comparable_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("comparable id"))
+        .expect("parse comparable id");
+
+    // 1.2 GET /{valuation_id}/comparables -> list_comparables
+    let resp = app
+        .execute(
+            app.get(&format!("{base}/{valuation_id}/comparables"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // 1.3 PUT /comparables/{comparable_id} -> update_comparable (200 Json)
+    let update_comp_payload = json!({ "weight": 0.5, "is_verified": true });
+    let resp = app
+        .execute(
+            app.put(&format!("{base}/comparables/{comparable_id}"))
+                .bearer(&token)
+                .json(&update_comp_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // ========================================================================
+    // 2. ADJUSTMENTS (children of a comparable)
+    // ========================================================================
+
+    // 2.1 POST /comparables/{comparable_id}/adjustments -> create_adjustment (201)
+    let create_adj_payload = json!({
+        "adjustment_type": "location",
+        "adjustment_name": "Location premium",
+        "adjustment_amount": 5000.0,
+        "justification": "Closer to city centre"
+    });
+    let resp = app
+        .execute(
+            app.post(&format!("{base}/comparables/{comparable_id}/adjustments"))
+                .bearer(&token)
+                .json(&create_adj_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let adjustment_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("adjustment id"))
+        .expect("parse adjustment id");
+
+    // 2.2 GET /comparables/{comparable_id}/adjustments -> list_adjustments
+    let resp = app
+        .execute(
+            app.get(&format!("{base}/comparables/{comparable_id}/adjustments"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // 2.3 DELETE /adjustments/{adjustment_id} -> delete_adjustment (204)
+    let resp = app
+        .execute(
+            app.delete(&format!("{base}/adjustments/{adjustment_id}"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::NO_CONTENT);
+
+    // 2.4 DELETE /comparables/{comparable_id} -> delete_comparable (204)
+    let resp = app
+        .execute(
+            app.delete(&format!("{base}/comparables/{comparable_id}"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::NO_CONTENT);
+
+    // ========================================================================
+    // 3. PROPERTY FEATURES (route is /properties/{property_id}/features)
+    // ========================================================================
+
+    // 3.1 POST /properties/{property_id}/features -> create_features (201).
+    // property_id is overridden by the path but still required to deserialize.
+    let create_feat_payload = json!({
+        "property_id": unit_id,
+        "total_area_sqm": 80.0,
+        "living_area_sqm": 70.0,
+        "bedrooms": 3,
+        "has_garage": true,
+        "condition": "good"
+    });
+    let resp = app
+        .execute(
+            app.post(&format!("{base}/properties/{unit_id}/features"))
+                .bearer(&token)
+                .json(&create_feat_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let feature_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("feature id"))
+        .expect("parse feature id");
+
+    // 3.2 GET /properties/{property_id}/features -> get_features
+    let resp = app
+        .execute(
+            app.get(&format!("{base}/properties/{unit_id}/features"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // 3.3 PUT /features/{feature_id} -> update_features (200 Json)
+    let update_feat_payload = json!({ "condition_score": 8, "has_pool": true });
+    let resp = app
+        .execute(
+            app.put(&format!("{base}/features/{feature_id}"))
+                .bearer(&token)
+                .json(&update_feat_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // ========================================================================
+    // 4. REPORTS
+    // ========================================================================
+
+    // 4.1 POST /{valuation_id}/reports -> create_report (201).
+    // valuation_id is overridden by the path but required to deserialize.
+    let create_report_payload = json!({
+        "valuation_id": valuation_id,
+        "report_type": "summary",
+        "title": "Valuation Report",
+        "executive_summary": "Estimated value 300k"
+    });
+    let resp = app
+        .execute(
+            app.post(&format!("{base}/{valuation_id}/reports"))
+                .bearer(&token)
+                .json(&create_report_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let report_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("report id"))
+        .expect("parse report id");
+
+    // 4.2 GET /{valuation_id}/reports -> list_reports
+    let resp = app
+        .execute(
+            app.get(&format!("{base}/{valuation_id}/reports"))
+                .bearer(&token)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // 4.3 PUT /reports/{report_id} -> update_report (200 Json)
+    let update_report_payload = json!({ "title": "Valuation Report Rev2" });
+    let resp = app
+        .execute(
+            app.put(&format!("{base}/reports/{report_id}"))
+                .bearer(&token)
+                .json(&update_report_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // 4.4 PUT /reports/{report_id}/sign -> sign_report (200 Json)
+    let resp = app
+        .execute(
+            app.put(&format!("{base}/reports/{report_id}/sign"))
+                .bearer(&token)
+                .json(json!({}))
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // ========================================================================
+    // 5. UPDATE VALUATION REQUEST
+    // ========================================================================
+
+    // 5.1 POST /requests -> create_request (201) — parent for the update.
+    let create_req_payload = json!({
+        "property_id": unit_id,
+        "request_type": "standard",
+        "purpose": "sale",
+        "priority": 3
+    });
+    let resp = app
+        .execute(
+            app.post(&format!("{base}/requests"))
+                .bearer(&token)
+                .json(&create_req_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::CREATED);
+    let req_id = Uuid::parse_str(resp.json_value()["id"].as_str().expect("request id"))
+        .expect("parse request id");
+
+    // 5.2 PUT /requests/{request_id} -> update_request (200 Json)
+    let update_req_payload = json!({ "priority": 2, "internal_notes": "Reviewed" });
+    let resp = app
+        .execute(
+            app.put(&format!("{base}/requests/{req_id}"))
+                .bearer(&token)
+                .json(&update_req_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+}
