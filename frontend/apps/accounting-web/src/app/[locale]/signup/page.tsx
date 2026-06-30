@@ -39,6 +39,8 @@ function SignupContent() {
             <SignupForm />
             <p className={styles.altAuth}>
               {t('haveAccount')}{' '}
+              {/* TODO(PAP-303 #3): point at /login once the login route lands;
+                  currently the only public route is /signup. */}
               <Link href="/signup" className={styles.altAuthLink}>
                 {t('login')}
               </Link>
@@ -46,8 +48,13 @@ function SignupContent() {
           </div>
         </section>
 
-        <aside className={styles.asideCol} aria-hidden="true">
-          <div className={styles.asideBrand}>{BRAND_NAME}</div>
+        <aside className={styles.asideCol}>
+          {/* Only the decorative brand mark is hidden from assistive tech; the
+              benefits heading + list below are real value-prop content and must
+              stay announced (#1828 finding-1). */}
+          <div className={styles.asideBrand} aria-hidden="true">
+            {BRAND_NAME}
+          </div>
           <h2 className={styles.asideHeading}>{t('benefitsTitle')}</h2>
           <ul className={styles.benefitList}>
             {[0, 1, 2, 3].map((i) => (

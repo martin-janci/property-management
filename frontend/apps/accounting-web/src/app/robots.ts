@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${base}/sitemap.xml`,
-    host: base,
+    // `host` intentionally omitted (#1828 finding-5): a Yandex-only extension,
+    // ignored by Google/Bing and not part of MetadataRoute.Robots' indexing
+    // contract; the sitemap URL already conveys the canonical origin.
   };
 }

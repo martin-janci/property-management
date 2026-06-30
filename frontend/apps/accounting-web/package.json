@@ -6,8 +6,9 @@
     "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui"
   },
@@ -27,10 +28,16 @@
     "@ppt/dev-panel": "workspace:*",
     "@ppt/e2e": "workspace:*",
     "@ppt/vite-plugin-worktree": "workspace:*",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^25.0.5",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.3.0"
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.9"
   },
   "version": "0.1.0"
 }
