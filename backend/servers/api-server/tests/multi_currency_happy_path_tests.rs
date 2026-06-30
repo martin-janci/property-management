@@ -420,7 +420,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     // 5.5 GET /api/v1/multi-currency/cross-border/compliance/{country} -> get_compliance_requirements (200)
     let resp = app
         .execute(
-            app.get("/api/v1/multi-currency/cross-border/compliance/SK")
+            app.get("/api/v1/multi-currency/cross-border/compliance/S_K")
                 .bearer(&token)
                 .build(),
         )

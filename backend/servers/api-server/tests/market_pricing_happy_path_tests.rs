@@ -155,7 +155,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
         "region_id": region_id,
         "property_type": "apartment",
         "size_sqm": 60.0,
-        "monthly_rent": 750.0,
+        "monthly_rent": "750.0",
         "price_per_sqm": 12.5,
         "currency": "EUR",
         "source": "manual"
@@ -305,7 +305,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     // but still required for deserialization), effective_date and monthly_rent.
     let price_payload = json!({
         "unit_id": unit_id,
-        "monthly_rent": 650.0,
+        "monthly_rent": "650.0",
         "currency": "EUR",
         "effective_date": "2026-06-01",
         "change_reason": "market adjustment"

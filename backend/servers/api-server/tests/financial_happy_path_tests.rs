@@ -449,7 +449,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         resp.text()
     );
     let payment = resp.json_value();
-    let payment_id_str = payment["id"].as_str().expect("id missing");
+    let payment_id_str = payment["payment"]["id"].as_str().expect("id missing");
     let payment_id = Uuid::parse_str(payment_id_str).expect("invalid payment uuid");
 
     // 3.9 GET /api/v1/financial/payments -> list_payments
