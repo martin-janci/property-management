@@ -54,9 +54,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ locale: 'en' }),
 }));
 
-import SsoCallbackPage from './page';
-
-const SSO_STATE_KEY = 'sso_state';
+import SsoCallbackPage, { SSO_STATE_KEY } from './page';
 
 function renderCallback(search: string) {
   currentParams = new URLSearchParams(search);
@@ -85,11 +83,28 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
   });
 
-  it('redirects with no state token present (server already set the cookie)', async () => {
+  it('redirects when NO nonce was issued (server-cookie-only flow, nothing to verify)', async () => {
+    // No `sso_state` in sessionStorage → no nonce was issued, so there is
+    // nothing to validate and the server-set-cookie flow proceeds.
     renderCallback('');
 
     await waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/'));
     expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
+  });
+
+  it('FAILS when a nonce was issued but the callback carries no state (CSRF bypass closed, #1826)', async () => {
+    // A nonce was saved at flow start, but the callback arrives with no
+    // `state`. The pre-fix guard skipped validation here (state absent), letting
+    // an attacker-supplied callback through. It must now fail closed.
+    sessionStorage.setItem(SSO_STATE_KEY, 'nonce-1');
+
+    renderCallback('');
+
+    await waitFor(() => {
+      expect(screen.getByText('Login Failed')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/invalid state token/i)).toBeInTheDocument();
+    expect(replaceSpy).not.toHaveBeenCalled();
   });
 
   it('honours a same-origin relative redirect_uri', async () => {
