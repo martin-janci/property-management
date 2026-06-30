@@ -420,7 +420,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     );
     let checkout_res = resp.json_value();
     assert_eq!(
-        checkout_res["checkoutUrl"],
+        checkout_res["checkout_url"],
         "https://checkout.stripe.test/cs_happy_test_session_id"
     );
 
