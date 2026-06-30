@@ -87,7 +87,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: multi currency tables not seeded"]
 async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 

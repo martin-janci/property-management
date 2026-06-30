@@ -52,7 +52,6 @@ fn mint(user_id: Uuid, email: &str, org_id: Uuid) -> String {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: market pricing tables not seeded"]
 async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
