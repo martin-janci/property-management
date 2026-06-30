@@ -271,7 +271,7 @@ impl RealityPortalRepository {
     // Saved-search alert transport drainer (BIT-139, Epic 16).
     //
     // The email/push drainer delivers alerts out-of-band and tracks its own
-    // progress via `notified_at` / `notify_attempts` (migration 00194), kept
+    // progress via `notified_at` / `notify_attempts` (migration 00195), kept
     // separate from the `status` column owned by the in-app read channel above.
     // It runs service-role (no `app.current_user_id`); `search_alert_queue`,
     // `portal_saved_searches`, and `users` are not RLS-gated, so it sees every
