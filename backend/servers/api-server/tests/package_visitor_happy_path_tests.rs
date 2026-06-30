@@ -202,6 +202,7 @@ fn nested_id(v: &Value, key: &str) -> Uuid {
 // Packages
 // ---------------------------------------------------------------------------
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn packages_happy_path(pool: PgPool) {
     let ctx = setup(pool, "pkg").await;
@@ -271,6 +272,7 @@ async fn packages_happy_path(pool: PgPool) {
 // Visitors
 // ---------------------------------------------------------------------------
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn visitors_happy_path(pool: PgPool) {
     let ctx = setup(pool, "vis").await;

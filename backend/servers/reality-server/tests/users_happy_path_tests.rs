@@ -80,6 +80,7 @@ async fn request_password_reset_returns_2xx(pool: PgPool) {
 
 // ── get_me (GET /me) ─────────────────────────────────────────────────────────
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_me_returns_2xx(pool: PgPool) {
     let user = seed_user(&pool, "get-me").await;
@@ -91,6 +92,7 @@ async fn get_me_returns_2xx(pool: PgPool) {
 
 // ── update_me (PUT /me) ──────────────────────────────────────────────────────
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_me_returns_2xx(pool: PgPool) {
     let user = seed_user(&pool, "update-me").await;

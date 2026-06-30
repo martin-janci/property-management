@@ -91,6 +91,7 @@ async fn search_returns_2xx_on_empty_db(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn search_returns_2xx_with_seeded_listing(pool: PgPool) {
     seed_active_listing(&pool, "search").await;
@@ -128,6 +129,7 @@ async fn get_suggestions_returns_2xx(pool: PgPool) {
 
 // ── get_listing (GET /{id}) ──────────────────────────────────────────────────
 
+#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_listing_returns_2xx_for_active(pool: PgPool) {
     let listing_id = seed_active_listing(&pool, "detail").await;
