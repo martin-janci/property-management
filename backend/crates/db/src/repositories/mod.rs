@@ -214,7 +214,7 @@ pub use government_portal::GovernmentPortalRepository;
 // Epics 31-34: Reality Portal Professional
 pub mod reality_portal;
 
-pub use reality_portal::RealityPortalRepository;
+pub use reality_portal::{FavoriteAlertReadOutcome, RealityPortalRepository};
 
 // Epic 37: Community & Social Features
 pub mod community;
