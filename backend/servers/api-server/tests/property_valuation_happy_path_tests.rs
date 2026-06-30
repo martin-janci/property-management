@@ -495,6 +495,7 @@ async fn property_valuation_comparables_features_reports_happy_path(pool: PgPool
 
     // 2.1 POST /comparables/{comparable_id}/adjustments -> create_adjustment (201)
     let create_adj_payload = json!({
+        "comparable_id": comparable_id,
         "adjustment_type": "location",
         "adjustment_name": "Location premium",
         "adjustment_amount": 5000.0,

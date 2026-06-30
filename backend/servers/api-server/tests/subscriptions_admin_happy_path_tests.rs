@@ -63,7 +63,7 @@ async fn list_all_subscriptions_2xx(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.get("/api/v1/admin/subscriptions")
+            app.get("/api/v1/admin/subscriptions/subscriptions")
                 .bearer(&token)
                 .header("X-Tenant-ID", &org_id.to_string())
                 .build(),
@@ -89,7 +89,7 @@ async fn list_all_invoices_2xx(pool: PgPool) {
 
     let resp = app
         .execute(
-            app.get("/api/v1/admin/invoices")
+            app.get("/api/v1/admin/subscriptions/invoices")
                 .bearer(&token)
                 .header("X-Tenant-ID", &org_id.to_string())
                 .build(),
