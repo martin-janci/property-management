@@ -163,7 +163,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let create_prop_payload = json!({
         "building_id": building_id,
         "default_currency": "U_S_D",
-        "country": "SK",
+        "country": "S_K",
         "vat_rate": "20.00",
         "requires_local_reporting": true,
     });
@@ -360,9 +360,9 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let lease_id = Uuid::new_v4();
     let create_lease_payload = json!({
         "lease_id": lease_id,
-        "property_country": "SK",
+        "property_country": "S_K",
         "property_currency": "E_U_R",
-        "tenant_country": "CZ",
+        "tenant_country": "C_Z",
         "tenant_tax_id": "CZ12345678",
         "tenant_vat_number": "CZ12345678",
         "lease_currency": "E_U_R",

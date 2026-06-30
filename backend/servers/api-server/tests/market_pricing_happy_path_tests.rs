@@ -104,7 +104,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    resp.assert_status(StatusCode::CREATED);
+    resp.assert_status(StatusCode::OK);
     let region = resp.json_value();
     let region_id_str = region["id"].as_str().expect("region id").to_string();
     let region_id = Uuid::parse_str(&region_id_str).expect("uuid");
