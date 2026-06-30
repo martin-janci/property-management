@@ -11,11 +11,14 @@ use uuid::Uuid;
 /// Explicit column list for `Delegation` rows.
 ///
 /// #859: sqlx 0.9 cannot decode a Postgres ENUM column into a Rust `String`,
-/// so the `status` (`delegation_status`) enum is cast to text. The rest map
-/// 1:1 to the struct fields. Used instead of `SELECT *` / `RETURNING *`.
-const DELEGATION_COLUMNS: &str = "id, owner_user_id, delegate_user_id, unit_id, scopes, \
-     status::text AS status, start_date, end_date, invitation_token, invitation_sent_at, \
-     accepted_at, declined_at, revoked_at, revoked_reason, created_at, updated_at";
+/// so the `status` (`delegation_status`) enum is cast to text. The same applies
+/// to `scopes`, whose column type is `delegation_scope[]` (an array of the enum)
+/// — it must be cast to `text[]` to decode into `Vec<String>`. The rest map 1:1
+/// to the struct fields. Used instead of `SELECT *` / `RETURNING *`.
+const DELEGATION_COLUMNS: &str = "id, owner_user_id, delegate_user_id, unit_id, \
+     scopes::text[] AS scopes, status::text AS status, start_date, end_date, \
+     invitation_token, invitation_sent_at, accepted_at, declined_at, revoked_at, \
+     revoked_reason, created_at, updated_at";
 
 /// Repository for delegation operations.
 #[derive(Clone)]
@@ -44,7 +47,7 @@ impl DelegationRepository {
                 owner_user_id, delegate_user_id, unit_id, scopes,
                 status, start_date, end_date, invitation_token, invitation_sent_at
             )
-            VALUES ($1, $2, $3, $4::text[], 'pending', $5, $6, $7, NOW())
+            VALUES ($1, $2, $3, $4::text[]::delegation_scope[], 'pending', $5, $6, $7, NOW())
             RETURNING {DELEGATION_COLUMNS}
             "#
         )))
@@ -100,7 +103,7 @@ impl DelegationRepository {
         // #859: cast the `status` enum to text so sqlx 0.9 can decode it as String.
         let delegations = sqlx::query_as::<_, DelegationSummary>(
             r#"
-            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status::text AS status
+            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes::text[] AS scopes, status::text AS status
             FROM delegations
             WHERE owner_user_id = $1
             ORDER BY created_at DESC
@@ -121,7 +124,7 @@ impl DelegationRepository {
         // #859: cast the `status` enum to text so sqlx 0.9 can decode it as String.
         let delegations = sqlx::query_as::<_, DelegationSummary>(
             r#"
-            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status::text AS status
+            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes::text[] AS scopes, status::text AS status
             FROM delegations
             WHERE delegate_user_id = $1
             ORDER BY created_at DESC
@@ -253,7 +256,7 @@ impl DelegationRepository {
             r#"
             UPDATE delegations
             SET
-                scopes = COALESCE($3::text[], scopes),
+                scopes = COALESCE($3::text[]::delegation_scope[], scopes),
                 end_date = COALESCE($4, end_date),
                 updated_at = NOW()
             WHERE id = $1 AND owner_user_id = $2 AND status IN ('pending', 'active')
@@ -284,7 +287,7 @@ impl DelegationRepository {
                 WHERE delegate_user_id = $1
                   AND status = 'active'
                   AND (unit_id = $2 OR unit_id IS NULL)
-                  AND ($3 = ANY(scopes) OR 'all' = ANY(scopes))
+                  AND ($3 = ANY(scopes::text[]) OR 'all' = ANY(scopes::text[]))
                   AND start_date <= CURRENT_DATE
                   AND (end_date IS NULL OR end_date >= CURRENT_DATE)
             )
