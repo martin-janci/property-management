@@ -1321,7 +1321,7 @@ impl FinancialRepository {
             r#"
             SELECT
                 u.id as unit_id,
-                u.designation AS unit_number,
+                u.designation,
                 COALESCE(SUM(CASE WHEN i.due_date >= $3 THEN i.balance_due ELSE 0 END), 0) as current,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 AND i.due_date >= $3 - INTERVAL '30 days' THEN i.balance_due ELSE 0 END), 0) as days_30,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 - INTERVAL '30 days' AND i.due_date >= $3 - INTERVAL '60 days' THEN i.balance_due ELSE 0 END), 0) as days_60,
