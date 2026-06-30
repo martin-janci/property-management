@@ -1,0 +1,329 @@
+{
+  "date": "2026-06-30",
+  "run_iso": "2026-06-30T03:30:00Z",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "summary": {
+    "merged_pr_count": 353,
+    "merged_pr_range": "#1440-#1981",
+    "open_pr_touched": 18,
+    "closed_unmerged": 88,
+    "issues_seen": 90,
+    "dev_commits": 50,
+    "dependabot_prs": 23,
+    "new_signal_count": 16
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-docs-endpoint-checklist-readme-2026-06-30",
+      "type": "churn-hotspot",
+      "source": "file docs/endpoint-checklist/README.md",
+      "score_delta": 1,
+      "evidence": "7 commits, +334/-192 in 14d (BIT-258 checklist tally updates)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        "docs/endpoint-checklist/README.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-analytics-investor-portal-tests-2026-06-30",
+      "type": "churn-hotspot",
+      "source": "file backend/servers/api-server/tests/analytics_investor_portal_success_tests.rs",
+      "score_delta": 1,
+      "evidence": "5 commits, +984/-3 in 14d (Wave 8 happy-path backfill)",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/analytics_investor_portal_success_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-ci-workflow-2026-06-30",
+      "type": "churn-hotspot",
+      "source": "file .github/workflows/backend.yml",
+      "score_delta": 1,
+      "evidence": "5 commits, +736/-20 in 14d — backend CI repeatedly tweaked (toolchain pins, skip-decision)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "revert-pr-1713-delegations",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": "Reverts #1690 — re-added delegation frontend conflicting with retirement (BIT-213)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "risky-churn-pr-1928-backend-yml",
+      "type": "risky-churn",
+      "source": "PR #1928",
+      "score_delta": 2,
+      "evidence": "PR #1928 (fix) modified .github/workflows/backend.yml — a top-churn file — with no test diff",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1801-event-bus",
+      "type": "hotfix-no-test",
+      "source": "PR #1801",
+      "score_delta": 2,
+      "evidence": "fix(event-bus): keep subscription alive on broadcast lag — 1 file changed, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1807-scheduler",
+      "type": "hotfix-no-test",
+      "source": "PR #1807",
+      "score_delta": 2,
+      "evidence": "fix(scheduler): one meter-reading reminder per resident per window — 1 file changed, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1825-booking-currency",
+      "type": "hotfix-no-test",
+      "source": "PR #1825",
+      "score_delta": 2,
+      "evidence": "fix(api-server): tighten Booking.com listing-push currency validation — 2 files, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1972-delegation-scopes",
+      "type": "hotfix-no-test",
+      "source": "PR #1972",
+      "score_delta": 2,
+      "evidence": "fix(db): correct delegation scopes enum-array SQL casts (BIT-407) — 1 file, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1955-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1955",
+      "score_delta": 2,
+      "evidence": "PR #1955 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ]
+    },
+    {
+      "id": "dep-update-summary-2026-06-30",
+      "type": "dep-update-noise",
+      "source": "23 PRs",
+      "score_delta": 0,
+      "evidence": "23 Dependabot/renovate PRs merged in 14d window",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "lag-warning-2026-06-30",
+      "type": "lag_warning",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "evidence": "13d 23h since last run (window 2026-06-16T03:25Z .. 2026-06-30T03:30Z)",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "stale_routine_alert-2026-06-30",
+      "type": "stale_routine_alert",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "evidence": "LAG_DAYS=13 — routine substantially behind schedule",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "code-review-ppt-web-core-querykeys-accounting-leak",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/lib/queryKeys.ts:347",
+      "score_delta": 3,
+      "evidence": "AUTHED_QUERY_KEY_ROOTS omits 'accounting' — auth-scoped invoices/contacts/statements leak across sessions on logout. File's own doc-comment warns to add new auth-scoped roots to the list.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-stale-token",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:212",
+      "score_delta": 2,
+      "evidence": "WebSocketService getToken reads stale token from WebSocketWrapper props after silent refresh; reconnects send expired token in ?token= until next user/isAuthenticated change.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-no-exp",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396",
+      "score_delta": 2,
+      "evidence": "initializeAuth restores user from localStorage without checking access-token expiry; on lapsed return the app shows authenticated UI until first 401. decodeJwtPayload is already in this file.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches ^# <today>$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare state.json vs HEAD",
+      "observed": "last_pr_seen, last_issue_seen, last_commit_sha, seen_signals.length, hotspot_history.length all advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in prior seen_signals re-emitted with score_delta != 0 for non-cumulative types",
+      "observed": "all 16 new ids are fresh",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "no score > 8; 52 open items with updated_at <= 2026-06-16 decayed -1 (38 dropped to status=dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has 'adversarial pass:' annotation in brief",
+      "observed": "plans/code-review-ppt-web-core-querykeys-accounting-leak.md → adversarial pass: passed",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; 15 required sections present; ≥1 capability ticked; Mode declared; Files paths resolve",
+      "observed": "1 new plan; all 4 metadata fields + 11 ## headings present; C1+C6 ticked; Mode: cloud-ok; queryKeys.ts:347 + AuthContext.tsx exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "expect 0 lines outside .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (excluding 4 baseline doc files)",
+      "observed": "scan clean",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (byte-identical, verified during Phase 2)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "for each failed phase, the corresponding cursor unchanged",
+      "observed": "phase-1.6-pm-rotation failed; pm_cursor + coverage_cursor unchanged (still next_index=5 + next_index=12)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "all 9 prior plans + new plan accounted for; archive grew or held steady",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ archive_count_now >= archive_count_at_HEAD ]",
+      "observed": "archive unchanged (6 files)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas.regen.md",
+      "observed": "exit 0 (byte-identical, verified during Phase 2)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 auto-fix discipline (cap + idempotency + verify-all + kill switch)",
+      "observed": "no candidate this run (no high-conf signal matched the allowlist + score>=3); auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran)",
+      "observed": "Phase 1.6 SKIPPED (subagent malformed); gate is no-op per routine spec",
+      "expected": "true (no-op)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged added lines",
+      "observed": "scan clean",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "ok (segment: ppt-web-core, 3 findings)",
+    "phase_1_6_pm": "FAILED — parent subagent returned malformed JSON; sub-roles (scrum-master + pm-security) ran but management artifacts NOT persisted; pm_cursor + coverage_cursor NOT advanced",
+    "phase_2_decide": "ok (14 decayed, 38 dropped, 16 new items; no bumps)",
+    "phase_3_promote": "ok (1 plan promoted: code-review-ppt-web-core-querykeys-accounting-leak)",
+    "phase_3_5_adversarial": "passed",
+    "phase_4_artifacts": "ok",
+    "phase_5_autofix": "no_candidate",
+    "phase_6_gate_commit": "<filled by Phase 6>"
+  }
+}
