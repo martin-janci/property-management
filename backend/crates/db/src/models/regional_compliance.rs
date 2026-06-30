@@ -66,6 +66,21 @@ impl SlovakDecisionType {
             SlovakDecisionType::Unanimous => "SS 14 ods. 4 zakona 182/1993 Z.z.",
         }
     }
+
+    /// The snake_case key as stored in `jurisdiction_rules.decision_type`
+    /// (migration 00197). This is the value to pass to
+    /// `RegionalComplianceRepository::get_quorum_rule` — NOT `legal_reference()`,
+    /// which the validate handlers previously used and which never matched the
+    /// seeded keys, silently falling back to the in-code defaults (#1906
+    /// finding-1). Matches the enum's `serde(rename_all = "snake_case")`.
+    pub fn decision_type_key(&self) -> &'static str {
+        match self {
+            SlovakDecisionType::SimpleMajority => "simple_majority",
+            SlovakDecisionType::TwoThirdsMajority => "two_thirds_majority",
+            SlovakDecisionType::ThreeQuartersMajority => "three_quarters_majority",
+            SlovakDecisionType::Unanimous => "unanimous",
+        }
+    }
 }
 
 // ============================================================================
@@ -98,6 +113,18 @@ impl CzechDecisionType {
             CzechDecisionType::QualifiedMajority => "SS 1208 zakona 89/2012 Sb.",
             CzechDecisionType::ThreeQuartersMajority => "SS 1209 zakona 89/2012 Sb.",
             CzechDecisionType::AllOwners => "SS 1214 zakona 89/2012 Sb.",
+        }
+    }
+
+    /// The snake_case key as stored in `jurisdiction_rules.decision_type`
+    /// (migration 00197) — pass this to `get_quorum_rule`, not `legal_reference()`
+    /// (#1906 finding-1). Matches the enum's `serde(rename_all = "snake_case")`.
+    pub fn decision_type_key(&self) -> &'static str {
+        match self {
+            CzechDecisionType::SimpleMajority => "simple_majority",
+            CzechDecisionType::QualifiedMajority => "qualified_majority",
+            CzechDecisionType::ThreeQuartersMajority => "three_quarters_majority",
+            CzechDecisionType::AllOwners => "all_owners",
         }
     }
 }
