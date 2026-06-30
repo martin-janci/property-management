@@ -637,9 +637,7 @@ async fn get_thread(
     let participants = get_participants(&mut rls, &thread, user_id).await?;
 
     // Mark thread as read
-    let _ = repo
-        .mark_thread_read_rls(&mut **rls.conn(), id, user_id)
-        .await;
+    let _ = repo.mark_thread_read_rls(rls.conn(), id, user_id).await;
 
     rls.release().await;
 
@@ -1199,7 +1197,7 @@ async fn mark_thread_read(
     }
 
     let marked = repo
-        .mark_thread_read_rls(&mut **rls.conn(), id, user_id)
+        .mark_thread_read_rls(rls.conn(), id, user_id)
         .await
         .map_err(|e| {
             (
