@@ -125,7 +125,6 @@ async fn link_then_list_attachment(pool: PgPool) {
 }
 
 /// Only the message sender may attach a file to it — another participant cannot.
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn non_sender_cannot_link_attachment(pool: PgPool) {
@@ -196,7 +195,6 @@ async fn non_participant_cannot_list_attachments(pool: PgPool) {
 /// Download authz: a participant passes the authz gate (reaching the storage
 /// layer — 503 in the no-S3 harness), while a non-participant in the SAME org
 /// and a user from a DIFFERENT org are both denied before any storage call.
-#[ignore]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn download_url_authz_gate(pool: PgPool) {
