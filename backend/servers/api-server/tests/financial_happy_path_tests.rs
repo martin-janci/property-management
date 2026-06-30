@@ -579,7 +579,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::CREATED,
         "allocate_payment should succeed: {}",
         resp.text()
     );
