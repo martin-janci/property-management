@@ -99,6 +99,18 @@
       ],
       "confidence": "high",
       "candidate_vector": "dep-update"
+    },
+    {
+      "id": "same-day-rerun-2026-07-01-0322",
+      "type": "same-day-rerun",
+      "source": "routine invocation at 03:22 UTC (~15 min after 03:07 UTC catch-up run)",
+      "score_delta": 0,
+      "evidence": [
+        "Verified no new PRs (last cursor #1991), no new issues since 2026-07-01T03:07Z, no new commits on dev since c3af3082",
+        "Same-day idempotent rerun; state.stats.quiet_days bumped; brief left as-is (already accurate)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
     }
   ],
   "goal_checks": [
@@ -230,5 +242,6 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate: no eligible allowlist signal (screen-map-drift/orphan/fixme/dep-lockfile-drift/stalled-review) met the confidence=high + score>=3 bar this run"
+  "auto_fix_skipped_reason": "no candidate: no eligible allowlist signal (screen-map-drift/orphan/fixme/dep-lockfile-drift/stalled-review) met the confidence=high + score>=3 bar this run",
+  "rerun_note": "Second run on 2026-07-01. Prior run at 03:07 UTC did the 14d catch-up. This run confirmed no new activity in the 15-min interval; quiet_days incremented."
 }
