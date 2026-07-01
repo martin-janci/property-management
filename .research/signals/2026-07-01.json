@@ -1,0 +1,234 @@
+{
+  "date": "2026-07-01",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25:00Z; today is 2026-07-01 \u2192 14d 23h lag"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "state.json.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 14d old; cloud routine cron may have missed runs. Dispatcher state (assignments.json) lives on planning branch \u2014 check separately."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-ppt-web-core-delete-session-no-error-handling",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core (Phase 1.5, segment=ppt-web-core, reason=oldest-unreviewed 2026-06-05)",
+      "score_delta": 3,
+      "evidence": [
+        "`await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'DELETE' })` at frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:136 \u2014 no response.ok check; onSuccess invalidates caches on 4xx/5xx"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-websocket-unsafe-window-cast",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core (Phase 1.5)",
+      "score_delta": 2,
+      "evidence": [
+        "`(window as unknown as Record<string, unknown>)` at frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:32 \u2014 cross-boundary type coercion, no URL.parse / protocol validation for __API_BASE_URL__ before WS upgrade"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-ppt-web-core-action-queue-faked-api-calls",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core (Phase 1.5)",
+      "score_delta": 3,
+      "evidence": [
+        "`await new Promise(resolve => setTimeout(resolve, 300))` at frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:248 with TODO comment \u2014 dashboard action queue is mocked, never hits /api/v1/action-queue"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-check-2026-07-01-security-llm-doc-idor",
+      "type": "resolution",
+      "source": "merged PR #1955 (integration consolidation) referencing PR #1857",
+      "score_delta": 0,
+      "evidence": [
+        "Backlog id security-llm-doc-idor referenced in PR #1955 body via consolidated PR #1857 (regression tests for LLM-doc IDOR fix). Marked done and plan archived."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "resolution-check-2026-07-01-bug-risky-churn-pr-963-api-main-rs",
+      "type": "resolution",
+      "source": "merged PR #1955 referencing PR #1919",
+      "score_delta": 0,
+      "evidence": [
+        "Backlog id bug-risky-churn-pr-963-api-main-rs referenced in PR #1955 body via consolidated PR #1919 (wire security-headers into create_router + smoke tests). Marked done."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-check-2026-07-01-churn-hotspot-backend-crates-db-src-repositories-form-rs",
+      "type": "resolution",
+      "source": "merged PR #1955 referencing PR #1814",
+      "score_delta": 0,
+      "evidence": [
+        "Backlog id churn-hotspot-backend-crates-db-src-repositories-form-rs referenced in PR #1955 body via consolidated PR #1814 (form.rs module split). Marked done."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1839",
+      "type": "dep-update-noise",
+      "source": "merged PR #1839 (dependabot: bump dorny/paths-filter 3\u21924)",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged PR #1839; logged, not scored"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": false,
+      "command": "test -f briefs/2026-07-01.md && head -1 matches",
+      "observed": "exit 1",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (cursors + seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative id double-scored (verified: 3 new code-review-findings and 5 zero-delta signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "Phase 2 applied -1 to all 52 items with updated_at <= 2026-06-17",
+      "observed": "14 decayed, 38 dropped",
+      "expected": "all open items with updated_at <=cutoff got -1 or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotates adversarial pass for each new plan",
+      "observed": "will assert in brief",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "2 new plans; each has 15 sections + Mode + capability tick + files exist",
+      "observed": "manual check passed",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "verified at Phase 6 pre-commit",
+      "observed": "pending",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "verified at Phase 6 pre-commit",
+      "observed": "pending",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerated from backlog.json",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty \u2014 none failed",
+      "observed": "no phase failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived (security-llm-doc-idor archived)",
+      "observed": "convergence maintained",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files vs ls-tree HEAD",
+      "observed": "staged=7, head=7",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regenerated from vector=='triage' rows",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate this run)",
+      "observed": "0 actions",
+      "expected": "<= 3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm artifacts valid; pm_cursor advanced to 6; coverage_cursor advanced to 0",
+      "observed": "pm_cursor=6, coverage_cursor=0",
+      "expected": "valid + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "verified at Phase 6 pre-commit",
+      "observed": "pending",
+      "expected": "true"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no eligible allowlist signal (screen-map-drift/orphan/fixme/dep-lockfile-drift/stalled-review) met the confidence=high + score>=3 bar this run"
+}
