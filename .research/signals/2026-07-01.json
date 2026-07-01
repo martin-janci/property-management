@@ -1,0 +1,309 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine has not run in 15d 6h \u2014 last_run_iso=2026-06-16T03:25:00Z",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 15d old; cloud routine likely paused/broken while dispatcher on planning branch ticked",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "phase-1-5-skipped-2026-07-01",
+      "type": "phase_skipped",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Phase 1.5 rotating code review skipped: 15-day lag consumes budget; will resume normal cadence next run",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "phase-1-6-skipped-2026-07-01",
+      "type": "phase_skipped",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Phase 1.6 PM synthesis skipped: 15-day lag consumes budget; will resume normal cadence next run",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dispatcher-batch-2026-06-28",
+      "type": "dep-update-noise",
+      "source": "PR batch",
+      "score_delta": 0,
+      "evidence": "6 auto-impl/churn-hotspot PRs merged 2026-06-28",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dispatcher-batch-2026-06-29",
+      "type": "dep-update-noise",
+      "source": "PR batch",
+      "score_delta": 0,
+      "evidence": "12 auto-impl PRs merged 2026-06-29 (largest batch)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dispatcher-batch-2026-06-30",
+      "type": "dep-update-noise",
+      "source": "PR batch",
+      "score_delta": 0,
+      "evidence": "7 auto-impl PRs merged 2026-06-30",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dispatcher-batch-2026-07-01",
+      "type": "dep-update-noise",
+      "source": "PR batch",
+      "score_delta": 0,
+      "evidence": "1 auto-impl PR merged 2026-07-01",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": "churn-hotspot reality_portal split draft, 7d, no reviewDecision",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "fix(api-server): OCR auth + rental PII gate draft, 7d, no reviewDecision \u2014 security scope",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "hotfix-no-test-ci-pr-1993",
+      "type": "hotfix-no-test",
+      "source": "PR #1993, issue #1998",
+      "score_delta": 2,
+      "evidence": "PR #1993 landed with a regression test that never runs in CI (issue #1998 from post-merge reviewer); the test compiles but is not on any CI run path",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "test-gap-coverage-overstated-issue-2001",
+      "type": "code-review-finding",
+      "source": "issue #2001",
+      "score_delta": 2,
+      "evidence": "Follow-up: finance 100% coverage overstated \u2014 ignored/500-tolerant tests counted as done",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-integration-merge-pr-1955",
+      "type": "risky-churn",
+      "source": "PR #1955",
+      "score_delta": 2,
+      "evidence": "consolidate 22 reviewed/compiling PRs onto one integration branch (merge-then-fix, ~90KB diff) \u2014 elevated regression surface for followup review",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "untriaged-issue-1997",
+      "type": "untriaged-issue",
+      "source": "issue #1997",
+      "score_delta": 1,
+      "evidence": "follow-up: finance test coverage overstated (from-merged-review reviewer)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1999",
+      "type": "untriaged-issue",
+      "source": "issue #1999",
+      "score_delta": 1,
+      "evidence": "follow-up: currency serialization bug (from-merged-review)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-2000",
+      "type": "untriaged-issue",
+      "source": "issue #2000",
+      "score_delta": 1,
+      "evidence": "follow-up: alert drop (from-merged-review)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": "4 commits touching backend/servers/api-server/src/routes/messaging.rs this window (unread badge / block-check / watermark hotfixes)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-financial-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": "4 commits touching backend/crates/db/src/repositories/financial.rs this window",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-rentals-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": "3 commits touching backend/servers/api-server/src/routes/rentals.rs this window (PII gating + booking hotfixes)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-window-2026-07-01",
+      "type": "dep-update-noise",
+      "source": "30 PRs",
+      "score_delta": 0,
+      "evidence": "30 PRs closed unmerged in window \u2014 mostly superseded auto-impl attempts (test/churn/fix pairs), not abandoned scope",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (no high-confidence screen-map drift/orphan or fixme this run; dispatcher-batch signals are noise; churn/stalled are not allowlist types)",
+  "phase_1_5_skipped": true,
+  "phase_1_6_skipped": true,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-01.md && head -1 == '# 2026-07-01'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state diff prev vs current",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen\u00d7non-cumulative\u00d7score_delta filter",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay verification",
+      "observed": "true + PASS",
+      "expected": "true + PASS"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no plans promoted this run \u2014 vacuously satisfied",
+      "observed": "N/A",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans \u2264 2",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v '^.research/' staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep against diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases FAILED (1.5+1.6 SKIPPED, cursors unchanged)",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still exist in worktree/archive",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now \u2265 prev",
+      "observed": "7 \u2265 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; caps satisfied",
+      "observed": "0 actions",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped \u2014 coverage_cursor/pm_cursor unchanged from HEAD",
+      "observed": "PASS",
+      "expected": "PASS (no-op)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
