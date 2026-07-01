@@ -1,0 +1,365 @@
+{
+  "date": "2026-07-01",
+  "cursor_previous": {
+    "last_pr_seen": 1439,
+    "last_issue_seen": 1437,
+    "last_commit_sha": "4829015b"
+  },
+  "cursor_new": {
+    "last_pr_seen": 2005,
+    "last_issue_seen": 2001,
+    "last_commit_sha": "65eaa538"
+  },
+  "summary": {
+    "merged_prs_ct": 379,
+    "open_prs_touched_ct": 7,
+    "closed_not_merged_ct": 83,
+    "new_issues_ct": 96,
+    "updated_issues_ct": 69,
+    "commits_ct": 300,
+    "lag_days": 15
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "routine-run-2026-07-01",
+      "score_delta": 0,
+      "evidence": [
+        "Last run 2026-06-16, current 2026-07-01 = ~15 days lag; well over 36h threshold. Cursor sweep covers PRs #1440..#2005, issues #1438..#2001."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 reverted #1690 (re-added delegation frontend). Confirms delegations retirement per BIT-213; second revert loop suggests contested feature scope."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "local-git churn window",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched routes/messaging.rs on origin/dev in the current shallow window; part of the messaging feature-set churn."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/reality_portal.rs",
+      "type": "churn-hotspot",
+      "source": "local-git churn window",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched repositories/reality_portal.rs; PR #1812 in-flight proposes a module split."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/reality_portal.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": [
+        "File is a repeated churn hotspot: runs_seen=2, last seen 2026-06-12"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "local-git churn window",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched repositories/messaging.rs; supports the messaging routes churn."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/financial.rs",
+      "type": "churn-hotspot",
+      "source": "local-git churn window",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched repositories/financial.rs; parallel to the finance test-backfill wave."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/financial.rs"
+      ]
+    },
+    {
+      "id": "security-totp-capability-hardening-pr-1946",
+      "type": "code-review-finding",
+      "source": "PR #1946 (fix: harden TOTP + capability-token security)",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1946 merged 2026-06-29 hardens TOTP + capability tokens (UC-ACC-16.1 / 05.11). High-impact security fix — verify follow-up test/regression coverage per PR body."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/accounts.rs"
+      ]
+    },
+    {
+      "id": "security-cross-tenant-oauth-upsert-pr-1473",
+      "type": "code-review-finding",
+      "source": "PR #1473 (BIT-85 cross-tenant OAuth upsert + manager gate #1405)",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1473 fixed BIT-85 cross-tenant OAuth upsert hazard + added manager gate. High-severity tenant-isolation fix — confirm broader OAuth handler audit."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1812 (reality_portal repository split — churn refactor) has been open 6+ days as draft with no reviewDecision; blocks churn-hotspot resolution for reality_portal.rs."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "process-post-merge-review-catchup-2026-07-01",
+      "type": "unchecked-todo",
+      "source": "issues since #1437",
+      "score_delta": 0,
+      "evidence": [
+        "96 new issues since cursor, dominated by `from-merged-review` follow-ups. Post-merge review process healthy; no untriaged (all labeled)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-01.md && head-1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-id check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup",
+      "observed": "0 offenders",
+      "expected": "0 offenders"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap ok; 52 decayed",
+      "expected": "no >8, decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a — no promotions"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep non-.research paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phases cursor honesty",
+      "observed": "no failed phases; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grew",
+      "observed": "7 -> 11",
+      "expected": ">= prior"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=3 total, kill-switch ok"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (catch-up run — allowlist certainty bar not met by any single high-confidence signal)",
+  "decayed": [
+    "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+    "code-review-mobile-native-kmp-search-stale-response-race",
+    "test-gap-screen-map-drift-pr-1085-reality",
+    "test-gap-screen-map-drift-pr-1100-ppt",
+    "bug-risky-churn-pr-963-api-main-rs",
+    "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+    "test-gap-screen-map-drift-pr-922-ppt",
+    "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+    "triage-issue-1151",
+    "churn-hotspot-mobile-native-listing-detail-kt",
+    "churn-hotspot-mobile-native-search-screen-kt",
+    "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+    "refactor-churn-hotspot-mobile-announcements",
+    "refactor-churn-hotspot-mobile-announcements-test",
+    "refactor-churn-hotspot-mobile-documents",
+    "triage-dispatcher-mcp-push-large-file-issue-1014",
+    "triage-issue-951",
+    "bug-ios-deeplink-info-plist-missing",
+    "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+    "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
+    "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
+    "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+    "closed-not-merged-pr-1274",
+    "churn-hotspot-backend-crates-integrations-src-booking-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+    "triage-issue-1331",
+    "dx-stalled-review-pr-988",
+    "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+    "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+    "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+    "triage-issue-1380",
+    "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+    "churn-hotspot-frontend-apps-mobile-app-config-ts",
+    "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+    "code-review-api-core-osrng-expect",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+    "closed-not-merged-pr-1425",
+    "screen-map-drift-pr-1418-ppt",
+    "code-review-mobile-rn-screens-mock-data",
+    "code-review-mobile-rn-deeplink-init-unhandled",
+    "dx-stalled-review-pr-1179"
+  ],
+  "resolved": [
+    [
+      "code-review-reality-web-share-comparison-404",
+      1676
+    ],
+    [
+      "code-review-reality-web-listing-page-ssr-crash",
+      1677
+    ],
+    [
+      "code-review-reality-web-realtor-mgmt-untranslated",
+      1678
+    ],
+    [
+      "code-review-mobile-rn-report-fault-fake-submit",
+      1679
+    ],
+    [
+      "code-review-mobile-rn-screens-mock-data",
+      1681
+    ]
+  ]
+}
