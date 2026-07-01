@@ -69,8 +69,8 @@ private const val TAG = "InquiriesScreen"
  * yet — only the messages/viewings list is rendered here. The underlying shared APIs it needs now
  * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/{id}/replies, and the
  * scheduling calendar's `scheduleViewing` → POST /api/v1/viewings, both with commonTest contract
- * coverage), so the earlier "API support not yet present" blocker is resolved; the remaining work is
- * the Android Compose thread + calendar UI itself. iOS already ships this via
+ * coverage), so the earlier "API support not yet present" blocker is resolved; the remaining work
+ * is the Android Compose thread + calendar UI itself. iOS already ships this via
  * `InquiryDetailView.swift`. Tracked as a follow-up Android-parity task.
  *
  * Epic 48 - Story 48.6: Portal Mobile Inquiries.
