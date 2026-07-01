@@ -5,6 +5,12 @@ product: reality-mobile
 sitemapRefs:
   reality-web: reality-home
 implementations:
+  mobile-native:
+    component: HomeScreen (Compose) — androidApp/.../ui/home/HomeScreen.kt
+    route: Screen.Home ("home")
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: complete
   ios-swiftui:
     component: HomeView
     route: Tab.home / Route.home
@@ -77,4 +83,5 @@ Root tab screen of Reality Portal iOS. Uses KMP `ListingRepository` (via `Depend
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Home/HomeView.swift (epic-82 story 82.3). NavigationCoordinator integration confirmed. Category chip actions unimplemented.
 - 2026-05-25 — agent: wired category chips to pendingSearchFilters on NavigationCoordinator; SearchView.onAppear consumes and auto-searches. buildStatus → shipped.
 - 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.
+- 2026-07-01 — agent: coverage 82-3 finish-to-done (82-3-home-search-screens). Closed the tracked KMP gap by adding the missing `mobile-native` implementation block (Compose `HomeScreen` at `Screen.Home`, `buildStatus: shipped`) alongside the existing `ios-swiftui` block — the Android/KMP Home screen (`androidApp/.../ui/home/HomeScreen.kt`) is fully shipped (featured carousel, recent list, category grid, loading/error/empty states; no TODO/stub markers) but its build status was previously untracked here. iOS `HomeView.swift` re-audited: braces balance, category chips wired to `pendingSearchFilters`/`NavigationCoordinator` — intact. KMP/Swift not compile-runnable in this sandbox; CI / macOS reviewer is the authoritative gate.
 - 2026-06-10 — agent: coverage 82-3 verify (verify-reality-mobile-search-ac-coverage). Home view (`HomeView.swift`) audited and intact — no AC-2/AC-4 logic lives here (Home defers all search to the Search tab via `pendingSearchFilters`). The story-82.3 AC-2 (debounce) / AC-4 (infinite scroll) / CoreLocation / FilterSheet ACs are verified on the **search** screen; see `reality-mobile/search.md` for the full findings, including a compile-blocking defect found in the sibling iOS `SearchView.swift`.
