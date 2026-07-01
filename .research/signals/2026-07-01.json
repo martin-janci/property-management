@@ -1,0 +1,250 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-06-16T03:25:00Z; now=2026-07-01 → 15d lag. Cloud routine has not fired; catch-up run.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "evidence": "raw churn (14d, first-parent): 3752 lines added — heavy i18n message additions; not a code-instability signal but topping the raw ranking",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: 2933 lines added in 6626d22 (fix booking_channel manager gate — new file scaffolded from an existing block)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "evidence": "raw churn (14d): 2818 lines added — booking integrations mod being fleshed out around channel-manager work",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-1994-migration",
+      "type": "hotfix-no-test",
+      "source": "PR #1994",
+      "score_delta": 2,
+      "evidence": "fix(migration): SQL-side template pagination + honest import/export checklist (#1905) — modifies backend/crates/db/src/repositories/migration.rs + routes/migration.rs, no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1989-accounting",
+      "type": "hotfix-no-test",
+      "source": "PR #1989",
+      "score_delta": 2,
+      "evidence": "fix(accounting): symmetric 404 in confirm_match + drop ToSchema on secret-bearing model (#1827) — touches models/accounting_provider.rs + services/accounting.rs, no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1967-jwt-access-gate",
+      "type": "hotfix-no-test",
+      "source": "PR #1967",
+      "score_delta": 2,
+      "evidence": "fix(api-core): restore structured token_type/raw_kind logs + pin JwtService access gate (#1782, #1761) — modifies extractors/auth.rs + extractors/principal.rs + services/jwt.rs, no *test* file in diff — auth gating change without regression coverage",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1966-preflight-env",
+      "type": "hotfix-no-test",
+      "source": "PR #1966",
+      "score_delta": 2,
+      "evidence": "fix(api-server): enforce length floors in preflight env check (#1758) — modifies integrations/lib.rs + api-server/src/preflight.rs, no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1972-delegation-scopes",
+      "type": "hotfix-no-test",
+      "source": "PR #1972",
+      "score_delta": 2,
+      "evidence": "fix(db): correct delegation scopes enum-array SQL casts (BIT-407) — modifies backend/crates/db/src/repositories/delegation.rs, no *test* file in diff — SQL cast fix without regression test",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1825-booking-currency",
+      "type": "hotfix-no-test",
+      "source": "PR #1825",
+      "score_delta": 2,
+      "evidence": "fix(api-server): validate Booking.com listing-push currency against ISO-4217 allowlist (#1759, #1788) — modifies models/multi_currency.rs + routes/integrations/booking_channel.rs, no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1807-meter-reminders",
+      "type": "hotfix-no-test",
+      "source": "PR #1807",
+      "score_delta": 2,
+      "evidence": "fix(scheduler): one meter-reading reminder per resident per window (#1777) — modifies services/scheduler.rs, no *test* file in diff — dedup logic change without a regression assertion",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1987",
+      "score_delta": 2,
+      "evidence": "fix(reality-web): close SSO callback CSRF state-bypass (#1826) — modifies frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx (+ test), no docs/screens/reality/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1955-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1955",
+      "score_delta": 2,
+      "evidence": "integration: consolidate 22 reviewed/compiling PRs onto one branch (#1955) — modifies frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx but only touches docs/screens/ppt/ (ppt-web side), no reality screen doc update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# <today>'",
+      "observed": "file exists, first line matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json '...' state.json",
+      "observed": "true (last_pr_seen advanced 1439→1994; seen_signals length grew; hotspot_history keys grew; cursors moved)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s '...' signals/<today>.json — no non-cumulative id re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items with updated_at ≤ today-14 either dropped 1 pt or moved to dropped",
+      "observed": "14 decayed −1, 38 dropped (score → 0)",
+      "expected": "decay applied to all eligible open rows"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "per new plan: brief has adversarial-pass line",
+      "observed": "no new plans this run — vacuously satisfied",
+      "expected": "line-per-plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- plans/",
+      "observed": "0 new plans (≤ 2)",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for known secret patterns in staged diff (see routine-prompt G9 for the exact regex)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff -q vs staged",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' section vs cursor advance",
+      "observed": "no phases failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs present in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now ≥ head",
+      "observed": "7 = 7",
+      "expected": "now ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff -q vs staged",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions total ≤ 3 and per-type ≤ 1; kill-switch honored; idempotency",
+      "observed": "auto_fix_actions=[] (no candidate this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm/coverage cursors",
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index=6 in [0,7]; coverage_cursor.next_index=0 in [0,13); both cursors advanced vs HEAD",
+      "expected": "all sub-checks pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram bot-token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

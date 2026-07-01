@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-23T09:59:19Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-01T04:00:00Z",
+  "scan_kind": "upkeep",
   "stories": [
     {
       "id": "6-1-announcement-creation-targeting",
@@ -239,7 +239,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-06-23",
+      "last_checked": "2026-07-01",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
