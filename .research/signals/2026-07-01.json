@@ -1,0 +1,226 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 15d 12h — 15-day cloud cron gap",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "evidence": "3 changes since last run in backend/servers/api-server/src/routes/messaging.rs (per-participant read watermark #1977, unread soft-delete leak #1993, follow-up #1998)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "evidence": "3 changes since last run in reality_portal.rs; open PR #1812 proposes module split — still monolithic on dev",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-06-16..HEAD",
+      "score_delta": 1,
+      "evidence": "3 changes since last run in messaging.rs repo (soft-delete leak fix + N-party set-based block check + participant watermark PR#1977)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-2026-07-01",
+      "type": "dep-update-noise",
+      "source": "6 dependabot PRs merged: #1836,#1837,#1838,#1839,#1841,#1842",
+      "score_delta": 0,
+      "evidence": "6 dependabot PRs merged this window (rust_xlsxwriter, cargo-minor-patch, dorny/paths-filter, actions/cache, dtolnay/rust-toolchain, gradle-wrapper)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "post-merge-followup-issue-1997-migration-pagination",
+      "type": "code-review-finding",
+      "source": "issue #1997 (from-merged-review)",
+      "score_delta": 2,
+      "evidence": "Follow-up on PR #1994: migration list_templates ORDER BY updated_at DESC lacks supporting index + no total-sort tiebreak (id) + no tests for count/pagination path",
+      "confidence": "high",
+      "candidate_vector": "perf"
+    },
+    {
+      "id": "post-merge-followup-issue-1998-messaging-count-unread-test",
+      "type": "code-review-finding",
+      "source": "issue #1998 (from-merged-review)",
+      "score_delta": 2,
+      "evidence": "Follow-up on PR #1993: #1771 regression test soft_deleted_thread_excluded_from_unread_count is [ignore]'d under BIT-351 → shipped with zero executing regression coverage",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "post-merge-followup-issue-1999-favorite-alert-nonatomic",
+      "type": "code-review-finding",
+      "source": "issue #1999 (from-merged-review)",
+      "score_delta": 2,
+      "evidence": "Follow-up on PR #1992: FavoriteAlertWorker.run_once enqueue+advance run as separate autocommitted execute calls with no transaction — can drop a price alert on concurrent write interleaving. Advance recomputes MAX independently and skips un-enqueued rows.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "post-merge-followup-issue-2000-country-currency-rename-all",
+      "type": "code-review-finding",
+      "source": "issue #2000 (from-merged-review)",
+      "score_delta": 3,
+      "evidence": "Follow-up on PR #1991: CountryCode/SupportedCurrency use rename_all=SCREAMING_SNAKE_CASE which serde encodes SK→'S_K', EUR→'E_U_R'. Breaks (1) wire contract (ISO codes rejected as 422) and (2) sqlx encode/decode against real Postgres enum labels (real DB rejects 'S_K'). Should be UPPERCASE.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "post-merge-followup-issue-2001-finance-coverage-overstated",
+      "type": "code-review-finding",
+      "source": "issue #2001 (from-merged-review)",
+      "score_delta": 1,
+      "evidence": "Follow-up on PR #1983: finance.md marks ~59 endpoints done citing tests that are still [ignore]'d (market_pricing, multi_currency). Also person_months calculate_from_residents accepts 500 as success. Coverage doc/CI-reality drift.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "post-merge-followup-issue-1995-migration-wire-import-export",
+      "type": "code-review-finding",
+      "source": "issue #1995 (split from #1905)",
+      "score_delta": 1,
+      "evidence": "Split from #1905: tenant-migration import/export is a DB-backed facade — no real S3 upload, validate/preview inserts hardcoded 2 rows regardless of file, approve_import queues no execution, export URL is fake storage.example.com. Tests assert mock outputs.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist + certainty bar this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-01.md && grep '^# 2026-07-01$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq: state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq: ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq: no non-cumulative double count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq: score cap + decay",
+      "observed": "all pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass annotation",
+      "observed": "1/1",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "gate: 1 new plan, all headings + metadata + files exist",
+      "observed": "1 plan, 15/15 sections, mode declared, files exist",
+      "expected": "<=2 plans, all sections present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v ^.research staged names",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phase 1.5/1.6 skipped, review_cursor + pm_cursor untouched",
+      "expected": "cursors not advanced for failed/skipped phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans converge",
+      "observed": "all prior plans present",
+      "expected": "all prior plans present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 >= 7",
+      "expected": "staged >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq: auto_fix_actions",
+      "observed": "0 actions",
+      "expected": "<= 3, cap per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "skipped this run",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
