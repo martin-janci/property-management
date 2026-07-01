@@ -439,6 +439,7 @@
     "revokeAction": "Widerrufen",
     "errorTitle": "Fehler",
     "errorUserIdRequired": "Bitte geben Sie eine Benutzer-ID ein.",
+    "errorUserIdInvalid": "Die Benutzer-ID muss eine gultige UUID sein.",
     "errorRoleRequired": "Bitte geben Sie einen Rollennamen ein.",
     "errorPasswordTooShort": "Das Passwort muss mindestens 4 Zeichen lang sein.",
     "errorInvalidDays": "Bitte geben Sie eine gultige Anzahl von Tagen ein."
