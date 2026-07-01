@@ -1,0 +1,339 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso vs now",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16 \u2014 15d 8h since; missed ~15 daily runs; catch-up run merging 34 PR-to-dev merges + 50 commits",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "cursor age",
+      "score_delta": 0,
+      "evidence": "state.json cursor 15d stale; cloud cron likely paused. Dispatcher (separate loop) still active \u2014 assignments.json touched 2026-07-01. Operator: check research routine trigger.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/messaging.rs \u2014 3 changes in the 15-day catch-up window",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/reality_portal.rs \u2014 3 changes in the 15-day catch-up window",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/messaging.rs \u2014 3 changes in the 15-day catch-up window",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-financial-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/financial.rs \u2014 3 changes in the 15-day catch-up window",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/financial.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/reality_portal.rs \u2014 runs_seen 1\u21922 (2026-06-12 \u2192 2026-07-01); pending refactor PR #1812 open (draft, needs-human-review)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "gh pr list --state open",
+      "score_delta": 1,
+      "evidence": "PR #1797 open 8d, draft, no reviewDecision; fix(api-server) auth OCR + rental PII manager gate (#1772, #1766)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "gh pr list --state open",
+      "score_delta": 1,
+      "evidence": "PR #1812 open 7d, draft with needs-human-review label; reality_portal.rs module-split refactor (churn-hotspot response)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-backend-messaging-race-block-check",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/messaging.rs:947 \u2014 send_message loops over recipients checking is_blocked per recipient (947-968) without atomicity; N+1 pattern; blocked_among_rls batch query exists (line 421, start_thread) as atomic alternative (issue #1776 pattern)",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ],
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-backend-financial-payment-race",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review",
+      "score_delta": 3,
+      "evidence": "backend/crates/db/src/repositories/financial.rs:971 \u2014 allocate_existing_payment fetches payment + invoice outside transaction (949-969); concurrent second allocate can double-allocate by reading stale allocated sum; should FOR UPDATE lock payment row before reading allocations",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/financial.rs"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "code-review-backend-reality-watermark-ordering",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/services/favorite_alerts.rs:118 \u2014 worker sets org context per-org inside loop (108) but does not isolate enqueue+advance pairs; if org_id=2 enqueue runs between org_id=1 enqueue and advance, org_id=1 advance reads org_id=2 newer watermark; violates documented ordering (line 115 comment)",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/services/favorite_alerts.rs"
+      ],
+      "severity": "medium"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no high-confidence signal matched Phase 5 allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-01.md + H1 match",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique(items[].id)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [items|.score>8]",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief lists adversarial pass for each new plan",
+      "observed": "passed",
+      "expected": "one of passed|fixed-in-place|rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan metadata + headings + capability + Mode + files",
+      "observed": "all present, file exists",
+      "expected": "all"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists phases-that-failed + cursor honesty",
+      "observed": "1.6 skipped (deliberate), cursor not advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "true; 0 actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "resolutions": [
+    "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+    "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
+    "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+    "bug-risky-churn-pr-963-api-main-rs"
+  ],
+  "decayed": [
+    "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+    "code-review-mobile-native-kmp-search-stale-response-race",
+    "test-gap-screen-map-drift-pr-1085-reality",
+    "test-gap-screen-map-drift-pr-1100-ppt",
+    "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+    "bug-ios-deeplink-info-plist-missing",
+    "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
+    "screen-map-drift-pr-1418-ppt",
+    "code-review-mobile-rn-screens-mock-data",
+    "code-review-mobile-rn-deeplink-init-unhandled"
+  ],
+  "dropped": [
+    "test-gap-screen-map-drift-pr-922-ppt",
+    "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+    "triage-issue-1151",
+    "churn-hotspot-mobile-native-listing-detail-kt",
+    "churn-hotspot-mobile-native-search-screen-kt",
+    "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+    "refactor-churn-hotspot-mobile-announcements",
+    "refactor-churn-hotspot-mobile-announcements-test",
+    "refactor-churn-hotspot-mobile-documents",
+    "triage-dispatcher-mcp-push-large-file-issue-1014",
+    "triage-issue-951",
+    "closed-not-merged-pr-1274",
+    "churn-hotspot-backend-crates-integrations-src-booking-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+    "triage-issue-1331",
+    "dx-stalled-review-pr-988",
+    "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+    "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+    "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+    "triage-issue-1380",
+    "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+    "churn-hotspot-frontend-apps-mobile-app-config-ts",
+    "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+    "code-review-api-core-osrng-expect",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+    "closed-not-merged-pr-1425",
+    "dx-stalled-review-pr-1179"
+  ],
+  "phases_ran": [
+    "1",
+    "1.5",
+    "2",
+    "3",
+    "4",
+    "6"
+  ],
+  "phases_skipped": [
+    "1.6"
+  ],
+  "phase_skip_reasons": {
+    "1.6": "catch-up run \u2014 15d lag; dispatcher-maintained artifacts fresh (assignments.json touched 2026-07-01)"
+  },
+  "meta": {
+    "lag_hours": 376,
+    "lag_days": 15,
+    "merged_prs_since_cursor": 34,
+    "commits_since_cursor": 50
+  }
+}
