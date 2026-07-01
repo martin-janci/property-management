@@ -7,7 +7,6 @@
 
 use std::time::Duration;
 
-use db::models::listing_status;
 use db::{repositories::RealityPortalRepository, DbPool};
 use tokio::time::interval;
 use tracing::Instrument;
@@ -112,97 +111,49 @@ impl FavoriteAlertWorker {
                 continue;
             }
 
-            let price_candidates = match self
+            // Price path: one set-based enqueue, then advance the watermarks.
+            // The enqueue MUST run first — it reads the pre-update watermark.
+            match self
                 .repo
-                .list_pending_favorite_price_alerts(&mut *conn)
+                .enqueue_pending_favorite_price_alerts(&mut *conn)
                 .await
             {
-                Ok(v) => v,
-                Err(e) => {
-                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] price candidate query failed");
-                    continue;
-                }
-            };
-            for candidate in price_candidates {
-                if let Err(e) = self
-                    .repo
-                    .enqueue_favorite_price_alert(&mut *conn, &candidate)
-                    .await
-                {
-                    tracing::warn!(
-                        org_id = %org_id,
-                        favorite_id = %candidate.favorite_id,
-                        error = %e,
-                        "[BIT-138] failed to enqueue favorite price alert"
-                    );
-                    continue;
-                }
-                if let Err(e) = self
-                    .repo
-                    .mark_favorite_price_alert_seen(
-                        &mut *conn,
-                        candidate.favorite_id,
-                        candidate.changed_at,
-                    )
-                    .await
-                {
-                    tracing::warn!(
-                        org_id = %org_id,
-                        favorite_id = %candidate.favorite_id,
-                        error = %e,
-                        "[BIT-138] failed to advance favorite price watermark"
-                    );
-                    continue;
-                }
-                queued_price += 1;
-            }
-
-            let status_candidates = match self
-                .repo
-                .list_pending_favorite_status_alerts(&mut *conn)
-                .await
-            {
-                Ok(v) => v,
-                Err(e) => {
-                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] status candidate query failed");
-                    continue;
-                }
-            };
-            for candidate in status_candidates {
-                let should_alert = candidate.new_status == listing_status::ACTIVE
-                    && candidate.previous_status.as_deref() != Some(listing_status::ACTIVE);
-                if should_alert {
+                Ok(n) => {
+                    queued_price += n as usize;
                     if let Err(e) = self
                         .repo
-                        .enqueue_favorite_status_alert(&mut *conn, &candidate)
+                        .advance_favorite_price_watermarks(&mut *conn)
                         .await
                     {
-                        tracing::warn!(
-                            org_id = %org_id,
-                            favorite_id = %candidate.favorite_id,
-                            error = %e,
-                            "[BIT-138] failed to enqueue back-on-market alert"
-                        );
-                    } else {
-                        queued_status += 1;
+                        tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to advance favorite price watermarks");
                     }
                 }
+                Err(e) => {
+                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to enqueue favorite price alerts");
+                }
+            }
 
-                if let Err(e) = self
-                    .repo
-                    .mark_favorite_listing_status_seen(
-                        &mut *conn,
-                        candidate.favorite_id,
-                        &candidate.new_status,
-                    )
-                    .await
-                {
-                    tracing::warn!(
-                        org_id = %org_id,
-                        favorite_id = %candidate.favorite_id,
-                        error = %e,
-                        "[BIT-138] failed to advance listing status snapshot"
-                    );
+            // Back-on-market path: one set-based enqueue (favorites whose listing
+            // just became active), then snapshot ALL changed favorites' status.
+            // back_on_market alerts are intentionally not opt-out-able — see
+            // `enqueue_pending_favorite_status_alerts` (#1852 finding-3).
+            match self
+                .repo
+                .enqueue_pending_favorite_status_alerts(&mut *conn)
+                .await
+            {
+                Ok(n) => {
+                    queued_status += n as usize;
+                    if let Err(e) = self
+                        .repo
+                        .advance_favorite_status_watermarks(&mut *conn)
+                        .await
+                    {
+                        tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to advance favorite status snapshots");
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to enqueue favorite back-on-market alerts");
                 }
             }
         }

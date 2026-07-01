@@ -264,19 +264,25 @@ pub async fn mark_favorite_alert_read(
     principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    let marked = state
+    let outcome = state
         .reality_portal_repo
         .mark_favorite_alert_read(alert_id, principal.user_id)
         .await
         .map_err(|e| crate::util::errors::db_error("mark favorite alert read", e))?;
 
-    if marked {
-        Ok(axum::http::StatusCode::NO_CONTENT)
-    } else {
-        Err((
+    match outcome {
+        // Idempotent (#1852 finding-4): a freshly-flipped alert AND one already
+        // read both succeed — a client polling read-state shouldn't get a
+        // surprising 404 for an alert it already marked. Genuinely absent /
+        // not-owned still 404s (no existence leak).
+        db::repositories::FavoriteAlertReadOutcome::Flipped
+        | db::repositories::FavoriteAlertReadOutcome::AlreadyRead => {
+            Ok(axum::http::StatusCode::NO_CONTENT)
+        }
+        db::repositories::FavoriteAlertReadOutcome::NotFound => Err((
             axum::http::StatusCode::NOT_FOUND,
             "Alert not found".to_string(),
-        ))
+        )),
     }
 }
 
