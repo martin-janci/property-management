@@ -20,6 +20,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
