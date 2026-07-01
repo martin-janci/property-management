@@ -20,6 +20,21 @@ export const SHARE_TYPE = {
 
 export type ShareType = (typeof SHARE_TYPE)[keyof typeof SHARE_TYPE];
 
+// ─── Validation ──────────────────────────────────────────────────────────────
+
+/**
+ * Canonical UUID matcher, mirroring the web share panel
+ * (`frontend/apps/ppt-web/.../DocumentSharePanel.tsx`). A `user` share targets a
+ * user by id, and the backend expects a UUID; accepting free-form text here
+ * produces a confusing 4xx after the round-trip. Validate client-side instead.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True when `value` (trimmed) is a syntactically valid UUID. */
+export function isValidUserId(value: string): boolean {
+  return UUID_RE.test(value.trim());
+}
+
 // ─── API shapes ──────────────────────────────────────────────────────────────
 
 export interface DocumentShare {
