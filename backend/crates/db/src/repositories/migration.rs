@@ -38,6 +38,8 @@ impl MigrationRepository {
         org_id: Uuid,
         data_type: Option<ImportDataType>,
         include_system: bool,
+        limit: i64,
+        offset: i64,
     ) -> Result<Vec<ImportTemplate>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -45,39 +47,96 @@ impl MigrationRepository {
         match (data_type, include_system) {
             (Some(dt), true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2",
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2 ORDER BY updated_at DESC LIMIT $3 OFFSET $4",
                 )
                 .bind(org_id)
                 .bind(dt)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(executor)
                 .await
             }
             (Some(dt), false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2",
+                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2 ORDER BY updated_at DESC LIMIT $3 OFFSET $4",
                 )
                 .bind(org_id)
                 .bind(dt)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(executor)
                 .await
             }
             (None, true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL)",
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
                 )
                 .bind(org_id)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(executor)
                 .await
             }
             (None, false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1",
+                    "SELECT * FROM import_templates WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
                 )
                 .bind(org_id)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(executor)
                 .await
             }
         }
+    }
+
+    /// Count import templates matching the same filter as [`Self::list_templates`],
+    /// for accurate pagination totals (#1905).
+    pub async fn count_templates<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        data_type: Option<ImportDataType>,
+        include_system: bool,
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let (count,): (i64,) = match (data_type, include_system) {
+            (Some(dt), true) => {
+                sqlx::query_as(
+                    "SELECT COUNT(*) FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2",
+                )
+                .bind(org_id)
+                .bind(dt)
+                .fetch_one(executor)
+                .await?
+            }
+            (Some(dt), false) => {
+                sqlx::query_as(
+                    "SELECT COUNT(*) FROM import_templates WHERE organization_id = $1 AND data_type = $2",
+                )
+                .bind(org_id)
+                .bind(dt)
+                .fetch_one(executor)
+                .await?
+            }
+            (None, true) => {
+                sqlx::query_as(
+                    "SELECT COUNT(*) FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL)",
+                )
+                .bind(org_id)
+                .fetch_one(executor)
+                .await?
+            }
+            (None, false) => {
+                sqlx::query_as("SELECT COUNT(*) FROM import_templates WHERE organization_id = $1")
+                    .bind(org_id)
+                    .fetch_one(executor)
+                    .await?
+            }
+        };
+        Ok(count)
     }
 
     /// List system-provided templates.
