@@ -439,6 +439,7 @@
     "revokeAction": "Cofnij",
     "errorTitle": "Blad",
     "errorUserIdRequired": "Prosze podac ID uzytkownika.",
+    "errorUserIdInvalid": "ID uzytkownika musi byc prawidlowym UUID.",
     "errorRoleRequired": "Prosze podac nazwe roli.",
     "errorPasswordTooShort": "Haslo musi miec co najmniej 4 znaki.",
     "errorInvalidDays": "Prosze podac prawidlowa liczbe dni."
