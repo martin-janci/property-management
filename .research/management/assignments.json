@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-01T10:10:05Z",
+  "generated": "2026-07-01T12:13:36Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -50,15 +50,15 @@
       "branch": "auto-impl/79-3-error-handling-toasts-2c66d88f",
       "status": "review",
       "claimed_at": "2026-07-01T10:10:05Z",
-      "last_updated": "2026-07-01T12:08:49Z",
+      "last_updated": "2026-07-01T12:13:36Z",
       "status_changed_at": "2026-07-01T12:08:49Z",
       "pr_number": 2002,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2002",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=test-only+screenmap; 35 assertions verified against errorHandler.ts, all correct; posted COMMENT (self-authored)",
+      "last_reviewed_oid": "0510c4475214893048f492b0da2dfb831e41b1b3",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
