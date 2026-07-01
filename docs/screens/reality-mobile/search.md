@@ -5,6 +5,12 @@ product: reality-mobile
 sitemapRefs:
   reality-web: reality-listings
 implementations:
+  mobile-native:
+    component: SearchScreen (Compose) — androidApp/.../ui/search/SearchScreen.kt
+    route: Screen.Search ("search?type={type}&category={category}")
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: complete
   ios-swiftui:
     component: SearchView
     route: Tab.search / Route.search
@@ -81,6 +87,7 @@ Search tab root. Calls `listingRepository.searchListings(request:)` via KMP. Pag
 
 ## Agent Log
 
+- 2026-07-01 — agent: coverage 82-3 finish-to-done (82-3-home-search-screens). Closed the tracked KMP gap by adding the missing `mobile-native` implementation block (Compose `SearchScreen` at `Screen.Search`, `buildStatus: shipped`) alongside the existing `ios-swiftui` block — the Android/KMP search path is fully shipped: `SearchScreen.kt` drives AC-2 debounce via `SearchState.debouncedQueryFlow` and AC-4 pagination via `SearchState.nextPageTriggerFlow` (both pure helpers in commonMain), plus a Material3 `FilterSheet` ModalBottomSheet; pinned by 43+ `SearchStateTest` cases (debounce, pagination, stale-response race). Re-audited iOS `SearchView.swift`: exact character brace count is 186/186 (balanced) and `performSearch`/`scheduleSearch`/`resultsGrid`/`loadMoreResults` are all defined and wired (AC-2 `.onChange(of: searchText)`→`scheduleSearch`; AC-4 result-row `.onAppear`→`loadMoreResults`) — the historical "born broken" defect is resolved on `dev`, confirming the earlier verify note. KMP/Swift not compile-runnable in this sandbox; CI / macOS reviewer `xcodebuild` is the authoritative gate.
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Search/SearchView.swift (epic-82 story 82.3). Sort and map-toggle gaps noted.
 - 2026-05-25 — agent: added SortOption enum (7 cases) with toolbar button; added onAppear to consume pendingSearchFilters from HomeView; mapped ListingTypeFilter to KMP ListingType in buildKMPFilters. buildStatus → shipped. Map toggle remains future work.
 - 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.
