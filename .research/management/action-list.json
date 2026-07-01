@@ -303,11 +303,18 @@
       "action": "Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1814,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
@@ -555,22 +562,36 @@
       "action": "Coverage gap [mvp]: Mediation and Resolution — verify and finish to done. Gaps: Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map); Mediation-resolution flow not promoted to done in sprint-status — story remains partial pending submissions integration",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1846,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "84-5-pgvector-rag",
       "action": "Coverage gap [phase3]: pgvector RAG Migration — verify and finish to done. Gaps: RAG retrieval/query service (embedding generation + similarity search) not implemented — migration only; Vector path is conditional/optional (JSONB fallback) rather than a hard pgvector dependency; No sprint-status entry and no test exercising vector similarity search; no screen-map (orphan epic)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1833,
+        "merged_at": "2026-06-28T16:17:47Z",
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "10b-7-contextual-help-documentation",
@@ -594,7 +615,7 @@
       "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
@@ -700,11 +721,18 @@
       "action": "Coverage gap [mvp]: Notification Trigger System — verify and finish to done. Gaps: No sprint-status entry to corroborate; trigger-specific unit/integration test not confirmed; no screen-map (orphan epic)",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1910,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "85-1-environment-variables",
@@ -747,11 +775,18 @@
       "action": "Coverage gap [mvp]: Channel-Level Notification Toggles — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1918,
+        "merged_at": "2026-06-28T08:16:17Z",
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "8a-2-critical-notification-override",
