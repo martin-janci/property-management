@@ -1,0 +1,243 @@
+{
+  "date": "2026-07-01",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 15d 15h \u2014 cloud cron likely stalled; catch-up sweep spans 569 commits, ~100 merged PRs (#1754-#2002), 100 recent issues"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso is 15d old; cloud routine may be paused; dispatcher may still be ticking independently"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "local git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx touched 13x since 2026-06-16 \u2014 central lazy-route registry; heavy churn tracks the pace of new feature routes; not per-se instability but a central hub"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "type": "churn-hotspot",
+      "source": "local git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/models/mod.rs touched 12x since 2026-06-16 \u2014 model registry that grows with every new domain slice; consider whether it warrants module-split like the recent repository splits (documents, subscription, sensor)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "local git log 2026-06-16..2026-07-01",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/rental.rs touched 10x since 2026-06-16 \u2014 rentals/bookings domain is expanding; monitor for a repository-split (mirroring #1683 document, #1796 subscription, #1810 sensor pattern)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-1836",
+      "type": "dep-update-noise",
+      "source": "PR #1836",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: bump gradle-wrapper 9.5.1 \u2192 9.6.0 (mobile-native gradle-minor-patch group)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-1837",
+      "type": "dep-update-noise",
+      "source": "PR #1837",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: bump dtolnay/rust-toolchain 1.94.1 \u2192 1.100.0 (actions-minor-patch); note: PR #1928 restored 1.94.1 to unbreak backend CI \u2014 regression in the bumped version"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-1838",
+      "type": "dep-update-noise",
+      "source": "PR #1838",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: bump actions/cache 5 \u2192 6"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-1841",
+      "type": "dep-update-noise",
+      "source": "PR #1841",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: cargo-minor-patch group in /backend (3 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-1842",
+      "type": "dep-update-noise",
+      "source": "PR #1842",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: rust_xlsxwriter 0.80.0 \u2192 0.95.0 (large jump \u2014 worth verifying report pipelines aren't affected)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no eligible signal met certainty bar (confidence=high + score>=3 + allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-01.md && head -1 | grep '^# 2026-07-01$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current on state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no double-counted non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score <= 8 across items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse Phases-that-failed",
+      "observed": "none",
+      "expected": "none or cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present in tree or archive",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions length caps",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "CC=12 in [0,13); PM=5 in [0,7]",
+      "expected": "in range; PM held so CC not required to advance"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token pattern",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": {
+    "phases_1_5_and_1_6_skipped": "Skipped Phase 1.5 (ppt-dev-review) and Phase 1.6 (ppt-project-management) for this 15-day catch-up run to keep the recovery commit lean; both skills are heavy readers and the top priority was landing a valid brief + advancing cursors so the daily cadence resumes. Both will run normally on the next incremental run."
+  }
+}
