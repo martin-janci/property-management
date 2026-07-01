@@ -439,6 +439,7 @@
     "revokeAction": "Visszavon",
     "errorTitle": "Hiba",
     "errorUserIdRequired": "Kerlek add meg a felhasznalo ID-t.",
+    "errorUserIdInvalid": "A felhasznalo ID-nak ervenyes UUID-nak kell lennie.",
     "errorRoleRequired": "Kerlek add meg a szerepkor nevet.",
     "errorPasswordTooShort": "A jelszonak legalabb 4 karakternek kell lennie.",
     "errorInvalidDays": "Kerlek adj meg ervenyes napszamot."

@@ -476,6 +476,7 @@
     "revokeAction": "Zrusit",
     "errorTitle": "Chyba",
     "errorUserIdRequired": "Prosim zadejte ID uzivatele.",
+    "errorUserIdInvalid": "ID uzivatele musi byt platne UUID.",
     "errorRoleRequired": "Prosim zadejte nazev role.",
     "errorPasswordTooShort": "Heslo musi mit alespon 4 znaky.",
     "errorInvalidDays": "Prosim zadejte platny pocet dni."

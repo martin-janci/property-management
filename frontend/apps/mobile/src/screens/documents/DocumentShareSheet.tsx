@@ -31,6 +31,7 @@ import {
 import { colors } from '../shared/screenStyles';
 import {
   type CreateShareRequest,
+  isValidUserId,
   SHARE_TYPE,
   type ShareType,
   type ShareWithDocument,
@@ -39,7 +40,7 @@ import {
   useRevokeShare,
 } from './documentShare';
 
-// ─── Helper ──────────────────────────────────────────────────────────────────
+// ─── Helper ───────────────────────────────────────────────────────────────────────
 
 function shareTypeLabel(t: ReturnType<typeof useTranslation>['t'], type: ShareType): string {
   switch (type) {
@@ -68,7 +69,7 @@ function formatExpiry(dateStr: string): string {
   });
 }
 
-// ─── Create-share form ───────────────────────────────────────────────────────
+// ─── Create-share form ─────────────────────────────────────────────────────────
 
 interface CreateShareFormProps {
   documentId: string;
@@ -89,9 +90,15 @@ function CreateShareForm({ documentId, onCreated }: CreateShareFormProps) {
 
   const handleCreate = useCallback(async () => {
     // Client-side validation
-    if (shareType === SHARE_TYPE.USER && !targetId.trim()) {
-      Alert.alert(t('documentShare.errorTitle'), t('documentShare.errorUserIdRequired'));
-      return;
+    if (shareType === SHARE_TYPE.USER) {
+      if (!targetId.trim()) {
+        Alert.alert(t('documentShare.errorTitle'), t('documentShare.errorUserIdRequired'));
+        return;
+      }
+      if (!isValidUserId(targetId)) {
+        Alert.alert(t('documentShare.errorTitle'), t('documentShare.errorUserIdInvalid'));
+        return;
+      }
     }
     if (shareType === SHARE_TYPE.ROLE && !targetRole.trim()) {
       Alert.alert(t('documentShare.errorTitle'), t('documentShare.errorRoleRequired'));
@@ -378,7 +385,7 @@ function ShareList({ documentId, shares, onRevoked }: ShareListProps) {
   );
 }
 
-// ─── Main sheet ──────────────────────────────────────────────────────────────
+// ─── Main sheet ────────────────────────────────────────────────────────────────
 
 export interface DocumentShareSheetProps {
   documentId: string;
@@ -455,7 +462,7 @@ export function DocumentShareSheet({
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const formStyles = StyleSheet.create({
   container: {
