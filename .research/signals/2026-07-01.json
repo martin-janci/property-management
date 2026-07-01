@@ -1,0 +1,241 @@
+{
+  "date": "2026-07-01",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "phase_notes": {
+    "phase_1_5_skipped": "catch-up run — 15d lag; rotating expert review deferred to next tick. review_cursor unchanged.",
+    "phase_1_6_skipped": "catch-up run — pm-project-management skill deferred to next tick. pm_cursor + coverage_cursor unchanged; G16 becomes a no-op per spec.",
+    "phase_5_status": "no candidate — see brief"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z; today 2026-07-01T12:15Z; lag = 15d 8h — 10x the 36h threshold.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-06-16T03:25Z is 15d old (>= 3d threshold); cloud routine cron likely wedged. Dispatcher (separate loop) is still ticking on the planning branch — see chore(research) commits on origin/dev.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 --name-only origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/messaging.rs — 4 commits in 15d window (PR #1968/#1993 unread fix, #1977 per-participant read watermark, #1990 set-based block check, #1993 dev merge). New hotspot (not previously in hotspot_history).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-financial.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 --name-only origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/financial.rs — 4 commits in 15d window driven by BIT-258 finance test-backfill (unit_number→designation rename, JSON key-case fixes, quarantine reword). New hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/financial.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 --name-only origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/messaging.rs — 3 commits in 15d window (per-participant read watermark #1977, unread soft-delete #1993, set-based block check #1990). All three landed in the same handler area — routes/messaging.rs. New hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs"
+      ]
+    },
+    {
+      "id": "test-gap-bit-351-quarantine-hides-regression-guards",
+      "type": "fixme-in-merged-code",
+      "source": "issue #1998, #1999, #2001; PR #1968 #1992 #1993 #1983 #1991",
+      "score_delta": 3,
+      "evidence": "Three separate post-merge review issues opened 2026-07-01 cite the same anti-pattern: fix PRs add a regression test then mark it #[ignore] under BIT-351 quarantine so the fix ships with zero executing regression coverage. #1998 (PR #1993 unread-soft-delete), #1999 (PR #1992 favorite-alert finding-4), #2001 (PR #1983 finance ~59 rows flipped partial→done on ignored tests). BIT-351 unresolved (BIT-352 tracks repair).",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs",
+        "backend/crates/db/tests/thread_participant_state_tests.rs",
+        "backend/servers/reality-server/src/services/favorite_alerts.rs",
+        "backend/servers/reality-server/tests/favorite_alert_worker_tests.rs",
+        "docs/endpoint-checklist/README.md",
+        "docs/endpoint-checklist/groups/finance.md"
+      ]
+    },
+    {
+      "id": "bug-multi-currency-enum-rename_all-broken-wire-and-db",
+      "type": "fixme-in-merged-code",
+      "source": "issue #2000 (PR #1991 follow-up)",
+      "score_delta": 3,
+      "evidence": "CountryCode + SupportedCurrency in backend/crates/db/src/models/multi_currency.rs carry rename_all='SCREAMING_SNAKE_CASE' on all-caps ISO variants (SK, CZ, EUR, CZK); serde emits 'S_K'/'E_U_R'/'C_Z_K'. Wire contract diverges from ISO; sqlx encode/decode also breaks vs the real Postgres enum labels (00101_create_multi_currency.sql seeds 'SK','EUR','CZK'). PR #1991 bent test payloads to match the bug. Fix: rename_all='UPPERCASE' on both serde + sqlx.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs",
+        "backend/servers/api-server/tests/multi_currency_happy_path_tests.rs",
+        "backend/crates/db/migrations/00101_create_multi_currency.sql"
+      ]
+    },
+    {
+      "id": "bug-favorite-alert-worker-non-transactional-drops-alerts",
+      "type": "fixme-in-merged-code",
+      "source": "issue #1999 (PR #1992 follow-up)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/services/favorite_alerts.rs:95-134 — FavoriteAlertWorker::run_once acquires one connection and runs enqueue + advance as separate autocommitted execute() calls; no BEGIN. Concurrent listing_price_history commit between the two statements causes advance to move watermark past a row enqueue never saw — alert silently dropped. Pre-rewrite mark_favorite_price_alert_seen with GREATEST did not have this hazard. Fix: wrap both paths in a REPEATABLE READ txn OR derive advance from enqueue's RETURNING.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/services/favorite_alerts.rs",
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "perf-migration-list-templates-missing-index-and-tiebreak",
+      "type": "fixme-in-merged-code",
+      "source": "issue #1997 (PR #1994 follow-up)",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/migration.rs list_templates ORDER BY updated_at DESC has no supporting index (import_templates has only organization_id); no unique tiebreak — migration 00198 seeds system templates in one INSERT so many rows share updated_at → page boundaries can skip/duplicate.",
+      "confidence": "medium",
+      "candidate_vector": "perf",
+      "files": [
+        "backend/crates/db/src/repositories/migration.rs",
+        "backend/crates/db/migrations/00198_create_tenant_migration_tables.sql"
+      ]
+    },
+    {
+      "id": "test-gap-migration-import-export-still-mocked",
+      "type": "fixme-in-merged-code",
+      "source": "issue #1995 (split from #1905)",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/migration.rs — upload_import_file synthesizes file_path (no S3 write); validate_import inserts hardcoded (total=100 successful=98 failed=2); approve_import flips status to Importing but queues no worker; get_export_status fabricates storage.example.com URL + 15_234_567 bytes. Current migration_db_tests.rs assert the mock outputs = false confidence when real logic lands; missing cross-tenant RLS negatives.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs",
+        "backend/servers/api-server/tests/migration_db_tests.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal simultaneously met (confidence=high AND item score≥3 AND allowlist shape); the two score-3 items promote as manual plans instead",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "cap:true; decay-30-open-items-verified",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "2/2 plans have adversarial pass: passed in brief",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "2 new plans, all 15 sections + Mode: cloud-ok + capability tick + all Files paths exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 non-.research paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "diff -q backlog.md exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "all failed phases recorded (none this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no HEAD plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive size 7 >= HEAD 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "diff -q IDEAS_TRIAGE.md exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions: [] (no-candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped this run — gate becomes no-op per spec",
+      "expected": "no-op-when-1.6-skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
