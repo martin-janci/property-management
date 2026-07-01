@@ -415,29 +415,29 @@ async fn start_thread(
 
     let repo = MessagingRepository::new(state.db.clone());
 
-    // No participant may have blocked (or be blocked by) the caller.
-    for &rid in &recipients {
-        let is_blocked = repo
-            .is_blocked_rls(&mut **rls.conn(), user_id, rid)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to check block status: {:?}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+    // No participant may have blocked (or be blocked by) the caller. One
+    // set-based query instead of a per-recipient loop (#1776), matching the
+    // existence and org-membership checks above.
+    let blocked = repo
+        .blocked_among_rls(&mut **rls.conn(), user_id, &recipients)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to check block status: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
 
-        if is_blocked {
-            rls.release().await;
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(ErrorResponse::new(
-                    "USER_BLOCKED",
-                    "Cannot message this user",
-                )),
-            ));
-        }
+    if !blocked.is_empty() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "USER_BLOCKED",
+                "Cannot message this user",
+            )),
+        ));
     }
 
     // Build the full participant list (caller + recipients). The repository
