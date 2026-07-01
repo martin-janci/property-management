@@ -1,0 +1,321 @@
+{
+  "date": "2026-07-01",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-01",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25:00Z, 15d 15h ago"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-01",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "cloud routine last ran 15d ago; dispatcher may still be ticking on planning branch"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+      "type": "churn-hotspot",
+      "source": "git churn 4829015b..c64e0632",
+      "score_delta": 1,
+      "evidence": [
+        "13 changes in 4829015b..c64e0632 (15-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "git churn 4829015b..c64e0632",
+      "score_delta": 1,
+      "evidence": [
+        "13 changes in 4829015b..c64e0632 (15-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git churn 4829015b..c64e0632",
+      "score_delta": 1,
+      "evidence": [
+        "13 changes in 4829015b..c64e0632 (15-day window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-1801",
+      "type": "hotfix-no-test",
+      "source": "PR #1801",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1801 (fix(event-bus): keep subscription alive on broadcast lag (at-least-once, #1792)) — 1 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1807",
+      "type": "hotfix-no-test",
+      "source": "PR #1807",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1807 (fix(scheduler): one meter-reading reminder per resident per window (#1777)) — 1 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1825",
+      "type": "hotfix-no-test",
+      "source": "PR #1825",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1825 (fix(api-server): tighten Booking.com listing-push currency validation (ISO-4217 allowlist)) — 2 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1966",
+      "type": "hotfix-no-test",
+      "source": "PR #1966",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1966 (fix(api-server): enforce length floors in preflight env check) — 2 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1967",
+      "type": "hotfix-no-test",
+      "source": "PR #1967",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1967 (fix(api-core): restore token_type/raw_kind logs + pin JwtService access gate) — 3 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1972",
+      "type": "hotfix-no-test",
+      "source": "PR #1972",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1972 (fix(db): correct delegation scopes enum-array SQL casts (BIT-407)) — 1 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1989",
+      "type": "hotfix-no-test",
+      "source": "PR #1989",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1989 (fix(accounting): symmetric 404 in confirm_match + drop ToSchema on secret model) — 2 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1994",
+      "type": "hotfix-no-test",
+      "source": "PR #1994",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1994 (fix(migration): SQL-side template pagination + honest import/export checklist (#1905)) — 3 files, no test diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-backend-servers-api-server-src-services-accounting-rs-148",
+      "type": "fixme-in-merged-code",
+      "source": "PR #1454 or #1821 (accounting MVP)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:148 — `// TODO: Date proximity, IBAN match` (added in accounting MVP epic)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "screen-map-drift-pr-1955-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1955",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1955 (integration: consolidate 22 reviewed/compiling PRs onto one branch (merge-then-f) touched reality routes without docs/screens/reality/ update: ['frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx']"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1987",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1987 (fix(reality-web): close SSO callback CSRF state-bypass) touched reality routes without docs/screens/reality/ update: ['frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx', 'frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx']"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1805",
+      "type": "unchecked-todo",
+      "source": "PR #1805",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1805 merged with unchecked verification boxes: ['`pnpm --filter @ppt/accounting-web e2e` (smoke suite, no backend) — all 4 tests pass', 'With backend + `E2E_WITH_BACKEND=1` — lifecycle suite and cross-tenant suite pass']"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq aged open items decayed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run — trivial pass",
+      "observed": "0 new",
+      "expected": "0 or matched"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans <= 2 cap",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "byte-identity",
+      "expected": "byte-identity"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists Phases that failed",
+      "observed": "1 match",
+      "expected": "1"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "0 plans deleted this run",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "byte-identity",
+      "expected": "byte-identity"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op gate",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
