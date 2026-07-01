@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-01T08:16:50Z",
+  "generated": "2026-07-01T08:25:41Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -162,18 +162,18 @@
     {
       "task_id": "10b-6-user-onboarding-tour",
       "branch": "auto-impl/10b-6-user-onboarding-tour-61abee1b",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-01T08:16:50Z",
-      "last_updated": "2026-07-01T08:16:50Z",
-      "status_changed_at": "2026-07-01T08:16:50Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-01T08:25:41Z",
+      "status_changed_at": "2026-07-01T08:25:41Z",
+      "pr_number": 1996,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1996",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "pm-frontend",
+      "implementer_summary": "pr=1996 status=done specialist=pm-frontend scope_drift=false code_reuse_warn=none note=screen-map-already-present-and-feature-deliberately-unwired-PAP55;added-18-unit-tests-for-onboarding-helpers",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
