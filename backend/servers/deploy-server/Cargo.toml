@@ -54,4 +54,4 @@ subtle = "2"
 [dev-dependencies]
 httpmock = "0.8"
 tempfile = "3.10"
-axum-test = "20"
+axum-test = "21"

@@ -102,5 +102,5 @@ urlencoding = { workspace = true }
 # WebSocket integration tests (Epic 8A, Story 8A.3)
 # The `ws` feature pulls in tokio-tungstenite + related helpers for TestServer::get_websocket.
 # `http_transport` mode (required for WS upgrade) binds a real TCP listener per test.
-axum-test = { version = "20", features = ["ws"] }
+axum-test = { version = "21", features = ["ws"] }
 jsonwebtoken = { workspace = true }
