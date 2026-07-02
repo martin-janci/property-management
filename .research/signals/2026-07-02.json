@@ -1,0 +1,299 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-02.md && head -1 \u2026",
+      "observed": "exit 0 (will be)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs staged",
+      "observed": "true (cursors advance)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq every signal counted once",
+      "observed": "true (no signal id in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8 + decay applied",
+      "observed": "true (14 decayed, 38 dropped-by-decay, no score above 8)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief lists adversarial pass status for each new plan",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; each has 4 metadata + 11 headings; capability ticked; Mode declared; Files exist",
+      "observed": "2 plans, both valid",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged only under .research/",
+      "observed": "pending final check in phase 6",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged diff (excluding baseline docs)",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md \u2014 diff -q vs staged",
+      "observed": "pending final check in phase 6",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases listed + cursor not advanced",
+      "observed": "no phase failed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or _archive/",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD archive count",
+      "observed": "unchanged this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md \u2014 diff -q vs staged",
+      "observed": "pending final check in phase 6",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline: kill-switch, caps, idempotency, verify gate",
+      "observed": "Phase 5 no-op (no candidate met bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor 0..7 + coverage_cursor in [0,#epics) + advanced together",
+      "observed": "pm 5\u21926, coverage 12\u21920, both advanced together",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "none",
+      "expected": "none"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine has not run in 16d 14h since last_run_iso=2026-06-16T03:25:00Z; deep catch-up mode this run"
+      ],
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-07-02",
+      "type": "stale_routine_alert",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.json last_run_iso is 16d old (cloud routine may be paused). Dispatcher on planning branch is still healthy (last dispatcher commit 2026-07-02 18:06Z)."
+      ],
+      "files": []
+    },
+    {
+      "id": "reverted-pr-1690",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #1713 reverted #1690 (delegation frontend) \u2014 #1690 re-wired the standalone delegation surface ~16 min before CEO ruled on BIT-198 that delegation stays retired (PAP-33/PAP-51/PAP-55).",
+        "Root cause is coordination: gap-sweep silently re-admitted a board-retired customer surface. Backend delegation surface is intentionally live for voting delegation (Story 5.4).",
+        "unwired-features.ts records delegation as retired. Signal captures the process gap; PR #1713 already reconciled dev (BIT-213)."
+      ],
+      "files": [
+        "docs/superpowers/unwired-features.ts"
+      ]
+    },
+    {
+      "id": "unchecked-todo-template-hygiene-2026-07-02",
+      "type": "unchecked-todo",
+      "source": "PRs #1606, #1723, #1877, #1896",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "4 merged PRs shipped with verify-CI checkboxes unticked (cargo fmt, CI check+test). All PRs merged with green CI \u2192 boxes were implicitly satisfied.",
+        "Pattern: PR-template verify-checklist treated as decorative. Consider removing the checkboxes or letting a bot tick them from CI status."
+      ],
+      "files": [
+        ".github/PULL_REQUEST_TEMPLATE.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-.github/workflows/backend.yml",
+      "type": "churn-hotspot",
+      "source": "origin/dev commits since 2026-06-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "changed in 13 commits over 16-day catch-up window (deep mode; top-3 raw churn)"
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "origin/dev commits since 2026-06-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "changed in 13 commits over 16-day catch-up window (deep mode; top-3 raw churn)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "origin/dev commits since 2026-06-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "changed in 13 commits over 16-day catch-up window (deep mode; top-3 raw churn)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-07-02",
+      "type": "dep-update-noise",
+      "source": "dependabot/renovate",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "17 dependabot/renovate PRs merged in window; no scoring, contextual only"
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-aggregate-2026-07-02",
+      "type": "closed-not-merged-pr",
+      "source": "67 closed-unmerged PRs across 16-day window",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "67 non-research PRs closed without merge in window \u2014 dominant pattern is 'superseded by later implementation', not dropped ideas.",
+        "Deep-catchup aggregation: individual +1 signals suppressed to avoid backlog flood. See PR list for review candidates."
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-fetch-missing-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 \u2014 useBuildingUnits calls raw fetch('/api/v1/units?buildingId=...') with only Content-Type; no Authorization bearer token and no X-Tenant-ID header",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:169 \u2014 sibling code builds { Authorization: `Bearer ${getToken()}`, 'X-Tenant-ID': user.organizationId } via useRentalsAuth",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:325 \u2014 setTokenProvider only hooks @ppt/api-client, not window.fetch"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutations-silent-failure",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:258,272,373,385 \u2014 4 mutations (createConnection/syncPlatforms/checkIn/checkOut) have onSuccess but no onError; silent failure on click"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:245,251,297,301,373,378 \u2014 6 hardcoded UI strings (Saved / Bulk entry failed / Deleted / Delete failed / Person-month saved / Save failed); sibling financial.tsx uses t()"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}
