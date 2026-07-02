@@ -27,7 +27,8 @@ seed() {
 {"generated":"2026-07-01T00:00:00Z","items":[
   {"id":"real-open","action":"real","owner_role":"pm-backend","priority":"medium","status":"open","source":"seed","deadline":null,"dependency":null,"depends_on":[]},
   {"id":"ghost-merged","action":"ghost","owner_role":"pm-backend","priority":"low","status":"open","source":"seed","deadline":null,"dependency":null,"depends_on":[]},
-  {"id":"ghost-arch","action":"ghost2","owner_role":"pm-backend","priority":"low","status":"open","source":"seed","deadline":null,"dependency":null,"depends_on":[]}
+  {"id":"ghost-arch","action":"ghost2","owner_role":"pm-backend","priority":"low","status":"open","source":"seed","deadline":null,"dependency":null,"depends_on":[]},
+  {"id":"deferred-stem","action":"tier0-deferred","owner_role":"pm-backend","priority":"low","status":"deferred","source":"seed","deadline":null,"dependency":null,"depends_on":[]}
 ]}
 JSON
   cat > "$ASG" <<'JSON'
@@ -51,7 +52,8 @@ JSON
   {"id":"bl-refactor-low","title":"Refactor","vector":"refactor","confidence":"high","score":1,"status":"open"},
   {"id":"bl-done","title":"Already done","vector":"bug","confidence":"high","score":6,"status":"done"},
   {"id":"real-open","title":"dup of action-list open","vector":"bug","confidence":"high","score":5,"status":"open"},
-  {"id":"ghost-merged","title":"dup of assignment","vector":"bug","confidence":"high","score":5,"status":"open"}
+  {"id":"ghost-merged","title":"dup of assignment","vector":"bug","confidence":"high","score":5,"status":"open"},
+  {"id":"deferred-stem-v2","title":"suffix-variant of a deferred action-list row","vector":"bug","confidence":"high","score":6,"status":"open"}
 ]}
 JSON
 }
@@ -98,6 +100,10 @@ for x in bl-done real-open ghost-merged ghost-arch; do
     [ "$CNT" = "0" ] && ok "done backlog item $x not promoted" || bad "$x wrongly promoted"
   fi
 done
+
+# --- 4b. stem block: suffix-variant of a NON-terminal (deferred) row not promoted ---
+CNT=$(jq '[.items[]|select(.id=="deferred-stem-v2")]|length' "$AL")
+[ "$CNT" = "0" ] && ok "deferred-stem-v2 blocked by deferred action-list stem (T24)" || bad "deferred-stem-v2 promoted despite deferred stem collision"
 
 # --- 5. idempotency: second --apply is a no-op (buffer now >= floor) ---
 AFTER1=$(jq -c . "$AL")

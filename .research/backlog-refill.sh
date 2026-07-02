@@ -157,14 +157,18 @@ CANDIDATES=$(jq -n \
       else "pm-tech-lead" end;
 
   ( [ $al[0].items[]?.id ]                 | unique) as $al_ids
-  | ([ $al[0].items[]? | select(.status=="open") | (.id | stem) ] | unique) as $al_open_stems
+  # Stem block covers every NON-TERMINAL action-list row (open, in-progress,
+  # deferred) — not just open. T24 treats `deferred` as equivalent to `open`
+  # for stem-uniqueness, and an in-progress row must block a suffix-variant
+  # (`<stem>-v2`) too; only terminal done/dropped rows are excluded.
+  | ([ $al[0].items[]? | select(.status != "done" and .status != "dropped") | (.id | stem) ] | unique) as $al_active_stems
   | ($aids                                 | unique) as $a_ids
   | ($aids | map(stem)                     | unique) as $a_stems
 
   | [ $bl[0].items[]
       | select(.status == "open" or .status == "ready")
       | select((.id | IN($al_ids[])) | not)
-      | select((.id | stem | IN($al_open_stems[])) | not)
+      | select((.id | stem | IN($al_active_stems[])) | not)
       | select((.id | IN($a_ids[])) | not)
       | select((.id | stem | IN($a_stems[])) | not)
     ]
