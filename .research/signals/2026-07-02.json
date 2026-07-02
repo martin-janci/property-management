@@ -1,0 +1,332 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso=2026-06-16T03:25:00Z — 396h (16d) since last run; catch-up sweep executed"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-02",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso is 16d old; cloud routine cron likely paused. Dispatcher on planning branch is still running (see recent dispatcher commits on dev)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-1685-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1685",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1685 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/*.md — Story: real-time IoT dashboard via BIT-145 WebSocket channel"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1641 touched frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx without updating docs/screens/ppt/*.md — Story: Sentiment + Predictive Maintenance dashboards (Epic 13, 13.2/13.3)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1697-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1697",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1697 touched frontend/apps/ppt-web/src/routes/groups/documents.tsx without updating docs/screens/ppt/*.md — Story 7B.3: e-signature surface on document detail (#974)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/documents.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1707-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1707",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1707 touched frontend/apps/ppt-web/src/routes/groups/documents.tsx without updating docs/screens/ppt/*.md — Story 7B.2: document-template generation UI"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/documents.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1701-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1701",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1701 touched frontend/apps/ppt-web/src/routes/groups/units.tsx without updating docs/screens/ppt/*.md — Story 3.6: resident 'My Unit' view (BIT-201)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/units.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1695-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1695",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1695 touched frontend/apps/ppt-web/src/routes/groups/buildings.tsx without updating docs/screens/ppt/*.md — Story 3.2: unit management UI (PM #981 gap 1)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1987",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1987 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx without updating docs/screens/reality/*.md — Security: close SSO callback CSRF state-bypass"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1677-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1677",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1677 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx without updating docs/screens/reality/*.md — Listing detail SEO/JSON-LD updates"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1746-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1746",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1746 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/*.md — Account listing edit surface"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 touched frontend/apps/ppt-web/src/routes/groups/accounting.tsx without updating docs/screens/ppt/*.md — Epic ACC: accounting UI nav wiring"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 touched frontend/apps/reality-web/src/app/[locale]/accounting/page.tsx without updating docs/screens/reality/*.md — Epic ACC: reality-web accounting entry"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads) — draft, opened 2026-06-23 (9d), no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1812 (churn-hotspot: split reality-portal.rs repository) — draft, opened 2026-06-24 (8d), no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate; catch-up sweep, Phase 5 conservatively skipped",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/... && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev cursor comparison",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit non-cumulative w/ delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "manual: 13 open>14d items got -1",
+      "observed": "13 decayed / 26 dropped",
+      "expected": "≥1 point loss or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — check N/A",
+      "observed": "0 new plans",
+      "expected": "annotation not required"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached count new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff staged vs regen backlog.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty check",
+      "observed": "no failed phases; Phase 1.5/1.6 intentionally scoped down (documented in brief)",
+      "expected": "documented"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present in tree",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "new=7 old=7",
+      "expected": "new ≥ old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff staged vs regen IDEAS_TRIAGE.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions len + idempotency",
+      "observed": "0 actions (skipped by design)",
+      "expected": "≤3 total, ≤1 pr, ≤1 issue, ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → gate is no-op",
+      "observed": "skipped",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
