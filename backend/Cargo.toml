@@ -89,7 +89,7 @@ reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 # entities (XXE / billion-laughs safety). That posture is load-bearing and pinned
 # by the entity guards in integrations `booking.rs` (`ota_xml::tests`) — a bump
 # that changes entity normalization will turn those tests red. See GH #1519/#1591.
-quick-xml = { version = "0.40", features = ["serialize"] }
+quick-xml = { version = "0.41", features = ["serialize"] }
 
 # Observability (Epic 95)
 opentelemetry = { version = "0.32", features = ["metrics", "trace"] }

@@ -709,12 +709,12 @@ if [ -f "$ACTION_LIST" ]; then
     [ .items[]
       | select(has("first_open_at") and .first_open_at != null
                and ((.first_open_at | type) != "string"
-                    or (.first_open_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T") | not))) ]
+                    or (.first_open_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$") | not))) ]
     | length' "$ACTION_LIST")
   if [ "$BAD29" = "0" ]; then note "all first_open_at values are iso-8601 or null"
   else
     fail "$BAD29 action-list item(s) with malformed first_open_at"
-    jq -r '.items[] | select(has("first_open_at") and .first_open_at != null and ((.first_open_at|type)!="string" or (.first_open_at|test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T")|not))) | "    \(.id) first_open_at=\(.first_open_at)"' "$ACTION_LIST" >&2
+    jq -r '.items[] | select(has("first_open_at") and .first_open_at != null and ((.first_open_at|type)!="string" or (.first_open_at|test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$")|not))) | "    \(.id) first_open_at=\(.first_open_at)"' "$ACTION_LIST" >&2
   fi
 else
   printf '  skip  %s not found\n' "$ACTION_LIST"

@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-07-02T10:48:40Z",
+  "archived_at": "2026-07-02T16:16:02Z",
   "_deferred": true,
   "_reason": "Full 452-row archive (~492KB) exceeds the mcp__github__push_files inline-content limit (known issue #1014); git push is 403 in this environment. The authoritative archive lives in the local working tree and must be landed by a run with working git transport or after archive compaction. This is a placeholder marker, NOT the real archive data.",
   "assignments": [
@@ -156,6 +156,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-25T12:31:50Z"
+    },
+    {
+      "task_id": "6-3-announcement-comments-discussion",
+      "branch": "auto-impl/6-3-announcement-comments-discussion-7bf88645",
+      "status": "merged",
+      "claimed_at": "2026-07-02T06:11:56Z",
+      "last_updated": "2026-07-02T16:10:20Z",
+      "status_changed_at": "2026-07-02T16:10:20Z",
+      "pr_number": 2010,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2010",
+      "merged_at": "2026-07-02T16:10:20Z",
+      "specialist": null,
+      "implementer_summary": " [Phase5.6 2026-07-02T16:10Z: dispatcher rebased branch onto origin/dev (additive Agent-Log conflict only; sprint-status hunk already on dev), force-pushed c36a8a91, merged via MCP squash 0c8b817d]",
+      "reviewer_summary": "verdict=approve note=docs-only-6.3-closeout-ci-green-approve-posted-as-comment-selfPR",
+      "last_reviewed_oid": "c36a8a915d50c8e819a3c07e0e24a84f25fe52a0",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 2,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-02T16:10:20Z"
     },
     {
       "task_id": "6-4-pinned-announcements",
@@ -1018,6 +1040,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "dep-bump-ammonia-rustsec-2026-06",
+      "branch": "auto-impl/dep-bump-ammonia-rustsec-2026-06-aa96169c",
+      "status": "merged",
+      "claimed_at": "2026-07-02T08:09:47Z",
+      "last_updated": "2026-07-02T16:10:20Z",
+      "status_changed_at": "2026-07-02T16:10:20Z",
+      "pr_number": 2011,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2011",
+      "merged_at": "2026-07-02T14:13:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2011 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=ammonia 4.1.2->4.1.3 lockfile-only; ammonia subgraph builds clean; api-server full check + cargo-deny blocked by sandbox egress (swagger-ui zip + RUSTSEC DB) -> CI verifies",
+      "reviewer_summary": "verdict=approve note=cargo-deny-green-both-advisories-cleared-xxe-guards-pass; merged this run (squash 078b865a) — awaiting next-run Phase2 archive",
+      "last_reviewed_oid": "2d6baaa69d68e8508c8738ca5bf73b3f78fee452",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-02T14:14:26Z"
     },
     {
       "task_id": "dx-stalled-review-pr-988",
