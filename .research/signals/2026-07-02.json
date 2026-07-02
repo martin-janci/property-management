@@ -1,0 +1,190 @@
+{
+  "date": "2026-07-02",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z (2026-07-02 run)",
+      "score_delta": 0,
+      "evidence": [
+        "16d 390h since last run \u2014 surface in brief Since last run",
+        "stale_routine_alert: cloud routine may be paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "security-rustsec-ammonia-4-1-2",
+      "type": "code-review-finding",
+      "source": "issue #2009 (2026-07-02, security+dependencies)",
+      "score_delta": 3,
+      "evidence": [
+        "issue #2009 (labels: security,dependencies): RUSTSEC advisory (XSS-sanitizer bypass) fires on ammonia v4.1.2 transitively via api-server; cargo-deny FAILED on every backend PR",
+        "auto-impl PR #2011 (draft, 2026-07-02) bumps ammonia 4.1.2 \u2192 4.1.3 (lockfile-only) \u2014 unblocks merge pipeline",
+        "dispatcher task dep-bump-ammonia-rustsec-2026-06 currently status=review"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits since 2026-06-16 touched routes/messaging.rs \u2014 3 concurrent bug fixes: per-participant read watermark (#1977), unread soft-delete leak (#1993), set-based block check (#1993)",
+        "recent_churn: 3"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits since 2026-06-16 touched repositories/messaging.rs \u2014 mirrors the routes-layer churn",
+        "recent_churn: 3"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-multi-currency-happy-path-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16 origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched multi_currency_happy_path_tests.rs across BIT-417/BIT-440/BIT-479 quarantine cycle",
+        "see issue #2000: test payloads bent to SCREAMING_SNAKE_CASE \u2014 wrong rename_all on CountryCode/SupportedCurrency",
+        "recent_churn: 3"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-02.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advance vs HEAD",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id]|unique|length'==length",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8 AND decay applied to 14d-old items",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "exit 0",
+      "expected": "0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness",
+      "observed": "exit 0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached scoped to .research/",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "exit 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases without cursor freeze",
+      "observed": "exit 0",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "exit 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "exit 0",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no auto-fix this run)",
+      "observed": "exit 0",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (phase 1.6 skipped for catchup)",
+      "observed": "exit 0",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "exit 0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 the sole high-confidence security signal (rustsec-ammonia) has an in-flight dispatcher-owned PR #2011 already; not our lane. Comment-only nudge candidate PR #1797 excluded (draft, so no reviewDecision expected)."
+}
