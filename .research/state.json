@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-07-02T06:15:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_pr_seen": 2008,
+  "last_issue_seen": 2009,
+  "last_commit_sha": "5fa3f24",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -321,6 +321,21 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/api-server/src/routes/messaging.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-02",
+      "recent_churn": 116
+    },
+    "backend/crates/db/src/repositories/messaging.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-02",
+      "recent_churn": 116
+    },
+    "backend/servers/api-server/src/routes/regional_compliance.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-02",
+      "recent_churn": 77
     }
   },
   "seen_signals": [
@@ -553,7 +568,27 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-07-02",
+    "screen-map-drift-pr-1987-reality",
+    "screen-map-drift-pr-1977-ppt",
+    "screen-map-drift-pr-1993-ppt",
+    "stalled-review-pr-1797",
+    "closed-not-merged-pr-1958",
+    "closed-not-merged-pr-1982",
+    "closed-not-merged-pr-1802",
+    "closed-not-merged-pr-1956",
+    "closed-not-merged-pr-1795",
+    "closed-not-merged-pr-1799",
+    "closed-not-merged-pr-1804",
+    "closed-not-merged-pr-1814",
+    "closed-not-merged-pr-1823",
+    "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+    "test-gap-bit-440-fragile-test-gate",
+    "dx-followup-issue-growth-2026-07-02",
+    "security-cargo-deny-ammonia-advisory-2009"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +602,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 192,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0

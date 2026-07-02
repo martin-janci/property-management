@@ -1,0 +1,344 @@
+{
+  "date": "2026-07-02",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z vs today=2026-07-02",
+      "score_delta": 0,
+      "evidence": "Routine has not run in ~16 days (last=2026-06-16T03:25Z, now=2026-07-02T06:15Z). Stale-routine alert (>= 3d).",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1987",
+      "score_delta": 2,
+      "evidence": "PR #1987 (fix(reality-web) SSO callback CSRF) modified frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx with no docs/screens/reality/auth-callback.md \u2014 the callback screen has no screen doc.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1977-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1977",
+      "score_delta": 2,
+      "evidence": "PR #1977 (fix(messaging): per-participant read watermark for N-party threads) modified backend/servers/api-server/src/routes/messaging.rs \u2014 behavior change for unread-badge semantics \u2014 with no docs/screens/ppt/messaging-* update.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1993-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1993",
+      "score_delta": 2,
+      "evidence": "PR #1993 (fix(messaging): unread soft-delete leak + set-based block check #1771 #1776 #1789) modified backend/servers/api-server/src/routes/messaging.rs \u2014 unread-count and block semantics \u2014 with no docs/screens/ppt/messaging-* update.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads #1772 #1766) draft, last updated 2026-06-24T08:17Z, ~8 days idle, no reviewDecision. Blocks closure of #1772/#1766.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1958",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1958",
+      "score_delta": 1,
+      "evidence": "PR #1958 (test(BIT-360): bulk re-enable 718 BIT-351-quarantined tests) closed unmerged 2026-07-01 \u2014 superseded by incremental #1957/#1964/#1991 approach.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1982",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1982",
+      "score_delta": 1,
+      "evidence": "PR #1982 (test(api-server): un-quarantine 5 finance happy-path suites BIT-417) closed unmerged 2026-06-30 \u2014 superseded by #1991 (BIT-479).",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1802",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1802",
+      "score_delta": 1,
+      "evidence": "PR #1802 (fix(messaging): N-party delivery/block/unhide) closed unmerged 2026-06-29 \u2014 superseded by #1977 + #1993 + #1990.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1956",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1956",
+      "score_delta": 1,
+      "evidence": "PR #1956 (test(BIT-358): documents-forms happy-path Wave 7) closed unmerged 2026-06-29 \u2014 likely rolled into #1963/#1980.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1795",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1795",
+      "score_delta": 1,
+      "evidence": "PR #1795 closed unmerged 2026-06-29 (batch close, superseded by newer security/hardening wave #1946/#1973/#1976/#1993/#1994).",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1799",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1799",
+      "score_delta": 1,
+      "evidence": "PR #1799 closed unmerged 2026-06-29 (batch close with #1795 wave).",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1804",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1804",
+      "score_delta": 1,
+      "evidence": "PR #1804 closed unmerged 2026-06-29 (batch close with #1795 wave).",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1814",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1814",
+      "score_delta": 1,
+      "evidence": "PR #1814 closed unmerged 2026-06-29 (batch close with #1795 wave).",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1823",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1823",
+      "score_delta": 1,
+      "evidence": "PR #1823 closed unmerged 2026-06-29 (batch close with #1795 wave).",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "3 merged PRs touched this file in the window (#1977, #1993, #1983)",
+      "score_delta": 1,
+      "evidence": "messaging.rs \u2014 3 PRs in the 06-29..07-01 slice (#1977 per-participant unread watermark, #1993 unread soft-delete leak + set-based block check, #1983 helper touches). Top churn hotspot of the visible window.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "2 merged PRs (#1977, #1993) \u2014 repository side of the messaging churn",
+      "score_delta": 1,
+      "evidence": "messaging.rs (repository) \u2014 2 PRs, ~116 lines; migration 00208 (per-participant read watermark) + soft-delete predicate reconciled with #1968. Same feature area as #15 above.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1976",
+      "score_delta": 1,
+      "evidence": "regional_compliance.rs \u2014 77-line change adding live quorum lookup + 5 manager-gates + org-id security fix (client-supplied organization_id PII bypass closed).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "test-gap-bit-440-fragile-test-gate",
+      "type": "hotfix-no-test",
+      "source": "PR #1984, PR #1985",
+      "score_delta": 2,
+      "evidence": "PR #1984 quarantined 9 backend suites to unblock the test gate (BIT-440); PR #1985 immediately patched a duplicate #[ignore] typo \u2014 pattern indicates the gate is fragile without a hardening plan or a test that the quarantine attribute set is valid. No regression test accompanied either PR.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/"
+      ]
+    },
+    {
+      "id": "dx-followup-issue-growth-2026-07-02",
+      "type": "closed-not-merged-pr",
+      "source": "issues #1997, #1998, #1999, #2000, #2001",
+      "score_delta": 1,
+      "evidence": "5 new 'follow-up' / 'from-merged-review' issues filed against last week's merged fixes (PRs #1994, #1993, #1992, #1983, plus SupportedCurrency rename_all). Reviewer catches landing post-merge instead of pre-merge \u2014 worth a workflow tune.",
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "security-cargo-deny-ammonia-advisory-2009",
+      "type": "unchecked-todo",
+      "source": "issue #2009",
+      "score_delta": 3,
+      "evidence": "GitHub issue #2009 \u2014 cargo-deny advisories failing repo-wide (RUSTSEC advisory on ammonia v4.1.2); blocks all backend PR merges. High-confidence blocker; needs an ammonia bump or advisory-ignore with justification.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/deny.toml",
+        "backend/Cargo.toml"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && grep '^# 2026-07-02$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '.items[].id | unique length == length'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score <= 8 and score >= 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass annotation",
+      "observed": "1 plan annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, metadata/headings/mode/files",
+      "observed": "1 plan, all checks passed",
+      "expected": "<=2 with structure"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames",
+      "observed": "0 matches after bridge-URL removal from plan",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "MATCH",
+      "expected": "MATCH"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (Phase 1.5+1.6 skipped, cursors not advanced falsely)",
+      "observed": "skip noted in brief; review_cursor + pm_cursor untouched",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plans still present or archived",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "prev=7 cur=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "MATCH",
+      "expected": "MATCH"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "auto_fix_actions empty",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (no-op \u2014 Phase 1.6 skipped)",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
