@@ -757,6 +757,49 @@ out of band under a NON-id subject (no `<id>:` prefix) are not auto-matched —
 those still need a manual reconcile note (that is how the Airbnb cluster was
 drained in this defect). Smoke-tested by `.research/test-dev-reconcile.sh`.
 
+**Open-issue ingestion (NEW 2026-07-02 — get things done).** Run RIGHT AFTER
+the reconcilers, before the buffer-guard tiers, so freshly-ingested issues are
+in this run's claim pool. Unlike the buffer refill (a starvation top-up), this
+runs **EVERY cycle** regardless of buffer level — real work filed as GitHub
+issues should always enter the pipeline. Fetch open issues via the **GitHub
+MCP** (the cron can't run `gh` — proxy-403'd, #958), write them to a temp file,
+then run the deterministic merge:
+
+```bash
+# 1. Fetch via MCP (NOT gh): mcp__github__list_issues owner=<owner> repo=<repo>
+#    state=open (paginate). Persist the raw array to a temp file in the same
+#    shape the REST /issues payload has: [{number,title,labels,html_url,
+#    pull_request?}, …]. The MCP call is the ONLY network step; the merge is
+#    deterministic + offline (GH_ISSUES_FILE injection, like dev-reconcile's
+#    DEV_LOG_FILE). If the MCP fetch fails, SKIP (no file → the script no-ops)
+#    — never block the run on issue ingestion.
+GH_ISSUES_FILE=<tmp.json> bash .research/issue-ingest.sh --apply
+```
+
+It promotes untracked open issues into `action-list.json` as `gh-issue-<N>`
+rows (PRs filtered; `EXCLUDE_LABELS` default `epic,discussion,question,wontfix,
+duplicate,blocked,needs-triage` dropped; label→priority `security|critical|bug`
+→high, `enhancement|backend|frontend|mobile|follow-up|from-merged-review`
+→medium, else low). Dedup is thorough: skip any issue already an action-list
+id/stem, an assignment id/stem, or referenced by `#<N>` in an existing row.
+Each row carries `Closes #<N>` in its action, `first_open_at=NOW`, `depends_on:[]`,
+and an `issue_ref:{number,url,labels}` stamp. Bounded: never past `BUFFER_CEIL`
+headroom, ≤ `ISSUE_INGEST_CAP` (default 12) per run, append-only fail-closed.
+Include `action-list.json` in the Phase 6 commit when it ingested any row;
+surface the count on the Phase 7 `Issue-ingest:` line. Smoke-tested by
+`.research/test-issue-ingest.sh`.
+
+**Closing the loop (get things DONE).** A `gh-issue-<N>` PR targets `dev`, and
+a `Closes #<N>` keyword only auto-closes on merge to the **default** branch
+(`main`, not `dev`) — so the issue must be closed EXPLICITLY. When Phase 2 (or
+Phase 5.5) observes a `gh-issue-<N>` assignment go `merged`, close issue `#<N>`
+via `mcp__github__update_issue` (`state=closed`) and post a one-line
+`mcp__github__add_issue_comment` linking the merged PR (`resolved by #<pr> on
+dev`). Surface on the Phase 7 `Issues-closed:` line. If the close MCP call
+fails, log it and continue — the merge already landed; a stale-open issue is
+re-closed idempotently next run (the `gh-issue-<N>` row is terminal, so it is
+not re-ingested).
+
 **Archive lookup pattern (issue #9 — token spending).** With terminal rows
 split into `assignments-archive.json`, the dep_blocked check below MUST
 consult BOTH files when resolving a `depends_on` entry. Compute a set of
@@ -2102,6 +2145,8 @@ Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6;
 Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
 Backlog-refill:           <promoted=<N> honest-claimable=<A>→<B> capped=<0|1> | clean (healthy) | none-available>   (Tier 1b backlog.json self-refill; planner-independent)
+Issue-ingest:             <ingested=<N> [#<n>, …] capped=<0|1> | none-untracked | mcp-fetch-failed>   (open GH issues → action-list gh-issue-<N>; every cycle)
+Issues-closed:            [#<n> resolved-by=PR#<m>, …]   (gh-issue-<N> assignments that merged this run and were closed via MCP; [] if none)
 Aged claims (this run):   [<id> waited=<h>h <low→medium|medium→high>, …]   (Phase 3 anti-starvation aging boost; [] if none)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
