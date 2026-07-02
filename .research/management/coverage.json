@@ -53,6 +53,7 @@
   },
   "stories": [
     {
+      "epic": "epic-10a",
       "id": "10a-1-oauth-authorization-server",
       "title": "OAuth 2.0 Authorization Server",
       "phase": "mvp",
@@ -72,6 +73,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10a",
       "id": "10a-2-oauth-client-registration",
       "title": "OAuth Client Registration",
       "phase": "mvp",
@@ -91,6 +93,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10a",
       "id": "10a-3-oauth-token-management",
       "title": "OAuth Token Management",
       "phase": "mvp",
@@ -110,6 +113,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-1-organization-management-dashboard",
       "title": "Organization Management Dashboard",
       "phase": "mvp",
@@ -131,6 +135,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-2-feature-flag-management",
       "title": "Feature Flag Management",
       "phase": "mvp",
@@ -150,6 +155,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-3-platform-health-monitoring",
       "title": "Platform Health Monitoring",
       "phase": "mvp",
@@ -169,6 +175,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-4-system-announcements",
       "title": "System Announcements",
       "phase": "mvp",
@@ -188,6 +195,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-5-support-data-access",
       "title": "Support Data Access",
       "phase": "mvp",
@@ -207,6 +215,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-6-user-onboarding-tour",
       "title": "User Onboarding Tour",
       "phase": "mvp",
@@ -226,6 +235,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-10b",
       "id": "10b-7-contextual-help-documentation",
       "title": "Contextual Help & Documentation",
       "phase": "mvp",
@@ -246,6 +256,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-1-announcement-creation-targeting",
       "title": "Announcement Creation & Targeting",
       "phase": "mvp",
@@ -266,6 +277,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-2-announcement-viewing-acknowledgment",
       "title": "Announcement Viewing & Acknowledgment",
       "phase": "mvp",
@@ -286,6 +298,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-3-announcement-comments-discussion",
       "title": "Announcement Comments & Discussion",
       "phase": "mvp",
@@ -307,6 +320,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-4-pinned-announcements",
       "title": "Pinned Announcements",
       "phase": "mvp",
@@ -326,6 +340,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-5-direct-messaging",
       "title": "Direct Messaging",
       "phase": "mvp",
@@ -347,6 +362,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-6",
       "id": "6-6-neighbor-information",
       "title": "Neighbor Information (Privacy-Aware)",
       "phase": "mvp",
@@ -367,6 +383,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-79",
       "id": "79-1-api-client-integration",
       "title": "API Client Integration for Core Features",
       "phase": "mvp",
@@ -385,6 +402,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-79",
       "id": "79-2-authentication-flow",
       "title": "Authentication Flow Implementation",
       "phase": "mvp",
@@ -403,6 +421,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-79",
       "id": "79-3-error-handling-toasts",
       "title": "Error Handling and Toast Notifications",
       "phase": "mvp",
@@ -421,6 +440,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-79",
       "id": "79-4-websocket-realtime",
       "title": "WebSocket Real-time Integration",
       "phase": "mvp",
@@ -439,6 +459,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-7a",
       "id": "7a-1-document-upload-metadata",
       "title": "Document Upload with Metadata",
       "phase": "mvp",
@@ -459,6 +480,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-7a",
       "id": "7a-2-folder-organization",
       "title": "Folder Organization",
       "phase": "mvp",
@@ -481,6 +503,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-7a",
       "id": "7a-3-permission-based-access",
       "title": "Permission-Based Document Access",
       "phase": "mvp",
@@ -503,6 +526,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-7a",
       "id": "7a-4-document-download-preview",
       "title": "Document Download & Preview",
       "phase": "mvp",
@@ -525,6 +549,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-7a",
       "id": "7a-5-document-sharing",
       "title": "Document Sharing",
       "phase": "mvp",
@@ -548,6 +573,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-80",
       "id": "80-1-disputes-api-integration",
       "title": "Disputes API Integration",
       "phase": "mvp",
@@ -567,6 +593,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-80",
       "id": "80-2-dispute-filing-flow",
       "title": "Dispute Filing Flow",
       "phase": "mvp",
@@ -588,6 +615,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-80",
       "id": "80-3-mediation-resolution",
       "title": "Mediation and Resolution",
       "phase": "mvp",
@@ -607,6 +635,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-81",
       "id": "81-1-report-schedule-editing",
       "title": "Report Schedule Editing",
       "phase": "phase2",
@@ -628,6 +657,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-81",
       "id": "81-2-report-execution-history",
       "title": "Report Execution History",
       "phase": "phase2",
@@ -647,6 +677,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-82",
       "id": "82-1-swiftui-project-setup",
       "title": "SwiftUI Project Setup",
       "phase": "phase4",
@@ -665,6 +696,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-82",
       "id": "82-2-navigation-routing",
       "title": "Navigation and Routing",
       "phase": "phase4",
@@ -683,6 +715,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-82",
       "id": "82-3-home-search-screens",
       "title": "Home and Search Screens",
       "phase": "phase4",
@@ -701,6 +734,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-82",
       "id": "82-4-listing-detail-favorites",
       "title": "Listing Detail and Favorites",
       "phase": "phase4",
@@ -722,6 +756,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-82",
       "id": "82-5-inquiries-account",
       "title": "Inquiries and Account",
       "phase": "phase4",
@@ -744,6 +779,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-83",
       "id": "83-1-airbnb-integration",
       "title": "Airbnb OAuth and Sync",
       "phase": "phase4",
@@ -765,6 +801,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-83",
       "id": "83-2-booking-integration",
       "title": "Booking.com OAuth and Sync",
       "phase": "phase4",
@@ -783,6 +820,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-83",
       "id": "83-3-portal-webhooks",
       "title": "Real Estate Portal Webhooks",
       "phase": "phase4",
@@ -801,6 +839,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-84",
       "id": "84-1-s3-presigned-urls",
       "title": "S3 Presigned URL Implementation",
       "phase": "mvp",
@@ -819,6 +858,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-84",
       "id": "84-2-esignature-email",
       "title": "E-Signature Email Integration",
       "phase": "phase2",
@@ -837,6 +877,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-84",
       "id": "84-3-price-tracking",
       "title": "Price Tracking for Favorites",
       "phase": "phase4",
@@ -855,6 +896,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-84",
       "id": "84-4-notification-triggers",
       "title": "Notification Trigger System",
       "phase": "mvp",
@@ -873,6 +915,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-84",
       "id": "84-5-pgvector-rag",
       "title": "pgvector RAG Migration",
       "phase": "phase3",
@@ -893,6 +936,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-85",
       "id": "85-1-environment-variables",
       "title": "Environment Variable Setup",
       "phase": "mvp",
@@ -915,6 +959,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-85",
       "id": "85-2-build-configuration",
       "title": "Build Configuration by Environment",
       "phase": "mvp",
@@ -933,6 +978,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-8a",
       "id": "8a-1-channel-level-notification-toggles",
       "title": "Channel-Level Notification Toggles",
       "phase": "mvp",
@@ -952,6 +998,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-8a",
       "id": "8a-2-critical-notification-override",
       "title": "Critical Notification Override",
       "phase": "mvp",
@@ -971,6 +1018,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-8a",
       "id": "8a-3-notification-preference-sync",
       "title": "Notification Preference Sync",
       "phase": "mvp",
@@ -994,6 +1042,7 @@
       "last_checked": "2026-07-02"
     },
     {
+      "epic": "epic-9",
       "id": "9-1-totp-2fa-setup",
       "title": "TOTP Two-Factor Authentication Setup",
       "phase": "mvp",
