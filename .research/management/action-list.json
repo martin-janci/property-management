@@ -1551,6 +1551,26 @@
         "score": 1,
         "vector": "triage"
       }
+    },
+    {
+      "id": "gh-issue-2034",
+      "action": "Follow-up: delegation scopes enum-array cast fix shipped without a regression test (PR #1972) (Closes #2034)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T22:17:11Z (#2034)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T22:17:11Z",
+      "issue_ref": {
+        "number": 2034,
+        "url": "https://github.com/martin-janci/property-management/issues/2034",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
