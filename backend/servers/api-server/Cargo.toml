@@ -67,7 +67,7 @@ ammonia = "4.0"
 totp-rs = { version = "5.6", features = ["gen_secret", "otpauth", "qr"] }
 base32 = "0.5"
 base64 = "0.22"
-aes-gcm = "0.10"
+aes-gcm = "0.11"
 subtle = "2.5"
 lettre = { version = "0.11", features = ["tokio1-native-tls", "builder", "hostname", "smtp-transport"] }
 # Bounded-concurrency dispatch for NotificationPipeline (issue #484)
