@@ -163,6 +163,7 @@ visible every cycle.
 - `status_changed_at` — bumped ONLY when the `status` field value changes (hang signal).
 - `merged_at` — set ONCE when row → `merged`; mirrors GH `PR.mergedAt`.
 - Backfill missing `status_changed_at` = `claimed_at` on first read.
+- `first_open_at` (**action-list items only**, NOT an assignments field) — set ONCE when an item is created `open` (backlog-refill promotion, coverage refill, or manual add); backfilled = NOW on first read for any legacy open row missing it (set-once — persist it by including `action-list.json` in the Phase 6 commit, so aging accrues across runs). Never changes while the item stays open. Consumed by the Phase 3 claim-sort **aging** term (anti-starvation); ignored everywhere else.
 - Legacy compat: rows with `status == "done"` are treated equivalent to `merged` (terminal); do not migrate or touch them.
 
 ## State machine
@@ -838,6 +839,11 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 
   **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
 - **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
+- **Tier 1b (in-repo backlog self-refill — NEW 2026-07-02, planner-independent):** after the Tier-1 coverage rubric, if the buffer is still starved, promote fresh `open`/`ready` vectors from `.research/backlog.json` (the research routine's continuously-refreshed, SCORED, PLANNED output) into `action-list.json`. This runs **BEFORE** the Tier-2 planner kick so the buffer self-heals even while `DISPATCHER_URL` is the mis-configured no-op (GH #1380 defect 2 — an operator-only secret the dispatcher cannot fix). Deterministic + idempotent. It computes its **OWN honest claimable count** (open rows whose id AND stem are absent from assignments active+archive) rather than trusting `open_claimable_count`, so the metric blind spot that inflates the buffer with ghost rows (findings.json) cannot suppress the refill. Bounded: never lifts honest claimable above `BUFFER_CEIL`, and promotes at most `BACKLOG_REFILL_CAP` (default 24) per run to stay well inside the MCP inline-push size limit (issue #1014 — the same corruption vector `action-list-reconcile.sh` guards). Priority is **score-based** on the routine's own 0–8 scale (`>=6`→high, `3–5`→medium, `<3`→low; `>=3` is the routine's actionable bar, routine-prompt.md:121; `confidence:low` downgrades one tier); each promoted row is stamped `source="dispatcher-backlog-refill <iso>"`, `first_open_at=NOW`, `depends_on:[]`, plus a `backlog_ref` evidence object. Only ever APPENDS rows (never mutates/removes existing ones; the script fails closed if the item count doesn't grow by exactly the promote count). Include `action-list.json` in the Phase 6 commit when it promoted any row; surface the count on the Phase 7 `Backlog-refill:` line.
+  ```bash
+  # Defaults (36/72/120, cap 24) already match goal-check.sh — pass overrides only if the run set them.
+  bash .research/backlog-refill.sh --apply
+  ```
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, the `anthropic-version` header, a `{"text": …}` body, and `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it. The body/header shape is fixed per issue #1151 / #1380 — see the comment below):
 
   ```bash
@@ -1081,8 +1087,33 @@ candidates = [c for c in action-list
               and stem(c.id) not in {stem(t) for t in ARCHIVED_IDS}   # stem-aware archive check (incl. failed)
               and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5)
               and claimable(c, TERMINAL_IDS)]               # dep satisfaction: merged/done only (failed deps unsatisfied)
-candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
+
+# --- Anti-starvation aging (NEW 2026-07-02) --------------------------------
+# Static priority alone STARVES low-priority backlog: it waits forever behind
+# a steady drip of higher-priority claims. Age each open candidate so it
+# eventually competes. This is LOCAL to the claim sort — Tier-0 defer and
+# pick-target-epic.sh keep raw pri_rank, so their determinism invariants are
+# untouched. One priority mapping for the whole file: the canonical pri_rank
+# (critical=4 high=3 medium=2 low=1 else=0), same as pick-target-epic.sh:99.
+AGE_BOOST_HOURS = int(env "DISPATCHER_AGE_BOOST_HOURS" default 48)
+def pri_rank(p):   # canonical — bigger = higher priority
+    return {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(p, 0)
+for c in candidates:
+    if c.get("first_open_at") is None:      # set-once backfill (persist in Phase 6 commit)
+        c["first_open_at"] = NOW
+def eff_rank(c):                            # bounded aging: at most +1 tier, capped at 4
+    aged = (NOW_EPOCH - iso_epoch(c["first_open_at"])) >= AGE_BOOST_HOURS * 3600
+    return min(4, pri_rank(c["priority"]) + (1 if aged else 0))
+# Sort: higher eff_rank first, then source_rank, then OLDEST first_open_at first
+# (deterministic tiebreak — the longest-waiting item wins a tie).
+candidates.sort(key=lambda c: (-eff_rank(c), source_rank(c["source"]), c["first_open_at"]))
 ```
+
+An item's aged boost lifts it by **one tier only** (e.g. a `low` waiting past
+`DISPATCHER_AGE_BOOST_HOURS` competes as `medium`), so priority still dominates
+fresh work but nothing waits forever. Because the boost never exceeds +1 and
+never touches Tier-0/pick-target ranking, no existing priority invariant or
+finish-first behaviour changes — only the claim order among the eligible pool.
 
 The stem-aware terminal check catches the case where a suffix-variant
 slug (e.g. `<id>-impl`, `<id>-v2`) is being claimed while the canonical
@@ -2070,6 +2101,8 @@ Empty branches deleted:   [<branch>, …]                             (item #1; 
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
 Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
+Backlog-refill:           <promoted=<N> honest-claimable=<A>→<B> capped=<0|1> | clean (healthy) | none-available>   (Tier 1b backlog.json self-refill; planner-independent)
+Aged claims (this run):   [<id> waited=<h>h <low→medium|medium→high>, …]   (Phase 3 anti-starvation aging boost; [] if none)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)

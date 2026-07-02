@@ -697,6 +697,38 @@ else
 fi
 echo
 
+# --- T29: anti-starvation wiring (aging + backlog self-refill; 2026-07-02) --
+# Two starvation fixes must stay encoded and well-formed:
+#   (a) every action-list item's first_open_at is iso-8601 or null/absent
+#       (the Phase 3 aging term reads it; a malformed value would mis-age);
+#   (b) the prompt encodes the aging boost AND the Tier-1b backlog self-refill,
+#       and the backlog-refill.sh helper exists and is executable.
+echo "T29 anti-starvation wiring: first_open_at well-formed + aging/backlog-refill encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD29=$(jq -r '
+    [ .items[]
+      | select(has("first_open_at") and .first_open_at != null
+               and ((.first_open_at | type) != "string"
+                    or (.first_open_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T") | not))) ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD29" = "0" ]; then note "all first_open_at values are iso-8601 or null"
+  else
+    fail "$BAD29 action-list item(s) with malformed first_open_at"
+    jq -r '.items[] | select(has("first_open_at") and .first_open_at != null and ((.first_open_at|type)!="string" or (.first_open_at|test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T")|not))) | "    \(.id) first_open_at=\(.first_open_at)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+PROMPT="${PROMPT:-.research/dispatcher-prompt.md}"
+if [ -f "$PROMPT" ]; then
+  grep -q 'Anti-starvation aging' "$PROMPT"     && note "prompt encodes Phase 3 aging" || fail "prompt missing Phase 3 aging block"
+  grep -q 'backlog-refill.sh' "$PROMPT"          && note "prompt wires Tier-1b backlog-refill" || fail "prompt missing Tier-1b backlog-refill wiring"
+fi
+REFILL="${REFILL:-.research/backlog-refill.sh}"
+if [ -x "$REFILL" ]; then note "backlog-refill.sh present + executable"
+else fail "backlog-refill.sh missing or not executable ($REFILL)"; fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
