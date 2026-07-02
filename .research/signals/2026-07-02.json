@@ -1,0 +1,102 @@
+{
+  "run_at": "2026-07-02T00:35:00Z",
+  "run_kind": "normal-catchup-16d",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine-lag",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["routine has not run in 16d 5h (last_run_iso=2026-06-16T03:25:00Z, now=2026-07-02T00:35:00Z)"]
+    },
+    {
+      "id": "stale-routine-alert-2026-07-02",
+      "type": "stale-routine-alert",
+      "source": "routine-lag",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["state.json last_run_iso is 16d old (≥3d threshold); cloud research routine cron may be paused. Dispatcher (planning-branch loop) unaffected — see .research/management/assignments.json on planning."]
+    },
+    {
+      "id": "churn-hotspot-docs-endpoint-checklist-groups-finance-md",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["382 lines changed (191+/191-) across 2 commits on origin/dev between 2026-06-16 and 2026-07-02"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative_reemit": true,
+      "evidence": ["cumulative re-emit: 272 lines changed (138+/134-) in 1 commit since 2026-06-16; score_delta withheld per cumulative-type rule (was already in seen_signals)"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-preflight-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["148 lines changed (117+/31-) in 1 commit (PR #1966) since 2026-06-16"]
+    },
+    {
+      "id": "risky-churn-pr-1966-preflight-rs",
+      "type": "risky-churn",
+      "source": "PR #1966",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["PR #1966 (fix(api-server): enforce length floors in preflight env check) modified preflight.rs (a top-3 churn hotspot this run) with no test file in its diff — canonical instability pattern"]
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1987",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": ["PR #1987 (fix reality-web: close SSO callback CSRF state-bypass, closes #1826) modified frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx + page.test.tsx without updating docs/screens/reality/oauth-callback.md — screen doc exists but was not touched by the CSRF-guard tightening"]
+    },
+    {
+      "id": "code-review-api-core-scheduler-metrics-lock-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-core",
+      "expert": "rust",
+      "evidence": ["backend/servers/api-server/src/services/scheduler.rs — 13x metrics.lock().unwrap() calls on a std::sync::Mutex; a panic while a scheduled task holds the lock poisons it and every subsequent lock().unwrap() panics too, potentially bringing down the scheduler service (announcements, votes, leases, meter reminders). Swap to parking_lot::Mutex (no poisoning) or catch the poison and log."]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (all high-signal candidates were confidence=medium)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-02.md && head -1 == '# 2026-07-02'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "non-cumulative signal ids from this run absent from prior seen_signals OR score_delta==0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score > 8; every open item with updated_at <= 2026-06-18 decayed -1 or dropped", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — G6 vacuously holds (0 plans, 0 required annotations)", "observed": "0 plans created", "expected": "0 plans created" },
+    { "goal": "G7", "passed": true, "command": "0 new plans <= 2; G7 metadata/heading/mode/files checks vacuous", "observed": "0 new plans", "expected": "<=2 new plans" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "expect 0 at Phase 6 stage", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff", "observed": "no matches", "expected": "0 matches" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "byte-identical (regen script authored both)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failed → no failure annotation needed", "observed": "all phases succeeded", "expected": "all phases succeeded OR phase-1..6 listed with matching cursor state" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "no silent deletions" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive/ file count now >= HEAD count", "observed": "unchanged (0 new archives, 0 removed)", "expected": "count_now >= count_head" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical (regen script authored both)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions len<=3 (1 pr, 1 issue, 1 comment caps); ROUTINE_AUTOFIX_DISABLED not set; empty array this run", "observed": "auto_fix_actions=[] (no candidate)", "expected": "compliant" },
+    { "goal": "G16", "passed": true, "command": "action-list.json+risks.json parse; project-state.md non-empty; pm_cursor.next_index in 0..7; coverage_cursor advanced with pm_cursor", "observed": "pm=5→6, cov=12→0, both artifacts refreshed", "expected": "compliant" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram bot-token value in added lines", "observed": "no token literals in diff", "expected": "0 matches" }
+  ]
+}
