@@ -1,0 +1,81 @@
+{
+  "date": "2026-07-02",
+  "run_iso": "2026-07-02T04:20:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine self-diagnosis",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "(now − last_run_iso) = 16d 1h — routine missed 16 daily runs since 2026-06-16T03:25:00Z"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-02",
+      "type": "stale_routine_alert",
+      "source": "routine self-diagnosis",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 16d old (≥3d threshold); cloud routine cron may be paused. Dispatcher on planning branch continued (see .research/management/assignments.json)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/community_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-16 --name-only",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "4 commits touched this file in the 16-day window — BIT-417/BIT-479 finance happy-path backfill campaign; test-only churn, no code instability."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/disputes_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-16 --name-only",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "4 commits touched this file — BIT-417/BIT-479 backfill campaign."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/documents_forms_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-16 --name-only",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "4 commits touched this file — BIT-417/BIT-479 backfill campaign."
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713 reverts PR #1690",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1713 revert(delegations): remove re-added delegation frontend (#1690) — merged 2026-06-22 to reconcile with BIT-213 retirement. Timing issue: #1690 merged ~16 min before CEO ruled delegation stays retired (BIT-198). Governance/process signal, not a code defect. No residue to clean."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run (stalled-review not triggered; no lockfile-drift; no screen-map-drift derived because per-PR file lists not fetched; no fixme-in-merged-code)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-02.md && head -1 == '# 2026-07-02'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "cursors advanced vs HEAD (last_pr_seen 1439→2006, last_issue_seen 1437→2001, last_commit_sha 4829015b→b5311d1, seen_signals grew)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id re-emitted with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score > 8; decay applied to 14+ open items", "observed": "38 dropped, 14 decayed −1", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run so vacuously satisfied", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "0 new plans this run ≤ 2 cap", "observed": "0", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets in staged .research/ diff (excl. baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md /tmp/backlog.regen.md", "observed": "identical (single-source render)", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — Phase 1.5 and 1.6 skipped, noted in brief; their cursors unchanged", "observed": "consistent", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "9 archived this run, none silently deleted", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count 6→12", "observed": "12 >= 6", "expected": "grew" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (single-source render)", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto-fix cap 0/3 (kill switch not set; no eligible signals)", "observed": "0 actions", "expected": "≤3" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — gate is a no-op (pm_cursor unchanged)", "observed": "skipped", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "0", "expected": "0" }
+  ]
+}
