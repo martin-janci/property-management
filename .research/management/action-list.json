@@ -474,6 +474,166 @@
         "score": 1,
         "vector": "dx"
       }
+    },
+    {
+      "id": "gh-issue-1680",
+      "action": "Research dispatcher: cron environment can't run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) (Closes #1680)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#1680)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 1680,
+        "url": "https://github.com/martin-janci/property-management/issues/1680",
+        "labels": [
+          "dispatcher",
+          "infrastructure"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1995",
+      "action": "Wire tenant-migration import/export data-movement (S3 upload, parse/validate, async execution, export gen) — split from #1905 (Closes #1995)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#1995)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 1995,
+        "url": "https://github.com/martin-janci/property-management/issues/1995",
+        "labels": [
+          "enhancement",
+          "backend"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1997",
+      "action": "Follow-up: index + stable-sort + test for migration template pagination (PR #1994) (Closes #1997)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#1997)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 1997,
+        "url": "https://github.com/martin-janci/property-management/issues/1997",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1998",
+      "action": "Follow-up: #1771 regression test never runs in CI + stale count_unread_rls doc-comment (PR #1993) (Closes #1998)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#1998)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 1998,
+        "url": "https://github.com/martin-janci/property-management/issues/1998",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1999",
+      "action": "Follow-up: favorite price-alert enqueue/advance can drop an alert (non-transactional) + idempotency test is quarantined (PR #1992) (Closes #1999)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#1999)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 1999,
+        "url": "https://github.com/martin-janci/property-management/issues/1999",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2000",
+      "action": "Follow-up: CountryCode/SupportedCurrency serialize to ugly \"S_K\"/\"E_U_R\" (wrong rename_all) — wire + DB enum mismatch (PR #1991) (Closes #2000)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#2000)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 2000,
+        "url": "https://github.com/martin-janci/property-management/issues/2000",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2001",
+      "action": "Follow-up: finance 100% coverage overstated — ignored/500-tolerant tests marked \"done\" (PR #1983) (Closes #2001)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#2001)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 2001,
+        "url": "https://github.com/martin-janci/property-management/issues/2001",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2009",
+      "action": "cargo-deny advisories failing repo-wide: RUSTSEC advisory on ammonia v4.1.2 (blocks backend PR merges) (Closes #2009)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T11:12:15Z (#2009)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T11:12:15Z",
+      "issue_ref": {
+        "number": 2009,
+        "url": "https://github.com/martin-janci/property-management/issues/2009",
+        "labels": [
+          "security",
+          "dependencies"
+        ]
+      }
     }
   ]
 }

@@ -729,6 +729,34 @@ if [ -x "$REFILL" ]; then note "backlog-refill.sh present + executable"
 else fail "backlog-refill.sh missing or not executable ($REFILL)"; fi
 echo
 
+# --- T30: open-issue ingestion wiring (2026-07-02 — get things done) --------
+# gh-issue-<N> rows must carry issue_ref.number (drives the post-merge MCP
+# close); the prompt must encode the ingest + explicit-close loop; the helper
+# must exist + be executable.
+echo "T30 issue-ingest wiring: gh-issue-<N> rows carry issue_ref + ingest/close encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD30=$(jq -r '
+    [ .items[]
+      | select(.id | type=="string" and startswith("gh-issue-"))
+      | select((.issue_ref // {} | .number | type) != "number") ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD30" = "0" ]; then note "all gh-issue-<N> rows carry issue_ref.number"
+  else
+    fail "$BAD30 gh-issue-<N> row(s) missing issue_ref.number"
+    jq -r '.items[] | select(.id|type=="string" and startswith("gh-issue-")) | select((.issue_ref//{}|.number|type)!="number") | "    \(.id)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'issue-ingest.sh' "$PROMPT"        && note "prompt wires open-issue ingestion" || fail "prompt missing issue-ingest wiring"
+  grep -q 'mcp__github__update_issue' "$PROMPT" && note "prompt encodes explicit issue-close loop" || fail "prompt missing post-merge issue-close loop"
+fi
+INGEST="${INGEST:-.research/issue-ingest.sh}"
+if [ -x "$INGEST" ]; then note "issue-ingest.sh present + executable"
+else fail "issue-ingest.sh missing or not executable ($INGEST)"; fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
