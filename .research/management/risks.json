@@ -1,1 +1,494 @@
-{"generated":"2026-06-16T00:00:00Z","items":[{"id":"pm-backend-ai-equipment-cross-tenant-idor","risk":"Cross-tenant IDOR cluster in ai.rs equipment endpoints: update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), and update_maintenance (ai.rs:1192) all bind `_principal: RequestPrincipal` and discard it, then call equipment_repo.update/delete/update_maintenance with only the Path id \u2014 no tenant scoping. An authenticated user in any org can DELETE FROM equipment WHERE id=$1 / mutate any other org's equipment + maintenance rows. List/predictions siblings DO call require_tenant_id, confirming the omission is a bug not a design choice.","probability":"high","impact":"high","mitigation":"Thread the principal's tenant_id into equipment_repo.update/delete/update_maintenance and add `AND tenant_id = $tenant` to the WHERE clauses (or use the RLS connection so the policy enforces scope). Add a cross-tenant regression test asserting 404/forbidden for foreign ids.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-frontend-epic6-announcement-web-ui-in-draft","risk":"Epic 6 announcement web UI (viewing/ack 6-2, comments 6-3, pin 6-4) is split across three draft PRs (#474/#475/#479) that have not merged. Backend + notification pipeline (PR #463) and WebSocket sync (PR #472) are now live, so the only thing gating story closure is the web UI landing \u2014 but a stalled three-PR draft cluster is a review-queue risk that can leave 6-2/6-3/6-4 stuck at partial.","probability":"medium","impact":"medium","mitigation":"Sequence the three drafts (#474 viewing \u2192 #475 comments \u2192 #479 pin) so they merge in dependency order without conflicting on the shared AnnouncementsPage; promote out of draft once apiStatus wiring is verified.","owner_role":"pm-frontend","trigger":null,"status":"open"},{"id":"pm-frontend-followup-test-gaps-480-487","risk":"Post-merge review opened follow-up issues #480-#487 covering test gaps + minor security/UX follow-ups on the heavy frontend delivery (messaging realtime, document share-flow, OAuth UI, MFA). If these are not scheduled, the merged features ship 'done' without regression coverage, inflating the apparent done-count while real test debt accrues on auth/sharing surfaces.","probability":"high","impact":"medium","mitigation":"pm-scrum-master to slot #480-#487 into the sprint as a single test-hardening batch; do not promote dependent stories to done until their follow-up issue is closed or explicitly deferred.","owner_role":"pm-frontend","trigger":null,"status":"open"},{"id":"pm-tech-lead-ai-platform-announcements-route-monoliths","risk":"Three route monoliths on hot paths this run: ai.rs (3142 lines), platform_admin.rs (2762), announcements.rs (2722). ai.rs already harbors the cross-tenant IDOR cluster above \u2014 exactly the failure mode predicted for oversized route files (a handler silently skips the tenant scope and reviewers miss it in a 3k-line file). Same risk surface as the integrations/organizations/documents.rs split already actioned.","probability":"medium","impact":"high","mitigation":"Add ai.rs/platform_admin.rs/announcements.rs to the module-split backlog; add a CI grep/clippy lint that flags handlers binding `_principal` (discarded principal) on mutating routes.","owner_role":"pm-tech-lead","trigger":null,"status":"open"},{"id":"pm-scrum-master-pr-435-deferred-security","risk":"PR #435 merged with deferred security findings (#438/#439): P1-05 SSRF, P0-12 cookie scope, P1-04 Debug-format audit-hash domain. SSRF (#450) and ProtectedRoute fail-open (#459) have since landed; remaining #438/#439 items (cookie scope, Debug-format hash, ordering, IG3 test gap) still need a single owner.","probability":"medium","impact":"high","mitigation":"Assign pm-security sole owner of the residual #438/#439 items; treat remaining P0/P1 as pre-feature-work. SSRF and ProtectedRoute legs now resolved.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-backend-webhook-signature-ssrf","risk":"Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issued requests to unvalidated user/provider URLs \u2014 SSRF to 169.254.169.254 / internal services.","probability":"low","impact":"high","mitigation":"validate_external_url extracted to shared module and applied at the outbound sinks (PR #450).","owner_role":"pm-backend","trigger":null,"status":"resolved","mitigated_by":"PR #450 (SSRF outbound URL validation) merged 2026-05-25"},{"id":"pm-frontend-protectedroute-fail-open","risk":"ProtectedRoute.tsx:117 role gate was fail-open: when user.role was falsy the role check was skipped and access granted \u2014 would silently no-op the first role-gated route.","probability":"low","impact":"medium","mitigation":"Now denies on missing role; user.role populated in AuthContext (PR #459).","owner_role":"pm-frontend","trigger":null,"status":"resolved","mitigated_by":"PR #459 (ProtectedRoute fail-open fix) merged 2026-05-25"},{"id":"pm-security-voice-device-idor","risk":"Voice device endpoints permitted cross-tenant device access (IDOR) \u2014 a principal could address another org's voice device by id.","probability":"low","impact":"high","mitigation":"Tenant scoping added to voice device lookups (PR #461).","owner_role":"pm-security","trigger":null,"status":"resolved","mitigated_by":"PR #461 (voice device IDOR fix) merged 2026-05-25"},{"id":"pm-scrum-master-epic-2b-foundation-missing","risk":"Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)","probability":"low","impact":"high","mitigation":"Epic 2B notification pipeline (PR #463) + WebSocket realtime sync (PR #472) merged \u2014 the blocking infra is now live; 6-2/6-3/6-4 web UI and 8a-3 WS half are unblocked.","owner_role":"pm-scrum-master","trigger":null,"status":"resolved","mitigated_by":"PR #463 (Epic 2B notification pipeline) + PR #472 (WebSocket realtime sync) merged 2026-05-25 \u2014 DEC-001 unblock triggers fired"},{"id":"pm-backend-81-missing-endpoints","risk":"Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist \u2014 404 in production","probability":"medium","impact":"medium","mitigation":"Implement the missing endpoints or feature-flag the frontend calls until they exist; Epic 81 schedule/execution verify PRs (#488/#489) in flight.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-backend-10b-silent-stub-handlers","risk":"10B handler stubs (10b-4/5/6/7) are mounted routes returning success with no business logic \u2014 callers get 200/204 for operations that never happened (silent data loss / incorrect UI state)","probability":"high","impact":"medium","mitigation":"Return 501 Not Implemented with a documented timeline until real handlers ship, so callers fail loudly","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-tech-lead-oauth-10a-no-token-design","risk":"OAuth provider (10A) backend complete; admin client-management UI + user-grants UI now shipped (PRs #468/#469/#471). Residual gap is end-to-end integration/security test coverage (PKCE flow, refresh rotation reuse detection).","probability":"low","impact":"medium","mitigation":"Add OAuth integration test suite (gap-10a-1-oauth-tests); UI delivery risk now closed.","owner_role":"pm-tech-lead","trigger":null,"status":"open"},{"id":"pm-qa-inquiry-idor-no-regression-test","risk":"PR #497 inquiry IDOR fix shipped with zero regression tests; mark_inquiry_read_for_realtor does an ownership EXISTS check then a separate UPDATE \u2014 a future refactor could silently reintroduce the IDOR with no CI signal.","probability":"medium","impact":"high","mitigation":"Add reality-server/tests/inquiry_idor_tests.rs immediately; require a test file on security-fix PRs.","owner_role":"pm-qa","trigger":null,"status":"open"},{"id":"pm-qa-oauth-revoked-token-bypass-open","risk":"Issue #481 (OAuth refresh-token revocation bypass) is high-severity and open, yet stories 10a-1/10a-3 target this sprint; merging OAuth stories ships a broken security contract.","probability":"high","impact":"high","mitigation":"Block 10a-1/10a-3 promotion until #481 closed; escalate to tech lead.","owner_role":"pm-qa","trigger":null,"status":"open"},{"id":"pm-qa-jwt-token-in-ws-logs-open","risk":"Issue #480 (JWT access token in WebSocket query-param access logs) is high-severity and open; story 8a-3 has a WS dependency \u2014 shipping it leaks tokens via logs.","probability":"high","impact":"high","mitigation":"Block 8a-3 promotion; strip token from log line and re-validate JWT on session before any WS story ships.","owner_role":"pm-qa","trigger":null,"status":"open"},{"id":"pm-scrum-master-app-tsx-router-merge-conflict","risk":"App.tsx is the top churn hotspot; concurrent edits across #503, #500, and 80-3 mediation wiring risk triple-conflict rebases.","probability":"high","impact":"medium","mitigation":"Sequence App.tsx PRs: merge 80-3 wiring first, then #503; pm-frontend coordinates.","owner_role":"pm-scrum-master","trigger":null,"status":"open"},{"id":"pm-scrum-master-documents-upload-endpoint-missing","risk":"Story 7a-1 not promotable: POST /api/v1/documents/upload backend handler absent; mobile upload UI (PR #447) calls a missing route in production.","probability":"high","impact":"high","mitigation":"Immediate backend task; critical-path blocker for Epic 7A completion.","owner_role":"pm-scrum-master","trigger":null,"status":"open"},{"id":"pm-devops-mobile-eas-no-merged-pipeline","risk":"Mobile release pipeline has no merged path: EAS Android/iOS build workflows exist only in draft PRs (#566 cluster) with broken @v6 action pins (checkout/setup-node/pnpm-action-setup @v6 do not exist); no mobile artifact can be cut until they land and the pins are corrected.","probability":"high","impact":"medium","mitigation":"Land gap-85-2-android-ci-fix + gap-85-2-ios-ci-fix together; downgrade pins to @v4, add eas-cli devDependency + missing Android npm scripts; verify green on a no-op push.","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-devops-security-test-gate-advisory-only","risk":"security-test-gate.yml may be advisory only (not a required status check): PR #497 shipped a security IDOR fix with zero tests despite the gate existing, suggesting it does not block merges.","probability":"medium","impact":"high","mitigation":"Make the gate a required status check on dev branch protection; re-run against a synthetic test-less security PR to confirm it blocks.","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-devops-app-tsx-churn-concurrent-drafts","risk":"App.tsx router-file churn + 6 concurrent dispatcher drafts (#563-#568) risk repeated triple-conflict rebases, stalling the merge queue.","probability":"medium","impact":"medium","mitigation":"Serialize App.tsx-touching PRs via a merge queue / auto-rebase ordering so concurrent route-wiring drafts do not collide.","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-security-update-schedule-cross-tenant-idor","risk":"update_schedule (report_schedule.rs) missing RBAC (#614) and missing tenant/org scope (#624): an authenticated user can mutate another tenant's report schedule and/or mutate schedules without the required capability. Same omission class as the prior ai.rs equipment IDOR cluster.","probability":"high","impact":"high","mitigation":"Add RequireCapability extractor + thread principal tenant/org into the WHERE clause; cross-tenant regression test; block Epic 81 promotion until both close.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-security-cookie-path-breaking-565","risk":"Cookie Path breaking change (#617) from PR #565 session-cookie scope hardening: if mis-scoped it either silently logs users out or leaks the session cookie to unintended paths / breaks the SSO auth-callback read.","probability":"medium","impact":"high","mitigation":"Verify cookie set/clear across / and the API prefix and the SSO callback flow before merging the change to dev; document the migration.","owner_role":"pm-security","trigger":null,"status":"resolved","mitigated_by":"PR #642 (auth.rs + sso.rs cookie Path reconciliation + runbook, with inline tests) merged 2026-05-28 \u2014 confirms set/clear across path prefixes + SSO /auth/callback read; migration documented"},{"id":"pm-security-audit-hash-debug-format-p1-04","risk":"P1-04 residual (PR #435): internal type internals may reach audit-trail log lines via Debug ({:?}) formatting.","probability":"medium","impact":"medium","mitigation":"Replace {:?} with Display/structured fields on internal types in audit records.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-security-oauth-10a-untested-security-contract","risk":"OAuth provider stories 10a-1/10a-2/10a-3 shipped with no introspection/refresh-rotation/PKCE security tests; a refactor could silently reintroduce revoked-token acceptance or replay.","probability":"medium","impact":"high","mitigation":"Add the OAuth security test suite (revoked-token, family-reuse, PKCE S256) before any further OAuth-provider change merges.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-data-fault-status-metric-divergence","risk":"FaultStatusCount / FaultByStatusTable surfaced by the new Support Data admin page (#635) defines a fault-by-status metric for support staff. The same fault counting also exists in owner_analytics.rs and portfolio_performance.rs. If the status buckets / counting window are re-derived per route rather than from one shared definition, support, owner, and portfolio dashboards will show divergent fault numbers \u2014 eroding trust in the analytics and complicating support triage.","probability":"medium","impact":"medium","mitigation":"Factor the fault-status bucket + window definition into one shared query/helper reused by the support-data, owner-analytics, and portfolio routes; add a test asserting the three surfaces return identical counts for a fixed fixture.","owner_role":"pm-data","trigger":null,"status":"open"},{"id":"pm-data-support-data-pii-no-usage-tracking","risk":"The Support Data page (#635) lets support/admin staff read cross-tenant user diagnostics (memberships, sessions with IP, activity log) gated only by the audit_read capability. There is no analytics/audit event recording WHO viewed a given tenant's support data or revoked sessions \u2014 so cross-tenant PII access by support staff is not independently traceable, a privacy/retention exposure as the UI makes this access routine.","probability":"medium","impact":"medium","mitigation":"Emit a support_data_viewed / support_sessions_revoked audit event (admin_user_id + target tenant/user) on each support-data read and session-revoke; bound retention on the session/activity diagnostics surfaced through the page.","owner_role":"pm-data","trigger":null,"status":"open"},{"id":"pm-integration-sqlx-0-9-major-bump","risk":"sqlx 0.8\u21920.9 major bump (Dependabot PR #666) affects every workspace query; merging without a coordinated upgrade pass may break compile-time query! checks or the migrate API and block all backend CI.","probability":"medium","impact":"high","mitigation":"Freeze PR #666 from auto-merge; backend owner audits the 0.9 changelog and runs cargo check --workspace on a branch before landing.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-integration-airbnb-webhook-dup-jobs","risk":"Airbnb at-least-once webhook (webhook.rs:1028) enqueues duplicate SYNC_EXTERNAL jobs on event bursts \u2014 redundant sync load and possible reservation-state races.","probability":"high","impact":"medium","mitigation":"Add an event_id dedup table (ON CONFLICT DO NOTHING) + already-queued-job check before CreateBackgroundJob; mirrors backlog item bug-webhook-airbnb-dup-sync-jobs.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-integration-push-fanout-silent-drop","risk":"Redis push-fanout queue (push_fanout.rs:621) is never drained (BLPOP deferred) \u2014 jobs enqueued to push_fanout_queue are silently dropped while Epic 8A notification stories are marked done.","probability":"high","impact":"medium","mitigation":"Implement the BLPOP drain before any production traffic relies on the fanout path; add a queue-depth monitor.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-integration-esignature-webhook-no-idempotency","risk":"e-signature webhook status writes have no idempotency guard; a provider re-delivering a completed/voided event can overwrite a terminal state.","probability":"medium","impact":"medium","mitigation":"Skip the workflow update when current_status is terminal; coordinate with PR #719 (gap-84-2 signerParties) on the same surface.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-scrum-master-725-ai-idor-stalled","risk":"PR #725 (ai-maintenance IDOR fix) sits at verdict=changes (B1-session-IDOR, B2-sentiment-IDOR, B3-missing-test); the maintenance/chat-session/sentiment IDOR vector stays live until merged.","probability":"medium","impact":"high","mitigation":"pm-security addresses the three change requests within a day; reviewer re-approves and merges before next run.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-scrum-master-sprint-status-stale","risk":"sprint-status.yaml is materially stale (10b-3/10b-4/10b-6 still ready-for-dev despite done evidence); risks duplicated work or mis-reporting progress.","probability":"high","impact":"medium","mitigation":"Write the sprint-status update as a tracked action (pm-scrum-master-sync-sprint-status-10b); confirm sync next run.","owner_role":"pm-scrum-master","trigger":null,"status":"open"},{"id":"pm-scrum-master-mobile-coverage-lag","risk":"10 of 22 remaining partial/not-started stories are mobile (7a-2/7a-4, 8a-3 push, epic-82 SwiftUI); unreviewed gap-82 drafts let the mobile slice fall further behind.","probability":"high","impact":"medium","mitigation":"Force gap-82 drafts (#639/#641/#705) to non-draft review this window; assign pm-frontend as explicit mobile-lag owner.","owner_role":"pm-frontend","trigger":null,"status":"open"},{"id":"pm-qa-followup-issue-flood-2026-06-14","risk":"18 follow-up issues (#1360\u2013#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.","probability":"high","impact":"medium","mitigation":"pm-scrum-master triages the batch this run \u2014 assign owner or close as won't-fix; bind to action pm-qa-triage-followup-issues-2026-06-14.","owner_role":"pm-scrum-master","trigger":null,"status":"open"},{"id":"pm-qa-record-payment-double-write","risk":"record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.","probability":"medium","impact":"high","mitigation":"Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test.","owner_role":"pm-backend","trigger":null,"status":"open"},{"id":"pm-qa-cron-validator-drift-regression","risk":"Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) \u2014 current tests don't pin the validator surface.","probability":"medium","impact":"medium","mitigation":"Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it.","owner_role":"pm-qa","trigger":null,"status":"open"},{"id":"pm-qa-dispatcher-stale-gap-scan","risk":"Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured \u2014 wastes implementer cycles claiming gap stories already shipped.","probability":"high","impact":"medium","mitigation":"pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings.","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-qa-booking-oauth-no-secure-replacement","risk":"Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) \u2014 old credentials can linger and be used post-rotation.","probability":"medium","impact":"high","mitigation":"Implement atomic credential swap + add OAuth handler/CSRF test coverage.","owner_role":"pm-security","trigger":null,"status":"open"},{"id":"pm-devops-dev-ci-discipline-1437","risk":"PR #1426 merged despite breaking `dev` backend compile (issue #1437) - ALL backend CI gates now broken on `dev` until #1435/#1436 lands. Indicates the PR-merge gate didn't run (or was bypassed) and there is no `dev`-push smoke gate to catch it after the fact. Second dev-red incident in two weeks (cf. #1332 unblocked 2026-06-14 via #1379).","probability":"high","impact":"high","mitigation":"Land #1435 or #1436 immediately to restore green. Add `cargo check --workspace --tests` as a fail-fast `dev`-push smoke (backend.yml run on push, not just PR). Audit PR #1426 merge log to determine whether backend.yml was required-check + green at merge.","owner_role":"pm-devops","trigger":"Any `dev`-targeting merge that lacked a backend.yml green status check","status":"open"},{"id":"pm-devops-mobile-eas-pipeline-unverified","risk":"`eas-build-android.yml` and `eas-build-ios.yml` now exist in `.github/workflows/` (cleared since 2026-05-27 from draft PRs), but green status on `dev` is unverified. If action pins / eas-cli installation / EXPO_TOKEN secret are still broken from the original gap-85-2 fix, mobile has no working release path.","probability":"medium","impact":"medium","mitigation":"Trigger a no-op push or workflow_dispatch run; confirm both Android and iOS jobs reach the build step. Audit required secrets (EXPO_TOKEN, EXPO_PROJECT_ID, Android keystore, iOS provisioning).","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-devops-security-test-gate-still-advisory","risk":"`security-test-gate.yml` workflow file is present but enforcement-vs-advisory on `dev` branch protection remains unconfirmed since 2026-05-27. If still advisory, security-labelled PRs can merge with no test file (cf. PR #497 incident).","probability":"medium","impact":"high","mitigation":"Verify required-status-check listing via `gh api repos/.../branches/dev/protection`. Promote to required check if currently advisory.","owner_role":"pm-devops","trigger":null,"status":"open"},{"id":"pm-devops-pre-push-gate-local-only","risk":"Pre-push fmt/clippy gate (#1431) merged but is local hook only - does not enforce on CI side and does not run cargo check. Cannot prevent a contributor with hooks disabled from re-landing a #1426-class compile break.","probability":"medium","impact":"medium","mitigation":"Mirror the gate as a fast CI status check (`cargo fmt --check && cargo clippy -q && cargo check`) gated on `dev`-push so local-disabled hooks still get caught.","owner_role":"pm-devops","trigger":null,"status":"open"}]}
+{
+  "generated": "2026-07-02T03:25:00Z",
+  "items": [
+    {
+      "id": "pm-backend-ai-equipment-cross-tenant-idor",
+      "risk": "Cross-tenant IDOR cluster in ai.rs equipment endpoints: update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), and update_maintenance (ai.rs:1192) all bind `_principal: RequestPrincipal` and discard it, then call equipment_repo.update/delete/update_maintenance with only the Path id — no tenant scoping. An authenticated user in any org can DELETE FROM equipment WHERE id=$1 / mutate any other org's equipment + maintenance rows. List/predictions siblings DO call require_tenant_id, confirming the omission is a bug not a design choice.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Thread the principal's tenant_id into equipment_repo.update/delete/update_maintenance and add `AND tenant_id = $tenant` to the WHERE clauses (or use the RLS connection so the policy enforces scope). Add a cross-tenant regression test asserting 404/forbidden for foreign ids.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-epic6-announcement-web-ui-in-draft",
+      "risk": "Epic 6 announcement web UI (viewing/ack 6-2, comments 6-3, pin 6-4) is split across three draft PRs (#474/#475/#479) that have not merged. Backend + notification pipeline (PR #463) and WebSocket sync (PR #472) are now live, so the only thing gating story closure is the web UI landing — but a stalled three-PR draft cluster is a review-queue risk that can leave 6-2/6-3/6-4 stuck at partial.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Sequence the three drafts (#474 viewing → #475 comments → #479 pin) so they merge in dependency order without conflicting on the shared AnnouncementsPage; promote out of draft once apiStatus wiring is verified.",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-followup-test-gaps-480-487",
+      "risk": "Post-merge review opened follow-up issues #480-#487 covering test gaps + minor security/UX follow-ups on the heavy frontend delivery (messaging realtime, document share-flow, OAuth UI, MFA). If these are not scheduled, the merged features ship 'done' without regression coverage, inflating the apparent done-count while real test debt accrues on auth/sharing surfaces.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "pm-scrum-master to slot #480-#487 into the sprint as a single test-hardening batch; do not promote dependent stories to done until their follow-up issue is closed or explicitly deferred.",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-ai-platform-announcements-route-monoliths",
+      "risk": "Three route monoliths on hot paths this run: ai.rs (3142 lines), platform_admin.rs (2762), announcements.rs (2722). ai.rs already harbors the cross-tenant IDOR cluster above — exactly the failure mode predicted for oversized route files (a handler silently skips the tenant scope and reviewers miss it in a 3k-line file). Same risk surface as the integrations/organizations/documents.rs split already actioned.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add ai.rs/platform_admin.rs/announcements.rs to the module-split backlog; add a CI grep/clippy lint that flags handlers binding `_principal` (discarded principal) on mutating routes.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-pr-435-deferred-security",
+      "risk": "PR #435 merged with deferred security findings (#438/#439): P1-05 SSRF, P0-12 cookie scope, P1-04 Debug-format audit-hash domain. SSRF (#450) and ProtectedRoute fail-open (#459) have since landed; remaining #438/#439 items (cookie scope, Debug-format hash, ordering, IG3 test gap) still need a single owner.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Assign pm-security sole owner of the residual #438/#439 items; treat remaining P0/P1 as pre-feature-work. SSRF and ProtectedRoute legs now resolved.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-backend-webhook-signature-ssrf",
+      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issued requests to unvalidated user/provider URLs — SSRF to 169.254.169.254 / internal services.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "validate_external_url extracted to shared module and applied at the outbound sinks (PR #450).",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #450 (SSRF outbound URL validation) merged 2026-05-25"
+    },
+    {
+      "id": "pm-frontend-protectedroute-fail-open",
+      "risk": "ProtectedRoute.tsx:117 role gate was fail-open: when user.role was falsy the role check was skipped and access granted — would silently no-op the first role-gated route.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Now denies on missing role; user.role populated in AuthContext (PR #459).",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #459 (ProtectedRoute fail-open fix) merged 2026-05-25"
+    },
+    {
+      "id": "pm-security-voice-device-idor",
+      "risk": "Voice device endpoints permitted cross-tenant device access (IDOR) — a principal could address another org's voice device by id.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Tenant scoping added to voice device lookups (PR #461).",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #461 (voice device IDOR fix) merged 2026-05-25"
+    },
+    {
+      "id": "pm-scrum-master-epic-2b-foundation-missing",
+      "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Epic 2B notification pipeline (PR #463) + WebSocket realtime sync (PR #472) merged — the blocking infra is now live; 6-2/6-3/6-4 web UI and 8a-3 WS half are unblocked.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #463 (Epic 2B notification pipeline) + PR #472 (WebSocket realtime sync) merged 2026-05-25 — DEC-001 unblock triggers fired"
+    },
+    {
+      "id": "pm-backend-81-missing-endpoints",
+      "risk": "Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist — 404 in production",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Implement the missing endpoints or feature-flag the frontend calls until they exist; Epic 81 schedule/execution verify PRs (#488/#489) in flight.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-backend-10b-silent-stub-handlers",
+      "risk": "10B handler stubs (10b-4/5/6/7) are mounted routes returning success with no business logic — callers get 200/204 for operations that never happened (silent data loss / incorrect UI state)",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Return 501 Not Implemented with a documented timeline until real handlers ship, so callers fail loudly",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-oauth-10a-no-token-design",
+      "risk": "OAuth provider (10A) backend complete; admin client-management UI + user-grants UI now shipped (PRs #468/#469/#471). Residual gap is end-to-end integration/security test coverage (PKCE flow, refresh rotation reuse detection).",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Add OAuth integration test suite (gap-10a-1-oauth-tests); UI delivery risk now closed.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-inquiry-idor-no-regression-test",
+      "risk": "PR #497 inquiry IDOR fix shipped with zero regression tests; mark_inquiry_read_for_realtor does an ownership EXISTS check then a separate UPDATE — a future refactor could silently reintroduce the IDOR with no CI signal.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add reality-server/tests/inquiry_idor_tests.rs immediately; require a test file on security-fix PRs.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-oauth-revoked-token-bypass-open",
+      "risk": "Issue #481 (OAuth refresh-token revocation bypass) is high-severity and open, yet stories 10a-1/10a-3 target this sprint; merging OAuth stories ships a broken security contract.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Block 10a-1/10a-3 promotion until #481 closed; escalate to tech lead.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-jwt-token-in-ws-logs-open",
+      "risk": "Issue #480 (JWT access token in WebSocket query-param access logs) is high-severity and open; story 8a-3 has a WS dependency — shipping it leaks tokens via logs.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Block 8a-3 promotion; strip token from log line and re-validate JWT on session before any WS story ships.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-app-tsx-router-merge-conflict",
+      "risk": "App.tsx is the top churn hotspot; concurrent edits across #503, #500, and 80-3 mediation wiring risk triple-conflict rebases.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Sequence App.tsx PRs: merge 80-3 wiring first, then #503; pm-frontend coordinates.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-documents-upload-endpoint-missing",
+      "risk": "Story 7a-1 not promotable: POST /api/v1/documents/upload backend handler absent; mobile upload UI (PR #447) calls a missing route in production.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Immediate backend task; critical-path blocker for Epic 7A completion.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-mobile-eas-no-merged-pipeline",
+      "risk": "Mobile release pipeline has no merged path: EAS Android/iOS build workflows exist only in draft PRs (#566 cluster) with broken @v6 action pins (checkout/setup-node/pnpm-action-setup @v6 do not exist); no mobile artifact can be cut until they land and the pins are corrected.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Land gap-85-2-android-ci-fix + gap-85-2-ios-ci-fix together; downgrade pins to @v4, add eas-cli devDependency + missing Android npm scripts; verify green on a no-op push.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-security-test-gate-advisory-only",
+      "risk": "security-test-gate.yml may be advisory only (not a required status check): PR #497 shipped a security IDOR fix with zero tests despite the gate existing, suggesting it does not block merges.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Make the gate a required status check on dev branch protection; re-run against a synthetic test-less security PR to confirm it blocks.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-app-tsx-churn-concurrent-drafts",
+      "risk": "App.tsx router-file churn + 6 concurrent dispatcher drafts (#563-#568) risk repeated triple-conflict rebases, stalling the merge queue.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Serialize App.tsx-touching PRs via a merge queue / auto-rebase ordering so concurrent route-wiring drafts do not collide.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-update-schedule-cross-tenant-idor",
+      "risk": "update_schedule (report_schedule.rs) missing RBAC (#614) and missing tenant/org scope (#624): an authenticated user can mutate another tenant's report schedule and/or mutate schedules without the required capability. Same omission class as the prior ai.rs equipment IDOR cluster.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add RequireCapability extractor + thread principal tenant/org into the WHERE clause; cross-tenant regression test; block Epic 81 promotion until both close.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-cookie-path-breaking-565",
+      "risk": "Cookie Path breaking change (#617) from PR #565 session-cookie scope hardening: if mis-scoped it either silently logs users out or leaks the session cookie to unintended paths / breaks the SSO auth-callback read.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Verify cookie set/clear across / and the API prefix and the SSO callback flow before merging the change to dev; document the migration.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #642 (auth.rs + sso.rs cookie Path reconciliation + runbook, with inline tests) merged 2026-05-28 — confirms set/clear across path prefixes + SSO /auth/callback read; migration documented"
+    },
+    {
+      "id": "pm-security-audit-hash-debug-format-p1-04",
+      "risk": "P1-04 residual (PR #435): internal type internals may reach audit-trail log lines via Debug ({:?}) formatting.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Replace {:?} with Display/structured fields on internal types in audit records.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-oauth-10a-untested-security-contract",
+      "risk": "OAuth provider stories 10a-1/10a-2/10a-3 shipped with no introspection/refresh-rotation/PKCE security tests; a refactor could silently reintroduce revoked-token acceptance or replay.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add the OAuth security test suite (revoked-token, family-reuse, PKCE S256) before any further OAuth-provider change merges.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-fault-status-metric-divergence",
+      "risk": "FaultStatusCount / FaultByStatusTable surfaced by the new Support Data admin page (#635) defines a fault-by-status metric for support staff. The same fault counting also exists in owner_analytics.rs and portfolio_performance.rs. If the status buckets / counting window are re-derived per route rather than from one shared definition, support, owner, and portfolio dashboards will show divergent fault numbers — eroding trust in the analytics and complicating support triage.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Factor the fault-status bucket + window definition into one shared query/helper reused by the support-data, owner-analytics, and portfolio routes; add a test asserting the three surfaces return identical counts for a fixed fixture.",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-support-data-pii-no-usage-tracking",
+      "risk": "The Support Data page (#635) lets support/admin staff read cross-tenant user diagnostics (memberships, sessions with IP, activity log) gated only by the audit_read capability. There is no analytics/audit event recording WHO viewed a given tenant's support data or revoked sessions — so cross-tenant PII access by support staff is not independently traceable, a privacy/retention exposure as the UI makes this access routine.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Emit a support_data_viewed / support_sessions_revoked audit event (admin_user_id + target tenant/user) on each support-data read and session-revoke; bound retention on the session/activity diagnostics surfaced through the page.",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-sqlx-0-9-major-bump",
+      "risk": "sqlx 0.8→0.9 major bump (Dependabot PR #666) affects every workspace query; merging without a coordinated upgrade pass may break compile-time query! checks or the migrate API and block all backend CI.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Freeze PR #666 from auto-merge; backend owner audits the 0.9 changelog and runs cargo check --workspace on a branch before landing.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-airbnb-webhook-dup-jobs",
+      "risk": "Airbnb at-least-once webhook (webhook.rs:1028) enqueues duplicate SYNC_EXTERNAL jobs on event bursts — redundant sync load and possible reservation-state races.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Add an event_id dedup table (ON CONFLICT DO NOTHING) + already-queued-job check before CreateBackgroundJob; mirrors backlog item bug-webhook-airbnb-dup-sync-jobs.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-push-fanout-silent-drop",
+      "risk": "Redis push-fanout queue (push_fanout.rs:621) is never drained (BLPOP deferred) — jobs enqueued to push_fanout_queue are silently dropped while Epic 8A notification stories are marked done.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Implement the BLPOP drain before any production traffic relies on the fanout path; add a queue-depth monitor.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-esignature-webhook-no-idempotency",
+      "risk": "e-signature webhook status writes have no idempotency guard; a provider re-delivering a completed/voided event can overwrite a terminal state.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Skip the workflow update when current_status is terminal; coordinate with PR #719 (gap-84-2 signerParties) on the same surface.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-725-ai-idor-stalled",
+      "risk": "PR #725 (ai-maintenance IDOR fix) sits at verdict=changes (B1-session-IDOR, B2-sentiment-IDOR, B3-missing-test); the maintenance/chat-session/sentiment IDOR vector stays live until merged.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "pm-security addresses the three change requests within a day; reviewer re-approves and merges before next run.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-sprint-status-stale",
+      "risk": "sprint-status.yaml is materially stale (10b-3/10b-4/10b-6 still ready-for-dev despite done evidence); risks duplicated work or mis-reporting progress.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Write the sprint-status update as a tracked action (pm-scrum-master-sync-sprint-status-10b); confirm sync next run.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-mobile-coverage-lag",
+      "risk": "10 of 22 remaining partial/not-started stories are mobile (7a-2/7a-4, 8a-3 push, epic-82 SwiftUI); unreviewed gap-82 drafts let the mobile slice fall further behind.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Force gap-82 drafts (#639/#641/#705) to non-draft review this window; assign pm-frontend as explicit mobile-lag owner.",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-followup-issue-flood-2026-06-14",
+      "risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix; bind to action pm-qa-triage-followup-issues-2026-06-14.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-record-payment-double-write",
+      "risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test.",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-cron-validator-drift-regression",
+      "risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-dispatcher-stale-gap-scan",
+      "risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-booking-oauth-no-secure-replacement",
+      "risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-dev-ci-discipline-1437",
+      "risk": "PR #1426 merged despite breaking `dev` backend compile (issue #1437) - ALL backend CI gates now broken on `dev` until #1435/#1436 lands. Indicates the PR-merge gate didn't run (or was bypassed) and there is no `dev`-push smoke gate to catch it after the fact. Second dev-red incident in two weeks (cf. #1332 unblocked 2026-06-14 via #1379).",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Land #1435 or #1436 immediately to restore green. Add `cargo check --workspace --tests` as a fail-fast `dev`-push smoke (backend.yml run on push, not just PR). Audit PR #1426 merge log to determine whether backend.yml was required-check + green at merge.",
+      "owner_role": "pm-devops",
+      "trigger": "Any `dev`-targeting merge that lacked a backend.yml green status check",
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-mobile-eas-pipeline-unverified",
+      "risk": "`eas-build-android.yml` and `eas-build-ios.yml` now exist in `.github/workflows/` (cleared since 2026-05-27 from draft PRs), but green status on `dev` is unverified. If action pins / eas-cli installation / EXPO_TOKEN secret are still broken from the original gap-85-2 fix, mobile has no working release path.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Trigger a no-op push or workflow_dispatch run; confirm both Android and iOS jobs reach the build step. Audit required secrets (EXPO_TOKEN, EXPO_PROJECT_ID, Android keystore, iOS provisioning).",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-security-test-gate-still-advisory",
+      "risk": "`security-test-gate.yml` workflow file is present but enforcement-vs-advisory on `dev` branch protection remains unconfirmed since 2026-05-27. If still advisory, security-labelled PRs can merge with no test file (cf. PR #497 incident).",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Verify required-status-check listing via `gh api repos/.../branches/dev/protection`. Promote to required check if currently advisory.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-pre-push-gate-local-only",
+      "risk": "Pre-push fmt/clippy gate (#1431) merged but is local hook only - does not enforce on CI side and does not run cargo check. Cannot prevent a contributor with hooks disabled from re-landing a #1426-class compile break.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Mirror the gate as a fast CI status check (`cargo fmt --check && cargo clippy -q && cargo check`) gated on `dev`-push so local-disabled hooks still get caught.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "risk-security-sso-oauth-callback-csrf-audit",
+      "title": "PR #1987 fixed SSO callback CSRF state-bypass on reality-web — audit remaining OAuth/SSO callbacks for the same pattern",
+      "vector": "security",
+      "severity": "high",
+      "status": "open",
+      "owner": "pm-security",
+      "owner_role": "pm-security",
+      "risk": "PR #1987 (fix(reality-web): close SSO callback CSRF state-bypass) revealed a live state-parameter validation gap on the reality-web SSO callback. Other OAuth/SSO consumer callback paths (Airbnb, Booking.com, Google, admin SSO) share the same handler shape and may have the same defect. Compromise vector: attacker forces victim's browser to land on callback with attacker-controlled `state` and bypass CSRF/session-binding.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Systematic sweep of every OAuth/SSO callback handler: assert state cookie present, HMAC or session-bound, single-use, and matches URL param; add regression tests for each callback; document a shared state-verify helper.",
+      "trigger": null,
+      "source": "PR #1987 (2026-07-02)",
+      "evidence": [
+        "PR #1987 fix(reality-web): close SSO callback CSRF state-bypass",
+        "OAuth callbacks: reality-web SSO, Airbnb (#1388 tokens), Booking.com (#1362/#1374), admin SSO"
+      ],
+      "created_at": "2026-07-02",
+      "updated_at": "2026-07-02"
+    },
+    {
+      "id": "risk-security-manager-gate-pii-read-path-audit",
+      "title": "Two manager-gate/PII read-path fixes landed together (#1973 rentals, #1976 regional-compliance) — audit remaining PII reads",
+      "vector": "security",
+      "severity": "medium",
+      "status": "open",
+      "owner": "pm-security",
+      "owner_role": "pm-security",
+      "risk": "#1973 fix(rentals): manager-gate guest/booking PII read paths and #1976 fix(regional-compliance): live quorum lookup + manager-gate writes + export scoping landed in the same window. The pattern — GET/list endpoints returning PII without capability/manager-gate — was clearly systemic (two independent domains). Neighboring domains (documents, faults, financial, tenant screening, ai/equipment) need a lightweight sweep for the same shape: RequestPrincipal accepted but tenant/manager check dropped on read paths.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Static sweep of route handlers accepting `_principal: RequestPrincipal` (underscore-prefix indicates unused) on GET/list endpoints returning PII columns. Cross-reference with `docs/endpoint-checklist` capability list. Add negative-authz tests where missing.",
+      "trigger": null,
+      "source": "PR #1973, #1976 (2026-07-02)",
+      "evidence": [
+        "PR #1973 fix(rentals): manager-gate guest/booking PII read paths",
+        "PR #1976 fix(regional-compliance): live quorum lookup + manager-gate writes + export scoping (#1906)",
+        "Prior: pm-backend-ai-equipment-cross-tenant-idor (same shape: `_principal` discarded)"
+      ],
+      "created_at": "2026-07-02",
+      "updated_at": "2026-07-02"
+    },
+    {
+      "id": "risk-security-jwt-service-access-gate-no-test",
+      "title": "PR #1967 pinned JwtService access gate + restored token_type/raw_kind logs — merged with no test file in diff (hotfix-no-test)",
+      "vector": "security",
+      "severity": "medium",
+      "status": "open",
+      "owner": "pm-security",
+      "owner_role": "pm-security",
+      "risk": "Observation signal `hotfix-no-test-pr-1967`: PR #1967 fix(api-core): restore token_type/raw_kind logs + pin JwtService access gate — a security-sensitive hardening of the JWT access gate — shipped with no test file in the diff. A silent regression (e.g., accidental relaxation of the token_type check, allowing a refresh token to be accepted where only an access token should be) would go undetected. Companion risk to open pm-qa-jwt-token-in-ws-logs-open (#480).",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add unit test in api-core covering: (1) wrong token_type rejected, (2) missing raw_kind rejected, (3) accepted only for token_type=access + raw_kind=jwt. Tie the test to security-test-gate.yml so any relaxation trips the required check.",
+      "trigger": null,
+      "source": "PR #1967 (2026-07-02)",
+      "evidence": [
+        "PR #1967 fix(api-core): restore token_type/raw_kind logs + pin JwtService access gate",
+        "observation.signals: hotfix-no-test-pr-1967 (no test file in diff)"
+      ],
+      "created_at": "2026-07-02",
+      "updated_at": "2026-07-02"
+    }
+  ]
+}

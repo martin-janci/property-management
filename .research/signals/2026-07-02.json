@@ -1,0 +1,1421 @@
+{
+  "signals": [
+    {
+      "id": "unchecked-todo-pr-1723",
+      "type": "unchecked-todo",
+      "source": "pr-1723",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1723 fix(financial): rustfmt compliance for financial reports routes",
+        "body contains `- [ ]` unchecked"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1484",
+      "type": "unchecked-todo",
+      "source": "pr-1484",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1484 chore(db): fix tracker-id in registry_rules_enum_decode_tests (BIT-114, GH #1366",
+        "body contains `- [ ]` unchecked"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "pr-1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 title starts with Revert",
+        "revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-21",
+        "reverted PR #1690"
+      ],
+      "confidence": "high",
+      "candidate_vector": "quality"
+    },
+    {
+      "id": "hotfix-no-test-pr-1966",
+      "type": "hotfix-no-test",
+      "source": "pr-1966",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1966 fix(api-server): enforce length floors in preflight env check",
+        "no test file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1967",
+      "type": "hotfix-no-test",
+      "source": "pr-1967",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1967 fix(api-core): restore token_type/raw_kind logs + pin JwtService access gate",
+        "no test file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1972",
+      "type": "hotfix-no-test",
+      "source": "pr-1972",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1972 fix(db): correct delegation scopes enum-array SQL casts (BIT-407)",
+        "no test file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1989",
+      "type": "hotfix-no-test",
+      "source": "pr-1989",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1989 fix(accounting): symmetric 404 in confirm_match + drop ToSchema on secret model",
+        "no test file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1994",
+      "type": "hotfix-no-test",
+      "source": "pr-1994",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1994 fix(migration): SQL-side template pagination + honest import/export checklist (#",
+        "no test file in diff"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1987-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1987",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1987 touched reality routes without docs/screens/reality/",
+        "fix(reality-web): close SSO callback CSRF state-bypass"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-disputes_happy_path_tests-rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/api-server/tests/disputes_happy_path_tests.rs",
+      "score_delta": 1,
+      "evidence": [
+        "572 lines changed across recent PRs",
+        "top-3 hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-admin_platform_happy_path_batch2_tests-rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/api-server/tests/admin_platform_happy_path_batch2_tests.rs",
+      "score_delta": 1,
+      "evidence": [
+        "441 lines changed across recent PRs",
+        "top-3 hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-1982",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1982",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1982 closed without merge",
+        "test(api-server): un-quarantine 5 finance happy-path suites + docs (BIT-417 bucket A)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1958",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1958",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1958 closed without merge",
+        "test(BIT-360): bulk re-enable 718 BIT-351-quarantined tests (146 files)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1956",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1956",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1956 closed without merge",
+        "test(BIT-358): documents-forms happy-path backfill (Wave 7)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1954",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1954",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1954 closed without merge",
+        "test(api-server): compliance/AML/EDD/DSA/moderation Wave 1B happy-path backfill (BIT-332)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1952",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1952",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1952 closed without merge",
+        "test(api-server): forms happy-path 2xx backfill — 18 endpoints (BIT-358)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1947",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1947",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1947 closed without merge",
+        "fix(api-server): fix doc_lazy_continuation in org_property_authz_backfill (BIT-345)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1943",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1943",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1943 closed without merge",
+        "fix(test): allow(dead_code) on unused seed_verification (unblock backend test gate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1942",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1942",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1942 closed without merge",
+        "style(api-server): drop needless &amp;json! borrows in faults/voting behaviour tests (BIT-347)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1941",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1941",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1941 closed without merge",
+        "fix(ci): close push-event test-gate bypass + enumerate broken test files (BIT-346)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1940",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1940",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1940 closed without merge",
+        "fix(api-server): unbreak dev test gate — compile + -Dwarnings clean (BIT-345)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1939",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1939",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1939 closed without merge",
+        "fix(api-server): resolve E0515 in ai_automation_batch3_tests — unbreak dev compile-smoke (BIT-345)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1938",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1938",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1938 closed without merge",
+        "test(BIT-344): reality-server happy-path 2xx backfill (Wave 6)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1935",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1935",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1935 closed without merge",
+        "ci(BIT-342): verify backend fmt gate green on current dev"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1933",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1933",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1933 closed without merge",
+        "fix(test): repair analytics_owner_success_tests harness API (unbreak dev backend gate)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1929",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1929",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1929 closed without merge",
+        "test(BIT-268): re-cut reality-server partial endpoint backfill batch 3"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1927",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1927",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1927 closed without merge",
+        "fix(ci): pin dtolnay/rust-toolchain back to 1.94.1 (revert #1837)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1924",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1924",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1924 closed without merge",
+        "test(BIT-330): re-cut financial/budgets/accounting happy-path tests"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1922",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1922",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1922 closed without merge",
+        "test(BIT-336): re-cut authz backfill coverage — 124 endpoints + infra/ops + org-property"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1919",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1919",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1919 closed without merge",
+        "bug-risky-churn-pr-963-api-main-rs: wire security-headers into create_router + smoke tests"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1910",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1910",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1910 closed without merge",
+        "84-4-notification-triggers: dedicated trigger-mapping test coverage"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1903",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1903",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1903 closed without merge",
+        "test(BIT-268): ai-automation partial endpoint backfill batch 5"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1902",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1902",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1902 closed without merge",
+        "fix(test): deterministic backend `test` — runtime sqlx queries in ocr_meter_reading_tests (BIT-322)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1901",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1901",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1901 closed without merge",
+        "fix(api-server): deterministic ocr_meter_reading_tests build — runtime queries (BIT-321)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1900",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1900",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1900 closed without merge",
+        "fix(ci): apply migrations in backend test job so sqlx query! macros compile (BIT-323)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1899",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1899",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1899 closed without merge",
+        "fix(api-server): replace sqlx::query!() macros with runtime queries in OCR tests"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1897",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1897",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1897 closed without merge",
+        "fix(backend): scoped-ignore RUSTSEC-2026-0187 (lopdf) so cargo-deny is green on dev [BIT-319]"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1894",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1894",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1894 closed without merge",
+        "test(BIT-268): notifications partial endpoint backfill batch 1"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1893",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1893",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1893 closed without merge",
+        "test(BIT-268): ai partial endpoint backfill batch 1"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1891",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1891",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1891 closed without merge",
+        "test(BIT-268): reality partial endpoint backfill batch 1"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1889",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1889",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1889 closed without merge",
+        "test(BIT-268): documents partial endpoint backfill batches 3-5"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1888",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1888",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1888 closed without merge",
+        "test(BIT-268): integrations partial endpoint backfill batch 4"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1887",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1887",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1887 closed without merge",
+        "test(BIT-268): reality-server partial endpoint backfill batch 3"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1886",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1886",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1886 closed without merge",
+        "test(BIT-268): integrations partial endpoint backfill batch 3"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1883",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1883",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1883 closed without merge",
+        "test(BIT-268): integrations partial endpoint backfill batch 2"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1882",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1882",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1882 closed without merge",
+        "test(BIT-303): notifications granular endpoint happy-path backfill batch 2"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1878",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1878",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1878 closed without merge",
+        "test(BIT-268): auth partial endpoint backfill batch 1+2"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1876",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1876",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1876 closed without merge",
+        "test(BIT-268): analytics partial endpoint backfill batch 1"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1875",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1875",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1875 closed without merge",
+        "test(BIT-268): reality-server partial endpoint backfill batch 1"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1872",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1872",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1872 closed without merge",
+        "test(BIT-277): Wave 2b/2c authz backfill — infra/ops + org-property partials (~100 endpoints → done)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1871",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1871",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1871 closed without merge",
+        "test(BIT-282): Wave 1A financial happy-path test backfill (remaining groups)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1869",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1869",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1869 closed without merge",
+        "test(BIT-274): wave-2 batch-2 authz — 124 endpoints partial→done"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1868",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1868",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1868 closed without merge",
+        "test(api-server): BIT-271 Wave 1A financial happy-path tests (30 endpoints)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1867",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1867",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1867 closed without merge",
+        "test(BIT-270): Wave 1A batch 1 — financial, budgets, accounting/invoices happy-path tests (43 endpoi"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1865",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1865",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1865 closed without merge",
+        "test(BIT-264): Wave 1B — compliance/AML/EDD/DSA/moderation test-backfill (26 endpoints)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1858",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1858",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1858 closed without merge",
+        "chore(api-server): remove 59 unmounted ROADMAP routers + orphaned public_api db model (BIT-257)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1857",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1857",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1857 closed without merge",
+        "security-llm-doc-idor: regression tests for LLM-doc publish + photo-enhancement cross-tenant IDOR"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1855",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1855",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1855 closed without merge",
+        "docs(endpoint-checklist): BIT-247 backend endpoint audit — 12.9% DONE (test-verified)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1846",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1846",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1846 closed without merge",
+        "80-3-mediation-resolution: wire dispute party submissions endpoints"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1840",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1840",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1840 closed without merge",
+        "chore(deps): bump actions/checkout from 6 to 7"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1824",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1824",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1824 closed without merge",
+        "fix(api-server): Stripe Checkout hardening — multi-currency + idempotency-key + webhook amount cross"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1823",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1823",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1823 closed without merge",
+        "fix(rentals): guest ID-document PII hardening — audit, content sniff, manager gate (#1760)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1814",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1814",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1814 closed without merge",
+        "churn-hotspot-backend-crates-db-src-repositories-form-rs: split form repository into cohesive sub-mo"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1804",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1804",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1804 closed without merge",
+        "fix(scheduler): persistent payment-reminder dedup (stop re-firing every tick, #1790)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1803",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1803",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1803 closed without merge",
+        "feat(PAP-305): add @ppt/accounting-api-client package"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1802",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1802",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1802 closed without merge",
+        "fix(messaging): N-party delivery/block/unhide for all recipients + unread honors soft-delete/archive"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1799",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1799",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1799 closed without merge",
+        "fix(messaging): bind attachment file_key to its thread + validate MIME (IDOR, #1791 #1770)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1795",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1795",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1795 closed without merge",
+        "fix(portal-listings): no FE status downgrade + DB-level enum CHECK defense-in-depth (#1762, #1784)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1749",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1749",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1749 closed without merge",
+        "fix(mobile): exclude app.config.icon.test.ts from tsc typecheck (unblock dev frontend CI)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1727",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1727",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1727 closed without merge",
+        "fix(ci): unblock backend gate — organizations fmt + notification_event RLS baseline"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1720",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1720",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1720 closed without merge",
+        "fix(ppt-web): add Leases nav link + home tile (#977)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1698",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1698",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1698 closed without merge",
+        "feat(epic-3): story 3.2 - unit management UI (BIT-188)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1647",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1647 closed without merge",
+        "feat(iot): sensor register + edit + standalone list [BIT-147]"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1636",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1636 closed without merge",
+        "fix(reality-server): reconcile portal import authz + dedup principal extractor (#1584 findings 1,4)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1634",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1634",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1634 closed without merge",
+        "[PM #1627] saved-search alerts list: signal truncation past LIMIT 100"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1511",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1511 closed without merge",
+        "fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting routes)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1506",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1506 closed without merge",
+        "fix(api-server): pass role to seed_membership in booking-oauth non-manager test (unblocks backend ch"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1505",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1505 closed without merge",
+        "fix(db): cast rental enum columns to text across rental.rs queries (PAP-158)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1504",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1504",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1504 closed without merge",
+        "fix(db): resolve duplicate migration 00181 — rename force_developer_oauth_rls to 00182"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1503",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1503",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1503 closed without merge",
+        "fix(tests): add missing role arg to seed_membership in booking_oauth_routes_tests"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1500",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1500",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1500 closed without merge",
+        "fix(api-server): org-scope IDOR gate on dispute/violation add_evidence and add_comment (BIT-73)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1498",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1498",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1498 closed without merge",
+        "fix(db): cast form_submissions.status enum to text in form queries (fixes form_repo_force_rls_deny_a"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1497",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1497",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1497 closed without merge",
+        "test(db): fail-on-main test for registry INSERT-branch NULL-boolean defaults (closes #1406)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1496",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1496",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1496 closed without merge",
+        "test(db): grant SELECT on units/buildings to form RLS test role (fixes form_repo_force_rls_deny_all_"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1494",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1494",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1494 closed without merge",
+        "fix(db): cast remaining rental enum readers — RentalGuest.status, CalendarBlock.source_platform, ICa"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1493",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1493",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1493 closed without merge",
+        "fix(db): repair dev backend test failures from schema drift + remove broken duplicate reserve API"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1488",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1488",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1488 closed without merge",
+        "style(db): rustfmt budget export line-wrap after #1481 reserve-fund removal"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1482",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1482",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1482 closed without merge",
+        "chore(scripts): stale RLS baseline entries fail --strict (BIT-111, GH #1340)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1479",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1479",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1479 closed without merge",
+        "test(api-server): dedupe inline seed_membership onto common::seed_membership (GH #1341)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1475",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1475",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1475 closed without merge",
+        "fix(db): decode nullable rental_bookings financial columns as Option (GH #1422)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1474",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1474",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1474 closed without merge",
+        "fix(api-server): BIT-98 — encrypt Booking.com basic-auth credentials at rest"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1462",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1462",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1462 closed without merge",
+        "fix(api-server): idempotent mark_invitation_viewed (GH #1301)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1461",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1461",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1461 closed without merge",
+        "fix(db): scope nil-unit_id Airbnb/Booking upserts to per-org conflict target (BIT-79, #1405)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1459",
+      "type": "closed-not-merged-pr",
+      "source": "pr-1459",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1459 closed without merge",
+        "fix(api-server): mfa.rs RLS correction — RlsConnection in verify_recovery_code, unified tx in disabl"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/db/src/repositories/form.rs",
+      "score_delta": 0,
+      "evidence": [
+        "1106 lines changed across 1 PRs (already seen)",
+        "cumulative re-emit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-1842",
+      "type": "dep-update-noise",
+      "source": "pr-1842",
+      "score_delta": 0,
+      "evidence": [
+        "PR #1842 chore(deps): bump rust_xlsxwriter from 0.80.0 to 0.95.0 in /backend",
+        "author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1841",
+      "type": "dep-update-noise",
+      "source": "pr-1841",
+      "score_delta": 0,
+      "evidence": [
+        "PR #1841 chore(deps): bump the cargo-minor-patch group in /backend with 3 updates",
+        "author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1839",
+      "type": "dep-update-noise",
+      "source": "pr-1839",
+      "score_delta": 0,
+      "evidence": [
+        "PR #1839 chore(deps): bump dorny/paths-filter from 3 to 4",
+        "author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1838",
+      "type": "dep-update-noise",
+      "source": "pr-1838",
+      "score_delta": 0,
+      "evidence": [
+        "PR #1838 chore(deps): bump actions/cache from 5 to 6",
+        "author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1837",
+      "type": "dep-update-noise",
+      "source": "pr-1837",
+      "score_delta": 0,
+      "evidence": [
+        "PR #1837 chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-m",
+        "author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": "noise"
+    },
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16 (16d lag)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "ops"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-lib-unconfigured",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core-2026-07-02",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:281 — default export runs getApiClient() at module-load with no tokenGetter/onUnauthorized set",
+        "frontend/apps/ppt-web/src/lib/api.ts:258 — configureApiClient() is exported but never called anywhere in ppt-web src outside tests (grep for `configureApiClient(` returns only api.ts + api.test.tsx)",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:5,33,50,63,76 — getApiClient() consumer; comment on line 8-11 claims interceptors inject Bearer token, but tokenGetter is undefined so Authorization header is never attached and 401s never trigger a refresh",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:7 — same broken client for the AI sentiment endpoints; both feature slices ship unauthenticated requests to authenticated /api/v1/ai/* routes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core-2026-07-02",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142 — window.addEventListener('load', collectNavigationTiming) with no matching removeEventListener in the useEffect cleanup at line 160-164",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:153-158 — window.addEventListener('visibilitychange', …) added inside the effect but never removed; effect deps [onReport, reportOnUnload] re-run on every parent render when onReport is inline, so each render leaks a new visibilitychange listener that closes over stale metricsRef/onReport",
+        "consequence: repeated reports on hidden→visible transitions (one per accumulated listener) and unbounded listener growth for long-lived sessions"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-expiry-check",
+      "type": "code-review-finding",
+      "source": "code-review-ppt-web-core-2026-07-02",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396-399 — initializeAuth admits any stored access token without checking expiry (comment even says 'Validate the token is not expired (basic check)' but no check follows)",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:400-414 — refresh path only fires when accessToken is falsy; expired-but-present token skips refresh and lands the app in an 'authenticated' state whose next API call will 401",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389 — useEffect has empty deps but no biome-ignore comment; setUser/setIsLoading may fire after unmount if the initial refresh promise is still in flight"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlist signal at confidence=high+score>=3 this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-02.md && head -1 == # 2026-07-02",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal reemits with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score>8)] empty",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated <=2026-06-18 either lost 1+ point or dropped",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief lists adversarial pass: annotation for each new plan",
+      "observed": "OK: code-review-ppt-web-core-api-lib-unconfigured.md",
+      "expected": "one line per new plan"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present in each new plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 required headings present in each new plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": ">=1 capability box ticked",
+      "observed": "2 ticks",
+      "expected": ">=1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: local-only or cloud-ok declared",
+      "observed": "Mode: cloud-ok",
+      "expected": "one of"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "every ## Files bullet resolves on disk",
+      "observed": "5/5 OK",
+      "expected": "all OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secret patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed line",
+      "observed": "none",
+      "expected": "consistent with cursor advance"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "each prior plan still present in active or archive",
+      "observed": "no MISSING",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count staged >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap+idempotency",
+      "observed": "empty (no candidate)",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management files valid + pm_cursor range + GC7 coverage advance",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

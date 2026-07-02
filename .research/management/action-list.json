@@ -856,6 +856,39 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "pm-security-audit-oauth-sso-callbacks-csrf",
+      "action": "Audit all OAuth/SSO callback handlers for the CSRF state-parameter validation defect fixed in reality-web via PR #1987 (Airbnb, Booking.com, admin SSO, any Google/OIDC path)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-security 2026-07-02 (PR #1987 SSO CSRF state-bypass)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "pm-security-audit-manager-gate-pii-read-paths",
+      "action": "Sweep read-path handlers accepting `_principal: RequestPrincipal` (underscore-discarded) on PII endpoints — cascading from #1973 (rentals) and #1976 (regional-compliance) manager-gate fixes",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-security 2026-07-02 (PR #1973, #1976 pattern)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "pm-security-jwt-access-gate-regression-test",
+      "action": "Backfill api-core regression tests for the JwtService access gate pinning from PR #1967 — must trip on token_type/raw_kind relaxation (hotfix-no-test signal)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-security 2026-07-02 (PR #1967 hotfix-no-test)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }
