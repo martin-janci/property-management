@@ -1251,6 +1251,20 @@
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
+    },
+    {
+      "id": "dispatcher-buffer-low-2026-07-02",
+      "type": "dispatcher-buffer-low",
+      "source": "routine-fire-payload 2026-07-02",
+      "score_delta": 0,
+      "evidence": [
+        "trigger payload: buffer-low: claimable=0/72 — coverage backlog fully drained (all partial stories done/in-flight/terminal); please run a fresh coverage scan + refill planner",
+        "verified precondition: action-list.json had 57 items (12 open, 4 in-progress, 27 done, 14 dropped) at same-day re-fire — 41 terminal rows accreted since the daily commit, consistent with fp-dispatcher-buffer-blindness [recurrence=3+1]",
+        "reconcile action taken this fire: bash action-list-reconcile.sh --apply → moved 41 terminal items to archive (active 57→16, archive 168→209, combined 225 unchanged); action-list.md regenerated",
+        "fresh coverage scan requested but NOT run: `scan` mode is LOCAL-ONLY per routine-prompt.md line 596 (spawns many subagents + broad greps; forbidden in cloud). Refill from the fresh scan requires local /ppt-project-management scan invocation."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
     }
   ],
   "auto_fix_actions": [],
