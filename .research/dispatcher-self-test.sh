@@ -697,6 +697,66 @@ else
 fi
 echo
 
+# --- T29: anti-starvation wiring (aging + backlog self-refill; 2026-07-02) --
+# Two starvation fixes must stay encoded and well-formed:
+#   (a) every action-list item's first_open_at is iso-8601 or null/absent
+#       (the Phase 3 aging term reads it; a malformed value would mis-age);
+#   (b) the prompt encodes the aging boost AND the Tier-1b backlog self-refill,
+#       and the backlog-refill.sh helper exists and is executable.
+echo "T29 anti-starvation wiring: first_open_at well-formed + aging/backlog-refill encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD29=$(jq -r '
+    [ .items[]
+      | select(has("first_open_at") and .first_open_at != null
+               and ((.first_open_at | type) != "string"
+                    or (.first_open_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$") | not))) ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD29" = "0" ]; then note "all first_open_at values are iso-8601 or null"
+  else
+    fail "$BAD29 action-list item(s) with malformed first_open_at"
+    jq -r '.items[] | select(has("first_open_at") and .first_open_at != null and ((.first_open_at|type)!="string" or (.first_open_at|test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$")|not))) | "    \(.id) first_open_at=\(.first_open_at)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+PROMPT="${PROMPT:-.research/dispatcher-prompt.md}"
+if [ -f "$PROMPT" ]; then
+  grep -q 'Anti-starvation aging' "$PROMPT"     && note "prompt encodes Phase 3 aging" || fail "prompt missing Phase 3 aging block"
+  grep -q 'backlog-refill.sh' "$PROMPT"          && note "prompt wires Tier-1b backlog-refill" || fail "prompt missing Tier-1b backlog-refill wiring"
+fi
+REFILL="${REFILL:-.research/backlog-refill.sh}"
+if [ -x "$REFILL" ]; then note "backlog-refill.sh present + executable"
+else fail "backlog-refill.sh missing or not executable ($REFILL)"; fi
+echo
+
+# --- T30: open-issue ingestion wiring (2026-07-02 — get things done) --------
+# gh-issue-<N> rows must carry issue_ref.number (drives the post-merge MCP
+# close); the prompt must encode the ingest + explicit-close loop; the helper
+# must exist + be executable.
+echo "T30 issue-ingest wiring: gh-issue-<N> rows carry issue_ref + ingest/close encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD30=$(jq -r '
+    [ .items[]
+      | select(.id | type=="string" and startswith("gh-issue-"))
+      | select((.issue_ref // {} | .number | type) != "number") ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD30" = "0" ]; then note "all gh-issue-<N> rows carry issue_ref.number"
+  else
+    fail "$BAD30 gh-issue-<N> row(s) missing issue_ref.number"
+    jq -r '.items[] | select(.id|type=="string" and startswith("gh-issue-")) | select((.issue_ref//{}|.number|type)!="number") | "    \(.id)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'issue-ingest.sh' "$PROMPT"        && note "prompt wires open-issue ingestion" || fail "prompt missing issue-ingest wiring"
+  grep -q 'mcp__github__update_issue' "$PROMPT" && note "prompt encodes explicit issue-close loop" || fail "prompt missing post-merge issue-close loop"
+fi
+INGEST="${INGEST:-.research/issue-ingest.sh}"
+if [ -x "$INGEST" ]; then note "issue-ingest.sh present + executable"
+else fail "issue-ingest.sh missing or not executable ($INGEST)"; fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
