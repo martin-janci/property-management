@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           components: rustfmt, clippy
 
@@ -161,7 +161,7 @@ jobs:
 
       - name: Install Rust
         if: needs.changes.outputs.backend == 'true'
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         if: needs.changes.outputs.backend == 'true'
@@ -300,7 +300,7 @@ jobs:
 
       - name: Install Rust
         if: needs.changes.outputs.backend == 'true'
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         if: needs.changes.outputs.backend == 'true'
@@ -400,7 +400,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -458,7 +458,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -555,7 +555,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -675,7 +675,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
