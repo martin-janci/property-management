@@ -856,6 +856,63 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "security-country-code-rename-all",
+      "action": "CountryCode enum serializes SK as S_K on the wire (issue #2000, HIGH). Rename variants (rename_all = UPPERCASE or explicit #[serde(rename=\"SK\")]) so external contract shows SK. Add OpenAPI golden-file regression at the schemas boundary.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "phase-1.6-pm-security 2026-07-02 (catch-up synthesis; issue #2000)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "created_at": "2026-07-02T00:00:00Z",
+      "updated_at": "2026-07-02T00:00:00Z",
+      "evidence": "issue #2000 open, HIGH severity; multi-currency test suite recently un-quarantined but the SK country_code axis at the Serialize boundary is uncovered"
+    },
+    {
+      "id": "security-favorite-alert-transaction",
+      "action": "Favorite-alert enqueue advances cursor before enqueue commit is durable (issue #1999) — alerts silently dropped under load. Wrap enqueue + cursor advance in one tx, or use SELECT ... FOR UPDATE SKIP LOCKED with commit-then-advance. Add contention load test.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "phase-1.6-pm-security 2026-07-02 (catch-up synthesis; issue #1999)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "created_at": "2026-07-02T00:00:00Z",
+      "updated_at": "2026-07-02T00:00:00Z",
+      "evidence": "issue #1999 open; data-loss on user-visible favorite-alerts surface"
+    },
+    {
+      "id": "devops-1771-test-ungate-ci",
+      "action": "Test file introduced for #1771 never runs in CI (issue #1998). Audit test-runner path/feature-gate config; confirm test is discovered; add expected-test-count CI tripwire so future exclusions surface immediately.",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "status": "open",
+      "source": "phase-1.6-pm-security 2026-07-02 (catch-up synthesis; issue #1998)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "created_at": "2026-07-02T00:00:00Z",
+      "updated_at": "2026-07-02T00:00:00Z",
+      "evidence": "issue #1998 open; silent-regression risk on the surface #1771 originally patched"
+    },
+    {
+      "id": "scrum-triage-follow-ups-2028-2030",
+      "action": "Triage new post-merge follow-up issues #2028 (u.name schema drift → 500 in list_bookings), #2029 (fault-triage tests do not hit real handler — coverage debt on the #1974 flow), #2030 (Slovak accounting export renders misleading 0). Assign owner or defer with note.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "status": "open",
+      "source": "phase-1.6-pm-security 2026-07-02 (catch-up synthesis)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "created_at": "2026-07-02T00:00:00Z",
+      "updated_at": "2026-07-02T00:00:00Z",
+      "evidence": "GitHub follow-up issues #2028, #2029, #2030 all newly opened from merged-PR review"
     }
-  ]
+  ],
+  "generated": "2026-07-02T00:00:00Z"
 }

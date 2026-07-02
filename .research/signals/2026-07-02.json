@@ -1,0 +1,214 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine has not run since 2026-06-16T03:25:00Z; lag = ~16 days (394h). Cloud cron scheduler was paused; ~406 PRs updated in the window (41 landed on dev).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-relative-url",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:32-36 — buildWsUrl reads window.__API_BASE_URL__ which is never set anywhere in the app (only read in api-client packages); httpBase falls back to '' so the wss/ws replace is a no-op and new WebSocket('/api/v1/iot/sensors/ws?...') is called with a schemeless relative URL, which the WebSocket constructor rejects with SyntaxError — live sensor stream is broken in production and the throw inside useEffect is unhandled",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "severity": "High"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-leak",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142,153 — window.addEventListener('load', collectNavigationTiming) and window.addEventListener('visibilitychange', anonymous) are registered inside useEffect but the cleanup only calls observer.disconnect(); listeners are never removed on unmount, leaking handlers (and the visibilitychange one is an anonymous fn so cannot be removed at all) — accumulates on every mount/route change",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "Medium"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-unchecked-cast",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review:ppt-web-core",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API response to a locally-declared SessionRow shape with no runtime validation, defeating TS type checking across the auth API boundary; any drift in listSessions() response shape (e.g. isCurrent renamed) will silently produce undefined fields at render time instead of a type error",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "severity": "Low"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git-log:origin/dev 2026-06-16..2026-07-02",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/messaging.rs — 3 touches in window (PRs #1977 N-party read watermark, #1993 unread soft-delete/set-based block, others)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-messaging.rs",
+      "type": "churn-hotspot",
+      "source": "git-log:origin/dev 2026-06-16..2026-07-02",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/messaging.rs — 3 touches in window (same N-party feature area)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-multi-currency-happy-path-tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log:origin/dev 2026-06-16..2026-07-02",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/multi_currency_happy_path_tests.rs — 3 rewrites (BIT-479 un-quarantine surfaced CountryCode S_K bug #2000)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal double-count with cumulative allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap and >=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass per new plan",
+      "observed": "vacuous — 0 new plans",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<= 2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans preserved",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "no actions",
+      "expected": "<=1 pr,<=1 issue,<=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "pm_cursor=6, coverage_cursor=0/13",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal matched allowlist (screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift, stalled-review) at confidence=high + score>=3",
+  "notes": {
+    "run_kind": "catch-up",
+    "lag_hours": 394,
+    "lag_days": 16,
+    "prs_in_window_all_updates": 406,
+    "prs_landed_on_dev": 41,
+    "compressed_run": true,
+    "resolution_check_skipped": "compressed catch-up run — resolution check would require per-item file grep; deferred to next run",
+    "closed_not_merged_prs": [
+      1795,
+      1799,
+      1802,
+      1804,
+      1814,
+      1823,
+      1956,
+      1958,
+      1982
+    ],
+    "closed_not_merged_note": "9 closed-unmerged PRs, mostly superseded by #1955 integration branch; no signals emitted"
+  }
+}
