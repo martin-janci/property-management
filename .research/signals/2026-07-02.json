@@ -1,0 +1,186 @@
+{
+  "date": "2026-07-02",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-02",
+      "type": "lag_warning",
+      "source": "routine 2026-07-02T03:10:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-06-16T03:25:00Z; lag=15d 383h \u2014 routine missed daily runs since 2026-06-16",
+        "stale_routine_alert: cloud cron may be paused. Dispatcher (separate loop) still ticking on planning branch."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since=2026-06-16 on origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "raw churn (additions+deletions) this run: 2933 lines",
+        "re-emit of previously-seen id; score_delta suppressed (cumulative-type carve-out)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since=2026-06-16 on origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "raw churn (additions+deletions) this run: 2818 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since=2026-06-16 on origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "raw churn (additions+deletions) this run: 2719 lines",
+        "re-emit of previously-seen id; score_delta suppressed (cumulative-type carve-out)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/servers/api-server/tests/oauth_integration_tests.rs].runs_seen=3",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen=3, this-run churn=2719"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "# 2026-07-02",
+      "expected": "# 2026-07-02"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "True",
+      "expected": "True"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "len=180 unique=180",
+      "expected": "equal"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "offenders=[]",
+      "expected": "empty"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "cap_ok=True decay_ok=True",
+      "expected": "both true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "no new plans this run",
+      "expected": "vacuous true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "new_plans=[]",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "non_research=[]",
+      "expected": "empty"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "hits=0",
+      "expected": "empty"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "len_regen=32935 len_staged=32935",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "no phase failures",
+      "expected": "vacuous true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "no plan changes this run",
+      "expected": "vacuous true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "prev=7 cur=7",
+      "expected": ">= prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "len_regen=7878 len_staged=7878",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "actions=0",
+      "expected": "0 (kill switch off but no candidate this run)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "Phase 1.6 skipped in catch-up run (no-op gate)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "python-regen",
+      "observed": "hits=0",
+      "expected": "empty"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matching certainty bar this run"
+}
