@@ -1,0 +1,166 @@
+{
+  "date": "2026-07-03",
+  "run_kind": "catch-up-incremental",
+  "notes": "Routine had not run since 2026-06-16 (17d lag). Advancing cursors + applying decay. Skipped Phase 1.5, 1.6, and per-PR signal derivation for the 45-PR window because a full backfill is out of scope for a single catch-up run — the dispatcher pipeline (separate flow) has been actioning delivery work through 2026-07-03.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-03",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-06-16T03:25:00Z; now=2026-07-03T03:15:28Z; lag=~17 days (well past the 36h alert threshold)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-07-03",
+      "type": "stale_routine_alert",
+      "source": "state.json last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 17d old; cloud routine cron likely paused. Dispatcher pipeline (separate loop on planning branch) is still ticking — see recent chore(research): dispatcher commits through 2026-07-03T02:23Z.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-2026-07-03",
+      "type": "dep-update-noise",
+      "source": "open PRs since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "10 open dependabot PRs (#2015-2016, 2018, 2020-2025, 2031) touched since 2026-07-02. Not scored per routine convention.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "catch-up-decay-sweep-2026-07-03",
+      "type": "decay-batch",
+      "source": "backlog.json",
+      "score_delta": 0,
+      "evidence": "Applied score −1 decay to 52 open items >14d stale; 38 items dropped (score 1→0), 14 items decayed 2→1. No item at score ≥3 remains open; Phase 3 promotion has no candidates.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no open item at confidence=high + score>=3 this run; catch-up sweep prioritized cursor advance over per-PR analysis)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-03.md && head -1 | grep -q ^# 2026-07-03$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal ids from today already in prev seen_signals",
+      "observed": "true — 4 new ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "52 open items decayed −1, no score >8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a — vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/",
+      "observed": "0 lines",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged .research/",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regeneration",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed (Phase 1.5/1.6 deliberately skipped, documented in brief)",
+      "expected": "passing when brief reflects skips"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "9 active plans preserved; 7 archived preserved",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "7 == 7",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regeneration",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + kill-switch",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped)",
+      "observed": "skipped — pm_cursor unchanged (index=5), coverage_cursor unchanged (index=12); G16 is a no-op when Phase 1.6 did not run this run",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token in staged",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
