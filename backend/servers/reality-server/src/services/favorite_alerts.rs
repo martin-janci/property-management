@@ -8,6 +8,7 @@
 use std::time::Duration;
 
 use db::{repositories::RealityPortalRepository, DbPool};
+use sqlx::{pool::PoolConnection, Connection, Error as SqlxError, Postgres};
 use tokio::time::interval;
 use tracing::Instrument;
 
@@ -111,49 +112,25 @@ impl FavoriteAlertWorker {
                 continue;
             }
 
-            // Price path: one set-based enqueue, then advance the watermarks.
+            // Price path: enqueue + advance run as ONE REPEATABLE READ
+            // transaction so both statements observe a single MVCC snapshot.
             // The enqueue MUST run first — it reads the pre-update watermark.
-            match self
-                .repo
-                .enqueue_pending_favorite_price_alerts(&mut *conn)
-                .await
-            {
-                Ok(n) => {
-                    queued_price += n as usize;
-                    if let Err(e) = self
-                        .repo
-                        .advance_favorite_price_watermarks(&mut *conn)
-                        .await
-                    {
-                        tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to advance favorite price watermarks");
-                    }
-                }
+            match self.run_price_path(&mut conn).await {
+                Ok(n) => queued_price += n as usize,
                 Err(e) => {
-                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to enqueue favorite price alerts");
+                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] favorite price-alert pass failed");
                 }
             }
 
             // Back-on-market path: one set-based enqueue (favorites whose listing
-            // just became active), then snapshot ALL changed favorites' status.
-            // back_on_market alerts are intentionally not opt-out-able — see
+            // just became active), then snapshot ALL changed favorites' status —
+            // also under one REPEATABLE READ transaction. back_on_market alerts
+            // are intentionally not opt-out-able — see
             // `enqueue_pending_favorite_status_alerts` (#1852 finding-3).
-            match self
-                .repo
-                .enqueue_pending_favorite_status_alerts(&mut *conn)
-                .await
-            {
-                Ok(n) => {
-                    queued_status += n as usize;
-                    if let Err(e) = self
-                        .repo
-                        .advance_favorite_status_watermarks(&mut *conn)
-                        .await
-                    {
-                        tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to advance favorite status snapshots");
-                    }
-                }
+            match self.run_status_path(&mut conn).await {
+                Ok(n) => queued_status += n as usize,
                 Err(e) => {
-                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] failed to enqueue favorite back-on-market alerts");
+                    tracing::warn!(org_id = %org_id, error = %e, "[BIT-138] favorite back-on-market pass failed");
                 }
             }
         }
@@ -165,5 +142,56 @@ impl FavoriteAlertWorker {
                 "[BIT-138] favorite alerts queued"
             );
         }
+    }
+
+    /// Enqueue price-change alerts and advance the price watermarks inside a
+    /// single `REPEATABLE READ` transaction (#1999 finding-1).
+    ///
+    /// The enqueue and the advance compute their working set independently:
+    /// the enqueue inserts rows for `changed_at > watermark`, and the advance
+    /// re-derives `MAX(changed_at)` over the *same* predicate. Run as separate
+    /// autocommitted statements, a `listing_price_history` row committed by a
+    /// concurrent writer *between* them would be missed by the enqueue yet
+    /// swept past the watermark by the advance's re-evaluated `MAX` — the alert
+    /// for that price change would then be silently dropped forever. Binding
+    /// both statements to one MVCC snapshot closes that race. The org RLS
+    /// context set on `conn` is session-scoped (`set_config(..., FALSE)`), so
+    /// it remains in force inside the transaction.
+    async fn run_price_path(&self, conn: &mut PoolConnection<Postgres>) -> Result<u64, SqlxError> {
+        let mut tx = conn.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
+        let queued = self
+            .repo
+            .enqueue_pending_favorite_price_alerts(&mut *tx)
+            .await?;
+        self.repo
+            .advance_favorite_price_watermarks(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        Ok(queued)
+    }
+
+    /// Enqueue back-on-market alerts and advance the status snapshots inside a
+    /// single `REPEATABLE READ` transaction (#1999 finding-1), for the same
+    /// snapshot-consistency reason as [`Self::run_price_path`]: the advance
+    /// snapshots `last_seen_listing_status` for every changed favorite, so a
+    /// status transition committed between the two statements must not let the
+    /// advance move a favorite past a transition the enqueue never saw.
+    async fn run_status_path(&self, conn: &mut PoolConnection<Postgres>) -> Result<u64, SqlxError> {
+        let mut tx = conn.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
+        let queued = self
+            .repo
+            .enqueue_pending_favorite_status_alerts(&mut *tx)
+            .await?;
+        self.repo
+            .advance_favorite_status_watermarks(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        Ok(queued)
     }
 }
