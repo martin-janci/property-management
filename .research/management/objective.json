@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
   "selected_at": "2026-07-03T12:13:35Z",
-  "last_action": "repick",
-  "reason": "prior target 'churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs' exhausted; closest-to-done is 'churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

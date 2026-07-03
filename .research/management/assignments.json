@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-03T12:16:33Z",
+  "generated": "2026-07-03T14:10:06Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -38,28 +38,6 @@
       "reviewer_summary": "verdict=approve note=doc-comment-only(5 lines), HMAC untouched, CI green except unrelated cargo-deny; existing approve-comment at same SHA (dedup) | head advanced to c6f56 via clean human Merge-branch-dev (net diff unchanged: +5/1-file doc comment already approved at cd78); oid carried, no redundant re-review",
       "last_reviewed_oid": "c6f56c684cbe8f3a921a286e5a446992c0a7d787",
       "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
-      "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-app-c-c36f6bf5",
-      "status": "in-progress",
-      "claimed_at": "2026-07-03T14:07:24Z",
-      "last_updated": "2026-07-03T14:07:24Z",
-      "status_changed_at": "2026-07-03T14:07:24Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
