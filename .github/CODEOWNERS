@@ -1,0 +1,19 @@
+# CODEOWNERS — explicit-review markers for load-bearing files.
+#
+# GitHub auto-requests a review from the listed owners whenever a PR
+# touches a matching path. When branch protection for `dev` has
+# "Require review from Code Owners" enabled, that review is mandatory.
+#
+# --------------------------------------------------------------------
+# Security-pinned dependency manifest
+# --------------------------------------------------------------------
+# backend/Cargo.toml carries dependency pins whose versions are
+# load-bearing for security posture, not just build reproducibility.
+# The most notable is `quick-xml`, pinned for XXE / billion-laughs
+# safety and guarded by `ota_xml::tests` in
+# backend/crates/integrations/src/booking/ota_xml.rs (see GH #1519 /
+# #1591 / #2033). A bump that changes entity normalization can cross
+# that pin — so every change to this manifest must get an explicit
+# owner review rather than riding into an unrelated dep-bump merge
+# (the failure mode PR #2011 exhibited).
+/backend/Cargo.toml    @martin-janci
