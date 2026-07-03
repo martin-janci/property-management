@@ -1226,7 +1226,7 @@
       "action": "iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=high vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -1236,6 +1236,13 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (non-id-subject; manual reconcile note per dispatcher-prompt Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "CFBundleURLTypes(realityportal) present in mobile-native/iosApp/iosApp/Resources/Info.plist; com.apple.developer.associated-domains applinks present in iosApp.entitlements — added by ed90607, present on origin/dev HEAD",
+        "at": "2026-07-03T12:09:53Z"
       }
     },
     {
@@ -1413,7 +1420,7 @@
       "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -1423,6 +1430,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (already split into aml_dsa/ module dir; non-id-subject; manual reconcile per Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "backend/servers/api-server/src/routes/aml_dsa/ is a module dir (aml.rs,dsa.rs,edd.rs,moderation.rs,shared.rs,mod.rs) — the churn split already landed",
+        "at": "2026-07-03T12:12:51Z"
       }
     },
     {
@@ -1566,7 +1580,7 @@
       "action": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -1576,6 +1590,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (forms.rs already split into forms/ module dir; non-id-subject; manual reconcile per Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "backend/servers/api-server/src/routes/forms/ = {crud.rs,fields.rs,submissions.rs,types.rs,mod.rs} (Jun29 split)",
+        "at": "2026-07-03T12:13:20Z"
       }
     },
     {
