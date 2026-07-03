@@ -117,11 +117,13 @@ async fn person_months_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    // 200 OK, 400 if no residents, or 500 pre-existing endpoint bug (BIT-440)
+    // 200 OK, or 400 if the unit has no residents to calculate from.
+    // The pre-existing BIT-440 500 was fixed in PR #1991 (the
+    // count_residents_for_month result is now decoded via a `::bigint` cast),
+    // so a 500 here is a real regression and must fail loudly — do NOT
+    // green-light INTERNAL_SERVER_ERROR.
     assert!(
-        resp.status == StatusCode::OK
-            || resp.status == StatusCode::BAD_REQUEST
-            || resp.status == StatusCode::INTERNAL_SERVER_ERROR,
+        resp.status == StatusCode::OK || resp.status == StatusCode::BAD_REQUEST,
         "calculate_from_residents: unexpected {}",
         resp.status
     );
