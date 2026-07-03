@@ -246,7 +246,7 @@ impl TestDb {
 
 /// Test UserRepository.create() - successful user creation
 #[tokio::test]
-#[ignore] // Requires test database: cargo test --test repository_tests -- --ignored
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_create_success() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -278,7 +278,7 @@ async fn test_user_repository_create_success() {
 
 /// Test UserRepository.find_by_email() - user found
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_find_by_email_found() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -306,7 +306,7 @@ async fn test_user_repository_find_by_email_found() {
 
 /// Test UserRepository.find_by_email() - user not found
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_find_by_email_not_found() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -326,7 +326,7 @@ async fn test_user_repository_find_by_email_not_found() {
 
 /// Test UserRepository.email_exists() - email collision detection
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_email_exists() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -371,7 +371,7 @@ async fn test_user_repository_email_exists() {
 
 /// Test UserRepository.verify_email() - email verification flow
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_verify_email() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -420,7 +420,7 @@ async fn test_user_repository_verify_email() {
 
 /// Test UserRepository.update_password() - password update
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_update_password() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -462,7 +462,7 @@ async fn test_user_repository_update_password() {
 
 /// Test UserRepository.soft_delete() - soft deletion
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_user_repository_soft_delete() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -521,7 +521,7 @@ async fn test_user_repository_soft_delete() {
 
 /// Test OrganizationRepository.create() - organization creation
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_organization_repository_create() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -550,7 +550,7 @@ async fn test_organization_repository_create() {
 
 /// Test OrganizationRepository - unique slug enforcement
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_organization_repository_unique_slug() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -573,7 +573,7 @@ async fn test_organization_repository_unique_slug() {
 
 /// Test BuildingRepository.create() - building creation
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_building_repository_create() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -607,7 +607,7 @@ async fn test_building_repository_create() {
 
 /// Test building belongs to organization (RLS context)
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_building_repository_rls_isolation() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -664,7 +664,7 @@ async fn test_building_repository_rls_isolation() {
 
 /// Test email verification token creation and usage
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_email_verification_token_lifecycle() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -737,7 +737,7 @@ async fn test_email_verification_token_lifecycle() {
 
 /// Test organization membership operations
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_organization_membership() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();

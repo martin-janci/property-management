@@ -542,7 +542,7 @@ mod tests {
 
     /// Smoke test against local docker daemon. Skipped in CI; run manually with --ignored.
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires local docker daemon; run manually with --ignored"]
     async fn run_frontend_dev_against_local_docker() {
         let client = DockerClient::from_socket("unix:///var/run/docker.sock").unwrap();
         let spec = FrontendDevSpec {

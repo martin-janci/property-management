@@ -2109,7 +2109,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_a_can_respond_to_own_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_own@test.sk"];
@@ -2134,7 +2134,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_b_cannot_respond_to_realtor_a_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_idor@test.sk", "realtor_b_idor@test.sk"];

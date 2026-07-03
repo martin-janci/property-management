@@ -152,7 +152,7 @@ impl TestDb {
 
 /// Test creating an announcement
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_create_announcement() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -187,7 +187,7 @@ async fn test_create_announcement() {
 
 /// Test announcement status transitions
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_announcement_status_transitions() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -243,7 +243,7 @@ async fn test_announcement_status_transitions() {
 
 /// Test scheduled publishing
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_scheduled_announcement() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -290,7 +290,7 @@ async fn test_scheduled_announcement() {
 
 /// Test marking announcement as read
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_mark_announcement_read() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -341,7 +341,7 @@ async fn test_mark_announcement_read() {
 
 /// Test acknowledging announcement
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_acknowledge_announcement() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -400,7 +400,7 @@ async fn test_acknowledge_announcement() {
 
 /// Test adding attachment to announcement
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_announcement_attachments() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -449,7 +449,7 @@ async fn test_announcement_attachments() {
 
 /// Test that announcements are isolated by organization
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_announcement_rls_isolation() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -516,7 +516,7 @@ async fn test_announcement_rls_isolation() {
 
 /// Test announcement targeting validation
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_announcement_targeting() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -563,7 +563,7 @@ async fn test_announcement_targeting() {
 
 /// Test pinning announcement
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_pin_announcement() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
     db.cleanup().await.unwrap();
@@ -606,7 +606,7 @@ async fn test_pin_announcement() {
 /// Issue #972.7: announcements pinned longer than the cutoff are auto-unpinned
 /// by `auto_unpin_expired`, while recently-pinned ones are left untouched.
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_auto_unpin_expired() {
     use db::repositories::AnnouncementRepository;
 
@@ -685,7 +685,7 @@ async fn test_auto_unpin_expired() {
 
 /// Verify announcements tables have RLS enabled
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres test database; run with --ignored --test-threads=1"]
 async fn test_announcement_rls_coverage() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 

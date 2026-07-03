@@ -171,7 +171,7 @@ impl TestDb {
 
 /// Core smoke test: Verify tenant A cannot see tenant B's buildings
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn smoke_test_cross_tenant_isolation() {
     let db = TestDb::new()
         .await
@@ -305,7 +305,7 @@ async fn smoke_test_cross_tenant_isolation() {
 
 /// Smoke test: Verify no context means no data access
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn smoke_test_null_context_blocks_access() {
     let db = TestDb::new()
         .await
@@ -360,7 +360,7 @@ async fn smoke_test_null_context_blocks_access() {
 
 /// Smoke test: Verify context clearing works
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn smoke_test_context_clearing() {
     let db = TestDb::new()
         .await
@@ -486,7 +486,7 @@ async fn insert_listing(db: &TestDb, org: Uuid, created_by: Uuid, title: &str) -
 /// Phase 0 smoke test: build a two-org data graph spanning all newly-protected
 /// tables and assert each org sees only its own rows.
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn smoke_test_phase0_rls_cross_tenant_isolation() {
     let db = TestDb::new()
         .await
