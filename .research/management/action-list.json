@@ -956,8 +956,8 @@
       "action": "Follow-up: index + stable-sort + test for migration template pagination (PR #1994) (Closes #1997)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1997)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1997) | gc1-reconcile 2026-07-03T08:08:39Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -969,6 +969,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2038,
+        "merged_at": "2026-07-03T04:07:45Z",
+        "at": "2026-07-03T08:08:39Z"
       }
     },
     {
@@ -976,8 +983,8 @@
       "action": "Follow-up: #1771 regression test never runs in CI + stale count_unread_rls doc-comment (PR #1993) (Closes #1998)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1998)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1998) | gc1-reconcile 2026-07-03T08:08:39Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -989,6 +996,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2039,
+        "merged_at": "2026-07-03T06:11:24Z",
+        "at": "2026-07-03T08:08:39Z"
       }
     },
     {
