@@ -1717,6 +1717,206 @@
         "score": 1,
         "vector": "triage"
       }
+    },
+    {
+      "id": "gh-issue-2049",
+      "action": "Follow-up: units u.name schema-drift 500 still live in lease.rs (PR #2042) (Closes #2049)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2049)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2049,
+        "url": "https://github.com/martin-janci/property-management/issues/2049",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2050",
+      "action": "Follow-up: idempotency remediation guards only mapping not repo behavior (PR #2043) (Closes #2050)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2050)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2050,
+        "url": "https://github.com/martin-janci/property-management/issues/2050",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2051",
+      "action": "Follow-up: per_page clamp still untested + index tiebreak polish (PR #2038) (Closes #2051)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2051)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2051,
+        "url": "https://github.com/martin-janci/property-management/issues/2051",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2052",
+      "action": "Follow-up: harden #1771 unread soft-delete guard beyond substring check (PR #2039) (Closes #2052)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2052)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2052,
+        "url": "https://github.com/martin-janci/property-management/issues/2052",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2053",
+      "action": "Follow-up: encapsulate + test partial/unsupported_fields for SlovakAccountingExport (PR #2047) (Closes #2053)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2053)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2053,
+        "url": "https://github.com/martin-janci/property-management/issues/2053",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2054",
+      "action": "Follow-up: triage/confirm recipient tests dont exercise self-exclusion/dedup (PR #2048) (Closes #2054)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2054)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2054,
+        "url": "https://github.com/martin-janci/property-management/issues/2054",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2055",
+      "action": "Follow-up: model CountryCode/SupportedCurrency as closed enums in TypeSpec (PR #2041) (Closes #2055)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2055)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2055,
+        "url": "https://github.com/martin-janci/property-management/issues/2055",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2056",
+      "action": "Follow-up: quick-xml pin is a caret range and guard ignores Cargo.lock (PR #2044) (Closes #2056)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2056)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2056,
+        "url": "https://github.com/martin-janci/property-management/issues/2056",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2057",
+      "action": "Follow-up: ignore-reason gate misses cfg_attr ignore + same-line bare ignores (PR #2045) (Closes #2057)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2057)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2057,
+        "url": "https://github.com/martin-janci/property-management/issues/2057",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2058",
+      "action": "Follow-up: wire backlog-refill/issue-ingest behavioral tests into CI (PR #2026) (Closes #2058)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2058)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2058,
+        "url": "https://github.com/martin-janci/property-management/issues/2058",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
