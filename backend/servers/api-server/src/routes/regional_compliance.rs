@@ -448,6 +448,18 @@ async fn export_slovak_accounting(
 
     let journal_entry_count = invoice_count + payment_count;
 
+    // Surface un-computed monetary fields honestly (#2030): a `null` +
+    // `unsupported_fields` entry so consumers can distinguish "not available"
+    // from a genuine zero, rather than the previous misleading hardcoded 0.
+    let mut unsupported_fields = Vec::new();
+    if total_expenses.is_none() {
+        unsupported_fields.push("total_expenses".to_string());
+    }
+    if total_payables.is_none() {
+        unsupported_fields.push("total_payables".to_string());
+    }
+    let partial = !unsupported_fields.is_empty();
+
     let result = Ok(Json(SlovakAccountingExport {
         export_id: Uuid::new_v4(),
         organization_id: org_id,
@@ -461,6 +473,8 @@ async fn export_slovak_accounting(
         total_expenses,
         total_receivables,
         total_payables,
+        partial,
+        unsupported_fields,
         download_url: Some(format!(
             "/api/v1/regional-compliance/slovak/accounting/download/{}",
             Uuid::new_v4()
