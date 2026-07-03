@@ -1444,8 +1444,8 @@
       "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-03T16:03:37Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1454,6 +1454,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-03T16:03:37Z"
       }
     },
     {
