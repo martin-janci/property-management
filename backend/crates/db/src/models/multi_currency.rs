@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 /// Supported currencies for multi-currency operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
-#[sqlx(type_name = "supported_currency", rename_all = "SCREAMING_SNAKE_CASE")]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(type_name = "supported_currency", rename_all = "UPPERCASE")]
+#[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
 pub enum SupportedCurrency {
     #[default]
@@ -141,8 +141,8 @@ pub enum CrossBorderComplianceStatus {
 
 /// Country codes (ISO 3166-1 alpha-2)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
-#[sqlx(type_name = "country_code", rename_all = "SCREAMING_SNAKE_CASE")]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(type_name = "country_code", rename_all = "UPPERCASE")]
+#[serde(rename_all = "UPPERCASE")]
 pub enum CountryCode {
     SK, // Slovakia
     CZ, // Czech Republic
