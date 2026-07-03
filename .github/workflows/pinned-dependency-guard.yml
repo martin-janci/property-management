@@ -1,0 +1,67 @@
+name: Pinned-dependency guard
+
+# Why this exists
+# ---------------
+# PR #2011 ("bump ammonia to 4.1.3, RUSTSEC XSS-sanitizer bypass") also
+# carried an unrelated `quick-xml 0.40 -> 0.41` bump in backend/Cargo.toml.
+# `quick-xml` is a SECURITY PIN: the inbound OTA parsers depend on it NOT
+# resolving custom DTD entities (XXE / billion-laughs safety), guarded by
+# `ota_xml::tests` in backend/crates/integrations/src/booking/ota_xml.rs.
+# Folding that pin-crossing change into a differently-titled RUSTSEC PR
+# meant the entity-safety change got none of the focused review the pin
+# comment asks for (GH #1519 / #1591 / #2033).
+#
+# This workflow is a lightweight, ADVISORY marker: whenever a PR touches
+# the `quick-xml` pin line in backend/Cargo.toml it emits a GitHub warning
+# annotation reminding the author + reviewers to treat it as an XXE-safety
+# change. It NEVER fails the build — the hard "requests explicit review"
+# guarantee is provided by .github/CODEOWNERS. This job only surfaces the
+# regression note so the pin cannot be crossed silently.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'backend/Cargo.toml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  quick-xml-pin-guard:
+    name: quick-xml XXE pin — advisory review marker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect diff for the quick-xml pin line
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Grab only the added/removed lines for backend/Cargo.toml and
+          # look for a change to the quick-xml dependency line.
+          DIFF=$(gh pr diff "$PR" --repo "$REPO" --patch -- backend/Cargo.toml || true)
+          TOUCHED=$(printf '%s\n' "$DIFF" | grep -E '^[+-][[:space:]]*quick-xml[[:space:]]*=' || true)
+
+          if [ -z "$TOUCHED" ]; then
+            echo "OK: this PR edits backend/Cargo.toml but does not change the quick-xml pin line."
+            exit 0
+          fi
+
+          echo "::warning title=quick-xml is an XXE security pin::This PR changes the quick-xml dependency line in backend/Cargo.toml. quick-xml is pinned for XXE / billion-laughs safety and guarded by ota_xml::tests. Confirm 'cargo test -p integrations' entity-guard tests pass on the new version and that the change gets an explicit XXE-regression review (GH #1519/#1591/#2033)."
+
+          echo ""
+          echo "Changed quick-xml line(s):"
+          printf '%s\n' "$TOUCHED"
+          echo ""
+          echo "Reviewer checklist for a quick-xml bump:"
+          echo "  - ota_xml::tests entity guards (XXE + billion-laughs) pass on the new version"
+          echo "    (run: cd backend && cargo test -p integrations ota_xml)."
+          echo "  - Those tests are live #[test]s, NOT BIT-440-quarantined, so CI runs them."
+          echo "  - The bump lands in its own PR (or is called out explicitly), not folded"
+          echo "    into an unrelated dep-bump."
+          echo ""
+          echo "This check is advisory and does not fail the build; CODEOWNERS enforces the review."
