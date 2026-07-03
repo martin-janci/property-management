@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-07-03T14:10:06Z",
+  "archived_at": "2026-07-03T22:07:09Z",
   "_deferred": true,
   "_reason": "Full 452-row archive (~492KB) exceeds the mcp__github__push_files inline-content limit (known issue #1014); git push is 403 in this environment. The authoritative archive lives in the local working tree and must be landed by a run with working git transport or after archive compaction. This is a placeholder marker, NOT the real archive data.",
   "assignments": [
@@ -288,6 +288,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-01T14:13:46Z"
+    },
+    {
+      "task_id": "7a-2-folder-organization",
+      "branch": "auto-impl/7a-2-folder-organization-0d7698ef",
+      "status": "done",
+      "claimed_at": "2026-07-03T20:08:29Z",
+      "last_updated": "2026-07-03T20:23:06Z",
+      "status_changed_at": "2026-07-03T20:23:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=document_folder_tests already GREEN on dev (backend run 28653651221 test job success); folder code/tests byte-identical to tested b8e226d; premise stale, no code fix needed; story review->done flip is out of backend scope for scrum-master",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "7a-5-document-sharing",
@@ -974,6 +996,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-mobile-native-listing-detail-kt",
+      "branch": "auto-impl/churn-hotspot-mobile-native-listing-deta-52878795",
+      "status": "merged",
+      "claimed_at": "2026-07-03T18:07:00Z",
+      "last_updated": "2026-07-03T22:03:46Z",
+      "status_changed_at": "2026-07-03T22:03:46Z",
+      "pr_number": 2059,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2059",
+      "merged_at": "2026-07-03T20:11:26Z",
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=2059 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=move-only split of ListingDetailScreen.kt into 9 files; bodies byte-identical (22/22), ktfmt fixed-point verified; Android build not run (no SDK) - draft pending CI",
+      "reviewer_summary": "verdict=approve note=move-only-split-verified-byte-identical-20-funcs-14-widened-internal-android-CI-gate-pending",
+      "last_reviewed_oid": "cceca80112da0c9418206ec9bd8308ad7aee6bed",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-03T20:11:15Z"
     },
     {
       "task_id": "code-review-mobile-rn-report-fault-fake-submit",

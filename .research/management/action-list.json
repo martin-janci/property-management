@@ -1468,8 +1468,8 @@
       "action": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=refactor)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-07-03T22:07:28Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1478,6 +1478,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2059,
+        "merged_at": "2026-07-03T20:11:26Z",
+        "at": "2026-07-03T22:07:28Z"
       }
     },
     {
