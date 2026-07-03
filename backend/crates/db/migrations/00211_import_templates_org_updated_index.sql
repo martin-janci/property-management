@@ -1,0 +1,27 @@
+-- Migration: 00211_import_templates_org_updated_index
+-- Composite index backing MigrationRepository::list_templates pagination
+-- (#1997 finding-1, follow-up to PR #1994).
+--
+-- PR #1994 moved list_templates pagination into SQL:
+--   SELECT * FROM import_templates
+--   WHERE (organization_id = $1 [OR organization_id IS NULL]) [AND data_type = $2]
+--   ORDER BY updated_at DESC, id DESC
+--   LIMIT $ OFFSET $
+--
+-- Migration 00198 only created idx_import_templates_organization_id
+-- (a single-column btree on organization_id). That index covers the equality
+-- predicate but not the ORDER BY, so every page runs an org-filtered scan
+-- followed by a sort — cost grows with the org's template count and the OFFSET.
+--
+-- A composite index keyed (organization_id, updated_at DESC) lets Postgres
+-- satisfy both the org filter and the descending sort from one index, so the
+-- paginated reads become an index range scan.
+--
+-- Note the (organization_id IS NULL) system-template leg of the OR: NULLs are
+-- indexed by btree, so the same index also serves the system-template branch
+-- (Postgres can OR two index scans or bitmap-OR them). The id DESC tiebreak
+-- added in the query is a within-key tiebreak the planner resolves after the
+-- index range; keeping the index on (organization_id, updated_at DESC) matches
+-- the leading sort keys, which is what drives the plan.
+CREATE INDEX IF NOT EXISTS idx_import_templates_org_updated
+    ON import_templates (organization_id, updated_at DESC);

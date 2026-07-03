@@ -47,7 +47,7 @@ impl MigrationRepository {
         match (data_type, include_system) {
             (Some(dt), true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2 ORDER BY updated_at DESC LIMIT $3 OFFSET $4",
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) AND data_type = $2 ORDER BY updated_at DESC, id DESC LIMIT $3 OFFSET $4",
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -58,7 +58,7 @@ impl MigrationRepository {
             }
             (Some(dt), false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2 ORDER BY updated_at DESC LIMIT $3 OFFSET $4",
+                    "SELECT * FROM import_templates WHERE organization_id = $1 AND data_type = $2 ORDER BY updated_at DESC, id DESC LIMIT $3 OFFSET $4",
                 )
                 .bind(org_id)
                 .bind(dt)
@@ -69,7 +69,7 @@ impl MigrationRepository {
             }
             (None, true) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
+                    "SELECT * FROM import_templates WHERE (organization_id = $1 OR organization_id IS NULL) ORDER BY updated_at DESC, id DESC LIMIT $2 OFFSET $3",
                 )
                 .bind(org_id)
                 .bind(limit)
@@ -79,7 +79,7 @@ impl MigrationRepository {
             }
             (None, false) => {
                 sqlx::query_as::<_, ImportTemplate>(
-                    "SELECT * FROM import_templates WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
+                    "SELECT * FROM import_templates WHERE organization_id = $1 ORDER BY updated_at DESC, id DESC LIMIT $2 OFFSET $3",
                 )
                 .bind(org_id)
                 .bind(limit)
