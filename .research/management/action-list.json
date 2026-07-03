@@ -1010,8 +1010,8 @@
       "action": "Follow-up: favorite price-alert enqueue/advance can drop an alert (non-transactional) + idempotency test is quarantined (PR #1992) (Closes #1999)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1999)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1999) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1023,6 +1023,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2043,
+        "merged_at": "2026-07-03T08:05:26Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1030,8 +1037,8 @@
       "action": "Follow-up: CountryCode/SupportedCurrency serialize to ugly S_K/E_U_R (wrong rename_all) — wire + DB enum mismatch (PR #1991) (Closes #2000)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2000)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2000) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1043,6 +1050,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2041,
+        "merged_at": "2026-07-03T08:05:43Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1050,8 +1064,8 @@
       "action": "Follow-up: finance 100% coverage overstated — ignored/500-tolerant tests marked done (PR #1983) (Closes #2001)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2001)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2001) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1063,6 +1077,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2040,
+        "merged_at": "2026-07-03T08:05:46Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1070,8 +1091,8 @@
       "action": "Follow-up: latent u.name schema-drift 500 in list_bookings (PR #1973) (Closes #2028)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2028)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2028) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1083,6 +1104,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2042,
+        "merged_at": "2026-07-03T08:05:48Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1090,8 +1118,8 @@
       "action": "Follow-up: fault triage/confirm notification tests don't exercise the real handler (PR #1974) (Closes #2029)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2029)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2029) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1103,6 +1131,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2048,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1110,8 +1145,8 @@
       "action": "Follow-up: Slovak accounting export returns misleading 0 for expenses/payables (PR #1976) (Closes #2030)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2030)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2030) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1123,6 +1158,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2047,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1130,8 +1172,8 @@
       "action": "Follow-up: authz/security + freshly-added happy-path tests silently quarantined via bundled #[ignore] (PR #1980 / #1984) (Closes #2032)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2032)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2032) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1143,6 +1185,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2045,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1150,8 +1199,8 @@
       "action": "Follow-up: quick-xml 0.40→0.41 bump (XXE-pinned) rode into an ammonia-only RUSTSEC PR (PR #2011) (Closes #2033)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2033)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2033) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1163,6 +1212,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2044,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
@@ -1578,8 +1634,8 @@
       "action": "Follow-up: delegation scopes enum-array cast fix shipped without a regression test (PR #1972) (Closes #2034)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T22:17:11Z (#2034)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T22:17:11Z (#2034) | gc1-reconcile 2026-07-03T10:11:42Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1591,6 +1647,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2046,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
       }
     },
     {
