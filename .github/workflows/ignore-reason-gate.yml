@@ -1,0 +1,60 @@
+name: Ignore-reason gate
+
+# Why this exists
+# ---------------
+# PR #1980 (BIT-416 admin happy-path backfill) silently quarantined tests
+# in nine unrelated suites — including authz/security regression tests
+# (messaging_attachments_authz, IDOR guards) — by bundling bare,
+# unexplained `#[ignore]` attributes into a feature PR. A security guard
+# that only runs when un-ignored is not a guard; a bare `#[ignore]` drops
+# it with no ticket, no reason, and no reviewer signal. See issue #2032.
+#
+# This gate enforces the contract at PR time:
+#
+#   Every Rust `#[ignore]` MUST be written as `#[ignore = "<reason>"]`.
+#
+# The whole tree is scanned (not just the diff) so no bare `#[ignore]`
+# can survive anywhere in the codebase — the strongest reading of
+# "FAILS on any bare #[ignore]". The scan is DB-free and fast: it is a
+# pure text check via `.github/workflows/scripts/check-ignore-reason.sh`.
+#
+# This mirrors the security-test-gate.yml pattern: an extracted, self-
+# tested shell helper plus a self-test job that exercises the matcher
+# against fixtures so a future refactor that breaks the detector is
+# caught in CI rather than by letting a bare `#[ignore]` slip through.
+
+on:
+  pull_request:
+    paths:
+      - '**/*.rs'
+      - '.github/workflows/ignore-reason-gate.yml'
+      - '.github/workflows/scripts/check-ignore-reason.sh'
+  # Fires the self-test whenever the gate or its helper changes, and
+  # re-scans dev's tip on merge so a bare `#[ignore]` that somehow lands
+  # is caught immediately.
+  push:
+    branches: [dev]
+    paths:
+      - '**/*.rs'
+      - '.github/workflows/ignore-reason-gate.yml'
+      - '.github/workflows/scripts/check-ignore-reason.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  ignore-reason-gate:
+    name: "Rust #[ignore] must carry a reason string"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Scan for bare #[ignore]
+        run: bash .github/workflows/scripts/check-ignore-reason.sh
+
+  self-test:
+    name: Self-test — check-ignore-reason.sh fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run fixture-based matcher tests
+        run: bash .github/workflows/scripts/check-ignore-reason.sh --self-test

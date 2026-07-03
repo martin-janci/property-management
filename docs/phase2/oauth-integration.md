@@ -37,7 +37,7 @@ External OAuth integrations are scaffolded but use placeholder tokens:
 | Google Calendar | Scaffolded | `integrations/calendar.rs` | Auth URL, token exchange implemented |
 | Microsoft Calendar | Scaffolded | `integrations/calendar.rs` | Parallel to Google |
 | Airbnb | Scaffolded | `integrations/airbnb.rs` | OAuth config defined |
-| Booking.com | Scaffolded | `integrations/booking.rs` | XML-based (OTA), no OAuth |
+| Booking.com | Implemented | `integrations/booking/` | Dual-auth: credential-connect + OTA-XML (primary), plus OAuth token-exchange (see below) |
 | Google Assistant | Stub | `routes/ai.rs:link_voice_device` | TODO comment for Phase 2 |
 | Amazon Alexa | Stub | Voice device model | Not started |
 
@@ -87,6 +87,40 @@ pub struct AirbnbOAuthConfig {
 - `GET /api/v1/integrations/airbnb/callback` - Handle redirect
 - `POST /api/v1/integrations/airbnb/disconnect` - Revoke access
 - `GET /api/v1/integrations/airbnb/status` - Check connection
+
+### 2b. Booking.com Channel Integration (Implemented)
+
+Unlike Airbnb, Booking.com is **not** connected through an Airbnb-style OAuth
+*connect* handshake. Booking.com's real API model exposes two authentication
+surfaces, and both are implemented in `backend/crates/integrations/src/booking/`:
+
+1. **Credential connect + OTA-XML (primary).** The legacy Supply XML /
+   Connectivity API authenticates each request with a per-hotel
+   `hotel_id + username + password` over HTTP Basic auth — Booking.com issues
+   long-lived machine credentials rather than running an authorization-code
+   flow. Handled by `BookingClient` / `BookingCredentials`. The api-server
+   `POST /booking/connect` route validates the credentials (by calling
+   `fetch_property`) and stores them encrypted at rest (`IntegrationCrypto`,
+   AES-256-GCM). Reservation pull/push and availability/rate sync ride this path
+   as OpenTravel Alliance (OTA) XML messages.
+2. **OAuth 2.0 token exchange (newer Connectivity APIs).** Booking.com's newer
+   endpoints additionally offer an authorization-code grant, handled by
+   `BookingOAuthClient` and the api-server `POST /booking/token/exchange` route
+   (mirrors the Airbnb OAuth client; fail-closed 503 when `client_id` is unset).
+
+**Existing endpoints:**
+- `POST /api/v1/integrations/organizations/{org_id}/booking/connect` — credential connect
+- `GET  /api/v1/integrations/organizations/{org_id}/booking/status` — connection status
+- `POST /api/v1/integrations/organizations/{org_id}/booking/sync` — pull + persist reservations
+- `POST /api/v1/integrations/organizations/{org_id}/booking/push-availability` / `.../push-rates`
+- `POST /api/v1/integrations/organizations/{org_id}/booking/listing-push` — OTA availability+rate push
+- `GET  /api/v1/integrations/organizations/{org_id}/booking/conflicts` — cross-platform overlap detection
+- `POST /api/v1/integrations/organizations/{org_id}/booking/token/exchange` — OAuth code exchange
+- `DELETE /api/v1/integrations/organizations/{org_id}/booking` — disconnect
+
+The absence of an OAuth *connect* handshake on the primary path is therefore
+intentional and correct — the credential-connect flow matches Booking.com's
+Supply XML contract (Story 83.2 / coverage gap 83-2).
 
 ### 3. Voice Assistant OAuth (Google Assistant/Alexa)
 

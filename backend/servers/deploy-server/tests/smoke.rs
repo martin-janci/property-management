@@ -9,7 +9,7 @@ mod common;
 use common::{setup_app, TestApp};
 
 #[tokio::test]
-#[ignore] // requires docker daemon + ppt-frontend-dev:local image
+#[ignore = "requires docker daemon + ppt-frontend-dev:local image"]
 async fn open_status_close_flow() {
     let TestApp { app, token, .. } = setup_app(&["staging"]).await;
     let server = axum_test::TestServer::new(app);
@@ -61,7 +61,7 @@ async fn open_status_close_flow() {
 }
 
 #[tokio::test]
-#[ignore] // requires postgres + GH API + docker daemon + branch images
+#[ignore = "requires postgres + GH API + docker daemon + branch images"]
 async fn dedicated_open_close_with_dump() {
     // This test sketches the dedicated path. It will fail without:
     //   - real Postgres at admin_url
@@ -86,7 +86,7 @@ async fn dedicated_open_close_with_dump() {
 }
 
 #[tokio::test]
-#[ignore] // requires docker daemon to actually deploy; without it, tests the auth + parse paths.
+#[ignore = "requires docker daemon to actually deploy; tests auth + parse paths without it"]
 async fn promote_and_rollback_flow() {
     let TestApp { app, token, .. } = setup_app(&["prod", "staging"]).await;
     let server = axum_test::TestServer::new(app);

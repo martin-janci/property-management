@@ -39,6 +39,28 @@ pub struct MessagingRepository {
     pool: DbPool,
 }
 
+/// SQL for [`MessagingRepository::count_unread_rls`].
+///
+/// Hoisted into a `const` so a non-DB unit test can pin the #1771 soft-delete
+/// exclusion (`tps.deleted_at IS NULL`) on the normal CI gate without a live
+/// Postgres pool (the DB-backed regression test is quarantined under BIT-351).
+const COUNT_UNREAD_SQL: &str = r#"
+            SELECT COUNT(*)
+            FROM messages m
+            JOIN message_threads t ON t.id = m.thread_id
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
+            WHERE $1 = ANY(t.participant_ids)
+              AND t.organization_id = $2
+              AND m.sender_id != $1
+              AND m.deleted_at IS NULL
+              -- exclude threads this user soft-deleted ("delete for me"); they
+              -- vanish from the inbox list, so their unread messages must not
+              -- keep the global unread badge stuck non-zero (#1771).
+              AND tps.deleted_at IS NULL
+              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
+            "#;
+
 impl MessagingRepository {
     /// Create a new MessagingRepository.
     pub fn new(pool: DbPool) -> Self {
@@ -594,10 +616,12 @@ impl MessagingRepository {
     /// — one member reading no longer clears everyone's badge.
     ///
     /// Note (#1771): this LEFT JOIN to `thread_participant_state` is also where
-    /// the per-participant soft-delete exclusion lives; see PR #1968 which adds
-    /// `tps.deleted_at IS NULL` on the same join. The two changes touch the same
-    /// query and should be reconciled at merge (combine both predicates on the
-    /// one join).
+    /// the per-participant soft-delete exclusion lives — `tps.deleted_at IS NULL`
+    /// is inline in the query below, so threads a user soft-deleted ("delete for
+    /// me") no longer keep their global unread badge stuck non-zero. The query
+    /// SQL is hoisted into [`COUNT_UNREAD_SQL`] so a non-DB unit test can pin that
+    /// predicate on the normal CI gate (the DB-backed regression test is
+    /// quarantined under BIT-351).
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -607,28 +631,11 @@ impl MessagingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let (count,): (i64,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(*)
-            FROM messages m
-            JOIN message_threads t ON t.id = m.thread_id
-            LEFT JOIN thread_participant_state tps
-                ON tps.thread_id = t.id AND tps.user_id = $1
-            WHERE $1 = ANY(t.participant_ids)
-              AND t.organization_id = $2
-              AND m.sender_id != $1
-              AND m.deleted_at IS NULL
-              -- exclude threads this user soft-deleted ("delete for me"); they
-              -- vanish from the inbox list, so their unread messages must not
-              -- keep the global unread badge stuck non-zero (#1771).
-              AND tps.deleted_at IS NULL
-              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
-            "#,
-        )
-        .bind(user_id)
-        .bind(organization_id)
-        .fetch_one(executor)
-        .await?;
+        let (count,): (i64,) = sqlx::query_as(COUNT_UNREAD_SQL)
+            .bind(user_id)
+            .bind(organization_id)
+            .fetch_one(executor)
+            .await?;
 
         Ok(count)
     }
@@ -1293,5 +1300,29 @@ impl MessagingRepository {
                 )
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::COUNT_UNREAD_SQL;
+
+    /// Non-DB guard for the #1771 fix (PR #1993): the unread-count query must
+    /// exclude threads a user soft-deleted ("delete for me") via the
+    /// per-participant `tps.deleted_at IS NULL` predicate on the
+    /// `thread_participant_state` join. The DB-backed regression test
+    /// (`soft_deleted_thread_excluded_from_unread_count`) is `#[ignore]`d under
+    /// the BIT-351 quarantine, so this plain `#[test]` — mirroring the
+    /// catalog-metadata guard style — is the executing guard on the normal CI
+    /// gate. It runs without a live Postgres pool.
+    #[test]
+    fn count_unread_sql_excludes_soft_deleted_threads() {
+        assert!(
+            COUNT_UNREAD_SQL.contains("tps.deleted_at IS NULL"),
+            "count_unread_rls SQL must keep the per-participant soft-delete \
+             exclusion `tps.deleted_at IS NULL` (#1771 / PR #1993); without it a \
+             thread a user hid from their inbox leaves its unread messages stuck \
+             on the global unread badge with no thread visible to clear them"
+        );
     }
 }

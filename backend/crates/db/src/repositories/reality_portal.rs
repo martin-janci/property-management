@@ -563,8 +563,18 @@ impl RealityPortalRepository {
     //
     // Ordering matters: the enqueue reads the pre-update watermark state, so the
     // worker MUST call `enqueue_*` before `advance_*_watermarks` for the same
-    // path. `ON CONFLICT DO NOTHING` keeps re-runs idempotent if the worker dies
-    // between the two statements.
+    // path. `ON CONFLICT DO NOTHING` keeps *crash re-runs* idempotent if the
+    // worker dies between the two statements.
+    //
+    // Snapshot consistency is NOT optional (#1999 finding-1): the advance
+    // re-derives its working set (`MAX(changed_at)` / current status) over the
+    // live tables, independently of what the enqueue actually inserted. A row
+    // committed by a concurrent writer *between* the two statements would be
+    // missed by the enqueue yet swept past the watermark by the advance, and
+    // its alert would be dropped forever. The caller MUST therefore run each
+    // enqueue+advance pair in a single `REPEATABLE READ` (or stricter)
+    // transaction so both statements read one MVCC snapshot — see
+    // `FavoriteAlertWorker::run_price_path` / `run_status_path`.
     //
     // (Runtime `sqlx::query`, not the compile-time macros — see the module-level
     // note on the repo-wide convention.)
@@ -645,6 +655,14 @@ impl RealityPortalRepository {
     /// a favorite still gets the (rarer, higher-signal) "it's available again"
     /// notice. Add a `status_alert_enabled` column + filter here if that should
     /// change.
+    ///
+    /// Flap dedupe (#1999 finding-3, accepted): `idx_favorite_alert_queue_status_dedupe`
+    /// (migration 00194) is unique on
+    /// `(favorite_id, alert_type, previous_status, new_status)` for
+    /// `back_on_market`. A listing that flaps active→inactive→active with the
+    /// *same* before/after status tuple has its second genuine back-on-market
+    /// event deduped away. This is intentional for an hourly poll — repeated
+    /// identical flaps shouldn't spam the user — not a bug.
     pub async fn enqueue_pending_favorite_status_alerts<'e, E>(
         &self,
         executor: E,
@@ -2091,7 +2109,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_a_can_respond_to_own_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_own@test.sk"];
@@ -2116,7 +2134,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_b_cannot_respond_to_realtor_a_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_idor@test.sk", "realtor_b_idor@test.sk"];

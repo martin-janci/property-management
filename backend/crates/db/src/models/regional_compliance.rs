@@ -379,9 +379,24 @@ pub struct SlovakAccountingExport {
     pub payment_count: i32,
     pub journal_entry_count: i32,
     pub total_revenue: Decimal,
-    pub total_expenses: Decimal,
+    /// Total expenses for the period. `None` = **not available**, not zero.
+    /// There is no expense source wired for this export yet (#1906 finding-3,
+    /// tracked by #2030); a `null` here means "not computed" and a consumer
+    /// MUST NOT treat it as genuine zero expenses. See `unsupported_fields`.
+    pub total_expenses: Option<Decimal>,
     pub total_receivables: Decimal,
-    pub total_payables: Decimal,
+    /// Total accounts-payable for the period. `None` = **not available**, not
+    /// zero. No vendor/accounts-payable source is wired yet (#1906 finding-3,
+    /// tracked by #2030). See `unsupported_fields`.
+    pub total_payables: Option<Decimal>,
+    /// `true` when one or more monetary fields could not be computed and are
+    /// returned as `null`. A partial export is NOT a complete accounting
+    /// statement — see `unsupported_fields` for which figures are missing.
+    pub partial: bool,
+    /// Names of the fields that are not yet computed and are returned as
+    /// `null` (e.g. `["total_expenses", "total_payables"]`). Empty when the
+    /// export is complete.
+    pub unsupported_fields: Vec<String>,
     pub download_url: Option<String>,
     pub export_data: Option<serde_json::Value>,
     pub generated_at: DateTime<Utc>,
@@ -626,4 +641,51 @@ pub struct RegionalComplianceStatus {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct SetJurisdiction {
     pub jurisdiction: Jurisdiction,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression for #2030: an un-computed monetary field must serialize as
+    /// JSON `null`, not a misleading `0`, so a consumer can distinguish
+    /// "not available" from a genuine zero. A real zero (`Some(0)`) must still
+    /// serialize as a number.
+    #[test]
+    fn uncomputed_totals_serialize_as_null_not_zero() {
+        let export = SlovakAccountingExport {
+            export_id: Uuid::nil(),
+            organization_id: Uuid::nil(),
+            from_date: NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            format: SlovakAccountingFormat::Pohoda,
+            invoice_count: 3,
+            payment_count: 2,
+            journal_entry_count: 5,
+            total_revenue: Decimal::new(12345, 2),
+            total_expenses: None,
+            total_receivables: Decimal::ZERO,
+            total_payables: None,
+            partial: true,
+            unsupported_fields: vec!["total_expenses".into(), "total_payables".into()],
+            download_url: None,
+            export_data: None,
+            generated_at: DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
+        };
+
+        let json = serde_json::to_value(&export).expect("serialize export");
+
+        // Un-computed fields are explicit null — NOT the number 0.
+        assert!(json["total_expenses"].is_null());
+        assert!(json["total_payables"].is_null());
+        // A genuinely-zero figure still renders as a number, proving the two
+        // cases are distinguishable on the wire.
+        assert!(!json["total_receivables"].is_null());
+        // Partial signalling is honest and enumerates the missing fields.
+        assert_eq!(json["partial"], serde_json::json!(true));
+        assert_eq!(
+            json["unsupported_fields"],
+            serde_json::json!(["total_expenses", "total_payables"])
+        );
+    }
 }

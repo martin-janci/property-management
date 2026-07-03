@@ -146,7 +146,7 @@ fn req_to(host_path_slug: &str, token: &str) -> Request<Body> {
 // sqlx::test transactional template. The test fixture needs a
 // `pool.acquire().detach()` style commit, or seed via a transaction that
 // finishes before the request fires. Tracked separately.
-#[ignore]
+#[ignore = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_works_for_org_with_active_membership(pool: PgPool) {
     // Stamp JWT_SECRET so the principal extractor reads the same value.
@@ -199,7 +199,7 @@ async fn token_works_for_org_with_active_membership(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK, "should succeed for org B");
 }
 
-#[ignore]
+#[ignore = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_is_rejected_for_org_without_active_membership(pool: PgPool) {
     static ONCE: std::sync::Once = std::sync::Once::new();
@@ -247,7 +247,7 @@ async fn token_is_rejected_for_org_without_active_membership(pool: PgPool) {
     );
 }
 
-#[ignore]
+#[ignore = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_is_rejected_after_membership_revoked(pool: PgPool) {
     static ONCE: std::sync::Once = std::sync::Once::new();
