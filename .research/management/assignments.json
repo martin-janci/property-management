@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-03T00:09:44Z",
+  "generated": "2026-07-03T00:29:29Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-1997",
       "branch": "auto-impl/gh-issue-1997-61136962",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-03T00:08:48Z",
-      "last_updated": "2026-07-03T00:08:48Z",
-      "status_changed_at": "2026-07-03T00:08:48Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-03T00:29:29Z",
+      "status_changed_at": "2026-07-03T00:29:29Z",
+      "pr_number": 2038,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2038",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "db-migration",
+      "implementer_summary": "pr=2038 status=done specialist=db-migration scope_drift=true code_reuse_warn=none note=index+id-DESC+tests; compile-only verified (no DB in sandbox), sqlx::test deferred to CI; drift=owner_role hint (pm-tech-lead->docs) vs db work",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
