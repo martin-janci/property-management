@@ -391,18 +391,11 @@ async fn triage_fault_notifies_reporter_and_assignee_not_manager(pool: PgPool) {
     let fault_id = Uuid::new_v4();
     let pipeline = build_pipeline(&pool);
 
-    // Mirror triage_fault recipient logic (manager = principal.user_id):
-    // reporter + assignee (if triage set one), excluding the actor.
-    let assigned_to: Option<Uuid> = Some(assignee);
-    let mut recipients: Vec<Uuid> = Vec::new();
-    if reporter != manager {
-        recipients.push(reporter);
-    }
-    if let Some(a) = assigned_to {
-        if a != manager && !recipients.contains(&a) {
-            recipients.push(a);
-        }
-    }
+    // Exercise the *production* recipient policy (manager = principal.user_id):
+    // reporter + assignee (if triage set one), excluding the actor. Shared with
+    // the `triage_fault` handler so this asserts the real selection (#2029).
+    let recipients =
+        api_server::routes::faults::triage_fault_recipients(reporter, manager, Some(assignee));
 
     let notification = Notification::new(
         Uuid::nil(),
@@ -450,24 +443,16 @@ async fn confirm_fault_notifies_assignee_and_managers_not_reporter(pool: PgPool)
     let fault_id = Uuid::new_v4();
     let pipeline = build_pipeline(&pool);
 
-    // Mirror confirm_fault recipient logic (reporter = principal.user_id):
-    // assignee + org managers, excluding the actor.
-    let assigned_to: Option<Uuid> = Some(assignee);
-    let mut recipients: Vec<Uuid> = Vec::new();
-    if let Some(a) = assigned_to {
-        if a != reporter {
-            recipients.push(a);
-        }
-    }
+    // Exercise the *production* recipient policy (reporter = principal.user_id):
+    // assignee + org managers, excluding the actor. The manager lookup uses the
+    // real `MembershipRepository`; the merge/self-exclusion is the shared
+    // `confirm_fault` handler policy (#2029).
     let manager_ids = MembershipRepository::new(pool.clone())
         .list_manager_ids(org)
         .await
         .expect("list_manager_ids");
-    for mid in manager_ids {
-        if mid != reporter && !recipients.contains(&mid) {
-            recipients.push(mid);
-        }
-    }
+    let recipients =
+        api_server::routes::faults::confirm_fault_recipients(Some(assignee), reporter, manager_ids);
 
     assert!(
         recipients.contains(&assignee),
