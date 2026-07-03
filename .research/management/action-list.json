@@ -929,8 +929,8 @@
       "action": "Wire tenant-migration import/export data-movement (S3 upload, parse/validate, async execution, export gen) — split from #1905 (Closes #1995)",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1995)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1995) | gc1-reconcile 2026-07-03T02:03:45Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -942,6 +942,13 @@
           "enhancement",
           "backend"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2037,
+        "merged_at": "2026-07-03T00:05:39Z",
+        "at": "2026-07-03T02:03:45Z"
       }
     },
     {
@@ -1570,6 +1577,40 @@
           "follow-up",
           "from-merged-review"
         ]
+      }
+    },
+    {
+      "id": "triage-issue-1331",
+      "action": "Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T02:05:30Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
+    },
+    {
+      "id": "triage-issue-951",
+      "action": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T02:05:30Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
       }
     }
   ]
