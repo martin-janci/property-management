@@ -1810,7 +1810,7 @@ export type SharedAddress = {
     /**
      * ISO 3166-1 alpha-2 country code
      */
-    country: string;
+    country: SharedCountryCode;
 };
 
 /**
@@ -1894,6 +1894,11 @@ export type SharedAuthenticatedUser = {
      */
     delegations?: Array<SharedDelegation>;
 };
+
+/**
+ * Supported ISO 3166-1 alpha-2 country codes (EU/EEA focus)
+ */
+export type SharedCountryCode = 'SK' | 'CZ' | 'AT' | 'DE' | 'PL' | 'HU' | 'CH' | 'GB' | 'FR' | 'IT' | 'ES' | 'NL' | 'BE' | 'PT' | 'IE' | 'RO' | 'BG' | 'HR' | 'SI' | 'LU' | 'SE' | 'DK' | 'NO' | 'FI';
 
 /**
  * Cursor-based pagination metadata
@@ -2035,7 +2040,7 @@ export type SharedMoney = {
     /**
      * ISO 4217 currency code
      */
-    currency: string;
+    currency: SharedSupportedCurrency;
 };
 
 /**
@@ -2101,6 +2106,11 @@ export type SharedResourceAccess = {
      */
     expiresAt?: SharedDateTime;
 };
+
+/**
+ * Supported ISO 4217 currency codes for multi-currency operations
+ */
+export type SharedSupportedCurrency = 'EUR' | 'CZK' | 'CHF' | 'GBP' | 'PLN' | 'USD' | 'HUF' | 'RON' | 'BGN' | 'HRK' | 'SEK' | 'DKK' | 'NOK';
 
 /**
  * Tenant context - required for all multi-tenant operations

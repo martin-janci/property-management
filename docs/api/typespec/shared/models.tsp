@@ -20,6 +20,66 @@ scalar phoneNumber extends string;
 @format("uri")
 scalar urlString extends string;
 
+// ---------------------------------------------------------------------------
+// Closed enums for the multi-currency / cross-border domain (Epic 145).
+//
+// THREE SOURCES OF TRUTH — keep these member lists in sync:
+//   1. Postgres enums  → backend/crates/db/migrations/00101_create_multi_currency.sql
+//                        (`supported_currency`, `country_code`)
+//   2. Rust enums      → backend/crates/db/src/models/multi_currency.rs
+//                        (`SupportedCurrency`, `CountryCode`)
+//   3. This TypeSpec   → drives OpenAPI + generated @ppt/api-client / Kotlin client
+//
+// Member names ARE the wire values: an unvalued TypeSpec enum member emits its
+// name as the string value, so `EUR` -> "EUR", matching serde/sqlx
+// `rename_all = "UPPERCASE"` (identity for these single-token acronyms).
+// ---------------------------------------------------------------------------
+
+@doc("Supported ISO 4217 currency codes for multi-currency operations")
+enum SupportedCurrency {
+  EUR, // Euro (base for most EU)
+  CZK, // Czech Koruna
+  CHF, // Swiss Franc
+  GBP, // British Pound
+  PLN, // Polish Zloty
+  USD, // US Dollar
+  HUF, // Hungarian Forint
+  RON, // Romanian Leu
+  BGN, // Bulgarian Lev
+  HRK, // Croatian Kuna (legacy, now EUR)
+  SEK, // Swedish Krona
+  DKK, // Danish Krone
+  NOK, // Norwegian Krone
+}
+
+@doc("Supported ISO 3166-1 alpha-2 country codes (EU/EEA focus)")
+enum CountryCode {
+  SK, // Slovakia
+  CZ, // Czech Republic
+  AT, // Austria
+  DE, // Germany
+  PL, // Poland
+  HU, // Hungary
+  CH, // Switzerland
+  GB, // United Kingdom
+  FR, // France
+  IT, // Italy
+  ES, // Spain
+  NL, // Netherlands
+  BE, // Belgium
+  PT, // Portugal
+  IE, // Ireland
+  RO, // Romania
+  BG, // Bulgaria
+  HR, // Croatia
+  SI, // Slovenia
+  LU, // Luxembourg
+  SE, // Sweden
+  DK, // Denmark
+  NO, // Norway
+  FI, // Finland
+}
+
 @doc("Physical address")
 model Address {
   @doc("Street address line 1")
@@ -38,9 +98,7 @@ model Address {
   postalCode: string;
 
   @doc("ISO 3166-1 alpha-2 country code")
-  @minLength(2)
-  @maxLength(2)
-  country: string;
+  country: CountryCode;
 }
 
 @doc("Monetary amount with currency")
@@ -49,9 +107,7 @@ model Money {
   amount: int64;
 
   @doc("ISO 4217 currency code")
-  @minLength(3)
-  @maxLength(3)
-  currency: string;
+  currency: SupportedCurrency;
 }
 
 @doc("GPS coordinates")
