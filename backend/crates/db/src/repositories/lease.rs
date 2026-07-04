@@ -296,7 +296,7 @@ impl LeaseRepository {
         let apps = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, String, String, Option<chrono::DateTime<Utc>>, Option<Decimal>, Option<NaiveDate>, i64, bool)>(
             r#"
             SELECT
-                a.id, a.unit_id, u.name, b.name,
+                a.id, a.unit_id, u.designation, b.name,
                 a.applicant_name, a.applicant_email, a.status,
                 a.submitted_at, a.monthly_income, a.desired_move_in,
                 (SELECT COUNT(*) FROM tenant_screenings WHERE application_id = a.id) as screening_count,
@@ -1039,7 +1039,7 @@ impl LeaseRepository {
         >(
             r#"
             SELECT
-                l.id, l.unit_id, u.name, b.name,
+                l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
                 l.start_date, l.end_date, l.monthly_rent, l.status,
                 (l.end_date - $6::date)::int8 as days_until_expiry
@@ -1489,7 +1489,7 @@ impl LeaseRepository {
         >(
             r#"
             SELECT
-                l.id, l.unit_id, u.name, b.name,
+                l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
                 l.start_date, l.end_date, l.monthly_rent, l.status,
                 (l.end_date - $2::date)::int8 as days_until_expiry
@@ -1998,7 +1998,7 @@ impl LeaseRepository {
 
         // Get unit and building names
         let (unit_name, building_name): (String, String) = sqlx::query_as(
-            r#"SELECT u.name, b.name FROM units u JOIN buildings b ON b.id = u.building_id WHERE u.id = $1"#,
+            r#"SELECT u.designation, b.name FROM units u JOIN buildings b ON b.id = u.building_id WHERE u.id = $1"#,
         )
         .bind(lease.unit_id)
         .fetch_one(&self.pool)
