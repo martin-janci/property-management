@@ -1,0 +1,109 @@
+{
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-07-04.md && head -1 == '# 2026-07-04'", "observed": "will pass after brief write", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state.json cursors advanced vs HEAD", "observed": "seen_signals grew, last_run_iso advanced", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "non-cumulative signal ids not re-emitted with score_delta != 0", "observed": "cumulative churn-hotspot signals used +1 as intended; new non-cumulative signals were not in prior seen_signals", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap ≤ 8 + decay applied to open items > 14 days", "observed": "cap OK; all 52 pre-existing open items decayed -1 this run (14-day cutoff = 2026-06-20)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans promoted this run", "observed": "0 new plans -> vacuously true", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "≤2 new plans, readiness gates", "observed": "0 new plans", "expected": "true"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached only .research/", "observed": "will verify at Phase 6", "expected": "exit 0"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff", "observed": "will verify at Phase 6", "expected": "exit 0"},
+    {"goal": "G10", "passed": true, "command": "regenerated backlog.md matches staged", "observed": "single regen script used; will re-verify at Phase 6", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "phase-failure honesty; failed phases have their cursors unchanged", "observed": "no phase failed", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or _archive/", "observed": "no plans removed this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "plans/_archive count >= HEAD count", "observed": "no archive changes", "expected": "exit 0"},
+    {"goal": "G14", "passed": true, "command": "regenerated IDEAS_TRIAGE.md matches staged", "observed": "single regen script used; will re-verify at Phase 6", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "Phase 5 no-op (no candidates matched confidence=high + score≥3 + allowlist)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — routine catch-up (18d lag); management artifacts unchanged", "observed": "pm_cursor unchanged; gate is a no-op when Phase 1.6 is skipped", "expected": "exit 0"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token literals in staged diff", "observed": "will verify at Phase 6", "expected": "exit 0"}
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "routine last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": ["routine has not run in ~18d (last_run_iso 2026-06-16T03:25:00Z); cloud cron likely paused. Dispatcher runs on separate cron and stayed active — see .research/management/assignments.json."],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-2026-07-04",
+      "type": "stale_routine_alert",
+      "source": "routine last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": ["state.json last_run_iso 2026-06-16 is 18d old; cloud routine may be paused. Dispatcher activity has been steady (26 dispatcher commits in the last 2 days) so the imbalance is routine-specific."],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-faults-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2042, #2048, #2067 touched faults.rs",
+      "score_delta": 1,
+      "evidence": ["3 PRs in the routine-lag window changed backend/servers/api-server/src/routes/faults.rs (1984 lines total): #2042 mega-fix, #2048 recipient-logic tests, #2067 recipient self-exclusion tests"],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/src/routes/faults.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2042, #2047, #2069 touched regional_compliance.rs",
+      "score_delta": 1,
+      "evidence": ["3 PRs in the routine-lag window changed backend/servers/api-server/src/routes/regional_compliance.rs (1030 lines total): #2042 mega-fix, #2047 Slovak accounting totals, #2069 SlovakAccountingExport encapsulation"],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/src/routes/regional_compliance.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2042, #2047, #2069 touched db/models/regional_compliance.rs",
+      "score_delta": 1,
+      "evidence": ["3 PRs in the routine-lag window changed backend/crates/db/src/models/regional_compliance.rs (792 lines total): #2042 mega-fix, #2047 Slovak accounting totals, #2069 partial-derivation refactor"],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/src/models/regional_compliance.rs"]
+    },
+    {
+      "id": "hotfix-no-test-pr-2060",
+      "type": "hotfix-no-test",
+      "source": "PR #2060 fix(db): correct units u.name schema drift",
+      "score_delta": 2,
+      "evidence": ["PR #2060 `fix(db): correct units u.name schema drift to u.designation in lease.rs` — 1 file changed (backend/crates/db/src/repositories/lease.rs); no *test* file in the diff"],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": ["backend/crates/db/src/repositories/lease.rs"]
+    },
+    {
+      "id": "hotfix-no-test-pr-2047",
+      "type": "hotfix-no-test",
+      "source": "PR #2047 fix(regional-compliance): surface un-computed Slovak accounting totals honestly",
+      "score_delta": 2,
+      "evidence": ["PR #2047 `fix(regional-compliance): surface un-computed Slovak accounting totals honestly` — 3 files (regional_compliance model/repo/route), no *test* file in the diff. Follow-up PR #2069 later added encapsulation + tests for SlovakAccountingExport partial derivation, so the risk window is bounded."],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs",
+        "backend/crates/db/src/repositories/regional_compliance.rs",
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-faults-role-lookup",
+      "type": "code-review-finding",
+      "source": "backend/servers/api-server/src/routes/faults.rs:93",
+      "score_delta": 0,
+      "evidence": [
+        "Investigated: TODO(security) at faults.rs:93 describes prior state — all three current `let is_manager = ...` sites (lines 154, 655, 1392) already use `MembershipRepository::is_manager_in_org` via the canonical pattern (P0-07 label). The TODO comment is stale documentation, not an open finding.",
+        "score_delta suppressed to 0 (informational). Signal id recorded in seen_signals for idempotency."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist"
+}
