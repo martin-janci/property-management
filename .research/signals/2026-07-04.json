@@ -1,0 +1,162 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso=2026-06-16T03:25:00Z is 18d old (36h threshold breached)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-04",
+      "type": "stale_routine_alert",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "state.json has not advanced in 18d; cloud routine trigger may be paused. Dispatcher runs on separate planning branch — check that separately."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-04.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit cumulative check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay applied to 38 open items updated≤2026-06-20",
+      "observed": "38 decayed",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v '^\\.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed",
+      "expected": "any-failed → surfaced"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plans deleted",
+      "observed": "4 archived",
+      "expected": "no plan silently deleted"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "10 (was 6)",
+      "expected": ">=6"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions this run",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped on catch-up run — no-op gate",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "catch-up run — no fresh high-confidence signals matched allowlist",
+  "resolutions_applied": {
+    "done": 19,
+    "partial": 1,
+    "decay": 38,
+    "note": "19 items marked done via ID-in-PR-title match; 4 plans archived; 1 partial (mock-data compound)"
+  }
+}
