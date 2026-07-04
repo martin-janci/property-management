@@ -1924,6 +1924,30 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "7a-3-permission-based-access",
+      "action": "Coverage gap [mvp]: Permission-Based Document Access (Story 7A.3) — verify-to-done. Evidence: document_access_allowed + scope_membership_allows in core.rs, document_access_test.rs (217 lines). Gaps: sprint-status not flipped, no merged-PR keyword match, frontend permission UI unconfirmed. Confirm backend authz coverage is complete and flip sprint-status; if a real gap exists, close it.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T04:07:39Z"
+    },
+    {
+      "id": "7a-4-document-download-preview",
+      "action": "Coverage gap [mvp]: Document Download & Preview (Story 7A.4) — verify-to-done. Evidence: GET /{id}/download + /preview handlers, document-detail screen shipped. Gaps: sprint-status not flipped, preview second-frame planned. Confirm download/preview handlers are complete and flip sprint-status; if the preview second frame is a real gap, scope it.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T04:07:39Z"
     }
   ]
 }
