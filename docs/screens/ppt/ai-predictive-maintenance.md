@@ -2,6 +2,8 @@
 id: ppt/ai-predictive-maintenance
 name: Predictive Maintenance Dashboard
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-ai-predictive-maintenance
 implementations:
   ppt-web:
     route: "/ai/predictive-maintenance"

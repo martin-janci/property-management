@@ -2,6 +2,8 @@
 id: ppt/ai-sentiment
 name: Tenant Sentiment Dashboard
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-ai-sentiment
 implementations:
   ppt-web:
     route: "/ai/sentiment"

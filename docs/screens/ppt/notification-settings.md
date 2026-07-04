@@ -78,7 +78,7 @@ owner: pm-frontend
 
 Epic 8A, Story 8A.1 — channel-level notification toggles. The screen is the user-facing surface over `notification_preferences` (push / email / in_app), backed by `GET` + `PATCH /api/v1/users/me/notification-preferences`. Default preferences (all enabled) are auto-created per user by a DB trigger (migration `00021_create_notification_preferences.sql`). Story 8A.3 layers realtime sync on top so multiple sessions stay consistent.
 
-There is a sibling **Advanced** route (`/settings/notifications/advanced`, `AdvancedNotificationSettingsPage`, Epic 40) for per-category preferences, digests, quiet hours and grouping — catalogued in the sitemap as `ppt-settings-notifications-advanced` but intentionally out of scope for this 8A.1 screen-map.
+There is a sibling **Advanced** route (`/settings/notifications/advanced`, `AdvancedNotificationSettingsPage`, Epic 40) for per-category preferences, digests, quiet hours and grouping — catalogued in the sitemap as `ppt-settings-notifications-advanced` and out of scope for this 8A.1 screen-map. It now has its own screen-map at `ppt/settings-notifications-advanced` (child of this screen).
 
 ### Specific (recent)
 
