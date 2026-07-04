@@ -8350,9 +8350,8 @@ components:
           type: string
           description: Postal/ZIP code
         country:
-          type: string
-          minLength: 2
-          maxLength: 2
+          allOf:
+            - $ref: '#/components/schemas/Shared.CountryCode'
           description: ISO 3166-1 alpha-2 country code
       description: Physical address
     Shared.Attachment:
@@ -8445,6 +8444,34 @@ components:
             $ref: '#/components/schemas/Shared.Delegation'
           description: Active delegations to this user
       description: Authenticated user info (from JWT)
+    Shared.CountryCode:
+      type: string
+      enum:
+        - SK
+        - CZ
+        - AT
+        - DE
+        - PL
+        - HU
+        - CH
+        - GB
+        - FR
+        - IT
+        - ES
+        - NL
+        - BE
+        - PT
+        - IE
+        - RO
+        - BG
+        - HR
+        - SI
+        - LU
+        - SE
+        - DK
+        - 'NO'
+        - FI
+      description: Supported ISO 3166-1 alpha-2 country codes (EU/EEA focus)
     Shared.CursorPaginationMeta:
       type: object
       required:
@@ -8591,9 +8618,8 @@ components:
           format: int64
           description: Amount in smallest currency unit (e.g., cents)
         currency:
-          type: string
-          minLength: 3
-          maxLength: 3
+          allOf:
+            - $ref: '#/components/schemas/Shared.SupportedCurrency'
           description: ISO 4217 currency code
       description: Monetary amount with currency
     Shared.PaginationMeta:
@@ -8669,6 +8695,23 @@ components:
             - $ref: '#/components/schemas/Shared.dateTime'
           description: Access expiration (null for permanent)
       description: Resource access level
+    Shared.SupportedCurrency:
+      type: string
+      enum:
+        - EUR
+        - CZK
+        - CHF
+        - GBP
+        - PLN
+        - USD
+        - HUF
+        - RON
+        - BGN
+        - HRK
+        - SEK
+        - DKK
+        - NOK
+      description: Supported ISO 4217 currency codes for multi-currency operations
     Shared.TenantContext:
       type: object
       description: Tenant context - required for all multi-tenant operations
