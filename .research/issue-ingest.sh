@@ -75,9 +75,19 @@ if [ -z "${GH_ISSUES_FILE:-}" ] || [ ! -f "${GH_ISSUES_FILE:-}" ]; then
 fi
 
 # Assignment id set (active + archive), multi-file-safe via `jq -s`.
-ASSIGN_INPUTS=("$ASSIGN")
+# Guard BOTH inputs symmetrically with `[ -f ]`: a missing PRIMARY
+# assignments.json makes `jq -s "$ASSIGN"` exit 2 ("Could not open file"),
+# which under `set -euo pipefail` aborts the whole ingest — the `.assignments[]?`
+# optional operator only tolerates a missing *key*, not a missing *file* (#2078).
+# Default to an empty id set when neither file exists.
+ASSIGN_INPUTS=()
+[ -f "$ASSIGN" ]         && ASSIGN_INPUTS+=("$ASSIGN")
 [ -f "$ASSIGN_ARCHIVE" ] && ASSIGN_INPUTS+=("$ASSIGN_ARCHIVE")
-ASSIGN_IDS=$(jq -s '[ .[].assignments[]?.task_id ] | unique' "${ASSIGN_INPUTS[@]}")
+if [ "${#ASSIGN_INPUTS[@]}" -eq 0 ]; then
+  ASSIGN_IDS='[]'
+else
+  ASSIGN_IDS=$(jq -s '[ .[].assignments[]?.task_id ] | unique' "${ASSIGN_INPUTS[@]}")
+fi
 
 ACTIVE_BEFORE=$(jq '.items | length' "$ACTION_LIST")
 # CEIL headroom is measured against the active item count (append-bound).
