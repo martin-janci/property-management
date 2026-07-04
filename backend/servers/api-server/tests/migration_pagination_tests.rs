@@ -167,6 +167,43 @@ async fn seed_buildings_templates(pool: &PgPool, org_id: Uuid, count: i32) -> Ve
     (0..count).rev().map(|i| format!("pg-tpl-{i}")).collect()
 }
 
+/// Insert `count` custom `buildings` templates for `org_id` that all share an
+/// identical `updated_at`, collapsing the leading `ORDER BY updated_at DESC`
+/// key into a single tie for every row. That makes the `id DESC` sub-sort the
+/// *only* thing that decides order — the exact instability the 00212 index +
+/// the `id DESC` ORDER BY key exist to pin (#2051 / #1997 / #2080).
+///
+/// Returns the inserted ids sorted DESC — the exact order
+/// `ORDER BY updated_at DESC, id DESC` must produce for a single tie group.
+/// Postgres compares `uuid` byte-wise big-endian, which matches the derived
+/// `Ord` on `uuid::Uuid`'s `[u8; 16]`, so a Rust descending sort is a faithful
+/// oracle for Postgres `id DESC`.
+async fn seed_tied_updated_at_templates(pool: &PgPool, org_id: Uuid, count: i32) -> Vec<Uuid> {
+    let mut ids = Vec::with_capacity(count as usize);
+    for i in 0..count {
+        // Pin one literal timestamp for every row so no two rows can differ on
+        // the leading sort key.
+        let id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO import_templates
+                   (organization_id, name, description, data_type,
+                    field_mappings, is_system_template, updated_at)
+               VALUES ($1, $2, NULL, 'buildings', '[]'::jsonb, false,
+                       TIMESTAMPTZ '2026-01-01 12:00:00+00')
+               RETURNING id"#,
+        )
+        .bind(org_id)
+        .bind(format!("tie-tpl-{i}"))
+        .fetch_one(pool)
+        .await
+        .expect("seed tied-updated_at template");
+        ids.push(id);
+    }
+
+    ids.sort_unstable();
+    ids.reverse();
+    ids
+}
+
 /// `per_page=0` and `per_page=-5` must both clamp up to 1.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn per_page_zero_and_negative_clamp_to_one(pool: PgPool) {
@@ -257,5 +294,52 @@ async fn page_two_returns_expected_offset_slice(pool: PgPool) {
         names,
         vec![&expected_order[2][..], &expected_order[3][..]],
         "page 2 must be the offset-2 slice of the DESC ordering"
+    );
+}
+
+/// The whole point of the `id DESC` tie-break (00212's third index column and
+/// the second ORDER BY key) is to make paging deterministic when rows share an
+/// `updated_at`. The clamp tests above give every row a distinct `updated_at`,
+/// so their slice assertions would pass even if the tiebreak regressed. This
+/// test pins the tiebreak directly (#2080): it seeds one tie group — several
+/// rows with an identical `updated_at` — and asserts both the full-list order
+/// and an offset slice straddling that group resolve to a strict `id DESC`
+/// order.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn identical_updated_at_falls_back_to_deterministic_id_desc(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgtie").await;
+
+    // Four rows, all with the same updated_at => a single 4-row tie group.
+    let ids_desc = seed_tied_updated_at_templates(&pool, org_id, 4).await;
+
+    // (1) Full list order must equal the seeded ids sorted DESC. Without the
+    // `id DESC` key this order would be unspecified across the tie group.
+    let uri = "/api/v1/migration/templates?include_system=false&per_page=100";
+    let resp = app.execute(get(&token, org_id, uri)).await;
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
+    let body: ListTemplatesResponse = resp.json();
+    assert_eq!(body.total, 4, "all four tied rows are listed");
+    let full_order: Vec<Uuid> = body.templates.iter().map(|t| t.id).collect();
+    assert_eq!(
+        full_order, ids_desc,
+        "tied updated_at must resolve to a strict id DESC order"
+    );
+
+    // (2) Offset slice straddling the tie group: page=2&per_page=2 => offset
+    // (2-1)*2 = 2 => the 3rd and 4th ids of the DESC order. This slice is only
+    // stable because the id tiebreak fixes the intra-tie ordering.
+    let uri = "/api/v1/migration/templates?include_system=false&page=2&per_page=2";
+    let resp = app.execute(get(&token, org_id, uri)).await;
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
+    let body: ListTemplatesResponse = resp.json();
+    assert_eq!(body.page, 2);
+    assert_eq!(body.per_page, 2);
+    assert_eq!(body.total, 4);
+    let slice: Vec<Uuid> = body.templates.iter().map(|t| t.id).collect();
+    assert_eq!(
+        slice,
+        vec![ids_desc[2], ids_desc[3]],
+        "page-2 slice of a single tie group must be the deterministic id DESC sub-slice"
     );
 }
