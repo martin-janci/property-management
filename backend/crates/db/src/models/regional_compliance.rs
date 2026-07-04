@@ -402,6 +402,31 @@ pub struct SlovakAccountingExport {
     pub generated_at: DateTime<Utc>,
 }
 
+impl SlovakAccountingExport {
+    /// Derive `partial` and `unsupported_fields` from the `Option` monetary
+    /// fields, keeping the honesty invariant (#2030) co-located with the fields
+    /// it depends on instead of being hand-rolled in the route handler.
+    ///
+    /// A monetary field that is `None` is **not available** (not a genuine
+    /// zero): it serializes as JSON `null` and its name is enumerated in
+    /// `unsupported_fields`. `partial` is `true` iff at least one such field is
+    /// missing. When a new `Option` monetary field is added to this struct,
+    /// extend the checks below so it is covered here in one place rather than
+    /// being silently omitted from the derivation (which would re-introduce the
+    /// "looks complete but isn't" dishonesty #2030 set out to kill).
+    pub fn compute_partial(&mut self) {
+        let mut unsupported_fields = Vec::new();
+        if self.total_expenses.is_none() {
+            unsupported_fields.push("total_expenses".to_string());
+        }
+        if self.total_payables.is_none() {
+            unsupported_fields.push("total_payables".to_string());
+        }
+        self.partial = !unsupported_fields.is_empty();
+        self.unsupported_fields = unsupported_fields;
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PohodaExport {
     pub header: PohodaHeader,
@@ -687,5 +712,77 @@ mod tests {
             json["unsupported_fields"],
             serde_json::json!(["total_expenses", "total_payables"])
         );
+    }
+
+    /// Baseline export whose `partial`/`unsupported_fields` are deliberately
+    /// seeded with WRONG values, so a passing assertion proves
+    /// `compute_partial` actually (re)derived them rather than reading stale
+    /// hand-set state.
+    fn export_with(
+        total_expenses: Option<Decimal>,
+        total_payables: Option<Decimal>,
+    ) -> SlovakAccountingExport {
+        SlovakAccountingExport {
+            export_id: Uuid::nil(),
+            organization_id: Uuid::nil(),
+            from_date: NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            format: SlovakAccountingFormat::Pohoda,
+            invoice_count: 0,
+            payment_count: 0,
+            journal_entry_count: 0,
+            total_revenue: Decimal::ZERO,
+            total_expenses,
+            total_receivables: Decimal::ZERO,
+            total_payables,
+            // Intentionally inconsistent seed values — compute_partial must
+            // overwrite both.
+            partial: false,
+            unsupported_fields: vec!["stale".to_string()],
+            download_url: None,
+            export_data: None,
+            generated_at: DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
+        }
+    }
+
+    /// #2053: exercise the derivation itself (not just serialization). Feeds
+    /// every combination of present/absent monetary fields through
+    /// `compute_partial` and asserts the exact `partial` + `unsupported_fields`
+    /// outcome, so a handler that forgets to set `partial` or mislabels a field
+    /// is caught.
+    #[test]
+    fn compute_partial_derives_from_option_fields() {
+        // Both monetary fields missing -> partial, both enumerated in order.
+        let mut both_missing = export_with(None, None);
+        both_missing.compute_partial();
+        assert!(both_missing.partial);
+        assert_eq!(
+            both_missing.unsupported_fields,
+            vec!["total_expenses".to_string(), "total_payables".to_string()]
+        );
+
+        // Only expenses missing -> partial, only expenses listed.
+        let mut expenses_missing = export_with(None, Some(Decimal::new(500, 2)));
+        expenses_missing.compute_partial();
+        assert!(expenses_missing.partial);
+        assert_eq!(
+            expenses_missing.unsupported_fields,
+            vec!["total_expenses".to_string()]
+        );
+
+        // Only payables missing -> partial, only payables listed.
+        let mut payables_missing = export_with(Some(Decimal::new(500, 2)), None);
+        payables_missing.compute_partial();
+        assert!(payables_missing.partial);
+        assert_eq!(
+            payables_missing.unsupported_fields,
+            vec!["total_payables".to_string()]
+        );
+
+        // Everything present (incl. genuine zero) -> complete, no unsupported.
+        let mut complete = export_with(Some(Decimal::ZERO), Some(Decimal::ZERO));
+        complete.compute_partial();
+        assert!(!complete.partial);
+        assert!(complete.unsupported_fields.is_empty());
     }
 }

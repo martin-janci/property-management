@@ -448,19 +448,7 @@ async fn export_slovak_accounting(
 
     let journal_entry_count = invoice_count + payment_count;
 
-    // Surface un-computed monetary fields honestly (#2030): a `null` +
-    // `unsupported_fields` entry so consumers can distinguish "not available"
-    // from a genuine zero, rather than the previous misleading hardcoded 0.
-    let mut unsupported_fields = Vec::new();
-    if total_expenses.is_none() {
-        unsupported_fields.push("total_expenses".to_string());
-    }
-    if total_payables.is_none() {
-        unsupported_fields.push("total_payables".to_string());
-    }
-    let partial = !unsupported_fields.is_empty();
-
-    let result = Ok(Json(SlovakAccountingExport {
+    let mut export = SlovakAccountingExport {
         export_id: Uuid::new_v4(),
         organization_id: org_id,
         from_date: payload.from_date,
@@ -473,15 +461,24 @@ async fn export_slovak_accounting(
         total_expenses,
         total_receivables,
         total_payables,
-        partial,
-        unsupported_fields,
+        // Derived below by `compute_partial` from the `Option` monetary fields.
+        partial: false,
+        unsupported_fields: Vec::new(),
         download_url: Some(format!(
             "/api/v1/regional-compliance/slovak/accounting/download/{}",
             Uuid::new_v4()
         )),
         export_data: None,
         generated_at: Utc::now(),
-    }));
+    };
+    // Surface un-computed monetary fields honestly (#2030): sets `partial` +
+    // `unsupported_fields` so consumers can distinguish "not available" from a
+    // genuine zero, rather than the previous misleading hardcoded 0. The
+    // derivation lives on the model (#2053) so the invariant stays co-located
+    // with the fields it depends on.
+    export.compute_partial();
+
+    let result = Ok(Json(export));
     rls.release().await;
     result
 }
