@@ -66,8 +66,12 @@ async fn search(router: &Router, query: &str) -> (StatusCode, Value) {
     let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
         .await
         .expect("read response body");
-    let json: Value = serde_json::from_slice(&bytes)
-        .unwrap_or_else(|e| panic!("body was not JSON ({e}): {:?}", String::from_utf8_lossy(&bytes)));
+    let json: Value = serde_json::from_slice(&bytes).unwrap_or_else(|e| {
+        panic!(
+            "body was not JSON ({e}): {:?}",
+            String::from_utf8_lossy(&bytes)
+        )
+    });
     (status, json)
 }
 
