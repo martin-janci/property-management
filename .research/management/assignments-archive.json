@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-07-04T20:13:51Z",
+  "archived_at": "2026-07-04T20:18:31Z",
   "_deferred": true,
   "_reason": "Full 452-row archive (~492KB) exceeds the mcp__github__push_files inline-content limit (known issue #1014); git push is 403 in this environment. The authoritative archive lives in the local working tree and must be landed by a run with working git transport or after archive compaction. This is a placeholder marker, NOT the real archive data.",
   "assignments": [
@@ -1830,6 +1830,28 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "refactor-churn-hotspot-mobile-announcements-test",
+      "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme-42323e22",
+      "status": "merged",
+      "claimed_at": "2026-07-04T18:17:51Z",
+      "last_updated": "2026-07-04T20:18:02Z",
+      "status_changed_at": "2026-07-04T20:18:02Z",
+      "pr_number": 2088,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2088",
+      "merged_at": "2026-07-04T20:18:02Z",
+      "specialist": "frontend-mobile",
+      "implementer_summary": "pr=2088 status=done specialist=frontend-mobile scope_drift=false note=added-3-boundary-tests-for-formatRelativeDate-only-real-gap",
+      "reviewer_summary": "verdict=approve note=test-only boundary tests verified correct; CI green; approve via comment (self-approval blocked)",
+      "last_reviewed_oid": "ef5dff474b0f4a4170bdbf94ff28894d57be4d98",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
