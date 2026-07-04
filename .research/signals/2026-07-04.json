@@ -1,0 +1,171 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Routine has not run in 18d 442h (since 2026-06-16T03:25Z). Cloud cron may be paused; state.last_run_iso >3d old → stale_routine_alert."
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-06-16T03:25Z on origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2941 lines (+/−) since 2026-06-16 — top-3 code churn hotspot (excluding docs/routine files)."
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-06-16T03:25Z on origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2818 lines (+/−) since 2026-06-16 — top-3 code churn hotspot."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-06-16T03:25Z on origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2719 lines (+/−) since 2026-06-16 — top-3 code churn hotspot; test-file heavy churn."
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen was 2 (last_seen 2026-06-02) → now 3",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Repeated hotspot: runs_seen crosses 3 — instability proxy on oauth_integration_tests.rs."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json prev vs current",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen_signals disjoint",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run — vacuous",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run — vacuous",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secret",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phase failure honesty",
+      "observed": "no failures",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all HEAD plan slugs still exist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "7 >= 7",
+      "expected": "current >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + kill-switch",
+      "observed": "0",
+      "expected": "<= 3, disciplined"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
