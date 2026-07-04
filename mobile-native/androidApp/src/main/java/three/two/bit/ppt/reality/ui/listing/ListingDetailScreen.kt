@@ -14,14 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
-import three.two.bit.ppt.reality.favorites.FavoritesRepository
-import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
-import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.*
 import three.two.bit.ppt.reality.util.isNetworkError
 
@@ -66,104 +62,51 @@ fun ListingDetailScreen(
     val authState by ssoService.authState.collectAsState()
     val networkErrorMsg = stringResource(R.string.error_network)
     val genericErrorMsg = stringResource(R.string.error_generic)
-    fun friendlyError(e: Throwable) = if (e.isNetworkError()) networkErrorMsg else genericErrorMsg
-
-    var listing by remember { mutableStateOf<ListingDetail?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isFavorite by remember { mutableStateOf(false) }
-    var isFavoriteLoading by remember { mutableStateOf(false) }
-    var showInquiryDialog by remember { mutableStateOf(false) }
-    var isInquirySubmitting by remember { mutableStateOf(false) }
-    var inquiryError by remember { mutableStateOf<String?>(null) }
-    var showShareSheet by remember { mutableStateOf(false) }
 
     val sessionToken = (authState as? AuthState.Authenticated)?.sessionToken
-    val favoritesRepository =
-        remember(sessionToken) {
-            FavoritesRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
-        }
-    val inquiryRepository =
-        remember(sessionToken) {
-            InquiryRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
-        }
-
-    LaunchedEffect(listingId, authState) {
-        if (authState is AuthState.Authenticated) {
-            favoritesRepository
-                .isFavorite(listingId)
-                .fold(onSuccess = { isFavorite = it }, onFailure = { /* non-critical */ })
-        }
-    }
-    LaunchedEffect(listingId) {
-        isLoading = true
-        repository
-            .getListingDetail(listingId)
-            .fold(
-                onSuccess = {
-                    listing = it
-                    isLoading = false
-                },
-                onFailure = {
-                    errorMessage = friendlyError(it)
-                    isLoading = false
-                },
+    // State + side-effects are hoisted into ListingDetailViewModel (commonMain). This composable
+    // is now a `collectAsState()` render + intent wiring — see issue #2079. The VM is re-created on
+    // session-token change so its repositories carry the current auth header.
+    val viewModel =
+        remember(sessionToken, listingId) {
+            ListingDetailViewModel.create(
+                listingId = listingId,
+                listingRepository = repository,
+                baseUrl = ApiConfig.requireBaseUrl(),
+                sessionToken = sessionToken,
+                scope = scope,
+                errorMapper = { e -> if (e.isNetworkError()) networkErrorMsg else genericErrorMsg },
             )
+        }
+    val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(viewModel) { viewModel.start() }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ListingDetailEvent.InquirySubmitted -> onInquirySuccess()
+            }
+        }
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
-            isLoading ->
+            state.isLoading ->
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            errorMessage != null ->
-                ErrorContent(
-                    message = errorMessage!!,
-                    onRetry = {
-                        scope.launch {
-                            isLoading = true
-                            errorMessage = null
-                            repository
-                                .getListingDetail(listingId)
-                                .fold(
-                                    onSuccess = { listing = it },
-                                    onFailure = { errorMessage = friendlyError(it) },
-                                )
-                            isLoading = false
-                        }
-                    },
-                )
-            listing != null ->
+            state.errorMessage != null ->
+                ErrorContent(message = state.errorMessage!!, onRetry = viewModel::retry)
+            state.listing != null ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     ListingContent(
-                        listing = listing!!,
-                        isFavorite = isFavorite,
+                        listing = state.listing!!,
+                        isFavorite = state.isFavorite,
                         onBackClick = onBackClick,
-                        onShareClick = { showShareSheet = true },
-                        onFavoriteClick = {
-                            if (authState is AuthState.Authenticated && !isFavoriteLoading) {
-                                val previousFav = isFavorite
-                                val newFav = !isFavorite
-                                // Optimistic UI: flip the heart immediately, then reconcile with
-                                // the server response. On failure we roll the state back to
-                                // `previousFav` so the icon never lies about persisted state.
-                                isFavorite = newFav
-                                isFavoriteLoading = true
-                                scope.launch {
-                                    val result =
-                                        if (newFav) favoritesRepository.addFavorite(listingId)
-                                        else favoritesRepository.removeFavorite(listingId)
-                                    result.fold(
-                                        onSuccess = { /* optimistic value already applied */ },
-                                        onFailure = { isFavorite = previousFav },
-                                    )
-                                    isFavoriteLoading = false
-                                }
-                            }
-                        },
+                        onShareClick = viewModel::onShowShareSheet,
+                        onFavoriteClick = viewModel::onFavoriteToggle,
                         onCallClick = {
-                            listing!!.realtor?.phone?.let { phone ->
+                            state.listing!!.realtor?.phone?.let { phone ->
                                 context.startActivity(
                                     Intent(Intent.ACTION_DIAL).apply {
                                         data = Uri.parse("tel:$phone")
@@ -171,54 +114,27 @@ fun ListingDetailScreen(
                                 )
                             }
                         },
-                        onMessageClick = { showInquiryDialog = true },
-                        onInquiryClick = { showInquiryDialog = true },
+                        onMessageClick = viewModel::onShowInquiryDialog,
+                        onInquiryClick = viewModel::onShowInquiryDialog,
                     )
                 }
         }
     }
 
-    if (showInquiryDialog && listing != null) {
+    if (state.showInquiryDialog && state.listing != null) {
         InquiryDialog(
-            listing = listing!!,
+            listing = state.listing!!,
             isAuthenticated = authState is AuthState.Authenticated,
-            isSubmitting = isInquirySubmitting,
-            errorMessage = inquiryError,
-            onDismiss = {
-                showInquiryDialog = false
-                inquiryError = null
-            },
+            isSubmitting = state.isInquirySubmitting,
+            errorMessage = state.inquiryError,
+            onDismiss = viewModel::onDismissInquiryDialog,
             onSubmit = { message, name, email, phone ->
-                isInquirySubmitting = true
-                inquiryError = null
-                scope.launch {
-                    val request =
-                        CreateInquiryRequest(
-                            listingId = listingId,
-                            message = message,
-                            name = name,
-                            email = email,
-                            phone = phone,
-                        )
-                    inquiryRepository
-                        .createInquiry(request)
-                        .fold(
-                            onSuccess = {
-                                isInquirySubmitting = false
-                                showInquiryDialog = false
-                                onInquirySuccess()
-                            },
-                            onFailure = { error ->
-                                isInquirySubmitting = false
-                                inquiryError = friendlyError(error)
-                            },
-                        )
-                }
+                viewModel.onSubmitInquiry(message, name, email, phone)
             },
         )
     }
-    if (showShareSheet && listing != null) {
-        ShareListingSheet(listing = listing!!, onDismiss = { showShareSheet = false })
+    if (state.showShareSheet && state.listing != null) {
+        ShareListingSheet(listing = state.listing!!, onDismiss = viewModel::onDismissShareSheet)
     }
 }
 
