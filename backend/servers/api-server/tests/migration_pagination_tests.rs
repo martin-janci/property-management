@@ -117,9 +117,7 @@ async fn per_page_zero_and_negative_clamp_to_one(pool: PgPool) {
     seed_buildings_templates(&pool, org_id, 3).await;
 
     for raw in ["0", "-5"] {
-        let uri = format!(
-            "/api/v1/migration/templates?include_system=false&per_page={raw}"
-        );
+        let uri = format!("/api/v1/migration/templates?include_system=false&per_page={raw}");
         let resp = app.execute(get(&token, org_id, &uri)).await;
         assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
         let body: ListTemplatesResponse = resp.json();
@@ -144,8 +142,7 @@ async fn per_page_above_max_clamps_to_hundred(pool: PgPool) {
     let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgclamp2").await;
     seed_buildings_templates(&pool, org_id, 5).await;
 
-    let uri =
-        "/api/v1/migration/templates?include_system=false&per_page=500";
+    let uri = "/api/v1/migration/templates?include_system=false&per_page=500";
     let resp = app.execute(get(&token, org_id, uri)).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body: ListTemplatesResponse = resp.json();
@@ -166,8 +163,7 @@ async fn page_zero_clamps_to_one(pool: PgPool) {
     let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgclamp3").await;
     let expected_order = seed_buildings_templates(&pool, org_id, 5).await;
 
-    let uri =
-        "/api/v1/migration/templates?include_system=false&page=0&per_page=2";
+    let uri = "/api/v1/migration/templates?include_system=false&page=0&per_page=2";
     let resp = app.execute(get(&token, org_id, uri)).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body: ListTemplatesResponse = resp.json();
@@ -188,8 +184,7 @@ async fn page_two_returns_expected_offset_slice(pool: PgPool) {
     let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgclamp4").await;
     let expected_order = seed_buildings_templates(&pool, org_id, 5).await;
 
-    let uri =
-        "/api/v1/migration/templates?include_system=false&page=2&per_page=2";
+    let uri = "/api/v1/migration/templates?include_system=false&page=2&per_page=2";
     let resp = app.execute(get(&token, org_id, uri)).await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body: ListTemplatesResponse = resp.json();
