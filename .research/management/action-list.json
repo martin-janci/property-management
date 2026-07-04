@@ -1325,8 +1325,8 @@
       "action": "AI llm/sessions + integrations sync + subscriptions RLS migration (PR #1287, PAP-169) shipped without a new regression test",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-07-04T20:05:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1335,6 +1335,13 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-04T20:05:24Z"
       }
     },
     {
@@ -1366,8 +1373,8 @@
       "action": "api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test for the public-connection routing",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-07-04T20:05:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1376,6 +1383,13 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-04T20:05:24Z"
       }
     },
     {
@@ -1564,8 +1578,8 @@
       "action": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-04T20:05:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1574,6 +1588,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-04T20:05:24Z"
       }
     },
     {
@@ -2027,12 +2048,240 @@
       "action": "Coverage gap [mvp]: Document Download & Preview (Story 7A.4) — verify-to-done. Evidence: GET /{id}/download + /preview handlers, document-detail screen shipped. Gaps: sprint-status not flipped, preview second-frame planned. Confirm download/preview handlers are complete and flip sprint-status; if the preview second frame is a real gap, scope it.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-04T20:05:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-07-04T04:07:39Z"
+      "first_open_at": "2026-07-04T04:07:39Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2071,
+        "merged_at": "2026-07-04T14:11:50Z",
+        "at": "2026-07-04T20:05:24Z"
+      }
+    },
+    {
+      "id": "gh-issue-2076",
+      "action": "Follow-up: add DB-round-trip regression test pinning lease.rs units-join drift (PR #2060) (Closes #2076)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2076)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2076,
+        "url": "https://github.com/martin-janci/property-management/issues/2076",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-04T20:13:30Z"
+    },
+    {
+      "id": "gh-issue-2078",
+      "action": "Follow-up: refill/ingest still abort on missing assignments.json; smoke tests don't cover it (PR #2061) (Closes #2078)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2078)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2078,
+        "url": "https://github.com/martin-janci/property-management/issues/2078",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2079",
+      "action": "Follow-up: ListingDetail split didn't decompose the actual churn locus — hoist screen state/side-effects into a ViewModel (PR #2059) (Closes #2079)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2079)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2079,
+        "url": "https://github.com/martin-janci/property-management/issues/2079",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2080",
+      "action": "Follow-up: id-tiebreak stability untested + OR-leg sort not index-satisfiable (PR #2063) (Closes #2080)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2080)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2080,
+        "url": "https://github.com/martin-janci/property-management/issues/2080",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2081",
+      "action": "Follow-up: self-test the grep scan path + restore script exec bit (PR #2062) (Closes #2081)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2081)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2081,
+        "url": "https://github.com/martin-janci/property-management/issues/2081",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2082",
+      "action": "Follow-up: #1771 unread soft-delete invariant still only guarded by SQL-text assertion; behavioral DB test stays BIT-351-quarantined (PR #2065) (Closes #2082)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2082)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2082,
+        "url": "https://github.com/martin-janci/property-management/issues/2082",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2083",
+      "action": "Follow-up: add an automated sync guard for the three-source currency/country enum lists (PR #2066) (Closes #2083)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2083)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2083,
+        "url": "https://github.com/martin-janci/property-management/issues/2083",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2084",
+      "action": "Follow-up: enforce quick-xml pin via existing cargo-deny [bans] instead of advisory grep guard (PR #2064) (Closes #2084)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2084)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2084,
+        "url": "https://github.com/martin-janci/property-management/issues/2084",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2085",
+      "action": "Follow-up: extract + unit-cover the assign/reopen fault recipient guards (PR #2067) (Closes #2085)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2085)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2085,
+        "url": "https://github.com/martin-janci/property-management/issues/2085",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2086",
+      "action": "Follow-up: make SlovakAccountingExport honesty invariant enforced-by-construction, not call-me-or-forget (PR #2069) (Closes #2086)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2086)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2086,
+        "url": "https://github.com/martin-janci/property-management/issues/2086",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2087",
+      "action": "Follow-up: reuse shared tests/common fixture in favorite_alert_read idempotency test (PR #2068) (Closes #2087)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2087)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T20:08:15Z",
+      "issue_ref": {
+        "number": 2087,
+        "url": "https://github.com/martin-janci/property-management/issues/2087",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }

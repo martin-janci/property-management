@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-07-04T18:20:12Z",
+  "archived_at": "2026-07-04T20:13:51Z",
   "_deferred": true,
   "_reason": "Full 452-row archive (~492KB) exceeds the mcp__github__push_files inline-content limit (known issue #1014); git push is 403 in this environment. The authoritative archive lives in the local working tree and must be landed by a run with working git transport or after archive compaction. This is a placeholder marker, NOT the real archive data.",
   "assignments": [
@@ -1064,6 +1064,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-osrng-expect",
+      "branch": "auto-impl/code-review-api-core-osrng-expect-ad4b72ce",
+      "status": "merged",
+      "claimed_at": "2026-07-04T14:18:00Z",
+      "last_updated": "2026-07-04T20:12:47Z",
+      "status_changed_at": "2026-07-04T18:14:27Z",
+      "pr_number": 2074,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2074",
+      "merged_at": "2026-07-04T18:14:27Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2074 status=done specialist=rust-backend note=accounting-core/crypto.rs .expect() panic on CSPRNG failure -> Result propagation + regression test; cargo check/test -p accounting-core GREEN (6 tests); accounting-server caller change gated by CI (swagger-ui sandbox-blocked)",
+      "reviewer_summary": "verdict=approve note=clean-csprng-error-propagation-all-ci-green",
+      "last_reviewed_oid": "99cb75f0cfdfbabbcf5a3d08dec67625a0990040",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-04T18:13:02Z"
+    },
+    {
       "task_id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
       "branch": "auto-impl/code-review-mobile-native-kmp-deeplink-a-fc2de143",
       "status": "failed",
@@ -1812,6 +1834,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-mobile-documents",
+      "branch": "auto-impl/refactor-churn-hotspot-mobile-documents-8fa3cda3",
+      "status": "merged",
+      "claimed_at": "2026-07-04T16:01:45Z",
+      "last_updated": "2026-07-04T20:12:47Z",
+      "status_changed_at": "2026-07-04T20:12:47Z",
+      "pr_number": 2077,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2077",
+      "merged_at": "2026-07-04T20:12:47Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2077 status=done note=extracted pure data layer to documentModel.ts w/ back-compat re-exports; typecheck+biome+96 tests green; drift is owner-area mismatch (mobile under pm-tech-lead)",
+      "reviewer_summary": "verdict=approve note=verbatim-move-reexports-preserve-surface-typecheck+96tests-green-scopedrift-justified(comment;self-approve-blocked)",
+      "last_reviewed_oid": "68bf854e31b90c63333615cd9693c59f6bdbb8d9",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "screen-map-drift-pr-1418-ppt",
       "branch": "auto-impl/screen-map-drift-pr-1418-ppt-039c63c4",
       "status": "merged",
@@ -1986,6 +2030,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "test-gap-screen-map-drift-pr-922-ppt",
+      "branch": "auto-impl/test-gap-screen-map-drift-pr-922-ppt-8b56e416",
+      "status": "merged",
+      "claimed_at": "2026-07-04T16:01:45Z",
+      "last_updated": "2026-07-04T20:12:47Z",
+      "status_changed_at": "2026-07-04T18:14:24Z",
+      "pr_number": 2075,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2075",
+      "merged_at": "2026-07-04T18:14:24Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=docs-only-screen-map-drift-validate-0err(posted as comment; self-approval blocked)",
+      "last_reviewed_oid": "186a6f5b26f216f6d4289ded01a80e3b19cf8975",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
       "task_id": "triage-issue-1380",
