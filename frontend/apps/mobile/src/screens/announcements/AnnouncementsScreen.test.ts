@@ -206,13 +206,44 @@ describe('formatRelativeDate', () => {
     expect(formatRelativeDate('2026-05-18T12:00:00Z', now)).toBe('2d ago');
   });
 
+  // Boundary transitions between the three branches. The interior cases above
+  // ("Just now", "3h ago", "2d ago", absolute) never cross a `<` threshold, so
+  // an off-by-one flip (`<` vs `<=`) on any boundary would slip past them. Pin
+  // each transition explicitly -- this is the branchiest function in the file
+  // and the documented relative-date churn source (see jest.config.js).
+
+  it('flips from "Just now" to "Nh ago" at exactly one hour', () => {
+    // diffHours === 1 is NOT `< 1`, so it must render as the (unpluralised)
+    // "1h ago" label rather than staying "Just now".
+    expect(formatRelativeDate('2026-05-20T11:00:00Z', now)).toBe('1h ago');
+  });
+
+  it('flips from "Nh ago" to "Nd ago" at exactly 24 hours', () => {
+    // diffHours === 24 is NOT `< 24`, so it drops to the day branch: "1d ago"
+    // (unpluralised), never "24h ago".
+    expect(formatRelativeDate('2026-05-19T12:00:00Z', now)).toBe('1d ago');
+  });
+
+  it('flips from "Nd ago" to an absolute label at exactly seven days', () => {
+    // diffDays === 7 is NOT `< 7`, so it must render the absolute "Mon D" date
+    // rather than "7d ago". Derived under the pinned UTC zone (see jest.config.js).
+    const sevenDays = '2026-05-13T12:00:00Z';
+    const expected = new Date(sevenDays).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+    expect(expected).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/); // guard the "Mon D" shape
+    expect(formatRelativeDate(sevenDays, now)).toBe(expected);
+  });
+
   it('returns an absolute month-day label beyond a week', () => {
     // Beyond a week the formatter switches from a relative ("Nd ago") label to
     // an absolute "Mon D" date produced by `toLocaleDateString('en-US', …)`.
     // The exact rendering is timezone-dependent, so the test worker pins TZ=UTC
     // (see jest.config.js); we derive the expected label from that same UTC
     // contract rather than hard-coding it, so the assertion can't drift if the
-    // pinned zone ever changes — while still proving an absolute (not relative)
+    // pinned zone ever changes -- while still proving an absolute (not relative)
     // label is returned via the `Mon D` shape check. Under the pinned UTC zone
     // this date renders as "May 1" (the value dev asserted literally).
     const old = '2026-05-01T12:00:00Z';
