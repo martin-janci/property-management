@@ -459,12 +459,12 @@ impl RentalRepository {
         let connections = sqlx::query_as::<_, PlatformConnectionSummary>(
             r#"
             SELECT
-                c.id, c.unit_id, u.name as unit_name,
+                c.id, c.unit_id, u.designation as unit_name,
                 c.platform::text, c.is_active, c.last_sync_at, c.sync_error
             FROM rental_platform_connections c
             JOIN units u ON u.id = c.unit_id
             WHERE c.organization_id = $1
-            ORDER BY u.name, c.platform
+            ORDER BY u.designation, c.platform
             "#,
         )
         .bind(org_id)
@@ -947,7 +947,7 @@ impl RentalRepository {
         let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, Option<String>, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
             r#"
             SELECT
-                b.id, b.unit_id, u.name, bld.name,
+                b.id, b.unit_id, u.designation, bld.name,
                 b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
                 b.status,
@@ -1021,7 +1021,7 @@ impl RentalRepository {
         let reminders = sqlx::query_as::<_, (Uuid, String, String, NaiveDate, i64)>(
             r#"
             SELECT
-                b.id, u.name, b.guest_name, b.check_in,
+                b.id, u.designation, b.guest_name, b.check_in,
                 (SELECT COUNT(*) FROM rental_guests WHERE booking_id = b.id AND status = 'pending')
             FROM rental_bookings b
             JOIN units u ON u.id = b.unit_id

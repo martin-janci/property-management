@@ -16,7 +16,6 @@ use wiremock::{matchers, Mock, MockServer, ResponseTemplate};
 use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn financial_endpoints_happy_path(pool: PgPool) {
     // 1. Start wiremock server for Stripe Checkout mocking
     let stripe_server = MockServer::start().await;
@@ -421,7 +420,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
     );
     let checkout_res = resp.json_value();
     assert_eq!(
-        checkout_res["checkoutUrl"],
+        checkout_res["checkout_url"],
         "https://checkout.stripe.test/cs_happy_test_session_id"
     );
 
@@ -450,7 +449,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         resp.text()
     );
     let payment = resp.json_value();
-    let payment_id_str = payment["id"].as_str().expect("id missing");
+    let payment_id_str = payment["payment"]["id"].as_str().expect("id missing");
     let payment_id = Uuid::parse_str(payment_id_str).expect("invalid payment uuid");
 
     // 3.9 GET /api/v1/financial/payments -> list_payments
@@ -511,7 +510,9 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::CREATED);
     let unallocated_payment = resp.json_value();
-    let unallocated_payment_id_str = unallocated_payment["id"].as_str().expect("id missing");
+    let unallocated_payment_id_str = unallocated_payment["payment"]["id"]
+        .as_str()
+        .expect("id missing");
     let unallocated_payment_id =
         Uuid::parse_str(unallocated_payment_id_str).expect("invalid payment uuid");
 
@@ -578,7 +579,7 @@ async fn financial_endpoints_happy_path(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::CREATED,
         "allocate_payment should succeed: {}",
         resp.text()
     );

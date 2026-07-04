@@ -476,6 +476,7 @@
     "revokeAction": "Revoke",
     "errorTitle": "Error",
     "errorUserIdRequired": "Please enter a user ID.",
+    "errorUserIdInvalid": "User ID must be a valid UUID.",
     "errorRoleRequired": "Please enter a role name.",
     "errorPasswordTooShort": "Password must be at least 4 characters.",
     "errorInvalidDays": "Please enter a valid number of days."

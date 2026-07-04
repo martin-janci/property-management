@@ -177,6 +177,24 @@ impl JwtService {
     }
 
     /// Validate and decode an access token.
+    ///
+    /// # Relationship to the shared verifier (GH #1675 / #1782)
+    ///
+    /// This is a **deliberate third copy** of the `decode` + `token_type ==
+    /// "access"` gate that `api_core::extractors::auth::verify_access_token`
+    /// unified for the extractor paths. It is intentionally *not* delegated to
+    /// the shared verifier because this is the **issuance-service** validator: it
+    /// owns its own `decoding_key` and returns the richer [`JwtError`] (notably
+    /// distinguishing `Expired` from `Invalid`/`ValidationFailed`), which ~40
+    /// route call-sites depend on for their responses — a granularity the shared
+    /// verifier's `&'static str` does not carry.
+    ///
+    /// **Maintenance contract:** any future hardening of the access-token gate
+    /// (e.g. adding `aud`/`iss` validation, or tightening the `token_type`
+    /// check) MUST be applied here as well as in `verify_access_token`, or this
+    /// most-used path silently diverges — exactly the failure mode #1675 set out
+    /// to prevent. The `refresh_token_rejected_by_validate_access_token` test
+    /// below pins the `token_type` gate so a regression fails CI.
     pub fn validate_access_token(&self, token: &str) -> Result<Claims, JwtError> {
         let mut validation = Validation::default();
         validation.validate_exp = true;
@@ -276,6 +294,28 @@ mod tests {
 
         let result = service.validate_refresh_token(&token);
         assert!(matches!(result, Err(JwtError::Invalid)));
+    }
+
+    /// Pins the `token_type` access-gate in `JwtService::validate_access_token`
+    /// — the deliberate third copy of the gate (GH #1675 / #1782). A refresh
+    /// token passes signature + exp validation but must be rejected here, the
+    /// same way the shared `verify_access_token` rejects it on the extractor
+    /// paths. If a future edit drops or weakens this gate, this test fails CI,
+    /// keeping the three access-token paths in sync.
+    #[test]
+    fn refresh_token_rejected_by_validate_access_token() {
+        let service = create_test_service();
+        let user_id = Uuid::new_v4();
+
+        let (token, _hash, _exp) = service
+            .generate_refresh_token(user_id, "test@example.com", "Test User")
+            .unwrap();
+
+        let result = service.validate_access_token(&token);
+        assert!(
+            matches!(result, Err(JwtError::Invalid)),
+            "refresh token must be rejected as an access token, got {result:?}"
+        );
     }
 
     #[test]

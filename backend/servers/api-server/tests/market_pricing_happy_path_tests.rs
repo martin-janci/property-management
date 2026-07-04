@@ -52,7 +52,6 @@ fn mint(user_id: Uuid, email: &str, org_id: Uuid) -> String {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: market pricing tables not seeded"]
 async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -105,7 +104,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    resp.assert_status(StatusCode::CREATED);
+    resp.assert_status(StatusCode::OK);
     let region = resp.json_value();
     let region_id_str = region["id"].as_str().expect("region id").to_string();
     let region_id = Uuid::parse_str(&region_id_str).expect("uuid");
@@ -155,9 +154,9 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     let add_dp_payload = json!({
         "region_id": region_id,
         "property_type": "apartment",
-        "size_sqm": 60.0,
-        "monthly_rent": 750.0,
-        "price_per_sqm": 12.5,
+        "size_sqm": "60.0",
+        "monthly_rent": "750.0",
+        "price_per_sqm": "12.5",
         "currency": "EUR",
         "source": "manual"
     });
@@ -306,7 +305,7 @@ async fn market_pricing_endpoints_happy_path(pool: PgPool) {
     // but still required for deserialization), effective_date and monthly_rent.
     let price_payload = json!({
         "unit_id": unit_id,
-        "monthly_rent": 650.0,
+        "monthly_rent": "650.0",
         "currency": "EUR",
         "effective_date": "2026-06-01",
         "change_reason": "market adjustment"

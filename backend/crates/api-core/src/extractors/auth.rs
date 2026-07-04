@@ -132,6 +132,38 @@ pub enum TokenTypePolicy {
     LegacyTolerant,
 }
 
+/// Why [`verify_access_token`] rejected a token.
+///
+/// Carries the offending `token_type` discriminator on the wrong-type branch so
+/// callers can restore the structured `token_type = %value` security log field
+/// that was lost when the verifier collapsed every rejection to a `&'static str`
+/// (GH #1782). [`AccessTokenError::message`] yields the stable, client-facing
+/// string — byte-identical to the pre-#1782 returns — so HTTP responses and the
+/// existing `(StatusCode, &'static str)` assertions are unchanged.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AccessTokenError {
+    /// Decode failed: bad signature, expired/`nbf`, or malformed claims.
+    Decode,
+    /// `token_type` was present but not `"access"` (e.g. a replayed refresh
+    /// token). Carries the offending value for observability.
+    WrongType(String),
+    /// `token_type` was absent and the policy was [`TokenTypePolicy::Required`].
+    MissingType,
+}
+
+impl AccessTokenError {
+    /// The stable, client-facing rejection message. Kept byte-identical to the
+    /// pre-#1782 `&'static str` returns so callers' HTTP responses don't change.
+    pub fn message(&self) -> &'static str {
+        match self {
+            AccessTokenError::Decode => "Invalid or expired token",
+            AccessTokenError::WrongType(_) | AccessTokenError::MissingType => {
+                "Invalid token type for this endpoint"
+            }
+        }
+    }
+}
+
 /// Shared access-token verifier (GH #1675).
 ///
 /// Owns the security-critical sequence that used to be copy-pasted across
@@ -155,20 +187,21 @@ pub fn verify_access_token<C>(
     key: &DecodingKey,
     validation: &Validation,
     policy: TokenTypePolicy,
-) -> Result<C, &'static str>
+) -> Result<C, AccessTokenError>
 where
     C: AccessTokenClaims + serde::de::DeserializeOwned,
 {
-    let token_data = decode::<C>(token, key, validation).map_err(|_| "Invalid or expired token")?;
+    let token_data = decode::<C>(token, key, validation).map_err(|_| AccessTokenError::Decode)?;
     let claims = token_data.claims;
     match claims.token_type() {
         Some("access") => Ok(claims),
         // An explicit non-access discriminator (e.g. a refresh token) is
-        // rejected by BOTH policies — this is the RUST-002 / #822 gate.
-        Some(_) => Err("Invalid token type for this endpoint"),
+        // rejected by BOTH policies — this is the RUST-002 / #822 gate. The
+        // offending value is carried out so callers can log it (GH #1782).
+        Some(other) => Err(AccessTokenError::WrongType(other.to_string())),
         // A missing discriminator: rejected only under `Required`.
         None => match policy {
-            TokenTypePolicy::Required => Err("Invalid token type for this endpoint"),
+            TokenTypePolicy::Required => Err(AccessTokenError::MissingType),
             TokenTypePolicy::LegacyTolerant => Ok(claims),
         },
     }
@@ -199,7 +232,8 @@ pub fn validate_access_token_with_exp(token: &str) -> Result<(Uuid, i64), &'stat
         &verifier.key,
         &verifier.validation,
         TokenTypePolicy::Required,
-    )?;
+    )
+    .map_err(|e| e.message())?;
     Ok((claims.sub, claims.exp))
 }
 
@@ -257,15 +291,16 @@ where
         // pass signature+exp validation, but must not be accepted as access
         // tokens. `Required` policy mirrors the historical `auth.rs` behavior
         // exactly (the `Claims` shape already makes `token_type` mandatory).
-        // The shared verifier returns `&'static str`; map it to this
-        // extractor's `(StatusCode, &'static str)` rejection unchanged.
+        // The shared verifier returns an `AccessTokenError`; map its stable
+        // `message()` to this extractor's `(StatusCode, &'static str)` rejection
+        // unchanged.
         let claims: Claims = verify_access_token(
             token,
             &verifier.key,
             &verifier.validation,
             TokenTypePolicy::Required,
         )
-        .map_err(|msg| (StatusCode::UNAUTHORIZED, msg))?;
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.message()))?;
 
         // Store user_id and role in extensions for TenantExtractor
         parts.extensions.insert(claims.sub);
@@ -297,6 +332,41 @@ where
         match AuthUser::from_request_parts(parts, state).await {
             Ok(user) => Ok(OptionalAuth(Some(user))),
             Err(_) => Ok(OptionalAuth(None)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod access_token_error_tests {
+    use super::*;
+
+    /// The client-facing messages MUST stay byte-identical to the pre-#1782
+    /// `&'static str` returns, so HTTP responses and existing extractor tests
+    /// (e.g. `principal_token_type_tests`) keep asserting the same strings.
+    #[test]
+    fn messages_are_stable() {
+        assert_eq!(
+            AccessTokenError::Decode.message(),
+            "Invalid or expired token"
+        );
+        assert_eq!(
+            AccessTokenError::WrongType("refresh".to_string()).message(),
+            "Invalid token type for this endpoint"
+        );
+        assert_eq!(
+            AccessTokenError::MissingType.message(),
+            "Invalid token type for this endpoint"
+        );
+    }
+
+    /// The wrong-type branch carries the offending discriminator so callers can
+    /// restore the structured `token_type = %value` log field (#1782).
+    #[test]
+    fn wrong_type_carries_offending_value() {
+        let err = AccessTokenError::WrongType("refresh".to_string());
+        match err {
+            AccessTokenError::WrongType(v) => assert_eq!(v, "refresh"),
+            other => panic!("expected WrongType, got {other:?}"),
         }
     }
 }

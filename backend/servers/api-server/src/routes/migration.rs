@@ -118,6 +118,23 @@ async fn list_templates(
         "Organization context required".to_string(),
     ))?;
 
+    let page = query.page.unwrap_or(1).max(1);
+    let per_page = query.per_page.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) as i64 * per_page as i64;
+
+    // Page in SQL (LIMIT/OFFSET) and take the total from a COUNT, rather than
+    // fetching every template and slicing in Rust (#1905).
+    let total = state
+        .migration_repo
+        .count_templates(
+            &mut **rls.conn(),
+            org_id,
+            query.data_type.clone(),
+            query.include_system,
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
     let db_templates = state
         .migration_repo
         .list_templates(
@@ -125,6 +142,8 @@ async fn list_templates(
             org_id,
             query.data_type,
             query.include_system,
+            per_page as i64,
+            offset,
         )
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -150,19 +169,9 @@ async fn list_templates(
         })
         .collect();
 
-    let page = query.page.unwrap_or(1);
-    let per_page = query.per_page.unwrap_or(20);
-    let total = templates.len() as i64;
-    let offset = ((page - 1) * per_page).max(0) as usize;
-    let paginated = templates
-        .into_iter()
-        .skip(offset)
-        .take(per_page as usize)
-        .collect();
-
     Ok(Json(ListTemplatesResponse {
         total,
-        templates: paginated,
+        templates,
         page,
         per_page,
     }))
@@ -1427,7 +1436,17 @@ async fn get_export_history(
     let history = exports
         .into_iter()
         .map(|e| {
-            let categories: Vec<String> = serde_json::from_value(e.categories).unwrap_or_default();
+            let categories: Vec<String> =
+                serde_json::from_value(e.categories).unwrap_or_else(|err| {
+                    // Don't silently swallow a malformed `categories` blob (#1905):
+                    // surface it so a bad row is debuggable instead of just empty.
+                    tracing::warn!(
+                        export_id = %e.id,
+                        error = %err,
+                        "malformed export `categories` JSON; defaulting to empty list"
+                    );
+                    Vec::new()
+                });
             ExportHistoryEntry {
                 id: e.id,
                 status: e.status,

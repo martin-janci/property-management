@@ -151,8 +151,8 @@ impl MarketPricingRepository {
                 latitude, longitude, postal_code, district, listing_date, days_on_market,
                 is_furnished, amenities
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-            RETURNING id, region_id, collected_at, source, source_reference, property_type, size_sqm,
+            VALUES ($1, $2::pricing_source, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+            RETURNING id, region_id, collected_at, source::text AS source, source_reference, property_type, size_sqm,
                       rooms, bathrooms, floor, has_parking, has_balcony, has_elevator, year_built,
                       monthly_rent, currency, price_per_sqm, latitude, longitude, postal_code, district,
                       listing_date, days_on_market, is_furnished, amenities, created_at
@@ -197,7 +197,7 @@ impl MarketPricingRepository {
 
         let data_points = sqlx::query_as::<_, MarketDataPoint>(
             r#"
-            SELECT mdp.id, mdp.region_id, mdp.collected_at, mdp.source, mdp.source_reference,
+            SELECT mdp.id, mdp.region_id, mdp.collected_at, mdp.source::text AS source, mdp.source_reference,
                    mdp.property_type, mdp.size_sqm, mdp.rooms, mdp.bathrooms, mdp.floor,
                    mdp.has_parking, mdp.has_balcony, mdp.has_elevator, mdp.year_built,
                    mdp.monthly_rent, mdp.currency, mdp.price_per_sqm, mdp.latitude, mdp.longitude,
@@ -382,7 +382,7 @@ impl MarketPricingRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, unit_id, generated_at, min_price, optimal_price, max_price, currency,
-                      confidence_score, status, expires_at, factors, comparables_count, market_stats_id,
+                      confidence_score, status::text AS status, expires_at, factors, comparables_count, market_stats_id,
                       accepted_price, accepted_at, accepted_by, rejection_reason, created_at, updated_at
             "#,
         )
@@ -410,7 +410,7 @@ impl MarketPricingRepository {
         let recommendation = sqlx::query_as::<_, PricingRecommendation>(
             r#"
             SELECT pr.id, pr.unit_id, pr.generated_at, pr.min_price, pr.optimal_price, pr.max_price,
-                   pr.currency, pr.confidence_score, pr.status, pr.expires_at, pr.factors,
+                   pr.currency, pr.confidence_score, pr.status::text AS status, pr.expires_at, pr.factors,
                    pr.comparables_count, pr.market_stats_id, pr.accepted_price, pr.accepted_at,
                    pr.accepted_by, pr.rejection_reason, pr.created_at, pr.updated_at
             FROM pricing_recommendations pr
@@ -436,7 +436,7 @@ impl MarketPricingRepository {
         let recommendation = sqlx::query_as::<_, PricingRecommendation>(
             r#"
             SELECT pr.id, pr.unit_id, pr.generated_at, pr.min_price, pr.optimal_price, pr.max_price,
-                   pr.currency, pr.confidence_score, pr.status, pr.expires_at, pr.factors,
+                   pr.currency, pr.confidence_score, pr.status::text AS status, pr.expires_at, pr.factors,
                    pr.comparables_count, pr.market_stats_id, pr.accepted_price, pr.accepted_at,
                    pr.accepted_by, pr.rejection_reason, pr.created_at, pr.updated_at
             FROM pricing_recommendations pr
@@ -462,7 +462,7 @@ impl MarketPricingRepository {
     ) -> Result<Vec<PricingRecommendationSummary>, AppError> {
         let recommendations = sqlx::query_as::<_, PricingRecommendationSummary>(
             r#"
-            SELECT pr.id, pr.unit_id, pr.optimal_price, pr.confidence_score, pr.status,
+            SELECT pr.id, pr.unit_id, pr.optimal_price, pr.confidence_score, pr.status::text AS status,
                    pr.generated_at, pr.expires_at
             FROM pricing_recommendations pr
             JOIN units u ON u.id = pr.unit_id
@@ -500,7 +500,7 @@ impl MarketPricingRepository {
             JOIN buildings b ON b.id = u.building_id
             WHERE pr.id = $1 AND u.id = pr.unit_id AND b.organization_id = $2
             RETURNING pr.id, pr.unit_id, pr.generated_at, pr.min_price, pr.optimal_price, pr.max_price,
-                      pr.currency, pr.confidence_score, pr.status, pr.expires_at, pr.factors,
+                      pr.currency, pr.confidence_score, pr.status::text AS status, pr.expires_at, pr.factors,
                       pr.comparables_count, pr.market_stats_id, pr.accepted_price, pr.accepted_at,
                       pr.accepted_by, pr.rejection_reason, pr.created_at, pr.updated_at
             "#,
@@ -532,7 +532,7 @@ impl MarketPricingRepository {
             JOIN buildings b ON b.id = u.building_id
             WHERE pr.id = $1 AND u.id = pr.unit_id AND b.organization_id = $2
             RETURNING pr.id, pr.unit_id, pr.generated_at, pr.min_price, pr.optimal_price, pr.max_price,
-                      pr.currency, pr.confidence_score, pr.status, pr.expires_at, pr.factors,
+                      pr.currency, pr.confidence_score, pr.status::text AS status, pr.expires_at, pr.factors,
                       pr.comparables_count, pr.market_stats_id, pr.accepted_price, pr.accepted_at,
                       pr.accepted_by, pr.rejection_reason, pr.created_at, pr.updated_at
             "#,

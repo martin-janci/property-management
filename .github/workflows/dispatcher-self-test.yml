@@ -5,6 +5,10 @@ on:
     paths:
       - ".research/dispatcher-prompt.md"
       - ".research/dispatcher-self-test.sh"
+      - ".research/backlog-refill.sh"
+      - ".research/issue-ingest.sh"
+      - ".research/test-backlog-refill.sh"
+      - ".research/test-issue-ingest.sh"
       - ".research/management/assignments.json"
       - ".claude/skills/ppt-implement/**"
       - ".claude/skills/ppt-pr-merge/**"
@@ -29,6 +33,10 @@ jobs:
           fetch-depth: 0
       - name: dispatcher schema + invariant self-test
         run: bash .research/dispatcher-self-test.sh
+      - name: backlog-refill behavioral smoke test
+        run: bash .research/test-backlog-refill.sh
+      - name: issue-ingest behavioral smoke test
+        run: bash .research/test-issue-ingest.sh
       - name: goal-check (enforcing)
         env:
           GOAL_CHECK_ENFORCE: "1"

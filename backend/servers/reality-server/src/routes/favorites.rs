@@ -264,19 +264,40 @@ pub async fn mark_favorite_alert_read(
     principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    let marked = state
+    let outcome = state
         .reality_portal_repo
         .mark_favorite_alert_read(alert_id, principal.user_id)
         .await
         .map_err(|e| crate::util::errors::db_error("mark favorite alert read", e))?;
 
-    if marked {
-        Ok(axum::http::StatusCode::NO_CONTENT)
-    } else {
-        Err((
+    mark_read_outcome_status(outcome)
+}
+
+/// Map a [`db::repositories::FavoriteAlertReadOutcome`] to the HTTP result the
+/// `mark_favorite_alert_read` route returns.
+///
+/// Extracted as a pure, DB-free function so the idempotency contract (#1852
+/// finding-4) has a fast regression guard that actually runs on the PR gate
+/// (#1999 finding-2) while the DB-backed
+/// `mark_favorite_alert_read_is_idempotent` integration test stays quarantined
+/// under BIT-351.
+///
+/// Idempotent: a freshly-flipped alert AND one already read both succeed with
+/// 204 — a client polling read-state shouldn't get a surprising 404 for an
+/// alert it already marked. Genuinely absent / not-owned still 404s (no
+/// existence leak).
+fn mark_read_outcome_status(
+    outcome: db::repositories::FavoriteAlertReadOutcome,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    use db::repositories::FavoriteAlertReadOutcome;
+    match outcome {
+        FavoriteAlertReadOutcome::Flipped | FavoriteAlertReadOutcome::AlreadyRead => {
+            Ok(axum::http::StatusCode::NO_CONTENT)
+        }
+        FavoriteAlertReadOutcome::NotFound => Err((
             axum::http::StatusCode::NOT_FOUND,
             "Alert not found".to_string(),
-        ))
+        )),
     }
 }
 
@@ -345,4 +366,41 @@ pub async fn list_favorite_ids(
         })?;
 
     Ok(Json(favorites.into_iter().map(|f| f.listing_id).collect()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mark_read_outcome_status;
+    use axum::http::StatusCode;
+    use db::repositories::FavoriteAlertReadOutcome;
+
+    // #1852 finding-4 / #1999 finding-2: the mark-read route is idempotent.
+    // These assert the outcome→status mapping directly, without a database, so
+    // the contract is guarded on every PR even while the DB-backed
+    // `mark_favorite_alert_read_is_idempotent` test stays quarantined (BIT-351).
+
+    #[test]
+    fn flipped_maps_to_204() {
+        assert_eq!(
+            mark_read_outcome_status(FavoriteAlertReadOutcome::Flipped),
+            Ok(StatusCode::NO_CONTENT)
+        );
+    }
+
+    #[test]
+    fn already_read_maps_to_204_not_404() {
+        // The core of finding-4: a second mark on an already-read alert is a
+        // success, not a surprising 404.
+        assert_eq!(
+            mark_read_outcome_status(FavoriteAlertReadOutcome::AlreadyRead),
+            Ok(StatusCode::NO_CONTENT)
+        );
+    }
+
+    #[test]
+    fn not_found_maps_to_404() {
+        let err = mark_read_outcome_status(FavoriteAlertReadOutcome::NotFound)
+            .expect_err("NotFound must map to an error status");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+    }
 }

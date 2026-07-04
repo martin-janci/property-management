@@ -1,6 +1,20 @@
 //! Reality Portal Professional repository (Epics 31-34).
 //!
 //! Repository for agencies, realtors, inquiries, and property import.
+//!
+//! # Runtime `sqlx::query` convention (#1852 finding-1)
+//!
+//! Every query in this module uses the runtime, *unchecked* `sqlx::query` /
+//! `query_as` forms rather than the compile-time-checked `query!` macros. This
+//! is a deliberate, **repo-wide** convention, not an oversight: the checked
+//! macros require a live DB connection (or a committed `.sqlx/` offline cache
+//! via `cargo sqlx prepare`) at build time, but this workspace compiles DB-free
+//! — CI runs `SQLX_OFFLINE=true` and there is **no `.sqlx/` cache** in the tree
+//! (same rationale documented at `rental.rs::find_airbnb_connection_by_listing_id`
+//! and `platform_admin.rs`). A `query!` added here in isolation would fail the
+//! `check` / `fmt-clippy` gates. A column rename therefore won't be caught at
+//! compile time; the DB-backed `#[sqlx::test]` suites are the guard until a
+//! workspace-wide offline-cache workflow exists.
 
 use crate::models::reality_portal::*;
 use crate::models::Listing;
@@ -11,27 +25,17 @@ use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, Postgres, Row};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, sqlx::FromRow)]
-pub struct FavoritePriceAlertCandidate {
-    pub favorite_id: Uuid,
-    pub user_id: Uuid,
-    pub listing_id: Uuid,
-    pub title: String,
-    pub old_price: Decimal,
-    pub new_price: Decimal,
-    pub currency: String,
-    pub change_percentage: Option<Decimal>,
-    pub changed_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow)]
-pub struct FavoriteStatusAlertCandidate {
-    pub favorite_id: Uuid,
-    pub user_id: Uuid,
-    pub listing_id: Uuid,
-    pub title: String,
-    pub previous_status: Option<String>,
-    pub new_status: String,
+/// Outcome of [`RealityPortalRepository::mark_favorite_alert_read`] (#1852
+/// finding-4) — lets the route return idempotent success for an already-read
+/// alert instead of a 404, while keeping not-found/not-owned indistinguishable.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FavoriteAlertReadOutcome {
+    /// A pending alert was flipped to `sent`.
+    Flipped,
+    /// The alert exists for the user but was already read (idempotent success).
+    AlreadyRead,
+    /// No such alert for this user (genuinely absent or not owned).
+    NotFound,
 }
 
 /// Repository for Reality Portal Professional operations.
@@ -549,169 +553,163 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Find pending favorite price alerts on a connection whose org context is
-    /// already set via `set_request_context`.
-    pub async fn list_pending_favorite_price_alerts<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<Vec<FavoritePriceAlertCandidate>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, FavoritePriceAlertCandidate>(
-            r#"
-            SELECT
-                pf.id AS favorite_id,
-                pf.user_id,
-                l.id AS listing_id,
-                l.title,
-                lph.old_price,
-                lph.new_price,
-                lph.currency,
-                lph.change_percentage,
-                lph.changed_at
-            FROM portal_favorites pf
-            JOIN listings l ON l.id = pf.listing_id
-            JOIN listing_price_history lph ON lph.listing_id = l.id
-            WHERE pf.price_alert_enabled = true
-              AND lph.changed_at > COALESCE(pf.last_price_alert_at, pf.created_at)
-            ORDER BY lph.changed_at ASC, pf.created_at ASC
-            "#,
-        )
-        .fetch_all(executor)
-        .await
-    }
+    // ------------------------------------------------------------------------
+    // Favorite alert worker — set-based batch enqueue + watermark (#1852).
+    //
+    // These replace the per-candidate list→enqueue→watermark loop the worker
+    // ran (one INSERT + one UPDATE *per favorite*, an N+1 over an unbounded
+    // result set). Each is a single set-based statement, so `run_once` does a
+    // constant 4 queries per org regardless of how many favorites changed.
+    //
+    // Ordering matters: the enqueue reads the pre-update watermark state, so the
+    // worker MUST call `enqueue_*` before `advance_*_watermarks` for the same
+    // path. `ON CONFLICT DO NOTHING` keeps *crash re-runs* idempotent if the
+    // worker dies between the two statements.
+    //
+    // Snapshot consistency is NOT optional (#1999 finding-1): the advance
+    // re-derives its working set (`MAX(changed_at)` / current status) over the
+    // live tables, independently of what the enqueue actually inserted. A row
+    // committed by a concurrent writer *between* the two statements would be
+    // missed by the enqueue yet swept past the watermark by the advance, and
+    // its alert would be dropped forever. The caller MUST therefore run each
+    // enqueue+advance pair in a single `REPEATABLE READ` (or stricter)
+    // transaction so both statements read one MVCC snapshot — see
+    // `FavoriteAlertWorker::run_price_path` / `run_status_path`.
+    //
+    // (Runtime `sqlx::query`, not the compile-time macros — see the module-level
+    // note on the repo-wide convention.)
+    // ------------------------------------------------------------------------
 
-    /// Find favorite listing status transitions on an org-scoped executor.
-    pub async fn list_pending_favorite_status_alerts<'e, E>(
+    /// Enqueue a `price_change` alert for every favorite whose listing has a
+    /// price-history change newer than the favorite's watermark, in one
+    /// statement. Returns the number of newly-queued alerts. Org-scoped via the
+    /// caller's RLS context.
+    pub async fn enqueue_pending_favorite_price_alerts<'e, E>(
         &self,
         executor: E,
-    ) -> Result<Vec<FavoriteStatusAlertCandidate>, SqlxError>
+    ) -> Result<u64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, FavoriteStatusAlertCandidate>(
-            r#"
-            SELECT
-                pf.id AS favorite_id,
-                pf.user_id,
-                l.id AS listing_id,
-                l.title,
-                pf.last_seen_listing_status AS previous_status,
-                l.status AS new_status
-            FROM portal_favorites pf
-            JOIN listings l ON l.id = pf.listing_id
-            WHERE pf.last_seen_listing_status IS DISTINCT FROM l.status
-            ORDER BY pf.created_at ASC
-            "#,
-        )
-        .fetch_all(executor)
-        .await
-    }
-
-    /// Queue a favorite price-change alert for later delivery.
-    pub async fn enqueue_favorite_price_alert<'e, E>(
-        &self,
-        executor: E,
-        alert: &FavoritePriceAlertCandidate,
-    ) -> Result<(), SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query(
+        let res = sqlx::query(
             r#"
             INSERT INTO favorite_alert_queue (
                 favorite_id, user_id, listing_id, alert_type,
                 old_price, new_price, currency, change_percentage, source_changed_at
             )
-            VALUES ($1, $2, $3, 'price_change', $4, $5, $6, $7, $8)
+            SELECT
+                pf.id, pf.user_id, l.id, 'price_change',
+                lph.old_price, lph.new_price, lph.currency, lph.change_percentage, lph.changed_at
+            FROM portal_favorites pf
+            JOIN listings l ON l.id = pf.listing_id
+            JOIN listing_price_history lph ON lph.listing_id = l.id
+            WHERE pf.price_alert_enabled = true
+              AND lph.changed_at > COALESCE(pf.last_price_alert_at, pf.created_at)
             ON CONFLICT DO NOTHING
             "#,
         )
-        .bind(alert.favorite_id)
-        .bind(alert.user_id)
-        .bind(alert.listing_id)
-        .bind(alert.old_price)
-        .bind(alert.new_price)
-        .bind(&alert.currency)
-        .bind(alert.change_percentage)
-        .bind(alert.changed_at)
         .execute(executor)
         .await?;
-        Ok(())
+        Ok(res.rows_affected())
     }
 
-    /// Queue a favorite back-on-market alert for later delivery.
-    pub async fn enqueue_favorite_status_alert<'e, E>(
+    /// Advance every price-alerting favorite's `last_price_alert_at` watermark to
+    /// the newest price change it has now seen, in one statement. Must run AFTER
+    /// [`enqueue_pending_favorite_price_alerts`] (which reads the old watermark).
+    pub async fn advance_favorite_price_watermarks<'e, E>(
         &self,
         executor: E,
-        alert: &FavoriteStatusAlertCandidate,
     ) -> Result<(), SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
         sqlx::query(
+            r#"
+            UPDATE portal_favorites pf
+            SET last_price_alert_at = sub.max_changed
+            FROM (
+                SELECT pf2.id, MAX(lph.changed_at) AS max_changed
+                FROM portal_favorites pf2
+                JOIN listings l ON l.id = pf2.listing_id
+                JOIN listing_price_history lph ON lph.listing_id = l.id
+                WHERE pf2.price_alert_enabled = true
+                  AND lph.changed_at > COALESCE(pf2.last_price_alert_at, pf2.created_at)
+                GROUP BY pf2.id
+            ) sub
+            WHERE pf.id = sub.id
+            "#,
+        )
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Enqueue a `back_on_market` alert for every favorite whose listing just
+    /// became `active` (from a non-active state), in one statement. Returns the
+    /// number of newly-queued alerts.
+    ///
+    /// Opt-out asymmetry (#1852 finding-3): the price path gates on
+    /// `pf.price_alert_enabled`, but back-on-market alerts are **intentionally
+    /// not opt-out-able** — `portal_favorites` carries only `price_alert_enabled`
+    /// (migration 00063), no status-alert flag. A user who muted price alerts on
+    /// a favorite still gets the (rarer, higher-signal) "it's available again"
+    /// notice. Add a `status_alert_enabled` column + filter here if that should
+    /// change.
+    ///
+    /// Flap dedupe (#1999 finding-3, accepted): `idx_favorite_alert_queue_status_dedupe`
+    /// (migration 00194) is unique on
+    /// `(favorite_id, alert_type, previous_status, new_status)` for
+    /// `back_on_market`. A listing that flaps active→inactive→active with the
+    /// *same* before/after status tuple has its second genuine back-on-market
+    /// event deduped away. This is intentional for an hourly poll — repeated
+    /// identical flaps shouldn't spam the user — not a bug.
+    pub async fn enqueue_pending_favorite_status_alerts<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<u64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let res = sqlx::query(
             r#"
             INSERT INTO favorite_alert_queue (
                 favorite_id, user_id, listing_id, alert_type, previous_status, new_status
             )
-            VALUES ($1, $2, $3, 'back_on_market', $4, $5)
+            SELECT
+                pf.id, pf.user_id, l.id, 'back_on_market',
+                pf.last_seen_listing_status, l.status
+            FROM portal_favorites pf
+            JOIN listings l ON l.id = pf.listing_id
+            WHERE l.status = 'active'
+              AND pf.last_seen_listing_status IS DISTINCT FROM 'active'
             ON CONFLICT DO NOTHING
             "#,
         )
-        .bind(alert.favorite_id)
-        .bind(alert.user_id)
-        .bind(alert.listing_id)
-        .bind(&alert.previous_status)
-        .bind(&alert.new_status)
         .execute(executor)
         .await?;
-        Ok(())
+        Ok(res.rows_affected())
     }
 
-    /// Advance the favorite's price watermark after processing a change.
-    pub async fn mark_favorite_price_alert_seen<'e, E>(
+    /// Snapshot every favorite's `last_seen_listing_status` to its listing's
+    /// current status, in one statement (advances ALL changed favorites, not just
+    /// the back-on-market ones — matching the prior per-candidate behaviour). Must
+    /// run AFTER [`enqueue_pending_favorite_status_alerts`].
+    pub async fn advance_favorite_status_watermarks<'e, E>(
         &self,
         executor: E,
-        favorite_id: Uuid,
-        changed_at: DateTime<Utc>,
     ) -> Result<(), SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
         sqlx::query(
             r#"
-            UPDATE portal_favorites
-            SET last_price_alert_at = GREATEST(COALESCE(last_price_alert_at, $2), $2)
-            WHERE id = $1
+            UPDATE portal_favorites pf
+            SET last_seen_listing_status = l.status
+            FROM listings l
+            WHERE l.id = pf.listing_id
+              AND pf.last_seen_listing_status IS DISTINCT FROM l.status
             "#,
         )
-        .bind(favorite_id)
-        .bind(changed_at)
-        .execute(executor)
-        .await?;
-        Ok(())
-    }
-
-    /// Record the listing status snapshot after a worker evaluates it.
-    pub async fn mark_favorite_listing_status_seen<'e, E>(
-        &self,
-        executor: E,
-        favorite_id: Uuid,
-        status: &str,
-    ) -> Result<(), SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query(
-            r#"
-            UPDATE portal_favorites
-            SET last_seen_listing_status = $2
-            WHERE id = $1
-            "#,
-        )
-        .bind(favorite_id)
-        .bind(status)
         .execute(executor)
         .await?;
         Ok(())
@@ -766,23 +764,47 @@ impl RealityPortalRepository {
     }
 
     /// Mark one favorite alert delivered (`pending` -> `sent`), scoped to the owner.
+    /// Mark a single pending favorite alert delivered, distinguishing
+    /// already-read from genuinely-absent (#1852 finding-4).
+    ///
+    /// One round-trip via a CTE: it both counts the rows that exist for the user
+    /// (any status) and the rows the UPDATE actually flips (pending → sent), so
+    /// the route can return idempotent success for an already-read alert instead
+    /// of a surprising 404. not-found and not-owned still collapse to
+    /// [`FavoriteAlertReadOutcome::NotFound`] (no existence leak).
     pub async fn mark_favorite_alert_read(
         &self,
         id: Uuid,
         user_id: Uuid,
-    ) -> Result<bool, SqlxError> {
-        let res = sqlx::query(
+    ) -> Result<FavoriteAlertReadOutcome, SqlxError> {
+        let (exists_count, flipped_count): (i64, i64) = sqlx::query_as(
             r#"
-            UPDATE favorite_alert_queue
-            SET status = 'sent', processed_at = NOW()
-            WHERE id = $1 AND user_id = $2 AND status = 'pending'
+            WITH existing AS (
+                SELECT id FROM favorite_alert_queue WHERE id = $1 AND user_id = $2
+            ),
+            upd AS (
+                UPDATE favorite_alert_queue
+                SET status = 'sent', processed_at = NOW()
+                WHERE id = $1 AND user_id = $2 AND status = 'pending'
+                RETURNING id
+            )
+            SELECT
+                (SELECT COUNT(*) FROM existing) AS exists_count,
+                (SELECT COUNT(*) FROM upd) AS flipped_count
             "#,
         )
         .bind(id)
         .bind(user_id)
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
-        Ok(res.rows_affected() > 0)
+
+        Ok(if flipped_count > 0 {
+            FavoriteAlertReadOutcome::Flipped
+        } else if exists_count > 0 {
+            FavoriteAlertReadOutcome::AlreadyRead
+        } else {
+            FavoriteAlertReadOutcome::NotFound
+        })
     }
 
     /// Mark all of a user's pending favorite alerts delivered.
@@ -2087,7 +2109,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_a_can_respond_to_own_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_own@test.sk"];
@@ -2112,7 +2134,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn realtor_b_cannot_respond_to_realtor_a_inquiry() {
         let pool = test_pool().await;
         let emails = ["realtor_a_idor@test.sk", "realtor_b_idor@test.sk"];

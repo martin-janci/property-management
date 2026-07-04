@@ -376,3 +376,119 @@ async fn reopen_fault_notifies_managers_not_reopener(pool: PgPool) {
         "reopen: reopener must not receive self-notification"
     );
 }
+
+// ---------------------------------------------------------------------------
+// R7: triage — reporter + assignee notified; triaging manager excluded (#1793)
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn triage_fault_notifies_reporter_and_assignee_not_manager(pool: PgPool) {
+    let _org = seed_org(&pool).await;
+    let reporter = seed_user(&pool, "reporter-triage").await;
+    let assignee = seed_user(&pool, "assignee-triage").await;
+    let manager = seed_user(&pool, "manager-triage").await;
+
+    let fault_id = Uuid::new_v4();
+    let pipeline = build_pipeline(&pool);
+
+    // Exercise the *production* recipient policy (manager = principal.user_id):
+    // reporter + assignee (if triage set one), excluding the actor. Shared with
+    // the `triage_fault` handler so this asserts the real selection (#2029).
+    let recipients =
+        api_server::routes::faults::triage_fault_recipients(reporter, manager, Some(assignee));
+
+    let notification = Notification::new(
+        Uuid::nil(),
+        NotificationCategory::Faults,
+        "Fault triaged: Leaking pipe",
+        "The fault has been triaged and prioritized.",
+    )
+    .with_action_url(format!("/faults/{fault_id}"))
+    .with_data(serde_json::json!({"fault_id": fault_id}));
+
+    pipeline
+        .dispatch_to_users(&recipients, &notification, Some(fault_id), None)
+        .await;
+
+    assert_eq!(
+        count_fault_notif_groups(&pool, reporter).await,
+        1,
+        "triage: reporter must receive notification"
+    );
+    assert_eq!(
+        count_fault_notif_groups(&pool, assignee).await,
+        1,
+        "triage: assignee must receive notification"
+    );
+    assert_eq!(
+        count_fault_notif_groups(&pool, manager).await,
+        0,
+        "triage: triaging manager must not receive self-notification"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// R8: confirm — assignee + managers notified; confirming reporter excluded (#1793)
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn confirm_fault_notifies_assignee_and_managers_not_reporter(pool: PgPool) {
+    let org = seed_org(&pool).await;
+    let reporter = seed_user(&pool, "reporter-confirm").await;
+    let assignee = seed_user(&pool, "assignee-confirm").await;
+    let manager = seed_user(&pool, "manager-confirm").await;
+
+    seed_user_membership(&pool, org, manager, "Manager").await;
+
+    let fault_id = Uuid::new_v4();
+    let pipeline = build_pipeline(&pool);
+
+    // Exercise the *production* recipient policy (reporter = principal.user_id):
+    // assignee + org managers, excluding the actor. The manager lookup uses the
+    // real `MembershipRepository`; the merge/self-exclusion is the shared
+    // `confirm_fault` handler policy (#2029).
+    let manager_ids = MembershipRepository::new(pool.clone())
+        .list_manager_ids(org)
+        .await
+        .expect("list_manager_ids");
+    let recipients =
+        api_server::routes::faults::confirm_fault_recipients(Some(assignee), reporter, manager_ids);
+
+    assert!(
+        recipients.contains(&assignee),
+        "confirm: assignee must be a recipient"
+    );
+    assert!(
+        recipients.contains(&manager),
+        "confirm: org manager must be a recipient"
+    );
+
+    let notification = Notification::new(
+        Uuid::nil(),
+        NotificationCategory::Faults,
+        "Fault resolution confirmed: Leaking pipe",
+        "The reporter has confirmed the fault resolution.",
+    )
+    .with_action_url(format!("/faults/{fault_id}"))
+    .with_data(serde_json::json!({"fault_id": fault_id, "organization_id": org}));
+
+    pipeline
+        .dispatch_to_users(&recipients, &notification, Some(fault_id), None)
+        .await;
+
+    assert_eq!(
+        count_fault_notif_groups(&pool, assignee).await,
+        1,
+        "confirm: assignee must receive notification"
+    );
+    assert_eq!(
+        count_fault_notif_groups(&pool, manager).await,
+        1,
+        "confirm: org manager must receive notification"
+    );
+    assert_eq!(
+        count_fault_notif_groups(&pool, reporter).await,
+        0,
+        "confirm: confirming reporter must not receive self-notification"
+    );
+}

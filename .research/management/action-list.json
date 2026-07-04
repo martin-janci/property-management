@@ -303,11 +303,18 @@
       "action": "Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1814,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
@@ -555,22 +562,36 @@
       "action": "Coverage gap [mvp]: Mediation and Resolution — verify and finish to done. Gaps: Party submissions endpoints unwired (apiStatus stays partial per dispute-detail screen-map); Mediation-resolution flow not promoted to done in sprint-status — story remains partial pending submissions integration",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1846,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "84-5-pgvector-rag",
       "action": "Coverage gap [phase3]: pgvector RAG Migration — verify and finish to done. Gaps: RAG retrieval/query service (embedding generation + similarity search) not implemented — migration only; Vector path is conditional/optional (JSONB fallback) rather than a hard pgvector dependency; No sprint-status entry and no test exercising vector similarity search; no screen-map (orphan epic)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-25 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1833,
+        "merged_at": "2026-06-28T16:17:47Z",
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "10b-7-contextual-help-documentation",
@@ -594,7 +615,7 @@
       "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
@@ -605,11 +626,18 @@
       "action": "Coverage gap [mvp]: Document Sharing — verify and finish to done. Gaps: Known UX nit (per sprint-status): share panel uses window.confirm and lacks UUID validation on user-ID input — non-blocking polish item",
       "owner_role": "pm-security",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-02T16:16:02Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2003,
+        "merged_at": "2026-07-01T14:16:22Z",
+        "at": "2026-07-02T16:16:02Z"
+      }
     },
     {
       "id": "81-1-report-schedule-editing",
@@ -634,55 +662,88 @@
       "action": "Coverage gap [phase2]: Report Execution History — verify and finish to done. Gaps: sprint-status.yaml has no 81-2 key (only epic-80 keys present); classification driven by code+screen+PR consensus; Screen apiStatus: partial — download/retry flow had a test-gap follow-up (d1785e5fb)",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | dev-reconcile 2026-07-02T16:16:02Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b8e226da83533a1ef8125760e11dc319a20b7f6d",
+        "subject": "81-2-report-execution-history: verify-to-done + pin apiStatus reason (#2004)",
+        "at": "2026-07-02T16:16:02Z"
+      }
     },
     {
       "id": "82-1-swiftui-project-setup",
       "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-02T18:04:26Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-02T18:04:26Z"
+      }
     },
     {
       "id": "82-3-home-search-screens",
       "action": "Coverage gap [phase4]: Home and Search Screens — verify and finish to done. Gaps: mobile-native KMP buildStatus still in-progress; SwiftUI iOS slice is a parallel port that lagged (bug-ios-searchview-uncompilable PR #1357 was a recent fix)",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-02T18:04:26Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2005,
+        "merged_at": "2026-07-01T20:13:11Z",
+        "at": "2026-07-02T18:04:26Z"
+      }
     },
     {
       "id": "82-5-inquiries-account",
       "action": "Coverage gap [phase4]: Inquiries and Account — verify and finish to done. Gaps: Inline inquiry thread/conversation view noted as deferred in KMP agent log (inquiry-reply API + scheduling backend); iOS SendInquiryView present so iOS slice covered",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | dev-reconcile 2026-07-02T16:16:02Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b5311d158f463bde622c8e1a333c37117685c27a",
+        "subject": "82-5-inquiries-account: correct stale KMP inquiry-reply/scheduling API note + record coverage (#2006)",
+        "at": "2026-07-02T16:16:02Z"
+      }
     },
     {
       "id": "83-2-booking-integration",
       "action": "Coverage gap [phase4]: Booking.com OAuth and Sync — verify and finish to done. Gaps: Booking.com uses credential-based connect + OTA-XML rather than OAuth proper (matches Booking.com's real API model, not a true OAuth handshake like Airbnb)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-02T18:04:26Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2008,
+        "merged_at": "2026-07-02T04:12:40Z",
+        "at": "2026-07-02T18:04:26Z"
+      }
     },
     {
       "id": "83-3-portal-webhooks",
@@ -700,11 +761,18 @@
       "action": "Coverage gap [mvp]: Notification Trigger System — verify and finish to done. Gaps: No sprint-status entry to corroborate; trigger-specific unit/integration test not confirmed; no screen-map (orphan epic)",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1910,
+        "merged_at": null,
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "85-1-environment-variables",
@@ -747,11 +815,18 @@
       "action": "Coverage gap [mvp]: Channel-Level Notification Toggles — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-01T10:14:37Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1918,
+        "merged_at": "2026-06-28T08:16:17Z",
+        "at": "2026-07-01T10:14:37Z"
+      }
     },
     {
       "id": "8a-2-critical-notification-override",
@@ -816,11 +891,1063 @@
       "action": "Coverage gap [mvp]: User Onboarding Tour — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-02T16:16:02Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 1996,
+        "merged_at": "2026-07-01T14:11:07Z",
+        "at": "2026-07-02T16:16:02Z"
+      }
+    },
+    {
+      "id": "gh-issue-1680",
+      "action": "Research dispatcher: cron environment can't run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) (Closes #1680)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1680)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 1680,
+        "url": "https://github.com/martin-janci/property-management/issues/1680",
+        "labels": [
+          "dispatcher",
+          "infrastructure"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1995",
+      "action": "Wire tenant-migration import/export data-movement (S3 upload, parse/validate, async execution, export gen) — split from #1905 (Closes #1995)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1995) | gc1-reconcile 2026-07-03T02:03:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 1995,
+        "url": "https://github.com/martin-janci/property-management/issues/1995",
+        "labels": [
+          "enhancement",
+          "backend"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2037,
+        "merged_at": "2026-07-03T00:05:39Z",
+        "at": "2026-07-03T02:03:45Z"
+      }
+    },
+    {
+      "id": "gh-issue-1997",
+      "action": "Follow-up: index + stable-sort + test for migration template pagination (PR #1994) (Closes #1997)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1997) | gc1-reconcile 2026-07-03T08:08:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 1997,
+        "url": "https://github.com/martin-janci/property-management/issues/1997",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2038,
+        "merged_at": "2026-07-03T04:07:45Z",
+        "at": "2026-07-03T08:08:39Z"
+      }
+    },
+    {
+      "id": "gh-issue-1998",
+      "action": "Follow-up: #1771 regression test never runs in CI + stale count_unread_rls doc-comment (PR #1993) (Closes #1998)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1998) | gc1-reconcile 2026-07-03T08:08:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 1998,
+        "url": "https://github.com/martin-janci/property-management/issues/1998",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2039,
+        "merged_at": "2026-07-03T06:11:24Z",
+        "at": "2026-07-03T08:08:39Z"
+      }
+    },
+    {
+      "id": "gh-issue-1999",
+      "action": "Follow-up: favorite price-alert enqueue/advance can drop an alert (non-transactional) + idempotency test is quarantined (PR #1992) (Closes #1999)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#1999) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 1999,
+        "url": "https://github.com/martin-janci/property-management/issues/1999",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2043,
+        "merged_at": "2026-07-03T08:05:26Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2000",
+      "action": "Follow-up: CountryCode/SupportedCurrency serialize to ugly S_K/E_U_R (wrong rename_all) — wire + DB enum mismatch (PR #1991) (Closes #2000)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2000) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2000,
+        "url": "https://github.com/martin-janci/property-management/issues/2000",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2041,
+        "merged_at": "2026-07-03T08:05:43Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2001",
+      "action": "Follow-up: finance 100% coverage overstated — ignored/500-tolerant tests marked done (PR #1983) (Closes #2001)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2001) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2001,
+        "url": "https://github.com/martin-janci/property-management/issues/2001",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2040,
+        "merged_at": "2026-07-03T08:05:46Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2028",
+      "action": "Follow-up: latent u.name schema-drift 500 in list_bookings (PR #1973) (Closes #2028)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2028) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2028,
+        "url": "https://github.com/martin-janci/property-management/issues/2028",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2042,
+        "merged_at": "2026-07-03T08:05:48Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2029",
+      "action": "Follow-up: fault triage/confirm notification tests don't exercise the real handler (PR #1974) (Closes #2029)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2029) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2029,
+        "url": "https://github.com/martin-janci/property-management/issues/2029",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2048,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2030",
+      "action": "Follow-up: Slovak accounting export returns misleading 0 for expenses/payables (PR #1976) (Closes #2030)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2030) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2030,
+        "url": "https://github.com/martin-janci/property-management/issues/2030",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2047,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2032",
+      "action": "Follow-up: authz/security + freshly-added happy-path tests silently quarantined via bundled #[ignore] (PR #1980 / #1984) (Closes #2032)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2032) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2032,
+        "url": "https://github.com/martin-janci/property-management/issues/2032",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2045,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2033",
+      "action": "Follow-up: quick-xml 0.40→0.41 bump (XXE-pinned) rode into an ammonia-only RUSTSEC PR (PR #2011) (Closes #2033)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T20:05:30Z (#2033) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:30Z",
+      "issue_ref": {
+        "number": 2033,
+        "url": "https://github.com/martin-janci/property-management/issues/2033",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2044,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "bug-ios-deeplink-info-plist-missing",
+      "action": "iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (non-id-subject; manual reconcile note per dispatcher-prompt Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "CFBundleURLTypes(realityportal) present in mobile-native/iosApp/iosApp/Resources/Info.plist; com.apple.developer.associated-domains applinks present in iosApp.entitlements — added by ed90607, present on origin/dev HEAD",
+        "at": "2026-07-03T12:09:53Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "action": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-search-stale-response-race",
+      "action": "SearchScreen stale-response race — overlapping searches can clobber newer results",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-init-unhandled",
+      "action": "useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-1418-ppt",
+      "action": "PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
+      "action": "AI llm/sessions + integrations sync + subscriptions RLS migration (PR #1287, PAP-169) shipped without a new regression test",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+      "action": "Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
+      "action": "api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test for the public-connection routing",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+      "action": "mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixed in PR #1287",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+      "action": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality",
+      "action": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+      "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (already split into aml_dsa/ module dir; non-id-subject; manual reconcile per Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "backend/servers/api-server/src/routes/aml_dsa/ is a module dir (aml.rs,dsa.rs,edd.rs,moderation.rs,shared.rs,mod.rs) — the churn split already landed",
+        "at": "2026-07-03T12:12:51Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-03T16:03:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-03T16:03:37Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-mobile-native-listing-detail-kt",
+      "action": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-07-03T22:07:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2059,
+        "merged_at": "2026-07-03T20:11:26Z",
+        "at": "2026-07-03T22:07:28Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-mobile-native-search-screen-kt",
+      "action": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-api-core-osrng-expect",
+      "action": "crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "action": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements",
+      "action": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements-test",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-documents",
+      "action": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "action": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev (forms.rs already split into forms/ module dir; non-id-subject; manual reconcile per Phase 2.6)",
+        "commit": "ed90607",
+        "subject": "chore(research): dispatcher 2026-07-01 18:08 — 1 claimed, 0 reviewed, 0 merge-attempts, 0 merged-now, 0 failed, 4 active, B 4/72 dep-blocked=0, 0 rebased, 0 dup-skipped",
+        "evidence": "backend/servers/api-server/src/routes/forms/ = {crud.rs,fields.rs,submissions.rs,types.rs,mod.rs} (Jun29 split)",
+        "at": "2026-07-03T12:13:20Z"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-922-ppt",
+      "action": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "triage-dispatcher-mcp-push-large-file-issue-1014",
+      "action": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
+    },
+    {
+      "id": "triage-issue-1151",
+      "action": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T20:05:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
+    },
+    {
+      "id": "gh-issue-2034",
+      "action": "Follow-up: delegation scopes enum-array cast fix shipped without a regression test (PR #1972) (Closes #2034)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-02T22:17:11Z (#2034) | gc1-reconcile 2026-07-03T10:11:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-02T22:17:11Z",
+      "issue_ref": {
+        "number": 2034,
+        "url": "https://github.com/martin-janci/property-management/issues/2034",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2046,
+        "merged_at": "2026-07-03T10:10:54Z",
+        "at": "2026-07-03T10:11:42Z"
+      }
+    },
+    {
+      "id": "triage-issue-1331",
+      "action": "Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T02:05:30Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
+    },
+    {
+      "id": "triage-issue-951",
+      "action": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T02:05:30Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
+    },
+    {
+      "id": "gh-issue-2049",
+      "action": "Follow-up: units u.name schema-drift 500 still live in lease.rs (PR #2042) (Closes #2049)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2049)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2049,
+        "url": "https://github.com/martin-janci/property-management/issues/2049",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2050",
+      "action": "Follow-up: idempotency remediation guards only mapping not repo behavior (PR #2043) (Closes #2050)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2050)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2050,
+        "url": "https://github.com/martin-janci/property-management/issues/2050",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2051",
+      "action": "Follow-up: per_page clamp still untested + index tiebreak polish (PR #2038) (Closes #2051)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2051)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2051,
+        "url": "https://github.com/martin-janci/property-management/issues/2051",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2052",
+      "action": "Follow-up: harden #1771 unread soft-delete guard beyond substring check (PR #2039) (Closes #2052)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2052)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2052,
+        "url": "https://github.com/martin-janci/property-management/issues/2052",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2053",
+      "action": "Follow-up: encapsulate + test partial/unsupported_fields for SlovakAccountingExport (PR #2047) (Closes #2053)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2053)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2053,
+        "url": "https://github.com/martin-janci/property-management/issues/2053",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2054",
+      "action": "Follow-up: triage/confirm recipient tests dont exercise self-exclusion/dedup (PR #2048) (Closes #2054)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2054)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2054,
+        "url": "https://github.com/martin-janci/property-management/issues/2054",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2055",
+      "action": "Follow-up: model CountryCode/SupportedCurrency as closed enums in TypeSpec (PR #2041) (Closes #2055)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2055)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2055,
+        "url": "https://github.com/martin-janci/property-management/issues/2055",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2056",
+      "action": "Follow-up: quick-xml pin is a caret range and guard ignores Cargo.lock (PR #2044) (Closes #2056)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2056)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2056,
+        "url": "https://github.com/martin-janci/property-management/issues/2056",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2057",
+      "action": "Follow-up: ignore-reason gate misses cfg_attr ignore + same-line bare ignores (PR #2045) (Closes #2057)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2057)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2057,
+        "url": "https://github.com/martin-janci/property-management/issues/2057",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2058",
+      "action": "Follow-up: wire backlog-refill/issue-ingest behavioral tests into CI (PR #2026) (Closes #2058)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2058)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-03T18:24:40Z",
+      "issue_ref": {
+        "number": 2058,
+        "url": "https://github.com/martin-janci/property-management/issues/2058",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "7a-3-permission-based-access",
+      "action": "Coverage gap [mvp]: Permission-Based Document Access (Story 7A.3) — verify-to-done. Evidence: document_access_allowed + scope_membership_allows in core.rs, document_access_test.rs (217 lines). Gaps: sprint-status not flipped, no merged-PR keyword match, frontend permission UI unconfirmed. Confirm backend authz coverage is complete and flip sprint-status; if a real gap exists, close it.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T04:07:39Z"
+    },
+    {
+      "id": "7a-4-document-download-preview",
+      "action": "Coverage gap [mvp]: Document Download & Preview (Story 7A.4) — verify-to-done. Evidence: GET /{id}/download + /preview handlers, document-detail screen shipped. Gaps: sprint-status not flipped, preview second-frame planned. Confirm download/preview handlers are complete and flip sprint-status; if the preview second frame is a real gap, scope it.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-04T04:07:39Z"
     }
   ]
 }

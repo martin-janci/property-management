@@ -54,8 +54,15 @@ pub struct SensorWsQuery {
     /// JWT access token — required because WS upgrades cannot carry a custom
     /// `Authorization` header from browser clients.
     pub token: String,
-    /// Organization (tenant) whose sensor stream to subscribe to. Validated
-    /// against the caller's active membership before the upgrade.
+    /// Organization (tenant) whose sensor stream to subscribe to.
+    ///
+    /// This is **deliberately client-supplied**: a user who belongs to several
+    /// orgs picks which org's stream to open. It is NOT trusted for scoping —
+    /// authorization is enforced solely by the `is_member(org_id, user_id)` DB
+    /// check in [`sensor_ws_handler`] (active membership required), which returns
+    /// `403` before the upgrade for a non-member. The channel name is derived
+    /// from this validated value, so a foreign org id can never leak another
+    /// tenant's readings. Covered by `iot_sensor_ws_authz_tests`.
     pub organization_id: Uuid,
 }
 

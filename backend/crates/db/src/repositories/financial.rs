@@ -1321,7 +1321,7 @@ impl FinancialRepository {
             r#"
             SELECT
                 u.id as unit_id,
-                u.unit_number,
+                u.designation,
                 COALESCE(SUM(CASE WHEN i.due_date >= $3 THEN i.balance_due ELSE 0 END), 0) as current,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 AND i.due_date >= $3 - INTERVAL '30 days' THEN i.balance_due ELSE 0 END), 0) as days_30,
                 COALESCE(SUM(CASE WHEN i.due_date < $3 - INTERVAL '30 days' AND i.due_date >= $3 - INTERVAL '60 days' THEN i.balance_due ELSE 0 END), 0) as days_60,
@@ -1332,7 +1332,7 @@ impl FinancialRepository {
             LEFT JOIN invoices i ON i.unit_id = u.id AND i.balance_due > 0
             WHERE b.organization_id = $1
             AND ($2::uuid IS NULL OR b.id = $2)
-            GROUP BY u.id, u.unit_number
+            GROUP BY u.id, u.designation
             HAVING COALESCE(SUM(i.balance_due), 0) > 0
             ORDER BY total DESC
             "#,
@@ -1555,6 +1555,17 @@ impl FinancialRepository {
     /// `days` days, across all organizations. Used by the scheduler reminder
     /// tick.
     ///
+    /// **Cross-org by design (#1769 finding-4 / #1790 finding-4):** this runs on
+    /// the raw `self.pool` with no `organization_id` predicate and no
+    /// `app.current_organization_id` GUC — a deliberate system-level sweep, since
+    /// the background scheduler has no single tenant context. The scheduler pool
+    /// is the FORCE-RLS-exempt path, so this returns every tenant's due invoices
+    /// rather than silently empty. No cross-tenant leak results: the caller fans
+    /// notifications out strictly by each invoice's own `unit_id`
+    /// (`unit_residents`), never by a client-supplied org. The
+    /// `(due_date, status) WHERE balance_due > 0` partial index (migration 00209)
+    /// backs the hot predicate.
+    ///
     /// The due/overdue boundary is computed with SQL `CURRENT_DATE`
     /// (`make_interval`) rather than `Utc::now()` in Rust so it agrees with the
     /// `update_invoice_payment_status` trigger (migration 00040), which also
@@ -1602,6 +1613,13 @@ impl FinancialRepository {
     /// status `overdue`. Returns the transitioned invoices so callers can
     /// fire escalation notifications. Safe to call repeatedly (idempotent on
     /// already-overdue rows).
+    ///
+    /// Like [`find_invoices_due_for_reminder`], this is a deliberate
+    /// **cross-org** sweep on the raw `self.pool` (no `organization_id` filter,
+    /// RLS-exempt scheduler path); the single `UPDATE ... RETURNING` is atomic
+    /// and self-idempotent (a flipped row leaves the `status IN ('sent','partial')`
+    /// predicate). Backed by the `(due_date, status) WHERE balance_due > 0`
+    /// partial index (migration 00209).
     pub async fn transition_invoices_to_overdue(
         &self,
         grace_period_days: i64,
@@ -1627,55 +1645,11 @@ impl FinancialRepository {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use chrono::{Duration, Utc};
-
-    /// Verify the reminder window predicate: invoices due strictly after today
-    /// and on or before today + N days qualify for a reminder.
-    #[test]
-    fn test_reminder_window_predicate() {
-        let today = Utc::now().date_naive();
-        let days_before = 7i64;
-        let cutoff = today + Duration::days(days_before);
-
-        // The reminder window predicate: due strictly after today, on or before cutoff.
-        let in_reminder_window = |due| due > today && due <= cutoff;
-
-        // Due tomorrow — inside window.
-        assert!(in_reminder_window(today + Duration::days(1)));
-
-        // Due exactly at cutoff — inside window.
-        assert!(in_reminder_window(cutoff));
-
-        // Due today — excluded (already due, not upcoming).
-        assert!(!in_reminder_window(today));
-
-        // Due 8 days out — outside window.
-        assert!(!in_reminder_window(today + Duration::days(8)));
-    }
-
-    /// Verify the overdue grace-period predicate: invoices with due_date
-    /// strictly before today - grace_period_days should be transitioned.
-    #[test]
-    fn test_overdue_grace_period_predicate() {
-        let today = Utc::now().date_naive();
-
-        // The overdue predicate: due strictly before the grace cutoff transitions.
-        let is_overdue = |due, grace_cutoff| due < grace_cutoff;
-
-        // Grace period = 0: any invoice past due (due_date < today) transitions.
-        let grace_cutoff_0 = today - Duration::days(0);
-        assert!(is_overdue(today - Duration::days(1), grace_cutoff_0));
-
-        // Due today is NOT included (strict less-than).
-        assert!(!is_overdue(today, grace_cutoff_0));
-
-        // Grace period = 3: invoice overdue by 2 days stays pending.
-        let grace_cutoff_3 = today - Duration::days(3);
-        assert!(!is_overdue(today - Duration::days(2), grace_cutoff_3));
-
-        // Invoice overdue by 4 days transitions.
-        assert!(is_overdue(today - Duration::days(4), grace_cutoff_3));
-    }
-}
+// Behavioural coverage for the scheduler reminder/overdue helpers lives in the
+// DB-backed `backend/crates/db/tests/payment_reminder_dedup_tests.rs`
+// (`#[sqlx::test]`): it seeds boundary-date invoices and runs the real repo
+// methods — no-double-send after `mark_payment_reminder_sent`, `partial`
+// invoices reminded, and both `CURRENT_DATE` boundaries. The earlier in-module
+// unit tests were removed (#1769 finding-3 / #1790 finding-5): they re-derived
+// the date inequality as local closures and asserted on those, so they passed
+// regardless of the shipped SQL and gave false confidence.

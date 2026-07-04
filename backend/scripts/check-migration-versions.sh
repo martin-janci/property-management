@@ -3,7 +3,16 @@
 # Detects SQLx migration files that share the same numeric version prefix within
 # a single migrations directory.
 #
-# Usage: ./scripts/check-migration-versions.sh
+# Usage:
+#   ./scripts/check-migration-versions.sh              # auto-discover backend migrations dirs
+#   ./scripts/check-migration-versions.sh DIR [DIR...] # scan the given dirs (used by the test)
+#
+# With no arguments the script auto-discovers every `migrations/` directory
+# under the backend tree (so a future server with its own migrations dir is
+# guarded automatically, instead of silently un-checked until someone remembers
+# to append it). Passing explicit directories overrides discovery — the
+# regression test (`check-migration-versions.test.sh`) uses this to point the
+# checker at temp fixtures.
 #
 # Exit codes:
 #   0  Every migrations directory has unique numeric version prefixes.
@@ -32,10 +41,19 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # Migrations directories to scan (each enforced independently).
-MIGRATION_DIRS=(
-    "$BACKEND_DIR/crates/db/migrations"
-    "$BACKEND_DIR/servers/deploy-server/migrations"
-)
+#
+# Explicit args override discovery (the test passes temp fixture dirs).
+# Otherwise auto-discover every `migrations/` dir under the backend tree so the
+# guard stays in lock-step with the actual set of `sqlx::migrate!` loaders and
+# can't silently skip a newly added server's migrations. `target/` build output
+# is excluded.
+if [[ "$#" -gt 0 ]]; then
+    MIGRATION_DIRS=("$@")
+else
+    mapfile -t MIGRATION_DIRS < <(
+        find "$BACKEND_DIR" -type d -name migrations -not -path '*/target/*' | sort
+    )
+fi
 
 had_violation=false
 

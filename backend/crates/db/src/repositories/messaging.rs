@@ -39,6 +39,28 @@ pub struct MessagingRepository {
     pool: DbPool,
 }
 
+/// SQL for [`MessagingRepository::count_unread_rls`].
+///
+/// Hoisted into a `const` so a non-DB unit test can pin the #1771 soft-delete
+/// exclusion (`tps.deleted_at IS NULL`) on the normal CI gate without a live
+/// Postgres pool (the DB-backed regression test is quarantined under BIT-351).
+const COUNT_UNREAD_SQL: &str = r#"
+            SELECT COUNT(*)
+            FROM messages m
+            JOIN message_threads t ON t.id = m.thread_id
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
+            WHERE $1 = ANY(t.participant_ids)
+              AND t.organization_id = $2
+              AND m.sender_id != $1
+              AND m.deleted_at IS NULL
+              -- exclude threads this user soft-deleted ("delete for me"); they
+              -- vanish from the inbox list, so their unread messages must not
+              -- keep the global unread badge stuck non-zero (#1771).
+              AND tps.deleted_at IS NULL
+              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
+            "#;
+
 impl MessagingRepository {
     /// Create a new MessagingRepository.
     pub fn new(pool: DbPool) -> Self {
@@ -157,13 +179,18 @@ impl MessagingRepository {
                 WHERE m.deleted_at IS NULL
                 ORDER BY m.thread_id, m.created_at DESC
             ),
+            -- Per-participant unread (#1773 finding-2): count messages newer
+            -- than THIS user's read watermark, not the shared messages.read_at
+            -- flag, so a group thread's unread is independent per participant.
             unread_counts AS (
-                SELECT thread_id, COUNT(*) as unread
-                FROM messages
-                WHERE sender_id != $1
-                  AND read_at IS NULL
-                  AND deleted_at IS NULL
-                GROUP BY thread_id
+                SELECT m.thread_id, COUNT(*) as unread
+                FROM messages m
+                LEFT JOIN thread_participant_state tps
+                    ON tps.thread_id = m.thread_id AND tps.user_id = $1
+                WHERE m.sender_id != $1
+                  AND m.deleted_at IS NULL
+                  AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
+                GROUP BY m.thread_id
             )
             SELECT
                 t.id,
@@ -527,15 +554,27 @@ impl MessagingRepository {
     }
 
     /// Mark all messages in a thread as read for a user with RLS context.
-    pub async fn mark_thread_read_rls<'e, E>(
+    ///
+    /// Two effects, both keyed to `reader_id` only (never the other
+    /// participants):
+    ///  1. stamps `messages.read_at` on this thread's still-unread inbound
+    ///     messages — the per-message read receipt (unchanged behaviour);
+    ///  2. advances this user's per-participant read watermark
+    ///     (`thread_participant_state.last_read_at`), which is what
+    ///     [`count_unread_rls`] / the inbox `unread_counts` now derive unread
+    ///     from. The watermark is per-(thread, user), so one participant reading
+    ///     a group thread no longer zeroes everyone else's unread count
+    ///     (#1773 finding-2). The upsert satisfies the table's owner-isolation
+    ///     RLS policy because `reader_id == app.current_user_id`.
+    ///
+    /// Takes `&mut PgConnection` (not a generic executor) so both statements run
+    /// on the same RLS-scoped connection.
+    pub async fn mark_thread_read_rls(
         &self,
-        executor: E,
+        conn: &mut sqlx::PgConnection,
         thread_id: Uuid,
         reader_id: Uuid,
-    ) -> Result<i64, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<i64, SqlxError> {
         let result = sqlx::query(
             r#"
             UPDATE messages
@@ -548,7 +587,20 @@ impl MessagingRepository {
         )
         .bind(thread_id)
         .bind(reader_id)
-        .execute(executor)
+        .execute(&mut *conn)
+        .await?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO thread_participant_state (thread_id, user_id, last_read_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (thread_id, user_id)
+            DO UPDATE SET last_read_at = NOW(), updated_at = NOW()
+            "#,
+        )
+        .bind(thread_id)
+        .bind(reader_id)
+        .execute(&mut *conn)
         .await?;
 
         Ok(result.rows_affected() as i64)
@@ -556,14 +608,20 @@ impl MessagingRepository {
 
     /// Count unread messages for a user across all threads with RLS context.
     ///
-    /// Mirrors the per-participant soft-delete filter applied by
-    /// [`list_threads_rls`] / [`count_threads_rls`] (BIT-182): messages in a
-    /// thread the user soft-deleted "for me" (`thread_participant_state.deleted_at`
-    /// set) are excluded, so the global unread badge can't get stuck counting
-    /// messages in a thread the user can no longer see (GH #1771). A later inbound
-    /// message un-hides the thread via `unhide_thread_for_user`, so the count
-    /// naturally returns — consistent with the inbox. Archived threads are left
-    /// counted (a product call: archive is not "dismiss").
+    /// Unread is derived from the caller's per-participant read watermark
+    /// (`thread_participant_state.last_read_at`), not the shared
+    /// `messages.read_at` flag: a message counts when it was created after the
+    /// caller's watermark (or the caller has no watermark row yet). This makes
+    /// group-thread unread counts independent per participant (#1773 finding-2)
+    /// — one member reading no longer clears everyone's badge.
+    ///
+    /// Note (#1771): this LEFT JOIN to `thread_participant_state` is also where
+    /// the per-participant soft-delete exclusion lives — `tps.deleted_at IS NULL`
+    /// is inline in the query below, so threads a user soft-deleted ("delete for
+    /// me") no longer keep their global unread badge stuck non-zero. The query
+    /// SQL is hoisted into [`COUNT_UNREAD_SQL`] so a non-DB unit test can pin that
+    /// predicate on the normal CI gate (the DB-backed regression test is
+    /// quarantined under BIT-351).
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -573,27 +631,11 @@ impl MessagingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let (count,): (i64,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(*)
-            FROM messages m
-            JOIN message_threads t ON t.id = m.thread_id
-            -- Per-participant view state for the current user (BIT-182, #1771).
-            LEFT JOIN thread_participant_state tps
-                ON tps.thread_id = t.id AND tps.user_id = $1
-            WHERE $1 = ANY(t.participant_ids)
-              AND t.organization_id = $2
-              AND m.sender_id != $1
-              AND m.read_at IS NULL
-              AND m.deleted_at IS NULL
-              -- Don't count unread in threads this user soft-deleted for themselves.
-              AND tps.deleted_at IS NULL
-            "#,
-        )
-        .bind(user_id)
-        .bind(organization_id)
-        .fetch_one(executor)
-        .await?;
+        let (count,): (i64,) = sqlx::query_as(COUNT_UNREAD_SQL)
+            .bind(user_id)
+            .bind(organization_id)
+            .fetch_one(executor)
+            .await?;
 
         Ok(count)
     }
@@ -730,6 +772,39 @@ impl MessagingRepository {
         .await?;
 
         Ok(exists)
+    }
+
+    /// Set-based block check for N-party thread creation (#1776).
+    ///
+    /// Returns the subset of `candidates` that have either blocked `caller` or
+    /// been blocked by `caller`, in a single query. Replaces the per-recipient
+    /// `is_blocked_rls` loop in `start_thread`, keeping that handler at a
+    /// constant number of round-trips regardless of participant count (matching
+    /// the already-set-based existence and org-membership checks alongside it).
+    pub async fn blocked_among_rls<'e, E>(
+        &self,
+        executor: E,
+        caller: Uuid,
+        candidates: &[Uuid],
+    ) -> Result<Vec<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT blocked_id AS other_id FROM user_blocks
+              WHERE blocker_id = $1 AND blocked_id = ANY($2)
+            UNION
+            SELECT blocker_id AS other_id FROM user_blocks
+              WHERE blocked_id = $1 AND blocker_id = ANY($2)
+            "#,
+        )
+        .bind(caller)
+        .bind(candidates)
+        .fetch_all(executor)
+        .await?;
+
+        Ok(rows.into_iter().map(|(id,)| id).collect())
     }
 
     /// List blocked users with their info with RLS context.
@@ -975,7 +1050,11 @@ impl MessagingRepository {
         thread_id: Uuid,
         reader_id: Uuid,
     ) -> Result<i64, SqlxError> {
-        self.mark_thread_read_rls(&self.pool, thread_id, reader_id)
+        // `mark_thread_read_rls` now runs two statements (read receipt + read
+        // watermark upsert) on one connection, so acquire a pooled connection
+        // and pass it through. (This path is deprecated and non-RLS-scoped.)
+        let mut conn = self.pool.acquire().await?;
+        self.mark_thread_read_rls(&mut conn, thread_id, reader_id)
             .await
     }
 
@@ -1221,5 +1300,29 @@ impl MessagingRepository {
                 )
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::COUNT_UNREAD_SQL;
+
+    /// Non-DB guard for the #1771 fix (PR #1993): the unread-count query must
+    /// exclude threads a user soft-deleted ("delete for me") via the
+    /// per-participant `tps.deleted_at IS NULL` predicate on the
+    /// `thread_participant_state` join. The DB-backed regression test
+    /// (`soft_deleted_thread_excluded_from_unread_count`) is `#[ignore]`d under
+    /// the BIT-351 quarantine, so this plain `#[test]` — mirroring the
+    /// catalog-metadata guard style — is the executing guard on the normal CI
+    /// gate. It runs without a live Postgres pool.
+    #[test]
+    fn count_unread_sql_excludes_soft_deleted_threads() {
+        assert!(
+            COUNT_UNREAD_SQL.contains("tps.deleted_at IS NULL"),
+            "count_unread_rls SQL must keep the per-participant soft-delete \
+             exclusion `tps.deleted_at IS NULL` (#1771 / PR #1993); without it a \
+             thread a user hid from their inbox leaves its unread messages stuck \
+             on the global unread badge with no thread visible to clear them"
+        );
     }
 }

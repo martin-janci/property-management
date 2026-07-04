@@ -65,9 +65,13 @@ private const val TAG = "InquiriesScreen"
  *    cancel action).
  * 6. Bottom nav reserved 96dp.
  *
- * Inline thread view (`KmpInquiryThreadScreen` in the design) is not wired here — the design
- * includes scheduling UI (calendar grid + time slots) that requires API support not yet present in
- * the inquiry domain. Tracked as a follow-up.
+ * Inline thread view (`KmpInquiryThreadScreen` in the design) is not wired into this Compose screen
+ * yet — only the messages/viewings list is rendered here. The underlying shared APIs it needs now
+ * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/{id}/replies, and the
+ * scheduling calendar's `scheduleViewing` → POST /api/v1/viewings, both with commonTest contract
+ * coverage), so the earlier "API support not yet present" blocker is resolved; the remaining work
+ * is the Android Compose thread + calendar UI itself. iOS already ships this via
+ * `InquiryDetailView.swift`. Tracked as a follow-up Android-parity task.
  *
  * Epic 48 - Story 48.6: Portal Mobile Inquiries.
  */

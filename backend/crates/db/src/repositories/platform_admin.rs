@@ -2,6 +2,29 @@
 //!
 //! Repository for platform-wide administrative operations including
 //! organization management with cross-tenant queries.
+//!
+//! # Why runtime `sqlx::query` instead of the compile-time `query!` macros (#1851)
+//!
+//! Every query here uses the runtime, *unchecked* `sqlx::query` / `query_as` /
+//! `query_scalar` forms rather than the compile-time-checked `query!` family.
+//! This is a **deliberate, repo-wide convention**, not an oversight: the
+//! checked macros require a live DB connection (or a committed `.sqlx/` offline
+//! cache via `cargo sqlx prepare`) at build time, but this workspace compiles
+//! DB-free — CI runs `SQLX_OFFLINE=true` and there is **no `.sqlx/` cache** in
+//! the tree (see the same rationale documented at
+//! `rental.rs::find_airbnb_connection_by_listing_id`). Introducing a `query!`
+//! here in isolation would fail the `check` / `fmt-clippy` gates, which compile
+//! with `SQLX_OFFLINE=true`.
+//!
+//! Because the SQL is therefore validated at *runtime*, the `refresh_tokens`
+//! session queries (`get_user_sessions`, `revoke_user_sessions`, and the
+//! `active_sessions` count) are guarded against column/typo regressions by the
+//! DB-backed `#[sqlx::test]` in
+//! `backend/crates/db/tests/support_data_session_columns_tests.rs` (added with
+//! the #1829 fix) — keep that test in lock-step with any edit to those queries.
+//! Migrating the whole repo to the checked macros is tracked as part of
+//! establishing a workspace-wide `cargo sqlx prepare` offline-cache workflow,
+//! not a per-file change.
 
 use crate::models::fault::StatusCount as FaultStatusCount;
 use crate::models::platform_admin::{

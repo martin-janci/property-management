@@ -191,7 +191,7 @@ impl TestDb {
 
 /// Test that users cannot see organizations they don't belong to
 #[tokio::test]
-#[ignore] // Run with: cargo test --test rls_penetration_tests -- --ignored
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_cross_tenant_org_isolation() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -284,7 +284,7 @@ async fn test_cross_tenant_org_isolation() {
 
 /// Test that roles are isolated per organization
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_cross_tenant_role_isolation() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -362,7 +362,7 @@ async fn test_cross_tenant_role_isolation() {
 
 /// Test that users cannot modify data without proper permissions
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_permission_boundary_update() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -415,7 +415,7 @@ async fn test_permission_boundary_update() {
 
 /// Test that super admin can access all organizations
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_super_admin_access() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -459,7 +459,7 @@ async fn test_super_admin_access() {
 
 /// Test behavior when no tenant context is set
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_null_context_blocks_access() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -497,7 +497,7 @@ async fn test_null_context_blocks_access() {
 
 /// Validate that all tenant-scoped tables have RLS enabled
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_rls_coverage_validation() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -602,7 +602,7 @@ async fn test_rls_coverage_validation() {
 
 /// Test that SQL injection attempts are prevented
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_sql_injection_prevention() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -668,7 +668,7 @@ async fn test_sql_injection_prevention() {
 /// If a super-admin request's context isn't cleared before returning to the pool,
 /// a subsequent request could inherit elevated privileges.
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_rls_context_cleared_after_release() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 
@@ -782,7 +782,7 @@ async fn test_rls_context_cleared_after_release() {
 /// This verifies that returning a connection with context set doesn't affect
 /// subsequent connections acquired from the pool.
 #[tokio::test]
-#[ignore]
+#[ignore = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"]
 async fn test_rls_context_isolation_between_connections() {
     let db = TestDb::new().await.expect("Failed to connect to test DB");
 

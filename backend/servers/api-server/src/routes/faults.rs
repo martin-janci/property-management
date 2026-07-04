@@ -26,6 +26,61 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ============================================================================
+// Notification recipient policy (single source of truth — #2029)
+// ============================================================================
+//
+// The fault-lifecycle notification recipient rules are extracted into pure
+// functions so the production handlers below and the recipient tests in
+// `tests/fault_notification_recipient_tests.rs` assert against the *same*
+// logic. Previously the tests re-implemented the selection inline, so the
+// handler's real policy (self-exclusion, dedup, `assigned_to`/manager
+// handling) could drift while the tests stayed green (#1974 / #2029).
+
+/// Recipients for a `triage_fault` notification (#1793).
+///
+/// The reporter (unless they are the triaging manager) plus the assigned
+/// technician if triage set one (skipping the actor and any duplicate).
+pub fn triage_fault_recipients(
+    reporter_id: Uuid,
+    actor_id: Uuid,
+    assigned_to: Option<Uuid>,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if reporter_id != actor_id {
+        recipients.push(reporter_id);
+    }
+    if let Some(assignee) = assigned_to {
+        if assignee != actor_id && !recipients.contains(&assignee) {
+            recipients.push(assignee);
+        }
+    }
+    recipients
+}
+
+/// Recipients for a `confirm_fault` notification (#1793).
+///
+/// The assignee who did the work (unless they are the confirming reporter)
+/// plus the org's managers, excluding the actor and any duplicate.
+pub fn confirm_fault_recipients(
+    assigned_to: Option<Uuid>,
+    actor_id: Uuid,
+    manager_ids: impl IntoIterator<Item = Uuid>,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if let Some(assignee) = assigned_to {
+        if assignee != actor_id {
+            recipients.push(assignee);
+        }
+    }
+    for mid in manager_ids {
+        if mid != actor_id && !recipients.contains(&mid) {
+            recipients.push(mid);
+        }
+    }
+    recipients
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 //
@@ -822,6 +877,37 @@ async fn triage_fault(
         })?;
 
     rls.release().await;
+
+    // #1793: notify the reporter (and the assigned technician, if triage set
+    // one) that the fault has been triaged — the first manager touch on a fault.
+    // Best-effort, mirroring the other transitions: a dispatch failure is logged
+    // and never fails the mutation. Recipient policy lives in the shared
+    // `triage_fault_recipients` (#2029) so the tests exercise this exact logic.
+    let recipients =
+        triage_fault_recipients(fault.reporter_id, principal.user_id, fault.assigned_to);
+    if !recipients.is_empty() {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault triaged: {}", fault.title),
+            "The fault has been triaged and prioritized.".to_string(),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+        }));
+        let results = state
+            .notification_pipeline
+            .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+            .await;
+        tracing::info!(
+            fault_id = %fault.id,
+            recipients = results.len(),
+            "FaultTriaged notifications dispatched"
+        );
+    }
+
     Ok(Json(FaultActionResponse {
         message: "Fault triaged successfully".to_string(),
         fault,
@@ -1141,6 +1227,50 @@ async fn confirm_fault(
                 )),
             )
         })?;
+
+    // #1793: the reporter has confirmed (and rated) the resolution — typically
+    // the closing transition. Notify the assignee who did the work plus the
+    // org's managers so the lifecycle gets a closure signal. Best-effort.
+    let manager_ids = match MembershipRepository::new(state.db.clone())
+        .list_manager_ids(tenant_id)
+        .await
+    {
+        Ok(manager_ids) => manager_ids,
+        Err(e) => {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to load manager ids for FaultConfirmed notification"
+            );
+            Vec::new()
+        }
+    };
+    // Recipient policy lives in the shared `confirm_fault_recipients` (#2029)
+    // so the tests exercise this exact selection (assignee + managers, minus
+    // the confirming reporter, deduplicated).
+    let recipients = confirm_fault_recipients(fault.assigned_to, principal.user_id, manager_ids);
+    if !recipients.is_empty() {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault resolution confirmed: {}", fault.title),
+            "The reporter has confirmed the fault resolution.".to_string(),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+        }));
+        let results = state
+            .notification_pipeline
+            .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+            .await;
+        tracing::info!(
+            fault_id = %fault.id,
+            recipients = results.len(),
+            "FaultConfirmed notifications dispatched"
+        );
+    }
 
     Ok(Json(FaultActionResponse {
         message: "Resolution confirmed successfully".to_string(),
