@@ -1730,8 +1730,8 @@
       "action": "Follow-up: units u.name schema-drift 500 still live in lease.rs (PR #2042) (Closes #2049)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2049)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2049) | gc1-reconcile 2026-07-04T06:04:18Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1743,6 +1743,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2060,
+        "merged_at": "2026-07-04T02:06:44Z",
+        "at": "2026-07-04T06:04:18Z"
       }
     },
     {
@@ -1890,8 +1897,8 @@
       "action": "Follow-up: ignore-reason gate misses cfg_attr ignore + same-line bare ignores (PR #2045) (Closes #2057)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2057)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2057) | gc1-reconcile 2026-07-04T06:04:18Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1903,6 +1910,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2062,
+        "merged_at": "2026-07-04T02:09:38Z",
+        "at": "2026-07-04T06:04:18Z"
       }
     },
     {
@@ -1910,8 +1924,8 @@
       "action": "Follow-up: wire backlog-refill/issue-ingest behavioral tests into CI (PR #2026) (Closes #2058)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2058)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-03T18:24:40Z (#2058) | gc1-reconcile 2026-07-04T06:04:18Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1923,6 +1937,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2061,
+        "merged_at": "2026-07-04T02:09:43Z",
+        "at": "2026-07-04T06:04:18Z"
       }
     },
     {
