@@ -164,3 +164,4 @@ behavior so any future wiring change is caught.
 |------|--------|
 | 2025-12-21 | Story created |
 | 2026-06-11 | Coverage 7a-3 verify: RLS + capability gates confirmed; AC-mapped tests added; status → done |
+| 2026-07-04 | Verify-to-done: sprint-status.yaml flipped ready-for-dev → done to match story status. Confirmed the "Known gaps" (building/unit not wired into the download/preview gate) are now RESOLVED — `scope_membership_allows` + `user_scope_memberships_rls` wire building/unit membership into list/download/preview (GH #1413), OR'd with `document_access_allowed`; `document_access_test.rs` (217 lines) covers building/unit membership grant/deny. Backend authz coverage complete. Frontend permission-authoring UI (Task 5/6) not shipped — tracked separately; the story ACs are backend-enforcement ACs and are met. |
