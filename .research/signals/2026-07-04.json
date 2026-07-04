@@ -1,0 +1,140 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine has not run since 2026-06-16T03:25:00Z (18d ago); state cursors last_pr_seen=1439, last_issue_seen=1437 predate PRs #1440\u2013#2077 and issues up to #2087 \u2014 this run advances cursors only over the visible window (PRs \u2265 #1963) and defers older PRs to a future `deep` catch-up sweep",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-04",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 2026-06-16 is 18d old; cloud routine cron likely paused. Dispatcher (separate branch, .research/management/assignments.json) has been ticking \u2014 dispatcher commits visible on origin/dev through 2026-07-04 \u2014 so the routine schedule is the specific failure, not the whole automation",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-2026-07-04-batch",
+      "type": "dep-update-noise",
+      "source": "gh pr list --state open",
+      "score_delta": 0,
+      "evidence": "13 open dependabot PRs awaiting review: #2012 (compose-bom), #2013 (ktor), #2014 (axum-test), #2015 (gradle-minor-patch), #2016 (rust-toolchain action), #2018 (aes-gcm), #2020 (rust_xlsxwriter), #2021 (npm-minor-patch), #2022\u2013#2025 (expo-*), #2031 (cargo-minor-patch) \u2014 no security advisories referenced, all ready-for-review; not scored per routine convention",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal \u2014 this run emitted only 3 process signals (lag/stale/dep-noise), none in the Phase 5 allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 grep '^# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-id check on backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq intersect signals vs prior seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "jq max score <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "python decay verify",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached count new plans",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= count at HEAD",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md against regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix caps + idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2192 gate is no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram bot-token pattern in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
