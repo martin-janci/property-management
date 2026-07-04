@@ -1,9 +1,98 @@
 {
- "generated": "2026-07-03T16:24:28Z",
+ "generated": "2026-07-04T18:18:47Z",
  "window": "14d",
  "base": "dev",
  "scope": null,
  "runs": [
+  {
+   "run_at": "2026-07-04T18:18:47Z",
+   "prs_scanned": 15,
+   "clean": [
+    2035,
+    2036,
+    2070,
+    2071
+   ],
+   "with_issues": [
+    {
+     "pr": 2059,
+     "issue": 2079,
+     "findings": 1,
+     "specialist": "kotlin-mp",
+     "note": "Clean CI-green move-only ListingDetail.kt split; but stateful entry composable (favorite-toggle churn locus) left monolithic; follow-up suggests ViewModel state hoist."
+    },
+    {
+     "pr": 2060,
+     "issue": 2076,
+     "findings": 1,
+     "specialist": "rust-backend",
+     "note": "Fix correct+complete (all 4 units.designation sites in lease.rs, no drift); but no regression test added despite board_meetings #1586 sqlx::test precedent for this class."
+    },
+    {
+     "pr": 2061,
+     "issue": 2078,
+     "findings": 1,
+     "specialist": "generic",
+     "note": "dispatcher-self-test wiring correct+complete; but missing assignments.json still aborts jq under set -e and seeded smoke tests never cover that #2058 path."
+    },
+    {
+     "pr": 2062,
+     "issue": 2081,
+     "findings": 2,
+     "specialist": "generic",
+     "note": "Matcher closes both #2057 gaps (cfg_attr + same-line) with no false positives; self-test covers only bash classifier not grep scan path; script lost exec bit."
+    },
+    {
+     "pr": 2063,
+     "issue": 2080,
+     "findings": 2,
+     "specialist": "rust-backend",
+     "note": "Clamp/tiebreak/index requirements met; but id-tiebreak never exercised (all seeds distinct updated_at) and OR-leg sort not index-satisfiable on default path."
+    },
+    {
+     "pr": 2064,
+     "issue": 2084,
+     "findings": 1,
+     "specialist": "generic",
+     "note": "Exact =0.41.0 quick-xml pin correct, but enforcement advisory-only; existing cargo-deny [bans] gate would enforce over resolved graph incl. Cargo.lock."
+    },
+    {
+     "pr": 2065,
+     "issue": 2082,
+     "findings": 2,
+     "specialist": "rust-backend",
+     "note": "Guard hardened but still SQL-text-only; real #[sqlx::test] behavioral test for #1771 unread soft-delete stays BIT-351-ignored, so invariant never runs on CI."
+    },
+    {
+     "pr": 2066,
+     "issue": 2083,
+     "findings": 1,
+     "specialist": "typespec",
+     "note": "CountryCode/SupportedCurrency enum values byte-for-byte correct across TypeSpec/Rust wire/DB 00101; gap is no CI/test guard to prevent future re-drift."
+    },
+    {
+     "pr": 2067,
+     "issue": 2085,
+     "findings": 1,
+     "specialist": "rust-backend",
+     "note": "Core #2054 fix solid (5 tests genuinely fire self-exclusion/dedup, fail if removed); sibling assign transition still inline + uncovered."
+    },
+    {
+     "pr": 2068,
+     "issue": 2087,
+     "findings": 1,
+     "specialist": "rust-backend",
+     "note": "CTE idempotency guard (AlreadyRead/NotFound) correct + catches regressions; only nit is re-declared seed_org duplicating shared tests/common fixture."
+    },
+    {
+     "pr": 2069,
+     "issue": 2086,
+     "findings": 1,
+     "specialist": "rust-backend",
+     "note": "Derivation cleanly extracted to compute_partial + well tested; only nit is call-me-or-forget mutator vs enforced-by-construction, leaving #2030 regression latent."
+    }
+   ]
+  },
   {
    "run_at": "2026-07-03T16:24:28Z",
    "prs_scanned": 14,
