@@ -1906,8 +1906,7 @@ mod recipient_policy_tests {
         let assignee = Uuid::new_v4();
         let other_manager = Uuid::new_v4();
 
-        let recipients =
-            confirm_fault_recipients(Some(assignee), actor, [actor, other_manager]);
+        let recipients = confirm_fault_recipients(Some(assignee), actor, [actor, other_manager]);
 
         assert!(
             !recipients.contains(&actor),
