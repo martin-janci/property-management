@@ -26,30 +26,50 @@
 #
 # What counts as "bare"
 # ---------------------
-#   flagged     #[ignore]                     (no reason)
-#   flagged         #[ignore]                 (indented)
-#   flagged     #[ignore] // some comment     (comment is not a reason string)
-#   flagged     #[ ignore ]                   (inner whitespace, still bare)
-#   OK          #[ignore = "requires DB"]     (has a reason string)
-#   OK          #[ignore = "BIT-440: ..."]    (reason + tracking id)
-#   ignored     /// `#[ignore]` ...           (doc comment — starts with `/`)
-#   ignored     //! marked #[ignore] ...       (doc comment)
-#   ignored     // #[ignore]                   (commented-out attribute)
-#   ignored     let s = "#[ignore]";           (string literal — not at line start)
+#   flagged     #[ignore]                       (no reason)
+#   flagged         #[ignore]                   (indented)
+#   flagged     #[ignore] // some comment       (comment is not a reason string)
+#   flagged     #[ ignore ]                     (inner whitespace, still bare)
+#   flagged     #[test] #[ignore]               (bare ignore after another attr)
+#   flagged     #[cfg_attr(test, ignore)]       (conditional but still reason-free)
+#   OK          #[ignore = "requires DB"]       (has a reason string)
+#   OK          #[ignore = "BIT-440: ..."]      (reason + tracking id)
+#   OK          #[cfg_attr(test, ignore = "…")] (cfg-gated ignore with a reason)
+#   ignored     /// `#[ignore]` ...             (doc comment — starts with `/`)
+#   ignored     //! marked #[ignore] ...        (doc comment)
+#   ignored     // #[ignore]                    (commented-out attribute)
+#   ignored     let s = "#[ignore]";            (string literal — not at line start)
 #
-# The leading `#` anchor (`^[[:space:]]*#\[`) is what excludes doc comments,
+# The leading `#[` anchor (`^[[:space:]]*#\[`) is what excludes doc comments,
 # commented-out attributes, and in-string mentions: those lines start with
-# `/`, `l`, etc. — never with `#[` after optional indentation. The valid
-# `#[ignore = "..."]` form has content between `ignore` and `]`, so it does
-# not match the bare pattern either.
+# `/`, `l`, etc. — never with `#[` after optional indentation. Once a line is
+# known to be an attribute line, the matcher looks for a bare `#[ignore]`
+# token anywhere on it (so `#[test] #[ignore]` is caught, not just a
+# line-leading one) and for a reason-free `ignore` inside `cfg_attr(...)`
+# (`ignore` followed by `,` or `)` rather than `=`). The valid
+# `#[ignore = "..."]` and `#[cfg_attr(test, ignore = "...")]` forms have an
+# `=` after `ignore`, so they do not match. A `#[ignore]` buried inside a
+# block comment or a multi-line string is out of scope by design — the
+# matcher keys on attribute lines, not on every mention of the token.
 
 set -euo pipefail
 
-# Single source of truth for the matcher — a bare `#[ignore]` attribute at
-# the start of a line (leading indentation allowed; optional inner
-# whitespace around `ignore`). POSIX ERE so plain `grep -E` and bash
-# `=~` agree.
-BARE_IGNORE_ERE='^[[:space:]]*#\[[[:space:]]*ignore[[:space:]]*\]'
+# Single source of truth for the matcher. Built from named parts (POSIX ERE
+# so plain `grep -E` and bash `=~` agree — no `\b`, no PCRE backreferences):
+#
+#   BARE_TOKEN     a reason-free `#[ignore]` token (optional inner whitespace).
+#   CFG_ATTR_BARE  a reason-free `ignore` inside `cfg_attr(...)` — preceded by
+#                  `(`/`,` and followed by `,`/`)`, i.e. NOT `ignore = "..."`.
+#
+# The composed pattern requires the line to be an attribute line
+# (`^[[:space:]]*#\[` — the anchor that excludes doc comments, commented-out
+# attrs, and in-string mentions) and then flags it when the ignore sits
+# right after the leading `#[` (plain `#[ignore]`), or a bare `#[ignore]`
+# token / bare cfg_attr ignore appears anywhere later on the line
+# (`#[test] #[ignore]`, `#[cfg_attr(test, ignore)]`).
+BARE_TOKEN='#\[[[:space:]]*ignore[[:space:]]*\]'
+CFG_ATTR_BARE='cfg_attr\(.*[(,][[:space:]]*ignore[[:space:]]*[,)]'
+BARE_IGNORE_ERE="^[[:space:]]*#\[([[:space:]]*ignore[[:space:]]*\]|.*(${BARE_TOKEN}|${CFG_ATTR_BARE}))"
 
 # ---- classifier (single line) --------------------------------------
 
@@ -101,11 +121,19 @@ self_test() {
   run "bare + trailing comment"    "bare" '#[ignore] // requires database'
   run "inner whitespace"           "bare" '#[ ignore ]'
   run "bare then attr on same idx" "bare" '    #[ignore] // run with --ignored'
+  run "cfg_attr bare ignore"       "bare" '#[cfg_attr(test, ignore)]'
+  run "cfg_attr bare, indented"    "bare" '    #[cfg_attr(test, ignore)]'
+  run "cfg_attr bare, nested cfg"  "bare" '#[cfg_attr(all(unix, test), ignore)]'
+  run "same-line bare after attr"  "bare" '#[test] #[ignore]'
+  run "same-line bare, indented"   "bare" '    #[test] #[ignore]'
 
   # Negative — must NOT be flagged.
   run "reason string"              "ok"   '#[ignore = "requires DB"]'
   run "reason + ticket, indented"  "ok"   '    #[ignore = "BIT-440: workspace hostage"]'
   run "reason with metachars"      "ok"   '#[ignore = "flakes; run --test-threads=1"]'
+  run "cfg_attr with reason"       "ok"   '#[cfg_attr(test, ignore = "requires DB")]'
+  run "cfg_attr reason, indented"  "ok"   '    #[cfg_attr(test, ignore = "BIT-440: db")]'
+  run "cfg_attr no ignore"         "ok"   '#[cfg_attr(feature = "x", test)]'
   run "doc comment ///"            "ok"   '/// `#[ignore]`; run them with:'
   run "doc comment //!"            "ok"   '//! marked #[ignore] until DB is seeded'
   run "commented-out attribute"    "ok"   '// #[ignore]'

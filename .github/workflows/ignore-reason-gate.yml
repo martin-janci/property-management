@@ -13,10 +13,13 @@ name: Ignore-reason gate
 #
 #   Every Rust `#[ignore]` MUST be written as `#[ignore = "<reason>"]`.
 #
-# The whole tree is scanned (not just the diff) so no bare `#[ignore]`
-# can survive anywhere in the codebase — the strongest reading of
-# "FAILS on any bare #[ignore]". The scan is DB-free and fast: it is a
-# pure text check via `.github/workflows/scripts/check-ignore-reason.sh`.
+# The whole tree is scanned (not just the diff), so a reason-free `#[ignore]`
+# — plain, indented, trailing another attribute (`#[test] #[ignore]`), or
+# conditional (`#[cfg_attr(test, ignore)]`) — is caught wherever it is
+# written as an attribute. The matcher keys on attribute lines, so a
+# `#[ignore]` buried in a block comment or a multi-line string is out of
+# scope by design. The scan is DB-free and fast: it is a pure text check
+# via `.github/workflows/scripts/check-ignore-reason.sh`.
 #
 # This mirrors the security-test-gate.yml pattern: an extracted, self-
 # tested shell helper plus a self-test job that exercises the matcher
