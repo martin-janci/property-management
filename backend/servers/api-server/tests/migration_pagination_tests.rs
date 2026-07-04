@@ -64,11 +64,68 @@ fn get(token: &str, tenant_id: Uuid, uri: &str) -> Request<Body> {
         .unwrap()
 }
 
-/// Register + verify + log in a user, then promote them to an active
-/// `platform_admin` member of a fresh org (mirrors the helper in
-/// `migration_db_tests.rs`). Returns `(access_token, org_id)`.
+/// Mint an access token that carries the `platform_admin` role and a
+/// `tenant_id` claim pinned to `org_id`.
+///
+/// The `list_templates` handler reads BOTH of these off the JWT *claims*:
+/// `require_platform_admin` gates on `AuthUser::is_platform_admin()` (the
+/// `role` claim) and the org scope comes from `user.tenant_id` (the
+/// `tenant_id` claim). The `/auth/login` flow used by `create_authenticated_user`
+/// mints a token with `role = None` / `tenant_id = None` ("roles are set when
+/// org context is selected", see `routes/auth.rs`), so a login token can never
+/// clear the platform-admin gate — it 403s before the query runs. We therefore
+/// mint the token directly, mirroring the green `accounting_happy_path` pattern.
+/// The signing secret matches `TestConfig::default().jwt_secret`, which
+/// `TestApp` installs into `JWT_SECRET`.
+///
+/// `role` serialises via `TenantRole`'s `rename_all = "snake_case"`, so the
+/// literal wire value is `"platform_admin"`.
+fn mint_platform_admin_token(user_id: Uuid, org_id: Uuid, email: &str) -> String {
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct Claims {
+        sub: String,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: String,
+        role: String,
+        email: String,
+        name: String,
+    }
+
+    let now = chrono::Utc::now().timestamp();
+    encode(
+        &Header::default(),
+        &Claims {
+            sub: user_id.to_string(),
+            exp: now + 900,
+            iat: now,
+            token_type: "access".into(),
+            tenant_id: org_id.to_string(),
+            role: "platform_admin".into(),
+            email: email.into(),
+            name: "Migration Pagination Admin".into(),
+        },
+        &EncodingKey::from_secret(
+            b"test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes",
+        ),
+    )
+    .expect("mint platform-admin token")
+}
+
+/// Register + verify a user, seed a fresh org with an active `platform_admin`
+/// membership for that user, then return a directly-minted platform-admin
+/// access token scoped to the org (plus the org id).
+///
+/// The membership row is seeded to keep the fixture faithful to the real
+/// authorization model (an admin *is* a member); the token's `platform_admin`
+/// role claim is what actually clears `ValidatedTenantExtractor`'s membership
+/// bypass and the `require_platform_admin` gate.
 async fn create_platform_admin(app: &TestApp, user: &TestUser, slug: &str) -> (String, Uuid) {
-    let (access_token, _refresh) = create_authenticated_user(app, user).await;
+    let (_login_token, _refresh) = create_authenticated_user(app, user).await;
 
     let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
@@ -79,7 +136,8 @@ async fn create_platform_admin(app: &TestApp, user: &TestUser, slug: &str) -> (S
     let org_id = seed_org(&app.pool, slug).await;
     seed_membership(&app.pool, org_id, user_id, "platform_admin").await;
 
-    (access_token, org_id)
+    let token = mint_platform_admin_token(user_id, org_id, &user.email);
+    (token, org_id)
 }
 
 /// Insert `count` custom `buildings` templates for `org_id` with strictly
