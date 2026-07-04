@@ -1,0 +1,105 @@
+{
+  "date": "2026-07-04",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso = 2026-06-16T03:25:00Z; now 2026-07-04T08:00:00Z; ~18d 4h",
+      "score_delta": 0,
+      "evidence": "Routine last committed 18 days 4 hours ago — well above the 36h lag threshold. Cloud scheduler almost certainly paused; dispatcher (planning branch, separate loop) kept ticking through the gap and did not surface the outage.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-07-04",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso lag > 3d",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 18d old; cloud routine likely paused. Dispatcher state on planning branch is a separate loop; proactive push notification sent to operator at run start.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-30 --numstat",
+      "score_delta": 1,
+      "evidence": "2941 lines changed 2026-06-30 → 2026-07-04. Touched by PR #1973 (manager-gate rental guest PII, Closes #1766 HIGH) and #2042 (u.name → u.designation schema-drift sweep). New signal id under the dashes convention; note legacy slash-form 'churn-hotspot-backend/crates/db/src/repositories/rental.rs' exists in state.seen_signals but was never linked to a backlog item.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/src/repositories/rental.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-30 --numstat",
+      "score_delta": 1,
+      "evidence": "2818 lines changed 2026-06-30 → 2026-07-04. Touched by PR #2044 (quick-xml XXE pin + CODEOWNERS), #2008 (Booking.com dual-auth model docs — Story 83.2), PR #2011 (ammonia 4.1.3 RUSTSEC XSS-sanitizer bypass). File is booking/mod.rs after the earlier booking.rs → booking/{mod.rs,ota_xml.rs} split — that's why the older backlog item on the flat path decayed rather than re-emitting.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/integrations/src/booking/mod.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-30 --numstat + hotspot_history.runs_seen",
+      "score_delta": 1,
+      "evidence": "2719 lines changed 2026-06-30 → 2026-07-04 (BIT-440 quarantine + un-quarantine + OAuth surface rework across the 4-day burst). hotspot_history for this file shows runs_seen=2 (last_seen 2026-06-02) — this run advances to runs_seen=3.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/tests/oauth_integration_tests.rs"]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 2 → 3 with new churn this run",
+      "score_delta": 1,
+      "evidence": "oauth_integration_tests.rs runs_seen=3: 2026-06-02, 2026-06-16-ish (implicit in history), 2026-07-04. Sustained instability proxy for the OAuth integration test surface — worth a dedicated stabilization plan next run.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/tests/oauth_integration_tests.rs"]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "Open draft PR #1797 by martin-janci, age 10d as of 2026-07-04, no reviewDecision. Title: fix(api-server) auth on OCR endpoints + manager-gate rental guest PII reads — security-adjacent, worth un-drafting or explicitly closing.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": "Open draft PR #1812 by martin-janci, age 10d as of 2026-07-04, no reviewDecision. Title: churn-hotspot: split reality_portal.rs — structural refactor.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-04.md && head -1 == '# 2026-07-04'", "observed": "pass", "expected": "pass" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id in seen_signals with score_delta != 0", "observed": "true (5 new-id signals, 0 re-emits with cumulative-only score_delta=0 applicable)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no item score > 8; every open item stale >14d decayed by 1 or moved to dropped", "observed": "cap ok; 52/52 decayed (38 dropped at 0, 14 to score 1)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "every new plans/*.md has adversarial pass annotation in brief", "observed": "no new plans this run (Phase 3 skipped)", "expected": "true (vacuously)" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; each has 15 required sections + concrete files", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached (excluding baseline docs) has no secrets/private hostnames", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regenerate from backlog.json)", "observed": "byte-identical (Python-side render, single call)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failed; if any, brief lists it and cursor stays put", "observed": "Phases 1.5/1.6 skipped by design (catch-up posture), documented in brief; not counted as failure", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs remain in plans/ or plans/_archive/", "observed": "6 plans in plans/ carried; 7 in plans/_archive/ carried (both unchanged)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ archive count at HEAD", "observed": "7 == 7 (unchanged)", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regenerate triage view from backlog.json)", "observed": "byte-identical (Python-side render, single call)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions[] cap + idempotency + kill-switch honored", "observed": "auto_fix_actions is empty; ROUTINE_AUTOFIX_DISABLED not set but no candidate met bar", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran; else no-op", "observed": "Phase 1.6 skipped this run (catch-up posture) → gate is a no-op", "expected": "true (vacuously)" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached added lines have no literal Telegram bot-token value", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": []
+}
