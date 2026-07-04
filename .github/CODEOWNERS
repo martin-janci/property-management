@@ -16,4 +16,14 @@
 # that pin — so every change to this manifest must get an explicit
 # owner review rather than riding into an unrelated dep-bump merge
 # (the failure mode PR #2011 exhibited).
+#
+# Cargo.lock is owned too: because a version requirement can be an in-range
+# caret (or an exact `=` pin that still gets bumped), a `cargo update` or an
+# in-range Dependabot bump changes ONLY the lockfile. Without an owner on
+# Cargo.lock the resolved quick-xml version could move with no review request.
+#
+# NOTE: CODEOWNERS review is only *mandatory* when branch protection on `dev`
+# has "Require review from Code Owners" enabled. That setting is not
+# verifiable in-repo — confirm it is on, otherwise this guard is advisory.
 /backend/Cargo.toml    @martin-janci
+/backend/Cargo.lock    @martin-janci
