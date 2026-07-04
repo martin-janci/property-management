@@ -143,6 +143,65 @@ self_test() {
   run "ignore-list form"           "ok"   '#[ignore(note = "x")]'
   run "empty line"                 "ok"   ''
 
+  # ---- file-based scan check (drives the real grep engine) ------------
+  # The fixtures above only exercise the bash `[[ =~ ]]` classifier via
+  # is_bare_ignore(). CI, however, scans the tree through `grep -HnE` in
+  # scan() — a different regex engine. The header comment asserts the two
+  # "agree", but nothing proved it, so a pattern edit that stays valid for
+  # bash `=~` while breaking `grep -E` (or vice versa) could pass self-test
+  # and silently mis-scan the tree (issue #2081, follow-up to PR #2062).
+  # These cases run scan() over temp fixtures and assert the exact grep
+  # output CI relies on.
+  local scan_tmp got_lines expected_lines neg_out
+  scan_tmp="$(mktemp -d)"
+
+  # Positive fixture: the three bare forms (lines 2, 4, 6) surrounded by the
+  # annotated / doc-comment / commented-out / string-literal negatives.
+  cat >"$scan_tmp/positive.rs" <<'RS'
+fn quarantined_suite() {}
+#[ignore]
+#[ignore = "requires DB"]
+#[cfg_attr(test, ignore)]
+#[cfg_attr(test, ignore = "requires DB")]
+#[test] #[ignore]
+/// `#[ignore]` — run with --ignored
+// #[ignore]
+let s = "#[ignore]";
+RS
+
+  # All-negative fixture: every line is a valid or ignored form → no offenders.
+  cat >"$scan_tmp/negative.rs" <<'RS'
+#[ignore = "requires DB"]
+#[cfg_attr(test, ignore = "BIT-440: db")]
+#[test]
+/// `#[ignore]` doc
+// #[ignore]
+let s = "#[ignore]";
+RS
+
+  # scan() emits `path:line:content`; mktemp paths carry no `:`, so field 2 is
+  # the line number. Expect exactly the three bare offenders on lines 2,4,6.
+  got_lines="$(scan "$scan_tmp/positive.rs" | cut -d: -f2 | paste -sd, -)"
+  expected_lines="2,4,6"
+  if [ "$got_lines" = "$expected_lines" ]; then
+    printf 'ok:   scan(positive fixture) → offenders on lines %s\n' "$expected_lines"
+  else
+    printf 'FAIL: scan(positive fixture) — expected lines=%s got=%s\n' \
+      "$expected_lines" "${got_lines:-<none>}" >&2
+    failures=$((failures + 1))
+  fi
+
+  neg_out="$(scan "$scan_tmp/negative.rs")"
+  if [ -z "$neg_out" ]; then
+    printf 'ok:   scan(all-negative fixture) → no offenders (exit 0)\n'
+  else
+    printf 'FAIL: scan(all-negative fixture) — expected empty output, got:\n%s\n' \
+      "$neg_out" >&2
+    failures=$((failures + 1))
+  fi
+
+  rm -rf "$scan_tmp"
+
   if [ "$failures" -gt 0 ]; then
     printf '\n%s self-test fixture(s) failed\n' "$failures" >&2
     return 1
