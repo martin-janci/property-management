@@ -106,7 +106,7 @@ pub struct TwoFactorConfirmRequest {
 /// Generate `RECOVERY_CODE_COUNT` CSPRNG one-time recovery codes (UC-ACC-16.1:
 /// issued once on enrollment). Raw codes are returned to the user once; only
 /// their SHA-256 hashes are stored.
-fn generate_recovery_codes() -> Vec<String> {
+fn generate_recovery_codes() -> Result<Vec<String>, crypto::CryptoError> {
     (0..RECOVERY_CODE_COUNT)
         .map(|_| crypto::generate_recovery_code())
         .collect()
@@ -264,7 +264,10 @@ pub async fn create_share_link(
 
     // Capability token: 256-bit CSPRNG, unguessable (the link IS the credential).
     // Only the SHA-256 hash is persisted; the raw token is returned once below.
-    let token = crypto::generate_share_token();
+    let token = crypto::generate_share_token().map_err(|e| {
+        tracing::error!("Failed to generate share token: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     let token_hash = crypto::hash_token(&token);
     let expires_at = req
         .expires_in_secs
@@ -536,8 +539,14 @@ pub async fn enroll_two_factor(
     // Real RFC-6238 TOTP secret (base32) + CSPRNG recovery codes. The raw
     // recovery codes are shown ONCE in the response; only their SHA-256 hashes
     // are persisted so a DB read cannot replay them.
-    let secret = crypto::generate_totp_secret();
-    let recovery_codes = generate_recovery_codes();
+    let secret = crypto::generate_totp_secret().map_err(|e| {
+        tracing::error!("Failed to generate TOTP secret: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    let recovery_codes = generate_recovery_codes().map_err(|e| {
+        tracing::error!("Failed to generate recovery codes: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     let recovery_hashes: Vec<String> = recovery_codes
         .iter()
         .map(|c| crypto::hash_token(c))
