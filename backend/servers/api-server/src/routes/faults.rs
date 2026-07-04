@@ -1828,3 +1828,107 @@ async fn get_statistics(
 
     Ok(Json(StatisticsResponse { statistics }))
 }
+
+// ============================================================================
+// Recipient-policy unit tests (#2054)
+// ============================================================================
+//
+// The DB-backed R7/R8 integration cases in
+// `tests/fault_notification_recipient_tests.rs` seed *distinct* actor /
+// reporter / assignee, so the actor is never in the candidate set and the
+// self-exclusion (`!= actor_id`) and dedup (`!recipients.contains(..)`)
+// branches never fire — a regression that deleted them would keep those
+// tests green (#2054). These pure-function cases put the actor *into* the
+// candidate set to exercise exactly those branches. They need no DB.
+#[cfg(test)]
+mod recipient_policy_tests {
+    use super::{confirm_fault_recipients, triage_fault_recipients};
+    use uuid::Uuid;
+
+    // --- triage_fault_recipients -------------------------------------------
+
+    /// Self-exclusion via the reporter path: the triaging manager IS the
+    /// reporter, so `reporter_id == actor_id` must drop them.
+    #[test]
+    fn triage_excludes_actor_when_reporter_is_the_triaging_manager() {
+        let actor = Uuid::new_v4(); // triaging manager == reporter
+        let assignee = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(actor, actor, Some(assignee));
+
+        assert!(
+            !recipients.contains(&actor),
+            "reporter == actor must be excluded (self-notify guard)"
+        );
+        assert_eq!(recipients, vec![assignee]);
+    }
+
+    /// Self-exclusion via the assignee path: the fault is self-assigned to the
+    /// actor, so `assignee != actor_id` must drop them.
+    #[test]
+    fn triage_excludes_actor_when_self_assigned() {
+        let actor = Uuid::new_v4();
+        let reporter = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(reporter, actor, Some(actor));
+
+        assert!(
+            !recipients.contains(&actor),
+            "self-assigned actor must be excluded"
+        );
+        assert_eq!(recipients, vec![reporter]);
+    }
+
+    /// Dedup: reporter and assignee are the same person, so
+    /// `!recipients.contains(&assignee)` must keep them to a single entry.
+    #[test]
+    fn triage_dedups_when_reporter_is_also_assignee() {
+        let actor = Uuid::new_v4();
+        let both = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(both, actor, Some(both));
+
+        assert_eq!(
+            recipients,
+            vec![both],
+            "reporter == assignee must appear exactly once"
+        );
+        assert_eq!(recipients.len(), 1);
+    }
+
+    // --- confirm_fault_recipients ------------------------------------------
+
+    /// Self-exclusion via `manager_ids`: the confirming reporter is also a
+    /// seeded manager, so `mid != actor_id` must drop the actor.
+    #[test]
+    fn confirm_excludes_actor_present_in_manager_ids() {
+        let actor = Uuid::new_v4(); // confirming reporter, also a manager
+        let assignee = Uuid::new_v4();
+        let other_manager = Uuid::new_v4();
+
+        let recipients = confirm_fault_recipients(Some(assignee), actor, [actor, other_manager]);
+
+        assert!(
+            !recipients.contains(&actor),
+            "actor present in manager_ids must be excluded"
+        );
+        assert_eq!(recipients, vec![assignee, other_manager]);
+    }
+
+    /// Dedup: a manager id equals the assignee already collected, so
+    /// `!recipients.contains(&mid)` must keep them to a single entry.
+    #[test]
+    fn confirm_dedups_manager_equal_to_assignee() {
+        let actor = Uuid::new_v4();
+        let assignee = Uuid::new_v4(); // also listed in manager_ids
+
+        let recipients = confirm_fault_recipients(Some(assignee), actor, [assignee]);
+
+        assert_eq!(
+            recipients,
+            vec![assignee],
+            "assignee also listed as manager must appear exactly once"
+        );
+        assert_eq!(recipients.len(), 1);
+    }
+}
