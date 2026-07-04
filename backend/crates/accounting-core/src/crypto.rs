@@ -20,8 +20,19 @@ use hmac::{Hmac, KeyInit, Mac};
 use sha1::Sha1;
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
+use thiserror::Error;
 
 type HmacSha1 = Hmac<Sha1>;
+
+/// Errors from the accounting security primitives.
+#[derive(Debug, Error)]
+pub enum CryptoError {
+    /// The OS CSPRNG failed to produce entropy. A transient OS entropy error is
+    /// surfaced as a handled error (not a panic) so the caller can refuse the
+    /// operation instead of crashing the process mid-request.
+    #[error("Secure random number generation failed: {0}")]
+    RngFailed(String),
+}
 
 /// TOTP time step in seconds (RFC-6238 default).
 pub const TOTP_PERIOD_SECS: u64 = 30;
@@ -35,13 +46,17 @@ const TOTP_SECRET_BYTES: usize = 20; // 160-bit (RFC-4226 §4 recommendation)
 const SHARE_TOKEN_BYTES: usize = 32; // 256-bit capability token
 const RECOVERY_CODE_BYTES: usize = 10; // 80-bit per recovery code
 
-/// Fill `buf` from the OS CSPRNG. Panics only if the OS entropy source fails
-/// (matches the convention in `db::repositories::delegation`).
-fn fill_random(buf: &mut [u8]) {
+/// Fill `buf` from the OS CSPRNG.
+///
+/// Returns [`CryptoError::RngFailed`] if the OS entropy source errors. A
+/// transient CSPRNG failure must surface as a handled error so the caller can
+/// refuse the operation (e.g. reject 2FA enrollment / share-link creation)
+/// rather than panicking and crashing the process mid-request.
+fn fill_random(buf: &mut [u8]) -> Result<(), CryptoError> {
     use rand::TryRng;
     rand::rngs::SysRng
         .try_fill_bytes(buf)
-        .expect("OS CSPRNG failed");
+        .map_err(|e| CryptoError::RngFailed(e.to_string()))
 }
 
 /// SHA-256 hex digest. Used to store share tokens & recovery codes at rest: the
@@ -67,26 +82,26 @@ pub fn ct_eq(a: &str, b: &str) -> bool {
 
 /// 256-bit URL-safe capability token for share links (UC-ACC-05.11). Returned to
 /// the caller ONCE; persist only `hash_token(&token)`.
-pub fn generate_share_token() -> String {
+pub fn generate_share_token() -> Result<String, CryptoError> {
     let mut bytes = [0u8; SHARE_TOKEN_BYTES];
-    fill_random(&mut bytes);
-    hex::encode(bytes)
+    fill_random(&mut bytes)?;
+    Ok(hex::encode(bytes))
 }
 
 /// A single human-friendly one-time recovery code (`XXXXXXXX-XXXXXXXX`, base32).
 /// Stored hashed; shown once (UC-ACC-16.1).
-pub fn generate_recovery_code() -> String {
+pub fn generate_recovery_code() -> Result<String, CryptoError> {
     let mut bytes = [0u8; RECOVERY_CODE_BYTES];
-    fill_random(&mut bytes);
+    fill_random(&mut bytes)?;
     let s = BASE32_NOPAD.encode(&bytes); // 10 bytes -> 16 base32 chars
-    format!("{}-{}", &s[0..8], &s[8..16])
+    Ok(format!("{}-{}", &s[0..8], &s[8..16]))
 }
 
 /// Fresh base32 (no-pad) TOTP secret for an authenticator app (UC-ACC-16.1).
-pub fn generate_totp_secret() -> String {
+pub fn generate_totp_secret() -> Result<String, CryptoError> {
     let mut bytes = [0u8; TOTP_SECRET_BYTES];
-    fill_random(&mut bytes);
-    BASE32_NOPAD.encode(&bytes)
+    fill_random(&mut bytes)?;
+    Ok(BASE32_NOPAD.encode(&bytes))
 }
 
 /// Current Unix time in seconds (TOTP time source).
@@ -216,8 +231,8 @@ mod tests {
 
     #[test]
     fn secret_and_tokens_are_well_formed_and_unique() {
-        let s1 = generate_totp_secret();
-        let s2 = generate_totp_secret();
+        let s1 = generate_totp_secret().unwrap();
+        let s2 = generate_totp_secret().unwrap();
         assert_ne!(s1, s2, "secrets must be unique");
         assert!(
             BASE32_NOPAD.decode(s1.as_bytes()).is_ok(),
@@ -237,14 +252,35 @@ mod tests {
             "self-generated code verifies"
         );
 
-        let t1 = generate_share_token();
-        let t2 = generate_share_token();
+        let t1 = generate_share_token().unwrap();
+        let t2 = generate_share_token().unwrap();
         assert_ne!(t1, t2);
         assert_eq!(t1.len(), SHARE_TOKEN_BYTES * 2, "32 bytes -> 64 hex chars");
 
-        let r = generate_recovery_code();
+        let r = generate_recovery_code().unwrap();
         assert_eq!(r.len(), 17, "XXXXXXXX-XXXXXXXX");
-        assert_ne!(generate_recovery_code(), generate_recovery_code());
+        assert_ne!(
+            generate_recovery_code().unwrap(),
+            generate_recovery_code().unwrap()
+        );
+    }
+
+    #[test]
+    fn rng_failure_surfaces_as_handled_error() {
+        // Regression: a CSPRNG failure during token/secret generation must
+        // propagate as a handled `CryptoError::RngFailed` rather than panicking
+        // the process (the OS entropy source can transiently fail).
+        let err = CryptoError::RngFailed("entropy source unavailable".to_string());
+        assert!(matches!(err, CryptoError::RngFailed(_)));
+        let msg = err.to_string();
+        assert!(msg.contains("Secure random number generation failed"));
+        assert!(msg.contains("entropy source unavailable"));
+
+        // The generators expose a `Result` so callers can `?`-propagate the
+        // failure. On a healthy host they succeed.
+        assert!(generate_share_token().is_ok());
+        assert!(generate_recovery_code().is_ok());
+        assert!(generate_totp_secret().is_ok());
     }
 
     #[test]
