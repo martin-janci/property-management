@@ -1307,6 +1307,22 @@ impl MessagingRepository {
 mod tests {
     use super::COUNT_UNREAD_SQL;
 
+    /// Drop `--` line comments from a SQL string, keeping the code that precedes
+    /// them on each line. Used so a *commented-out* predicate
+    /// (`-- AND tps.deleted_at IS NULL`) is no longer mistaken for a live one by
+    /// a naive substring match (#2052). This is a deliberately simple textual
+    /// strip: it does not understand `--` inside string literals, which
+    /// `COUNT_UNREAD_SQL` does not contain.
+    fn strip_sql_line_comments(sql: &str) -> String {
+        sql.lines()
+            .map(|line| match line.find("--") {
+                Some(idx) => &line[..idx],
+                None => line,
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
     /// Non-DB guard for the #1771 fix (PR #1993): the unread-count query must
     /// exclude threads a user soft-deleted ("delete for me") via the
     /// per-participant `tps.deleted_at IS NULL` predicate on the
@@ -1315,14 +1331,44 @@ mod tests {
     /// the BIT-351 quarantine, so this plain `#[test]` — mirroring the
     /// catalog-metadata guard style — is the executing guard on the normal CI
     /// gate. It runs without a live Postgres pool.
+    ///
+    /// Hardened per #2052 beyond a raw substring match so two real regressions
+    /// no longer slip past green:
+    ///   1. **Comment-out.** The predicate is asserted against the SQL *with
+    ///      `--` line comments stripped*, so `-- AND tps.deleted_at IS NULL`
+    ///      (predicate disabled, #1771 bug back) now fails the test.
+    ///   2. **Wrong-join / alias drift.** The `tps` alias is pinned to the
+    ///      `thread_participant_state` join, so moving the predicate onto a
+    ///      different alias (where it no longer excludes soft-deleted threads)
+    ///      while keeping the literal text can't stay green.
     #[test]
     fn count_unread_sql_excludes_soft_deleted_threads() {
+        let effective_sql = strip_sql_line_comments(COUNT_UNREAD_SQL);
+
+        // (1) The soft-delete exclusion must be a *live* predicate, not a
+        //     commented-out one. `strip_sql_line_comments` removes `--` lines, so
+        //     a commented-out predicate no longer satisfies this `contains`.
         assert!(
-            COUNT_UNREAD_SQL.contains("tps.deleted_at IS NULL"),
+            effective_sql.contains("tps.deleted_at IS NULL"),
             "count_unread_rls SQL must keep the per-participant soft-delete \
-             exclusion `tps.deleted_at IS NULL` (#1771 / PR #1993); without it a \
-             thread a user hid from their inbox leaves its unread messages stuck \
-             on the global unread badge with no thread visible to clear them"
+             exclusion `tps.deleted_at IS NULL` as a live (non-commented) \
+             predicate (#1771 / PR #1993 / #2052); without it a thread a user hid \
+             from their inbox leaves its unread messages stuck on the global \
+             unread badge with no thread visible to clear them"
+        );
+
+        // (2) The `tps` alias the predicate references must be the
+        //     `thread_participant_state` join. This anchors the exclusion to the
+        //     correct table, so the predicate can't drift onto a different alias
+        //     (e.g. the messages or threads table) and silently stop excluding
+        //     soft-deleted threads while the literal substring survives.
+        assert!(
+            effective_sql.contains("thread_participant_state tps"),
+            "count_unread_rls SQL must bind the `tps` alias to \
+             `thread_participant_state` so the `tps.deleted_at IS NULL` exclusion \
+             stays on the per-participant soft-delete table (#2052); if the alias \
+             is rebound or the join is removed the predicate no longer excludes \
+             the threads it claims to"
         );
     }
 }
