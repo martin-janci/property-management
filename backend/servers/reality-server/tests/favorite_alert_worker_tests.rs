@@ -150,6 +150,14 @@ async fn worker_queues_price_and_back_on_market_alerts(pool: PgPool) {
 /// to read (Flipped); marking the same alert again returns AlreadyRead (the
 /// route maps both to 204, not a surprising 404); a non-existent alert id
 /// returns NotFound.
+///
+/// NOTE (#2050): this test remains under the BIT-351 quarantine (never green on
+/// the PR gate). The running guard for the AlreadyRead-vs-NotFound idempotency
+/// branch now lives in a non-ignored repository round-trip,
+/// `mark_favorite_alert_read_repo_round_trip_is_idempotent`
+/// (`crates/db/tests/favorite_alert_read_idempotent_tests.rs`), so the CTE has a
+/// failing-on-regression guard that actually runs. Repair + un-`#[ignore]` of
+/// this worker-driven test is still tracked under BIT-352.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_favorite_alert_read_is_idempotent(pool: PgPool) {
