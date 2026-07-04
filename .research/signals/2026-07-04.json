@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-07-04T00:00:00Z",
+  "run_lag_hours": 444,
+  "run_lag_days": 18,
+  "catch_up_mode": true,
+  "notes": [
+    "18-day routine gap since 2026-06-16 — treating as targeted catch-up run",
+    "Ingest agent produced observe.json with 434 merged PRs, 21 open, 93 closed-not-merged, 182 issues, 664 commits; file-level fidelity was best-effort (no per-PR file lists, no labels via list_pull_requests). Churn hotspots derived from local git-log --numstat (authoritative).",
+    "Phase 1.5 (rotating expert review) skipped — reason: catch-up mode + no churn-aligned segment identifiable at Phase 1.5 fidelity. Resume next run.",
+    "Phase 1.6 (project management) skipped — reason: catch-up mode; pm_cursor untouched → G16 is no-op.",
+    "Screen-map drift/orphan detection skipped — observe agent flagged touches_routes as title-heuristic; would produce false positives. Verify next run when file lists are available.",
+    "unchecked-todo signals suppressed for this run — 50 candidate PRs had reviewer-verification checklists ('verify CI passes', 'verify test runs') in body, not code TODO markers; not the intent of the signal type. Pattern noted in brief.",
+    "hotfix-no-test signals suppressed — observe agent's has_test_files field was title-heuristic (no file access); 107 flagged is unreliable. Deferred to next run.",
+    "closed-not-merged signals suppressed — 88 of 93 are by martin-janci (superseded/replaced by follow-up PRs); 5 dependabot rebase-close (routine noise). Operational churn, not process problem.",
+    "Routine-fire payload text: 'buffer-low: claimable=8/72 — refill planner' — dispatcher trigger text; not a documented routine trigger (see routine-prompt §Special trigger payloads). Surfaced in brief as operational note only; run proceeded normal."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 18d 12h (444 hours) — cloud cron likely paused; investigate router / trigger before next scheduled fire"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "revert-pr-1713",
+      "type": "revert",
+      "source": "PR #1713",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1713 titled 'revert(delegations): remove re-added delegation frontend (#1690) — reconcile with retirement (BIT-213)' merged 2026-06-22; retirement-driven revert (feature abandonment), not correctness-driven — score reflects lifecycle event but not necessarily backlog work"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-faults-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat --since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/faults.rs — 3 commits touching the file, 1,984 total lines changed in the window; concentrated in the fault-notification-recipient / regional-compliance PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat --since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/models/regional_compliance.rs — 3 commits, 792 lines changed in the window; new-feature build-out (not stability signal)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat --since 2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs — 3 commits, 1,030 lines changed in the window; sibling of the db-model churn above (same feature build-out)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1797 'fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads (#1746)' — open 10d, still draft, no reviewDecision as of 2026-07-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1812 'churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs: split reality-portal repo …' — open 10d, still draft, no reviewDecision as of 2026-07-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-04.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted signal",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "max=6",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run — vacuously satisfied",
+      "observed": "no promotions",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + all sections + files exist",
+      "observed": "0 new plans (revert-pr-1713 lacks files[] to satisfy readiness gate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research/ path staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret/private-hostname regex match",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — none failed",
+      "observed": "no phase failures",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present or archived",
+      "observed": "all present/archived (4 moved to _archive/ this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing (7 → 11)",
+      "observed": "11",
+      "expected": "≥7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + shape checks",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op path (pm_cursor unchanged, coverage_cursor unchanged)",
+      "observed": "next_index=5, coverage=12",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
