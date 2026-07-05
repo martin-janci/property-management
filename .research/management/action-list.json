@@ -2330,6 +2330,40 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "action": "Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-05T04:07:10Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-05T04:07:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/rental.rs (11 commits in 19-day catch-up)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-05T04:07:10Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-05T04:07:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ]
 }
