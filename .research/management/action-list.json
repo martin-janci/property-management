@@ -2050,12 +2050,19 @@
       "action": "Coverage gap [mvp]: Permission-Based Document Access (Story 7A.3) — verify-to-done. Evidence: document_access_allowed + scope_membership_allows in core.rs, document_access_test.rs (217 lines). Gaps: sprint-status not flipped, no merged-PR keyword match, frontend permission UI unconfirmed. Confirm backend authz coverage is complete and flip sprint-status; if a real gap exists, close it.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative)",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-07-04 (coverage partial-story gaps; conservative) | gc1-reconcile 2026-07-05T02:13:59Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-07-04T04:07:39Z"
+      "first_open_at": "2026-07-04T04:07:39Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2072,
+        "merged_at": "2026-07-04T22:15:52Z",
+        "at": "2026-07-05T02:13:59Z"
+      }
     },
     {
       "id": "7a-4-document-download-preview",
@@ -2102,8 +2109,8 @@
       "action": "Follow-up: refill/ingest still abort on missing assignments.json; smoke tests don't cover it (PR #2061) (Closes #2078)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2078)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2078) | gc1-reconcile 2026-07-05T02:15:02Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2115,6 +2122,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2090,
+        "merged_at": "2026-07-05T02:14:54Z",
+        "at": "2026-07-05T02:15:02Z"
       }
     },
     {
@@ -2122,8 +2136,8 @@
       "action": "Follow-up: ListingDetail split didn't decompose the actual churn locus — hoist screen state/side-effects into a ViewModel (PR #2059) (Closes #2079)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2079)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2079) | dev-reconcile 2026-07-05T02:14:14Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2135,6 +2149,12 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a7bae9fcd8fa729a6f2662dbeec2106bfa8a9792",
+        "subject": "gh-issue-2079: hoist ListingDetail state/side-effects into ListingDetailViewModel (#2093)",
+        "at": "2026-07-05T02:14:14Z"
       }
     },
     {
@@ -2142,8 +2162,8 @@
       "action": "Follow-up: id-tiebreak stability untested + OR-leg sort not index-satisfiable (PR #2063) (Closes #2080)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2080)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2080) | gc1-reconcile 2026-07-05T02:15:02Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2155,6 +2175,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2092,
+        "merged_at": "2026-07-05T02:14:54Z",
+        "at": "2026-07-05T02:15:02Z"
       }
     },
     {
@@ -2162,8 +2189,8 @@
       "action": "Follow-up: self-test the grep scan path + restore script exec bit (PR #2062) (Closes #2081)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2081)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2081) | gc1-reconcile 2026-07-05T02:15:02Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2175,6 +2202,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2091,
+        "merged_at": "2026-07-05T02:14:54Z",
+        "at": "2026-07-05T02:15:02Z"
       }
     },
     {
