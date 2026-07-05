@@ -1,0 +1,334 @@
+{
+  "date": "2026-07-05",
+  "trigger_text": "",
+  "routine_lag_hours": 461,
+  "routine_lag_days": 19,
+  "stale_routine_alert": true,
+  "phase_1_source": "subagent aad65e89 \u2014 435 merged PRs #1440-#2099 window",
+  "phase_1_5_segment": "ppt-web-core",
+  "phase_1_6_role": "pm-security",
+  "phases_that_failed": [],
+  "buffer_low_notification": {
+    "claimable": 6,
+    "total": 72,
+    "source": "dispatcher 2026-07-05"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-accounting-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2069,#2047,#1989,#1983,#1976,#1946,#1811,#1809 in 19d window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "accounting.rs touched by ~8 fix PRs across 19d window (state-machine, secret-serialize, symmetric-404, live quorum, TOTP, capability tokens)",
+      "files": [
+        "backend/servers/api-server/src/routes/accounting.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-messaging-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #1993,#1977,#1968,#1799,#2065,#2082,#2097",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "messaging/thread routes touched by 6+ fix PRs (unread soft-delete leak, N-party delivery, per-participant watermark, attachment MIME bind)",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-lease-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2060,#2049,#2042",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "3 PRs pin schema drift on units.designation join; #2060 fixed 42703 500 in list_leases_rls and 3 sibling reads",
+      "files": [
+        "backend/crates/db/src/repositories/lease.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797 (open draft, 12d)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "fix(api-server) auth OCR + rental guest PII manager-gate \u2014 draft 12d, last update 2026-07-05 04:27 (mechanical rebase), sensitive authz work dangling",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs",
+        "backend/servers/api-server/src/routes/rentals/bookings.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812 (open draft, 11d)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn-hotspot reality_portal.rs split \u2014 draft 11d, needs-human-review label, +1922 \u22121803 pure-move refactor blocked",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1919",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1919 closed unmerged 2026-06-29",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "bug-risky-churn-pr-963-api-main-rs (security-headers wiring) closed unmerged \u2014 the underlying risky-churn on api-server/src/main.rs is still open in backlog",
+      "files": [
+        "backend/servers/api-server/src/main.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1958",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1958 closed unmerged 2026-07-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "test(BIT-360) bulk re-enable 718 BIT-351-quarantined tests (146 files) closed unmerged \u2014 batched approach abandoned; smaller batches #1957/#1964 landed instead",
+      "files": [
+        "backend/servers/api-server/tests/"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1802",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1802 closed unmerged 2026-06-29",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "fix(messaging) N-party delivery/block/unhide superseded by merged #1789/#1993 \u2014 track whether all N-party edge cases actually shipped",
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1804",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1804 closed unmerged 2026-06-29",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "fix(scheduler) persistent payment-reminder dedup abandoned \u2014 need to verify whether the dedup regression is now covered by another PR",
+      "files": [
+        "backend/servers/api-server/src/scheduler/mod.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1861",
+      "type": "unchecked-todo",
+      "source": "PR #1861 (merged, Epic 72)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "fix(api-server) implement 19 regional-compliance endpoints (Epic 72) merged with unchecked `- [ ]` in body \u2014 followup scope may be incomplete",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1859",
+      "type": "unchecked-todo",
+      "source": "PR #1859 (merged, BIT-260)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "fix(api-server) 23 tenant-migration endpoints (BIT-260) merged with unchecked TODOs \u2014 template/import/export scope suspect",
+      "files": [
+        "backend/servers/api-server/src/routes/tenant_migration.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1862",
+      "type": "unchecked-todo",
+      "source": "PR #1862 (merged, BIT-265)",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "test(BIT-265) platform-admin authz regression \u2014 25 endpoints partial\u2192done merged with unchecked TODOs; +1 delta for authz scope",
+      "files": [
+        "backend/servers/api-server/src/routes/admin/"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-2037",
+      "type": "unchecked-todo",
+      "source": "PR #2037 (merged)",
+      "score_delta": 2,
+      "confidence": "low",
+      "candidate_vector": "bug",
+      "evidence": "recent merged PR has unchecked `- [ ]` in body \u2014 unfinished follow-up scope",
+      "files": []
+    },
+    {
+      "id": "code-review-ppt-web-core-api-retry-non-idempotent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-07-05 \u00b7 frontend/apps/ppt-web/src/lib/api.ts:184",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "api.ts:76,184-211 retries on 408/429/500/502/503/504 via instance.request(config) without checking HTTP method; useSentiment.ts:93 .post + :108 .put would cause duplicate writes on 5xx after commit",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-07-05 \u00b7 frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "usePerformanceMetrics.ts:142/153 addEventListener('load'/'visibilitychange') inside useEffect; cleanup :160-164 only observer.disconnect() \u2014 listener accumulates on every remount",
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-unprotected",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-07-05 \u00b7 frontend/apps/ppt-web/src/routes/groups/core.tsx:149",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "routes/groups/core.tsx:144-150 comment claims 'ProtectedRoute handles auth' but <Route path=/dashboard/manager> has no ProtectedRoute wrapper and ManagerDashboardPage has no useAuth check \u2014 unauth user renders manager shell",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-05.md && head -1 matches # 2026-07-05",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (last_pr_seen 1439\u21922093, seen_signals 230\u2192249, hotspot_history 62\u219267)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative dup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score-cap check + decay verified (14 decayed, 38 dropped)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for plans/code-review-ppt-web-core-dashboard-route-unprotected.md + adversarial pass:",
+      "observed": "passed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan; 4 metadata + 11 headings + capabilities + mode + files-exist",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures \u2014 'Phases that failed: none' recorded in brief",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 14 >= HEAD count 7",
+      "observed": "14>=7",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length == 0 (no candidate)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 0..7; coverage_cursor advanced 12\u21920",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}
