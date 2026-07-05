@@ -85,6 +85,21 @@ seed; ISSUE_INGEST_CAP=1 run --apply >/dev/null 2>&1
 NADD=$(jq '[.items[]|select(.source|startswith("dispatcher-issue-ingest "))]|length' "$AL")
 [ "$NADD" = "1" ] && ok "per-run cap=1 honored" || bad "cap not honored (added $NADD)"
 
+# 8. missing assignments.json: clean exit, empty assignment set (#2078)
+# A primary $ASSIGN that does not exist must NOT abort jq under `set -e`; ingest
+# should proceed treating the assignment set as empty. With no assignments,
+# issue 200 (previously skipped *only* because it matched an in-progress
+# assignment) becomes eligible and is ingested — proving the set is empty.
+seed; rm -f "$ASG" "$ASGA"     # neither primary ($ASSIGN) nor archive exists
+if OUT=$(run --apply 2>&1); then
+  ok "missing assignments.json exits cleanly (no jq abort)"
+else
+  bad "missing assignments.json aborted (exit $?): $OUT"
+fi
+has 200 \
+  && ok "empty assignment set: issue 200 now ingested (no assignment dedup)" \
+  || bad "issue 200 not ingested under empty assignment set"
+
 echo
 if [ "$FAIL" = "0" ]; then echo "==> issue-ingest smoke test PASSED"; exit 0
 else echo "==> issue-ingest smoke test FAILED"; exit 1; fi

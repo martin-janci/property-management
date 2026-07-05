@@ -124,6 +124,26 @@ N=$(jq '[.items[]|select(.source|startswith("dispatcher-backlog-refill"))]|lengt
 jq -e '[.items[]|select(.source|startswith("dispatcher-backlog-refill"))|.id]|sort==["bl-sec-high","bl-test-med"]' "$AL" >/dev/null \
   && ok "cap picks top-2 by score" || bad "cap picked wrong items"
 
+# --- 8. missing assignments.json: clean exit, empty assignment set (#2078) ---
+# A primary $ASSIGN that does not exist must NOT abort jq under `set -e`; the
+# refill should proceed treating the assignment set as empty. With no
+# assignments, the two ghost rows become honest-claimable (honest 3 >= floor 2),
+# so the buffer is healthy and --apply is a no-op — but critically it exits 0.
+seed
+rm -f "$ASG" "$ASGA"          # neither primary ($ASSIGN) nor archive exists
+BEFORE=$(jq -c . "$AL")
+if OUT=$(run --apply 2>&1); then
+  ok "missing assignments.json exits cleanly (no jq abort)"
+else
+  bad "missing assignments.json aborted (exit $?): $OUT"
+fi
+# ghosts are no longer excluded (empty assignment set) -> honest_claimable=3
+echo "$OUT" | grep -q "honest_claimable=3" \
+  && ok "empty assignment set: both ghosts now claimable (honest=3)" \
+  || bad "expected honest_claimable=3 with empty assignments: $(echo "$OUT" | grep -o 'honest_claimable=[0-9]*')"
+[ "$(jq -c . "$AL")" = "$BEFORE" ] \
+  && ok "healthy buffer under empty assignments -> no-op" || bad "mutated action-list under empty assignments"
+
 echo
 if [ "$FAIL" = "0" ]; then echo "==> backlog-refill smoke test PASSED"; exit 0
 else echo "==> backlog-refill smoke test FAILED"; exit 1; fi
