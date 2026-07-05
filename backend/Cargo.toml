@@ -96,10 +96,12 @@ reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 # prevent a recurrence, changes to this manifest are gated by two markers:
 #   1. .github/CODEOWNERS routes every backend/Cargo.toml AND backend/Cargo.lock
 #      edit to an explicit owner review.
-#   2. .github/workflows/pinned-dependency-guard.yml annotates any PR that
-#      touches this quick-xml line in either the manifest or the lockfile,
-#      reminding reviewers to confirm the `ota_xml::tests` entity guards stay
-#      green on the new version.
+#   2. backend/deny.toml `[bans]` HARD-bans every quick-xml version other than
+#      =0.41.0 (GH #2084). cargo-deny resolves the full graph, so the already-
+#      required `cargo-deny` CI job (.github/workflows/backend.yml) fails on any
+#      deviation in either the manifest or the lockfile — no PR can cross this
+#      pin silently. (This replaced the advisory-only
+#      .github/workflows/pinned-dependency-guard.yml, which only annotated.)
 # The entity-guard tests are live `#[test]`s in the `integrations` crate (they are
 # NOT among the BIT-440-quarantined suites), so `cargo test -p integrations` runs
 # them on every bump.
