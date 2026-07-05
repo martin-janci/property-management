@@ -1691,8 +1691,8 @@
       "action": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=triage)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=triage) | gc1-reconcile 2026-07-05T16:06:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1701,14 +1701,21 @@
         "plan": null,
         "score": 1,
         "vector": "triage"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2101,
+        "merged_at": "2026-07-05T14:11:28Z",
+        "at": "2026-07-05T16:06:24Z"
       }
     },
     {
       "id": "triage-issue-1151",
-      "action": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
+      "action": "[STALE-DROP: issue #1151 closed-completed 2026-06-16; triage moot] Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=triage)",
       "deadline": null,
       "dependency": null,
@@ -1718,6 +1725,12 @@
         "plan": null,
         "score": 1,
         "vector": "triage"
+      },
+      "stale_dropped": {
+        "by": "dispatcher",
+        "at": "2026-07-05T16:09:36Z",
+        "issue": 1151,
+        "issue_state": "closed"
       }
     },
     {
@@ -1749,10 +1762,10 @@
     },
     {
       "id": "triage-issue-1331",
-      "action": "Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline",
+      "action": "[STALE-DROP: issue #1331 closed-completed 2026-06-17; triage moot] Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
       "deadline": null,
       "dependency": null,
@@ -1762,14 +1775,20 @@
         "plan": null,
         "score": 1,
         "vector": "triage"
+      },
+      "stale_dropped": {
+        "by": "dispatcher",
+        "at": "2026-07-05T16:09:36Z",
+        "issue": 1331,
+        "issue_state": "closed"
       }
     },
     {
       "id": "triage-issue-951",
-      "action": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
+      "action": "[STALE-DROP: issue #951 closed-completed 2026-06-23; triage moot] Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-backlog-refill 2026-07-03T02:05:30Z (score=1 conf=high vector=triage)",
       "deadline": null,
       "dependency": null,
@@ -1779,6 +1798,12 @@
         "plan": null,
         "score": 1,
         "vector": "triage"
+      },
+      "stale_dropped": {
+        "by": "dispatcher",
+        "at": "2026-07-05T16:09:36Z",
+        "issue": 951,
+        "issue_state": "closed"
       }
     },
     {
@@ -2402,8 +2427,8 @@
       "action": "Churn hotspot: backend/crates/db/src/repositories/rental.rs (11 commits in 19-day catch-up)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-05T04:07:10Z (score=1 conf=high vector=refactor)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-05T04:07:10Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-05T16:06:24Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2412,6 +2437,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2100,
+        "merged_at": "2026-07-05T16:06:08Z",
+        "at": "2026-07-05T16:06:24Z"
       }
     }
   ]
