@@ -25,6 +25,12 @@
 # repos here.
 #
 # One basename per line. Comments after '#'.
+#
+# Split-repo modules (move-only refactors that turned <repo>.rs into a
+# <repo>/ directory: mod.rs holds the struct + pool field, sub-modules hold the
+# queries) are tracked under the key "<repo>/mod.rs" — the detector analyses the
+# whole directory as one logical repository. Keep the "<repo>/mod.rs" form for
+# those; plain "<repo>.rs" for the remaining single-file repositories.
 
 # === Class 2: service-role-by-design (PERMANENT — do NOT attempt conversion) ===
 # These tables use a service-role-allowance RLS policy (permits the unset-GUC
@@ -65,7 +71,7 @@ platform_admin.rs
 portal.rs
 portfolio_performance.rs
 reality_portal.rs
-rental.rs
+rental/mod.rs   # split into rental/ (move-only refactor #2100); tracked as a directory module
 report_schedule.rs
 role.rs
 unified_portal_user.rs
