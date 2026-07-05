@@ -11,21 +11,21 @@
       "goal": "G2",
       "passed": true,
       "command": "compare staged state.json vs HEAD (any cursor advanced)",
-      "observed": "last_pr_seen 2093→2099, last_commit_sha 7e09d77d→18953b09, seen_signals +3, review_cursor.ppt-web-core advanced",
+      "observed": "last_pr_seen 2093\u21922099, last_commit_sha 7e09d77d\u219218953b09, seen_signals +5 total across both runs, review_cursor.ppt-web-core advanced, pm_cursor 5\u21926, coverage_cursor 12\u21920",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
       "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
-      "observed": "181 items, 181 unique",
+      "observed": "182 items, 182 unique",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
       "command": "no non-cumulative signal double-counted vs prev seen_signals",
-      "observed": "3 new signal IDs, none in prior seen_signals",
+      "observed": "5 new signal IDs across both runs (3 morning + 1 news + 1 buffer-low), none in prior seen_signals",
       "expected": "true"
     },
     {
@@ -38,7 +38,7 @@
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "open items with updated_at <= today-14 decayed by ≥1 this run",
+      "command": "open items with updated_at <= today-14 decayed by \u22651 this run",
       "observed": "no open items older than 14d (all previously decayed 2026-07-05 03:10; today's open items have updated_at=2026-07-05)",
       "expected": "true"
     },
@@ -52,9 +52,9 @@
     {
       "goal": "G7-count",
       "passed": true,
-      "command": "≤2 new plans staged",
+      "command": "\u22642 new plans staged",
       "observed": "2 new plans (useaichat-unauthed, person-months-units-fetch-unauthed)",
-      "expected": "≤2"
+      "expected": "\u22642"
     },
     {
       "goal": "G7-metadata",
@@ -88,14 +88,14 @@
       "goal": "G10",
       "passed": true,
       "command": "regenerate backlog.md from backlog.json; diff -q against staged file",
-      "observed": "renderer verified byte-identical against 178-item historical snapshot; regenerated 181-item file with new timestamp",
+      "observed": "renderer byte-identical against 178-item snapshot; regenerated 182-item file with new timestamp",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "each phase-failure noted in brief has corresponding un-advanced cursor",
-      "observed": "no phase failures this run (Phase 1.6 intentionally deferred, brief notes it)",
+      "observed": "no phase failures. Phase 1.6 was first deferred then re-fired by buffer-low; brief documents both",
       "expected": "true"
     },
     {
@@ -108,15 +108,15 @@
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ count this run ≥ count at HEAD",
+      "command": "plans/_archive/ count this run \u2265 count at HEAD",
       "observed": "archive unchanged this run",
-      "expected": "≥"
+      "expected": "\u2265"
     },
     {
       "goal": "G14",
       "passed": true,
       "command": "regenerate IDEAS_TRIAGE.md from backlog.json (vector==triage); diff -q",
-      "observed": "renderer byte-identical when applied to 178-item snapshot; staged file matches renderer output",
+      "observed": "renderer byte-identical; triage vector unchanged (7914 bytes)",
       "expected": "exit 0"
     },
     {
@@ -129,8 +129,8 @@
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped this run → gate is no-op",
-      "observed": "pm_cursor unchanged, coverage_cursor unchanged, management/ files untouched",
+      "command": "Phase 1.6 skipped this run \u2192 gate is no-op",
+      "observed": "Phase 1.6 ran on re-fire. pm_cursor.next_index=6 (in 0..7), coverage_cursor.next_index=0 (in [0,13)). Advanced both against HEAD",
       "expected": "no-op"
     },
     {
@@ -147,10 +147,12 @@
       "type": "code-review-finding",
       "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
       "score_delta": 3,
-      "evidence": "features/ai-chat/hooks/useAiChat.ts:31 apiFetch<T>() sets Content-Type: application/json only — no Authorization header attached; every /api/v1/ai/chat/* call 401s. useDeleteSession (line 134) also calls fetch() directly, never checks response.ok, unconditionally invalidateQueries — a 401/500 delete silently succeeds in the UI.",
+      "evidence": "features/ai-chat/hooks/useAiChat.ts:31 apiFetch<T>() sets Content-Type: application/json only \u2014 no Authorization header attached; every /api/v1/ai/chat/* call 401s. useDeleteSession (line 134) also calls fetch() directly, never checks response.ok, unconditionally invalidateQueries \u2014 a 401/500 delete silently succeeds in the UI.",
       "confidence": "high",
       "candidate_vector": "bug",
-      "files": ["frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
       "severity": "high"
     },
     {
@@ -158,10 +160,12 @@
       "type": "code-review-finding",
       "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
       "score_delta": 3,
-      "evidence": "routes/groups/person-months.tsx:80 useBuildingUnits calls fetch('/api/v1/units?buildingId=…&limit=500', { headers: { 'Content-Type': 'application/json' } }) with no Authorization header and without the generated @ppt/api-client's unitsApiList — every call 401s and the unit dropdown stays empty. Also re-declares a wire shape already exposed by the generated client, drifting on rename.",
+      "evidence": "routes/groups/person-months.tsx:80 useBuildingUnits calls fetch('/api/v1/units?buildingId=\u2026&limit=500', { headers: { 'Content-Type': 'application/json' } }) with no Authorization header and without the generated @ppt/api-client's unitsApiList \u2014 every call 401s and the unit dropdown stays empty. Also re-declares a wire shape already exposed by the generated client, drifting on rename.",
       "confidence": "high",
       "candidate_vector": "bug",
-      "files": ["frontend/apps/ppt-web/src/routes/groups/person-months.tsx"],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
       "severity": "high"
     },
     {
@@ -169,13 +173,40 @@
       "type": "code-review-finding",
       "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
       "score_delta": 2,
-      "evidence": "App.tsx:216 <Suspense fallback={<RouteLoading />}><AppRoutes /></Suspense> wraps every lazy route group with no <ErrorBoundary> anywhere in the tree — a ChunkLoadError from a stale index.html referencing a since-removed chunk hash (or a flaky mobile network) unmounts the whole SPA to a blank page.",
+      "evidence": "App.tsx:216 <Suspense fallback={<RouteLoading />}><AppRoutes /></Suspense> wraps every lazy route group with no <ErrorBoundary> anywhere in the tree \u2014 a ChunkLoadError from a stale index.html referencing a since-removed chunk hash (or a flaky mobile network) unmounts the whole SPA to a blank page.",
       "confidence": "high",
       "candidate_vector": "bug",
-      "files": ["frontend/apps/ppt-web/src/App.tsx"],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
       "severity": "medium"
+    },
+    {
+      "id": "code-review-ppt-web-core-news-feature-fetch-unauthed",
+      "type": "code-review-finding",
+      "source": "Phase 1.6 pm-security lens (2026-07-05 re-fire)",
+      "score_delta": 3,
+      "evidence": "features/news/pages/{ArticleDetailPage,CreateArticlePage,EditArticlePage,NewsListPage}.tsx \u2014 \u226515 raw fetch() calls to /api/v1/news/* drop the Authorization header, including manager-gated mutations (publish/archive/pin, comment CRUD, reactions). Same class as the useAiChat + person-months bugs promoted earlier today, confirming a systemic pattern in ppt-web.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/CreateArticlePage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/EditArticlePage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "buffer-low-2026-07-05-1025",
+      "type": "process_signal",
+      "source": "dispatcher fire payload",
+      "score_delta": 0,
+      "evidence": "Received 'buffer-low: claimable=6/72 \u2014 refill planner' at 10:25 UTC. Confirmed action-list.json had 8 open + 8 in-progress = 16 non-terminal vs 36 target. Response: ran deferred Phase 1.6 (pm-scrum-master + pm-security), added 20 coverage-gap candidates + 12 role next_actions; open count now 40.",
+      "confidence": "high",
+      "candidate_vector": null
     }
   ],
-  "phase_1_6_status": "deferred — same-day rerun 6h after 19d catch-up; no merged PR mapped to a coverage story; pm_cursor + coverage_cursor unchanged",
+  "phase_1_6_status": "ran (re-fired by buffer-low at 10:25 UTC). Scrum Master + pm-security. Advanced pm_cursor 5\u21926, coverage_cursor 12\u21920. Refilled action-list.json 8\u219240 open.",
   "auto_fix_actions": []
 }

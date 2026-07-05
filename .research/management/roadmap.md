@@ -37,3 +37,5 @@ Also notable: four Epic-7A document stories (`7a-2..7a-5`) have shipped code but
 
 ### Phase 4
 - **[medium]** Finish **inquiries & account** on mobile-native (`82-5`) — owner: pm-frontend — why: build the Android/KMP Compose inquiry thread (+ calendar) and replace the stub Account Profile/Settings `Text` destinations with real screens.
+
+Buffer: 40/36 open · 0 candidates ranked but unqueued (refilled by buffer-low re-fire 2026-07-05 10:29 UTC — coverage-gap candidates + role next_actions merged)

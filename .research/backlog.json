@@ -4141,6 +4141,34 @@
       "created_at": "2026-07-05",
       "updated_at": "2026-07-05",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-news-feature-fetch-unauthed",
+      "title": "news/pages/*.tsx — 15+ raw fetch() calls to /api/v1/news/* drop Authorization; mutations (publish/archive/comments/reactions) also affected",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Phase 1.6 pm-security lens (2026-07-05)",
+        "grep -rEn \"await fetch\\(\" features/news/pages/"
+      ],
+      "evidence": [
+        "features/news/pages/EditArticlePage.tsx:38,115 — fetch(`/api/v1/news/${id}?…`) plain, no Authorization; the PUT at :115 is a mutating request",
+        "features/news/pages/CreateArticlePage.tsx:55 — POST /api/v1/news, no Authorization",
+        "features/news/pages/ArticleDetailPage.tsx:41-252 — 11 raw fetch() calls including POST/PATCH/DELETE on comments + reactions",
+        "features/news/pages/NewsListPage.tsx:35,77,98 — list + delete + publish; all lack Authorization",
+        "systemic pattern: the useAiChat + person-months bugs promoted this morning are two instances of the same class; pm-security lens confirms ≥9 more"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/CreateArticlePage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/EditArticlePage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx"
+      ],
+      "created_at": "2026-07-05",
+      "updated_at": "2026-07-05",
+      "plan": null
     }
   ]
 }

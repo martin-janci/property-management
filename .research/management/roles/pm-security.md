@@ -1,62 +1,53 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-07-05
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Rotating role this run (pm_cursor idx 5). Re-fired by buffer-low signal after 39d gap. Static read; no compile/run._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+OAuth epic 10a carries two open HIGH-severity gating issues (#481 refresh-token reuse, #487 MFA rate-limit gap); a frontend missing-`Authorization`-header pattern is broader than the two already-promoted bugs, recurring across the news feature; and one high-confidence cross-tenant IDOR (`security-llm-doc-idor`) remains unclaimed in the backlog.
+
+## Files reviewed
+
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `.research/backlog.json`
+- `frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts`
+- `frontend/apps/ppt-web/src/routes/groups/person-months.tsx`
+- `frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx`
+- `frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts`
+
+## Notable findings
+
+- **The `Authorization`-header-drop pattern is not isolated to the two already-promoted bugs.** `useAiChat.ts`'s `apiFetch()` helper never adds an `Authorization` header, and `person-months.tsx`'s `useBuildingUnits` fetch only sets `Content-Type`. The same class of bug recurs at ≥9 more call sites in `frontend/apps/ppt-web/src/features/news/pages/{CreateArticlePage,EditArticlePage,NewsListPage,ArticleDetailPage}.tsx` — including manager-gated mutating actions (`publish`, `archive`, `pin`, comment create/delete, reactions). `useDocumentDownload.ts`'s bare `fetch(url)` is fine (presigned S3 URL by design). `useNotificationAnalytics.ts`, `useMessaging.ts`, `paymentMatching.ts`, and `App.tsx` correctly attach the `Authorization` header. Emitted as backlog vector `code-review-ppt-web-core-news-feature-fetch-unauthed` (score 3).
+- **Test-hardening batch governance gap:** `sprint-status.yaml`'s own rule says stories can't be promoted to `done` while their gating security issue is open, but `epic-8a` is marked `done` (8a-2, 8a-3 both `done`) while batch items #480 (JWT in WS query-param access logs, high) and #484 (serial dispatch / FCM failures silently swallowed) are still `status: open` and explicitly gate those two stories.
+- **Epic 10a (OAuth Provider Foundation, in-progress this sprint, 0/3 stories complete)** still has two open HIGH-severity gating items: #481 (refresh-token revocation bypassed — revoked tokens reusable, breaks RFC 9700) and #487 (MFA e2e tests missing rate-limit coverage). These must close before any 10a story review.
+- **`security-llm-doc-idor`** (backlog.json) remains `status: ready`, high confidence, score 3 — cross-tenant IDOR letting any authenticated user publish/read another tenant's AI-generated listing descriptions and photo enhancements by UUID (`ai.rs:2620/2599/2847`, discarded `_principal`). Plan already drafted at `plans/security-llm-doc-idor.md` but unclaimed.
+- **Recent merged batch (#2094–#2099, #1979)** looks like clean debt-paydown with low residual surface: quick-xml XXE now hard-banned via cargo-deny (#2096, supply-chain guard, not a runtime code fix — worth one confirmatory test that no alternate XML parser bypasses it); SlovakAccountingExport honesty-by-construction (#2099) removes a mis-reporting vector by compile-time enforcement; messaging soft-delete/unread invariant test un-quarantined (#2097) closes a test-debt gap adjacent to the existing messaging RLS cross-tenant tests. No new residual attack surface identified from these three.
 
 ## next_actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Extend the useAiChat.ts/person-months.tsx auth-header fix into a repo-wide sweep of raw `fetch()` calls in ppt-web, starting with `features/news/pages` (`publish`/`archive`/`pin`/`comments`/`reactions` all missing `Authorization`) — owner: pm-frontend
+- **[high]** Reconcile test-hardening batch rule violation: #480 and #484 are open but their gated stories (8a-2, 8a-3) are already marked done — owner: pm-backend
+- **[high]** Fix #481 OAuth refresh-token revocation bypass before any 10a story leaves `ready-for-dev` — owner: pm-backend
+- **[medium]** Close #487 MFA rate-limit/brute-force test coverage gap (gates 10a-1) — owner: pm-backend
+- **[high]** Pick up `security-llm-doc-idor` (cross-tenant IDOR on AI listing descriptions/photo enhancements) — owner: pm-backend
+- **[low]** Add a runtime XXE regression test alongside the #2096 cargo-deny quick-xml ban to verify no alternate XML ingestion path bypasses it — owner: pm-backend
 
 ## risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **[high/high]** Raw `fetch()` calls without `Authorization` headers across ai-chat, person-months, and news feature.
+- **[high/medium]** Test-hardening batch gate rule violated in practice (8a-2/8a-3 done while #480/#484 open).
+- **[high/high]** Epic 10a (OAuth) ships with revoked-token reuse (#481) and no MFA brute-force coverage (#487) still open.
+- **[medium/high]** `security-llm-doc-idor` sits unclaimed despite high-confidence, score-3 rating.
+- **[low/medium]** quick-xml XXE mitigation is a dependency pin, not a code-level test.
 
 ## open_questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Does api-server reject `/api/v1/news/*` and `/api/v1/ai/chat/*` mutation requests lacking an `Authorization` header, or do they fail open — what is the actual blast radius of the frontend gap?
+- Should #480/#484 be closed or explicitly deferred given 8a-2/8a-3 are already merged/done — and who is authorized to make that call given the batch's own gating rule?
+- Is `security-llm-doc-idor` scheduled for any upcoming sprint, or purely sitting in backlog with no assigned specialist?
+- Was the fix scope for useAiChat.ts/person-months.tsx (already promoted to plans) limited to those two files, or does it already include the news-feature call sites found here?
 
 ## decisions_needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Formally close or defer test-hardening batch items #480/#484 now that their gated stories are done — owner: rust-backend / release manager
+- Prioritize `security-llm-doc-idor` fix against current sprint epics (10a OAuth, 6/7a) — owner: PM/tech lead
