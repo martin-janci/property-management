@@ -448,12 +448,18 @@ async fn export_slovak_accounting(
 
     let journal_entry_count = invoice_count + payment_count;
 
-    let mut export = SlovakAccountingExport {
-        export_id: Uuid::new_v4(),
-        organization_id: org_id,
-        from_date: payload.from_date,
-        to_date: payload.to_date,
-        format: payload.format,
+    // Build via the smart constructor (#2086): `partial` + `unsupported_fields`
+    // are derived inside `new` from the `Option` monetary fields, so this
+    // handler cannot ship a "looks complete but isn't" export by forgetting a
+    // mutator. Un-computed fields serialize as JSON `null` and are enumerated in
+    // `unsupported_fields`, letting consumers distinguish "not available" from a
+    // genuine zero (#2030).
+    let export = SlovakAccountingExport::new(
+        Uuid::new_v4(),
+        org_id,
+        payload.from_date,
+        payload.to_date,
+        payload.format,
         invoice_count,
         payment_count,
         journal_entry_count,
@@ -461,22 +467,13 @@ async fn export_slovak_accounting(
         total_expenses,
         total_receivables,
         total_payables,
-        // Derived below by `compute_partial` from the `Option` monetary fields.
-        partial: false,
-        unsupported_fields: Vec::new(),
-        download_url: Some(format!(
+        Some(format!(
             "/api/v1/regional-compliance/slovak/accounting/download/{}",
             Uuid::new_v4()
         )),
-        export_data: None,
-        generated_at: Utc::now(),
-    };
-    // Surface un-computed monetary fields honestly (#2030): sets `partial` +
-    // `unsupported_fields` so consumers can distinguish "not available" from a
-    // genuine zero, rather than the previous misleading hardcoded 0. The
-    // derivation lives on the model (#2053) so the invariant stays co-located
-    // with the fields it depends on.
-    export.compute_partial();
+        None,
+        Utc::now(),
+    );
 
     let result = Ok(Json(export));
     rls.release().await;
