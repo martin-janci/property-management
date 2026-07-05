@@ -4065,12 +4065,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 merged 2026-07-05 — refactor-churn-hotspot-...-rental-rs: split rental repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
