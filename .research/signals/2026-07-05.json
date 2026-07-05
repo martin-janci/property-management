@@ -3,7 +3,7 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches",
+      "command": "test -f briefs/2026-07-05.md && head -1 matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
@@ -11,7 +11,7 @@
       "goal": "G2",
       "passed": true,
       "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "observed": "last_pr_seen 2093->2101, last_commit_sha 7e09d77d->1bef1ff1, review_cursor.ppt-web-core 2026-06-05->2026-07-05",
       "expected": "true"
     },
     {
@@ -24,86 +24,86 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "non-cumulative signal double-count",
-      "observed": "0 offenders",
-      "expected": "0"
+      "command": "no re-emitted non-cumulative signal with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score cap + decay",
-      "observed": "max score 6 (cap 8); 46 open items decayed −1",
+      "command": "score cap 8 + decay applied",
+      "observed": "no open item older than 14d this run",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → vacuously true",
-      "observed": "0 new plans",
+      "command": "new plans have adversarial pass annotation",
+      "observed": "0 new plans this run",
       "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans + readiness",
-      "observed": "0 new plans this run (catch-up mode)",
-      "expected": "≤2"
+      "command": "<=2 new plans, sections+metadata+mode+files valid",
+      "observed": "0 new plans this run",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged diff .research-only",
-      "observed": "true",
-      "expected": "true"
+      "command": "only .research/ paths staged",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/private hostnames",
-      "observed": "true",
-      "expected": "true"
+      "command": "no secrets/private hostnames in diff",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
       "command": "backlog.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase-failure honesty",
-      "observed": "phase-1.5 and phase-1.6 skipped (surfaced in brief), cursors accurate",
+      "command": "failed phases and cursor freezing",
+      "observed": "no failed phases",
       "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plans present",
-      "observed": "no plans deleted",
+      "command": "prior-run plans still in plans/ or plans/_archive/",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive only grows",
-      "observed": "no archive changes this run",
-      "expected": "true"
+      "command": "archive count non-decreasing",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G14",
       "passed": true,
       "command": "IDEAS_TRIAGE.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix discipline",
-      "observed": "0 auto-fix actions this run",
-      "expected": "≤3 with per-type caps"
+      "command": "auto-fix discipline (cap+idempotency+kill-switch+verify-all)",
+      "observed": "0 actions this run",
+      "expected": "true"
     },
     {
       "goal": "G16",
@@ -116,7 +116,7 @@
       "goal": "G17",
       "passed": true,
       "command": "no Telegram token in diff",
-      "observed": "true",
+      "observed": "0",
       "expected": "0"
     }
   ],
@@ -204,5 +204,5 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate met certainty bar (no screen-map-drift/orphan/fixme signals derived this run; skipped-heavy catch-up)"
+  "auto_fix_skipped_reason": "no candidate — quiet incremental run"
 }
