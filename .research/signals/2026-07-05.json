@@ -11,7 +11,7 @@
       "goal": "G2",
       "passed": true,
       "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "observed": "last_commit_sha 7e09d77d→b6b53ddf (second run of day; PR/issue cursors unchanged — nothing new merged since 03:10 catch-up)",
       "expected": "true"
     },
     {
@@ -74,7 +74,7 @@
       "goal": "G11",
       "passed": true,
       "command": "phase-failure honesty",
-      "observed": "phase-1.5 and phase-1.6 skipped (surfaced in brief), cursors accurate",
+      "observed": "phase-1.5 and phase-1.6 remain skipped (same-day rerun — nothing new since deep-catchup run at 03:10 UTC)",
       "expected": "true"
     },
     {
