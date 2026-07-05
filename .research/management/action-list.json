@@ -1619,8 +1619,8 @@
       "action": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-05T00:04:44Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1629,6 +1629,13 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2077,
+        "merged_at": "2026-07-04T20:12:47Z",
+        "at": "2026-07-05T00:04:44Z"
       }
     },
     {
@@ -1660,8 +1667,8 @@
       "action": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=test-gap)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-02T20:05:51Z (score=1 conf=medium vector=test-gap) | gc1-reconcile 2026-07-05T00:04:44Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -1670,6 +1677,13 @@
         "plan": null,
         "score": 1,
         "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2075,
+        "merged_at": "2026-07-04T18:14:24Z",
+        "at": "2026-07-05T00:04:44Z"
       }
     },
     {
