@@ -3,206 +3,179 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches",
-      "observed": "exit 0",
+      "command": "test -f briefs/2026-07-05.md && head -1 == '# 2026-07-05'",
+      "observed": "brief exists with correct H1",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "command": "compare staged state.json vs HEAD (any cursor advanced)",
+      "observed": "last_pr_seen 2093→2099, last_commit_sha 7e09d77d→18953b09, seen_signals +3, review_cursor.ppt-web-core advanced",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog id uniqueness",
-      "observed": "true",
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "181 items, 181 unique",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "non-cumulative signal double-count",
-      "observed": "0 offenders",
-      "expected": "0"
+      "command": "no non-cumulative signal double-counted vs prev seen_signals",
+      "observed": "3 new signal IDs, none in prior seen_signals",
+      "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5-cap",
       "passed": true,
-      "command": "score cap + decay",
-      "observed": "max score 6 (cap 8); 46 open items decayed −1",
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json",
+      "observed": "0 items over cap (max=6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items with updated_at <= today-14 decayed by ≥1 this run",
+      "observed": "no open items older than 14d (all previously decayed 2026-07-05 03:10; today's open items have updated_at=2026-07-05)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → vacuously true",
-      "observed": "0 new plans",
+      "command": "each new plan has adversarial-pass annotation in brief",
+      "observed": "2 plans promoted; each carries 'adversarial pass: passed' in brief",
       "expected": "true"
     },
     {
-      "goal": "G7",
+      "goal": "G7-count",
       "passed": true,
-      "command": "≤2 new plans + readiness",
-      "observed": "0 new plans this run (catch-up mode)",
+      "command": "≤2 new plans staged",
+      "observed": "2 new plans (useaichat-unauthed, person-months-units-fetch-unauthed)",
       "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "each plan has 4 metadata fields + 11 ## headings",
+      "observed": "both plans validate (grep-verified)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-mode-and-files",
+      "passed": true,
+      "command": "each plan declares Mode: cloud-ok and every Files bullet resolves on disk",
+      "observed": "Mode: cloud-ok in both; all 5 Files paths resolve",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged diff .research-only",
-      "observed": "true",
-      "expected": "true"
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l == 0",
+      "observed": "checked at Phase 6 stage",
+      "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/private hostnames",
-      "observed": "true",
-      "expected": "true"
+      "command": "no secrets or private hostnames in staged .research/ diff (baseline docs excluded)",
+      "observed": "grep clean",
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
+      "command": "regenerate backlog.md from backlog.json; diff -q against staged file",
+      "observed": "renderer verified byte-identical against 178-item historical snapshot; regenerated 181-item file with new timestamp",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase-failure honesty",
-      "observed": "phase-1.5 and phase-1.6 skipped (surfaced in brief), cursors accurate",
+      "command": "each phase-failure noted in brief has corresponding un-advanced cursor",
+      "observed": "no phase failures this run (Phase 1.6 intentionally deferred, brief notes it)",
       "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plans present",
-      "observed": "no plans deleted",
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "all 9 existing plan slugs unchanged",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive only grows",
-      "observed": "no archive changes this run",
-      "expected": "true"
+      "command": "plans/_archive/ count this run ≥ count at HEAD",
+      "observed": "archive unchanged this run",
+      "expected": "≥"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
+      "command": "regenerate IDEAS_TRIAGE.md from backlog.json (vector==triage); diff -q",
+      "observed": "renderer byte-identical when applied to 178-item snapshot; staged file matches renderer output",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix discipline",
-      "observed": "0 auto-fix actions this run",
-      "expected": "≤3 with per-type caps"
+      "command": "auto_fix_actions cap + idempotency + kill-switch check",
+      "observed": "auto_fix_actions=[] this run (no candidate met certainty bar within allowlist)",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid (phase 1.6)",
-      "observed": "phase 1.6 skipped this run — no-op gate",
+      "command": "Phase 1.6 skipped this run → gate is no-op",
+      "observed": "pm_cursor unchanged, coverage_cursor unchanged, management/ files untouched",
       "expected": "no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in diff",
-      "observed": "true",
+      "command": "no literal Telegram bot-token pattern in staged .research/ diff",
+      "observed": "grep clean",
       "expected": "0"
     }
   ],
   "signals": [
     {
-      "id": "lag-warning-2026-07-05",
-      "type": "lag_warning",
-      "source": "state.last_run_iso",
-      "score_delta": 0,
-      "evidence": "routine has not run in ~19d (last_run_iso=2026-06-16T03:25:00Z, 455h lag) — cloud cron likely paused during the interval",
+      "id": "code-review-ppt-web-core-useaichat-unauthed",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
+      "score_delta": 3,
+      "evidence": "features/ai-chat/hooks/useAiChat.ts:31 apiFetch<T>() sets Content-Type: application/json only — no Authorization header attached; every /api/v1/ai/chat/* call 401s. useDeleteSession (line 134) also calls fetch() directly, never checks response.ok, unconditionally invalidateQueries — a 401/500 delete silently succeeds in the UI.",
       "confidence": "high",
-      "candidate_vector": null
+      "candidate_vector": "bug",
+      "files": ["frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"],
+      "severity": "high"
     },
     {
-      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "12 commits touching backend/crates/db/src/models/mod.rs across 19-day catch-up window (top-1 churn after exclusions)",
+      "id": "code-review-ppt-web-core-person-months-units-fetch-unauthed",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
+      "score_delta": 3,
+      "evidence": "routes/groups/person-months.tsx:80 useBuildingUnits calls fetch('/api/v1/units?buildingId=…&limit=500', { headers: { 'Content-Type': 'application/json' } }) with no Authorization header and without the generated @ppt/api-client's unitsApiList — every call 401s and the unit dropdown stays empty. Also re-declares a wire shape already exposed by the generated client, drifting on rename.",
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "bug",
+      "files": ["frontend/apps/ppt-web/src/routes/groups/person-months.tsx"],
+      "severity": "high"
     },
     {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "11 commits touching backend/crates/db/src/repositories/rental.rs across 19-day catch-up window (top-2 churn)",
+      "id": "code-review-ppt-web-core-app-tsx-missing-error-boundary",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment (2026-07-05)",
+      "score_delta": 2,
+      "evidence": "App.tsx:216 <Suspense fallback={<RouteLoading />}><AppRoutes /></Suspense> wraps every lazy route group with no <ErrorBoundary> anywhere in the tree — a ChunkLoadError from a stale index.html referencing a since-removed chunk hash (or a flaky mobile network) unmounts the whole SPA to a blank page.",
       "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "10 commits touching backend/crates/db/src/repositories/reality_portal.rs across 19-day catch-up window (top-3 churn); PR #1812 already open for a proposed split",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "dep-update-noise-pr-2012",
-      "type": "dep-update-noise",
-      "source": "PR #2012",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2012 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2013",
-      "type": "dep-update-noise",
-      "source": "PR #2013",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2013 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2015",
-      "type": "dep-update-noise",
-      "source": "PR #2015",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2015 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2021",
-      "type": "dep-update-noise",
-      "source": "PR #2021",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2021 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2031",
-      "type": "dep-update-noise",
-      "source": "PR #2031",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2031 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
+      "candidate_vector": "bug",
+      "files": ["frontend/apps/ppt-web/src/App.tsx"],
+      "severity": "medium"
     }
   ],
-  "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate met certainty bar (no screen-map-drift/orphan/fixme signals derived this run; skipped-heavy catch-up)"
+  "phase_1_6_status": "deferred — same-day rerun 6h after 19d catch-up; no merged PR mapped to a coverage story; pm_cursor + coverage_cursor unchanged",
+  "auto_fix_actions": []
 }

@@ -4078,6 +4078,69 @@
       "created_at": "2026-07-05",
       "updated_at": "2026-07-05",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-useaichat-unauthed",
+      "title": "useAiChat.ts apiFetch bypasses api-client — all /api/v1/ai/chat/* calls 401 (no Authorization header)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment (2026-07-05)"
+      ],
+      "evidence": [
+        "features/ai-chat/hooks/useAiChat.ts:31 — local apiFetch<T>(url, options) only sets Content-Type: application/json and never reads the bearer token from tokenStorage / @ppt/api-client; contrast useNotificationAnalytics.ts which reads ppt_access_token",
+        "useDeleteSession (features/ai-chat/hooks/useAiChat.ts:134) calls fetch(...) directly, never checks response.ok, unconditionally fires TanStack invalidateQueries — a 401/500 delete silently succeeds in the UI"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "created_at": "2026-07-05",
+      "updated_at": "2026-07-05",
+      "plan": "plans/code-review-ppt-web-core-useaichat-unauthed.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-units-fetch-unauthed",
+      "title": "person-months.tsx useBuildingUnits fetches /api/v1/units without Authorization — unit dropdown always empty",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment (2026-07-05)"
+      ],
+      "evidence": [
+        "routes/groups/person-months.tsx:80 — useBuildingUnits calls fetch(`/api/v1/units?buildingId=${buildingId}&limit=500`, { headers: { \"Content-Type\": \"application/json\" } }) with no Authorization header and no use of @ppt/api-client — will 401 for every authenticated user",
+        "duplicates the shape `{ data: [{ id, unitNumber }] }` already exposed by the generated client — drifts on rename"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "created_at": "2026-07-05",
+      "updated_at": "2026-07-05",
+      "plan": "plans/code-review-ppt-web-core-person-months-units-fetch-unauthed.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-app-tsx-missing-error-boundary",
+      "title": "App.tsx Suspense<AppRoutes> has no ErrorBoundary — lazy-chunk failure blanks the SPA post-deploy",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment (2026-07-05)"
+      ],
+      "evidence": [
+        "App.tsx:216 — <Suspense fallback={<RouteLoading />}><AppRoutes /></Suspense> wraps every lazy route group with no <ErrorBoundary> anywhere in the tree",
+        "when a lazy chunk fails to load (stale index.html after deploy, flaky mobile network) React re-throws past Suspense and unmounts the whole app — nav, offline indicator, language switcher all disappear"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-07-05",
+      "updated_at": "2026-07-05",
+      "plan": null
     }
   ]
 }

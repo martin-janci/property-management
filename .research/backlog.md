@@ -1,9 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-05 03:10 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-05 10:18 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | bug | `code-review-ppt-web-core-useaichat-unauthed` | useAiChat.ts apiFetch bypasses api-client — all /api/v1/ai/chat/* calls 401 (no Authorization header) | ready | 2026-07-05 | [plan](plans/code-review-ppt-web-core-useaichat-unauthed.md) |
+| 3 | bug | `code-review-ppt-web-core-person-months-units-fetch-unauthed` | person-months.tsx useBuildingUnits fetches /api/v1/units without Authorization — unit dropdown always empty | ready | 2026-07-05 | [plan](plans/code-review-ppt-web-core-person-months-units-fetch-unauthed.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend  | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -19,6 +21,7 @@
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file  | done | 2026-07-05 |  |
+| 2 | bug | `code-review-ppt-web-core-app-tsx-missing-error-boundary` | App.tsx Suspense<AppRoutes> has no ErrorBoundary — lazy-chunk failure blanks the SPA post-deploy | open | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id | done | 2026-06-16 |  |
 | 2 | test-gap | `unchecked-todo-pr-1196` | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO  | dropped | 2026-06-10 |  |
 | 2 | dx | `dx-push-fanout-blpop-drain` | PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op | done | 2026-06-06 |  |
