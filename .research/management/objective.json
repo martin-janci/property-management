@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2076",
-  "selected_at": "2026-07-04T20:10:23Z",
-  "last_action": "claimed gh-issue-2076 (finish-first target)",
-  "reason": "prior target '7a-3-permission-based-access' exhausted; closest-to-done is 'gh-issue-2076' (open=1 claimable=1)",
+  "epic_prefix": "triage-dispatcher-mcp-push-large-file-issue-1014",
+  "selected_at": "2026-07-05T12:06:27Z",
+  "last_action": "repick",
+  "reason": "prior target 'gh-issue-2076' exhausted; closest-to-done is 'triage-dispatcher-mcp-push-large-file-issue-1014' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
