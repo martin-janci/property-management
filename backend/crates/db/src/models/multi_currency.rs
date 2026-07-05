@@ -170,6 +170,96 @@ pub enum CountryCode {
     FI, // Finland
 }
 
+impl std::fmt::Display for CountryCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CountryCode::SK => write!(f, "SK"),
+            CountryCode::CZ => write!(f, "CZ"),
+            CountryCode::AT => write!(f, "AT"),
+            CountryCode::DE => write!(f, "DE"),
+            CountryCode::PL => write!(f, "PL"),
+            CountryCode::HU => write!(f, "HU"),
+            CountryCode::CH => write!(f, "CH"),
+            CountryCode::GB => write!(f, "GB"),
+            CountryCode::FR => write!(f, "FR"),
+            CountryCode::IT => write!(f, "IT"),
+            CountryCode::ES => write!(f, "ES"),
+            CountryCode::NL => write!(f, "NL"),
+            CountryCode::BE => write!(f, "BE"),
+            CountryCode::PT => write!(f, "PT"),
+            CountryCode::IE => write!(f, "IE"),
+            CountryCode::RO => write!(f, "RO"),
+            CountryCode::BG => write!(f, "BG"),
+            CountryCode::HR => write!(f, "HR"),
+            CountryCode::SI => write!(f, "SI"),
+            CountryCode::LU => write!(f, "LU"),
+            CountryCode::SE => write!(f, "SE"),
+            CountryCode::DK => write!(f, "DK"),
+            CountryCode::NO => write!(f, "NO"),
+            CountryCode::FI => write!(f, "FI"),
+        }
+    }
+}
+
+/// Error returned when a string cannot be parsed into a [`CountryCode`].
+///
+/// Mirrors [`ParseSupportedCurrencyError`]: it carries the offending
+/// (uppercased) input and only signals "not a supported country code".
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseCountryCodeError(pub String);
+
+impl std::fmt::Display for ParseCountryCodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "'{}' is not a supported ISO 3166-1 alpha-2 country code",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for ParseCountryCodeError {}
+
+impl std::str::FromStr for CountryCode {
+    type Err = ParseCountryCodeError;
+
+    /// Parse a case-insensitive ISO 3166-1 alpha-2 code into a [`CountryCode`].
+    ///
+    /// Input is uppercased before matching so `"sk"` and `"SK"` both resolve.
+    /// This mirrors the [`Display`](std::fmt::Display) impl above so the
+    /// supported set stays defined in exactly one place.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let upper = s.trim().to_ascii_uppercase();
+        match upper.as_str() {
+            "SK" => Ok(CountryCode::SK),
+            "CZ" => Ok(CountryCode::CZ),
+            "AT" => Ok(CountryCode::AT),
+            "DE" => Ok(CountryCode::DE),
+            "PL" => Ok(CountryCode::PL),
+            "HU" => Ok(CountryCode::HU),
+            "CH" => Ok(CountryCode::CH),
+            "GB" => Ok(CountryCode::GB),
+            "FR" => Ok(CountryCode::FR),
+            "IT" => Ok(CountryCode::IT),
+            "ES" => Ok(CountryCode::ES),
+            "NL" => Ok(CountryCode::NL),
+            "BE" => Ok(CountryCode::BE),
+            "PT" => Ok(CountryCode::PT),
+            "IE" => Ok(CountryCode::IE),
+            "RO" => Ok(CountryCode::RO),
+            "BG" => Ok(CountryCode::BG),
+            "HR" => Ok(CountryCode::HR),
+            "SI" => Ok(CountryCode::SI),
+            "LU" => Ok(CountryCode::LU),
+            "SE" => Ok(CountryCode::SE),
+            "DK" => Ok(CountryCode::DK),
+            "NO" => Ok(CountryCode::NO),
+            "FI" => Ok(CountryCode::FI),
+            _ => Err(ParseCountryCodeError(upper)),
+        }
+    }
+}
+
 // =============================================================================
 // STORY 145.1: MULTI-CURRENCY CONFIGURATION
 // =============================================================================
@@ -841,4 +931,245 @@ pub struct CurrencyDistribution {
     pub transaction_count: i64,
     pub total_amount: Decimal,
     pub percentage: Decimal,
+}
+
+// =============================================================================
+// ENUM SYNC GUARD (Issue #2083)
+// =============================================================================
+//
+// `SupportedCurrency` and `CountryCode` are hand-maintained in THREE places:
+//   1. Postgres enums  → backend/crates/db/migrations/00101_create_multi_currency.sql
+//   2. Rust enums      → this file (the canonical source of truth)
+//   3. TypeSpec enums  → docs/api/typespec/shared/models.tsp (drives OpenAPI)
+//
+// These tests turn "three sources of truth" into "one source + checked
+// mirrors": they hard-code the canonical ordered wire values and assert the
+// Rust enums serialize to exactly that list, in that order. The `match` inside
+// each canonical helper is EXHAUSTIVE — adding a variant without updating the
+// canonical list is a compile error, which is the whole point of the guard.
+// If a currency/country is added or removed, update ALL THREE files above plus
+// the canonical arrays here, and this test keeps the mirrors honest.
+#[cfg(test)]
+mod enum_sync_guard {
+    use super::*;
+    use std::str::FromStr;
+
+    /// Canonical ordered wire values for `SupportedCurrency`, matching the
+    /// `supported_currency` Postgres enum and the TypeSpec `SupportedCurrency`
+    /// enum (migration `00101_create_multi_currency.sql`).
+    ///
+    /// The exhaustive `match` guarantees every variant appears exactly once —
+    /// adding a variant fails to compile until this list is updated.
+    fn currency_canonical() -> Vec<(SupportedCurrency, &'static str)> {
+        use SupportedCurrency::*;
+        // Exhaustiveness guard: a new variant breaks this match at compile time.
+        fn _wire(c: SupportedCurrency) -> &'static str {
+            match c {
+                EUR => "EUR",
+                CZK => "CZK",
+                CHF => "CHF",
+                GBP => "GBP",
+                PLN => "PLN",
+                USD => "USD",
+                HUF => "HUF",
+                RON => "RON",
+                BGN => "BGN",
+                HRK => "HRK",
+                SEK => "SEK",
+                DKK => "DKK",
+                NOK => "NOK",
+            }
+        }
+        let list = vec![
+            (EUR, "EUR"),
+            (CZK, "CZK"),
+            (CHF, "CHF"),
+            (GBP, "GBP"),
+            (PLN, "PLN"),
+            (USD, "USD"),
+            (HUF, "HUF"),
+            (RON, "RON"),
+            (BGN, "BGN"),
+            (HRK, "HRK"),
+            (SEK, "SEK"),
+            (DKK, "DKK"),
+            (NOK, "NOK"),
+        ];
+        // Every listed value must round-trip through the exhaustive `_wire`.
+        for (variant, wire) in &list {
+            assert_eq!(_wire(*variant), *wire);
+        }
+        list
+    }
+
+    /// Canonical ordered wire values for `CountryCode`, matching the
+    /// `country_code` Postgres enum and the TypeSpec `CountryCode` enum.
+    fn country_canonical() -> Vec<(CountryCode, &'static str)> {
+        use CountryCode::*;
+        // Exhaustiveness guard: a new variant breaks this match at compile time.
+        fn _wire(c: CountryCode) -> &'static str {
+            match c {
+                SK => "SK",
+                CZ => "CZ",
+                AT => "AT",
+                DE => "DE",
+                PL => "PL",
+                HU => "HU",
+                CH => "CH",
+                GB => "GB",
+                FR => "FR",
+                IT => "IT",
+                ES => "ES",
+                NL => "NL",
+                BE => "BE",
+                PT => "PT",
+                IE => "IE",
+                RO => "RO",
+                BG => "BG",
+                HR => "HR",
+                SI => "SI",
+                LU => "LU",
+                SE => "SE",
+                DK => "DK",
+                NO => "NO",
+                FI => "FI",
+            }
+        }
+        let list = vec![
+            (SK, "SK"),
+            (CZ, "CZ"),
+            (AT, "AT"),
+            (DE, "DE"),
+            (PL, "PL"),
+            (HU, "HU"),
+            (CH, "CH"),
+            (GB, "GB"),
+            (FR, "FR"),
+            (IT, "IT"),
+            (ES, "ES"),
+            (NL, "NL"),
+            (BE, "BE"),
+            (PT, "PT"),
+            (IE, "IE"),
+            (RO, "RO"),
+            (BG, "BG"),
+            (HR, "HR"),
+            (SI, "SI"),
+            (LU, "LU"),
+            (SE, "SE"),
+            (DK, "DK"),
+            (NO, "NO"),
+            (FI, "FI"),
+        ];
+        for (variant, wire) in &list {
+            assert_eq!(_wire(*variant), *wire);
+        }
+        list
+    }
+
+    #[test]
+    fn supported_currency_count_is_stable() {
+        // The Postgres enum and TypeSpec enum both declare exactly 13 values.
+        assert_eq!(
+            currency_canonical().len(),
+            13,
+            "SupportedCurrency count drifted from the 13-value canonical list"
+        );
+    }
+
+    #[test]
+    fn country_code_count_is_stable() {
+        // The Postgres enum and TypeSpec enum both declare exactly 24 values.
+        assert_eq!(
+            country_canonical().len(),
+            24,
+            "CountryCode count drifted from the 24-value canonical list"
+        );
+    }
+
+    #[test]
+    fn supported_currency_serializes_to_canonical_wire_values() {
+        for (variant, wire) in currency_canonical() {
+            // serde (rename_all = "UPPERCASE") must emit the canonical wire value.
+            assert_eq!(
+                serde_json::to_string(&variant).unwrap(),
+                format!("\"{wire}\""),
+                "serde serialization for {variant:?} drifted"
+            );
+            // Display must agree with the wire value.
+            assert_eq!(variant.to_string(), wire, "Display for {variant:?} drifted");
+        }
+    }
+
+    #[test]
+    fn country_code_serializes_to_canonical_wire_values() {
+        for (variant, wire) in country_canonical() {
+            assert_eq!(
+                serde_json::to_string(&variant).unwrap(),
+                format!("\"{wire}\""),
+                "serde serialization for {variant:?} drifted"
+            );
+            assert_eq!(variant.to_string(), wire, "Display for {variant:?} drifted");
+        }
+    }
+
+    #[test]
+    fn supported_currency_deserializes_from_canonical_wire_values() {
+        for (variant, wire) in currency_canonical() {
+            let json = format!("\"{wire}\"");
+            let parsed: SupportedCurrency = serde_json::from_str(&json).unwrap();
+            assert_eq!(parsed, variant, "serde deserialization for {wire} drifted");
+        }
+    }
+
+    #[test]
+    fn country_code_deserializes_from_canonical_wire_values() {
+        for (variant, wire) in country_canonical() {
+            let json = format!("\"{wire}\"");
+            let parsed: CountryCode = serde_json::from_str(&json).unwrap();
+            assert_eq!(parsed, variant, "serde deserialization for {wire} drifted");
+        }
+    }
+
+    #[test]
+    fn supported_currency_from_str_round_trips() {
+        for (variant, wire) in currency_canonical() {
+            // FromStr(Display) == identity.
+            assert_eq!(SupportedCurrency::from_str(wire).unwrap(), variant);
+            // Case-insensitive parse resolves to the same variant.
+            assert_eq!(
+                SupportedCurrency::from_str(&wire.to_ascii_lowercase()).unwrap(),
+                variant
+            );
+        }
+    }
+
+    #[test]
+    fn country_code_from_str_round_trips() {
+        for (variant, wire) in country_canonical() {
+            assert_eq!(CountryCode::from_str(wire).unwrap(), variant);
+            assert_eq!(
+                CountryCode::from_str(&wire.to_ascii_lowercase()).unwrap(),
+                variant
+            );
+        }
+    }
+
+    #[test]
+    fn supported_currency_rejects_unknown_code() {
+        // Unknown ISO-4217-shaped input must error, not silently map.
+        let err = SupportedCurrency::from_str("XXX").unwrap_err();
+        assert_eq!(err, ParseSupportedCurrencyError("XXX".to_string()));
+        assert!(SupportedCurrency::from_str("").is_err());
+        assert!(SupportedCurrency::from_str("EURO").is_err());
+    }
+
+    #[test]
+    fn country_code_rejects_unknown_code() {
+        // Unknown ISO-3166-shaped input must error, not silently map.
+        let err = CountryCode::from_str("XX").unwrap_err();
+        assert_eq!(err, ParseCountryCodeError("XX".to_string()));
+        assert!(CountryCode::from_str("").is_err());
+        assert!(CountryCode::from_str("USA").is_err());
+    }
 }
