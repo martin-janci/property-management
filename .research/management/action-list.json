@@ -2216,8 +2216,8 @@
       "action": "Follow-up: #1771 unread soft-delete invariant still only guarded by SQL-text assertion; behavioral DB test stays BIT-351-quarantined (PR #2065) (Closes #2082)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2082)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2082) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2229,6 +2229,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2097,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
@@ -2236,8 +2243,8 @@
       "action": "Follow-up: add an automated sync guard for the three-source currency/country enum lists (PR #2066) (Closes #2083)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2083)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2083) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2249,6 +2256,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2098,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
@@ -2256,8 +2270,8 @@
       "action": "Follow-up: enforce quick-xml pin via existing cargo-deny [bans] instead of advisory grep guard (PR #2064) (Closes #2084)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2084)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2084) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2269,6 +2283,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2096,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
@@ -2276,8 +2297,8 @@
       "action": "Follow-up: extract + unit-cover the assign/reopen fault recipient guards (PR #2067) (Closes #2085)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2085)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2085) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2289,6 +2310,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2095,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
@@ -2296,8 +2324,8 @@
       "action": "Follow-up: make SlovakAccountingExport honesty invariant enforced-by-construction, not call-me-or-forget (PR #2069) (Closes #2086)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2086)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2086) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2309,6 +2337,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2099,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
@@ -2316,8 +2351,8 @@
       "action": "Follow-up: reuse shared tests/common fixture in favorite_alert_read idempotency test (PR #2068) (Closes #2087)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2087)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-04T20:08:15Z (#2087) | gc1-reconcile 2026-07-05T08:10:09Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -2329,6 +2364,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2094,
+        "merged_at": "2026-07-05T08:09:48Z",
+        "at": "2026-07-05T08:10:09Z"
       }
     },
     {
