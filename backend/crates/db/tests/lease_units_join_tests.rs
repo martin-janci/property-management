@@ -64,11 +64,30 @@ async fn seed_unit(pool: &PgPool, building: Uuid, designation: &str) -> Uuid {
     .expect("seed unit")
 }
 
+async fn seed_user(pool: &PgPool, email: &str, name: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'staff')
+        RETURNING id
+        "#,
+    )
+    .bind(email)
+    .bind(name)
+    .fetch_one(pool)
+    .await
+    .expect("seed user")
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) {
     let org = seed_org(&pool, "units-join").await;
     let building = seed_building(&pool, org).await;
     let unit = seed_unit(&pool, building, DESIGNATION).await;
+    // `create_lease_rls` binds this user id to `leases.created_by`, which carries
+    // a `REFERENCES users(id)` FK — a random UUID here would 23503-fail the seed
+    // INSERT, so the creator must be a real, persisted user row.
+    let creator = seed_user(&pool, "creator@units-join.test", "Lease Creator").await;
 
     let repo = LeaseRepository::new(pool.clone());
 
@@ -111,7 +130,7 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
         .create_lease_rls(
             &pool,
             org,
-            Uuid::new_v4(),
+            creator,
             CreateLease {
                 unit_id: unit,
                 application_id: None,
