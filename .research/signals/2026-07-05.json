@@ -11,7 +11,7 @@
       "goal": "G2",
       "passed": true,
       "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "observed": "last_pr_seen 2093→2101 (top-up), last_run_iso advanced to 2026-07-05T16:13:17Z, stats.runs 41→42",
       "expected": "true"
     },
     {
@@ -204,5 +204,5 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate met certainty bar (no screen-map-drift/orphan/fixme signals derived this run; skipped-heavy catch-up)"
+  "auto_fix_skipped_reason": "no candidate met certainty bar this run (8 top-up PRs closed follow-up issues cleanly; no allowlisted signal derived)"
 }
