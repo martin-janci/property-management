@@ -1,5 +1,7 @@
 # PPT Project State
 
+_Generated: 2026-07-05 — catch-up routine run after 19d lag. pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a wrap). Full PM role synthesis not regenerated this run; dispatcher pipeline on planning branch remained active and carries the delivery signal. Previous synthesis (2026-06-16) preserved below for reference._
+
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
 ## Executive summary

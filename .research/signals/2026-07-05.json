@@ -1,0 +1,153 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-05",
+      "type": "lag_warning",
+      "source": "routine-lag-check-2026-07-05",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16T03:25Z — 18d 21h gap",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-07-05",
+      "type": "stale_routine_alert",
+      "source": "routine-lag-check-2026-07-05",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 19d old; cloud routine likely paused. Dispatcher on planning branch remains active (assignments.json shows recent activity).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-messagesscreen-tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-05",
+      "score_delta": 1,
+      "evidence": "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx changed 3 times since 2026-06-16",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-05",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs changed 3 times since 2026-06-16",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-booking-channel-rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-05",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/integrations/booking_channel.rs changed 3 times since 2026-06-16",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1955-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1955",
+      "score_delta": 2,
+      "evidence": "PR #1955 (mega-integration consolidation) touched reality-web app/** files without a matching docs/screens/reality update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-05.md",
+      "observed": "brief will be written after this file",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced",
+      "observed": "last_pr_seen 1439 → 2088; last_commit_sha 4829015b → 31c688c2",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique",
+      "observed": "179 total, 179 unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emitted with score_delta != 0",
+      "observed": "all new signal ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score>8)] | length == 0",
+      "observed": "max score = 6",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at older than 14d were decayed or dropped",
+      "observed": "49 open items decayed this run, 37 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans + all sections present",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures listed in brief",
+      "observed": "no phase failures reported",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans silently deleted",
+      "observed": "plans/ untouched",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "archive untouched",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <= 3",
+      "observed": "0 auto-fix actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts exist and parse",
+      "observed": "files exist, project-state.md non-empty",
+      "expected": "true"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist certainty bar this run"
+}
