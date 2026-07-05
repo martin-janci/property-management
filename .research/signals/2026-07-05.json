@@ -1,208 +1,27 @@
 {
-  "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "backlog id uniqueness",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "non-cumulative signal double-count",
-      "observed": "0 offenders",
-      "expected": "0"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "score cap + decay",
-      "observed": "max score 6 (cap 8); 46 open items decayed −1",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "no new plans → vacuously true",
-      "observed": "0 new plans",
-      "expected": "true"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "≤2 new plans + readiness",
-      "observed": "0 new plans this run (catch-up mode)",
-      "expected": "≤2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "staged diff .research-only",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "no secrets/private hostnames",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "backlog.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "phase-failure honesty",
-      "observed": "phase-1.5 and phase-1.6 skipped (surfaced in brief), cursors accurate",
-      "expected": "true"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior plans present",
-      "observed": "no plans deleted",
-      "expected": "true"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive only grows",
-      "observed": "no archive changes this run",
-      "expected": "true"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "IDEAS_TRIAGE.md byte-identical to regen",
-      "observed": "diff clean",
-      "expected": "0"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto-fix discipline",
-      "observed": "0 auto-fix actions this run",
-      "expected": "≤3 with per-type caps"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "management artifacts valid (phase 1.6)",
-      "observed": "phase 1.6 skipped this run — no-op gate",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "no Telegram token in diff",
-      "observed": "true",
-      "expected": "0"
-    }
-  ],
-  "signals": [
-    {
-      "id": "lag-warning-2026-07-05",
-      "type": "lag_warning",
-      "source": "state.last_run_iso",
-      "score_delta": 0,
-      "evidence": "routine has not run in ~19d (last_run_iso=2026-06-16T03:25:00Z, 455h lag) — cloud cron likely paused during the interval",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "churn-hotspot-backend-crates-db-src-models-mod-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "12 commits touching backend/crates/db/src/models/mod.rs across 19-day catch-up window (top-1 churn after exclusions)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "11 commits touching backend/crates/db/src/repositories/rental.rs across 19-day catch-up window (top-2 churn)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "type": "churn-hotspot",
-      "source": "git log 4829015b..origin/dev",
-      "score_delta": 1,
-      "evidence": "10 commits touching backend/crates/db/src/repositories/reality_portal.rs across 19-day catch-up window (top-3 churn); PR #1812 already open for a proposed split",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "dep-update-noise-pr-2012",
-      "type": "dep-update-noise",
-      "source": "PR #2012",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2012 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2013",
-      "type": "dep-update-noise",
-      "source": "PR #2013",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2013 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2015",
-      "type": "dep-update-noise",
-      "source": "PR #2015",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2015 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2021",
-      "type": "dep-update-noise",
-      "source": "PR #2021",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2021 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "dep-update-noise-pr-2031",
-      "type": "dep-update-noise",
-      "source": "PR #2031",
-      "score_delta": 0,
-      "evidence": "dependabot PR #2031 merged during catch-up window",
-      "confidence": "high",
-      "candidate_vector": null
-    }
-  ],
+  "run_iso": "2026-07-05T12:11:00Z",
+  "trigger": "",
+  "notes": "Same-day incremental rerun ~9h after the 2026-07-05 03:10Z 19d catch-up brief. 7 merged PRs in window (#2094-#2099 + #1979 rebase). Zero new signals derived: none of the PRs matched unchecked-todo / revert / hotfix-no-test / churn-hotspot / risky-churn / screen-map-drift / fixme-in-merged-code / untriaged-issue / closed-not-merged-pr / dep-update-noise. Phase 1.5 (dev-review) and Phase 1.6 (project-management) skipped: same-day rerun after catch-up brief; both resume on next incremental.",
+  "signals": [],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate met certainty bar (no screen-map-drift/orphan/fixme signals derived this run; skipped-heavy catch-up)"
+  "auto_fix_skipped_reason": "no eligible signals this run (empty signal set)",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/2026-07-05.md && head -1 matches '# 2026-07-05'", "observed": "brief exists; H1 matches", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "state.json advanced vs HEAD",                                     "observed": "last_pr_seen 2093->2099, last_commit_sha 7e09d77d->4e0603e9, last_run_iso updated, stats.runs 41->42", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq '[.items[].id] | length == (unique|length)' backlog.json",     "observed": "true — no duplicate ids", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no non-cumulative signal double-counted",                          "observed": "empty signals[] — vacuously true", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "score cap + decay applied",                                        "observed": "no item >8; no open item stale >14d (all updated_at=2026-07-05 from prior catch-up run)", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "each new plan has adversarial-pass annotation",                    "observed": "0 new plans this run — vacuously true", "expected": "true" },
+    { "goal": "G7",  "passed": true,  "command": "<=2 new plans + template gates",                                    "observed": "0 new plans in this run", "expected": "<=2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",  "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "grep secrets/hostnames in staged diff excluding baseline docs",   "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "regenerate backlog.md from backlog.json; diff -q",                 "observed": "backlog.json rows unchanged; widget bumped to 2026-07-05 12:11 UTC", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true,  "command": "brief lists failed phases; cursors match",                         "observed": "no phase failures; brief 'Phases that failed: none'", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "prior-run plans still present or archived",                        "observed": "no plan deletions this run; 9 in plans/, 6 in plans/_archive/", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "plans/_archive/ count(this) >= count(HEAD)",                        "observed": "archive count unchanged at 6", "expected": ">=" },
+    { "goal": "G14", "passed": true,  "command": "regenerate IDEAS_TRIAGE.md from backlog.json; diff -q",             "observed": "triage rows unchanged; widget bumped to 2026-07-05 12:11 UTC", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true,  "command": "auto-fix discipline",                                              "observed": "auto_fix_actions=[] — no candidates this run", "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "management artifacts valid (only when Phase 1.6 ran)",              "observed": "no-op — Phase 1.6 skipped this run", "expected": "no-op" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram token literal in staged diff",                          "observed": "0 matches", "expected": "0" }
+  ]
 }
