@@ -1,0 +1,198 @@
+{
+  "date": "2026-07-05",
+  "run_type": "incremental (catch-up)",
+  "lag_hours": 454,
+  "lag_days": 18,
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-05",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine has not run in 18d 22h (last_run_iso=2026-06-16T03:25:00Z, now=2026-07-05). Cloud cron likely paused or blocked; dispatcher (separate loop) has continued — dispatcher-state commits visible on dev daily, so the dispatcher branch is healthy but the daily research routine is not."
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-07-05",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.json last_run_iso is 18d old (>= 3d threshold). This run is the catch-up. Dispatcher continues on planning branch — check .research/management/assignments.json separately."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-action-queue-mock-data",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 — segment: ppt-web-core (last reviewed 2026-06-05 — oldest unreviewed)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:243 — queryFn calls generateMockData(role) with a 300ms setTimeout instead of the backend. The dashboard Action Queue widget renders fabricated action items.",
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:284 — executeAction.mutationFn awaits a 500ms setTimeout and returns { success: true } without hitting an API. Dismiss / handle-action UI buttons appear functional but no-op."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1812 (`churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs: split reality-portal repo`) has been open since 2026-06-26 with no reviewDecision. Draft — but stalled without progress for 9 days."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1797 (`fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads`) — security fix, open since 2026-06-24 with no reviewDecision. Draft — stalled 11 days."
+      ]
+    },
+    {
+      "id": "dep-update-noise-batch-2026-07-05",
+      "type": "dep-update-noise",
+      "source": "dependabot batch (#2012, #2013, #2015, #2021, #2031 merged; #2014, #2016, #2018, #2020 open)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "5 dependabot PRs merged into dev between 2026-07-02 and 2026-07-05: androidx.compose-bom, ktor group (7 updates), mobile-native gradle minor-patch (3), frontend npm minor-patch (24 updates), backend cargo minor-patch (3). 4 remain open (rust_xlsxwriter, aes-gcm, dtolnay/rust-toolchain, axum-test group). No security-critical bumps."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal re-emit check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "no score>8; 38 items decayed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "pass vacuously"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan count check",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths in staged",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical regen",
+      "observed": "diff -q clean",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder rot in brief",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted-plans still present/archived",
+      "observed": "no promotions this run; existing plans unchanged",
+      "expected": "no thrash"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "count unchanged",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical regen",
+      "observed": "diff -q clean",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap+idempotency",
+      "observed": "empty (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 cursor advance",
+      "observed": "artifacts valid; pm_cursor 5→6, coverage_cursor 12→0",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met (confidence=high AND score>=3 AND allowlist)"
+}
