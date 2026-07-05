@@ -14,13 +14,23 @@
 -- leading sort key, but NOT the `id DESC` tie-break: Postgres can range-scan
 -- the index for the first two keys, yet rows sharing an `updated_at` value
 -- still need an extra in-memory sort to resolve the `id DESC` order. Adding
--- `id DESC` as a third index key makes the entire ORDER BY (and therefore the
--- LIMIT/OFFSET slice) satisfiable directly from the index, so paginated reads
--- become a pure index range scan with a stable, deterministic order.
+-- `id DESC` as a third index key makes the whole ORDER BY (and therefore the
+-- LIMIT/OFFSET slice) index-satisfiable *on the strict-org leg*
+-- (`organization_id = $1`, i.e. include_system=false): that query is a single
+-- equality on the leading column, so the planner walks the index range in
+-- order and the read becomes a pure index range scan with a stable,
+-- deterministic order and no top-level sort.
 --
--- The system-template leg of the OR (organization_id IS NULL) is still served
--- by this index: NULLs are indexed by btree, and the leading key plus the two
--- sort keys match the query's ordering for that branch too.
+-- This does NOT eliminate the sort on the default include_system=true leg.
+-- `WHERE (organization_id = $1 OR organization_id IS NULL)
+--  ORDER BY updated_at DESC, id DESC` is an OR over two disjoint ranges of the
+-- leading index column; Postgres resolves it via BitmapOr -> Bitmap Heap Scan
+-- (which discards index order) and then a top-level Sort. Each individual leg
+-- (`organization_id = $1` and `organization_id IS NULL`, with NULLs indexed by
+-- btree) is an ordered index range this index can serve, but the union of the
+-- two still requires a sort unless the query is rewritten as a UNION ALL /
+-- MergeAppend of the ordered legs. The `id DESC` tie-break itself remains
+-- deterministic on both legs regardless of the access path.
 CREATE INDEX IF NOT EXISTS idx_import_templates_org_updated_id
     ON import_templates (organization_id, updated_at DESC, id DESC);
 
