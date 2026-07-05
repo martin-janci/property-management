@@ -223,8 +223,8 @@ importers:
         specifier: ~56.0.18
         version: 56.0.18(expo@56.0.12)
       expo-local-authentication:
-        specifier: ~55.0.13
-        version: 55.0.13(expo@56.0.12)
+        specifier: ~57.0.0
+        version: 57.0.0(expo@56.0.12)
       expo-localization:
         specifier: ^56.0.6
         version: 56.0.6(expo@56.0.12)(react@19.2.0)
@@ -2063,6 +2063,16 @@ packages:
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
       tslib: 2.8.1
+    dev: true
+    optional: true
+
+  /@emnapi/core@1.11.2:
+    resolution: {integrity: sha512-TC8MkTuZUtcTSiFeuC0ksCh9QIJ5+F21MvZ4Wn4ORfYaFJ/0dsiudv5tVkejgwZlwQ39jL9WWDe2lz8x0WglOA==}
+    requiresBuild: true
+    dependencies:
+      '@emnapi/wasi-threads': 1.2.2
+      tslib: 2.8.1
+    dev: false
     optional: true
 
   /@emnapi/runtime@1.11.1:
@@ -2070,6 +2080,15 @@ packages:
     requiresBuild: true
     dependencies:
       tslib: 2.8.1
+    dev: true
+    optional: true
+
+  /@emnapi/runtime@1.11.2:
+    resolution: {integrity: sha512-kyOl3X0DuTiT1h2ft8r2fYO8JYtU9a9Xis/zBSiGArNaagCOWx90N1k2wxp18czFDH+OgcWGb5ZP/XMt3dcyPA==}
+    requiresBuild: true
+    dependencies:
+      tslib: 2.8.1
+    dev: false
     optional: true
 
   /@emnapi/wasi-threads@1.2.2:
@@ -3219,7 +3238,7 @@ packages:
     cpu: [wasm32]
     requiresBuild: true
     dependencies:
-      '@emnapi/runtime': 1.11.1
+      '@emnapi/runtime': 1.11.2
     dev: false
     optional: true
 
@@ -3729,8 +3748,8 @@ packages:
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
     requiresBuild: true
     dependencies:
-      '@emnapi/core': 1.11.1
-      '@emnapi/runtime': 1.11.1
+      '@emnapi/core': 1.11.2
+      '@emnapi/runtime': 1.11.2
       '@tybys/wasm-util': 0.10.3
     dev: false
     optional: true
@@ -6633,8 +6652,8 @@ packages:
       expo: 56.0.12(@babel/core@8.0.1)(@expo/dom-webview@56.0.6)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
       react: 19.2.0
 
-  /expo-local-authentication@55.0.13(expo@56.0.12):
-    resolution: {integrity: sha512-7m1+Roub/6xxjHtVKe0vVtsC5g0MXp1Nf0dxK0YfJ1i5314hvi/Glhl5/2loAgnplw8Nx4UVbf6L0/rDjhljsQ==}
+  /expo-local-authentication@57.0.0(expo@56.0.12):
+    resolution: {integrity: sha512-/ZzS7OD5OaAEhSF/+zPWZqzT8xWy1rMICfDqP5ojJ6Flh4wgAOedG37p8UZlTQYJRR5u1NQ9AoAePV8H/ky14g==}
     peerDependencies:
       expo: '*'
     dependencies:

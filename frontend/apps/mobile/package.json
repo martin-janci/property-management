@@ -38,7 +38,7 @@
     "expo-file-system": "~55.0.19",
     "expo-image-manipulator": "~56.0.19",
     "expo-image-picker": "~56.0.18",
-    "expo-local-authentication": "~55.0.13",
+    "expo-local-authentication": "~57.0.0",
     "expo-localization": "^56.0.6",
     "expo-location": "~56.0.18",
     "expo-notifications": "~55.0.22",
