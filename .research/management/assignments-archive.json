@@ -2055,6 +2055,28 @@
       "merge_attempted_at": "2026-07-05T08:09:48Z"
     },
     {
+      "task_id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "branch": "auto-impl/refactor-churn-hotspot-backend-crates-db-496685db",
+      "status": "failed",
+      "claimed_at": "2026-07-05T10:08:00Z",
+      "last_updated": "2026-07-05T10:13:14Z",
+      "status_changed_at": "2026-07-05T10:13:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=mod.rs is pure barrel (103 pub mod+pub use, 0 inline defs); already domain-split into 104 files; 32 downstream files use module-qualified paths that regrouping breaks; no safe path-preserving split feasible",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-mobile-announcements",
       "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme-51f4d6ac",
       "status": "failed",
@@ -2363,5 +2385,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-05T08:09:59Z"
+  "archived_at": "2026-07-05T10:34:03Z"
 }
