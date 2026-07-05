@@ -71,7 +71,28 @@ ignore = [
 
 [bans]
 multiple-versions = "warn"
-deny = []
+deny = [
+    # quick-xml XXE / billion-laughs SECURITY PIN (GH #2084, supersedes the
+    # advisory pinned-dependency-guard.yml workflow). The inbound OTA parsers
+    # in backend/crates/integrations/src/booking/ota_xml.rs rely on quick-xml
+    # NOT resolving custom DTD entities; the entity-safety guarantee is verified
+    # against exactly one version (see the `=0.41.0` pin + comment in
+    # backend/Cargo.toml). Banning every version other than 0.41.0 makes
+    # cargo-deny fail the (already-required) `cargo-deny` CI job the moment the
+    # resolved graph drifts — this checks Cargo.lock, so it catches both a
+    # manifest edit and an in-range `cargo update` / Dependabot lockfile bump
+    # that the manifest requirement alone would miss.
+    #
+    # cargo-deny's `version` field is a semver VersionReq, which has NO `!=`
+    # operator — a single req cannot express "not 0.41.0". We instead ban the
+    # two open half-ranges around the pin: everything BELOW 0.41.0 and
+    # everything ABOVE it. Their union is "every version except exactly
+    # 0.41.0", so the resolved 0.41.0 is the only quick-xml the graph may
+    # contain; any move off it (in Cargo.toml or Cargo.lock) trips one of these
+    # bans and fails `cargo deny check bans`.
+    { name = "quick-xml", version = "<0.41.0", reason = "XXE/billion-laughs safety pin — quick-xml must stay =0.41.0; downgrades require a focused ota_xml::tests entity-guard review (GH #1519/#1591/#2033/#2056/#2084)" },
+    { name = "quick-xml", version = ">0.41.0", reason = "XXE/billion-laughs safety pin — quick-xml must stay =0.41.0; upgrades require a focused ota_xml::tests entity-guard review (GH #1519/#1591/#2033/#2056/#2084)" },
+]
 
 [licenses]
 allow = [
