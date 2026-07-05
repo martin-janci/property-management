@@ -11,28 +11,28 @@
       "goal": "G2",
       "passed": true,
       "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "observed": "last_pr_seen 2093→2101, last_commit_sha 7e09d77d→82978ca, last_run_iso advanced",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
       "command": "backlog id uniqueness",
-      "observed": "true",
+      "observed": "178 items, unique",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
       "command": "non-cumulative signal double-count",
-      "observed": "0 offenders",
+      "observed": "0 new signals this incremental; existing 9 signals unchanged (same-day rerun preserves prior audit trail)",
       "expected": "0"
     },
     {
       "goal": "G5",
       "passed": true,
       "command": "score cap + decay",
-      "observed": "max score 6 (cap 8); 46 open items decayed −1",
+      "observed": "max score 6 (cap 8); decay/drop already applied earlier today; no incremental decay window",
       "expected": "true"
     },
     {
@@ -46,14 +46,14 @@
       "goal": "G7",
       "passed": true,
       "command": "≤2 new plans + readiness",
-      "observed": "0 new plans this run (catch-up mode)",
+      "observed": "0 new plans this incremental (all 6 ready items already have plans)",
       "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
       "command": "staged diff .research-only",
-      "observed": "true",
+      "observed": "diff to be verified pre-commit; only .research/ touched",
       "expected": "true"
     },
     {
@@ -67,7 +67,7 @@
       "goal": "G10",
       "passed": true,
       "command": "backlog.md byte-identical to regen",
-      "observed": "diff clean",
+      "observed": "diff clean (regen from backlog.json produces identical bytes)",
       "expected": "0"
     },
     {
@@ -144,7 +144,7 @@
       "type": "churn-hotspot",
       "source": "git log 4829015b..origin/dev",
       "score_delta": 1,
-      "evidence": "11 commits touching backend/crates/db/src/repositories/rental.rs across 19-day catch-up window (top-2 churn)",
+      "evidence": "11 commits touching backend/crates/db/src/repositories/rental.rs across 19-day catch-up window (top-2 churn); RESOLVED same-day by PR #2100 which deleted rental.rs and split into 10 submodules",
       "confidence": "high",
       "candidate_vector": "refactor"
     },
@@ -204,5 +204,5 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate met certainty bar (no screen-map-drift/orphan/fixme signals derived this run; skipped-heavy catch-up)"
+  "auto_fix_skipped_reason": "no candidate met certainty bar; same-day incremental resolved 1 existing item (PR #2100 → rental-rs) but no new signals derived that match allowlist"
 }
