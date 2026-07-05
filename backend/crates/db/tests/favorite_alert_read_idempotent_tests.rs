@@ -32,21 +32,8 @@ use db::repositories::{FavoriteAlertReadOutcome, RealityPortalRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Org {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@fav-idem.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
+mod common;
+use common::seed_org;
 
 async fn seed_portal_user(pool: &PgPool, email: &str) -> Uuid {
     // portal_users was merged into `users` (migration 00132); portal users are
