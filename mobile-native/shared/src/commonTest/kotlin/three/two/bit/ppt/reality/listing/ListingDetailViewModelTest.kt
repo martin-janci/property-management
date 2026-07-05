@@ -10,7 +10,6 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -30,8 +29,8 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
  *
  * The favorites HTTP layer is driven through a real [FavoritesRepository] over a Ktor [MockEngine]
  * (same harness as `FavoritesToggleRepositoryTest`). The view-model runs on the `runTest`
- * [StandardTestDispatcher], so launched work is deferred until [advanceUntilIdle], letting us assert
- * the optimistic intermediate state before the server responds.
+ * [StandardTestDispatcher], so launched work is deferred until [advanceUntilIdle], letting us
+ * assert the optimistic intermediate state before the server responds.
  */
 class ListingDetailViewModelTest {
 
@@ -60,7 +59,9 @@ class ListingDetailViewModelTest {
 
     /** Repositories that are constructed but never exercised in these toggle tests. */
     private fun unusedListingRepo(): ListingRepository {
-        val engine = MockEngine { respond(content = ByteReadChannel(""), status = HttpStatusCode.OK) }
+        val engine = MockEngine {
+            respond(content = ByteReadChannel(""), status = HttpStatusCode.OK)
+        }
         return ListingRepository(
             baseUrl = "https://example.test",
             client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
@@ -68,7 +69,9 @@ class ListingDetailViewModelTest {
     }
 
     private fun unusedInquiryRepo(): InquiryRepository {
-        val engine = MockEngine { respond(content = ByteReadChannel(""), status = HttpStatusCode.OK) }
+        val engine = MockEngine {
+            respond(content = ByteReadChannel(""), status = HttpStatusCode.OK)
+        }
         return InquiryRepository(
             baseUrl = "https://example.test",
             client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
@@ -91,79 +94,83 @@ class ListingDetailViewModelTest {
         )
 
     @Test
-    fun favoriteToggle_success_keeps_optimistic_true() = runTest(StandardTestDispatcher()) {
-        val repo =
-            favoritesRepo(
-                HttpStatusCode.Created,
-                """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
-            )
-        val vm = viewModel(repo, scope = backgroundScope)
+    fun favoriteToggle_success_keeps_optimistic_true() =
+        runTest(StandardTestDispatcher()) {
+            val repo =
+                favoritesRepo(
+                    HttpStatusCode.Created,
+                    """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
+                )
+            val vm = viewModel(repo, scope = backgroundScope)
 
-        vm.onFavoriteToggle()
+            vm.onFavoriteToggle()
 
-        // Optimistic: heart is already on and a write is in flight before the server answers.
-        assertTrue(vm.state.value.isFavorite, "heart should flip on immediately (optimistic)")
-        assertTrue(vm.state.value.isFavoriteLoading)
+            // Optimistic: heart is already on and a write is in flight before the server answers.
+            assertTrue(vm.state.value.isFavorite, "heart should flip on immediately (optimistic)")
+            assertTrue(vm.state.value.isFavoriteLoading)
 
-        advanceUntilIdle()
+            advanceUntilIdle()
 
-        // 201 → the optimistic value is confirmed, spinner cleared.
-        assertTrue(vm.state.value.isFavorite, "successful add keeps the heart on")
-        assertFalse(vm.state.value.isFavoriteLoading)
-    }
-
-    @Test
-    fun favoriteToggle_failure_rolls_back_to_previous() = runTest(StandardTestDispatcher()) {
-        // 500 → repository returns Result.failure, so the toggle must roll back.
-        val repo = favoritesRepo(HttpStatusCode.InternalServerError, """{"error":"boom"}""")
-        val vm = viewModel(repo, scope = backgroundScope)
-
-        vm.onFavoriteToggle()
-
-        // Optimistic flip applied first.
-        assertTrue(vm.state.value.isFavorite)
-        assertTrue(vm.state.value.isFavoriteLoading)
-
-        advanceUntilIdle()
-
-        // Rollback: heart returns to its previous (off) state and the spinner clears.
-        assertFalse(vm.state.value.isFavorite, "failed add must roll back to previous value")
-        assertFalse(vm.state.value.isFavoriteLoading)
-    }
+            // 201 → the optimistic value is confirmed, spinner cleared.
+            assertTrue(vm.state.value.isFavorite, "successful add keeps the heart on")
+            assertFalse(vm.state.value.isFavoriteLoading)
+        }
 
     @Test
-    fun favoriteToggle_ignored_when_not_authenticated() = runTest(StandardTestDispatcher()) {
-        val repo =
-            favoritesRepo(
-                HttpStatusCode.Created,
-                """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
-            )
-        val vm = viewModel(repo, scope = backgroundScope, isAuthenticated = false)
+    fun favoriteToggle_failure_rolls_back_to_previous() =
+        runTest(StandardTestDispatcher()) {
+            // 500 → repository returns Result.failure, so the toggle must roll back.
+            val repo = favoritesRepo(HttpStatusCode.InternalServerError, """{"error":"boom"}""")
+            val vm = viewModel(repo, scope = backgroundScope)
 
-        vm.onFavoriteToggle()
-        advanceUntilIdle()
+            vm.onFavoriteToggle()
 
-        assertFalse(vm.state.value.isFavorite, "unauthenticated toggle must be a no-op")
-        assertFalse(vm.state.value.isFavoriteLoading)
-    }
+            // Optimistic flip applied first.
+            assertTrue(vm.state.value.isFavorite)
+            assertTrue(vm.state.value.isFavoriteLoading)
+
+            advanceUntilIdle()
+
+            // Rollback: heart returns to its previous (off) state and the spinner clears.
+            assertFalse(vm.state.value.isFavorite, "failed add must roll back to previous value")
+            assertFalse(vm.state.value.isFavoriteLoading)
+        }
 
     @Test
-    fun favoriteToggle_is_reentrancy_guarded_while_in_flight() = runTest(StandardTestDispatcher()) {
-        val repo =
-            favoritesRepo(
-                HttpStatusCode.Created,
-                """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
-            )
-        val vm = viewModel(repo, scope = backgroundScope)
+    fun favoriteToggle_ignored_when_not_authenticated() =
+        runTest(StandardTestDispatcher()) {
+            val repo =
+                favoritesRepo(
+                    HttpStatusCode.Created,
+                    """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
+                )
+            val vm = viewModel(repo, scope = backgroundScope, isAuthenticated = false)
 
-        vm.onFavoriteToggle() // starts add → optimistic true, loading
-        vm.onFavoriteToggle() // must be ignored while the first write is in flight
-        assertTrue(vm.state.value.isFavorite)
+            vm.onFavoriteToggle()
+            advanceUntilIdle()
 
-        advanceUntilIdle()
+            assertFalse(vm.state.value.isFavorite, "unauthenticated toggle must be a no-op")
+            assertFalse(vm.state.value.isFavoriteLoading)
+        }
 
-        // Only the first toggle took effect; state settled on favorited.
-        assertTrue(vm.state.value.isFavorite)
-        assertFalse(vm.state.value.isFavoriteLoading)
-    }
+    @Test
+    fun favoriteToggle_is_reentrancy_guarded_while_in_flight() =
+        runTest(StandardTestDispatcher()) {
+            val repo =
+                favoritesRepo(
+                    HttpStatusCode.Created,
+                    """{"id":"fav-1","listing_id":"lst-1","created_at":"2026-04-26T10:00:00Z"}""",
+                )
+            val vm = viewModel(repo, scope = backgroundScope)
+
+            vm.onFavoriteToggle() // starts add → optimistic true, loading
+            vm.onFavoriteToggle() // must be ignored while the first write is in flight
+            assertTrue(vm.state.value.isFavorite)
+
+            advanceUntilIdle()
+
+            // Only the first toggle took effect; state settled on favorited.
+            assertTrue(vm.state.value.isFavorite)
+            assertFalse(vm.state.value.isFavoriteLoading)
+        }
 }

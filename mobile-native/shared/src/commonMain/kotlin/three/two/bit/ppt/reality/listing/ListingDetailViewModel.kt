@@ -142,14 +142,17 @@ class ListingDetailViewModel(
 
     fun onShowInquiryDialog() = _state.update { it.copy(showInquiryDialog = true) }
 
-    fun onDismissInquiryDialog() =
-        _state.update { it.copy(showInquiryDialog = false, inquiryError = null) }
+    fun onDismissInquiryDialog() = _state.update {
+        it.copy(showInquiryDialog = false, inquiryError = null)
+    }
 
     fun onShowShareSheet() = _state.update { it.copy(showShareSheet = true) }
 
     fun onDismissShareSheet() = _state.update { it.copy(showShareSheet = false) }
 
-    /** Submit an inquiry for this listing; emits [ListingDetailEvent.InquirySubmitted] on success. */
+    /**
+     * Submit an inquiry for this listing; emits [ListingDetailEvent.InquirySubmitted] on success.
+     */
     fun onSubmitInquiry(message: String, name: String?, email: String?, phone: String?) {
         _state.update { it.copy(isInquirySubmitting = true, inquiryError = null) }
         scope.launch {
