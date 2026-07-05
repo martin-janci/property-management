@@ -9,6 +9,7 @@
 //!   - `list_leases` (leases list)
 //!   - `get_expiration_overview_rls` (expiring-leases list)
 //!   - `get_lease_with_details` (single-lease detail)
+//!
 //! and asserts both (a) no 42703 on the units join and (b) the returned unit
 //! label equals the seeded `units.designation`. It fails on the pre-#2060 SQL
 //! and passes with the correct `u.designation` projection.
