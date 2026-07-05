@@ -100,6 +100,57 @@ impl std::str::FromStr for SupportedCurrency {
     }
 }
 
+impl SupportedCurrency {
+    /// Every `SupportedCurrency` variant, in canonical wire order.
+    ///
+    /// This is the Rust-side source of truth for *which* currencies exist and
+    /// *how many* there are. The `enum_sync_guard` tests drive their count and
+    /// membership assertions off this array (not a hand-written list), so an
+    /// enum that grows past the canonical wire list is detectable.
+    ///
+    /// Keep in sync with the exhaustiveness guard directly below: adding or
+    /// removing a variant makes that match non-exhaustive (a compile error),
+    /// which is your prompt to update this array — and the Postgres enum
+    /// (`00101_create_multi_currency.sql`) and TypeSpec enum — to match.
+    pub const ALL: [SupportedCurrency; 13] = [
+        SupportedCurrency::EUR,
+        SupportedCurrency::CZK,
+        SupportedCurrency::CHF,
+        SupportedCurrency::GBP,
+        SupportedCurrency::PLN,
+        SupportedCurrency::USD,
+        SupportedCurrency::HUF,
+        SupportedCurrency::RON,
+        SupportedCurrency::BGN,
+        SupportedCurrency::HRK,
+        SupportedCurrency::SEK,
+        SupportedCurrency::DKK,
+        SupportedCurrency::NOK,
+    ];
+}
+
+// Enum-sync guard (Issue #2104): adding or removing a `SupportedCurrency`
+// variant makes this match non-exhaustive → compile error. When you fix it,
+// update `SupportedCurrency::ALL` above (and the Postgres + TypeSpec enums) to
+// match. The `enum_sync_guard` tests then assert `ALL.len()` equals the
+// canonical wire list length, so a variant missing from the canonical list
+// fails the test rather than passing silently.
+const _: fn(SupportedCurrency) = |c| match c {
+    SupportedCurrency::EUR
+    | SupportedCurrency::CZK
+    | SupportedCurrency::CHF
+    | SupportedCurrency::GBP
+    | SupportedCurrency::PLN
+    | SupportedCurrency::USD
+    | SupportedCurrency::HUF
+    | SupportedCurrency::RON
+    | SupportedCurrency::BGN
+    | SupportedCurrency::HRK
+    | SupportedCurrency::SEK
+    | SupportedCurrency::DKK
+    | SupportedCurrency::NOK => {}
+};
+
 /// Exchange rate source
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[sqlx(type_name = "exchange_rate_source", rename_all = "snake_case")]
@@ -259,6 +310,79 @@ impl std::str::FromStr for CountryCode {
         }
     }
 }
+
+impl CountryCode {
+    /// Every `CountryCode` variant, in canonical wire order.
+    ///
+    /// This is the Rust-side source of truth for *which* countries exist and
+    /// *how many* there are. The `enum_sync_guard` tests drive their count and
+    /// membership assertions off this array (not a hand-written list), so an
+    /// enum that grows past the canonical wire list is detectable.
+    ///
+    /// Keep in sync with the exhaustiveness guard directly below: adding or
+    /// removing a variant makes that match non-exhaustive (a compile error),
+    /// which is your prompt to update this array — and the Postgres enum
+    /// (`00101_create_multi_currency.sql`) and TypeSpec enum — to match.
+    pub const ALL: [CountryCode; 24] = [
+        CountryCode::SK,
+        CountryCode::CZ,
+        CountryCode::AT,
+        CountryCode::DE,
+        CountryCode::PL,
+        CountryCode::HU,
+        CountryCode::CH,
+        CountryCode::GB,
+        CountryCode::FR,
+        CountryCode::IT,
+        CountryCode::ES,
+        CountryCode::NL,
+        CountryCode::BE,
+        CountryCode::PT,
+        CountryCode::IE,
+        CountryCode::RO,
+        CountryCode::BG,
+        CountryCode::HR,
+        CountryCode::SI,
+        CountryCode::LU,
+        CountryCode::SE,
+        CountryCode::DK,
+        CountryCode::NO,
+        CountryCode::FI,
+    ];
+}
+
+// Enum-sync guard (Issue #2104): adding or removing a `CountryCode` variant
+// makes this match non-exhaustive → compile error. When you fix it, update
+// `CountryCode::ALL` above (and the Postgres + TypeSpec enums) to match. The
+// `enum_sync_guard` tests then assert `ALL.len()` equals the canonical wire
+// list length, so a variant missing from the canonical list fails the test
+// rather than passing silently.
+const _: fn(CountryCode) = |c| match c {
+    CountryCode::SK
+    | CountryCode::CZ
+    | CountryCode::AT
+    | CountryCode::DE
+    | CountryCode::PL
+    | CountryCode::HU
+    | CountryCode::CH
+    | CountryCode::GB
+    | CountryCode::FR
+    | CountryCode::IT
+    | CountryCode::ES
+    | CountryCode::NL
+    | CountryCode::BE
+    | CountryCode::PT
+    | CountryCode::IE
+    | CountryCode::RO
+    | CountryCode::BG
+    | CountryCode::HR
+    | CountryCode::SI
+    | CountryCode::LU
+    | CountryCode::SE
+    | CountryCode::DK
+    | CountryCode::NO
+    | CountryCode::FI => {}
+};
 
 // =============================================================================
 // STORY 145.1: MULTI-CURRENCY CONFIGURATION
@@ -934,7 +1058,7 @@ pub struct CurrencyDistribution {
 }
 
 // =============================================================================
-// ENUM SYNC GUARD (Issue #2083)
+// ENUM SYNC GUARD (Issue #2083, hardened in #2104)
 // =============================================================================
 //
 // `SupportedCurrency` and `CountryCode` are hand-maintained in THREE places:
@@ -947,8 +1071,20 @@ pub struct CurrencyDistribution {
 // Rust enums serialize to exactly that list, in that order. The `match` inside
 // each canonical helper is EXHAUSTIVE — adding a variant without updating the
 // canonical list is a compile error, which is the whole point of the guard.
+//
+// #2104: the count/serialization assertions used to be driven purely off the
+// hand-written `list` vecs, so an enum that grew *past* its canonical list
+// (variant added, exhaustive `_wire`/`Display` matches updated, but the `list`
+// left untouched) was undetectable — the count tests just counted the stale
+// list. The fix ties the assertions to the enum itself: each enum now exposes
+// `Self::ALL`, whose completeness is enforced by a compile-time exhaustiveness
+// guard next to the enum, and the tests assert `ALL.len()` equals the canonical
+// list length plus per-variant membership in both directions. A variant missing
+// from the canonical list now fails a test instead of passing silently.
+//
 // If a currency/country is added or removed, update ALL THREE files above plus
-// the canonical arrays here, and this test keeps the mirrors honest.
+// `Self::ALL` and the canonical arrays here, and these tests keep the mirrors
+// honest.
 #[cfg(test)]
 mod enum_sync_guard {
     use super::*;
@@ -1075,6 +1211,16 @@ mod enum_sync_guard {
             13,
             "SupportedCurrency count drifted from the 13-value canonical list"
         );
+        // The *enum* (via `ALL`, which the compile-time exhaustiveness guard
+        // forces to cover every variant) must agree with the canonical wire
+        // list. This is the check that catches a variant added to the enum but
+        // omitted from the canonical list — the count above alone cannot.
+        assert_eq!(
+            SupportedCurrency::ALL.len(),
+            currency_canonical().len(),
+            "SupportedCurrency::ALL and the canonical wire list disagree — a \
+             variant was added/removed without updating both"
+        );
     }
 
     #[test]
@@ -1085,6 +1231,57 @@ mod enum_sync_guard {
             24,
             "CountryCode count drifted from the 24-value canonical list"
         );
+        // The *enum* (via `ALL`, which the compile-time exhaustiveness guard
+        // forces to cover every variant) must agree with the canonical wire
+        // list. This is the check that catches a variant added to the enum but
+        // omitted from the canonical list — the count above alone cannot.
+        assert_eq!(
+            CountryCode::ALL.len(),
+            country_canonical().len(),
+            "CountryCode::ALL and the canonical wire list disagree — a variant \
+             was added/removed without updating both"
+        );
+    }
+
+    #[test]
+    fn supported_currency_all_matches_canonical_list() {
+        let list = currency_canonical();
+        // Every enum variant (from `ALL`) must appear in the canonical list…
+        for variant in SupportedCurrency::ALL {
+            assert!(
+                list.iter().any(|(v, _)| *v == variant),
+                "{variant:?} is a SupportedCurrency variant missing from the \
+                 canonical wire list"
+            );
+        }
+        // …and every canonical entry must be a real variant present in `ALL`.
+        for (variant, _) in &list {
+            assert!(
+                SupportedCurrency::ALL.contains(variant),
+                "{variant:?} is in the canonical list but not in \
+                 SupportedCurrency::ALL"
+            );
+        }
+    }
+
+    #[test]
+    fn country_code_all_matches_canonical_list() {
+        let list = country_canonical();
+        // Every enum variant (from `ALL`) must appear in the canonical list…
+        for variant in CountryCode::ALL {
+            assert!(
+                list.iter().any(|(v, _)| *v == variant),
+                "{variant:?} is a CountryCode variant missing from the \
+                 canonical wire list"
+            );
+        }
+        // …and every canonical entry must be a real variant present in `ALL`.
+        for (variant, _) in &list {
+            assert!(
+                CountryCode::ALL.contains(variant),
+                "{variant:?} is in the canonical list but not in CountryCode::ALL"
+            );
+        }
     }
 
     #[test]
