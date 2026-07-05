@@ -10,8 +10,8 @@
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 1439→2093, last_issue_seen 1437→2087, last_commit_sha updated",
+      "command": "state.json cursors/quiet_days advanced vs HEAD",
+      "observed": "same-day rerun: stats.quiet_days 1→2, stats.runs 41→42, last_run_iso 03:10→04:13 UTC (catch-up run already advanced last_pr_seen 1439→2093, last_issue_seen 1437→2087)",
       "expected": "true"
     },
     {
