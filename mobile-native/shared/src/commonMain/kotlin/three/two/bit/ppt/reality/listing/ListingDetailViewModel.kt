@@ -56,9 +56,10 @@ sealed interface ListingDetailEvent {
  * @param scope the coroutine scope the loads/writes launch into. On Android this is a
  *   `rememberCoroutineScope()`, so in-flight work is cancelled when the screen leaves composition;
  *   in tests it is the `TestScope` from `runTest`.
- * @param favoritesRepositoryFactory builds a [FavoritesRepository] carrying the given session token.
- *   Held as a factory (rather than a ready-made repo) so [updateAuth] can rebuild the auth-scoped
- *   repositories on a login/logout without re-creating the whole view-model — see issue #2108.
+ * @param favoritesRepositoryFactory builds a [FavoritesRepository] carrying the given session
+ *   token. Held as a factory (rather than a ready-made repo) so [updateAuth] can rebuild the
+ *   auth-scoped repositories on a login/logout without re-creating the whole view-model — see
+ *   issue #2108.
  * @param inquiryRepositoryFactory builds an [InquiryRepository] carrying the given session token.
  * @param initialSessionToken the session token at construction time (`null` == unauthenticated).
  * @param errorMapper maps a caught [Throwable] to a user-facing message — injected because the
@@ -85,8 +86,7 @@ class ListingDetailViewModel(
     private var isAuthenticated: Boolean = initialSessionToken != null
     private var favoritesRepository: FavoritesRepository =
         favoritesRepositoryFactory(initialSessionToken)
-    private var inquiryRepository: InquiryRepository =
-        inquiryRepositoryFactory(initialSessionToken)
+    private var inquiryRepository: InquiryRepository = inquiryRepositoryFactory(initialSessionToken)
 
     private var started = false
 

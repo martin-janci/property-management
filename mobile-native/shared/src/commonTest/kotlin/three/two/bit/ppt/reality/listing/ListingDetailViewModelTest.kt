@@ -93,11 +93,9 @@ class ListingDetailViewModelTest {
     }
 
     /** Repositories that are constructed but never exercised in a given test. */
-    private fun unusedListingRepo(): ListingRepository =
-        listingRepo(HttpStatusCode.OK, "")
+    private fun unusedListingRepo(): ListingRepository = listingRepo(HttpStatusCode.OK, "")
 
-    private fun unusedInquiryRepo(): InquiryRepository =
-        inquiryRepo(HttpStatusCode.OK, "")
+    private fun unusedInquiryRepo(): InquiryRepository = inquiryRepo(HttpStatusCode.OK, "")
 
     /**
      * A minimal-but-valid `ListingDetail` JSON body the repository can decode — only the fields

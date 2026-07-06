@@ -66,7 +66,8 @@ fun ListingDetailScreen(
     val sessionToken = (authState as? AuthState.Authenticated)?.sessionToken
     // State + side-effects are hoisted into ListingDetailViewModel (commonMain). This composable
     // is now a `collectAsState()` render + intent wiring — see issue #2079. The VM is keyed only on
-    // `listingId`: an auth change no longer re-creates it (which would flip the whole screen back to
+    // `listingId`: an auth change no longer re-creates it (which would flip the whole screen back
+    // to
     // the full-screen spinner and reload the listing — issue #2108). Instead `updateAuth` below
     // rebuilds the auth-scoped repositories and re-syncs just the favorite heart.
     val viewModel =
