@@ -2,8 +2,16 @@
  * PersonMonthsScreen (UC-10).
  *
  * Lets a resident view and edit the number of person-months declared per
- * unit per month, used for cost-allocation. Mock data shows the convention
- * until the API client hooks are wired in.
+ * unit per month, used for cost-allocation.
+ *
+ * NOTE: still backed by mock data. The read endpoint
+ * (`GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months?year=…`)
+ * needs both a building id and a unit id plus a year, and its `PersonMonth`
+ * rows carry no per-entry draft/submitted/confirmed status — the field this
+ * screen's editing flow depends on. Wiring it cleanly needs a resident-scoped
+ * "my person-months" endpoint (or a status column) on the backend, so it is
+ * intentionally left on mock data (tracked as a backend follow-up). Sibling
+ * list/detail screens (Meters, Leases, Forms, Threads) are already wired.
  */
 
 import { useCallback, useState } from 'react';

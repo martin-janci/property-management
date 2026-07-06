@@ -3,24 +3,99 @@
  *
  * Single meter view: history of readings, consumption summary and a CTA to
  * submit a new reading.
+ *
+ * Wired to `GET /api/v1/meters/{id}` on the api-server, which returns a
+ * `MeterResponse { meter, recent_readings }` (see
+ * `db::models::meter::{Meter, MeterReading, MeterResponse}`). Those structs
+ * serialize with the default (snake_case) serde naming, so the wire format is
+ * snake_case and `Decimal` fields arrive as JSON strings. The response is
+ * consumed without a generated client, so it is validated defensively — a
+ * malformed shape degrades to an empty history rather than crashing.
  */
 
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-interface MeterReadingRecord {
+export interface MeterReadingRecord {
   id: string;
   value: number;
   unit: string;
   takenAt: string;
 }
 
-const MOCK_READINGS: MeterReadingRecord[] = [
-  { id: 'r1', value: 142.4, unit: 'm³', takenAt: '2026-03-31T09:10:00Z' },
-  { id: 'r2', value: 141.2, unit: 'm³', takenAt: '2026-02-28T08:45:00Z' },
-  { id: 'r3', value: 139.7, unit: 'm³', takenAt: '2026-01-31T09:05:00Z' },
-  { id: 'r4', value: 138.0, unit: 'm³', takenAt: '2025-12-31T09:00:00Z' },
-];
+/** Subset of `Meter` from `GET /api/v1/meters/{id}`. */
+export interface ApiMeter {
+  id: string;
+  meter_number?: string | null;
+  meter_type?: string | null;
+  unit_of_measure?: string | null;
+  current_reading?: string | number | null;
+  last_reading_date?: string | null;
+  location?: string | null;
+  description?: string | null;
+}
+
+/** Subset of `MeterReading` from the `recent_readings` list. */
+export interface ApiMeterReading {
+  id: string;
+  reading: string | number;
+  reading_date: string;
+  created_at?: string;
+}
+
+export interface ApiMeterResponse {
+  meter: ApiMeter;
+  recent_readings: ApiMeterReading[];
+}
+
+/** Parse a `Decimal`-as-string (or number) into a finite number, or null. */
+function toNumber(value: string | number | null | undefined): number | null {
+  if (value == null) return null;
+  const n = typeof value === 'number' ? value : Number.parseFloat(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function isApiMeterReading(value: unknown): value is ApiMeterReading {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === 'string' &&
+    (typeof v.reading === 'string' || typeof v.reading === 'number') &&
+    typeof v.reading_date === 'string'
+  );
+}
+
+/** Narrow the raw `GET /api/v1/meters/{id}` body into a validated response.
+ *  Tolerates any garbage top-level shape by returning null so the screen can
+ *  fall back to its empty state instead of dereferencing `undefined.meter`. */
+export function parseMeterResponse(data: unknown): ApiMeterResponse | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const v = data as Record<string, unknown>;
+  const meter = v.meter;
+  if (typeof meter !== 'object' || meter === null) return null;
+  const m = meter as Record<string, unknown>;
+  if (typeof m.id !== 'string') return null;
+  const readings = Array.isArray(v.recent_readings)
+    ? (v.recent_readings as unknown[]).filter(isApiMeterReading)
+    : [];
+  return { meter: meter as ApiMeter, recent_readings: readings };
+}
+
+/** Map api-server readings onto the UI record shape, newest first. Exported so
+ *  the mapping can be unit-tested without rendering the screen. */
+export function toUiReadings(response: ApiMeterResponse): MeterReadingRecord[] {
+  const unit = response.meter.unit_of_measure?.trim() || '';
+  return response.recent_readings
+    .map((r) => ({
+      id: r.id,
+      value: toNumber(r.reading) ?? 0,
+      unit,
+      takenAt: r.reading_date,
+    }))
+    .sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime());
+}
 
 interface MeterDetailScreenProps {
   meterId?: string;
@@ -31,12 +106,26 @@ interface MeterDetailScreenProps {
 
 export function MeterDetailScreen({
   meterId,
-  meterLabel = 'Cold water',
+  meterLabel = 'Meter',
   onBack,
   onNavigate,
 }: MeterDetailScreenProps) {
-  const lastTwo = MOCK_READINGS.slice(0, 2);
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
+    ['meters', 'detail', meterId],
+    `/api/v1/meters/${meterId ?? ''}`,
+    { staleTime: 30_000, enabled: !!meterId }
+  );
+
+  const response = parseMeterResponse(data);
+  const readings = response ? toUiReadings(response) : [];
+  const label = response?.meter.meter_number?.trim() || meterLabel;
+
+  const lastTwo = readings.slice(0, 2);
   const monthDelta = lastTwo.length === 2 ? Math.max(0, lastTwo[0].value - lastTwo[1].value) : null;
+
+  const onRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <View style={s.container}>
@@ -46,42 +135,69 @@ export function MeterDetailScreen({
             <Text style={styles.backLinkText}>← Meters</Text>
           </Pressable>
         )}
-        <Text style={s.headerTitle}>{meterLabel}</Text>
+        <Text style={s.headerTitle}>{label}</Text>
         {meterId && <Text style={s.headerSubtitle}>ID: {meterId}</Text>}
       </View>
 
-      <ScrollView style={s.scrollView}>
-        <View style={s.card}>
-          <Text style={styles.metricLabel}>Latest reading</Text>
-          <Text style={styles.metricValue}>
-            {MOCK_READINGS[0].value} {MOCK_READINGS[0].unit}
-          </Text>
-          <Text style={s.cardMeta}>{new Date(MOCK_READINGS[0].takenAt).toLocaleDateString()}</Text>
-          {monthDelta != null && (
-            <Text style={[s.cardBody, { marginTop: 8 }]}>
-              Used in last month: {monthDelta.toFixed(2)} {MOCK_READINGS[0].unit}
-            </Text>
-          )}
-        </View>
-
-        <Text style={styles.sectionTitle}>Reading history</Text>
-        {MOCK_READINGS.map((r) => (
-          <View key={r.id} style={s.card}>
-            <View style={s.cardHeader}>
-              <Text style={s.cardTitle}>
-                {r.value} {r.unit}
-              </Text>
-              <Text style={s.cardMeta}>{new Date(r.takenAt).toLocaleDateString()}</Text>
-            </View>
+      <ScrollView
+        style={s.scrollView}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
+      >
+        {isLoading || !meterId ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
           </View>
-        ))}
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load meter</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+          </View>
+        ) : (
+          <>
+            {readings.length > 0 && (
+              <View style={s.card}>
+                <Text style={styles.metricLabel}>Latest reading</Text>
+                <Text style={styles.metricValue}>
+                  {readings[0].value} {readings[0].unit}
+                </Text>
+                <Text style={s.cardMeta}>{new Date(readings[0].takenAt).toLocaleDateString()}</Text>
+                {monthDelta != null && (
+                  <Text style={[s.cardBody, { marginTop: 8 }]}>
+                    Used since previous reading: {monthDelta.toFixed(2)} {readings[0].unit}
+                  </Text>
+                )}
+              </View>
+            )}
 
-        <Pressable
-          style={s.primaryButton}
-          onPress={() => onNavigate?.('MeterReading', { meterId })}
-        >
-          <Text style={s.primaryButtonText}>Submit new reading</Text>
-        </Pressable>
+            <Text style={styles.sectionTitle}>Reading history</Text>
+            {readings.length === 0 ? (
+              <View style={s.emptyState}>
+                <Text style={s.emptyIcon}>📏</Text>
+                <Text style={s.emptyTitle}>No readings yet</Text>
+                <Text style={s.emptyText}>Submit your first reading for this meter.</Text>
+              </View>
+            ) : (
+              readings.map((r) => (
+                <View key={r.id} style={s.card}>
+                  <View style={s.cardHeader}>
+                    <Text style={s.cardTitle}>
+                      {r.value} {r.unit}
+                    </Text>
+                    <Text style={s.cardMeta}>{new Date(r.takenAt).toLocaleDateString()}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+
+            <Pressable
+              style={s.primaryButton}
+              onPress={() => onNavigate?.('MeterReading', { meterId })}
+            >
+              <Text style={s.primaryButtonText}>Submit new reading</Text>
+            </Pressable>
+          </>
+        )}
 
         <View style={s.bottomSpacer} />
       </ScrollView>
