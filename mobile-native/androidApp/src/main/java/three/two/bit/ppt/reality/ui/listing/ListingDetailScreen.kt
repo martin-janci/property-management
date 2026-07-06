@@ -65,10 +65,13 @@ fun ListingDetailScreen(
 
     val sessionToken = (authState as? AuthState.Authenticated)?.sessionToken
     // State + side-effects are hoisted into ListingDetailViewModel (commonMain). This composable
-    // is now a `collectAsState()` render + intent wiring — see issue #2079. The VM is re-created on
-    // session-token change so its repositories carry the current auth header.
+    // is now a `collectAsState()` render + intent wiring — see issue #2079. The VM is keyed only on
+    // `listingId`: an auth change no longer re-creates it (which would flip the whole screen back
+    // to
+    // the full-screen spinner and reload the listing — issue #2108). Instead `updateAuth` below
+    // rebuilds the auth-scoped repositories and re-syncs just the favorite heart.
     val viewModel =
-        remember(sessionToken, listingId) {
+        remember(listingId) {
             ListingDetailViewModel.create(
                 listingId = listingId,
                 listingRepository = repository,
@@ -81,6 +84,9 @@ fun ListingDetailScreen(
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(viewModel) { viewModel.start() }
+    // Re-key the auth-scoped repos + re-probe the favorite heart on login/logout, without
+    // disturbing the loaded listing. No-op on first composition (token unchanged).
+    LaunchedEffect(sessionToken) { viewModel.updateAuth(sessionToken) }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {

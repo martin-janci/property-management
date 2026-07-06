@@ -56,16 +56,22 @@ sealed interface ListingDetailEvent {
  * @param scope the coroutine scope the loads/writes launch into. On Android this is a
  *   `rememberCoroutineScope()`, so in-flight work is cancelled when the screen leaves composition;
  *   in tests it is the `TestScope` from `runTest`.
+ * @param favoritesRepositoryFactory builds a [FavoritesRepository] carrying the given session
+ *   token. Held as a factory (rather than a ready-made repo) so [updateAuth] can rebuild the
+ *   auth-scoped repositories on a login/logout without re-creating the whole view-model — see
+ *   issue #2108.
+ * @param inquiryRepositoryFactory builds an [InquiryRepository] carrying the given session token.
+ * @param initialSessionToken the session token at construction time (`null` == unauthenticated).
  * @param errorMapper maps a caught [Throwable] to a user-facing message — injected because the
  *   Android strings come from `stringResource(...)`, which is not reachable from `commonMain`.
  */
 class ListingDetailViewModel(
     private val listingId: String,
     private val listingRepository: ListingRepository,
-    private val favoritesRepository: FavoritesRepository,
-    private val inquiryRepository: InquiryRepository,
+    private val favoritesRepositoryFactory: (sessionToken: String?) -> FavoritesRepository,
+    private val inquiryRepositoryFactory: (sessionToken: String?) -> InquiryRepository,
     private val scope: CoroutineScope,
-    private val isAuthenticated: Boolean,
+    initialSessionToken: String?,
     private val errorMapper: (Throwable) -> String,
 ) {
     private val _state = MutableStateFlow(ListingDetailUiState())
@@ -73,6 +79,14 @@ class ListingDetailViewModel(
 
     private val _events = MutableSharedFlow<ListingDetailEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<ListingDetailEvent> = _events.asSharedFlow()
+
+    // Auth-scoped state. The favorites/inquiry repositories carry the bearer token, so they are
+    // rebuilt (not the whole view-model) whenever the session changes — see [updateAuth].
+    private var currentSessionToken: String? = initialSessionToken
+    private var isAuthenticated: Boolean = initialSessionToken != null
+    private var favoritesRepository: FavoritesRepository =
+        favoritesRepositoryFactory(initialSessionToken)
+    private var inquiryRepository: InquiryRepository = inquiryRepositoryFactory(initialSessionToken)
 
     private var started = false
 
@@ -116,6 +130,30 @@ class ListingDetailViewModel(
 
     /** Retry the failed listing load. */
     fun retry() = loadListing()
+
+    /**
+     * React to a session change (login / logout) without disturbing the loaded listing.
+     *
+     * The view-model is keyed only on `listingId` at the composition layer (issue #2108), so an
+     * auth transition no longer re-creates it and no longer flips the whole screen back to the
+     * full-screen spinner. Instead this rebuilds the auth-scoped repositories with the new token
+     * and re-syncs only the favorite heart — leaving `listing` / `isLoading` untouched. A no-op
+     * when the token is unchanged, so it is safe to drive from `LaunchedEffect(sessionToken)`
+     * (which also fires on first composition).
+     */
+    fun updateAuth(sessionToken: String?) {
+        if (sessionToken == currentSessionToken) return
+        currentSessionToken = sessionToken
+        isAuthenticated = sessionToken != null
+        favoritesRepository = favoritesRepositoryFactory(sessionToken)
+        inquiryRepository = inquiryRepositoryFactory(sessionToken)
+        if (isAuthenticated) {
+            loadFavoriteState()
+        } else {
+            // Favorites require auth; on logout the heart can no longer reflect a user's state.
+            _state.update { it.copy(isFavorite = false, isFavoriteLoading = false) }
+        }
+    }
 
     /**
      * Optimistic favorite toggle: flip the heart immediately, then reconcile with the server. On
@@ -199,12 +237,14 @@ class ListingDetailViewModel(
             ListingDetailViewModel(
                 listingId = listingId,
                 listingRepository = listingRepository,
-                favoritesRepository =
-                    FavoritesRepository(baseUrl = baseUrl, sessionToken = sessionToken),
-                inquiryRepository =
-                    InquiryRepository(baseUrl = baseUrl, sessionToken = sessionToken),
+                favoritesRepositoryFactory = { token ->
+                    FavoritesRepository(baseUrl = baseUrl, sessionToken = token)
+                },
+                inquiryRepositoryFactory = { token ->
+                    InquiryRepository(baseUrl = baseUrl, sessionToken = token)
+                },
                 scope = scope,
-                isAuthenticated = sessionToken != null,
+                initialSessionToken = sessionToken,
                 errorMapper = errorMapper,
             )
     }
