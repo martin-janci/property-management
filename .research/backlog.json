@@ -3982,11 +3982,13 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #2118"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "[partial] PR #2118 wired Meters/Leases/Forms/Threads to api-server; BuildingsScreen already wired (no MOCK); NotificationsScreen.tsx and PersonMonthsScreen.tsx still hold MOCK_ arrays. Remaining scope: two production screens."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
       "plan": null
     },
     {
@@ -4065,18 +4067,145 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: code patterns no longer present in cited files — PR #2100 (merged 2026-07-05) split rental.rs (~5866 LOC) into rental/{mod,bookings,calendar,connections,guest_documents,guests,ical,oauth,reports,statistics}.rs. `backend/crates/db/src/repositories/rental.rs` no longer exists on dev."
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (3 touches — enum-sync scaffolding + guard)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2098",
+        "PR #2113",
+        "PR #2117"
+      ],
+      "evidence": [
+        "3 recent PRs touched multi_currency.rs adding enum-sync test scaffolding, EnumIter-based canonical list, and currency/country wire-value tests. Not organic instability — driven by the multi-currency spec/enum triple-source sync work."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (3 touches — SlovakAccountingExport enforce-by-construction)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2099",
+        "PR #2117"
+      ],
+      "evidence": [
+        "PR #2099 moved SlovakAccountingExport partial/unsupported derivation into compute_partial(&mut self); PR #2117 replaced that with a named-field input struct constructor. Rapid iteration on the same DTO shape — worth a follow-up look at whether the surface is now stable."
+      ],
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/regional_compliance.rs (3 touches + serious quality findings from Phase 1.5)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2099",
+        "PR #2117",
+        "api-handlers rotating review 2026-07-06"
+      ],
+      "evidence": [
+        "Churn from #2099/#2117 (align with new SlovakAccountingExport constructor). Same file surfaced three independent code-review findings this run — hardcoded stub minutes/usneseni, fabricated DPO fallback, fake vote-validator defaults. This file is a hotspot AND a quality hotspot; the individual findings are captured as separate rows (code-review-api-handlers-*) which are the actionable items."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-compliance-minutes-stubbed",
+      "title": "regional_compliance minutes/usneseni endpoints ship hardcoded stub meeting data (Slovak + Czech legal minutes)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-handlers rotating review 2026-07-06"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:344 (get_slovak_vote_minutes) and :902 (get_czech_usneseni) build SlovakVoteMinutes / CzechSvjUsneseni with hardcoded literals: meeting_date=NaiveDate::from_ymd_opt(2024,1,15), meeting_location='Spolocenska miestnost, Hlavna 1, Bratislava', total_ownership_shares=100, votes_for=60, etc. Only vote_id, building_id, and title come from the DB. Both endpoints are the legal minutes-generation endpoints (Slovak zápisnica / Czech usnesení) reachable from router lines 77 and 97."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/code-review-api-handlers-compliance-minutes-stubbed.md"
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-fake-dpo",
+      "title": "regional_compliance GDPR consent status returns a fabricated DPO contact when config missing",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-handlers rotating review 2026-07-06"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:584-589 — get_gdpr_consent_status falls back to DpoContact { name: 'Jan Novak', email: 'dpo@example.sk', phone: None, address: None } when the org has no GDPR config. This is the Data Protection Officer contact that GDPR Art. 13/38 requires to be accurate; returning a fake to end users querying their own consent status is a compliance risk."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/code-review-api-handlers-gdpr-fake-dpo.md"
+    },
+    {
+      "id": "code-review-api-handlers-vote-validator-fake-defaults",
+      "title": "regional_compliance vote validators invent 75%/80% defaults when eligibles=0 or vote.results unparseable",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-handlers rotating review 2026-07-06"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-282 (validate_slovak_vote) and :803-832 (validate_czech_vote) — fall back to Decimal::new(7500,2) (75% participation) on eligible_count==0 and Decimal::new(8000,2) (80% approval) when vote.results JSON is missing or unparseable, then compute is_valid = quorum_met && approval_percentage >= required_quorum against the fabricated numbers. A poll with no eligibles or corrupted results can return is_valid: true. Reachable via POST /api/v1/regional-compliance/{slovak/czech}/voting/validate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]

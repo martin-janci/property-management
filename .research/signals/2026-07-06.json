@@ -1,0 +1,251 @@
+{
+  "run_iso": "2026-07-06T12:20:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-07-05T03:10Z..2026-07-06T12:20Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 recent PRs touched backend/crates/db/src/models/multi_currency.rs — #2098 (initial enum-sync guard), #2113 (drive enum-sync off EnumIter variant set), #2117 (SlovakAccountingExport enum arg refactor).",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-07-05T03:10Z..2026-07-06T12:20Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 recent PRs touched backend/crates/db/src/models/regional_compliance.rs — #2099 (enforce SlovakAccountingExport honesty by construction), #2117 (named-field constructor input), plus prior enum-sync work.",
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-07-05T03:10Z..2026-07-06T12:20Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 recent PRs touched backend/servers/api-server/src/routes/regional_compliance.rs — #2099 + #2117 (align handlers with new SlovakAccountingExport constructor). Same PRs surfaced code-review-finding signals (hardcoded stub minutes/usneseni + fabricated DPO contact + fake vote-validator defaults).",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-07-05T03:10Z..2026-07-06T12:20Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit — PR #2100 landed the planned rental repository split (~5866 LOC moved into rental/{mod,bookings,calendar,connections,guest_documents,guests,ical,oauth,reports,statistics}.rs). File deleted from tree; associated backlog item flipped to done.",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-rental-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.rental.rs runs_seen=2",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen=2 but the second-run churn was PR #2100's planned repository split, not organic instability — suppressed score_delta and marked seen so it does not re-fire.",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "rust_xlsxwriter 0.95.0 → 0.96.0 (Excel export lib bump).",
+      "files": [
+        "backend/Cargo.lock",
+        "backend/Cargo.toml"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "axum-test bump inside the axum group (backend/servers/{api-server,deploy-server}/Cargo.toml).",
+      "files": [
+        "backend/Cargo.lock",
+        "backend/servers/api-server/Cargo.toml",
+        "backend/servers/deploy-server/Cargo.toml"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-compliance-minutes-stubbed",
+      "type": "code-review-finding",
+      "source": "api-handlers rotating review 2026-07-06",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/regional_compliance.rs:344,902 — get_slovak_vote_minutes and get_czech_usneseni return hardcoded meeting_date / meeting_location / total_ownership_shares / votes_for literals; only vote_id/building_id/title come from the DB. Both are the legal minutes-generation endpoints reachable via GET /api/v1/regional-compliance/{slovak/czech}/{voting/svj}/{minutes,usneseni}/{vote_id} (router lines 77, 97).",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-fake-dpo",
+      "type": "code-review-finding",
+      "source": "api-handlers rotating review 2026-07-06",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/routes/regional_compliance.rs:584-589 — get_gdpr_consent_status falls back to a fabricated DpoContact { name: 'Jan Novak', email: 'dpo@example.sk', ... } when the org has no GDPR config. This value is returned as the Data Protection Officer contact GDPR Art. 13/38 requires to be accurate. Reachable via GET /api/v1/regional-compliance/slovak/gdpr/consent/status (router line 92).",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-vote-validator-fake-defaults",
+      "type": "code-review-finding",
+      "source": "api-handlers rotating review 2026-07-06",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/regional_compliance.rs:253-282,803-832 — validate_slovak_vote/validate_czech_vote fall back to Decimal(7500,2)=75% participation when eligible_count==0 and Decimal(8000,2)=80% approval when vote.results JSON is unparseable, then compute is_valid = (quorum_met && approval >= required) from those fabricated numbers. A poll with zero eligibles or corrupted results can silently return is_valid: true.",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-06.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal ids not re-scored (non-cumulative)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8 && decay verified",
+      "observed": "true (no decay candidates this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for adversarial pass on new plans",
+      "observed": "both plans annotated adversarial pass: passed",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "metadata+headings+ticked+mode+files",
+      "observed": "count=2, both 4/11/≥1/1 + all Files paths resolve",
+      "expected": "≤2, all fields present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secret patterns in cached diff (baseline docs exempted)",
+      "observed": "0 hits after plan edits (rewrote p.rlt.sk / ppt.rlt.sk / Authorization: Bearer illustrative uses)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run — trivially satisfied",
+      "observed": "no cursor stalls, no phase failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan still present in plans/ or plans/_archive/",
+      "observed": "no gone plans",
+      "expected": "no gone plans"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "7 == 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "no auto-fix candidate — auto_fix_actions=[], no state.auto_fix_history writes",
+      "expected": "≤ caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list/risks parse, project-state non-empty, pm_cursor 0..7, coverage_cursor advanced",
+      "observed": "pm_cursor 5→6, coverage_cursor 12→13",
+      "expected": "valid+advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token patterns in added diff lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate matched allowlist this run"
+}

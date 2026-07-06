@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "generated": "2026-07-06T03:15:00Z",
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
@@ -144,12 +145,14 @@
       "action": "Follow-up: outages happy-path tests bypass real login/authz via fabricated JWT (JWT-role vs DB-role mismatch) (PR #1979) (Closes #2107)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2107)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-05T22:07:52Z",
+      "closed_at": "2026-07-06T03:15:00Z",
+      "closed_reason": "Resolved by PR #2120 (authorize outage mutations on DB role not JWT claim, merged 2026-07-06); issue closed alongside.",
       "issue_ref": {
         "number": 2107,
         "url": "https://github.com/martin-janci/property-management/issues/2107",
@@ -158,6 +161,78 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-security-sweep-tenantextractor-role-antipattern",
+      "action": "Sweep 34 call sites across announcements/{crud,lifecycle,engagement,comments,ai_draft,stats}.rs, documents/{core,folders,shares,versions}.rs, granular_notifications.rs, templates.rs — replace tenant.role.is_manager() (JWT-derived, always Guest in prod) with rls.role().is_manager() or ValidatedTenantExtractor, matching #2120. Add real-login-flow regression test (create_authenticated_user_with_org), not raw-token mint.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
+    },
+    {
+      "id": "pm-security-confirm-pr-1797-status",
+      "action": "Confirm merge/close status of PR #1797 (fix/backend-authz-ocr-and-rental-pii) — fix content is already present in working tree; if superseded, close #1797 to avoid duplicate rework, else land or rebase.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "pm-scrum-master",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
+    },
+    {
+      "id": "pm-security-lint-tenantextractor-role-mutations",
+      "action": "Add a CI grep/clippy lint that flags TenantExtractor + .role.is_manager() / .role == authorization checks on mutating handlers (second confirmed instance after ai.rs equipment IDOR cluster and report_schedule.rs).",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "pm-devops",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
+    },
+    {
+      "id": "pm-security-verify-aes-gcm-bump-2018",
+      "action": "Manual crypto-surface review of dependabot #2018 (aes-gcm bump) before merge — verify no breaking nonce/API changes; cargo test -p api-server -p integrations green; credential/token encryption round-trips still decrypt existing at-rest data.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
+    },
+    {
+      "id": "pm-security-oauth-security-test-suite-10a",
+      "action": "Land the OAuth 10a-1/10a-2/10a-3 security test suite (revoked-token rejection, refresh-token-family-reuse replay block, PKCE S256 enforcement) before any of those stories are promoted — batch items #481/#487 remain open per sprint-status test-hardening gate.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
+    },
+    {
+      "id": "pm-security-review-pr-1812-reality-portal-split",
+      "action": "Locate and review PR #1812 (reality_portal.rs repository split) directly on GitHub for RLS-boundary preservation across the split modules — local git/gh access could not resolve the branch or diff this session.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-06",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-06T03:15:00Z"
     }
   ]
 }
