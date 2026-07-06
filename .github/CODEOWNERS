@@ -22,8 +22,16 @@
 # in-range Dependabot bump changes ONLY the lockfile. Without an owner on
 # Cargo.lock the resolved quick-xml version could move with no review request.
 #
+# backend/deny.toml is owned for the same reason (see GH #2106 / PR #2096):
+# enforcement of the quick-xml pin moved from the manifest + an advisory
+# workflow to a hard `bans` entry in deny.toml. That ban is now the
+# load-bearing guard — a PR that widens or deletes it would silently re-open
+# the XXE / billion-laughs pin, so every change to deny.toml must get an
+# explicit owner review just like the manifest and lockfile above.
+#
 # NOTE: CODEOWNERS review is only *mandatory* when branch protection on `dev`
 # has "Require review from Code Owners" enabled. That setting is not
 # verifiable in-repo — confirm it is on, otherwise this guard is advisory.
 /backend/Cargo.toml    @martin-janci
 /backend/Cargo.lock    @martin-janci
+/backend/deny.toml     @martin-janci
