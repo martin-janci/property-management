@@ -140,33 +140,6 @@
       "last_updated": "2026-07-04T20:13:30Z"
     },
     {
-      "id": "gh-issue-2102",
-      "action": "Follow-up: wire MCP-push size guard + action-list reconcile into dispatcher Phase 6 (PR #2101) (Closes #2102)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2102) | gc1-reconcile 2026-07-06T02:20:41Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2102,
-        "url": "https://github.com/martin-janci/property-management/issues/2102",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 2114,
-        "merged_at": "2026-07-06T02:20:41Z",
-        "at": "2026-07-06T02:20:41Z"
-      }
-    },
-    {
       "id": "gh-issue-2103",
       "action": "Follow-up: SlovakAccountingExport::new positional 15-arg constructor allows silent same-type transposition (PR #2099) (Closes #2103)",
       "owner_role": "pm-tech-lead",
@@ -184,87 +157,6 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
-    },
-    {
-      "id": "gh-issue-2104",
-      "action": "Follow-up: currency/country enum-sync guard doesn't fail on variant missing from canonical list (PR #2098) (Closes #2104)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2104) | gc1-reconcile 2026-07-06T02:08:30Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2104,
-        "url": "https://github.com/martin-janci/property-management/issues/2104",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 2113,
-        "merged_at": "2026-07-06T02:07:10Z",
-        "at": "2026-07-06T02:08:30Z"
-      }
-    },
-    {
-      "id": "gh-issue-2105",
-      "action": "Follow-up: stale BIT-351 quarantine docstrings after un-quarantining soft-delete unread test (PR #2097) (Closes #2105)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2105) | gc1-reconcile 2026-07-06T02:08:30Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2105,
-        "url": "https://github.com/martin-janci/property-management/issues/2105",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 2112,
-        "merged_at": "2026-07-06T02:07:10Z",
-        "at": "2026-07-06T02:08:30Z"
-      }
-    },
-    {
-      "id": "gh-issue-2106",
-      "action": "Follow-up: deny.toml quick-xml ban is now load-bearing but not CODEOWNERS-gated (PR #2096) (Closes #2106)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2106) | gc1-reconcile 2026-07-06T02:08:30Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2106,
-        "url": "https://github.com/martin-janci/property-management/issues/2106",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 2111,
-        "merged_at": "2026-07-06T00:15:15Z",
-        "at": "2026-07-06T02:08:30Z"
       }
     },
     {
@@ -345,30 +237,6 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
-    },
-    {
-      "id": "bug-ios-deeplink-info-plist-missing",
-      "action": "iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-backlog-refill 2026-07-05T22:08:34Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-07-06T02:20:41Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:08:34Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "failed",
-        "merged_pr": null,
-        "merged_at": null,
-        "at": "2026-07-06T02:20:41Z"
       }
     },
     {
