@@ -411,16 +411,54 @@ pub struct SlovakAccountingExport {
     pub generated_at: DateTime<Utc>,
 }
 
+/// Named-field input for [`SlovakAccountingExport::new`].
+///
+/// Exists to kill a whole class of quiet dishonesty (#2103): the previous
+/// `new` took 15 positional args, four of which were type-identical and
+/// interleaved — two bare `Decimal` (`total_revenue` / `total_receivables`)
+/// and two `Option<Decimal>` (`total_expenses` / `total_payables`).
+/// Transposing revenue↔receivables (or the two options) at any call site
+/// compiled cleanly and silently shipped wrong accounting figures — the same
+/// "looks right but isn't" failure #2030/#2086 set out to kill, just relocated
+/// from "forgot the mutator" to "swapped two same-typed args". Forcing
+/// callers to name each field makes the compiler catch the transposition.
+///
+/// This carries only the **non-derived** fields. The honesty flags
+/// (`partial` / `unsupported_fields`) are intentionally absent — they are
+/// derived inside `new` and must never be supplied by a caller.
+#[derive(Debug, Clone)]
+pub struct SlovakAccountingExportInput {
+    pub export_id: Uuid,
+    pub organization_id: Uuid,
+    pub from_date: NaiveDate,
+    pub to_date: NaiveDate,
+    pub format: SlovakAccountingFormat,
+    pub invoice_count: i32,
+    pub payment_count: i32,
+    pub journal_entry_count: i32,
+    pub total_revenue: Decimal,
+    /// `None` = not available (see [`SlovakAccountingExport::total_expenses`]).
+    pub total_expenses: Option<Decimal>,
+    pub total_receivables: Decimal,
+    /// `None` = not available (see [`SlovakAccountingExport::total_payables`]).
+    pub total_payables: Option<Decimal>,
+    pub download_url: Option<String>,
+    pub export_data: Option<serde_json::Value>,
+    pub generated_at: DateTime<Utc>,
+}
+
 impl SlovakAccountingExport {
     /// Smart constructor: the ONLY way to build a `SlovakAccountingExport`.
     ///
-    /// Takes every non-derived field and computes `partial` +
+    /// Takes every non-derived field via the named-field
+    /// [`SlovakAccountingExportInput`] and computes `partial` +
     /// `unsupported_fields` internally from the `Option` monetary fields before
     /// returning, so no caller can obtain an instance whose honesty flags are
-    /// un-derived or stale (#2086). This replaces the old
-    /// build-literal-then-`compute_partial(&mut self)` dance, where a caller who
-    /// forgot the mutator would silently ship a "looks complete but isn't"
-    /// export — exactly the dishonesty #2030 set out to kill.
+    /// un-derived or stale (#2086). The named-field input also makes revenue↔
+    /// receivables (and the two option fields) impossible to transpose at a
+    /// call site — the compiler enforces field identity (#2103) — replacing the
+    /// old 15-arg positional signature where four type-identical, interleaved
+    /// args could be silently swapped.
     ///
     /// A monetary field that is `None` is **not available** (not a genuine
     /// zero): it serializes as JSON `null` and its name is enumerated in
@@ -428,24 +466,25 @@ impl SlovakAccountingExport {
     /// missing. When a new `Option` monetary field is added to this struct,
     /// extend the checks below so it is covered here in one place rather than
     /// being silently omitted from the derivation.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        export_id: Uuid,
-        organization_id: Uuid,
-        from_date: NaiveDate,
-        to_date: NaiveDate,
-        format: SlovakAccountingFormat,
-        invoice_count: i32,
-        payment_count: i32,
-        journal_entry_count: i32,
-        total_revenue: Decimal,
-        total_expenses: Option<Decimal>,
-        total_receivables: Decimal,
-        total_payables: Option<Decimal>,
-        download_url: Option<String>,
-        export_data: Option<serde_json::Value>,
-        generated_at: DateTime<Utc>,
-    ) -> Self {
+    pub fn new(input: SlovakAccountingExportInput) -> Self {
+        let SlovakAccountingExportInput {
+            export_id,
+            organization_id,
+            from_date,
+            to_date,
+            format,
+            invoice_count,
+            payment_count,
+            journal_entry_count,
+            total_revenue,
+            total_expenses,
+            total_receivables,
+            total_payables,
+            download_url,
+            export_data,
+            generated_at,
+        } = input;
+
         let mut unsupported_fields = Vec::new();
         if total_expenses.is_none() {
             unsupported_fields.push("total_expenses".to_string());
@@ -728,23 +767,23 @@ mod tests {
     /// serialize as a number.
     #[test]
     fn uncomputed_totals_serialize_as_null_not_zero() {
-        let export = SlovakAccountingExport::new(
-            Uuid::nil(),
-            Uuid::nil(),
-            NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
-            NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
-            SlovakAccountingFormat::Pohoda,
-            3,
-            2,
-            5,
-            Decimal::new(12345, 2),
-            None,
-            Decimal::ZERO,
-            None,
-            None,
-            None,
-            DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
-        );
+        let export = SlovakAccountingExport::new(SlovakAccountingExportInput {
+            export_id: Uuid::nil(),
+            organization_id: Uuid::nil(),
+            from_date: NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            format: SlovakAccountingFormat::Pohoda,
+            invoice_count: 3,
+            payment_count: 2,
+            journal_entry_count: 5,
+            total_revenue: Decimal::new(12345, 2),
+            total_expenses: None,
+            total_receivables: Decimal::ZERO,
+            total_payables: None,
+            download_url: None,
+            export_data: None,
+            generated_at: DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
+        });
 
         let json = serde_json::to_value(&export).expect("serialize export");
 
@@ -769,23 +808,23 @@ mod tests {
         total_expenses: Option<Decimal>,
         total_payables: Option<Decimal>,
     ) -> SlovakAccountingExport {
-        SlovakAccountingExport::new(
-            Uuid::nil(),
-            Uuid::nil(),
-            NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
-            NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
-            SlovakAccountingFormat::Pohoda,
-            0,
-            0,
-            0,
-            Decimal::ZERO,
+        SlovakAccountingExport::new(SlovakAccountingExportInput {
+            export_id: Uuid::nil(),
+            organization_id: Uuid::nil(),
+            from_date: NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            to_date: NaiveDate::from_ymd_opt(2026, 3, 31).unwrap(),
+            format: SlovakAccountingFormat::Pohoda,
+            invoice_count: 0,
+            payment_count: 0,
+            journal_entry_count: 0,
+            total_revenue: Decimal::ZERO,
             total_expenses,
-            Decimal::ZERO,
+            total_receivables: Decimal::ZERO,
             total_payables,
-            None,
-            None,
-            DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
-        )
+            download_url: None,
+            export_data: None,
+            generated_at: DateTime::<Utc>::from_timestamp(0, 0).unwrap(),
+        })
     }
 
     /// #2053/#2086: exercise the derivation performed by the smart constructor.
@@ -823,5 +862,70 @@ mod tests {
         let complete = export_with(Some(Decimal::ZERO), Some(Decimal::ZERO));
         assert!(!complete.partial);
         assert!(complete.unsupported_fields.is_empty());
+    }
+
+    /// #2103: pin the positional/field wiring of the smart constructor. Every
+    /// non-derived field gets a *distinct* value so that any transposition of
+    /// two same-typed fields (notably `total_revenue` ↔ `total_receivables`,
+    /// or `total_expenses` ↔ `total_payables`) inside `new` would land a value
+    /// in the wrong slot and fail an assertion here. The named-field input
+    /// makes such a swap uncompilable at call sites; this test guards the
+    /// internal `new` wiring itself.
+    #[test]
+    fn new_wires_each_input_field_to_its_own_slot() {
+        let export_id = Uuid::from_u128(1);
+        let organization_id = Uuid::from_u128(2);
+        let from_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let to_date = NaiveDate::from_ymd_opt(2026, 3, 31).unwrap();
+        let generated_at = DateTime::<Utc>::from_timestamp(1_700_000_000, 0).unwrap();
+
+        // Distinct monetary values so revenue↔receivables / expenses↔payables
+        // transposition is detectable.
+        let total_revenue = Decimal::new(100, 0);
+        let total_expenses = Some(Decimal::new(300, 0));
+        let total_receivables = Decimal::new(200, 0);
+        let total_payables = Some(Decimal::new(400, 0));
+
+        let export = SlovakAccountingExport::new(SlovakAccountingExportInput {
+            export_id,
+            organization_id,
+            from_date,
+            to_date,
+            format: SlovakAccountingFormat::MoneyS3,
+            invoice_count: 7,
+            payment_count: 11,
+            journal_entry_count: 18,
+            total_revenue,
+            total_expenses,
+            total_receivables,
+            total_payables,
+            download_url: Some("https://example.test/dl".to_string()),
+            export_data: Some(serde_json::json!({"k": "v"})),
+            generated_at,
+        });
+
+        assert_eq!(export.export_id, export_id);
+        assert_eq!(export.organization_id, organization_id);
+        assert_eq!(export.from_date, from_date);
+        assert_eq!(export.to_date, to_date);
+        assert_eq!(export.format, SlovakAccountingFormat::MoneyS3);
+        assert_eq!(export.invoice_count, 7);
+        assert_eq!(export.payment_count, 11);
+        assert_eq!(export.journal_entry_count, 18);
+        // The two distinct bare `Decimal` figures must not be swapped.
+        assert_eq!(export.total_revenue, Decimal::new(100, 0));
+        assert_eq!(export.total_receivables, Decimal::new(200, 0));
+        // The two distinct `Option<Decimal>` figures must not be swapped.
+        assert_eq!(export.total_expenses, Some(Decimal::new(300, 0)));
+        assert_eq!(export.total_payables, Some(Decimal::new(400, 0)));
+        assert_eq!(
+            export.download_url.as_deref(),
+            Some("https://example.test/dl")
+        );
+        assert_eq!(export.export_data, Some(serde_json::json!({"k": "v"})));
+        assert_eq!(export.generated_at, generated_at);
+        // All monetary fields present -> honest complete export.
+        assert!(!export.partial);
+        assert!(export.unsupported_fields.is_empty());
     }
 }
