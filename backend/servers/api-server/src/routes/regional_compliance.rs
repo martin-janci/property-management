@@ -454,12 +454,12 @@ async fn export_slovak_accounting(
     // mutator. Un-computed fields serialize as JSON `null` and are enumerated in
     // `unsupported_fields`, letting consumers distinguish "not available" from a
     // genuine zero (#2030).
-    let export = SlovakAccountingExport::new(
-        Uuid::new_v4(),
-        org_id,
-        payload.from_date,
-        payload.to_date,
-        payload.format,
+    let export = SlovakAccountingExport::new(SlovakAccountingExportInput {
+        export_id: Uuid::new_v4(),
+        organization_id: org_id,
+        from_date: payload.from_date,
+        to_date: payload.to_date,
+        format: payload.format,
         invoice_count,
         payment_count,
         journal_entry_count,
@@ -467,13 +467,13 @@ async fn export_slovak_accounting(
         total_expenses,
         total_receivables,
         total_payables,
-        Some(format!(
+        download_url: Some(format!(
             "/api/v1/regional-compliance/slovak/accounting/download/{}",
             Uuid::new_v4()
         )),
-        None,
-        Utc::now(),
-    );
+        export_data: None,
+        generated_at: Utc::now(),
+    });
 
     let result = Ok(Json(export));
     rls.release().await;
