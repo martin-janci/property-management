@@ -1,0 +1,83 @@
+{
+  "date": "2026-07-06",
+  "run": {
+    "prev_last_run_iso": "2026-07-05T03:10:00Z",
+    "lag_hours": 40,
+    "lag_days": 1,
+    "merged_prs_since": 18,
+    "issues_updated_since": 15,
+    "commits_since": 50
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-06",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.json.last_run_iso=2026-07-05T03:10:00Z; now=2026-07-06T20:16:15Z; delta = 40h (1d 16h). Above 36h threshold. Below 3d stale-routine-alert threshold — cloud routine is late but not paused."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2020: chore(deps): bump rust_xlsxwriter from 0.95.0 to 0.96.0 in /backend — dependabot minor bump; merged 2026-07-06."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2014: chore(deps): bump axum-test in /backend in the axum group — dependabot group bump; merged 2026-07-06."
+      ]
+    }
+  ],
+  "resolution_actions": [
+    {
+      "backlog_id": "code-review-mobile-rn-screens-mock-data",
+      "resolved_by": "PR #2118",
+      "match_type": "title-verbatim-id + evidence-gone-grep",
+      "evidence": "PR title contains id verbatim; grep 'setTimeout' across frontend/apps/mobile/src/screens/{meters,leases,forms,messages}/*.tsx returned no hits — mock-data submits are gone."
+    },
+    {
+      "backlog_id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "resolved_by": "PR #2100",
+      "match_type": "title-stem-match + evidence-gone-fs",
+      "evidence": "PR #2100 splits rental repository into cohesive sub-modules; backend/crates/db/src/repositories/rental.rs no longer exists in the tree (git ls-files --error-unmatch fails); rental/*.rs submodules present."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run (lag-warning + dep-update-noise are 0-score; no screen-map-drift/orphan; no fixme-in-merged-code; no stalled-review on non-draft PRs)",
+  "phase_1_5_skipped_reason": "session-budget: rotating expert review skipped this run; will resume next daily run. Segment cursor unchanged.",
+  "phase_1_6_skipped_reason": "session-budget: PM rotation skipped this run; pm_cursor and coverage_cursor unchanged.",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-07-06.md && head -1 matches '# 2026-07-06'", "observed": "verified after Phase 4 write", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "jq compare against HEAD", "observed": "last_pr_seen 2093->2120, last_issue_seen 2087->2110, last_commit_sha 7e09d77d->f26713e0, seen_signals 233->236", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no dup non-cumulative signal ids with nonzero score_delta", "observed": "3 new signal ids; none in prior seen_signals", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap + decay", "observed": "no scores > 8 (max 6); no open items with updated_at older than 14 days this run — decay is a no-op", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans", "observed": "0 new plan files staged", "expected": "trivially true"},
+    {"goal": "G7", "passed": true, "command": "at most 2 new plans", "observed": "0 new plans", "expected": "<=2"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached only .research/", "observed": "verified before commit", "expected": "0 non-.research/ paths"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private hostnames in diff", "observed": "verified before commit", "expected": "0 hits"},
+    {"goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen", "observed": "regen diff==0 verified in Phase 4", "expected": "diff exit 0"},
+    {"goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no failed phases this run", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "plan promotions converge", "observed": "no plans added or removed this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive only grows", "observed": "archive count unchanged this run (same as HEAD)", "expected": "ge"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "regen diff==0 verified in Phase 4", "expected": "diff exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "auto_fix_actions empty (no candidate)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped -> no-op", "observed": "pm_cursor + coverage_cursor unchanged; gate is no-op", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token in diff", "observed": "verified before commit", "expected": "0 hits"}
+  ]
+}
