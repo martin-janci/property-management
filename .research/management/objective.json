@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "triage-dispatcher-mcp-push-large-file-issue-1014",
-  "selected_at": "2026-07-05T12:06:27Z",
+  "epic_prefix": "gh-issue-2102",
+  "selected_at": "2026-07-06T00:07:37Z",
   "last_action": "repick",
-  "reason": "prior target 'gh-issue-2076' exhausted; closest-to-done is 'triage-dispatcher-mcp-push-large-file-issue-1014' (open=1 claimable=1)",
+  "reason": "prior target 'triage-dispatcher-mcp-push-large-file-issue-1014' exhausted; closest-to-done is 'gh-issue-2102' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
