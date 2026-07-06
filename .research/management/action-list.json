@@ -144,8 +144,8 @@
       "action": "Follow-up: wire MCP-push size guard + action-list reconcile into dispatcher Phase 6 (PR #2101) (Closes #2102)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2102)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2102) | gc1-reconcile 2026-07-06T02:20:41Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -157,6 +157,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2114,
+        "merged_at": "2026-07-06T02:20:41Z",
+        "at": "2026-07-06T02:20:41Z"
       }
     },
     {
@@ -345,8 +352,8 @@
       "action": "iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-05T22:08:34Z (score=1 conf=high vector=bug)",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-05T22:08:34Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-07-06T02:20:41Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -355,6 +362,13 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-06T02:20:41Z"
       }
     },
     {

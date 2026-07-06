@@ -709,6 +709,28 @@
       "merge_attempted_at": "2026-06-28T04:23:57Z"
     },
     {
+      "task_id": "bug-ios-deeplink-info-plist-missing",
+      "branch": "auto-impl/bug-ios-deeplink-info-plist-missing-f8a7e3fd",
+      "status": "failed",
+      "claimed_at": "2026-07-06T02:14:10Z",
+      "last_updated": "2026-07-06T02:20:41Z",
+      "status_changed_at": "2026-07-06T02:20:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ios-swiftui",
+      "implementer_summary": "pr=none status=blocked specialist=ios-swiftui note=already-fixed-on-dev(d4b509b): CFBundleURLTypes+applinks entitlement present and wired via project.yml; no change needed [no-op close]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "bug-ios-searchview-uncompilable",
       "branch": "auto-impl/bug-ios-searchview-uncompilable-9caf59f7",
       "status": "failed",
@@ -2055,6 +2077,28 @@
       "merge_attempted_at": "2026-07-05T08:09:48Z"
     },
     {
+      "task_id": "gh-issue-2102",
+      "branch": "auto-impl/gh-issue-2102-e0ea5429",
+      "status": "merged",
+      "claimed_at": "2026-07-06T00:09:04Z",
+      "last_updated": "2026-07-06T02:20:41Z",
+      "status_changed_at": "2026-07-06T02:20:41Z",
+      "pr_number": 2114,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2114",
+      "merged_at": "2026-07-06T02:20:41Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2114 status=done specialist=generic scope_drift=false code_reuse_warn=none note=wired action-list-reconcile + mcp-push-size-guard into Phase 6; T26 warn->fail; self-test PASS",
+      "reviewer_summary": "verdict=approve note=root-cause-fix-verified;scripts-exist-fail-closed;reconcile-before-selftest-gate;T26-promotion-safe;CI-green;approve-posted-as-comment(self-PR-block)",
+      "last_reviewed_oid": "88a3cf09a6c1b49fb9d688cce52baac2f64a6bd6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-06T02:20:41Z"
+    },
+    {
       "task_id": "gh-issue-2104",
       "branch": "auto-impl/gh-issue-2104-5da60771",
       "status": "merged",
@@ -2495,5 +2539,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-06T02:08:30Z"
+  "archived_at": "2026-07-06T02:20:41Z"
 }
