@@ -42,9 +42,11 @@ FAIL=0
 note() { printf '  ok    %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1" >&2; FAIL=1; }
 # warn() — advisory only: prints but does NOT set FAIL. Used for invariants
-# that are self-healing on the next run (e.g. action-list archive bloat, which
-# action-list-reconcile.sh sweeps) so introducing the check doesn't retroactively
-# hard-fail an already-bloated dev snapshot.
+# that are self-healing on the next run (e.g. T28 gc1 archive-terminal drift,
+# which gc1-reconcile.sh sweeps) so introducing the check doesn't retroactively
+# hard-fail an already-drifted dev snapshot. (T26 was formerly a warn of this
+# kind but was promoted to fail in #2102 once Phase 6 began running the
+# action-list reconcile before the pre-commit self-test gate.)
 warn() { printf '  WARN  %s\n' "$1" >&2; }
 
 echo "==> dispatcher-self-test"
@@ -618,14 +620,19 @@ fi
 # Spec (dispatcher-prompt.md Phase 1 step 4): action-list.json carries only
 # open/in-progress items; done/dropped live in action-list-archive.json. Bloat
 # from un-archived terminal rows is what pushed the file past the MCP inline
-# push limit and corrupted it on dev. Advisory (warn, not fail) because
-# action-list-reconcile.sh --apply is self-healing on the next Phase 6.
-echo "T26 action-list.json holds non-terminal items only (issue #1014; advisory)"
+# push limit and corrupted it on dev. ENFORCED (fail) as of #2102: Phase 6 now
+# runs `bash .research/action-list-reconcile.sh --apply` BEFORE the pre-commit
+# self-test gate, so a clean action-list is guaranteed on the commit path. A
+# terminal row surviving to this check therefore means the reconcile was
+# skipped or failed — a real invariant breach that must block the MCP push
+# (a bloated action-list.json is the #1014 truncation vector), not transient
+# self-healing bloat. Promoting warn→fail is only safe BECAUSE of that wiring.
+echo "T26 action-list.json holds non-terminal items only (issue #1014; enforced)"
 if [ -f "$ACTION_LIST" ]; then
   TERM=$(jq -r '[.items[] | select(.status=="done" or .status=="dropped" or .status=="merged" or .status=="failed")] | length' "$ACTION_LIST")
   if [ "$TERM" = "0" ]; then note "no terminal items in action-list.json (archive split clean)"
   else
-    warn "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
+    fail "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
   fi
 else
   printf '  skip  %s not found\n' "$ACTION_LIST"
