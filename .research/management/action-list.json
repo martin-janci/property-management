@@ -140,26 +140,6 @@
       "last_updated": "2026-07-04T20:13:30Z"
     },
     {
-      "id": "gh-issue-2103",
-      "action": "Follow-up: SlovakAccountingExport::new positional 15-arg constructor allows silent same-type transposition (PR #2099) (Closes #2103)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2103)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2103,
-        "url": "https://github.com/martin-janci/property-management/issues/2103",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2107",
       "action": "Follow-up: outages happy-path tests bypass real login/authz via fabricated JWT (JWT-role vs DB-role mismatch) (PR #1979) (Closes #2107)",
       "owner_role": "pm-tech-lead",
@@ -177,83 +157,6 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
-    },
-    {
-      "id": "gh-issue-2108",
-      "action": "Follow-up: ListingDetail auth change resets screen to spinner; hoisted paths untested (PR #2093) (Closes #2108)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2108)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2108,
-        "url": "https://github.com/martin-janci/property-management/issues/2108",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2109",
-      "action": "Follow-up: import_templates pagination test only covers strict-org leg, not default include_system path (PR #2092) (Closes #2109)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2109)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2109,
-        "url": "https://github.com/martin-janci/property-management/issues/2109",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2110",
-      "action": "Follow-up: #2081 exec-bit restore never landed; issue closed while check-ignore-reason.sh still 100644 (PR #2091) (Closes #2110)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2110)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:07:52Z",
-      "issue_ref": {
-        "number": 2110,
-        "url": "https://github.com/martin-janci/property-management/issues/2110",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-screens-mock-data",
-      "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-05T22:08:34Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-05T22:08:34Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     }
   ]
