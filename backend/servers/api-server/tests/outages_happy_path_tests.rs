@@ -23,17 +23,29 @@
 //! all admit a freshly-created `planned` outage, so each lifecycle test creates
 //! its own outage to stay independent of transition ordering.
 //!
-//! # Authorization wiring
+//! # Authorization wiring (fixed — issue #2107)
 //!
-//! The mutating handlers gate on `TenantExtractor::role.is_manager()`, and that
-//! role is read from the **JWT `role` claim** — not the seeded DB membership
-//! (`TenantExtractor` does no DB lookup). `JwtService::generate_access_token`
-//! (used by the login flow) emits `org_id`/`roles` claims, which the `AuthUser`
-//! extractor does *not* read, so a login token resolves to `Guest` and every
-//! mutating route 403s. We therefore mint a raw HS256 token carrying
-//! `tenant_id = org_id` and `role = "org_admin"`. The seeded `organization_members`
-//! row is still required: `RlsConnection` validates DB membership via
-//! `ValidatedTenantExtractor` and scopes RLS to `org_id`.
+//! The mutating handlers now gate on `RlsConnection::role().is_manager()`, and
+//! that role is the **DB-validated** `organization_members.role_type` resolved by
+//! `ValidatedTenantExtractor` (which `RlsConnection` is built on) — not the JWT
+//! `role` claim. Previously they gated on `TenantExtractor::role.is_manager()`,
+//! read from the JWT `role` claim; but `JwtService::generate_access_token` (the
+//! production login flow) emits `org_id`/`roles`, which the `AuthUser` extractor
+//! never surfaces as `role`, so a real manager's login token resolved to `Guest`
+//! and every mutating route 403'd in production while the raw-token tests below
+//! stayed green (JWT-role vs DB-role mismatch).
+//!
+//! Two harnesses exercise the routes here:
+//!
+//! * The bulk of the tests mint a raw HS256 token (`mint_token`) carrying
+//!   `tenant_id = org_id` and a `role` claim, alongside a seeded `org_admin`
+//!   membership. This still authenticates and still passes after the fix
+//!   (authorization now reads the DB `org_admin` membership, not the claim).
+//! * `full_lifecycle_via_real_login_*` drives the **production** login flow via
+//!   `create_authenticated_user_with_org` (register → verify → login →
+//!   `org_admin` membership). It is the regression guard for #2107: before the
+//!   fix these mutations 403'd on the login token; after it they succeed, and we
+//!   assert the response-body `outage.status` transitions, not just HTTP 200.
 
 #![allow(dead_code)]
 
@@ -46,7 +58,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{seed_membership, seed_org, TestApp, TestConfig};
+use common::{
+    create_authenticated_user_with_org, seed_membership, seed_org, TestApp, TestConfig, TestUser,
+};
 
 const BASE: &str = "/api/v1/outages";
 
@@ -336,4 +350,93 @@ async fn get_unread_count_succeeds(pool: PgPool) {
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "unread-count: {}", resp.text());
+}
+
+// ---------------------------------------------------------------------------
+// Regression: real login → X-Tenant-ID → mutate (issue #2107)
+//
+// The raw-token fixtures above passed even while production 403'd, because they
+// hand-crafted a JWT carrying the `role` claim the handlers used to trust. These
+// tests instead drive the *real* login flow (`create_authenticated_user_with_org`
+// → register/verify/login + `org_admin` membership); the resulting access token
+// has no `role` claim (`generate_access_token` emits `org_id`/`roles`), so it
+// only authorizes the mutating routes once they derive the manager role from DB
+// membership. They also assert the lifecycle response-body `status` transitions,
+// not merely HTTP 200.
+// ---------------------------------------------------------------------------
+
+/// Read `outage.status` out of an `OutageActionResponse` body.
+fn action_status(resp: &common::TestResponse) -> String {
+    resp.json_value()["outage"]["status"]
+        .as_str()
+        .unwrap_or_else(|| panic!("missing outage.status in body: {}", resp.text()))
+        .to_string()
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_outage_via_real_login_succeeds(pool: PgPool) {
+    // The narrowest regression: before #2107, the production login token
+    // resolved to `Guest` and this create 403'd.
+    let app = TestApp::new(pool).await;
+    let user = TestUser::new();
+    let (token, org_id) =
+        create_authenticated_user_with_org(&app, &user, "outage-login-create").await;
+
+    let id = create_outage(&app, &token, org_id).await;
+    assert!(!id.is_nil());
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn full_lifecycle_via_real_login_transitions_status(pool: PgPool) {
+    let app = TestApp::new(pool).await;
+    let user = TestUser::new();
+    let (token, org_id) =
+        create_authenticated_user_with_org(&app, &user, "outage-login-lifecycle").await;
+
+    // planned → ongoing → resolved on one outage.
+    let id = create_outage(&app, &token, org_id).await;
+
+    let r = app
+        .post(&format!("{BASE}/{id}/start"))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({}))
+        .build();
+    let resp = app.execute(r).await;
+    assert_eq!(resp.status, StatusCode::OK, "start: {}", resp.text());
+    assert_eq!(
+        action_status(&resp),
+        "ongoing",
+        "start should set status=ongoing"
+    );
+
+    let r = app
+        .post(&format!("{BASE}/{id}/resolve"))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({ "resolution_notes": "Service restored" }))
+        .build();
+    let resp = app.execute(r).await;
+    assert_eq!(resp.status, StatusCode::OK, "resolve: {}", resp.text());
+    assert_eq!(
+        action_status(&resp),
+        "resolved",
+        "resolve should set status=resolved"
+    );
+
+    // planned → cancelled on a second outage.
+    let id2 = create_outage(&app, &token, org_id).await;
+    let r = app
+        .post(&format!("{BASE}/{id2}/cancel"))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({ "reason": "Supplier rescheduled" }))
+        .build();
+    let resp = app.execute(r).await;
+    assert_eq!(resp.status, StatusCode::OK, "cancel: {}", resp.text());
+    assert_eq!(
+        action_status(&resp),
+        "cancelled",
+        "cancel should set status=cancelled"
+    );
 }
