@@ -918,7 +918,10 @@ mod tests {
         // The two distinct `Option<Decimal>` figures must not be swapped.
         assert_eq!(export.total_expenses, Some(Decimal::new(300, 0)));
         assert_eq!(export.total_payables, Some(Decimal::new(400, 0)));
-        assert_eq!(export.download_url.as_deref(), Some("https://example.test/dl"));
+        assert_eq!(
+            export.download_url.as_deref(),
+            Some("https://example.test/dl")
+        );
         assert_eq!(export.export_data, Some(serde_json::json!({"k": "v"})));
         assert_eq!(export.generated_at, generated_at);
         // All monetary fields present -> honest complete export.
