@@ -43,7 +43,11 @@ pub struct MessagingRepository {
 ///
 /// Hoisted into a `const` so a non-DB unit test can pin the #1771 soft-delete
 /// exclusion (`tps.deleted_at IS NULL`) on the normal CI gate without a live
-/// Postgres pool (the DB-backed regression test is quarantined under BIT-351).
+/// Postgres pool. This is a fast non-DB guard that complements — it does not
+/// replace — the DB-backed regression test
+/// (`soft_deleted_thread_excluded_from_unread_count`), which was un-quarantined
+/// in PR #2097 (formerly `#[ignore]`d under BIT-351) and now runs on the CI
+/// Postgres gate.
 const COUNT_UNREAD_SQL: &str = r#"
             SELECT COUNT(*)
             FROM messages m
@@ -619,9 +623,11 @@ impl MessagingRepository {
     /// the per-participant soft-delete exclusion lives — `tps.deleted_at IS NULL`
     /// is inline in the query below, so threads a user soft-deleted ("delete for
     /// me") no longer keep their global unread badge stuck non-zero. The query
-    /// SQL is hoisted into [`COUNT_UNREAD_SQL`] so a non-DB unit test can pin that
-    /// predicate on the normal CI gate (the DB-backed regression test is
-    /// quarantined under BIT-351).
+    /// SQL is hoisted into [`COUNT_UNREAD_SQL`] so a fast non-DB unit test can pin
+    /// that predicate on the normal CI gate; the DB-backed regression test
+    /// (`soft_deleted_thread_excluded_from_unread_count`) was un-quarantined in
+    /// PR #2097 (formerly `#[ignore]`d under BIT-351) and now runs on the CI
+    /// Postgres gate.
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -1326,11 +1332,12 @@ mod tests {
     /// Non-DB guard for the #1771 fix (PR #1993): the unread-count query must
     /// exclude threads a user soft-deleted ("delete for me") via the
     /// per-participant `tps.deleted_at IS NULL` predicate on the
-    /// `thread_participant_state` join. The DB-backed regression test
-    /// (`soft_deleted_thread_excluded_from_unread_count`) is `#[ignore]`d under
-    /// the BIT-351 quarantine, so this plain `#[test]` — mirroring the
-    /// catalog-metadata guard style — is the executing guard on the normal CI
-    /// gate. It runs without a live Postgres pool.
+    /// `thread_participant_state` join. This plain `#[test]` — mirroring the
+    /// catalog-metadata guard style — is a fast guard that runs on the normal CI
+    /// gate without a live Postgres pool. It complements the DB-backed regression
+    /// test (`soft_deleted_thread_excluded_from_unread_count`), which was
+    /// un-quarantined in PR #2097 (formerly `#[ignore]`d under BIT-351) and now
+    /// runs on the CI Postgres gate.
     ///
     /// Hardened per #2052 beyond a raw substring match so two real regressions
     /// no longer slip past green:
