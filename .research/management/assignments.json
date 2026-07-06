@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-06T08:10:37Z",
+  "generated": "2026-07-06T10:08:35Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -74,7 +74,7 @@
       "branch": "auto-impl/gh-issue-2107-73a63d22",
       "status": "review",
       "claimed_at": "2026-07-06T02:14:10Z",
-      "last_updated": "2026-07-06T08:10:37Z",
+      "last_updated": "2026-07-06T10:08:35Z",
       "status_changed_at": "2026-07-06T06:25:19Z",
       "pr_number": 2120,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2120",
@@ -89,7 +89,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-06T10:08:35Z"
     }
   ]
 }
