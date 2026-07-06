@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -14,7 +14,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/\u221228 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -25,7 +25,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -36,7 +36,7 @@
     },
     {
       "id": "80-2-dispute-filing-flow",
-      "action": "Coverage gap [mvp]: Dispute Filing Flow — verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
+      "action": "Coverage gap [mvp]: Dispute Filing Flow \u2014 verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -47,7 +47,7 @@
     },
     {
       "id": "79-3-error-handling-toasts",
-      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications \u2014 verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -58,7 +58,7 @@
     },
     {
       "id": "83-3-portal-webhooks",
-      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
+      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks \u2014 verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -103,7 +103,7 @@
     },
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -144,7 +144,7 @@
       "action": "Follow-up: outages happy-path tests bypass real login/authz via fabricated JWT (JWT-role vs DB-role mismatch) (PR #1979) (Closes #2107)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2107)",
       "deadline": null,
       "dependency": null,
@@ -157,7 +157,384 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-06T00:00:00Z",
+      "resolved_by": "PR #2120 (merged 2026-07-06)"
+    },
+    {
+      "id": "pm-scrum-master-reconcile-sprint-status-vs-coverage",
+      "action": "Reconcile sprint-status.yaml against coverage.json: flip epic-10a (10a-1/2/3), epic-10b, 7a-3, 7a-4 to done with evidence citations",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-confirm-481-487-closure",
+      "action": "Confirm closure status of test-hardening batch issues #481 (OAuth refresh-token revocation bypass, RFC 9700) and #487 (MFA rate-limit test gap) \u2014 both still gate 10a-1/10a-3 in sprint-status.yaml",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-fix-7a-2-ci-red-1316",
+      "action": "Fix CI red on document_folder_tests (PR #1316) blocking 7a-2-folder-organization promotion from review to done",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-unblock-pr-1797-review",
+      "action": "Get reviewer assigned to draft PR #1797 (auth on OCR endpoints + manager-gate rental guest PII) \u2014 13 days stale with no gate tracking it",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-close-484-serial-dispatch",
+      "action": "Close #484 (serial dispatch_to_users + FCM stub swallowing failures) to fully clear 8a-3-notification-preference-sync from partial",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-implement-post-reports-schedules",
+      "action": "Implement missing POST /reports/schedules create route (81-1-report-schedule-editing gap: \"Create new schedule\" unimplemented)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-migrate-jwt-role-mutation-gates",
+      "action": "Migrate all tenant.role.is_manager() mutation/override gates in backend/servers/api-server/src/routes/documents/{core,folders,shares,versions}.rs, announcements/{comments,engagement,lifecycle,crud,ai_draft,stats}.rs, templates.rs, granular_notifications.rs to DB-validated role (ValidatedTenantExtractor/RlsConnection.role()), mirroring PR #2120",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-escalate-pr-1797-ocr-pii",
+      "action": "Escalate stalled draft PR #1797 (missing auth on OCR endpoints + missing manager-gate on rental guest PII) \u2014 merge or feature-flag off",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-verify-codeowners-branch-protection",
+      "action": "Verify dev branch protection actually enforces \"Require review from Code Owners\" so the new backend/deny.toml CODEOWNERS gate (PR #2111) is a real, not advisory, control",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-ci-lint-jwt-role-mutation-pattern",
+      "action": "Add a CI lint that flags a route handler holding both TenantExtractor and a mutating verb gated on .role.is_manager() without an accompanying RLS-derived role, to stop the JWT-role pattern reappearing",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-add-second-codeowner-supply-chain",
+      "action": "Add a second reviewer/team to the /backend/deny.toml, Cargo.toml, Cargo.lock CODEOWNERS lines currently owned solely by @martin-janci",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-verify-assign-fault-caller-migration",
+      "action": "Confirm assign_fault recipient-guard extraction (#2095) left no un-migrated caller of the old inline self-exclusion/dedup logic",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "gap-7a-3-permission-based-access",
+      "action": "Coverage gap [mvp]: Permission-Based Document Access \u2014 reconcile stale sprint-status; confirm frontend permission UI (authz-sensitive)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-7a-5-document-sharing",
+      "action": "Coverage gap [mvp]: Document Sharing \u2014 confirm web share-panel UUID validation + confirm-dialog parity with mobile fix (PR #2003); resolve #485",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview",
+      "action": "Coverage gap [mvp]: Document Download & Preview \u2014 reconcile stale sprint-status; finish planned preview second frame",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-85-1-environment-variables-doc",
+      "action": "Coverage gap [mvp]: Environment Variable Setup \u2014 RN/iOS env config implemented (Expo app.config.ts) but story doc still in-progress + env-setup .md missing (PR #1385)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-82-5-inquiries-account-native",
+      "action": "Coverage gap [phase4]: Inquiries and Account \u2014 build Android/KMP Compose inquiry thread + calendar; replace stub Account Profile/Settings Text destinations with real screens",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-epic-8a-notification-settings-page-screen",
+      "action": "Screen-map drift: Add screen-map for epic-8a NotificationSettingsPage ppt-web settings sub-page (real page exists per 8a-1 Task 5.1, no screen-map)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-epic-85-mobile-build-pipeline-screens",
+      "action": "Screen-map drift: Add screen-map(s) for orphan epic epic-85 (mobile env/build docs / EAS pipeline surface)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-uc-10-link-screen-map",
+      "action": "Screen-map drift: Link UC-10 to a screen-map (currently orphaned use-case)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-uc-29-link-screen-map",
+      "action": "Screen-map drift: Link UC-29 to a screen-map (currently orphaned use-case; 81-1 reports mismatch)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-uc-33-link-screen-map",
+      "action": "Screen-map drift: Link UC-33 to a screen-map (currently orphaned use-case; 80 disputes UC mismatch)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-uc-40-link-screen-map",
+      "action": "Screen-map drift: Link UC-40 to a screen-map (currently orphaned use-case)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-screen-map-epics-frontmatter-backfill",
+      "action": "Screen-map drift: Backfill frontmatter `epics:` field across ~120 screen-maps (0 currently populated) to enable epic\u2192screen linkage and eliminate the false-orphan cluster of 29 screens",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-reconcile-orphan-screen-cluster-ppt",
+      "action": "Screen-map drift: Reconcile or remove ppt/ orphan-screen cluster (article-detail, emergency-contacts, faults-list, news, report-fault, vote-create, vote-detail, voting) \u2014 likely UC/epic tag misses",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-reconcile-orphan-screen-cluster-reality",
+      "action": "Screen-map drift: Reconcile or remove reality/ orphan-screen cluster (about, agency-branding, agency-dashboard, agency-profile, agent-profile, careers, compare-properties, contact, for-agents, help, inquiries, journal, listing-edit, price-map, saved-searches, sell)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-reconcile-orphan-screen-cluster-reality-mobile",
+      "action": "Screen-map drift: Reconcile or remove reality-mobile/ orphan-screen cluster (agencies, auth-login, compare-listings, realtors, saved-searches)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-79-2-authentication-flow-e2e-verify",
+      "action": "Coverage upkeep [mvp]: Verify 79-2 authentication-flow e2e (auth-refresh.spec.ts) with pm-security SSO/JWT/cookie sign-off \u2014 churn hotspot repeatedly",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-10a-oauth-security-test-suite",
+      "action": "Coverage risk [mvp]: OAuth 10a stories shipped without introspection/refresh-rotation/PKCE security tests \u2014 refactor could silently reintroduce revoked-token acceptance (mirrors risks.json pm-security-oauth-10a-untested-security-contract)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-audit-hash-debug-format-p1-04",
+      "action": "Coverage risk [mvp]: Replace {:?} with Display/structured fields on internal types that reach audit-trail log lines (residual P1-04 from PR #435)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-record-payment-concurrent-double-write",
+      "action": "Coverage risk [mvp]: record_payment handler does check-then-insert without serializable isolation or unique-constraint guard (#1361) \u2014 concurrent retries can double-write",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-cron-validator-drift-regression-test",
+      "action": "Coverage risk [phase2]: Pin fixture-based test for cron validator to prevent regression #616 (Epic 81 promotion blocker)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-esignature-webhook-idempotency",
+      "action": "Coverage risk [phase3]: e-signature webhook status writes have no idempotency guard \u2014 provider re-delivering completed/voided event can overwrite terminal state",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
+    },
+    {
+      "id": "gap-push-fanout-blpop-drain",
+      "action": "Coverage risk [mvp]: Redis push-fanout queue (push_fanout.rs:621) is never drained (BLPOP deferred) \u2014 jobs enqueued to push_fanout_queue silently dropped while 8A notification stories marked done",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-07-06"
     }
-  ]
+  ],
+  "generated": "2026-07-06T00:00:00Z"
 }

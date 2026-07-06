@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-05T03:10:00Z",
+  "last_run_iso": "2026-07-06T10:20:00Z",
   "last_run_ms": 4321,
-  "last_pr_seen": 2093,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "7e09d77d",
+  "last_pr_seen": 2120,
+  "last_issue_seen": 2110,
+  "last_commit_sha": "e6b5093",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -331,6 +331,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-05",
       "recent_churn": 11
+    },
+    "backend/crates/db/src/repositories/rental/oauth.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-06",
+      "recent_churn": 594
+    },
+    "backend/crates/db/src/models/multi_currency.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-06",
+      "recent_churn": 532
+    },
+    "backend/crates/db/src/repositories/rental/bookings.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-06",
+      "recent_churn": 527
     }
   },
   "seen_signals": [
@@ -566,7 +581,17 @@
     "stalled-review-pr-1179",
     "lag-warning-2026-07-05",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
-    "churn-hotspot-backend-crates-db-src-repositories-rental-rs"
+    "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+    "churn-hotspot-backend/crates/db/src/repositories/rental/oauth.rs",
+    "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+    "churn-hotspot-backend/crates/db/src/repositories/rental/bookings.rs",
+    "stalled-review-pr-1797",
+    "stalled-review-pr-1812",
+    "dep-update-noise-pr-2020",
+    "dep-update-noise-pr-2014",
+    "code-review-ppt-web-core-api-client-unconfigured",
+    "code-review-ppt-web-core-perf-metrics-listener-leak",
+    "code-review-ppt-web-core-usewebsocket-late-handler"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -574,15 +599,15 @@
     "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
-    "ppt-web-core": "2026-06-05",
+    "ppt-web-core": "2026-07-06",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 41,
-    "vectors_created": 175,
-    "plans_created": 12,
+    "runs": 42,
+    "vectors_created": 183,
+    "plans_created": 13,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
@@ -597,19 +622,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-07-06",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

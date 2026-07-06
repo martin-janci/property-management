@@ -1,0 +1,232 @@
+{
+  "generated": "2026-07-06T10:20:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/repositories/rental/oauth.rs \u2014 594 lines churned this run (new post-split module from PR #2100; carries gap-83-1 sqlx-macro TODO)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/models/multi_currency.rs \u2014 532 lines churned this run"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/bookings.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/repositories/rental/bookings.rs \u2014 527 lines churned this run (new post-split module from PR #2100)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads) \u2014 13 days open, no reviewDecision (draft)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #1812 (churn-hotspot reality_portal repository split) \u2014 12 days open, no reviewDecision (draft, label=needs-human-review)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: rust_xlsxwriter 0.95.0 \u2192 0.96.0 (backend)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: axum-test 20.1.0 \u2192 21.0.0 (backend, axum group)"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-client-unconfigured",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review of ppt-web-core segment (commit e6b5093)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:258 \u2014 configureApiClient({ getToken, onUnauthorized }) only called in api.test.tsx; never wired in main.tsx or AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:35 \u2014 production hook uses getApiClient() with undefined tokenGetter \u2192 401 on every sentiment endpoint",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:33 \u2014 same pattern",
+        "frontend/apps/ppt-web/src/main.tsx \u2014 bootstrap wires only the generated @ppt/api-client; axios stack in lib/api.ts is unwired"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-listener-leak",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review of ppt-web-core segment",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142 \u2014 'load' listener registered inside effect; cleanup only disconnects PerformanceObservers, load handler never removed",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:153 \u2014 visibilitychange inline handler with same issue",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:165 \u2014 effect deps [onReport, reportOnUnload]; unmemoized onReport re-runs effect per render \u2192 adds two more listeners each time"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-late-handler",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 static review of ppt-web-core segment",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 \u2014 effect early-returns when handlerRef.current is undefined; deps [eventType, subscribe] omit handler identity \u2192 caller with handler=undefined first never re-subscribes",
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:79 \u2014 handlerRef mutated per render but effect body reads it once at run time"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "1 new plan; all sections present; Mode: cloud-ok; 4/4 files resolve",
+      "expected": "\u22642 new plans meeting all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md matches regeneration",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "'Phases that failed: none'",
+      "expected": "honest phase log"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "prior plans present",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count 7 (=prev 7)",
+      "expected": "\u2265 prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md matches regeneration",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty",
+      "expected": "\u2264 per-run caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "PM=5\u21926, CC=12\u21920, epics=13; project-state.md non-empty",
+      "expected": "management artifacts valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

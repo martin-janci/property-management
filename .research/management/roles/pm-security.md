@@ -1,62 +1,33 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-07-06
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+**Summary.** PR #2120 fixed the outages.rs JWT-role-vs-DB-role authz bug, but the same root cause (`TenantExtractor.role` always resolves to Guest because the login flow never populates `AuthUser.role`) still gates manager-only mutations/overrides in ~9 other route files across Documents, Announcements, Templates, and Granular Notifications — all shipped as "done" this sprint. Separately, PII-exposing OCR draft PR #1797 remains unmerged after 13 days.
 
-## Summary
+## Next actions
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+| Priority | Action | Owner dep | DoD |
+|---|---|---|---|
+| high | Migrate all `tenant.role.is_manager()` mutation/override gates in `routes/documents/{core,folders,shares,versions}.rs`, `announcements/{comments,engagement,lifecycle,crud,ai_draft,stats}.rs`, `templates.rs`, `granular_notifications.rs` to DB-validated role (`ValidatedTenantExtractor` / `RlsConnection.role()`), mirroring PR #2120 | pm-backend | All listed manager-gated handlers read role from RLS-validated org membership, not the JWT claim; regression tests drive real login flow per PR #1979 |
+| high | Escalate stalled draft PR #1797 (missing auth on OCR endpoints + missing manager-gate on rental guest PII) | pm-scrum-master | PR merged, or endpoint feature-flagged off / manager-gated in production until merge |
+| medium | Verify `dev` branch protection actually enforces "Require review from Code Owners" so the new `backend/deny.toml` CODEOWNERS gate (PR #2111) is a real, not advisory, control | pm-devops | `gh api repos/.../branches/dev/protection` confirms CODEOWNERS review is a required check |
+| medium | Add a CI lint that flags a route handler holding both `TenantExtractor` and a mutating verb gated on `.role.is_manager()` without an accompanying RLS-derived role | pm-tech-lead | Lint/clippy rule merged and passing on dev |
+| low | Add a second reviewer/team to the `/backend/deny.toml`, `Cargo.toml`, `Cargo.lock` CODEOWNERS lines currently owned solely by @martin-janci | pm-devops | CODEOWNERS entry lists ≥2 reviewers/team for supply-chain-critical files |
+| low | Confirm `assign_fault` recipient-guard extraction (#2095) left no un-migrated caller of the old inline logic | pm-qa | `faults.rs` recipient_policy_tests + existing fault-notification tests green; no divergent inline copy remains |
 
-## next_actions
+## Risks
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high/high]** `TenantExtractor.role` defaults to Guest for every request; fixed only in outages.rs, still gates manager-only mutations/overrides across documents/announcements/templates/granular_notifications — features marked "done" this sprint (Epic 6, 7A) likely fail closed for real managers in production.
+- **[high/high]** Draft PR #1797 (auth on OCR endpoints + manager-gate on rental guest PII) has sat unmerged 13+ days, leaving a live PII exposure vector.
+- **[medium/high]** `backend/deny.toml` CODEOWNERS gate (PR #2111) is only effective if "Require review from Code Owners" is enabled on dev branch protection — unverifiable in-repo.
+- **[low/medium]** Single-owner (@martin-janci) CODEOWNERS on Cargo.toml/Cargo.lock/deny.toml creates a bus-factor risk for supply-chain review.
 
-## risks
+## Open questions
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- Is "Require review from Code Owners" actually enabled on `dev` branch protection?
+- What is the specific blocker on draft PR #1797 — technical rework or review-queue backlog?
+- Do Epic 6/7A stories currently marked `done` need re-verification given the same JWT-role-vs-DB-role bug class likely affects their manager-only mutation paths?
+- Are there other extractors/services outside `servers/api-server/src/routes` (reality-server, mobile-native BFF calls) that assume `TenantExtractor.role` is populated?
 
-## open_questions
+## Decisions needed
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
-
-## decisions_needed
-
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Fast-track merge vs. temporary production disable/gate for #1797's OCR/rental-guest-PII exposure — owner: pm-security / pm-scrum-master
+- Schedule a dedicated remediation pass for the JWT-role-vs-DB-role mutation-gate class across documents/announcements/templates/notifications (single tracked issue vs. per-file follow-ups) — owner: pm-tech-lead
