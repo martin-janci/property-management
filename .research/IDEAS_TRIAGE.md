@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-07-05 03:10 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-06 14:07 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,12 +8,12 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
-| 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061, #1061 closed | 2026-06-07 | done |
-| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks stagi | #950, PR #1143, issue #950 closed | 2026-06-07 | done |
-| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on r | #952, PR #1144, issue #952 closed | 2026-06-07 | done |
-| 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769, PR #1141, issue #769 closed | 2026-06-07 | done |
-| 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildin | #789, PR #1142, issue #789 closed | 2026-06-07 | done |
-| 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749, issue #749 closed | 2026-06-06 | done |
+| 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev bra… | Issue #1061, #1061 closed | 2026-06-07 | done |
+| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and b… | #950, PR #1143 | 2026-06-07 | done |
+| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callbac… | #952, PR #1144 | 2026-06-07 | done |
+| 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769, PR #1141 | 2026-06-07 | done |
+| 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, or… | #789, PR #1142 | 2026-06-07 | done |
+| 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and t… | #749, issue #749 closed | 2026-06-06 | done |
 | 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755, issue #755 closed | 2026-06-06 | done |
 | 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764, issue #764 closed | 2026-06-06 | done |
 | 1 | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | #765, issue #765 closed | 2026-06-06 | done |
@@ -24,7 +24,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries | #763, #935 | 2026-06-02 | done |
 | 1 | Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app | #767, #943 | 2026-06-02 | done |
 | 1 | Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B) | #768, #930 | 2026-06-02 | done |
-| 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | #920, #944 | 2026-06-02 | done |
+| 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disc… | #920, #944 | 2026-06-02 | done |
 | 1 | Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings | #750, PR #922 | 2026-06-01 | done |
 | 1 | Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication | #753 | 2026-06-01 | done |
 | 1 | Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management | #754, PR #914 | 2026-06-01 | done |
@@ -40,26 +40,26 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime | #775, PR #926 | 2026-06-01 | done |
 | 1 | Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log | #776 | 2026-06-01 | done |
 | 1 | Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR | #777 | 2026-06-01 | done |
-| 1 | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonatio | #778, PR #882 | 2026-06-01 | done |
+| 1 | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, i… | #778, PR #882 | 2026-06-01 | done |
 | 1 | Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces | #788, PR #922 | 2026-06-01 | done |
-| 1 | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware | #790, PR #913 | 2026-06-01 | done |
-| 1 | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves | #791, PR #924 | 2026-06-01 | done |
+| 1 | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, m… | #790, PR #913 | 2026-06-01 | done |
+| 1 | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, re… | #791, PR #924 | 2026-06-01 | done |
 | 1 | Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev) | #846, PR #880 | 2026-06-01 | done |
-| 1 | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev | #847 | 2026-06-01 | done |
-| 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenan | #848, PR #913 | 2026-06-01 | done |
-| 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violati | #850, PR #883 | 2026-06-01 | done |
-| 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API st | #851, PR #904 | 2026-06-01 | done |
-| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust Stri | #859, PR #871 | 2026-06-01 | done |
-| 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — route | #867, PR #870 | 2026-06-01 | done |
-| 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | #836, PR #866 | 2026-05-31 | done |
-| 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | #845, PR #862 | 2026-05-31 | done |
-| 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | #849, PR #869 | 2026-05-31 | done |
-| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work  | #1151 | 2026-07-05 | dropped |
+| 1 | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) … | #847 | 2026-06-01 | done |
+| 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictiv… | #848, PR #913 | 2026-06-01 | done |
+| 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residen… | #850, PR #883 | 2026-06-01 | done |
+| 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Devel… | #851, PR #904 | 2026-06-01 | done |
+| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns int… | #859, PR #871 | 2026-06-01 | done |
+| 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_rou… | #867, PR #870 | 2026-06-01 | done |
+| 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration … | #836, PR #866 | 2026-05-31 | done |
+| 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds… | #845, PR #862 | 2026-05-31 | done |
+| 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Boar… | #849, PR #869 | 2026-05-31 | done |
+| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true clai… | #1151 | 2026-07-05 | dropped |
 | 0 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-07-05 | dropped |
-| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK | #951 | 2026-07-05 | dropped |
-| 0 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backen | #1331 | 2026-07-05 | dropped |
-| 0 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconf | issue #1380 | 2026-07-05 | dropped |
-| 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
+| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ES… | #951 | 2026-07-05 | dropped |
+| 0 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the en… | #1331 | 2026-07-05 | dropped |
+| 0 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpo… | issue #1380 | 2026-07-05 | dropped |
+| 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/de… | #779 | 2026-06-13 | dropped |
 
 ## Status legend
 

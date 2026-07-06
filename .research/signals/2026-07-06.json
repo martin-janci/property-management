@@ -1,0 +1,252 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-05T03:10:00Z --numstat -- backend/crates/db/src/repositories/rental.rs",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "+/- 5866 lines in top-3 raw churn this run; already tracked as cumulative signal (runs_seen was 1 \u2192 2)",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-05T03:10:00Z --numstat -- backend/crates/integrations/src/booking/mod.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "+/- 2818 lines in top-3 raw churn this run; NEW hotspot (prior booking.rs is dropped; now in submodule dir)",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-05T03:10:00Z --numstat -- backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "+/- 2719 lines in top-3 raw churn this run; already tracked (runs_seen was 2 \u2192 3)",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history[oauth_integration_tests.rs].runs_seen == 2",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "3rd sighting as top-3 churn; instability proxy for test churn on the OAuth integration suite",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review \u2014 segment ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "usePerformanceMetrics.ts:153 adds 'visibilitychange'/'load' window listeners inside a useEffect but cleanup only calls observer.disconnect(); re-runs leak listeners with stale onReport closures",
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-tokens-in-localstorage",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review \u2014 segment ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "AuthContext.tsx:96 persists ppt_access_token/ppt_refresh_token in localStorage; long-lived bearer creds accessible to any XSS in ppt-web (comment acknowledges 'MVP, httpOnly cookies later')",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-focustrap-stale-onescape",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review \u2014 segment ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "useFocusTrap.ts:40 useEffect deps=[] with biome-ignore closes over onEscape captured at mount; inline arrow callers get frozen first-mount behavior when their state changes",
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useFocusTrap.ts"
+      ]
+    },
+    {
+      "id": "code-review-security-jwt-role-vs-db-role-mismatch-mutating-handlers",
+      "type": "code-review-finding",
+      "source": "Phase 1.6 pm-security rotation lens (rotation last run 2026-05-27)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "PR #2120 fixed only outages.rs; identical `tenant.role.is_manager()` (JWT-role, always Guest in prod) still gates ~22 mutating handlers across documents/{core,folders,versions,shares}.rs, announcements/{crud,lifecycle,engagement,stats,comments,ai_draft}.rs, templates.rs, granular_notifications.rs \u2014 real managers fail-closed to 403 on sprint-critical Epic 6/7A endpoints",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/core.rs",
+        "backend/servers/api-server/src/routes/documents/folders.rs",
+        "backend/servers/api-server/src/routes/documents/versions.rs",
+        "backend/servers/api-server/src/routes/documents/shares.rs",
+        "backend/servers/api-server/src/routes/announcements/crud.rs",
+        "backend/servers/api-server/src/routes/announcements/lifecycle.rs",
+        "backend/servers/api-server/src/routes/announcements/engagement.rs",
+        "backend/servers/api-server/src/routes/announcements/stats.rs",
+        "backend/servers/api-server/src/routes/announcements/comments.rs",
+        "backend/servers/api-server/src/routes/announcements/ai_draft.rs",
+        "backend/servers/api-server/src/routes/templates.rs",
+        "backend/servers/api-server/src/routes/granular_notifications.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2020-rust-xlsxwriter",
+      "type": "dep-update-noise",
+      "source": "PR #2020 chore(deps): bump rust_xlsxwriter 0.95.0 \u2192 0.96.0",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot cargo minor bump; auto-merged after CI green \u2014 informational only"
+    },
+    {
+      "id": "dep-update-noise-pr-2014-axum-test-group",
+      "type": "dep-update-noise",
+      "source": "PR #2014 chore(deps): bump axum-test group",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot cargo group bump; auto-merged after CI green \u2014 informational only"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-06.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation",
+      "observed": "both plans annotated",
+      "expected": "both"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; metadata+headings+files",
+      "observed": "2 plans OK",
+      "expected": "\u22642 OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostname scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase honesty",
+      "observed": "none failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7\u22657",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE byte identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps",
+      "observed": "0 actions",
+      "expected": "caps OK"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + GC7",
+      "observed": "artifacts valid, pm_cursor=6, coverage_cursor advanced 12\u21920",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal matched Phase 5 allowlist (drift/orphan/fixme/lockfile-drift/stalled-review)"
+}
