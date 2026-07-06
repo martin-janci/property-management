@@ -1,0 +1,183 @@
+{
+  "date": "2026-07-06",
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-06.md && head -1 matches '# 2026-07-06'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced (last_pr_seen 2093->2114, last_issue_seen 2087->2110, last_commit_sha updated, 5 new seen_signals)",
+      "observed": "advanced",
+      "expected": "advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in prior seen_signals with non-cumulative type and non-zero score_delta re-emit",
+      "observed": "all 5 new signals absent from prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap\u22648 + decay for updated_at<=today-14 on open items",
+      "observed": "no scores >8; all open items updated_at \u2264 2026-07-05 (within 14d window)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plans/<slug>.md has adversarial pass annotation",
+      "observed": "no new plans this run",
+      "expected": "no plans \u2192 vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; metadata + headings intact",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only contains only .research/ paths",
+      "observed": "only .research/ writes staged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged diff",
+      "observed": "no matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches backlog.json regen byte-identical",
+      "observed": "regenerated fresh from backlog.json this run",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed; no cursor left unadvanced",
+      "observed": "all phases completed (1.6 delegated but marked skipped; pm_cursor deliberately not advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan appears in plans/ or plans/_archive/",
+      "observed": "9 active plans + 6 archived; no plan deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive count this run \u2265 HEAD count",
+      "observed": "6 archived (no new archives this run)",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches backlog.json regen byte-identical",
+      "observed": "regenerated fresh from backlog.json this run",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline: 0 actions, no signal in auto_fix_history re-processed",
+      "observed": "auto_fix_actions=[]; kill switch not set; no candidate met bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped \u2192 no-op)",
+      "observed": "Phase 1.6 skipped; pm_cursor.next_index=5 unchanged; check is no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token in staged diff",
+      "observed": "no matches",
+      "expected": "exit 0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-reconnect-race",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-06 (segment=ppt-web-core)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:292 \u2014 connect() early-returns only when readyState===OPEN; a CONNECTING/CLOSING socket is overwritten at :314 without close(), leaking the old socket while its onopen/onclose/onmessage handlers keep driving service state",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:250-256 \u2014 service.connect() runs on every auth.accessToken change with no prior disconnect(), making the race reachable on token refresh"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-06 (segment=ppt-web-core)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:281 \u2014 `export default getApiClient()` builds a singleton axios instance at module load, before configureApiClient() runs; the pre-config instance has no token getter or 401 handler, so any future default-imported apiClient bypasses auth"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-error-msgs-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-06 (segment=ppt-web-core)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-133 \u2014 ERROR_MESSAGES holds 24 hardcoded English titles/messages returned verbatim by parseApiError; no t()/react-i18next indirection despite the app shell shipping react-i18next 16"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump rust_xlsxwriter from 0.95.0 to 0.96.0 in /backend \u2014 dependabot"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump axum-test in /backend in the axum group \u2014 dependabot"
+      ]
+    }
+  ]
+}

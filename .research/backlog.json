@@ -4065,18 +4065,82 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: rental.rs split into rental/ modules (PR #2100 merged 2026-07-05)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-reconnect-race",
+      "title": "close superseded WebSocket before overwriting on reconnect",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-06"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:292 — connect() early-returns only when readyState===OPEN; a CONNECTING/CLOSING socket is overwritten at :314 without close(), leaking the old socket while its onopen/onclose/onmessage handlers keep driving service state",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:250-256 — service.connect() runs on every auth.accessToken change with no prior disconnect(), making the race reachable on token refresh"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export",
+      "title": "avoid pre-configure default apiClient export in lib/api.ts",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-06"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:281 — `export default getApiClient()` builds a singleton axios instance at module load, before configureApiClient() runs; the pre-config instance has no token getter or 401 handler, so any future default-imported apiClient bypasses auth"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-error-msgs-i18n",
+      "title": "route lib/errorHandler.ts titles/messages through i18n",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-06"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-133 — ERROR_MESSAGES holds 24 hardcoded English titles/messages returned verbatim by parseApiError; no t()/react-i18next indirection despite the app shell shipping react-i18next 16"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]
