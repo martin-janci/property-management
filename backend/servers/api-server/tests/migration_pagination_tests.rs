@@ -167,17 +167,37 @@ async fn seed_buildings_templates(pool: &PgPool, org_id: Uuid, count: i32) -> Ve
     (0..count).rev().map(|i| format!("pg-tpl-{i}")).collect()
 }
 
+/// Shared oracle for Postgres `ORDER BY id DESC`: return `ids` sorted descending.
+///
+/// Postgres compares `uuid` byte-wise big-endian, which matches the derived
+/// `Ord` on `uuid::Uuid`'s `[u8; 16]`, so a Rust descending sort is a faithful
+/// oracle for Postgres `id DESC`. Both tie-break tests in this file
+/// (`identical_updated_at_falls_back_to_deterministic_id_desc` on the strict-org
+/// leg and `include_system_default_tie_group_is_deterministic_id_desc` on the
+/// default leg) route their expected order through this single helper so their
+/// oracles cannot drift apart.
+///
+/// This is the HTTP-layer twin of the repo-layer oracle in
+/// `backend/crates/db/tests/migration_templates_pagination_tests.rs`
+/// (`count_and_pages_are_consistent_and_disjoint`, the `sort_by(|a, b| b.cmp(a))`
+/// block). Both files deliberately assert the same `id DESC` invariant at
+/// different layers — repo SQL vs the `GET /api/v1/migration/templates` route —
+/// so the HTTP straddling-slice coverage here is intentional, not a duplicate.
+/// If you change the `id DESC` contract, update both oracles together.
+fn expected_id_desc(mut ids: Vec<Uuid>) -> Vec<Uuid> {
+    ids.sort_unstable();
+    ids.reverse();
+    ids
+}
+
 /// Insert `count` custom `buildings` templates for `org_id` that all share an
 /// identical `updated_at`, collapsing the leading `ORDER BY updated_at DESC`
 /// key into a single tie for every row. That makes the `id DESC` sub-sort the
 /// *only* thing that decides order — the exact instability the 00212 index +
 /// the `id DESC` ORDER BY key exist to pin (#2051 / #1997 / #2080).
 ///
-/// Returns the inserted ids sorted DESC — the exact order
-/// `ORDER BY updated_at DESC, id DESC` must produce for a single tie group.
-/// Postgres compares `uuid` byte-wise big-endian, which matches the derived
-/// `Ord` on `uuid::Uuid`'s `[u8; 16]`, so a Rust descending sort is a faithful
-/// oracle for Postgres `id DESC`.
+/// Returns the inserted ids sorted DESC (via [`expected_id_desc`]) — the exact
+/// order `ORDER BY updated_at DESC, id DESC` must produce for a single tie group.
 async fn seed_tied_updated_at_templates(pool: &PgPool, org_id: Uuid, count: i32) -> Vec<Uuid> {
     let mut ids = Vec::with_capacity(count as usize);
     for i in 0..count {
@@ -199,9 +219,64 @@ async fn seed_tied_updated_at_templates(pool: &PgPool, org_id: Uuid, count: i32)
         ids.push(id);
     }
 
-    ids.sort_unstable();
-    ids.reverse();
-    ids
+    expected_id_desc(ids)
+}
+
+/// Seed a tie group that STRADDLES both legs of the default `include_system=true`
+/// OR predicate: `org_count` org-scoped rows (`organization_id = org_id`) plus one
+/// system template (`organization_id IS NULL`, `is_system_template = true`), all
+/// sharing a single far-future `updated_at`.
+///
+/// The shared timestamp is pinned in the year 2999 on purpose: migration 00198
+/// seeds three system templates (`organization_id IS NULL`) at migration time, so
+/// their `updated_at` is "now-ish". Placing this tie group far in the future
+/// guarantees it occupies the HEAD of the `updated_at DESC, id DESC` ordering
+/// regardless of how many system templates the schema seeds — the caller can then
+/// assert against a fixed prefix of the list without counting pre-seeded rows.
+///
+/// Returns the inserted ids (org rows + the system row) sorted DESC (via
+/// [`expected_id_desc`]) — the exact order the combined org+system tie group must
+/// produce at the head of the default-leg list.
+async fn seed_tied_org_and_system_templates(
+    pool: &PgPool,
+    org_id: Uuid,
+    org_count: i32,
+) -> Vec<Uuid> {
+    let mut ids = Vec::with_capacity(org_count as usize + 1);
+    for i in 0..org_count {
+        let id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO import_templates
+                   (organization_id, name, description, data_type,
+                    field_mappings, is_system_template, updated_at)
+               VALUES ($1, $2, NULL, 'buildings', '[]'::jsonb, false,
+                       TIMESTAMPTZ '2999-01-01 12:00:00+00')
+               RETURNING id"#,
+        )
+        .bind(org_id)
+        .bind(format!("tie-org-{i}"))
+        .fetch_one(pool)
+        .await
+        .expect("seed tied org template");
+        ids.push(id);
+    }
+
+    // One system template (organization_id IS NULL) sharing the exact instant,
+    // so the tie group spans both legs of the include_system OR.
+    let sys_id: Uuid = sqlx::query_scalar(
+        r#"INSERT INTO import_templates
+               (organization_id, name, description, data_type,
+                field_mappings, is_system_template, updated_at)
+           VALUES (NULL, $1, NULL, 'buildings', '[]'::jsonb, true,
+                   TIMESTAMPTZ '2999-01-01 12:00:00+00')
+           RETURNING id"#,
+    )
+    .bind("tie-system")
+    .fetch_one(pool)
+    .await
+    .expect("seed tied system template");
+    ids.push(sys_id);
+
+    expected_id_desc(ids)
 }
 
 /// `per_page=0` and `per_page=-5` must both clamp up to 1.
@@ -341,5 +416,80 @@ async fn identical_updated_at_falls_back_to_deterministic_id_desc(pool: PgPool) 
         slice,
         vec![ids_desc[2], ids_desc[3]],
         "page-2 slice of a single tie group must be the deterministic id DESC sub-slice"
+    );
+}
+
+/// Sibling of `identical_updated_at_falls_back_to_deterministic_id_desc`, on the
+/// DEFAULT and more common `include_system=true` leg (#2109, follow-up to PR
+/// #2092). The strict-org test only exercises `include_system=false`, whose query
+/// is a single equality on the leading index column and so walks the 00212 index
+/// in order (no top-level sort). The default leg is different: migration 00212's
+/// own comment flags that `WHERE (organization_id = $1 OR organization_id IS NULL)
+/// ORDER BY updated_at DESC, id DESC` resolves via BitmapOr -> Bitmap Heap Scan
+/// (index order discarded) -> a top-level Sort. So on this leg index order does
+/// NOT carry the tie-break — only the explicit `id DESC` ORDER BY key does, and
+/// this is the path real callers hit.
+///
+/// This seeds a tie group that straddles BOTH legs of the OR — org-scoped rows
+/// AND a system template (`organization_id IS NULL`) sharing one `updated_at` —
+/// and asserts the combined group resolves to a strict `id DESC` through the
+/// BitmapOr/Sort, both for the full-list head and for an offset slice cutting
+/// through the group.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn include_system_default_tie_group_is_deterministic_id_desc(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgtiesys").await;
+
+    // Three org rows + one system row, all sharing a far-future updated_at =>
+    // a 4-row tie group guaranteed to sit at the head of the DESC ordering,
+    // ahead of the migration-seeded system templates.
+    let org_count = 3;
+    let head_desc = seed_tied_org_and_system_templates(&pool, org_id, org_count).await;
+    assert_eq!(
+        head_desc.len(),
+        (org_count + 1) as usize,
+        "tie group is org_count org rows + one system row"
+    );
+
+    // (1) Default leg: OMIT include_system entirely so the serde default (true)
+    // is exercised — the exact predicate real callers hit. The list also holds
+    // the migration-seeded system templates, but our tie group is strictly newer,
+    // so it must occupy the first `head_desc.len()` slots in
+    // (updated_at DESC, id DESC) order across the combined org+system group.
+    let uri = "/api/v1/migration/templates?per_page=100";
+    let resp = app.execute(get(&token, org_id, uri)).await;
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
+    let body: ListTemplatesResponse = resp.json();
+    assert!(
+        body.total >= head_desc.len() as i64,
+        "include_system total must cover org rows + all system rows (got {})",
+        body.total
+    );
+    let head: Vec<Uuid> = body
+        .templates
+        .iter()
+        .take(head_desc.len())
+        .map(|t| t.id)
+        .collect();
+    assert_eq!(
+        head, head_desc,
+        "combined org+system tie group must resolve to strict id DESC through the BitmapOr/Sort path"
+    );
+
+    // (2) Offset slice straddling the combined tie group: page=2&per_page=2 =>
+    // offset (2-1)*2 = 2 => the 3rd and 4th ids of the combined DESC order.
+    // Because the whole tie group is newest, this slice lands entirely inside it
+    // and is only stable because the `id DESC` key survives the BitmapOr -> Sort.
+    let uri = "/api/v1/migration/templates?page=2&per_page=2";
+    let resp = app.execute(get(&token, org_id, uri)).await;
+    assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
+    let body: ListTemplatesResponse = resp.json();
+    assert_eq!(body.page, 2);
+    assert_eq!(body.per_page, 2);
+    let slice: Vec<Uuid> = body.templates.iter().map(|t| t.id).collect();
+    assert_eq!(
+        slice,
+        vec![head_desc[2], head_desc[3]],
+        "page-2 slice of the combined org+system tie group must be the deterministic id DESC sub-slice"
     );
 }
