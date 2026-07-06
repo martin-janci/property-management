@@ -1994,6 +1994,26 @@ if [ "$NEW_COMBINED" -lt "$((OLD_COMBINED - 2))" ]; then
   exit 0
 fi
 
+# Action-list archive-move reconcile (issue #1014 / #2102 ROOT-CAUSE fix).
+# Mirror of the assignments split (archive-reconcile.sh keeps assignments.json
+# small): sweep terminal action-list rows (done/dropped) into
+# action-list-archive.json so action-list.json stays well under the 64 KiB MCP
+# inline-push ceiling. An un-swept, bloated action-list.json is exactly what a
+# Phase-6 MCP-push fallback truncates and silently corrupts on dev (#1014). The
+# script is idempotent and combined-count-guarded (see its header) — a no-op on
+# already-clean state, so it is safe to run unconditionally every Phase 6.
+AL_ITEMS_BEFORE=$(jq '.items | length' .research/management/action-list.json 2>/dev/null || echo 0)
+if ! bash .research/action-list-reconcile.sh --apply; then
+  echo "PHASE 6: action-list-reconcile --apply failed (combined-count guard or jq error) — leaving action-list.json untouched and continuing; T26 self-test below will catch any residual terminal bloat." >&2
+fi
+AL_ITEMS_AFTER=$(jq '.items | length' .research/management/action-list.json 2>/dev/null || echo 0)
+# Stage the reconciled pair only when rows actually moved (keeps the commit
+# tight — no churn on a clean no-op run).
+if [ "$AL_ITEMS_AFTER" != "$AL_ITEMS_BEFORE" ]; then
+  git add .research/management/action-list.json \
+          .research/management/action-list-archive.json
+fi
+
 git add .research/management/assignments.json \
         .research/management/assignments-archive.json \
         [.research/management/action-list.json if refilled or GC1 cascade closed rows] \
@@ -2053,6 +2073,16 @@ INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (reba
 # fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
 # forces the legacy path for environments where direct push works.
 if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
+  # Backstop (issue #1014 / #2102): before the inline MCP push, hard-check every
+  # STAGED file against the 64 KiB inline-push ceiling. FAIL CLOSED — a blocked
+  # push is recoverable (the next run retries on a fixed base), a silently-
+  # truncated MCP push is not. The structural fix is the action-list reconcile
+  # staged above; this guard is the belt-and-suspenders that catches any file
+  # still oversize (e.g. the reconcile was skipped or failed).
+  if ! PUSH_METHOD=mcp bash .research/mcp-push-size-guard.sh --staged; then
+    echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
+    exit 0
+  fi
   : # land the Phase 6 file delta via mcp__github__push_files onto dev (one commit).
     # A GITHUB_TOKEN/API push does not re-trigger version-bump on its own, which also
     # caps the rapid-bump churn (finding subagent-race-on-dev-push).
