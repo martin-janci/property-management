@@ -10,8 +10,12 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -57,10 +61,14 @@ class ListingDetailViewModelTest {
         )
     }
 
-    /** Repositories that are constructed but never exercised in these toggle tests. */
-    private fun unusedListingRepo(): ListingRepository {
+    /** A ListingRepository whose every request returns [status] with [body]. */
+    private fun listingRepo(status: HttpStatusCode, body: String): ListingRepository {
         val engine = MockEngine {
-            respond(content = ByteReadChannel(""), status = HttpStatusCode.OK)
+            respond(
+                content = ByteReadChannel(body),
+                status = status,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         }
         return ListingRepository(
             baseUrl = "https://example.test",
@@ -68,28 +76,66 @@ class ListingDetailViewModelTest {
         )
     }
 
-    private fun unusedInquiryRepo(): InquiryRepository {
+    /** An InquiryRepository whose every request returns [status] with [body]. */
+    private fun inquiryRepo(status: HttpStatusCode, body: String): InquiryRepository {
         val engine = MockEngine {
-            respond(content = ByteReadChannel(""), status = HttpStatusCode.OK)
+            respond(
+                content = ByteReadChannel(body),
+                status = status,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         }
         return InquiryRepository(
             baseUrl = "https://example.test",
+            sessionToken = "test-token",
             client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
         )
     }
+
+    /** Repositories that are constructed but never exercised in a given test. */
+    private fun unusedListingRepo(): ListingRepository =
+        listingRepo(HttpStatusCode.OK, "")
+
+    private fun unusedInquiryRepo(): InquiryRepository =
+        inquiryRepo(HttpStatusCode.OK, "")
+
+    /**
+     * A minimal-but-valid `ListingDetail` JSON body the repository can decode — only the fields
+     * required by the `ListingDetail` data class plus a couple the render binds.
+     */
+    private val listingBody =
+        """
+        {
+          "id": "lst-1",
+          "title": "Bright 3br with terrace",
+          "description": "A lovely flat in Old Town.",
+          "type": "sale",
+          "category": "apartment",
+          "status": "active",
+          "price": 285000,
+          "area_sqm": 75.0,
+          "address": { "street": "Hlavna 1", "city": "Bratislava",
+            "postal_code": "81101", "country": "SK" },
+          "created_at": "2026-04-26T10:00:00Z",
+          "updated_at": "2026-04-27T09:00:00Z"
+        }
+        """
+            .trimIndent()
 
     private fun viewModel(
         favorites: FavoritesRepository,
         scope: kotlinx.coroutines.CoroutineScope,
         isAuthenticated: Boolean = true,
+        listing: ListingRepository = unusedListingRepo(),
+        inquiry: InquiryRepository = unusedInquiryRepo(),
     ) =
         ListingDetailViewModel(
             listingId = "lst-1",
-            listingRepository = unusedListingRepo(),
-            favoritesRepository = favorites,
-            inquiryRepository = unusedInquiryRepo(),
+            listingRepository = listing,
+            favoritesRepositoryFactory = { favorites },
+            inquiryRepositoryFactory = { inquiry },
             scope = scope,
-            isAuthenticated = isAuthenticated,
+            initialSessionToken = if (isAuthenticated) "test-token" else null,
             errorMapper = { it.message ?: "error" },
         )
 
@@ -172,5 +218,135 @@ class ListingDetailViewModelTest {
             // Only the first toggle took effect; state settled on favorited.
             assertTrue(vm.state.value.isFavorite)
             assertFalse(vm.state.value.isFavoriteLoading)
+        }
+
+    // ─── start(): initial listing load ────────────────────────────────────────
+
+    @Test
+    fun start_loads_listing_and_clears_spinner() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, "{}"),
+                    scope = backgroundScope,
+                    isAuthenticated = false,
+                    listing = listingRepo(HttpStatusCode.OK, listingBody),
+                )
+
+            // Default state is the full-screen spinner until start() resolves.
+            assertTrue(vm.state.value.isLoading)
+            assertNull(vm.state.value.listing)
+
+            vm.start()
+            advanceUntilIdle()
+
+            val listing = assertNotNull(vm.state.value.listing, "listing should be loaded")
+            assertEquals("lst-1", listing.id)
+            assertFalse(vm.state.value.isLoading, "spinner clears once the listing arrives")
+            assertNull(vm.state.value.errorMessage)
+        }
+
+    @Test
+    fun start_maps_error_then_retry_recovers() =
+        runTest(StandardTestDispatcher()) {
+            // A mock backend that 500s first, then is flipped to 200 before retry().
+            var status = HttpStatusCode.InternalServerError
+            var body = """{"error":"boom"}"""
+            val engine = MockEngine {
+                respond(
+                    content = ByteReadChannel(body),
+                    status = status,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            }
+            val repo =
+                ListingRepository(
+                    baseUrl = "https://example.test",
+                    client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
+                )
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, "{}"),
+                    scope = backgroundScope,
+                    isAuthenticated = false,
+                    listing = repo,
+                )
+
+            vm.start()
+            advanceUntilIdle()
+
+            assertNull(vm.state.value.listing, "a failed load leaves no listing")
+            assertNotNull(vm.state.value.errorMessage, "5xx surfaces an error message")
+            assertFalse(vm.state.value.isLoading)
+
+            // Backend recovers → retry() reloads the listing and clears the error.
+            status = HttpStatusCode.OK
+            body = listingBody
+            vm.retry()
+            advanceUntilIdle()
+
+            assertNotNull(vm.state.value.listing, "retry recovers the listing")
+            assertNull(vm.state.value.errorMessage, "error cleared on successful retry")
+            assertFalse(vm.state.value.isLoading)
+        }
+
+    // ─── onSubmitInquiry() ────────────────────────────────────────────────────
+
+    @Test
+    fun submitInquiry_success_emits_event_and_closes_dialog() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, "{}"),
+                    scope = backgroundScope,
+                    inquiry =
+                        inquiryRepo(
+                            HttpStatusCode.Created,
+                            """{"id":"inq-1","listing_id":"lst-1","status":"pending",""" +
+                                """"created_at":"2026-04-26T10:00:00Z"}""",
+                        ),
+                )
+            val events = mutableListOf<ListingDetailEvent>()
+            backgroundScope.launch { vm.events.collect { events += it } }
+
+            vm.onShowInquiryDialog()
+            vm.onSubmitInquiry("Hello", "Jana", "jana@example.test", "+421900000000")
+
+            // Optimistic: the submit spinner is on before the server answers.
+            assertTrue(vm.state.value.isInquirySubmitting)
+
+            advanceUntilIdle()
+
+            assertFalse(vm.state.value.isInquirySubmitting, "spinner clears on success")
+            assertFalse(vm.state.value.showInquiryDialog, "dialog closes on success")
+            assertNull(vm.state.value.inquiryError)
+            assertEquals(
+                listOf<ListingDetailEvent>(ListingDetailEvent.InquirySubmitted),
+                events,
+                "a 201 must emit InquirySubmitted so the UI can navigate",
+            )
+        }
+
+    @Test
+    fun submitInquiry_failure_sets_error_and_keeps_dialog() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, "{}"),
+                    scope = backgroundScope,
+                    inquiry =
+                        inquiryRepo(HttpStatusCode.InternalServerError, """{"error":"boom"}"""),
+                )
+            val events = mutableListOf<ListingDetailEvent>()
+            backgroundScope.launch { vm.events.collect { events += it } }
+
+            vm.onShowInquiryDialog()
+            vm.onSubmitInquiry("Hello", null, null, null)
+            advanceUntilIdle()
+
+            assertNotNull(vm.state.value.inquiryError, "5xx surfaces an inquiry error")
+            assertFalse(vm.state.value.isInquirySubmitting, "spinner clears on failure")
+            assertTrue(vm.state.value.showInquiryDialog, "dialog stays open so the user can retry")
+            assertTrue(events.isEmpty(), "no success event on a failed submit")
         }
 }
