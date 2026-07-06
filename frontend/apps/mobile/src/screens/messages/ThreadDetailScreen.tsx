@@ -1,11 +1,19 @@
 /**
  * ThreadDetailScreen (UC-05.4 / 05.5).
  *
- * Conversation view with a simple compose input. Mock data backs the
- * message list until the messaging API client is wired in.
+ * Conversation view with a compose input.
+ *
+ * Wired to `GET /api/v1/messages/threads/{id}` (returns a
+ * `ThreadDetailResponse { thread, participants, messages, messageCount }`) and
+ * `POST /api/v1/messages/threads/{id}/messages` for sending. The messaging
+ * response structs use `#[serde(rename_all = "camelCase")]`, so the wire format
+ * is camelCase (see `MessageWithSender`, `ParticipantInfo`). `fromMe` is derived
+ * by comparing each message's `sender.id` to the authenticated user id
+ * (`useAuth().user.id`). The response is consumed without a generated client,
+ * so it is validated defensively.
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,9 +24,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-interface Message {
+export interface Message {
   id: string;
   body: string;
   sentAt: string;
@@ -26,29 +36,74 @@ interface Message {
   authorName: string;
 }
 
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: 'm1',
-    body: 'Hi! When can we expect the elevator repair to be finished?',
-    sentAt: '2026-04-22T08:30:00Z',
-    fromMe: true,
-    authorName: 'You',
-  },
-  {
-    id: 'm2',
-    body: 'The technicians are scheduled for Wednesday morning. We expect it to be done by lunchtime.',
-    sentAt: '2026-04-22T09:15:00Z',
-    fromMe: false,
-    authorName: 'Building manager',
-  },
-  {
-    id: 'm3',
-    body: 'Great, thank you for the update!',
-    sentAt: '2026-04-22T09:18:00Z',
-    fromMe: true,
-    authorName: 'You',
-  },
-];
+/** Subset of `ParticipantInfo` (camelCase wire format). */
+interface ApiParticipant {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+/** Subset of `MessageWithSender` (camelCase wire format). */
+interface ApiMessage {
+  id: string;
+  content: string;
+  createdAt: string;
+  sender?: ApiParticipant;
+}
+
+interface ApiThreadDetail {
+  participants?: ApiParticipant[];
+  messages?: ApiMessage[];
+}
+
+function participantName(p: ApiParticipant | undefined): string {
+  if (!p) return '';
+  const full = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+  return full || p.email || '';
+}
+
+/** Derive the conversation title from the thread's other participants. */
+export function threadTitle(detail: ApiThreadDetail | null, fallback: string): string {
+  const people = detail?.participants ?? [];
+  if (people.length === 0) return fallback;
+  const [first, ...rest] = people;
+  const name = participantName(first) || fallback;
+  return rest.length > 0 ? `${name} +${rest.length}` : name;
+}
+
+function isApiMessage(value: unknown): value is ApiMessage {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.id === 'string' && typeof v.content === 'string';
+}
+
+/** Validate the raw `GET .../threads/{id}` body, or null on a bad shape. */
+export function parseThreadDetail(data: unknown): ApiThreadDetail | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const v = data as Record<string, unknown>;
+  return {
+    participants: Array.isArray(v.participants) ? (v.participants as ApiParticipant[]) : [],
+    messages: Array.isArray(v.messages) ? (v.messages as unknown[]).filter(isApiMessage) : [],
+  };
+}
+
+/** Map api-server messages onto UI bubbles, oldest first. `currentUserId`
+ *  drives the `fromMe` flag. Exported for unit testing. */
+export function toUiMessages(detail: ApiThreadDetail | null, currentUserId?: string): Message[] {
+  return (detail?.messages ?? [])
+    .map((m) => {
+      const fromMe = !!currentUserId && m.sender?.id === currentUserId;
+      return {
+        id: m.id,
+        body: m.content,
+        sentAt: m.createdAt,
+        fromMe,
+        authorName: fromMe ? 'You' : participantName(m.sender) || 'Participant',
+      };
+    })
+    .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+}
 
 interface ThreadDetailScreenProps {
   threadId?: string;
@@ -57,26 +112,44 @@ interface ThreadDetailScreenProps {
 }
 
 export function ThreadDetailScreen({
-  participantName = 'Building manager',
+  threadId,
+  participantName: participantNameProp = 'Conversation',
   onBack,
 }: ThreadDetailScreenProps) {
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const { user } = useAuth();
   const [draft, setDraft] = useState('');
+
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
+    ['messages', 'thread', threadId],
+    `/api/v1/messages/threads/${threadId ?? ''}`,
+    { staleTime: 15_000, enabled: !!threadId }
+  );
+
+  const sendMessage = useApiMutation<unknown, { content: string }>(
+    `/api/v1/messages/threads/${threadId ?? ''}/messages`,
+    'POST'
+  );
+
+  const detail = parseThreadDetail(data);
+  const messages = toUiMessages(detail, user?.id);
+  const title = threadTitle(detail, participantNameProp);
+
+  const onRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const handleSend = () => {
     const trimmed = draft.trim();
-    if (!trimmed) return;
-    setMessages((prev) => [
-      ...prev,
+    if (!trimmed || !threadId || sendMessage.isPending) return;
+    sendMessage.mutate(
+      { content: trimmed },
       {
-        id: `m${prev.length + 1}`,
-        body: trimmed,
-        sentAt: new Date().toISOString(),
-        fromMe: true,
-        authorName: 'You',
-      },
-    ]);
-    setDraft('');
+        onSuccess: () => {
+          setDraft('');
+          refetch();
+        },
+      }
+    );
   };
 
   return (
@@ -90,25 +163,47 @@ export function ThreadDetailScreen({
             <Text style={styles.backLinkText}>← Messages</Text>
           </Pressable>
         )}
-        <Text style={s.headerTitle}>{participantName}</Text>
+        <Text style={s.headerTitle}>{title}</Text>
       </View>
 
       <ScrollView style={s.scrollView} contentContainerStyle={styles.threadContent}>
-        {messages.map((message) => (
-          <View
-            key={message.id}
-            style={[styles.bubble, message.fromMe ? styles.bubbleMine : styles.bubbleTheirs]}
-          >
-            {!message.fromMe && <Text style={styles.author}>{message.authorName}</Text>}
-            <Text style={[styles.body, message.fromMe && styles.bodyMine]}>{message.body}</Text>
-            <Text style={[styles.time, message.fromMe && styles.timeMine]}>
-              {new Date(message.sentAt).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
+        {isLoading || !threadId ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
           </View>
-        ))}
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load conversation</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+            <Pressable style={s.primaryButton} onPress={onRefresh}>
+              <Text style={s.primaryButtonText}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : messages.length === 0 ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>💬</Text>
+            <Text style={s.emptyTitle}>No messages yet</Text>
+            <Text style={s.emptyText}>Say hello to start the conversation.</Text>
+          </View>
+        ) : (
+          messages.map((message) => (
+            <View
+              key={message.id}
+              style={[styles.bubble, message.fromMe ? styles.bubbleMine : styles.bubbleTheirs]}
+            >
+              {!message.fromMe && <Text style={styles.author}>{message.authorName}</Text>}
+              <Text style={[styles.body, message.fromMe && styles.bodyMine]}>{message.body}</Text>
+              <Text style={[styles.time, message.fromMe && styles.timeMine]}>
+                {new Date(message.sentAt).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </View>
+          ))
+        )}
+        {isFetching && !isLoading ? <Text style={styles.syncing}>Syncing…</Text> : null}
         <View style={s.bottomSpacer} />
       </ScrollView>
 
@@ -122,10 +217,13 @@ export function ThreadDetailScreen({
         />
         <Pressable
           onPress={handleSend}
-          style={[styles.sendButton, !draft.trim() && styles.sendButtonDisabled]}
-          disabled={!draft.trim()}
+          style={[
+            styles.sendButton,
+            (!draft.trim() || sendMessage.isPending) && styles.sendButtonDisabled,
+          ]}
+          disabled={!draft.trim() || sendMessage.isPending}
         >
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Text style={styles.sendButtonText}>{sendMessage.isPending ? '…' : 'Send'}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -136,6 +234,7 @@ const styles = StyleSheet.create({
   backLink: { marginBottom: 8 },
   backLinkText: { color: colors.accent, fontSize: 14 },
   threadContent: { paddingBottom: 24 },
+  syncing: { textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: 8 },
   bubble: {
     padding: 12,
     borderRadius: 16,

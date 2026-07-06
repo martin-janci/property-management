@@ -1,8 +1,14 @@
 /**
  * NotificationsScreen (UC-01.4).
  *
- * Inbox-style list of all notifications delivered to the user. Mock data is
- * used until the notification-preferences hooks are wired in.
+ * Inbox-style list of all notifications delivered to the user.
+ *
+ * NOTE: still backed by mock data. The api-server currently exposes only a
+ * WebSocket sync endpoint for the notification inbox (`ws_notifications` at
+ * `GET /api/v1/users/me/notifications/ws`) plus preference/critical-notification
+ * routes — there is no REST list endpoint to page the inbox. Wiring this screen
+ * needs a backend `GET /api/v1/users/me/notifications` (REST list) first, so it
+ * is intentionally left on mock data (tracked as a backend follow-up).
  */
 
 import { useCallback, useMemo, useState } from 'react';

@@ -1,16 +1,26 @@
 /**
  * MetersScreen (UC-11.1).
  *
- * Lists meters assigned to the user's unit with their last reading and the
- * next due date. The existing `MeterReadingScreen` handles the submission
- * flow; this screen wraps that flow with a list view.
+ * Lists meters assigned to the signed-in resident's unit with their last
+ * reading. The existing `MeterReadingScreen` handles the submission flow; this
+ * screen wraps that flow with a list view.
+ *
+ * Wired to `GET /api/v1/meters/units/{unit_id}` on the api-server, which
+ * returns `Vec<Meter>` (see `db::models::meter::Meter` — default snake_case
+ * serde, `Decimal` fields as JSON strings). The unit id comes from the
+ * authenticated user (`useAuth().user.unitId`); the query stays disabled until
+ * it is known. The response is consumed without a generated client, so it is
+ * validated defensively — malformed rows are dropped rather than crashing the
+ * list.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-export type MeterCommodity = 'water_cold' | 'water_hot' | 'electricity' | 'gas' | 'heat';
+export type MeterCommodity = 'water_cold' | 'water_hot' | 'water' | 'electricity' | 'gas' | 'heat';
 
 export interface Meter {
   id: string;
@@ -19,51 +29,84 @@ export interface Meter {
   unit: string;
   lastReading: number | null;
   lastReadingAt: string | null;
-  dueAt: string;
 }
 
-const MOCK_METERS: Meter[] = [
-  {
-    id: 'm-w-cold',
-    label: 'Cold water',
-    commodity: 'water_cold',
-    unit: 'm³',
-    lastReading: 142.4,
-    lastReadingAt: '2026-03-31T09:10:00Z',
-    dueAt: '2026-04-30T23:59:00Z',
-  },
-  {
-    id: 'm-w-hot',
-    label: 'Hot water',
-    commodity: 'water_hot',
-    unit: 'm³',
-    lastReading: 88.6,
-    lastReadingAt: '2026-03-31T09:12:00Z',
-    dueAt: '2026-04-30T23:59:00Z',
-  },
-  {
-    id: 'm-elec',
-    label: 'Electricity',
-    commodity: 'electricity',
-    unit: 'kWh',
-    lastReading: 4521,
-    lastReadingAt: '2026-04-01T08:00:00Z',
-    dueAt: '2026-05-01T23:59:00Z',
-  },
-  {
-    id: 'm-heat',
-    label: 'Heating',
-    commodity: 'heat',
-    unit: 'GJ',
-    lastReading: null,
-    lastReadingAt: null,
-    dueAt: '2026-04-30T23:59:00Z',
-  },
-];
+/** Subset of `Meter` from `GET /api/v1/meters/units/{unit_id}`. */
+export interface ApiMeter {
+  id: string;
+  meter_number?: string | null;
+  /** `MeterType` serialized snake_case: electricity|gas|water|heat|cold_water|hot_water|solar|other. */
+  meter_type?: string | null;
+  unit_of_measure?: string | null;
+  current_reading?: string | number | null;
+  last_reading_date?: string | null;
+  location?: string | null;
+}
+
+interface ApiMetersEnvelope {
+  meters: ApiMeter[];
+}
+
+function isApiMeter(value: unknown): value is ApiMeter {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.id === 'string';
+}
+
+/** Normalise the `/api/v1/meters/units/{unit_id}` response into a validated
+ *  list. The unit route returns a bare `Vec<Meter>`; a `{ meters: [...] }`
+ *  envelope is also accepted defensively. Any other shape yields `[]`. */
+export function parseMeters(data: unknown): ApiMeter[] {
+  const candidates: unknown[] = Array.isArray(data)
+    ? data
+    : typeof data === 'object' && data !== null && Array.isArray((data as ApiMetersEnvelope).meters)
+      ? (data as ApiMetersEnvelope).meters
+      : [];
+  return candidates.filter(isApiMeter);
+}
+
+/** Map the api-server `meter_type` string onto the UI commodity enum. */
+export function toUiCommodity(meterType: string | null | undefined): MeterCommodity {
+  switch (meterType) {
+    case 'cold_water':
+      return 'water_cold';
+    case 'hot_water':
+      return 'water_hot';
+    case 'water':
+      return 'water';
+    case 'gas':
+      return 'gas';
+    case 'heat':
+    case 'solar':
+      return 'heat';
+    default:
+      return 'electricity';
+  }
+}
+
+/** Map an api-server meter onto the UI shape. Exported for unit testing. */
+export function toUiMeter(m: ApiMeter): Meter {
+  const rawReading = m.current_reading;
+  const reading =
+    rawReading == null
+      ? null
+      : typeof rawReading === 'number'
+        ? rawReading
+        : Number.parseFloat(rawReading);
+  return {
+    id: m.id,
+    label: m.meter_number?.trim() || m.location?.trim() || 'Meter',
+    commodity: toUiCommodity(m.meter_type),
+    unit: m.unit_of_measure?.trim() || '',
+    lastReading: reading != null && Number.isFinite(reading) ? reading : null,
+    lastReadingAt: m.last_reading_date ?? null,
+  };
+}
 
 function commodityIcon(commodity: MeterCommodity): string {
   switch (commodity) {
     case 'water_cold':
+    case 'water':
       return '💧';
     case 'water_hot':
       return '🔥';
@@ -76,39 +119,61 @@ function commodityIcon(commodity: MeterCommodity): string {
   }
 }
 
-function daysUntil(dueAt: string): number {
-  return Math.ceil((new Date(dueAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-}
-
 interface MetersScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function MetersScreen({ onNavigate }: MetersScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
+  const unitId = user?.unitId;
+
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
+    ['meters', 'unit', unitId],
+    `/api/v1/meters/units/${unitId ?? ''}`,
+    { staleTime: 30_000, enabled: !!unitId }
+  );
+
+  const meters: Meter[] = parseMeters(data).map(toUiMeter);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   return (
     <View style={s.container}>
       <View style={s.header}>
         <Text style={s.headerTitle}>Meters</Text>
-        <Text style={s.headerSubtitle}>Submit your readings before the due date.</Text>
+        <Text style={s.headerSubtitle}>Meters registered to your unit.</Text>
       </View>
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {MOCK_METERS.map((meter) => {
-          const days = daysUntil(meter.dueAt);
-          const overdue = days < 0;
-          const dueSoon = days >= 0 && days <= 7;
-          return (
+        {!unitId ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>🏠</Text>
+            <Text style={s.emptyTitle}>No unit linked</Text>
+            <Text style={s.emptyText}>Meters appear once your account is linked to a unit.</Text>
+          </View>
+        ) : isLoading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load meters</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+          </View>
+        ) : meters.length === 0 ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>📏</Text>
+            <Text style={s.emptyTitle}>No meters</Text>
+            <Text style={s.emptyText}>No meters are registered for your unit yet.</Text>
+          </View>
+        ) : (
+          meters.map((meter) => (
             <Pressable
               key={meter.id}
               style={s.card}
@@ -117,23 +182,6 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
               <View style={s.cardHeader}>
                 <Text style={styles.icon}>{commodityIcon(meter.commodity)}</Text>
                 <Text style={[s.cardTitle, { marginLeft: 8 }]}>{meter.label}</Text>
-                <View
-                  style={[
-                    s.badge,
-                    overdue && styles.badgeOverdue,
-                    dueSoon && !overdue && styles.badgeDueSoon,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      s.badgeText,
-                      overdue && styles.badgeOverdueText,
-                      dueSoon && !overdue && styles.badgeDueSoonText,
-                    ]}
-                  >
-                    {overdue ? `${Math.abs(days)}d overdue` : `${days}d left`}
-                  </Text>
-                </View>
               </View>
 
               <Text style={s.cardBody}>
@@ -155,8 +203,8 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
                 </Pressable>
               </View>
             </Pressable>
-          );
-        })}
+          ))
+        )}
 
         <View style={s.bottomSpacer} />
       </ScrollView>
@@ -166,10 +214,6 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
 
 const styles = StyleSheet.create({
   icon: { fontSize: 20 },
-  badgeOverdue: { backgroundColor: colors.dangerBg },
-  badgeOverdueText: { color: colors.danger },
-  badgeDueSoon: { backgroundColor: colors.warningBg },
-  badgeDueSoonText: { color: colors.warningDark },
   linkButton: { paddingVertical: 4 },
   linkButtonText: { color: colors.accent, fontSize: 14, fontWeight: '500' },
 });
