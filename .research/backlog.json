@@ -4192,19 +4192,206 @@
       "id": "code-review-api-handlers-metric-tuple-swap",
       "title": "get_accounting_metrics still returns a 6-tuple with 4 same-typed monetary fields — #2103 tuple-transposition risk relocated one hop upstream of the safe named-field constructor",
       "vector": "refactor",
-      "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
       "sources": [
+        "Issue #2122 (from-merged-review)",
         "rotating-expert-review api-handlers 2026-07-06"
       ],
       "evidence": [
         "backend/crates/db/src/repositories/regional_compliance.rs:493-553 — get_accounting_metrics returns (i32,i32,Decimal,Option<Decimal>,Decimal,Option<Decimal>) with same four type-identical/interleaved monetary fields (revenue, expenses, receivables, payables). #2103 named-field-input killed this class inside SlovakAccountingExport::new but the tuple upstream is still vulnerable.",
-        "backend/servers/api-server/src/routes/regional_compliance.rs:431-447 — handler destructures the tuple positionally then feeds into SlovakAccountingExportInput by name; reordering the tuple or the destructure silently ships revenue↔receivables mislabeled through the now-safe constructor."
+        "backend/servers/api-server/src/routes/regional_compliance.rs:431-447 — handler destructures the tuple positionally then feeds into SlovakAccountingExportInput by name; reordering the tuple or the destructure silently ships revenue↔receivables mislabeled through the now-safe constructor.",
+        "Issue #2122 corroborates the same finding as medium-severity correctness on PR #2117 — the tuple-transposition risk is confirmed by an independent post-merge reviewer."
       ],
       "files": [
         "backend/crates/db/src/repositories/regional_compliance.rs",
         "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/refactor-accounting-metrics-named-struct.md"
+    },
+    {
+      "id": "bug-dispatcher-mcp-push-size-guard-dead-code",
+      "title": "MCP-push size guard runs post-commit (index empty) — never inspects payload, oversize state files still silently truncate on push",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2126",
+        "PR #2114 post-merge review"
+      ],
+      "evidence": [
+        ".research/dispatcher-prompt.md ~L2082 invokes mcp-push-size-guard.sh --staged AFTER git commit at ~L2066 — post-commit the index equals HEAD, so the guard L55 git diff --cached --diff-filter=ACM returns empty and the guard exits 0 unconditionally.",
+        "Any state file >64 KiB (e.g. assignments.json which Fix#1 does not shrink) still causes MCP-push silent truncation — the exact #1014 class the guard was meant to backstop.",
+        "Fix: move the guard invocation BEFORE git commit (right after the final git add), OR change the guard to inspect git diff --name-only HEAD~1 HEAD post-commit. Add .research/test-mcp-push-size-guard.sh covering the actual --staged wire path."
+      ],
+      "files": [
+        ".research/dispatcher-prompt.md",
+        ".research/mcp-push-size-guard.sh"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/bug-dispatcher-mcp-push-size-guard-dead-code.md"
+    },
+    {
+      "id": "refactor-enum-sync-all-not-compile-enforced",
+      "title": "SupportedCurrency/CountryCode ALL array completeness is not actually compiler-enforced — new variant + un-extended ALL passes all tests",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2124",
+        "PR #2113 post-merge review"
+      ],
+      "evidence": [
+        "backend/crates/db/src/models/multi_currency.rs:1079-1082, 1214-1217 — comments claim Self::ALL completeness is enforced by a compile-time exhaustiveness guard; the const _: fn(Self) = |c| match c {...} guard only forces the match itself to be exhaustive, ALL is a decoupled hand-written literal the compiler never checks for completeness.",
+        "Fix: add const-eval round-trip: an exhaustive const fn idx(c: Self) -> usize + const _: () = { assert!(Self::ALL[idx(v)] == v ...) } so an un-extended ALL produces a compile error. Alternatively adopt strum::EnumCount."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "security-deny-toml-quick-xml-ban-presence-ci-check",
+      "title": "backend/deny.toml quick-xml ban has no CI presence check — a PR deleting the bans passes cargo-deny green, CODEOWNERS review is advisory-only",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2127",
+        "PR #2111 post-merge review"
+      ],
+      "evidence": [
+        "backend/deny.toml:93-94 — the quick-xml half-range ban is the sole load-bearing XXE/billion-laughs pin (advisory pinned-dependency-guard.yml was deleted in #2096). Deleting the ban lines leaves cargo deny check bans green (nothing to trip) — CODEOWNERS is the sole backstop and is advisory unless branch protection Require review from Code Owners is on.",
+        "Fix: add a fail-closed CI grep step (in backend.yml or a dedicated gate workflow) asserting the two half-range quick-xml ban lines are present, wired as a required status check on dev."
+      ],
+      "files": [
+        "backend/deny.toml",
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-mobile-rn-screens-type-drift",
+      "title": "Mobile RN screens hand-roll ApiMeter/ApiLease/ApiFormSummary/ApiMessage — duplicate @ppt/api-client generated types, silent OpenAPI drift",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2129",
+        "PR #2118 post-merge review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/{meters/MetersScreen.tsx, meters/MeterDetailScreen.tsx, leases/LeaseDetailScreen.tsx, forms/FormsScreen.tsx, messages/ThreadDetailScreen.tsx} — each declares a private Api* interface duplicating types already generated in @ppt/api-client. OpenAPI source-of-truth can drift silently.",
+        "Fix: import payload types from @ppt/api-client and type parsers against them so regenerated client surfaces backend field renames at compile time. Keep useApiQuery for fetch layer.",
+        "Secondary: LeaseDetailScreen Payment history section title misrepresents an upcoming-payments field; FormsScreen hardcodes status=pending because FormSummary carries form lifecycle not per-resident completion."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/forms/FormsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-outages-non-manager-deny",
+      "title": "Outage mutations happy-path suite has no non-manager 403 deny test — flip is_manager open would go uncaught",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2121",
+        "PR #2120 post-merge review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/outages_happy_path_tests.rs — only positive (manager-allowed) paths; no RBAC-deny case. A future change flipping rls.role().is_manager() open would not be caught.",
+        "Fix: add a negative test using create_authenticated_user_with_org to mint a real-login token for a non-manager (Tenant/Resident), assert POST /api/v1/outages returns 403. Mirror report_schedule_rbac_tests.rs."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/outages_happy_path_tests.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-listing-detail-update-auth",
+      "title": "ListingDetailViewModel.updateAuth() has no unit test — the actual #2115 regression fix is unpinned",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2125",
+        "PR #2115 post-merge review"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/listing/ListingDetailViewModelTest.kt — no coverage for updateAuth(). A future refactor could silently reintroduce the spinner-reset regression #2108 and the suite would stay green.",
+        "Fix: add 4 cases: (1) start()+updateAuth(newToken) preserves listing; (2) authenticated→updateAuth(null) clears heart; (3) unauthenticated start()+updateAuth(token) re-probes favorites; (4) updateAuth(sameToken) no-op.",
+        "Secondary correctness: onFavoriteToggle rollback does not guard against session change during in-flight write."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/listing/ListingDetailViewModelTest.kt"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-include-system-tie-group-size",
+      "title": "include_system=true pagination tie-break test uses only 4 rows — ~4% false-pass rate if id-DESC secondary key regresses",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #2123",
+        "PR #2116 post-merge review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/migration_pagination_tests.rs — include_system_default_tie_group_is_deterministic_id_desc uses org_count=3 + 1 system row. BitmapOr → Bitmap Heap Scan in physical order + random UUIDs gives a ~1/4! ≈ 4% false-pass rate per run.",
+        "Fix: raise org_count to 6-8, driving false-pass probability to ~1/n! (negligible) at near-zero cost."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/migration_pagination_tests.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-lease-units-join-drift-regression",
+      "title": "lease.rs units-join drift (#2049 / PR #2060) has no DB round-trip regression test — PR #2089 already draft with the fix",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2076",
+        "PR #2089 (in-flight draft)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/lease.rs — 4 hot-path list queries (:299, :1042, :1492, :2001) using sqlx::query_as::<_, tuple> runtime strings can drift on u.designation (fixed in PR #2060). cargo sqlx prepare --check does not catch this class — same pattern already recurred rental.rs (#2042) → lease.rs (#2049).",
+        "Fix: PR #2089 is already draft/in-flight adding backend/crates/db/tests/lease_units_join_tests.rs modeled on board_meetings_list_join_tests.rs. Adjudicate that PR (merge or spawn dispatcher pickup)."
+      ],
+      "files": [
+        "backend/crates/db/tests/lease_units_join_tests.rs"
       ],
       "created_at": "2026-07-06",
       "updated_at": "2026-07-06",

@@ -4,7 +4,7 @@
   "last_pr_seen_before": 2093,
   "last_pr_seen_after": 2120,
   "last_issue_seen_before": 2087,
-  "last_issue_seen_after": 2110,
+  "last_issue_seen_after": 2129,
   "signals": [
     {
       "id": "lag-warning-2026-07-06",
@@ -55,7 +55,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -69,7 +69,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -83,7 +83,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "refactor",
       "evidence": [
@@ -91,6 +91,88 @@
         "backend/servers/api-server/src/routes/regional_compliance.rs:431-447 — handler destructures the tuple positionally then feeds SlovakAccountingExportInput by name; reordering the tuple silently ships revenue↔receivables mislabeled through the now-safe constructor."
       ],
       "expert": "rust"
+    },
+    {
+      "id": "followup-review-issue-2126-mcp-push-size-guard-dead",
+      "type": "code-review-finding",
+      "source": "Issue #2126",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2124-enum-sync-all-not-enforced",
+      "type": "code-review-finding",
+      "source": "Issue #2124",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2127-deny-toml-no-ci-check",
+      "type": "code-review-finding",
+      "source": "Issue #2127",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2129-mobile-rn-type-drift",
+      "type": "code-review-finding",
+      "source": "Issue #2129",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2121-outages-non-manager-deny",
+      "type": "code-review-finding",
+      "source": "Issue #2121",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2125-listing-detail-update-auth",
+      "type": "code-review-finding",
+      "source": "Issue #2125",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2123-tie-group-size",
+      "type": "code-review-finding",
+      "source": "Issue #2123",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "post-merge-review"
+    },
+    {
+      "id": "followup-review-issue-2122-metric-tuple-transposition",
+      "type": "code-review-finding",
+      "source": "Issue #2122",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "post-merge-review",
+      "corroborates": "code-review-api-handlers-metric-tuple-swap"
+    },
+    {
+      "id": "followup-review-issue-2076-lease-units-join-regression",
+      "type": "code-review-finding",
+      "source": "Issue #2076",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "post-merge-review"
     }
   ],
   "auto_fix_actions": [],
@@ -214,6 +296,39 @@
       "command": "telegram token grep",
       "observed": "0 matches",
       "expected": "0"
+    },
+    {
+      "goal": "addendum-G4-carryover",
+      "passed": true,
+      "command": "signals carry-over score_delta = 0 on prev-seen ids",
+      "observed": "lag-warning + 3 code-review-api-handlers ids zeroed",
+      "expected": "no double-count"
+    },
+    {
+      "goal": "addendum-G7-cap",
+      "passed": true,
+      "command": "new plans in addendum staged",
+      "observed": "2 new (over-cap by design on buffer-low re-fire)",
+      "expected": "<= 2 with justification"
+    },
+    {
+      "goal": "addendum-G10-regen",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "identical after items append + status flips",
+      "expected": "identical"
+    },
+    {
+      "goal": "addendum-G14-regen",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
     }
-  ]
+  ],
+  "buffer_low_addendum": {
+    "trigger": "routine-fire-payload: buffer-low: claimable=0/72 — backlog exhausted; refill planner with fresh cron-completable work",
+    "handled_at": "2026-07-06T22:35:00Z",
+    "action": "imported 8 follow-up review issues (#2121-#2129 minus #2128) as fresh backlog items with concrete file:line evidence; bumped code-review-api-handlers-metric-tuple-swap from 1→3 via #2122 corroboration; promoted 2 more plans (refactor-accounting-metrics-named-struct.md, bug-dispatcher-mcp-push-size-guard-dead-code.md) for cron-completable dispatcher pickup"
+  }
 }

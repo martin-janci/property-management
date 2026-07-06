@@ -1,11 +1,13 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-06 22:26 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-06 22:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 3 | bug | `code-review-api-handlers-fake-minutes` | Slovak vote-minutes + Czech usneseni endpoints fabricate legally-styled compliance evidence with hardcoded participants/votes/dates | ready | 2026-07-06 | [plan](plans/bug-regional-compliance-fake-minutes.md) |
 | 3 | bug | `code-review-api-handlers-fake-vote-fallback` | validate_slovak_vote + validate_czech_vote silently default to passing quorum/approval (75%/80%) on missing/malformed vote data, returning is_valid=true | ready | 2026-07-06 | [plan](plans/bug-regional-compliance-fake-vote-validation.md) |
+| 3 | refactor | `code-review-api-handlers-metric-tuple-swap` | get_accounting_metrics still returns a 6-tuple with 4 same-typed monetary fields — #2103 tuple-transposition risk relocated one hop upstream of the safe named-field constructor | ready | 2026-07-06 | [plan](plans/refactor-accounting-metrics-named-struct.md) |
+| 3 | bug | `bug-dispatcher-mcp-push-size-guard-dead-code` | MCP-push size guard runs post-commit (index empty) — never inspects payload, oversize state files still silently truncate on push | ready | 2026-07-06 | [plan](plans/bug-dispatcher-mcp-push-size-guard-dead-code.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -19,6 +21,12 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | refactor | `refactor-enum-sync-all-not-compile-enforced` | SupportedCurrency/CountryCode ALL array completeness is not actually compiler-enforced — new variant + un-extended ALL passes all tests | open | 2026-07-06 |  |
+| 2 | security | `security-deny-toml-quick-xml-ban-presence-ci-check` | backend/deny.toml quick-xml ban has no CI presence check — a PR deleting the bans passes cargo-deny green, CODEOWNERS review is advisory-only | open | 2026-07-06 |  |
+| 2 | test-gap | `test-gap-mobile-rn-screens-type-drift` | Mobile RN screens hand-roll ApiMeter/ApiLease/ApiFormSummary/ApiMessage — duplicate @ppt/api-client generated types, silent OpenAPI drift | open | 2026-07-06 |  |
+| 2 | test-gap | `test-gap-outages-non-manager-deny` | Outage mutations happy-path suite has no non-manager 403 deny test — flip is_manager open would go uncaught | open | 2026-07-06 |  |
+| 2 | test-gap | `test-gap-listing-detail-update-auth` | ListingDetailViewModel.updateAuth() has no unit test — the actual #2115 regression fix is unpinned | open | 2026-07-06 |  |
+| 2 | test-gap | `test-gap-lease-units-join-drift-regression` | lease.rs units-join drift (#2049 / PR #2060) has no DB round-trip regression test — PR #2089 already draft with the fix | open | 2026-07-06 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results | done | 2026-06-16 |  |
@@ -67,7 +75,7 @@
 | 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs` | Churn hotspot: backend/crates/db/src/models/multi_currency.rs (2 PRs in 24h, enum-sync guard iteration) | open | 2026-07-06 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs` | Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (2 PRs in 24h, SlovakAccountingExport refactor iteration) | open | 2026-07-06 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs` | Churn hotspot: backend/servers/api-server/src/routes/regional_compliance.rs (2 PRs in 24h) | open | 2026-07-06 |  |
-| 1 | refactor | `code-review-api-handlers-metric-tuple-swap` | get_accounting_metrics still returns a 6-tuple with 4 same-typed monetary fields — #2103 tuple-transposition risk relocated one hop upstream of the safe named-field constructor | open | 2026-07-06 |  |
+| 1 | test-gap | `test-gap-include-system-tie-group-size` | include_system=true pagination tie-break test uses only 4 rows — ~4% false-pass rate if id-DESC secondary key regresses | open | 2026-07-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-deeplink-token-not-url-decoded` | DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform | open | 2026-07-05 |  |
 | 1 | bug | `code-review-mobile-native-kmp-search-stale-response-race` | SearchScreen stale-response race — overlapping searches can clobber newer results | open | 2026-07-05 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-1085-reality` | Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update | open | 2026-07-05 |  |
