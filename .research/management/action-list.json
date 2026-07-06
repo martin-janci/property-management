@@ -21,7 +21,8 @@
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "first_open_at": "2026-07-06T14:07:23Z"
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
@@ -65,7 +66,8 @@
       "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "first_open_at": "2026-07-06T14:07:23Z"
     },
     {
       "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
