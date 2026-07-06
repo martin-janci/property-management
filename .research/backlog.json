@@ -4064,19 +4064,108 @@
       "title": "Churn hotspot: backend/crates/db/src/repositories/rental.rs (11 commits in 19-day catch-up)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 2,
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "churn 2026-07-06: 2933 lines this run (raw numstat) driven by PR #2100 module-split refactor — expected, not instability",
+        "repeated-churn: hotspot_history.runs_seen 1→2; both runs are refactor-driven, not code churn on a stable API",
+        "resolved: PR #2100 merged 2026-07-05 — split rental repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/oauth.rs (594 lines, from PR #2100 split)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2100"
+      ],
+      "evidence": [
+        "594 lines added — new file created by the rental repository split (PR #2100); largest sub-module extracted"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/oauth.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines: enum-sync guard #2098 + fix #2113)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2098",
+        "PR #2113"
+      ],
+      "evidence": [
+        "532 lines churn — enum-sync guard (#2098) added, then variant-set fix (#2113); one round-trip in <24h"
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "title": "Localise ERROR_MESSAGES in ppt-web errorHandler (i18n gap)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment (2026-07-06)"
+      ],
+      "evidence": [
+        "ERROR_MESSAGES dict at errorHandler.ts:53-133 defines every user-facing title/message as a hardcoded English string (e.g., 'Please log in to continue.', 'You have made too many requests.')",
+        "No react-i18next t('...') indirection: parseApiError() returns these raw strings, and it is the shared error surface (imported via lib/index.ts)",
+        "App ships sk/cs/de/hu/pl locale files under apps/ppt-web/messages/, so error dialogs appear in English regardless of user language"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-stale-token",
+      "title": "AuthContext initializeAuth skips access-token expiry check",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment (2026-07-06)"
+      ],
+      "evidence": [
+        "AuthContext.tsx:396-399 initializeAuth comment says 'Validate the token is not expired (basic check)' but only checks presence (`if (storedUser && accessToken) { setUser(storedUser); }`), no exp claim decoded/compared",
+        "decodeJwtPayload() already exists in this file (line 219); exp check is trivial",
+        "Result: expired access token bootstraps UI as authenticated; first protected API call trips 401 and the fire-and-forget onUnauthorizedCallback (lib/api.ts:180) does not retry — spurious error toast before refresh flow"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]

@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -14,7 +14,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/\u221228 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -25,7 +25,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -36,7 +36,7 @@
     },
     {
       "id": "80-2-dispute-filing-flow",
-      "action": "Coverage gap [mvp]: Dispute Filing Flow — verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
+      "action": "Coverage gap [mvp]: Dispute Filing Flow \u2014 verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -47,7 +47,7 @@
     },
     {
       "id": "79-3-error-handling-toasts",
-      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications \u2014 verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -58,7 +58,7 @@
     },
     {
       "id": "83-3-portal-webhooks",
-      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
+      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks \u2014 verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -103,7 +103,7 @@
     },
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -349,7 +349,7 @@
     },
     {
       "id": "bug-ios-deeplink-info-plist-missing",
-      "action": "iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement",
+      "action": "iOS deep-link layer dead at runtime \u2014 Info.plist missing CFBundleURLTypes + applinks entitlement",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "dropped",
@@ -373,7 +373,7 @@
     },
     {
       "id": "code-review-mobile-rn-screens-mock-data",
-      "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
+      "action": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays \u2014 no API wiring",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -387,6 +387,327 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-land-the-4-in-flight-follow-up-drafts-2115-listingdetail-hoi",
+      "action": "Land the 4 in-flight follow-up drafts (#2115 ListingDetail hoist-paths test, #2116 gh-issue-2109, #2117 gh-issue-2103, #2089 lease.rs units-join drift)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "all 4 out of draft, CI green, merged to dev"
+    },
+    {
+      "id": "pm-scrum-master-un-stall-1797-ocr-auth-rental-guest-pii-manager-gate-securit",
+      "action": "Un-stall #1797 (OCR auth + rental guest PII manager-gate) \u2014 security-sensitive draft idle ~13 days",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "draft promoted to ready-for-review or explicitly reassigned/escalated with a merge date"
+    },
+    {
+      "id": "pm-scrum-master-open-the-pr-for-issue-2110-restore-exec-bit-on-check-ignore-",
+      "action": "Open the PR for issue #2110 (restore exec bit on check-ignore-reason.sh)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "PR opened, merged, closes #2110"
+    },
+    {
+      "id": "pm-scrum-master-get-document-folder-tests-green-and-re-promote-7a-2-folder-o",
+      "action": "Get document_folder_tests green and re-promote 7a-2-folder-organization from review back toward done (PR #1316 follow-up)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "CI green on document_folder_tests, sprint-status flips 7a-2 to done"
+    },
+    {
+      "id": "pm-scrum-master-reconcile-sprint-status-for-7a-5-document-sharing-coverage-j",
+      "action": "Reconcile sprint-status for 7a-5-document-sharing \u2014 coverage.json shows merged PR #2003 (mobile share-sheet UUID validation) but sprint-status still reads ready-for-dev; confirm #485 (web share-panel confirm/UUID parity) status",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "sprint-status story entry matches actual shipped state, #485 closed or explicitly deferred"
+    },
+    {
+      "id": "pm-scrum-master-push-stalled-churn-hotspot-draft-1812-reality-portal-rs-modu",
+      "action": "Push stalled churn-hotspot draft #1812 (reality_portal.rs module split) using the #2100 rental.rs split as the template",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "draft out of draft state, CI green, merged"
+    },
+    {
+      "id": "pm-security-promote-pr-1797-out-of-draft-get-it-reviewed-and-merged-clos",
+      "action": "Promote PR #1797 out of draft, get it reviewed and merged (closes #1772 unauthenticated-OCR, #1766 guest-PII exposure)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "PR #1797 merged to dev; #1772 and #1766 closed with regression tests"
+    },
+    {
+      "id": "pm-security-fix-issue-2107-outages-happy-path-tests-must-exercise-real-l",
+      "action": "Fix issue #2107: outages happy-path tests must exercise real login/authz instead of a fabricated JWT with mismatched role",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "Test suite derives JWT via real login flow; DB-role/JWT-role parity asserted"
+    },
+    {
+      "id": "pm-security-resolve-test-hardening-481-refresh-token-revocation-bypass-b",
+      "action": "Resolve test-hardening #481 (refresh-token revocation bypass) before promoting 10a-1/10a-3 to done",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "revoked_at IS NULL check restored in refresh-token query + regression test; story_gate cleared"
+    },
+    {
+      "id": "pm-security-complete-79-2-auth-flow-sign-off-sso-jwt-cookie-currently-th",
+      "action": "Complete 79-2 auth-flow sign-off (SSO/JWT/cookie) \u2014 currently the top pending pm-security action per coverage.json",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "auth.rs / sso.rs reviewed end-to-end for token TTL, cookie Path/scope, session revocation; sign-off recorded in coverage.json"
+    },
+    {
+      "id": "pm-security-add-pkce-refresh-rotation-introspection-tests-for-oauth-prov",
+      "action": "Add PKCE + refresh-rotation + introspection tests for OAuth Provider (10a-1/10a-2/10a-3)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "pm-security-oauth-10a-untested-security-contract risk closed with test coverage"
+    },
+    {
+      "id": "pm-security-assess-dependabot-2018-aes-gcm-0-10-3-0-11-0-major-bump-for-",
+      "action": "Assess Dependabot #2018 (aes-gcm 0.10.3 -> 0.11.0 major bump) for breaking changes on any auth/crypto call sites",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06",
+      "definition_of_done": "Impact note posted on PR #2018; merge or defer decision made"
+    },
+    {
+      "id": "gap-7a-5-document-sharing-sprint-status-not-reconciled",
+      "action": "[mvp] sprint-status not reconciled (7a-5-document-sharing Document Sharing)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-5-document-sharing-web-share-panel-uuid-confirm-parity-unco",
+      "action": "[mvp] web share-panel UUID/confirm parity unconfirmed (#485) (7a-5-document-sharing Document Sharing)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-85-1-environment-variables-story-doc-still-in-progress-rn-ios-docs-",
+      "action": "[mvp] Story doc still in-progress; RN/iOS/docs tasks unchecked (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-85-1-environment-variables-no-standalone-env-setup-md-despite-pr-13",
+      "action": "[mvp] No standalone env-setup .md despite PR #1385 (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-85-1-environment-variables-react-native-config-replaced-by-expo-app",
+      "action": "[mvp] react-native-config replaced by Expo app.config \u2014 spec drift (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-8a-3-notification-preference-sync-mobile-os-push-fcm-apns-deferred",
+      "action": "[mvp] Mobile OS push (FCM/APNs) deferred (8a-3-notification-preference-sync Notification Preference Sync)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-8a-3-notification-preference-sync-pipeline-dispatch-serial-fcm-stub-swallo",
+      "action": "[mvp] pipeline dispatch serial + FCM stub swallows failures (8a-3-notification-preference-sync Notification Preference Sync)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-2-folder-organization-ci-red-on-document-folder-tests",
+      "action": "[mvp] CI red on document_folder_tests (7a-2-folder-organization Folder Organization)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-2-folder-organization-sprint-status-held-at-review",
+      "action": "[mvp] sprint-status held at review (7a-2-folder-organization Folder Organization)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-3-permission-based-access-sprint-status-not-flipped",
+      "action": "[mvp] sprint-status not flipped (7a-3-permission-based-access Permission-Based Document Access)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-3-permission-based-access-no-merged-pr-keyword-match",
+      "action": "[mvp] no merged PR keyword match (7a-3-permission-based-access Permission-Based Document Access)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-3-permission-based-access-frontend-permission-ui-unconfirmed",
+      "action": "[mvp] frontend permission UI unconfirmed (7a-3-permission-based-access Permission-Based Document Access)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview-sprint-status-not-flipped",
+      "action": "[mvp] sprint-status not flipped (7a-4-document-download-preview Document Download & Preview)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview-preview-second-frame-planned",
+      "action": "[mvp] preview second frame planned (7a-4-document-download-preview Document Download & Preview)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-redesignstatus-in-progress-5-step-wizard",
+      "action": "[mvp] redesignStatus in-progress \u2014 5-step wizard not applied (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-not-promoted-to-done-pending-wizard",
+      "action": "[mvp] not promoted to done pending wizard (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan-upkeep 2026-07-06"
     }
-  ]
+  ],
+  "generated": "2026-07-06T03:15:55Z"
 }

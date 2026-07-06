@@ -1,72 +1,66 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-07-06 — daily PM rotation (Scrum Master + pm-security; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next), coverage_cursor idx 12 → 0 (epic-8a re-checked → wraps to epic-10a next)._
 
 ## Executive summary
 
-- **`dev` backend is RED (issue #1437, critical).** PR #1426 merged despite breaking compile; ALL backend CI gates are now broken on `dev` until #1435 or #1436 lands. This is the **second dev-red incident in 14 days** (cf. #1332 unblocked 2026-06-14 via #1379) and exposes a structural gap: `backend.yml` runs on PR but not on push, so a merge that conflicts with `main`/peer PRs can break compile silently after-the-fact. pm-devops is filing this as the headline blocker.
-- **Test-coverage hardening flood: 4+ pm-qa PRs landed** this run, clearing high-priority follow-up gaps from the 2026-06-14 post-merge review: #1393 (Booking.com OAuth/CSRF coverage → closes #1362/#1374), #1394 (document presigned-URL minting/expiry + access-gate → closes #1377), #1395 (realtime preference-sync publish leg → closes #1376), #1417 (vote NaN fuzz guard → closes Phase 1.5 finding). All four queued action-list items now status=done via dev-reconcile.
-- **Mobile delivery momentum:** #1385-#1389 env-setup/iOS native, #1391 (FilterSheet Near Me Android/shared parity), #1401 (iOS CoreLocation Near Me), #1402 (navigation-state preservation AC-4). Five gap-82 coverage items closed via dev-reconcile.
-- **DevOps state-of-the-stack (pm-devops rotation):** Mobile EAS workflows (`eas-build-android.yml` / `eas-build-ios.yml`) are now present in `.github/workflows/` (cleared from 2026-05-27 backlog as draft-only). `app-tsx-merge-queue.yml` exists. Pre-push fmt/clippy gate (#1431) merged — but is **local-hook-only** and would not have caught #1426. `security-test-gate.yml` enforcement status still unconfirmed.
-- **New issues this run (13):** #1403-#1413 + #1422 (post-merge-review follow-ups, all labeled `follow-up` + `from-merged-review`) plus CRITICAL #1437.
-- **Stale drafts still need a call:** #1316 (verify-document-folder-organization-backend-promote), #1197 (test-oauth-authorization-server-integration ~6d), #988 (epic-scale).
+- **Steady systems-hygiene window: 12 PRs merged.** No single breaking incident this cycle. The cluster is anchored by three self-heal / hardening wins:
+  1. **`quick-xml` XXE / billion-laughs pin is now a HARD cargo-deny ban** (#2096), with CODEOWNERS gate on `backend/deny.toml` landing right after (#2111) — the pin is no longer bypassable by a lockfile edit.
+  2. **Dispatcher `#1014` MCP-push corruption class fully closed** (#2101 triage doc → #2114 wire-in of size-guard + `action-list-reconcile.sh` into Phase 6). Ends a recurring self-inflicted corruption vector for `.research/management/action-list.json`.
+  3. **Accounting export honesty invariant is now enforced-by-construction** (`SlovakAccountingExport::compute_partial` refactor #2099); the 15-arg positional `::new` builder follow-up (draft #2117) will close the same-type-transposition risk.
+- **Post-merge review opened 5 follow-ups (#2103, #2107, #2108, #2109, #2110)** — 4 already have draft PRs in flight (#2117 → #2103; #2116 → #2109; #2115 → #2108; and #2089 covers #2076 lease.rs drift). `#2110` (exec-bit restore on `check-ignore-reason.sh`) still needs a PR.
+- **Security lens (today's rotation) headline:** PR **#1797** ("auth on OCR endpoints + manager-gate rental guest PII reads") has been stale as a draft for **~13 days** on a critical surface (closes #1772 unauthenticated OCR + #1766 guest PII exposure). No security-sensitive work is more urgent this sprint.
+- **Second security concern:** issue **#2107** — the outages happy-path tests bypass real login/authz via a fabricated JWT with a role that mismatches the DB role. Masks real breakage in test signal.
+- **Coverage/sprint-status drift:** sprint-status.yaml has promoted 7a-3/7a-4/8a-3 to done since the 2026-07-02 deep scan, but `coverage.json` (`scan_kind=upkeep`) still classifies 8a-3 as `partial` (mobile OS push deferred). Reconcile in the next deep scan.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · epics_done=1/5 (8A only) — but **8A.3 publish-leg tests now in (#1395)**, only mobile-push leg gates final 8A promotion.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · epics_done=1/4 (8A only; sprint-status is optimistic — coverage classifier still holds 8a-3 partial pending mobile OS push).
 
 | Epic | Tracked status | Real status (from coverage + activity) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 1/6 stories complete (6-6); web UI for 6-2/6-3/6-4 still in flight |
-| 7A — Basic Document Management | in-progress | 0/5 stories complete; #1316 stale; presigned-URL coverage landed (#1394) |
-| 8A — Basic Notification Preferences | **near-done** | 8a-1/8a-2 done; 8a-3 publish-leg tests landed (#1395), only mobile-push (FCM/APNs) leg open |
-| 10A — OAuth Provider Foundation | in-progress | 0/3 stories complete; #1197 OAuth integration test draft stale ~6d; #1388 token-exchange serde tests landed |
-| 10B — Platform Administration | in-progress | 5/7 stories complete (coverage 2026-05-29) |
-| 82 — Mobile (Reality KMP) | in-progress | 5 gap-82 items closed this run via PRs #1391/#1401/#1402/#1386 |
-| 85 — Mobile Build Pipeline | in-progress | EAS workflow files NOW in repo; green-status verification still owed |
+| 6 — Announcements & Communication | in-progress | 3/6 stories complete (6-1/6-3/6-6); web UI for 6-2/6-4/6-5 still in flight |
+| 7A — Basic Document Management | in-progress | 2/5 stories complete (7a-1 done 2026-06-17; 7a-4 done 2026-07-04); 7a-2 CI-red, 7a-3/7a-5 sprint-status lagging |
+| 8A — Basic Notification Preferences | done (sprint-status) | 8a-1/8a-2 done; 8a-3 promoted in sprint-status but coverage still holds partial (FCM/APNs deferred) |
+| 10A — OAuth Provider Foundation | in-progress | 0/3 stories complete; #481 (revoked-token bypass) + #487 (MFA rate-limit) test-hardening gates still open |
 
-## Shipped since last run (cursor #1384, 26 PRs)
+## Shipped since last run (12 PRs, cursor 2026-07-05T03:10:00Z)
 
-- **#1393** — Booking.com OAuth handler / CSRF / secure-credential-replacement coverage (closes #1362, #1374) [pm-qa]
-- **#1394** — Document presigned-URL minting/expiry + access-gate allow-path tests (closes #1377) [pm-qa]
-- **#1395** — CI-executable coverage for realtime preference-sync publish leg (closes #1376) [pm-qa]
-- **#1417** — NaN-weight fuzz guard for vote winner selection (Phase 1.5 finding) [pm-qa]
-- **#1388** — Airbnb OAuth token-exchange serde unit tests [pm-backend]
-- **#1397** — Forms hardening [pm-backend]
-- **#1426** — Backend feature merge — **BROKE DEV COMPILE (see issue #1437)** [pm-backend]
-- **#1430** — Work-orders org-gate [pm-backend]
-- **#1431** — Pre-push fmt gate (local hook) [pm-devops]
-- **#1432** — Stale RLS baseline reset [pm-backend]
-- **#1385-#1389** — Mobile env-setup / iOS native [pm-frontend]
-- **#1386** — Mobile navigation auth guard (AC-5) evidence [pm-frontend]
-- **#1391** — FilterSheet Near Me location filter (Android/shared parity) [pm-frontend]
-- **#1401** — iOS CoreLocation Near Me integration (story 82.3) [pm-frontend]
-- **#1402** — Navigation state preservation (AC-4) proof [pm-frontend]
+- **#2094** — Reuse shared `seed_org` fixture in favorite_alert_read idempotency test [pm-qa]
+- **#2095** — Extract + unit-cover `assign_fault_recipients` guards [pm-backend]
+- **#2096** — Enforce quick-xml XXE pin via cargo-deny HARD ban [security/devops]
+- **#2097** — Un-quarantine #1771 soft-delete unread invariant (behavioural coverage back on) [pm-qa]
+- **#2098** — Enum sync guard for `SupportedCurrency` + `CountryCode` across 3-source triangle [pm-backend]
+- **#2099** — Enforce `SlovakAccountingExport` honesty invariant by construction [pm-backend/accounting]
+- **#2100** — Churn-hotspot split of `rental.rs` (2933-line monolith → cohesive sub-modules) [pm-backend]
+- **#2101** — Triage doc for `#1014` MCP-push corruption class [pm-tech-lead]
+- **#2111** — Gate `backend/deny.toml` with CODEOWNERS [pm-devops]
+- **#2112** — Refresh stale BIT-351 quarantine docstrings after #2097 [pm-backend]
+- **#2113** — Enum-sync guard now fails on variant missing from canonical list [pm-backend]
+- **#2114** — Wire MCP-push size-guard + action-list reconcile into dispatcher Phase 6 (root-cause fix for #1014) [pm-devops]
 
 ## What's next (top 5 actions)
 
-1. **[high] URGENT: Land #1435 or #1436 to restore `dev` backend compile** (issue #1437) — pm-devops + pm-backend. Until this lands every backend PR's CI is red regardless of its own quality.
-2. **[high] Add `cargo check --workspace --tests` smoke gate on `dev` push** (not just PR) — pm-devops + pm-backend. Would have caught #1426 → #1437 before propagation.
-3. **[high] Triage remaining open follow-up issues #1403-#1413 + #1422** (post-merge-review) — pm-scrum-master. Yesterday's pm-qa rotation cleared 4 of #1360-#1377 via merged PRs; new batch needs owner assignment.
-4. **[medium] Confirm EAS mobile workflows green on workflow_dispatch** — pm-devops. Both files now exist; pins/secrets verification still owed.
-5. **[medium] Decide stale draft PRs #1316 (~3d), #1197 (~7d), #988 (epic-scale)** — pm-scrum-master. Promote, rebase, or close.
+1. **[high] Land PR #1797 out of draft (OCR auth + rental guest PII manager-gate)** — pm-security. Closes #1772/#1766; 13-day staleness on a security-critical surface is itself the blocker.
+2. **[high] Fix issue #2107 fabricated-JWT test bypass** — pm-security / rust-backend. Outages happy-path tests must exercise the real login/authz flow; DB-role and JWT-role must be verified in parity.
+3. **[high] Complete 79-2 auth-flow SSO/JWT/cookie sign-off** — pm-security. This is the top pending pm-security action per coverage.json since the 2026-07-02 deep scan.
+4. **[medium] Land the 4 in-flight follow-up drafts (#2115, #2116, #2117, #2089)** — pm-backend / pm-qa. Closes 4 of 5 post-merge review issues in one sweep; #2117 replaces the 15-arg positional `::new` builder that #2099 left as a decorative smell.
+5. **[medium] Add OAuth Provider (10a) PKCE + refresh-rotation + introspection tests** — pm-security / rust-backend. Closes `pm-security-oauth-10a-untested-security-contract` before any epic-10a promotion.
 
 ## Blockers
 
-- **#1437 — `dev` backend compile broken (CRITICAL).** Owner: pm-devops + pm-backend. Lands as #1435 or #1436.
-- **EAS mobile pipeline unverified.** Owner: pm-devops. Workflow files present, green-status not confirmed.
-- **`security-test-gate.yml` enforcement.** Owner: pm-devops + pm-qa. Still possibly advisory-only on `dev`.
-- **Stale drafts #1316/#1197/#988.** Owner: pm-scrum-master. No movement >2d.
+- **PR #1797** (OCR auth + rental guest PII gate) — 13-day stale draft, security-sensitive. Owner: pm-security.
+- **7a-2-folder-organization** — reverted from done to review; `document_folder_tests` CI red (PR #1316 round 1). Owner: pm-backend.
+- **80-2-dispute-filing-flow** — held at partial pending the 5-step wizard redesign product decision. Owner: pm-frontend.
+- **test_hardening_batch (thb-2026-05-25)** — issues #480/#481/#482/#484/#487 still open, gating 8a-3, 10a-1/10a-2/10a-3, and 7a-5 promotions. Owner: pm-backend / pm-frontend.
 
-## Role focus today: **pm-devops** (+ pm-scrum-master always-on)
+## Role focus today: **pm-security** (+ pm-scrum-master always-on)
 
-- **pm-devops** (rotation idx 4, last 2026-05-27, 20d stale): 6 new next_actions appended to `action-list.json`; 4 new risks appended to `risks.json`; 3 new decisions in `decisions.md`. Full role JSON in `.research/management/roles/pm-devops.md`. Headline: dev-CI discipline failure (#1437) + EAS workflow files now present but unverified + pre-push gate local-only.
-- **pm-scrum-master** (always-on): produced the delivery synthesis above; headline = `dev` red blocks all backend CI; pm-qa coverage flood mostly cleared 18 follow-up issues from 2026-06-14; mobile location-filter slice complete.
+- **pm-security** (rotation idx 5, last 2026-05-27 → 40d stale before this run): 6 new next_actions appended to `action-list.json`; 5 new risks appended to `risks.json`; 2 new decisions in `decisions.md` (queued). Full role JSON in `.research/management/roles/pm-security.md`. Headline: PR #1797 stale draft on security-critical surface; #2107 fabricated-JWT masks real drift; 79-2 auth-flow sign-off still owed; OAuth 10a untested-security-contract risk still open. Wins: quick-xml XXE hard-ban + CODEOWNERS gate; accounting export honesty invariant enforced-by-construction.
+- **pm-scrum-master** (always-on): produced the delivery synthesis above; headline = steady hygiene sweep (12 merged, 4 follow-ups already in-flight); coverage vs sprint-status drift on epic-8a needs a deep-scan reconcile.
 
-## Coverage (deep scan — 2026-06-23)
+## Coverage (upkeep — 2026-07-06)
 
-- **`coverage.json` fully regenerated** (`scan_kind=deep`) — supersedes the `scan_kind=upkeep` note in the header above and the rotating per-epic upkeep cursor (was "next: epic-9"; all epics are now freshly classified). All 13 epics with story files rescanned in parallel → **49 stories: 37 done · 12 partial · 0 not-started**. Full ranked plan in `roadmap.md`.
-- **Dominant signal — promotion lag, not missing code:** ~8 stories (6-1…6-5, 79-1, 10b-5, 10b-7) are code-complete with merged PRs but stuck at sprint-status `ready-for-dev`/`review`; they need reconciliation + sign-off, not new implementation.
-- **Genuinely unfinished slices:** 84-5 pgvector RAG retrieval/query service (migration only), 80-3 mediation party-submission endpoints (unwired), 80-2 dispute redesign 5-step wizard + i18n, 6-3/6-4 mobile comments/pinned UI, 79-1/79-2 e2e (79-2 security-sensitive: SSO/JWT/cookie).
-- **Systemic screen-map drift:** 0 of ~120 screen-maps populate frontmatter `epics:` → epic→screen linkage impossible; this manufactures the 29 "orphan" screens (really out-of-scan-scope: 13 of 25 epics). Backfilling `epics:` is the single highest-leverage fix. Also: 2 orphan epics (epic-85 env/build, epic-8a NotificationSettingsPage), 4 missing UC links (UC-10/29/33/40).
-- **Top coverage actions** — *secondary to the #1437 dev-red incident in "What's next" above*: (1) reconcile 79-2 auth-flow → done with pm-security SSO/JWT/cookie sign-off; (2) reconcile 10b-5 support-data-access → done with retention/access-audit check; (3) finish & promote announcements 6-1/6-2/6-5; (4) complete 79-1 e2e verification; (5) backfill screen-map `epics:` frontmatter.
+- `coverage.json` refreshed with `scan_kind="upkeep"`. Rotating epic-8a re-checked at coverage cursor idx 12; no story-level status changes this window (no merged PR touched epic-8a). `last_checked` bumped to 2026-07-06 on all 3 epic-8a stories.
+- **Systemic epic-8a divergence:** sprint-status.yaml marks epic-8a done, but coverage classifier still holds 8a-3 partial (mobile FCM/APNs stub swallows failures + pipeline dispatch serial). Deep scan will reconcile.
+- **Deep scan of 2026-07-02 baseline:** 49 stories · 40 done · 9 partial · 0 not-started. Dominant remaining vectors: (a) promotion lag on epic-7A documents; (b) mobile OS push (8a-3); (c) mobile-native iOS Account + Android/KMP inquiry UI (82-5); (d) missing `POST /reports/schedules` (81-1).

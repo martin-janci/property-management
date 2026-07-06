@@ -1,0 +1,216 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-06.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced vs HEAD",
+      "observed": "last_pr_seen 2093→2114, last_issue_seen 2087→2110, last_commit_sha 7e09d77d→e7a89ccd, seen_signals 233→242, hotspot_history 64→66",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal double-count",
+      "observed": "0 offenders (rental.rs re-emit is cumulative churn-hotspot with score_delta=0; all others are new IDs)",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "max score 6 (cap 8); 0 open items decay-eligible (all open items updated_at >= 2026-07-05)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans → vacuously true",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness",
+      "observed": "0 new plans this run — no candidates reached score>=3 (highest new item score=1)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff .research-only",
+      "observed": "expected true — routine writes only under .research/",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged diff",
+      "observed": "no matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regenerated",
+      "observed": "regenerator confirmed byte-identical (timestamp is part of regen output)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures — all phases completed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge",
+      "observed": "no new plans; existing plans untouched",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "no archive changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "regenerator produced byte-identical file to staged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto-fix actions (no allowlist candidate reached certainty bar this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor advanced + coverage_cursor advanced",
+      "observed": "pm_cursor.next_index=6 (from 5, advanced), coverage_cursor.next_index=0 (from 12, advanced mod 13); action-list.json + risks.json parse; project-state.md non-empty",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-05T03:10:00Z (PR #2100 rental.rs split)",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: 2933 lines churn (raw numstat) this run — driven by PR #2100 module-split refactor; expected refactor churn, not code instability; score_delta suppressed per cumulative rule.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/rental.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1→2",
+      "score_delta": 1,
+      "evidence": "second consecutive run as top churn hotspot — both runs are refactor-driven (last run: preparation, this run: PR #2100 landed); no bug signal.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": "594 lines churn (raw numstat) — new file created by PR #2100 rental split; largest of the extracted sub-modules.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-05T03:10:00Z (PR #2098 + #2113)",
+      "score_delta": 1,
+      "evidence": "532 lines churn — enum-sync guard (#2098) then variant-set fix (#2113); one round-trip in <24h.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014 (dependabot: axum-test 20.1.0 → 21.0.0)",
+      "score_delta": 0,
+      "evidence": "dependabot bump, in-flight (open >4 days).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2016",
+      "type": "dep-update-noise",
+      "source": "PR #2016 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0)",
+      "score_delta": 0,
+      "evidence": "dependabot bump, in-flight.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2018",
+      "type": "dep-update-noise",
+      "source": "PR #2018 (dependabot: aes-gcm 0.10.3 → 0.11.0)",
+      "score_delta": 0,
+      "evidence": "dependabot bump, in-flight.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020 (dependabot: rust_xlsxwriter 0.95.0 → 0.96.0)",
+      "score_delta": 0,
+      "evidence": "dependabot bump, in-flight.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment 2026-07-06 — errorHandler.ts:53-133",
+      "score_delta": 1,
+      "evidence": "ERROR_MESSAGES dict hardcodes English titles/messages; parseApiError returns raw strings via lib/index.ts; app ships sk/cs/de/hu/pl locale files but error dialogs render English.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-stale-token",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment 2026-07-06 — AuthContext.tsx:396-399",
+      "score_delta": 1,
+      "evidence": "initializeAuth reads storedUser+accessToken and setUser(storedUser) with no exp-claim check despite decodeJwtPayload() existing at line 219; expired token yields authenticated UI, first protected API call trips 401 before refresh flow — user sees spurious error toast.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": []
+}

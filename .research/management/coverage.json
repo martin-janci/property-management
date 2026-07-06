@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-02T19:30:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-06T03:13:39Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [
       "epic-85",
@@ -130,7 +130,7 @@
         "PR #1911 verify-first already-complete on dev"
       ],
       "gaps": [
-        "screen admin-organizations buildStatus=planned; no dedicated admin-web Organizations page — frontend slice unconfirmed"
+        "screen admin-organizations buildStatus=planned; no dedicated admin-web Organizations page \u2014 frontend slice unconfirmed"
       ],
       "last_checked": "2026-07-02"
     },
@@ -315,7 +315,7 @@
         "ppt-web AnnouncementComments component + tests"
       ],
       "gaps": [
-        "Mobile RN shows comment count only — full comment UI not implemented"
+        "Mobile RN shows comment count only \u2014 full comment UI not implemented"
       ],
       "last_checked": "2026-07-02"
     },
@@ -514,7 +514,7 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "sprint-status: ready-for-dev (stale — code contradicts)",
+        "sprint-status: ready-for-dev (stale \u2014 code contradicts)",
         "document_access_allowed + scope_membership_allows in core.rs",
         "document_access_test.rs 217 lines"
       ],
@@ -609,7 +609,7 @@
         "screen file-dispute shipped/complete"
       ],
       "gaps": [
-        "redesignStatus in-progress — 5-step wizard not applied",
+        "redesignStatus in-progress \u2014 5-step wizard not applied",
         "not promoted to done pending wizard"
       ],
       "last_checked": "2026-07-02"
@@ -652,7 +652,7 @@
         "screen reports shipped; cron roundtrip/rbac tests"
       ],
       "gaps": [
-        "No POST /reports/schedules create route — 'Create new schedule' unimplemented (screen apiStatus=partial)"
+        "No POST /reports/schedules create route \u2014 'Create new schedule' unimplemented (screen apiStatus=partial)"
       ],
       "last_checked": "2026-07-02"
     },
@@ -796,7 +796,7 @@
         "airbnb oauth/webhook-dedup/sync-reconciliation tests"
       ],
       "gaps": [
-        "Airbnb UI PR #1004 merged but no airbnb component in ppt-web/src at HEAD — verify UI wired"
+        "Airbnb UI PR #1004 merged but no airbnb component in ppt-web/src at HEAD \u2014 verify UI wired"
       ],
       "last_checked": "2026-07-02"
     },
@@ -954,7 +954,7 @@
       "gaps": [
         "Story doc still in-progress; RN/iOS/docs tasks unchecked",
         "No standalone env-setup .md despite PR #1385",
-        "react-native-config replaced by Expo app.config — spec drift"
+        "react-native-config replaced by Expo app.config \u2014 spec drift"
       ],
       "last_checked": "2026-07-02"
     },
@@ -995,7 +995,7 @@
         "screen notification-settings shipped; granular tests"
       ],
       "gaps": [],
-      "last_checked": "2026-07-02"
+      "last_checked": "2026-07-06"
     },
     {
       "epic": "epic-8a",
@@ -1015,7 +1015,7 @@
         "ppt-web features/critical-notifications; migration 00177"
       ],
       "gaps": [],
-      "last_checked": "2026-07-02"
+      "last_checked": "2026-07-06"
     },
     {
       "epic": "epic-8a",
@@ -1039,7 +1039,7 @@
         "Mobile OS push (FCM/APNs) deferred",
         "pipeline dispatch serial + FCM stub swallows failures"
       ],
-      "last_checked": "2026-07-02"
+      "last_checked": "2026-07-06"
     },
     {
       "epic": "epic-9",
@@ -1061,5 +1061,13 @@
       "gaps": [],
       "last_checked": "2026-07-02"
     }
-  ]
+  ],
+  "upkeep_notes": {
+    "2026-07-06": {
+      "rotating_epic": "epic-8a",
+      "action": "sprint-status.yaml marks epic-8a done (3/3); coverage classifier keeps 8a-3 partial pending mobile OS push (FCM/APNs) \u2014 no code change this window; last_checked bumped.",
+      "merged_prs_mapped_to_epic": [],
+      "notes": "Note: sprint-status/coverage divergence on epic-8a is intentional \u2014 sprint promoted based on realtime WS coverage; coverage classifier still counts mobile-push gap. Reconcile in next deep scan."
+    }
+  }
 }

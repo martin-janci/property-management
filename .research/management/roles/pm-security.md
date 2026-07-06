@@ -1,62 +1,41 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-07-06
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Rotating role output for the daily PPT research routine. Rendered from the pm-security agent JSON._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Wins this sprint: quick-xml XXE ban is now a hard cargo-deny gate with CODEOWNERS protection (#2096 + #2111), and the accounting-export honesty invariant is enforced by construction (#2099) — both close real CVE/compliance exposure. Top open items: PR **#1797** (OCR auth + rental-guest-PII gate) is a **13-day stale draft on a security-critical surface**, test-hardening batch item **#481** (OAuth refresh-token revocation bypass) still blocks 10a-1/10a-3, and **#2107**'s fabricated-JWT test bypass masks real auth-role drift — none of these should ship to prod unresolved.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+| priority | action | dependency | done-when |
+|---|---|---|---|
+| high | Promote PR #1797 out of draft, get it reviewed and merged (closes #1772 unauthenticated-OCR, #1766 guest-PII exposure) | rust-backend | PR #1797 merged to dev; #1772 and #1766 closed with regression tests |
+| high | Fix issue #2107: outages happy-path tests must exercise real login/authz instead of a fabricated JWT with mismatched role | rust-backend | Test suite derives JWT via real login flow; DB-role/JWT-role parity asserted |
+| high | Resolve test-hardening #481 (refresh-token revocation bypass) before promoting 10a-1/10a-3 to done | rust-backend | `revoked_at IS NULL` check restored in refresh-token query + regression test; story_gate cleared |
+| high | Complete 79-2 auth-flow sign-off (SSO/JWT/cookie) — currently the top pending pm-security action per coverage.json | none | `auth.rs` / `sso.rs` reviewed end-to-end for token TTL, cookie Path/scope, session revocation; sign-off recorded in coverage.json |
+| medium | Add PKCE + refresh-rotation + introspection tests for OAuth Provider (10a-1/10a-2/10a-3) | rust-backend | `pm-security-oauth-10a-untested-security-contract` risk closed with test coverage |
+| medium | Assess Dependabot #2018 (`aes-gcm` 0.10.3 → 0.11.0 major bump) for breaking changes on any auth/crypto call sites | rust-backend | Impact note posted on PR #2018; merge or defer decision made |
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+| id | risk | prob | impact | mitigation |
+|---|---|---|---|---|
+| pr-1797-stale-security-draft | PR #1797 (OCR auth + guest PII gate) remains an unmerged draft for 13+ days on a known-critical surface | high | high | Prioritize review/merge this sprint; escalate if blocked |
+| oauth-refresh-revocation-bypass | Test-hardening #481: OAuth refresh-token revocation query bypass — revoked tokens may still be reusable (RFC 9700 violation) | medium | high | Restore `revoked_at IS NULL` predicate + regression test before 10a promotion |
+| fabricated-jwt-test-bypass | #2107 fabricated-JWT test bypass could mask real authz breakage in outages happy-path tests | medium | medium | Rework tests to use real login/authz path |
+| oauth-10a-no-security-tests | OAuth Provider (10a) ships without PKCE/refresh-rotation/introspection test coverage | medium | high | Land dedicated security-contract tests before epic-10a promotion to done |
+| audit-hash-debug-format-p1-04 | Debug-format audit-hash issue (P1-04) still open — potential sensitive-data leakage via Debug logging on an audit-hash surface | low | medium | Confirm status and close or explicitly defer with owner |
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Is PR #1797's auth fix already partially present on dev — does #1797 now only cover the remaining rental-guest-PII gate?
+- What is the status of test-hardening items #480 (WS auth token logged in query param) and #487 (MFA rate-limit test gap) relative to epic-10a promotion?
+- Is the cookie Path/scope hardening residual from a prior sprint closed, or still pending as part of 79-2 sign-off?
+- Has Dependabot #2018 (aes-gcm major bump) been triaged for any direct use in token/session encryption paths?
+- What is the current state/owner of Booking.com OAuth atomic credential swap on re-connect risk?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Whether epic-10a (OAuth Provider) can proceed toward done without closing #481/#487 test-hardening gates — owner: rust-backend / pm-security.
+- Whether PR #1797 should be split (OCR auth fix vs. guest-PII gate) to unblock the already-complete portion sooner — owner: rust-backend.
