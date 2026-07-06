@@ -1,0 +1,221 @@
+{
+  "generated": "2026-07-06T18:20:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn top-3 (2 PR touches in window ending 2026-07-06)",
+      "score_delta": 1,
+      "evidence": [
+        "2 PR(s) touched backend/crates/db/src/models/multi_currency.rs in the window ending 2026-07-06 \u2014 see PRs #2098/#2113 (multi_currency), #2099/#2117 (regional_compliance)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn top-3 (2 PR touches in window ending 2026-07-06)",
+      "score_delta": 1,
+      "evidence": [
+        "2 PR(s) touched backend/crates/db/src/models/regional_compliance.rs in the window ending 2026-07-06 \u2014 see PRs #2098/#2113 (multi_currency), #2099/#2117 (regional_compliance)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn top-3 (2 PR touches in window ending 2026-07-06)",
+      "score_delta": 1,
+      "evidence": [
+        "2 PR(s) touched backend/servers/api-server/src/routes/regional_compliance.rs in the window ending 2026-07-06 \u2014 see PRs #2098/#2113 (multi_currency), #2099/#2117 (regional_compliance)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-06",
+      "type": "lag_warning",
+      "source": "routine timing",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 1d 15h (~39h since last_run_iso 2026-07-05T03:10:00Z, threshold 36h)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".research/state.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-book-facility-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:47-54 \u2014 checkAvailability() failure only console.errors; no setError/setAvailableSlots reset. User sees an empty slot list with no indication the API call failed."
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-book-facility-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:33,69,93,99,110,125 \u2014 page never imports useTranslation; hardcoded user-facing English strings; sibling pages use t()."
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-api-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 `(sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[]` erases generated SessionInfo type at API boundary; hand-rolled SessionRow re-asserted."
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "observed": "0 open pre-2026-06-22",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "n/a \u2014 no plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 non-.research staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count 7 >= HEAD 7",
+      "expected": "cur\u2265HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions=0",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "pm_cursor=6 coverage_cursor=0 (wrap) epics=13",
+      "expected": "in range + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0 token matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}
