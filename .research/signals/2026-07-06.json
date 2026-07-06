@@ -1,0 +1,155 @@
+{
+  "generated_at": "2026-07-06T02:15:00Z",
+  "since": "2026-07-05T03:10:00Z",
+  "cursors": {
+    "last_pr_seen_before": 2093,
+    "last_pr_seen_after": 2114,
+    "last_issue_seen_before": 2087,
+    "last_issue_seen_after": 2110,
+    "last_commit_sha_before": "7e09d77d",
+    "last_commit_sha_after": "8ff7b4b1"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 7e09d77d (2 commits)",
+      "score_delta": 1,
+      "evidence": "Top-1 churn hotspot this run: 2 commits touching backend/crates/db/src/models/multi_currency.rs since 2026-07-05T03:10Z — PR #2098 (add enum sync guard for currency/country lists) and PR #2113 (drive enum-sync guard off enum variant set, follow-up fix). runs_seen: 0 -> 1.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 7e09d77d (2 commits)",
+      "score_delta": 1,
+      "evidence": "Top-2 churn hotspot this run: 2 commits touching backend/crates/db/src/repositories/messaging.rs since 2026-07-05T03:10Z — PR #2097 (un-quarantine #1771 soft-delete unread invariant) and PR #2112 (refresh stale BIT-351 quarantine docstrings). runs_seen: 0 -> 1.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-06.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "score<=8 all; no decay violations (0 open items over 14d)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new-plan adversarial annotation",
+      "observed": "no new plans this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "diff -q PASS",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "brief lists none; 1.5/1.6 intentional skip surfaced",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge",
+      "observed": "all prior slugs present in plans/ or _archive/",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7, head=7",
+      "expected": ">= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff -q PASS",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill-switch, caps, idempotency)",
+      "observed": "0 actions this run",
+      "expected": "<=3 total, <=1 each type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor advance",
+      "observed": "action-list/risks parse; project-state.md non-empty; pm_cursor unchanged (1.6 skipped) => GC7 no-op",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

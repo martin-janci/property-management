@@ -4065,18 +4065,60 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: code patterns no longer present in cited files — PR #2100 (merged 2026-07-05) split rental.rs into rental/ module; original file deleted"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (2 commits since 2026-07-05)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 7e09d77d: 2 commits (#2098, #2113)"
+      ],
+      "evidence": [
+        "top-1 file churn between last cursor (7e09d77d, 2026-07-05T03:10Z) and dev@HEAD — 2 commits: enum-sync guard (#2098) and enum-set-driven guard fix (#2113)"
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-messaging-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/messaging.rs (2 commits since 2026-07-05)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 7e09d77d: 2 commits (#2097, #2112)"
+      ],
+      "evidence": [
+        "top-2 file churn between last cursor (7e09d77d, 2026-07-05T03:10Z) and dev@HEAD — 2 commits: un-quarantine soft-delete unread test (#2097) and stale-quarantine docstring refresh (#2112)"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/messaging.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]
