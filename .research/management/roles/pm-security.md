@@ -1,62 +1,34 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-07-06
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Rotating role this run (pm_cursor idx 5 → 6). Static read; no compile/run._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Authz-mismatch class of bugs is actively being fixed (outage mutations PR #2120, dependency-pin hardening #2096/#2111), but four high/medium severity items from test-hardening batch thb-2026-05-25 remain open and are blocking three OAuth/notification stories from being marked done. WS auth token-in-query-param exposure (#480) is only partially mitigated — exp re-validation was added but the raw JWT still travels in the URL/query string and will land in access logs.
 
 ## next_actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Verify oauth.rs revoked_at filtering (find_access_token_by_hash/refresh token lookups) end-to-end against issue #481's claim that revocation is bypassed; sprint-status still lists #481 open but current code shows `revoked_at IS NULL` present on the hash-lookup queries — reconcile and close or re-open with root cause. DoD: Issue #481 closed with regression test proving a revoked refresh token cannot mint new access tokens, or re-confirmed open with exact query/line identified. dependency: rust-backend.
+- **[high]** Redirect WS auth off the query string (issue #480): move token to a `Sec-WebSocket-Protocol` header or first-frame auth message so it stops appearing in access/proxy logs; keep the exp re-validation already added. DoD: `ws_notifications.rs` WsQuery.token removed from URL query; token passed via non-logged channel; access-log grep shows no JWTs. dependency: rust-backend.
+- **[high]** Land #1797 (auth on OCR endpoints + manager-gate on rental guest PII reads) before release — currently draft. DoD: PR #1797 merged to dev with tests covering unauthenticated OCR access and non-manager PII read attempts. dependency: rust-backend.
+- **[medium]** Add IDOR regression tests for the voice-device fix (#483) and fix list-commands empty-vs-403 existence leak. DoD: New tests assert 403 (not empty list) for non-owners; #483 closed. dependency: rust-backend.
+- **[medium]** Fix ProtectedRoute multi-tenant role fallback (#482, uses `tenants[0]`) before promoting 10a-2 to done. DoD: ProtectedRoute resolves role from active tenant context, not array index 0; unit tests added. dependency: react-web.
+- **[medium]** Add MFA brute-force/rate-limit e2e coverage and fix the nested `mod common` compile risk (#487) ahead of 10a-1. DoD: Rate-limit test added, workspace compiles clean under `cargo test --workspace`. dependency: rust-backend.
 
 ## risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- OAuth Provider Foundation (epic-10a) has zero stories completed while two high-severity gates (#481 revocation, #487 MFA rate-limiting) remain open against it — risk of shipping OAuth without brute-force/replay protection. probability=medium impact=high. Mitigation: Block 10a-1/10a-3 promotion until #481 and #487 explicitly closed with tests, per existing story_gate rule.
+- WS JWT-in-query-param (#480) leaks bearer tokens into HTTP/proxy access logs and browser history, enabling session hijack if logs are exposed. probability=medium impact=high. Mitigation: Move token off the query string; short-term ensure access-log middleware redacts the token param.
+- Draft PR #1797 leaves OCR endpoints and rental guest PII reads potentially under-authorized in the meantime. probability=medium impact=high. Mitigation: Prioritize review/merge of #1797 before next release cut.
+- cargo-deny/XXE hardening (#2096/#2111) is new; other XML/YAML-parsing dependencies in the workspace may not yet be covered by the deny.toml ban list. probability=low impact=medium. Mitigation: Audit deny.toml coverage against all crates that parse untrusted XML/YAML.
 
 ## open_questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Is issue #481 actually still open, or was it fixed by an untracked commit — current `oauth.rs` shows `revoked_at IS NULL` on token lookups?
+- What is the merge/review target date for draft PR #1797?
+- Does the #2120 DB-role-derived authz pattern need to be back-ported to other mutation endpoints beyond the six outage ones?
 
 ## decisions_needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Confirm whether #481 stays open or closes given current oauth.rs state — owner: rust-backend
+- Decide WS auth transport mechanism (header vs first-frame vs signed short-TTL ticket) to replace query-param JWT — owner: rust-backend

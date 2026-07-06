@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-05 03:10 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-06 16:15 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -17,6 +17,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-mobile-rn-thread-send-no-onerror` | ThreadDetailScreen sendMessage.mutate has no onError — silent failure, no user feedback | open | 2026-07-06 |  |
+| 2 | test-gap | `code-review-mobile-rn-thread-send-untested` | ThreadDetailScreen new handleSend/mutation paths have zero test coverage | open | 2026-07-06 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file  | done | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id | done | 2026-06-16 |  |
@@ -60,6 +62,12 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcod | open | 2026-07-06 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs` | Churn hotspot: backend/crates/db/src/repositories/rental.rs (11 commits in 19-day catch-up) | done | 2026-07-06 |  |
+| 1 | bug | `code-review-mobile-rn-meter-type-fallback` | MetersScreen toUiCommodity default silently coerces unknown meter_type to electricity | open | 2026-07-06 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs` | Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines this run) | open | 2026-07-06 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs` | Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (387 lines this run) | open | 2026-07-06 |  |
+| 1 | refactor | `refactor-churn-hotspot-frontend-apps-mobile-src-screens-leases-leasedetailscreen-tsx` | Churn hotspot: frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx (273 lines this run) | open | 2026-07-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-deeplink-token-not-url-decoded` | DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platfor | open | 2026-07-05 |  |
 | 1 | bug | `code-review-mobile-native-kmp-search-stale-response-race` | SearchScreen stale-response race — overlapping searches can clobber newer results | open | 2026-07-05 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-1085-reality` | Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update | open | 2026-07-05 |  |
@@ -74,10 +82,8 @@
 | 1 | test-gap | `test-gap-hotfix-no-test-pr-1289-api-ecosystem` | api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test | open | 2026-07-05 |  |
 | 1 | test-gap | `test-gap-hotfix-no-test-pr-1292-mfa-rls` | mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixe | open | 2026-07-05 |  |
 | 1 | refactor | `code-review-api-core-osrng-expect` | crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential enc | done | 2026-07-05 |  |
-| 1 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcod | open | 2026-07-05 |  |
 | 1 | bug | `code-review-mobile-rn-deeplink-init-unhandled` | useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch | open | 2026-07-05 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-models-mod-rs` | Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) | open | 2026-07-05 |  |
-| 1 | refactor | `refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs` | Churn hotspot: backend/crates/db/src/repositories/rental.rs (11 commits in 19-day catch-up) | open | 2026-07-05 |  |
 | 1 | refactor | `refactor-closed-not-merged-pr-1378` | PR #1378 closed without merge — DROP-OWNED-BY teardown theory for #1332 was wrong root cause, superseded by #1 | done | 2026-06-15 |  |
 | 1 | test-gap | `code-review-issue-1137-pkce-test-tautology` | PKCE unit test became a tautology after services/oauth.rs DRY refactor (#1132) | done | 2026-06-07 |  |
 | 1 | triage | `triage-issue-1061-dispatcher-archive-corruption` | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | done | 2026-06-07 |  |

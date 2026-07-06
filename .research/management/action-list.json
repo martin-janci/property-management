@@ -140,6 +140,73 @@
         ]
       },
       "last_updated": "2026-07-04T20:13:30Z"
+    },
+    {
+      "id": "pm-scrum-master-fix-ci-document-folder-tests-fk-isolatio",
+      "action": "Fix CI (document_folder_tests FK/isolation) blocking 7a-2-folder-organization",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-un-draft-and-land-1797-auth-on-ocr-endpo",
+      "action": "Un-draft and land #1797 (auth on OCR endpoints + manager-gate rental guest PII reads) — open 12+ days",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-scrum-master-close-or-explicitly-defer-test-hardening",
+      "action": "Close or explicitly defer test-hardening batch thb-2026-05-25 items #481/#482/#487 gating 10a-1/2/3",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-verify-oauth-rs-revoked-at-filtering-end",
+      "action": "Verify oauth.rs revoked_at filtering end-to-end vs issue #481; reconcile and close or re-open with root cause.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-redirect-ws-auth-off-the-query-string-is",
+      "action": "Redirect WS auth off the query string (issue #480): move token to Sec-WebSocket-Protocol header or first-frame auth message.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
+    },
+    {
+      "id": "pm-security-land-1797-auth-on-ocr-endpoints-manager-",
+      "action": "Land #1797 (auth on OCR endpoints + manager-gate on rental guest PII reads) — currently draft.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-06"
     }
-  ]
+  ],
+  "generated": "2026-07-06T16:15:00Z"
 }

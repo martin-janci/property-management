@@ -3982,11 +3982,13 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #2118"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "[partial] PR #2118 (merged 2026-07-06) wired Meters/Leases/Forms/Threads screens to api-server; MOCK_NOTIFICATIONS still present in NotificationsScreen.tsx:36,115 and MOCK_ still in PersonMonthsScreen.tsx — Buildings/PersonMonths/Notifications not yet wired."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
       "plan": null
     },
     {
@@ -4065,18 +4067,141 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 merged 2026-07-05 — split rental repository into cohesive sub-modules (rental.rs deleted, replaced by repositories/rental/{oauth,bookings,connections,reports,guests,calendar,searches}.rs)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-no-onerror",
+      "title": "ThreadDetailScreen sendMessage.mutate has no onError — silent failure, no user feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-07-06)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:144 — sendMessage.mutate only wires onSuccess; on POST failure (network/RLS/validation) sendMessage.isError/error are never rendered, the Send button silently re-enables and the user gets no feedback."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meter-type-fallback",
+      "title": "MetersScreen toUiCommodity default silently coerces unknown meter_type to electricity",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-07-06)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:83 — toUiCommodity default: return 'electricity' silently coerces unknown/null meter_type (e.g. backend's MeterType::Other, or serde variant drift) into electricity, rendering the lightning icon for gas/water/heat meters."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-untested",
+      "title": "ThreadDetailScreen new handleSend/mutation paths have zero test coverage",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-07-06)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.test.ts:1 — suite only exercises pure parsers (parseThreadDetail/threadTitle/toUiMessages); the newly-added handleSend trim+empty guard, disabled state, refetch-on-success, and mutation error path have zero coverage."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.test.ts",
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines this run)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-07-05T03:10:00Z: 1 window"
+      ],
+      "evidence": [
+        "top-3 code-file churn between last cursor (2026-07-05) and dev@HEAD; 532 lines added/deleted, single-PR effect — decay if no follow-up."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (387 lines this run)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-07-05T03:10:00Z: 1 window"
+      ],
+      "evidence": [
+        "top-3 code-file churn between last cursor (2026-07-05) and dev@HEAD; 387 lines added/deleted, single-PR effect — decay if no follow-up."
+      ],
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-frontend-apps-mobile-src-screens-leases-leasedetailscreen-tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx (273 lines this run)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-07-05T03:10:00Z: 1 window"
+      ],
+      "evidence": [
+        "top-3 code-file churn between last cursor (2026-07-05) and dev@HEAD; 273 lines added/deleted, single-PR effect — decay if no follow-up."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]

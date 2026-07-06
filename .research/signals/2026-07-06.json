@@ -1,0 +1,232 @@
+{
+  "generated": "2026-07-06T16:15:00Z",
+  "signals": [
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot bump: rust_xlsxwriter 0.95.0 → 0.96.0 (backend/Cargo). Merged 2026-07-06."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot bump: axum-test (backend, axum group). Merged 2026-07-06."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/models/multi_currency.rs — 532 lines added/deleted this window (PR #2098 enum sync guard). Single-PR effect."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/models/regional_compliance.rs — 387 lines added/deleted (PRs #2099 + #2117 SlovakAccountingExport honesty-by-construction). Single-PR effect."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx — 273 lines added/deleted (PR #2118 wire mobile Leases to api-server). Single-PR effect."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-no-onerror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:144 — sendMessage.mutate only wires onSuccess; on POST failure (network/RLS/validation) sendMessage.isError/error are never rendered, the Send button silently re-enables and the user gets no feedback."
+      ],
+      "expert": "frontend",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-type-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:83 — toUiCommodity default: return 'electricity' silently coerces unknown/null meter_type (e.g. backend's MeterType::Other, or serde variant drift) into electricity, rendering the lightning icon for gas/water/heat meters."
+      ],
+      "expert": "frontend",
+      "severity": "low"
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.test.ts:1 — suite only exercises pure parsers (parseThreadDetail/threadTitle/toUiMessages); the newly-added handleSend trim+empty guard, disabled state, refetch-on-success, and mutation error path have zero coverage."
+      ],
+      "expert": "tester",
+      "severity": "medium"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal met confidence=high + score>=3 + safe-shape (per Phase 5 certainty bar) this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-06.md && head -1 …",
+      "observed": "# 2026-07-06",
+      "expected": "# 2026-07-06"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurp state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup exclude cumulative types",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep newly-written plans for adversarial pass annotation",
+      "observed": "no new plans this run",
+      "expected": "no new plans → vacuously satisfied"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached A .research/plans/",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse Phases-that-failed line",
+      "observed": "none",
+      "expected": "vacuously satisfied"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "no prior-run plan slugs deleted",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive/ >= ls-tree HEAD _archive/",
+      "observed": "7>=7",
+      "expected": "staged>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions cap+ids",
+      "observed": "[]",
+      "expected": "len<=3, per-type<=1, no dup vs history"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "pm 5→6, cov 12→0, epics=13",
+      "expected": "valid indices; cursors advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram bot-token pattern in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "QG11 placeholder-rot",
+      "passed": true,
+      "command": "grep placeholder patterns in brief",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
