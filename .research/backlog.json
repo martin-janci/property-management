@@ -4065,18 +4065,122 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2100",
         "churn since 4829015b: 11 commits"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: file deleted after PR #2100 split into rental/*.rs sub-modules; code patterns no longer present in cited files"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/oauth.rs (594 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2100 (module split)"
+      ],
+      "evidence": [
+        "top-1 raw churn 2026-07-05..dev@HEAD: 594 add+del — file BORN from PR #2100 module split (one-off; not ongoing churn). Track runs_seen for future signal amplification only if it re-appears."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/oauth.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2113"
+      ],
+      "evidence": [
+        "top-2 raw churn 2026-07-05..dev@HEAD: 532 add+del from PR #2113 enum-sync guard rework (drove guard off enum variant set, not hand list). Follow-up issue #2104 suggests further hardening with strum::EnumIter."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-bookings-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/bookings.rs (527 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2100 (module split)"
+      ],
+      "evidence": [
+        "top-3 raw churn 2026-07-05..dev@HEAD: 527 add+del — file BORN from PR #2100 module split (one-off; not ongoing churn). Track runs_seen for future signal amplification only if it re-appears."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/bookings.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "bug-ppt-web-core-perf-visibility-listener-leak",
+      "title": "usePerformanceMetrics leaks visibilitychange listener per re-mount",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code review (ppt-web-core)"
+      ],
+      "evidence": [
+        "usePerformanceMetrics registers window.addEventListener(\"visibilitychange\", () => {...}) with an anonymous handler; effect cleanup only calls observer.disconnect(), never removeEventListener. Each re-mount (StrictMode, route re-entry, or onReport/reportOnUnload dep change) leaks a live listener holding a closure over the previous onReport — stale callbacks fire post-unmount and listeners grow unboundedly.",
+        "file: frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:153"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "bug-ppt-web-core-auth-env-var-mismatch",
+      "title": "AuthContext reads VITE_API_BASE_URL (undeclared); rest of app uses VITE_API_URL",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code review (ppt-web-core)"
+      ],
+      "evidence": [
+        "AuthContext.tsx:95 reads `import.meta.env.VITE_API_BASE_URL ?? \"\"`, but main.tsx:19 and lib/api.ts:64 read VITE_API_URL. VITE_API_BASE_URL is not declared in vite-env.d.ts and not set in any env file. In cross-origin production (VITE_API_URL=https://<api-host>), createAuthApi({ baseUrl: \"\" }) POSTs /api/v1/auth/login to the SPA origin and receives index.html → silent login/refresh/logout break.",
+        "file: frontend/apps/ppt-web/src/contexts/AuthContext.tsx:95"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]

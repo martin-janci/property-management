@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "generated": "2026-07-06T04:15:00Z",
+  "routine": "daily-2026-07-06",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 raw churn 2026-07-05..dev@HEAD: 532 additions+deletions (PR #2113 enum-sync guard rework)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-1 raw churn 2026-07-05..dev@HEAD: 594 additions+deletions — file BORN from PR #2100 module split (one-off churn from rental.rs move-only extraction)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/bookings.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 raw churn 2026-07-05..dev@HEAD: 527 additions+deletions — file BORN from PR #2100 module split (one-off churn from rental.rs move-only extraction)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2022",
+      "type": "dep-update-noise",
+      "source": "PR #2022",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot expo-clipboard bump — closed unmerged 2026-07-05"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2023",
+      "type": "dep-update-noise",
+      "source": "PR #2023",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot expo-device bump — closed unmerged 2026-07-05"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2024",
+      "type": "dep-update-noise",
+      "source": "PR #2024",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot expo-local-authentication bump — closed unmerged 2026-07-05"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2025",
+      "type": "dep-update-noise",
+      "source": "PR #2025",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot expo-notifications bump — closed unmerged 2026-07-05"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-performance-visibility-listener-leak",
+      "type": "code-review-finding",
+      "source": "ppt-web-core segment review (Phase 1.5)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "usePerformanceMetrics registers `window.addEventListener('visibilitychange', () => {...})` with an anonymous handler; effect cleanup only calls `observer.disconnect()`, never removeEventListener. Each re-mount leaks a listener holding a closure over the previous `onReport`; stale callbacks fire post-unmount and listeners grow unboundedly.",
+        "file: frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:153"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-env-var-mismatch",
+      "type": "code-review-finding",
+      "source": "ppt-web-core segment review (Phase 1.5)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "AuthContext.tsx:95 reads `import.meta.env.VITE_API_BASE_URL ?? ''`; main.tsx:19 and lib/api.ts:64 use `VITE_API_URL`. `VITE_API_BASE_URL` is not declared in vite-env.d.ts and not set in any env file. In cross-origin production (e.g. VITE_API_URL=https://<api-host>), createAuthApi({ baseUrl: '' }) POSTs `/api/v1/auth/login` to the SPA origin and receives index.html → silent login/refresh/logout break.",
+        "file: frontend/apps/ppt-web/src/contexts/AuthContext.tsx:95"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal (no screen-map-drift/orphan/fixme/lockfile/stalled-review this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-06.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare vs HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog IDs unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-counted with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay applied to open >14d",
+      "observed": "no items > 8; no open items exceed 14d age",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial pass note",
+      "observed": "0 new plans this run — no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each meets readiness",
+      "observed": "0 new plans this run — no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames in staged non-baseline .research/",
+      "observed": "0",
+      "expected": "0",
+      "note": "initial fail on api.<api-host>-scrubbed reference; rewrote evidence in backlog.json + signals to <api-host> placeholder before commit"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md matches staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phases failed; Phase 1.6 skipped noted in brief with cursor unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= HEAD",
+      "observed": "staged=7, HEAD=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md matches staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no action + kill switch unset)",
+      "observed": "0 actions this run",
+      "expected": "≤ caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor/coverage_cursor bounds",
+      "observed": "Phase 1.6 skipped this run; pm_cursor + coverage_cursor unchanged (gate is no-op)",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
