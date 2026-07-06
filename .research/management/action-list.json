@@ -184,8 +184,8 @@
       "action": "Follow-up: currency/country enum-sync guard doesn't fail on variant missing from canonical list (PR #2098) (Closes #2104)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2104)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2104) | gc1-reconcile 2026-07-06T02:08:30Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -197,6 +197,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2113,
+        "merged_at": "2026-07-06T02:07:10Z",
+        "at": "2026-07-06T02:08:30Z"
       }
     },
     {
@@ -204,8 +211,8 @@
       "action": "Follow-up: stale BIT-351 quarantine docstrings after un-quarantining soft-delete unread test (PR #2097) (Closes #2105)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2105)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2105) | gc1-reconcile 2026-07-06T02:08:30Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -217,6 +224,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2112,
+        "merged_at": "2026-07-06T02:07:10Z",
+        "at": "2026-07-06T02:08:30Z"
       }
     },
     {
@@ -224,8 +238,8 @@
       "action": "Follow-up: deny.toml quick-xml ban is now load-bearing but not CODEOWNERS-gated (PR #2096) (Closes #2106)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2106)",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-05T22:07:52Z (#2106) | gc1-reconcile 2026-07-06T02:08:30Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -237,6 +251,13 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2111,
+        "merged_at": "2026-07-06T00:15:15Z",
+        "at": "2026-07-06T02:08:30Z"
       }
     },
     {
