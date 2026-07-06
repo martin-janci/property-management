@@ -4065,18 +4065,100 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: code patterns no longer present in cited files (rental.rs deleted; split into rental/ sub-modules via PR #2100)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (enum sync guard rework, PR #2098)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2098"
+      ],
+      "evidence": [
+        "331 lines churn since 7e09d774: PR #2098 added ALL[] + FromStr + Display + 10 tests; hardened by PR #2113 with ALL and const _ guards"
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-tests-outages-happy-path-tests-rs",
+      "title": "Churn hotspot: outages_happy_path_tests.rs (auth fix, PR #1979)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1979"
+      ],
+      "evidence": [
+        "339 lines churn from PR #1979 — mint raw manager JWT to unblock BIT-414 test-job gate; test-only file, latent auth gap flagged in #2107"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/outages_happy_path_tests.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-faults-rs",
+      "title": "Churn hotspot: faults.rs (assign_fault recipient extract, PR #2095)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2095"
+      ],
+      "evidence": [
+        "145 lines churn from PR #2095 — extracted assign_fault_recipients + manager_recipients helpers with unit-test coverage"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-faults-stale-security-todo",
+      "title": "faults.rs:133 TODO(security) stale — is_manager branches now use MembershipRepository lookup, not hard-coded false",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "api-handlers segment review 2026-07-06"
+      ],
+      "evidence": [
+        "TODO comment at faults.rs:133-137 claims is_manager branches use `false` (least privilege); grep confirms all 3 assignments (:194, :692, :1421) now call `MembershipRepository::is_manager_in_org(user_id, tenant_id)` — TODO is stale, should be removed to prevent future readers thinking it is still un-fixed"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]

@@ -1,0 +1,183 @@
+{
+  "generated_at": "2026-07-06T00:18:48Z",
+  "run_kind": "incremental",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2098",
+      "score_delta": 1,
+      "evidence": "churn since 7e09d774: 331 lines from PR #2098 (enum sync guard for currency/country lists)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/outages_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #1979",
+      "score_delta": 1,
+      "evidence": "churn since 7e09d774: 339 lines from PR #1979 (outages happy-path auth fix, BIT-414). Test-only file; latent auth-model gap flagged in #2107.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/faults.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2095",
+      "score_delta": 1,
+      "evidence": "churn since 7e09d774: 145 lines from PR #2095 (extract assign_fault_recipients + manager_recipients helpers with unit-test coverage).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "open draft 12d \u2014 'fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads'; awaiting review, remains draft. No reviewDecision.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": "open draft 11d \u2014 churn-hotspot reality_portal.rs split (labeled 'needs-human-review'). Human-gated intentionally.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-api-handlers-faults-stale-security-todo",
+      "type": "code-review-finding",
+      "source": "api-handlers segment review 2026-07-06",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/faults.rs:133-137 TODO(security) claims is_manager branches use `false` (least privilege); grep confirms all 3 is_manager assignments at :194,:692,:1421 now call MembershipRepository::is_manager_in_org(user_id, tenant_id). The security fix landed but the TODO is stale and misleads future readers.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief present",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap \u22648, decay applied",
+      "observed": "true (no items eligible for decay this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuous",
+      "observed": "0 new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans \u2264 2, each meets gates",
+      "observed": "0 new plans",
+      "expected": "\u2264 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty \u2014 no failures",
+      "observed": "no phases failed",
+      "expected": "consistency"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converge",
+      "observed": "all HEAD plans present in tree or _archive",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "7 == 7",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions this run (all caps satisfied)",
+      "expected": "\u2264 3 actions"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor in range; Phase 1.6 skipped this run so GC7 advance-clause is vacuously satisfied",
+      "observed": "action-list/risks JSON parse OK; project-state non-empty; pm_cursor.next_index=5; coverage_cursor.next_index=12 (in [0,13))",
+      "expected": "all present"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": "Phase 1.5 review reduced to a single quick static check on faults.rs (segment=api-handlers, oldest churn-aligned). Phase 1.6 intentionally skipped \u2014 dispatcher's management artifacts are fresh (updated 2026-07-06 00:07 UTC); no role rotation this run."
+}
