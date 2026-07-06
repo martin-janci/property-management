@@ -1,0 +1,219 @@
+{
+  "generated": "2026-07-06T22:24:00Z",
+  "cursor_since_iso": "2026-07-05T03:10:00Z",
+  "last_pr_seen_before": 2093,
+  "last_pr_seen_after": 2120,
+  "last_issue_seen_before": 2087,
+  "last_issue_seen_after": 2110,
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-06",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "(now - last_run_iso) = 43h; > 36h threshold — routine ran on the incremental schedule but ~7h later than the ideal ~24h cadence, likely because yesterday's catch-up run overshot the target hour"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/multi_currency.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2098, PR #2113",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — enum sync guard added (#2098) then hardened after post-merge review (#2113)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2099, PR #2117",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — SlovakAccountingExport::compute_partial mutator (#2099) then named-field constructor (#2117) landed back-to-back after post-merge review found the mutator-can-be-forgotten class"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2099, PR #2117",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — route updated in lock-step with the model refactor across two consecutive PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-handlers-fake-minutes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 — get_slovak_vote_minutes returns SlovakVoteMinutes with hardcoded meeting_date=2024-01-15, meeting_location, total_ownership_shares=100, participation=75%, votes_for=60, votes_against=10, abstentions=5, result_approved=true, empty participants/questions; only vote_id/building_id/title come from the DB. Served as compliance evidence under Regional Compliance tag.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:897-920 — same fabrication pattern in get_czech_usneseni (hardcoded svj_name=SVJ Hlavni 1, ico=12345678, meeting_date, share counts, vote counts, result_approved=true). Exact class of quiet dishonesty that #2030/#2086 killed for SlovakAccountingExport."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-fake-vote-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259, 261-279 — validate_slovak_vote substitutes actual_participation=75.00% when eligible_count==0 AND defaults approval_percentage to 80.00% when the vote's results JSON fails to deserialize, has no questions, has no matching yes-option, or the first-option f64 → Decimal conversion fails. Both defaults exceed 50.01% quorum → is_valid=true off no voter data.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:803-829 — identical shape in validate_czech_vote (same 75%/80% defaults); malformed vote.results produces CzechVoteValidation { is_valid: true } indistinguishable from a real validation."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-metric-tuple-swap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/repositories/regional_compliance.rs:493-553 — get_accounting_metrics returns (i32,i32,Decimal,Option<Decimal>,Decimal,Option<Decimal>) with four type-identical/interleaved monetary fields; #2103 killed the same-typed-arg transposition class inside SlovakAccountingExport::new but the tuple upstream still permits it.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:431-447 — handler destructures the tuple positionally then feeds SlovakAccountingExportInput by name; reordering the tuple silently ships revenue↔receivables mislabeled through the now-safe constructor."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist (no screen-map-drift/orphan, no eligible fixme-in-merged-code, no lockfile-drift dependabot bump, no stalled non-draft review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-06.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal double-count filter",
+      "observed": "0 offenders",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no items > 8; no open items past 14d cutoff",
+      "expected": "same"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation per new plan",
+      "observed": "both plans annotated",
+      "expected": "both annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan structure + Files existence",
+      "observed": "2 plans, 4 meta + 11 headings + Mode line + capability tick + files resolve",
+      "expected": "same"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached restricted to .research/",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep on cached diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases; Phase 1.6 intentional skip is disclosed",
+      "expected": "same"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "staged=7 head=7",
+      "expected": ">= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency + kill switch",
+      "observed": "0 actions",
+      "expected": "<= 1 pr, <= 1 issue, <= 1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 no-op; still verified action-list.json / risks.json / project-state.md / pm_cursor + coverage_cursor bounds",
+      "observed": "all parse; pm_cursor.next_index=5; coverage_cursor.next_index=12 within [0,13)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

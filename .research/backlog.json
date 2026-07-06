@@ -3982,11 +3982,13 @@
       "score": 1,
       "status": "open",
       "sources": [
+        "PR #2118",
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "[partial] PR #2118 wired Meters/Leases/Forms/Threads to api-server (verified 0 MOCK_ hits in BuildingsScreen/MetersScreen/LeasesScreen) but NotificationsScreen.tsx + PersonMonthsScreen.tsx still contain MOCK_ arrays — remainder scoped by cutting new plan"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
       "plan": null
     },
     {
@@ -4065,18 +4067,147 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2100",
         "churn since 4829015b: 11 commits"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: code patterns no longer present in cited files — rental.rs deleted, split into rental/ sub-modules by PR #2100 (2026-07-05)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (2 PRs in 24h, enum-sync guard iteration)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2098",
+        "PR #2113"
+      ],
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — enum sync guard added (#2098) then hardened after review (#2113)"
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (2 PRs in 24h, SlovakAccountingExport refactor iteration)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2099",
+        "PR #2117"
+      ],
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — compute_partial mutator (#2099) then named-field constructor (#2117) landed back-to-back"
+      ],
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/regional_compliance.rs (2 PRs in 24h)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2099",
+        "PR #2117"
+      ],
+      "evidence": [
+        "top-3 file churn 2026-07-05 → 2026-07-06 — handler updated for SlovakAccountingExport smart constructor + named-field input in two consecutive PRs"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-fake-minutes",
+      "title": "Slovak vote-minutes + Czech usneseni endpoints fabricate legally-styled compliance evidence with hardcoded participants/votes/dates",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-handlers 2026-07-06"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 — get_slovak_vote_minutes returns SlovakVoteMinutes with hardcoded meeting_date=2024-01-15, meeting_location, total_ownership_shares=100, participation=75%, votes_for=60, votes_against=10, abstentions=5, result_approved=true, empty participants/questions; only vote_id/building_id/title come from the DB. Served as compliance evidence under Regional Compliance tag.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:897-920 — same fabrication pattern in get_czech_usneseni (hardcoded svj_name=SVJ Hlavni 1, ico=12345678, meeting_date, share counts, vote counts, result_approved=true). Exact class of quiet dishonesty that #2030/#2086 killed for SlovakAccountingExport."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/bug-regional-compliance-fake-minutes.md"
+    },
+    {
+      "id": "code-review-api-handlers-fake-vote-fallback",
+      "title": "validate_slovak_vote + validate_czech_vote silently default to passing quorum/approval (75%/80%) on missing/malformed vote data, returning is_valid=true",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-handlers 2026-07-06"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259, 261-279 — validate_slovak_vote substitutes actual_participation=75.00% when eligible_count==0, and defaults approval_percentage to 80.00% when vote.results JSON deserialization fails, has no questions, has no matching yes-option text, or first-option percent conversion from f64 fails. Both defaults exceed simple-majority quorum (50.01%), so is_valid=quorum_met AND approval>=required returns true even when the system has no evidence of any voter data.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:803-829 — identical shape in validate_czech_vote (75% participation, 80% approval defaults). Malformed vote.results produces a legally-binding CzechVoteValidation { is_valid: true } indistinguishable from a real validation on the wire."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
+      "plan": "plans/bug-regional-compliance-fake-vote-validation.md"
+    },
+    {
+      "id": "code-review-api-handlers-metric-tuple-swap",
+      "title": "get_accounting_metrics still returns a 6-tuple with 4 same-typed monetary fields — #2103 tuple-transposition risk relocated one hop upstream of the safe named-field constructor",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-handlers 2026-07-06"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/regional_compliance.rs:493-553 — get_accounting_metrics returns (i32,i32,Decimal,Option<Decimal>,Decimal,Option<Decimal>) with same four type-identical/interleaved monetary fields (revenue, expenses, receivables, payables). #2103 named-field-input killed this class inside SlovakAccountingExport::new but the tuple upstream is still vulnerable.",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:431-447 — handler destructures the tuple positionally then feeds into SlovakAccountingExportInput by name; reordering the tuple or the destructure silently ships revenue↔receivables mislabeled through the now-safe constructor."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/regional_compliance.rs",
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-06",
       "plan": null
     }
   ]
