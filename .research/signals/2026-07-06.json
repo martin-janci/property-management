@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-07-06T08:15:00Z",
+  "since_iso": "2026-07-05T03:10:00Z",
+  "phase_notes": {
+    "phase_1": "ok — MCP-based scan (gh CLI unavailable in this env, GitHub MCP used); 18 merged PRs since #2093, 5 open PRs touched, 15 new/updated issues (13 closed follow-ups + 2 still open with active PRs)",
+    "phase_1_5": "skipped — cloud routine budget conservation; ppt-web-core segment (oldest, 2026-06-05) rolls to next incremental run",
+    "phase_1_6": "skipped — cloud routine budget conservation; pm-security role rotation stays parked. coverage_cursor left at 12 to avoid violating GC7 monotonicity without a run",
+    "phase_2": "2 resolutions (open→done), 0 new items, 0 decay (all open items updated_at=2026-07-05, within 14-day window)",
+    "phase_3": "no promotions — no candidates cross the readiness bar this run",
+    "phase_5": "no candidate — no signal met confidence=high + score>=3 + allowlist"
+  },
+  "signals": [
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "chore(deps): bump axum-test in /backend in the axum group (dependabot, merged 2026-07-06)"
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "chore(deps): bump rust_xlsxwriter from 0.95.0 to 0.96.0 in /backend (dependabot, merged 2026-07-06)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist",
+  "resolutions": [
+    {
+      "id": "code-review-mobile-rn-screens-mock-data",
+      "resolved_by": "PR #2118",
+      "resolved_date": "2026-07-06",
+      "kind": "pr-title-verbatim-id-match"
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "resolved_by": "PR #2100",
+      "resolved_date": "2026-07-05",
+      "kind": "pr-title-id-match (rental repository sub-module split)"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-06.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json cursors advanced vs HEAD", "observed": "last_pr_seen 2093→2118, last_issue_seen 2087→2110, last_commit_sha 7e09d77d→6c11733a, seen_signals grew by 2, hotspot_history unchanged (no top-3 churn), auto_fix_history unchanged (no fires)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "backlog id uniqueness", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "non-cumulative signal double-count check", "observed": "0 offenders (2 dep-update-noise ids are novel)", "expected": "0" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay", "observed": "max score 6 (cap 8); 0 open items past 14-day threshold this run — all open items updated_at=2026-07-05", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans → vacuously true", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans + readiness", "observed": "0 new plans this run", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "staged diff .research-only", "observed": "true", "expected": "true" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen", "observed": "diff clean (Python regenerator, sort=(-score,-updated_at) stable on JSON order, title truncated at 110)", "expected": "0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no failed phases; phase-1.5 + phase-1.6 skipped and surfaced in brief; cursors advanced only for succeeded phases", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or _archive", "observed": "9 active + 5 archived, none disappeared", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count only grows", "observed": "5 archived files, unchanged from HEAD", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "diff clean (Python regenerator, title truncated at 100)", "expected": "0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "0 actions, no candidate this run", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor + coverage_cursor GC7", "observed": "phase 1.6 skipped this run → pm_cursor unchanged (5); GC7 no-op because pm_cursor did not advance; management artifacts remain valid (parse OK, project-state.md non-empty)", "expected": "true" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot token in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}
