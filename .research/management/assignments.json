@@ -6,7 +6,7 @@
       "branch": "auto-impl/83-3-portal-webhooks-30907df2",
       "status": "review",
       "claimed_at": "2026-07-02T00:09:07Z",
-      "last_updated": "2026-07-07T16:05:15Z",
+      "last_updated": "2026-07-07T17:20:00Z",
       "status_changed_at": "2026-07-02T00:28:12Z",
       "pr_number": 2007,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2007",
@@ -21,7 +21,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
+      "merge_attempted_at": "2026-07-07T17:20:00Z",
       "quarantined_at": null,
       "quarantine_reason": null
     },
