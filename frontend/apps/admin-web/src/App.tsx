@@ -23,6 +23,7 @@ import MobileConfigPage from './pages/MobileConfigPage';
 import OAuthClientsPage from './pages/OAuthClientsPage';
 import OAuthConsentPage from './pages/OAuthConsentPage';
 import OnboardingToursPage from './pages/OnboardingToursPage';
+import OrganizationsPage from './pages/OrganizationsPage';
 import PlatformHealthPage from './pages/PlatformHealthPage';
 import PlatformPage from './pages/platform';
 import SupportDataPage from './pages/SupportDataPage';
@@ -171,6 +172,14 @@ export function App() {
                 />
 
                 {/* PLATFORM */}
+                <Route
+                  path="platform/organizations"
+                  element={
+                    <ProtectedRoute requiredCapability="agencies_read">
+                      <OrganizationsPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="platform/settings"
                   element={

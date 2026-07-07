@@ -7,7 +7,7 @@ implementations:
   ppt-web:
     route: platform/organizations
     component: OrganizationsPage
-    buildStatus: planned
+    buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
 endpoints:
@@ -33,14 +33,14 @@ owner: pm-frontend
 
 ## Functionality Checklist
 
-- [ ] Organizations list view: name, member count, building count, created date, status badge (active / suspended / pending)
-- [ ] Pagination, status filter, and search-by-name/slug on the list
-- [ ] Platform stats summary header (total orgs, total members, usage) from `get_platform_stats`
-- [ ] Drill into organization details: members, buildings, usage metrics, billing status
-- [ ] Suspend organization action with reason prompt (cascade-invalidates all org sessions)
-- [ ] Reactivate suspended organization action
-- [ ] Suspend / reactivate gated by the super-admin platform capability
-- [ ] Error banner if list / details load fails
+- [x] Organizations list view: name, member count, building count, created date, status badge (active / suspended / pending)
+- [x] Pagination, status filter, and search-by-name/slug on the list
+- [x] Platform stats summary header (total orgs, total members, usage) from `get_platform_stats`
+- [x] Drill into organization details: members, buildings, usage metrics (billing status not yet exposed by the API)
+- [x] Suspend organization action with reason prompt (cascade-invalidates all org sessions)
+- [x] Reactivate suspended organization action
+- [x] Suspend / reactivate gated by the `agencies_suspend` capability
+- [x] Error banner if list / details load fails
 
 ## States
 
@@ -64,6 +64,11 @@ pattern with the shared MFA-aware `authenticatedFetchJson`.
 
 ### Specific (recent)
 
+- 2026-07-07 — `OrganizationsPage` shipped in admin-web (route
+  `platform/organizations`, sidebar PLATFORM group, gated by `agencies_read`;
+  suspend/reactivate buttons gated by `agencies_suspend`). Detail drill-in is a
+  modal dialog (no `:id` sub-route). Billing status is not shown — the backend
+  detail DTO doesn't expose it yet.
 - 2026-06-28 — Screen-map created to close the Epic-10B-1 orphan-epic coverage
   gap. Backend shipped; the admin-web `OrganizationsPage` (route
   `platform/organizations`) is not yet built — `buildStatus: planned`. The five
@@ -73,6 +78,11 @@ pattern with the shared MFA-aware `authenticatedFetchJson`.
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-07-07 — agent: gap-10b-1 — built admin-web `OrganizationsPage`
+  (list + pagination + status filter + search, platform-stats cards,
+  suspend/reactivate confirmation dialogs, detail drill-in modal); added
+  platform-admin org endpoints to `@ppt/api-client` admin module (types, api,
+  hooks); i18n en/sk/cs; page tests. buildStatus planned → shipped.
 - 2026-06-28 — agent: 10b-1-organization-management-dashboard — created
   screen-map for Organization Management Dashboard (Epic-10B-1); registered the
   five `platform-admin/organizations*` + `stats` endpoints in `@ppt/sitemap`

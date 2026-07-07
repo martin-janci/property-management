@@ -17,6 +17,7 @@
 
 import { authenticatedFetchJson } from '../lib/fetch';
 import type {
+  AdminOrganizationDetail,
   AdminPaginatedResponse,
   Agency,
   AgencyDetail,
@@ -24,15 +25,21 @@ import type {
   CreateSystemAnnouncementResponse,
   HealthDashboard,
   ListAgenciesParams,
+  ListOrganizationsParams,
+  ListOrganizationsResponse,
   ListSystemAnnouncementsParams,
   MetricAlert,
   MetricHistory,
   MetricThreshold,
   OAuthClientSummary,
+  OrganizationActionResponse,
+  PlatformStatsResponse,
+  ReactivateOrganizationRequest,
   RegenerateSecretResponse,
   RegisterOAuthClientRequest,
   RegisterOAuthClientResponse,
   SupportDataResponse,
+  SuspendOrganizationRequest,
   SystemAnnouncement,
   TimeRange,
   UpdateOAuthClientRequest,
@@ -276,6 +283,79 @@ export async function deleteSystemAnnouncement(id: string): Promise<void> {
   await authenticatedFetchJson<void>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
+}
+
+// ============================================================
+// Platform-admin Organization Management (Epic 10B.1)
+// All requests go through authenticatedFetchJson (MFA interceptor).
+// ============================================================
+
+const PLATFORM_ORGS_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin`;
+
+/**
+ * GET /api/v1/platform-admin/organizations — paginated org list with metrics.
+ * Requires `agencies_read` capability.
+ */
+export async function listOrganizations(
+  params?: ListOrganizationsParams,
+  signal?: AbortSignal
+): Promise<ListOrganizationsResponse> {
+  const qs = buildQueryString(params || {});
+  return authenticatedFetchJson<ListOrganizationsResponse>(
+    `${PLATFORM_ORGS_BASE}/organizations${qs}`,
+    { signal }
+  );
+}
+
+/**
+ * GET /api/v1/platform-admin/organizations/{id} — org detail with metrics.
+ * Requires `agencies_read` capability.
+ */
+export async function getOrganization(
+  id: string,
+  signal?: AbortSignal
+): Promise<AdminOrganizationDetail> {
+  return authenticatedFetchJson<AdminOrganizationDetail>(
+    `${PLATFORM_ORGS_BASE}/organizations/${encodeURIComponent(id)}`,
+    { signal }
+  );
+}
+
+/**
+ * POST /api/v1/platform-admin/organizations/{id}/suspend — suspend an org.
+ * Cascade-revokes all org member sessions server-side.
+ * Requires `agencies_suspend` capability.
+ */
+export async function suspendOrganization(
+  id: string,
+  data: SuspendOrganizationRequest
+): Promise<OrganizationActionResponse> {
+  return authenticatedFetchJson<OrganizationActionResponse>(
+    `${PLATFORM_ORGS_BASE}/organizations/${encodeURIComponent(id)}/suspend`,
+    { method: 'POST', body: JSON.stringify(data) }
+  );
+}
+
+/**
+ * POST /api/v1/platform-admin/organizations/{id}/reactivate — reactivate a
+ * suspended org. Requires `agencies_suspend` capability.
+ */
+export async function reactivateOrganization(
+  id: string,
+  data?: ReactivateOrganizationRequest
+): Promise<OrganizationActionResponse> {
+  return authenticatedFetchJson<OrganizationActionResponse>(
+    `${PLATFORM_ORGS_BASE}/organizations/${encodeURIComponent(id)}/reactivate`,
+    { method: 'POST', body: JSON.stringify(data ?? {}) }
+  );
+}
+
+/**
+ * GET /api/v1/platform-admin/stats — platform-wide statistics.
+ * Requires `audit_read` capability.
+ */
+export async function fetchPlatformStats(signal?: AbortSignal): Promise<PlatformStatsResponse> {
+  return authenticatedFetchJson<PlatformStatsResponse>(`${PLATFORM_ORGS_BASE}/stats`, { signal });
 }
 
 // ============================================================

@@ -168,6 +168,81 @@
       "helpTooltip": "Onboarding prehliadky prevedú nových administrátorov krok za krokom kľúčovými pracovnými postupmi.",
       "navLabel": "Onboarding"
     },
+    "organizations": {
+      "navLabel": "Organizácie",
+      "title": "Organizácie",
+      "loadError": "Nepodarilo sa načítať organizácie. Skontrolujte pripojenie a skúste znova.",
+      "empty": "Žiadne organizácie.",
+      "searchPlaceholder": "Hľadať podľa názvu alebo slugu…",
+      "searchLabel": "Hľadať organizácie",
+      "searchButton": "Hľadať",
+      "statusFilterLabel": "Filtrovať podľa stavu",
+      "statusAll": "Všetky stavy",
+      "statusActive": "Aktívne",
+      "statusSuspended": "Pozastavené",
+      "columns": {
+        "name": "Názov",
+        "slug": "Slug",
+        "members": "Členovia",
+        "buildings": "Budovy",
+        "created": "Vytvorené",
+        "status": "Stav"
+      },
+      "actions": {
+        "details": "Detaily",
+        "suspend": "Pozastaviť",
+        "reactivate": "Obnoviť"
+      },
+      "pagination": {
+        "previous": "Predchádzajúca",
+        "next": "Ďalšia",
+        "pageOf": "Strana {{page}} z {{totalPages}}",
+        "total": "{{total}} organizácií"
+      },
+      "stats": {
+        "activeOrgs": "Aktívne org.",
+        "suspendedOrgs": "Pozastavené org.",
+        "activeUsers": "Aktívni používatelia",
+        "totalBuildings": "Budovy",
+        "totalUnits": "Jednotky"
+      },
+      "suspend": {
+        "dialogLabel": "Pozastaviť organizáciu",
+        "title": "Pozastaviť {{name}}?",
+        "warning": "Všetci členovia tejto organizácie budú okamžite odhlásení a nebudú sa môcť prihlásiť, kým organizácia nebude obnovená.",
+        "reasonLabel": "Dôvod (povinné, uchováva sa pre audit)",
+        "reasonPlaceholder": "napr. Neuhradené faktúry",
+        "confirm": "Pozastaviť organizáciu",
+        "pending": "Pozastavuje sa…",
+        "successTitle": "Organizácia pozastavená",
+        "failedTitle": "Pozastavenie zlyhalo",
+        "failedMessage": "Organizáciu sa nepodarilo pozastaviť."
+      },
+      "reactivate": {
+        "dialogLabel": "Obnoviť organizáciu",
+        "title": "Obnoviť {{name}}?",
+        "info": "Členovia tejto organizácie sa budú môcť znova prihlásiť.",
+        "noteLabel": "Poznámka (voliteľné)",
+        "confirm": "Obnoviť organizáciu",
+        "pending": "Obnovuje sa…",
+        "successTitle": "Organizácia obnovená",
+        "failedTitle": "Obnovenie zlyhalo",
+        "failedMessage": "Organizáciu sa nepodarilo obnoviť."
+      },
+      "detail": {
+        "dialogLabel": "Detaily organizácie",
+        "title": "Detaily organizácie",
+        "loadError": "Nepodarilo sa načítať detaily organizácie.",
+        "contactEmail": "Kontaktný e-mail",
+        "members": "Členovia",
+        "activeSuffix": "aktívnych",
+        "units": "Jednotky",
+        "suspendedHeading": "Pozastavená",
+        "suspensionReason": "Dôvod",
+        "suspendedAt": "Od",
+        "close": "Zavrieť"
+      }
+    },
     "health": {
       "activeOnly": "Iba aktívne",
       "allAlerts": "Všetky upozornenia",
