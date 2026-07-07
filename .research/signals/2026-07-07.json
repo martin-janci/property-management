@@ -1,0 +1,205 @@
+{
+  "date": "2026-07-07",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-05T03:10:00Z; now=2026-07-07T08:08:54Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine lag 52h since last successful run (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "type": "churn-hotspot",
+      "source": "merged PRs in window touching backend/crates/db/src/models/multi_currency.rs: #2098, #2113",
+      "score_delta": 1,
+      "evidence": [
+        "530 lines added across 2 PRs (initial enum-sync guard + hardening for #2104)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "merged PRs in window touching backend/crates/db/src/models/regional_compliance.rs: #2099, #2117",
+      "score_delta": 1,
+      "evidence": [
+        "265 lines added across 2 PRs (smart constructor + named-field input for #2103)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-regional-compliance-rs",
+      "type": "churn-hotspot",
+      "source": "merged PRs in window touching backend/servers/api-server/src/routes/regional_compliance.rs: #2099, #2117",
+      "score_delta": 1,
+      "evidence": [
+        "35 lines changed across 2 PRs (wire smart ctor + named-field input)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2140",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2140",
+      "score_delta": 1,
+      "evidence": [
+        "test(api-server): enlarge tie group in include_system pagination test",
+        "closed unmerged 2026-07-07 \u2014 likely superseded by PR #2116 (already merged) covering the same fix"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-2145",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2145",
+      "score_delta": 1,
+      "evidence": [
+        "test(api-server): add non-manager 403 deny test for outage mutations",
+        "closed unmerged 2026-07-07 \u2014 likely superseded by PR #2120 outage authz fix; #2131 (open) covers similar"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state cursor/seen_signals delta vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap \u2264 8; decay N/A (no opens > 14d)",
+      "observed": "cap true; no decay candidates this run",
+      "expected": "cap true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial pass annotation",
+      "observed": "0 new plans this run \u2014 no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; each has 15 sections",
+      "observed": "0 new plans this run",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 outside",
+      "expected": "0 outside"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty \u2014 no cursor advance for failed phase",
+      "observed": "Phase 1.5/1.6 skipped, no cursor advance for them",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "security-llm-doc-idor moved to _archive/ (item resolved)",
+      "expected": "present in one of the two"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "7 \u2192 8",
+      "expected": "\u2265 HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap/idempotency",
+      "observed": "auto_fix_actions empty; kill switch not set; no phase 5 actions",
+      "expected": "per-run cap \u2264 1 each; no repeat signals"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 0..7",
+      "observed": "Phase 1.6 skipped this run \u2014 gate is no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 3 refactor churn-hotspots (not on allowlist), 2 triage closed-not-merged (not on allowlist), 1 lag_warning (0 score, not on allowlist)"
+}
