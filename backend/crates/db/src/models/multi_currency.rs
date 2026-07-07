@@ -101,17 +101,19 @@ impl std::str::FromStr for SupportedCurrency {
 }
 
 impl SupportedCurrency {
-    /// Every `SupportedCurrency` variant, in canonical wire order.
+    /// Every `SupportedCurrency` variant, in declaration (discriminant) order.
     ///
     /// This is the Rust-side source of truth for *which* currencies exist and
-    /// *how many* there are. The `enum_sync_guard` tests drive their count and
-    /// membership assertions off this array (not a hand-written list), so an
-    /// enum that grows past the canonical wire list is detectable.
+    /// *how many* there are. `ALL`'s completeness is **compiler-enforced** by
+    /// the two zero-dependency const guards directly below: adding a variant
+    /// without extending this array is a const-eval compile error, not a
+    /// silently-passing test. Keep the order here identical to the `enum`
+    /// declaration above (the round-trip guard enforces this).
     ///
-    /// Keep in sync with the exhaustiveness guard directly below: adding or
-    /// removing a variant makes that match non-exhaustive (a compile error),
-    /// which is your prompt to update this array — and the Postgres enum
-    /// (`00101_create_multi_currency.sql`) and TypeSpec enum — to match.
+    /// When adding/removing a currency, update this array plus the Postgres
+    /// enum (`00101_create_multi_currency.sql`) and the TypeSpec enum. Only the
+    /// Postgres/TypeSpec mirrors still rely on the `enum_sync_guard` tests — the
+    /// compiler now keeps `ALL` itself honest.
     pub const ALL: [SupportedCurrency; 13] = [
         SupportedCurrency::EUR,
         SupportedCurrency::CZK,
@@ -129,26 +131,52 @@ impl SupportedCurrency {
     ];
 }
 
-// Enum-sync guard (Issue #2104): adding or removing a `SupportedCurrency`
-// variant makes this match non-exhaustive → compile error. When you fix it,
-// update `SupportedCurrency::ALL` above (and the Postgres + TypeSpec enums) to
-// match. The `enum_sync_guard` tests then assert `ALL.len()` equals the
-// canonical wire list length, so a variant missing from the canonical list
-// fails the test rather than passing silently.
-const _: fn(SupportedCurrency) = |c| match c {
-    SupportedCurrency::EUR
-    | SupportedCurrency::CZK
-    | SupportedCurrency::CHF
-    | SupportedCurrency::GBP
-    | SupportedCurrency::PLN
-    | SupportedCurrency::USD
-    | SupportedCurrency::HUF
-    | SupportedCurrency::RON
-    | SupportedCurrency::BGN
-    | SupportedCurrency::HRK
-    | SupportedCurrency::SEK
-    | SupportedCurrency::DKK
-    | SupportedCurrency::NOK => {}
+// -----------------------------------------------------------------------------
+// `SupportedCurrency::ALL` completeness — compiler-enforced (Issues #2104, #2124)
+// -----------------------------------------------------------------------------
+// Two zero-dependency const guards make `ALL` a faithful mirror of the enum at
+// *compile time*, closing the #2124 gap where a variant added to the enum could
+// be omitted from `ALL` while every `enum_sync_guard` test still passed. Each
+// variant is a fieldless unit variant, so `v as usize` is its declaration-order
+// discriminant (== its expected slot in `ALL`).
+//
+// 1. Completeness: the match is exhaustive, so adding a variant forces a new
+//    arm here. Each arm returns `ALL[<variant> as usize]`; the new variant's
+//    discriminant equals its expected slot, so forgetting to extend `ALL` makes
+//    that index out of bounds — a hard compile error via the deny-by-default
+//    `unconditional_panic` lint (see the `const _: ()` round-trip below for the
+//    ordering half). When you fix it, also update the Postgres + TypeSpec enums.
+// 2. Ordering: the round-trip asserts `ALL[i] as usize == i`, pinning `ALL` to
+//    the enum's discriminant order, so reordering `ALL` — or inserting a variant
+//    mid-enum without reordering `ALL` — is also a const-eval compile error.
+//
+// The guard is a never-called `const _: fn(..) -> ..` (not a free `const fn`,
+// which would warn as dead code); it exists only so the compiler checks every
+// arm's `ALL` index at build time.
+const _: fn(SupportedCurrency) -> SupportedCurrency = |c| match c {
+    SupportedCurrency::EUR => SupportedCurrency::ALL[SupportedCurrency::EUR as usize],
+    SupportedCurrency::CZK => SupportedCurrency::ALL[SupportedCurrency::CZK as usize],
+    SupportedCurrency::CHF => SupportedCurrency::ALL[SupportedCurrency::CHF as usize],
+    SupportedCurrency::GBP => SupportedCurrency::ALL[SupportedCurrency::GBP as usize],
+    SupportedCurrency::PLN => SupportedCurrency::ALL[SupportedCurrency::PLN as usize],
+    SupportedCurrency::USD => SupportedCurrency::ALL[SupportedCurrency::USD as usize],
+    SupportedCurrency::HUF => SupportedCurrency::ALL[SupportedCurrency::HUF as usize],
+    SupportedCurrency::RON => SupportedCurrency::ALL[SupportedCurrency::RON as usize],
+    SupportedCurrency::BGN => SupportedCurrency::ALL[SupportedCurrency::BGN as usize],
+    SupportedCurrency::HRK => SupportedCurrency::ALL[SupportedCurrency::HRK as usize],
+    SupportedCurrency::SEK => SupportedCurrency::ALL[SupportedCurrency::SEK as usize],
+    SupportedCurrency::DKK => SupportedCurrency::ALL[SupportedCurrency::DKK as usize],
+    SupportedCurrency::NOK => SupportedCurrency::ALL[SupportedCurrency::NOK as usize],
+};
+const _: () = {
+    let mut i = 0;
+    while i < SupportedCurrency::ALL.len() {
+        assert!(
+            SupportedCurrency::ALL[i] as usize == i,
+            "SupportedCurrency::ALL is not in enum declaration (discriminant) order"
+        );
+        i += 1;
+    }
 };
 
 /// Exchange rate source
@@ -312,17 +340,19 @@ impl std::str::FromStr for CountryCode {
 }
 
 impl CountryCode {
-    /// Every `CountryCode` variant, in canonical wire order.
+    /// Every `CountryCode` variant, in declaration (discriminant) order.
     ///
     /// This is the Rust-side source of truth for *which* countries exist and
-    /// *how many* there are. The `enum_sync_guard` tests drive their count and
-    /// membership assertions off this array (not a hand-written list), so an
-    /// enum that grows past the canonical wire list is detectable.
+    /// *how many* there are. `ALL`'s completeness is **compiler-enforced** by
+    /// the two zero-dependency const guards directly below: adding a variant
+    /// without extending this array is a const-eval compile error, not a
+    /// silently-passing test. Keep the order here identical to the `enum`
+    /// declaration above (the round-trip guard enforces this).
     ///
-    /// Keep in sync with the exhaustiveness guard directly below: adding or
-    /// removing a variant makes that match non-exhaustive (a compile error),
-    /// which is your prompt to update this array — and the Postgres enum
-    /// (`00101_create_multi_currency.sql`) and TypeSpec enum — to match.
+    /// When adding/removing a country, update this array plus the Postgres enum
+    /// (`00101_create_multi_currency.sql`) and the TypeSpec enum. Only the
+    /// Postgres/TypeSpec mirrors still rely on the `enum_sync_guard` tests — the
+    /// compiler now keeps `ALL` itself honest.
     pub const ALL: [CountryCode; 24] = [
         CountryCode::SK,
         CountryCode::CZ,
@@ -351,37 +381,50 @@ impl CountryCode {
     ];
 }
 
-// Enum-sync guard (Issue #2104): adding or removing a `CountryCode` variant
-// makes this match non-exhaustive → compile error. When you fix it, update
-// `CountryCode::ALL` above (and the Postgres + TypeSpec enums) to match. The
-// `enum_sync_guard` tests then assert `ALL.len()` equals the canonical wire
-// list length, so a variant missing from the canonical list fails the test
-// rather than passing silently.
-const _: fn(CountryCode) = |c| match c {
-    CountryCode::SK
-    | CountryCode::CZ
-    | CountryCode::AT
-    | CountryCode::DE
-    | CountryCode::PL
-    | CountryCode::HU
-    | CountryCode::CH
-    | CountryCode::GB
-    | CountryCode::FR
-    | CountryCode::IT
-    | CountryCode::ES
-    | CountryCode::NL
-    | CountryCode::BE
-    | CountryCode::PT
-    | CountryCode::IE
-    | CountryCode::RO
-    | CountryCode::BG
-    | CountryCode::HR
-    | CountryCode::SI
-    | CountryCode::LU
-    | CountryCode::SE
-    | CountryCode::DK
-    | CountryCode::NO
-    | CountryCode::FI => {}
+// -----------------------------------------------------------------------------
+// `CountryCode::ALL` completeness — compiler-enforced (Issues #2104, #2124)
+// -----------------------------------------------------------------------------
+// Same two zero-dependency const guards as `SupportedCurrency` above (see that
+// block for the full rationale): the exhaustive completeness match reads
+// `ALL[<variant> as usize]` per arm, so a variant added to the enum but omitted
+// from `ALL` is an out-of-bounds const index (hard compile error), and the
+// round-trip pins `ALL` to the enum's discriminant order. Like the currency
+// guard, this is a never-called `const _: fn(..) -> ..` checked at build time.
+const _: fn(CountryCode) -> CountryCode = |c| match c {
+    CountryCode::SK => CountryCode::ALL[CountryCode::SK as usize],
+    CountryCode::CZ => CountryCode::ALL[CountryCode::CZ as usize],
+    CountryCode::AT => CountryCode::ALL[CountryCode::AT as usize],
+    CountryCode::DE => CountryCode::ALL[CountryCode::DE as usize],
+    CountryCode::PL => CountryCode::ALL[CountryCode::PL as usize],
+    CountryCode::HU => CountryCode::ALL[CountryCode::HU as usize],
+    CountryCode::CH => CountryCode::ALL[CountryCode::CH as usize],
+    CountryCode::GB => CountryCode::ALL[CountryCode::GB as usize],
+    CountryCode::FR => CountryCode::ALL[CountryCode::FR as usize],
+    CountryCode::IT => CountryCode::ALL[CountryCode::IT as usize],
+    CountryCode::ES => CountryCode::ALL[CountryCode::ES as usize],
+    CountryCode::NL => CountryCode::ALL[CountryCode::NL as usize],
+    CountryCode::BE => CountryCode::ALL[CountryCode::BE as usize],
+    CountryCode::PT => CountryCode::ALL[CountryCode::PT as usize],
+    CountryCode::IE => CountryCode::ALL[CountryCode::IE as usize],
+    CountryCode::RO => CountryCode::ALL[CountryCode::RO as usize],
+    CountryCode::BG => CountryCode::ALL[CountryCode::BG as usize],
+    CountryCode::HR => CountryCode::ALL[CountryCode::HR as usize],
+    CountryCode::SI => CountryCode::ALL[CountryCode::SI as usize],
+    CountryCode::LU => CountryCode::ALL[CountryCode::LU as usize],
+    CountryCode::SE => CountryCode::ALL[CountryCode::SE as usize],
+    CountryCode::DK => CountryCode::ALL[CountryCode::DK as usize],
+    CountryCode::NO => CountryCode::ALL[CountryCode::NO as usize],
+    CountryCode::FI => CountryCode::ALL[CountryCode::FI as usize],
+};
+const _: () = {
+    let mut i = 0;
+    while i < CountryCode::ALL.len() {
+        assert!(
+            CountryCode::ALL[i] as usize == i,
+            "CountryCode::ALL is not in enum declaration (discriminant) order"
+        );
+        i += 1;
+    }
 };
 
 // =============================================================================
@@ -1076,11 +1119,17 @@ pub struct CurrencyDistribution {
 // hand-written `list` vecs, so an enum that grew *past* its canonical list
 // (variant added, exhaustive `_wire`/`Display` matches updated, but the `list`
 // left untouched) was undetectable — the count tests just counted the stale
-// list. The fix ties the assertions to the enum itself: each enum now exposes
-// `Self::ALL`, whose completeness is enforced by a compile-time exhaustiveness
-// guard next to the enum, and the tests assert `ALL.len()` equals the canonical
-// list length plus per-variant membership in both directions. A variant missing
-// from the canonical list now fails a test instead of passing silently.
+// list. #2104 tied the assertions to `Self::ALL` and added per-variant
+// membership checks in both directions.
+//
+// #2124: `Self::ALL`'s *completeness* is now compiler-enforced next to each
+// enum — the completeness guard indexes `ALL[<variant> as usize]` for every
+// (exhaustively matched) variant, and the round-trip asserts `ALL[i] as usize
+// == i`, so a variant added to the enum but omitted from (or misordered in)
+// `ALL` is a const-eval compile error, not a silently-passing build. Because
+// `ALL` is compiler-guaranteed complete, the tests below are genuine enum-vs-
+// mirror checks: they compare the (now-trustworthy) `ALL` against the canonical
+// wire list, catching Postgres/TypeSpec drift that the compiler cannot see.
 //
 // If a currency/country is added or removed, update ALL THREE files above plus
 // `Self::ALL` and the canonical arrays here, and these tests keep the mirrors
@@ -1211,10 +1260,10 @@ mod enum_sync_guard {
             13,
             "SupportedCurrency count drifted from the 13-value canonical list"
         );
-        // The *enum* (via `ALL`, which the compile-time exhaustiveness guard
-        // forces to cover every variant) must agree with the canonical wire
-        // list. This is the check that catches a variant added to the enum but
-        // omitted from the canonical list — the count above alone cannot.
+        // The *enum* (via `ALL`, which the #2124 completeness + round-trip const
+        // guards force to cover every variant, in order) must agree with the
+        // canonical wire list. This catches the enum and the canonical/Postgres/
+        // TypeSpec list drifting apart — the count above alone cannot.
         assert_eq!(
             SupportedCurrency::ALL.len(),
             currency_canonical().len(),
@@ -1231,10 +1280,10 @@ mod enum_sync_guard {
             24,
             "CountryCode count drifted from the 24-value canonical list"
         );
-        // The *enum* (via `ALL`, which the compile-time exhaustiveness guard
-        // forces to cover every variant) must agree with the canonical wire
-        // list. This is the check that catches a variant added to the enum but
-        // omitted from the canonical list — the count above alone cannot.
+        // The *enum* (via `ALL`, which the #2124 completeness + round-trip const
+        // guards force to cover every variant, in order) must agree with the
+        // canonical wire list. This catches the enum and the canonical/Postgres/
+        // TypeSpec list drifting apart — the count above alone cannot.
         assert_eq!(
             CountryCode::ALL.len(),
             country_canonical().len(),
