@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T04:27:48Z",
+  "generated": "2026-07-07T04:42:02Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -138,18 +138,18 @@
     {
       "task_id": "gh-issue-2124",
       "branch": "auto-impl/gh-issue-2124-c350946c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T04:09:49Z",
-      "status_changed_at": "2026-07-07T04:09:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T04:42:02Z",
+      "status_changed_at": "2026-07-07T04:42:02Z",
+      "pr_number": 2137,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2137",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2137 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=zero-dep const OOB guard+round-trip makes ALL completeness a compile error; wording corrected; drift=multi_currency.rs (issue target)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
