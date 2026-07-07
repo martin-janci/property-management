@@ -85,3 +85,7 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+- (2026-07-07) [pm-security] Whether to re-verify and close #481/#482 today to unblock Epic 10A stories from ready-for-dev, or keep the gate open pending a dedicated QA pass
+- (2026-07-07) [pm-security] Whether #2125's token/session-lifecycle angle needs a formal security sign-off before merge or can proceed as a UX-only fix
+- (2026-07-07) [pm-security] Whether to invest in formalizing the supply-chain/SCA ignore-list into a tracked policy doc now, or defer given it's currently working via cargo-deny CI gates

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-05T03:10:00Z",
-  "last_run_ms": 4321,
-  "last_pr_seen": 2093,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "7e09d77d",
+  "last_run_iso": "2026-07-07T10:25:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2146,
+  "last_issue_seen": 2141,
+  "last_commit_sha": "f4d27714",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -113,9 +113,9 @@
       "recent_churn": 193
     },
     "backend/servers/api-server/tests/oauth_integration_tests.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-06-02",
-      "recent_churn": 378
+      "runs_seen": 3,
+      "last_seen": "2026-07-07",
+      "recent_churn": 2719
     },
     "backend/servers/api-server/tests/ws_integration_tests.rs": {
       "runs_seen": 1,
@@ -148,9 +148,9 @@
       "recent_churn": 134
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 78
+      "runs_seen": 2,
+      "last_seen": "2026-07-07",
+      "recent_churn": 2648
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -331,6 +331,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-05",
       "recent_churn": 11
+    },
+    "backend/crates/integrations/src/booking/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-07",
+      "recent_churn": 2818
     }
   },
   "seen_signals": [
@@ -566,7 +571,14 @@
     "stalled-review-pr-1179",
     "lag-warning-2026-07-05",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
-    "churn-hotspot-backend-crates-db-src-repositories-rental-rs"
+    "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+    "lag-warning-2026-07-07",
+    "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+    "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+    "code-review-ppt-web-core-mutation-silent-failures",
+    "code-review-ppt-web-core-hardcoded-i18n-strings",
+    "dep-update-noise-pr-2018-aes-gcm",
+    "dep-update-noise-pr-2016-rust-toolchain"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -574,14 +586,14 @@
     "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
-    "ppt-web-core": "2026-06-05",
+    "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 41,
-    "vectors_created": 175,
+    "runs": 42,
+    "vectors_created": 179,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
@@ -597,19 +609,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-07-07",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

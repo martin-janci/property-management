@@ -1,0 +1,242 @@
+{
+  "run_iso": "2026-07-07T10:25:00Z",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-07-05T03:10:00Z \u2192 now=2026-07-07T10:25:00Z; lag ~55h (>36h threshold)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2818 additions+deletions since 2026-07-05T03:10 \u2014 top-1 code-file churn this window"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit: 2719 lines this window (test file); ID already in seen_signals \u2014 score not re-applied"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit: 2648 lines this window; ID already in seen_signals \u2014 score not re-applied"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen was 2 (last_seen 2026-06-02) \u2014 file remained a hotspot into 2026-07-07 (runs_seen \u2192 3); test-file instability proxy"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-mutation-silent-failures",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:373 \u2014 checkIn mutation has onSuccess (query invalidate) but no onError/toast; a failed check-in shows nothing to the operator",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:385 \u2014 checkOut mutation same silent-failure pattern",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:258 \u2014 createConnection/syncPlatforms mutations invalidate on success but never surface errors via toast",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:296 \u2014 matchMutation/autoMatchMutation only handle onSuccess; payment-allocation failures look like success"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-hardcoded-i18n-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:245,297,373 \u2014 toast titles/messages hardcoded English ('Saved'/'Bulk entry failed'/'Deleted'/'Save failed'), bypassing react-i18next used in sibling files",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:399 \u2014 literal '<div>Booking not found</div>' rendered without t()"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "dep-update-noise-pr-2018-aes-gcm",
+      "type": "dep-update-noise",
+      "source": "PR #2018",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot PR #2018 (open): backend aes-gcm 0.10.3 \u2192 0.11.0"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2016-rust-toolchain",
+      "type": "dep-update-noise",
+      "source": "PR #2016",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot PR #2016 (open): actions-minor-patch group dtolnay/rust-toolchain 1.94.1 \u2192 1.100.0"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief first line",
+      "observed": "# 2026-07-07",
+      "expected": "# 2026-07-07"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "changed",
+      "expected": "changed"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit with score",
+      "observed": "[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open+stale count",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans this run",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen (by construction)",
+      "observed": "regen",
+      "expected": "match"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen (by construction)",
+      "observed": "regen",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-failed",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present",
+      "observed": "[]",
+      "expected": "all"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count",
+      "observed": "7 vs 7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + GC7",
+      "observed": "pm=6/head=5 cc=0/head=12",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

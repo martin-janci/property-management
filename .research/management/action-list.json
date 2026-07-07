@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -14,7 +14,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/\u221228 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -26,7 +26,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -37,7 +37,7 @@
     },
     {
       "id": "80-2-dispute-filing-flow",
-      "action": "Coverage gap [mvp]: Dispute Filing Flow — verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
+      "action": "Coverage gap [mvp]: Dispute Filing Flow \u2014 verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -48,7 +48,7 @@
     },
     {
       "id": "79-3-error-handling-toasts",
-      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications \u2014 verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -59,7 +59,7 @@
     },
     {
       "id": "83-3-portal-webhooks",
-      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
+      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks \u2014 verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -105,7 +105,7 @@
     },
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -290,7 +290,7 @@
     },
     {
       "id": "gh-issue-2129",
-      "action": "Follow-up: mobile RN screen wiring — type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
+      "action": "Follow-up: mobile RN screen wiring \u2014 type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "in-progress",
@@ -327,6 +327,73 @@
           "dispatcher"
         ]
       }
+    },
+    {
+      "id": "pm-security-re-verify-481-oauth-refresh-token-revoca",
+      "action": "Re-verify #481 (OAuth refresh-token revocation) against current oauth.rs/services/oauth.rs \u2014 code already filters revoked_at IS NULL and implements token-family reuse revocation; confirm oauth_integration_tests.rs exercises this, then close/defer the gate to unblock 10a-1/10a-3",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
+    },
+    {
+      "id": "pm-security-re-verify-482-protectedroute-tenants-0-f",
+      "action": "Re-verify #482 (ProtectedRoute tenants[0] fallback) \u2014 AuthContext.tsx deriveActiveRole() and dedicated ProtectedRoute.test.tsx already implement/cover the highest-privilege fix; confirm coverage is sufficient and close the gate for 10a-2",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
+    },
+    {
+      "id": "pm-security-confirm-487-mfa-e2e-rate-limit-coverage-",
+      "action": "Confirm #487 MFA e2e rate-limit coverage is real and compiles before treating the 10a-1 auth-foundation gate as clear",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
+    },
+    {
+      "id": "pm-security-security-review-2125-listingdetail-favor",
+      "action": "Security-review #2125 (ListingDetail favorite-toggle rollback after logout, PR #2115) for token-lifecycle risk",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
+    },
+    {
+      "id": "pm-security-formalize-the-deny-toml-rustsec-ignore-l",
+      "action": "Formalize the deny.toml RUSTSEC ignore-list into a tracked supply-chain policy doc with owners/timelines",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
+    },
+    {
+      "id": "pm-security-sweep-other-rbac-checks-documents-announ",
+      "action": "Sweep other RBAC checks (documents/announcements/notifications routes) for the JWT-claim-vs-DB-role mismatch pattern that #2120/#2107 fixed",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-07"
     }
-  ]
+  ],
+  "generated": "2026-07-07T10:30:00Z"
 }
