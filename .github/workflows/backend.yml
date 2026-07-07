@@ -722,3 +722,41 @@ jobs:
           manifest-path: backend/Cargo.toml
           arguments: --workspace
           rust-version: stable
+
+  # deny-ban-presence (GH #2127, follow-up to #2106/#2111)
+  # ------------------------------------------------------
+  # `cargo deny check bans` only trips when a BANNED version is present in the
+  # graph — DELETING the two quick-xml half-range bans at backend/deny.toml:93-94
+  # leaves `cargo deny` green (nothing to trip). The CODEOWNERS gate on deny.toml
+  # is advisory (branch protection may not enforce "Require review from Code
+  # Owners"), so ban REMOVAL had no independent defence. This job asserts, on the
+  # committed file text, that both half-range bans are still present. It is
+  # deliberately independent of review and of the cargo-deny action.
+  #
+  # Runs on EVERY PR (no `changes` gate): the grep targets a file that always
+  # exists in the tree, so the context is always producible — a prerequisite for
+  # registering it as a required status check on `dev` (see Notes / #2127; the
+  # branch-protection registration in branch-protection-setup.yml needs repo
+  # settings and is intentionally OUT OF SCOPE here).
+  deny-ban-presence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Assert quick-xml half-range bans are present in backend/deny.toml
+        run: |
+          set -euo pipefail
+          f=backend/deny.toml
+          fail=0
+          if ! grep -Eq 'name[[:space:]]*=[[:space:]]*"quick-xml".*version[[:space:]]*=[[:space:]]*"<0\.41\.0"' "$f"; then
+            echo "::error file=$f::missing lower-bound ban: name = \"quick-xml\", version = \"<0.41.0\""
+            fail=1
+          fi
+          if ! grep -Eq 'name[[:space:]]*=[[:space:]]*"quick-xml".*version[[:space:]]*=[[:space:]]*">0\.41\.0"' "$f"; then
+            echo "::error file=$f::missing upper-bound ban: name = \"quick-xml\", version = \">0.41.0\""
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "The quick-xml =0.41.0 safety pin (XXE/billion-laughs, GH #1519/#1591/#2033/#2056/#2084) must keep BOTH half-range bans. Do not remove them without a focused ota_xml::tests entity-guard review." >&2
+            exit 1
+          fi
+          echo "OK: both quick-xml half-range bans present in $f"
