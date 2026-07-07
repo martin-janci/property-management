@@ -1,5 +1,13 @@
 import { type ApiMeter, parseMeters, toUiCommodity, toUiMeter } from './MetersScreen';
 
+let warnSpy: jest.SpyInstance;
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
+
 const validMeter: ApiMeter = {
   id: 'm-1',
   meter_number: 'CW-001',
@@ -30,6 +38,23 @@ describe('parseMeters', () => {
 
   it('drops malformed rows', () => {
     expect(parseMeters([validMeter, null, 'x', { noId: true }])).toEqual([validMeter]);
+  });
+
+  it('emits a dev-only warning for an unrecognized non-null payload', () => {
+    parseMeters({ error: 'boom' });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('parseMeters'));
+  });
+
+  it('emits a dev-only warning when every candidate row is dropped', () => {
+    parseMeters([{ noId: true }]);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('dropped all 1'));
+  });
+
+  it('stays silent for a legitimately empty response', () => {
+    parseMeters([]);
+    parseMeters({ meters: [] });
+    parseMeters(null);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
 

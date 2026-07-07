@@ -13,6 +13,7 @@
  * so it is validated defensively.
  */
 
+import type { MessageWithSender, ParticipantInfo, ThreadDetailResponse } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -26,6 +27,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface Message {
@@ -36,22 +38,20 @@ export interface Message {
   authorName: string;
 }
 
-/** Subset of `ParticipantInfo` (camelCase wire format). */
-interface ApiParticipant {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
+/**
+ * `ParticipantInfo` (camelCase wire format), typed against the generated
+ * `@ppt/api-client` payload so backend field renames surface at compile time.
+ * Relaxed to `Partial` (only `id` required) because the shape is validated
+ * defensively at runtime.
+ */
+type ApiParticipant = Partial<ParticipantInfo> & Pick<ParticipantInfo, 'id'>;
 
-/** Subset of `MessageWithSender` (camelCase wire format). */
-interface ApiMessage {
-  id: string;
-  content: string;
-  createdAt: string;
+/** `MessageWithSender` fields consumed by this screen (camelCase wire format). */
+type ApiMessage = Pick<MessageWithSender, 'id' | 'content' | 'createdAt'> & {
   sender?: ApiParticipant;
-}
+};
 
+/** Validated subset of the generated `ThreadDetailResponse` envelope. */
 interface ApiThreadDetail {
   participants?: ApiParticipant[];
   messages?: ApiMessage[];
@@ -80,11 +80,22 @@ function isApiMessage(value: unknown): value is ApiMessage {
 
 /** Validate the raw `GET .../threads/{id}` body, or null on a bad shape. */
 export function parseThreadDetail(data: unknown): ApiThreadDetail | null {
+  const parsed = parseThreadDetailInner(data);
+  warnIfParseFailed('parseThreadDetail', data, parsed);
+  return parsed;
+}
+
+function parseThreadDetailInner(data: unknown): ApiThreadDetail | null {
   if (typeof data !== 'object' || data === null) return null;
   const v = data as Record<string, unknown>;
+  const rawMessages = v['messages' satisfies keyof ThreadDetailResponse];
+  const candidates: unknown[] | null = Array.isArray(rawMessages) ? rawMessages : null;
+  const messages = (candidates ?? []).filter(isApiMessage);
+  warnIfListDegraded('parseThreadDetail.messages', rawMessages, candidates, messages.length);
+  const rawParticipants = v['participants' satisfies keyof ThreadDetailResponse];
   return {
-    participants: Array.isArray(v.participants) ? (v.participants as ApiParticipant[]) : [],
-    messages: Array.isArray(v.messages) ? (v.messages as unknown[]).filter(isApiMessage) : [],
+    participants: Array.isArray(rawParticipants) ? (rawParticipants as ApiParticipant[]) : [],
+    messages,
   };
 }
 

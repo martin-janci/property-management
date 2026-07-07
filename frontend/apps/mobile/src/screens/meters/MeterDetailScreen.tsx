@@ -13,9 +13,11 @@
  * malformed shape degrades to an empty history rather than crashing.
  */
 
+import type { Meter, MeterReading, MeterResponse } from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface MeterReadingRecord {
@@ -25,26 +27,19 @@ export interface MeterReadingRecord {
   takenAt: string;
 }
 
-/** Subset of `Meter` from `GET /api/v1/meters/{id}`. */
-export interface ApiMeter {
-  id: string;
-  meter_number?: string | null;
-  meter_type?: string | null;
-  unit_of_measure?: string | null;
-  current_reading?: string | number | null;
-  last_reading_date?: string | null;
-  location?: string | null;
-  description?: string | null;
-}
+/**
+ * `Meter` from `GET /api/v1/meters/{id}`, typed against the generated
+ * `@ppt/api-client` payload so backend field renames surface at compile time.
+ * Relaxed to `Partial` (only `id` required) because the shape is validated
+ * defensively at runtime.
+ */
+export type ApiMeter = Partial<Meter> & Pick<Meter, 'id'>;
 
-/** Subset of `MeterReading` from the `recent_readings` list. */
-export interface ApiMeterReading {
-  id: string;
-  reading: string | number;
-  reading_date: string;
-  created_at?: string;
-}
+/** `MeterReading` fields consumed from the `recent_readings` list. */
+export type ApiMeterReading = Pick<MeterReading, 'id' | 'reading' | 'reading_date'> &
+  Partial<Pick<MeterReading, 'created_at'>>;
 
+/** Validated subset of the generated `MeterResponse` envelope. */
 export interface ApiMeterResponse {
   meter: ApiMeter;
   recent_readings: ApiMeterReading[];
@@ -71,15 +66,27 @@ function isApiMeterReading(value: unknown): value is ApiMeterReading {
  *  Tolerates any garbage top-level shape by returning null so the screen can
  *  fall back to its empty state instead of dereferencing `undefined.meter`. */
 export function parseMeterResponse(data: unknown): ApiMeterResponse | null {
+  const parsed = parseMeterResponseInner(data);
+  warnIfParseFailed('parseMeterResponse', data, parsed);
+  return parsed;
+}
+
+function parseMeterResponseInner(data: unknown): ApiMeterResponse | null {
   if (typeof data !== 'object' || data === null) return null;
   const v = data as Record<string, unknown>;
-  const meter = v.meter;
+  const meter = v['meter' satisfies keyof MeterResponse];
   if (typeof meter !== 'object' || meter === null) return null;
   const m = meter as Record<string, unknown>;
   if (typeof m.id !== 'string') return null;
-  const readings = Array.isArray(v.recent_readings)
-    ? (v.recent_readings as unknown[]).filter(isApiMeterReading)
-    : [];
+  const rawReadings = v['recent_readings' satisfies keyof MeterResponse];
+  const candidates: unknown[] | null = Array.isArray(rawReadings) ? rawReadings : null;
+  const readings = (candidates ?? []).filter(isApiMeterReading);
+  warnIfListDegraded(
+    'parseMeterResponse.recent_readings',
+    rawReadings,
+    candidates,
+    readings.length
+  );
   return { meter: meter as ApiMeter, recent_readings: readings };
 }
 

@@ -1,5 +1,13 @@
 import { parseMeterResponse, toUiReadings } from './MeterDetailScreen';
 
+let warnSpy: jest.SpyInstance;
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
+
 const validResponse = {
   meter: { id: 'm-1', meter_number: 'CW-001', unit_of_measure: 'm³' },
   recent_readings: [
@@ -31,6 +39,17 @@ describe('parseMeterResponse', () => {
       recent_readings: [{ id: 'r1', reading: '1', reading_date: '2026-01-01' }, null, 'x', {}],
     });
     expect(parsed?.recent_readings).toHaveLength(1);
+  });
+
+  it('emits a dev-only warning for an unrecognized non-null payload', () => {
+    parseMeterResponse('nope');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('parseMeterResponse'));
+  });
+
+  it('stays silent for a null payload and a valid response', () => {
+    parseMeterResponse(null);
+    parseMeterResponse(validResponse);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
 
