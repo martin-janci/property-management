@@ -2037,6 +2037,26 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   exit 0
 }
 
+# MCP-push size guard (issue #1014 / #2102 / #2126) — MUST run BEFORE `git commit`,
+# while `git diff --cached` still reflects the staged push payload. FAIL CLOSED:
+# hard-check every STAGED file against the 64 KiB MCP inline-push ceiling. A
+# blocked push is recoverable (the next run retries on a fixed base); a silently-
+# truncated MCP push is not. The structural fix is the action-list reconcile
+# staged above; this guard is the belt-and-suspenders that catches any file still
+# oversize (e.g. the reconcile was skipped or failed).
+#
+# REGRESSION #2126: this guard was previously invoked in the push branch AFTER
+# `git commit`, where the index equals HEAD and `git diff --cached` returns an
+# empty set — so `--staged` inspected nothing, the guard printed "no files to
+# check — OK", exited 0 every run, and never saw the real push payload (dead
+# code). It is now placed here, right after the final `git add`, so the check
+# actually fires. The guard self-skips when PUSH_METHOD != mcp (direct `git push`
+# has no inline-content limit), so it is safe to run unconditionally.
+if ! PUSH_METHOD="${PUSH_METHOD:-mcp}" bash .research/mcp-push-size-guard.sh --staged; then
+  echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
+  exit 0
+fi
+
 # Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
 # T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
 # claim/archive cycle could introduce a fresh invariant violation that was
@@ -2073,16 +2093,13 @@ INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (reba
 # fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
 # forces the legacy path for environments where direct push works.
 if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
-  # Backstop (issue #1014 / #2102): before the inline MCP push, hard-check every
-  # STAGED file against the 64 KiB inline-push ceiling. FAIL CLOSED — a blocked
-  # push is recoverable (the next run retries on a fixed base), a silently-
-  # truncated MCP push is not. The structural fix is the action-list reconcile
-  # staged above; this guard is the belt-and-suspenders that catches any file
-  # still oversize (e.g. the reconcile was skipped or failed).
-  if ! PUSH_METHOD=mcp bash .research/mcp-push-size-guard.sh --staged; then
-    echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
-    exit 0
-  fi
+  # NOTE (issue #2126): the MCP inline-push size guard already ran BEFORE
+  # `git commit` above (right after the final `git add`), where
+  # `git diff --cached` still reflected the staged payload. Do NOT re-run it
+  # here with `--staged` — post-commit the index equals HEAD, so `git diff
+  # --cached` is empty and the guard is a dead no-op (the exact bug #2126
+  # fixed). The staged tree that guard vetted is the same tree this MCP push
+  # emits, so the push payload is already known-safe.
   : # land the Phase 6 file delta via mcp__github__push_files onto dev (one commit).
     # A GITHUB_TOKEN/API push does not re-trigger version-bump on its own, which also
     # caps the rapid-bump churn (finding subagent-race-on-dev-push).
