@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T17:15:03Z",
+  "generated": "2026-07-07T17:20:33Z",
   "assignments": [
     {
       "task_id": "gap-10a-1-rfc-9700-refresh-token-revocation-validation",
@@ -100,15 +100,15 @@
     {
       "task_id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
       "branch": "auto-impl/gap-80-3-disputedetailroute-in-app-tsx-is-stub-2b6c131b",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T17:15:00Z",
-      "last_updated": "2026-07-07T17:15:00Z",
-      "status_changed_at": "2026-07-07T17:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T17:20:33Z",
+      "status_changed_at": "2026-07-07T17:20:33Z",
+      "pr_number": 2155,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2155",
       "merged_at": null,
       "specialist": "react-web",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2155 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stub gap stale \u2014 already wired via #1108; shipped 4 route regression tests + screen-map log; typecheck/biome green, 3 pre-existing #1364 failures repro on clean dev",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
