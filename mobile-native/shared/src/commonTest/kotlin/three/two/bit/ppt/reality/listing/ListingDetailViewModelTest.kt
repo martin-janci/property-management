@@ -328,7 +328,10 @@ class ListingDetailViewModelTest {
 
             vm.start()
             advanceUntilIdle()
-            assertTrue(vm.state.value.isFavorite, "precondition: authenticated probe turns heart on")
+            assertTrue(
+                vm.state.value.isFavorite,
+                "precondition: authenticated probe turns heart on",
+            )
 
             // Logout: favorites require auth, so the heart can no longer reflect a user's state.
             vm.updateAuth(null)
