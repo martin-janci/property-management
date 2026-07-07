@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T16:17:53Z",
+  "archived_at": "2026-07-07T17:05:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -623,6 +623,25 @@
         "merged_pr": 1814,
         "merged_at": null,
         "at": "2026-07-01T10:14:37Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) | gc1-reconcile 2026-07-07T17:03:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-06T14:07:23Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 1812,
+        "merged_at": null,
+        "at": "2026-07-07T17:03:19Z"
       }
     },
     {

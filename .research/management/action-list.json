@@ -15,18 +15,6 @@
       "last_updated": "2026-07-07T14:21:22Z"
     },
     {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-06T14:07:23Z"
-    },
-    {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
       "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
@@ -423,7 +411,7 @@
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -435,7 +423,7 @@
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -447,7 +435,7 @@
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -459,7 +447,7 @@
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -471,7 +459,7 @@
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -706,6 +694,40 @@
       "depends_on": [],
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "10b-1-organization-management-dashboard",
+      "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2153",
+      "action": "dispatcher: Tier-1c retry-remint re-mints work already merged on dev (ghost retries waste claim slots) (Closes #2153)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T17:03:33Z (#2153)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T17:03:33Z",
+      "issue_ref": {
+        "number": 2153,
+        "url": "https://github.com/martin-janci/property-management/issues/2153",
+        "labels": [
+          "follow-up",
+          "dispatcher"
+        ]
+      }
+    },
+    {
+      "id": "10b-2-feature-flag-management-retry1",
+      "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-2-feature-flag-management]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T17:03:51Z (retry_of=10b-2-feature-flag-management reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:33:02Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T17:03:51Z",
+      "retry_of": "10b-2-feature-flag-management",
       "retry_round": 1
     }
   ]
