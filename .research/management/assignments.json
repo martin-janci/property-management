@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T20:51:16Z",
+  "generated": "2026-07-07T20:56:17Z",
   "assignments": [
     {
       "task_id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
@@ -124,15 +124,15 @@
     {
       "task_id": "gap-83-2-ota-xml-message-parsing-generation-untested",
       "branch": "auto-impl/gap-83-2-ota-xml-message-parsing-generation-untested-cae7b2ab",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-07T20:47:34Z",
-      "status_changed_at": "2026-07-07T20:47:34Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T20:56:17Z",
+      "status_changed_at": "2026-07-07T20:56:17Z",
+      "pr_number": 2162,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2162",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2162 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=22 additive ota_xml unit tests (module already had 28 \u2014 scan gap partially stale); cargo test -p integrations 246 passed; clippy+fmt clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
