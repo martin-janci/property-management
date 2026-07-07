@@ -7,8 +7,10 @@ on:
       - ".research/dispatcher-self-test.sh"
       - ".research/backlog-refill.sh"
       - ".research/issue-ingest.sh"
+      - ".research/mcp-push-size-guard.sh"
       - ".research/test-backlog-refill.sh"
       - ".research/test-issue-ingest.sh"
+      - ".research/test-mcp-push-size-guard.sh"
       - ".research/management/assignments.json"
       - ".claude/skills/ppt-implement/**"
       - ".claude/skills/ppt-pr-merge/**"
@@ -37,6 +39,8 @@ jobs:
         run: bash .research/test-backlog-refill.sh
       - name: issue-ingest behavioral smoke test
         run: bash .research/test-issue-ingest.sh
+      - name: mcp-push-size-guard behavioral smoke test
+        run: bash .research/test-mcp-push-size-guard.sh
       - name: goal-check (enforcing)
         env:
           GOAL_CHECK_ENFORCE: "1"
