@@ -1,36 +1,15 @@
 //! Regional Compliance Repository (Epic 72).
 
 use crate::models::regional_compliance::{
-    ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr, ConfigureSlovakVoting,
-    CzechSvjConfig, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig, SlovakDecisionType,
-    SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
+    AccountingMetrics, ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr,
+    ConfigureSlovakVoting, CzechSvjConfig, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig,
+    SlovakDecisionType, SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
 };
 use crate::DbPool;
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
-
-/// Metrics returned by [`RegionalComplianceRepository::get_accounting_metrics`]
-/// for the Slovak accounting export.
-///
-/// Named fields (rather than a positional tuple) so that same-type slots like
-/// `total_revenue` vs `total_receivables` cannot be silently transposed at the
-/// repo→handler seam (#2122, same honesty class as #2103).
-#[derive(Debug, Clone, PartialEq)]
-pub struct AccountingMetrics {
-    pub invoice_count: i32,
-    pub payment_count: i32,
-    pub total_revenue: Decimal,
-    /// **Not yet computed (#1906 finding-3, tracked by #2030):** always `None`
-    /// — no expense source is wired. `None` means "not available", never 0.
-    pub total_expenses: Option<Decimal>,
-    pub total_receivables: Decimal,
-    /// **Not yet computed (#1906 finding-3, tracked by #2030):** always `None`
-    /// — no accounts-payable source is wired. `None` means "not available",
-    /// never 0.
-    pub total_payables: Option<Decimal>,
-}
 
 /// Repository for regional legal compliance features.
 #[derive(Debug, Clone)]
@@ -498,18 +477,25 @@ impl RegionalComplianceRepository {
         Ok(row)
     }
 
-    /// Returns the [`AccountingMetrics`] for the accounting export.
+    /// Returns the accounting-export metrics for the period as a named
+    /// [`AccountingMetrics`] struct.
+    ///
+    /// The result was formerly a positional 6-tuple; it is now a named struct
+    /// (#2122) so the revenue/receivables/expenses/payables identity is
+    /// compiler-enforced from this assembly through to the handler, rather than
+    /// relying on tuple position where two same-typed pairs could be silently
+    /// transposed.
     ///
     /// **Not yet computed (#1906 finding-3, tracked by #2030):**
-    /// `total_expenses` and `total_payables` are returned as `None` — this
-    /// export only has the receivables side (`invoices` / `payments`) wired;
-    /// there is no expense / accounts-payable source in scope here. `None` is a
-    /// deliberate "not available" signal, NOT an accidental zero, and it is
-    /// surfaced honestly to API clients via `Option<Decimal>` + the `partial` /
-    /// `unsupported_fields` flags on [`SlovakAccountingExport`]. Computing real
-    /// figures from an expense / vendor-payables model is the tracked
-    /// follow-up; until then a caller must treat these two fields as "not
-    /// available", not "zero".
+    /// `total_expenses` and `total_payables` (the 4th and 6th tuple fields) are
+    /// returned as `None` — this export only has the receivables side
+    /// (`invoices` / `payments`) wired; there is no expense / accounts-payable
+    /// source in scope here. `None` is a deliberate "not available" signal, NOT
+    /// an accidental zero, and it is surfaced honestly to API clients via
+    /// `Option<Decimal>` + the `partial` / `unsupported_fields` flags on
+    /// [`SlovakAccountingExport`]. Computing real figures from an expense /
+    /// vendor-payables model is the tracked follow-up; until then a caller must
+    /// treat these two fields as "not available", not "zero".
     pub async fn get_accounting_metrics(
         &self,
         conn: &mut PgConnection,

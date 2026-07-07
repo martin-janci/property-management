@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T06:31:46Z",
+  "generated": "2026-07-07T08:25:50Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -74,7 +74,7 @@
       "branch": "auto-impl/gh-issue-2121-132c6323",
       "status": "review",
       "claimed_at": "2026-07-07T02:08:49Z",
-      "last_updated": "2026-07-07T04:16:51Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T02:20:08Z",
       "pr_number": 2131,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2131",
@@ -89,14 +89,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2122",
       "branch": "auto-impl/gh-issue-2122-ee76237a",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T06:22:37Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T04:27:48Z",
       "pr_number": 2136,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2136",
@@ -111,14 +111,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2123",
       "branch": "auto-impl/gh-issue-2123-2cbb209c",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T06:22:37Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T04:16:51Z",
       "pr_number": 2132,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2132",
@@ -133,14 +133,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2124",
       "branch": "auto-impl/gh-issue-2124-c350946c",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T06:22:37Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T04:42:02Z",
       "pr_number": 2137,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2137",
@@ -155,28 +155,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2125",
       "branch": "auto-impl/gh-issue-2125-d70ab78e",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T06:22:37Z",
-      "status_changed_at": "2026-07-07T04:19:44Z",
+      "last_updated": "2026-07-07T08:27:25Z",
+      "status_changed_at": "2026-07-07T08:27:25Z",
       "pr_number": 2135,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2135",
       "merged_at": null,
       "specialist": "kotlin-mp",
       "implementer_summary": "pr=2135 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=4 updateAuth tests+logout-rollback guard+test; local Gradle blocked (proxy 403), deferred to mobile-native.yml CI",
-      "reviewer_summary": "verdict=changes note=mobile-native spotlessKotlinCheck red on new test file; needs spotlessApply + rerun tests; guard logic race-free, no iOS parity break",
+      "reviewer_summary": null,
       "last_reviewed_oid": "c232045d26ff0bb2adc0104f5d5f28d5ca2d250b",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
@@ -184,29 +184,29 @@
       "branch": "auto-impl/gh-issue-2127-9ddbc144",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T04:17:03Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T04:17:03Z",
       "pr_number": 2133,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2133",
       "merged_at": null,
       "specialist": "generic",
       "implementer_summary": "pr=2133 status=done specialist=generic scope_drift=true code_reuse_warn=none note=added deny-ban-presence job in backend.yml; YAML parses, grep asserts both quick-xml bans; branch-protection registration OOS",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=grep-guard sound; catches either half-range removal; yaml valid; scope-drift justified",
+      "last_reviewed_oid": "93b808c219d755bfc30d852531710cac322e0c8d",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2128",
       "branch": "auto-impl/gh-issue-2128-76be1bf1",
       "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T06:22:37Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T04:17:03Z",
       "pr_number": 2134,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2134",
@@ -221,51 +221,51 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2141",
       "branch": "auto-impl/gh-issue-2141-ebdae8ac",
       "status": "review",
       "claimed_at": "2026-07-07T06:12:07Z",
-      "last_updated": "2026-07-07T06:22:37Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T06:22:37Z",
       "pr_number": 2144,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2144",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2144 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=crossbeam-epoch 0.9.18->0.9.20 lockfile-only; clears RUSTSEC-2026-0204; deny/build deferred to CI",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=lockfile-only crossbeam-epoch 0.9.18->0.9.20; exact RUSTSEC-2026-0204 fix; cargo-deny green",
+      "last_reviewed_oid": "451b34d0a28613f21b4ffa4f62918de5c9421fb9",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     },
     {
       "task_id": "gh-issue-2129",
       "branch": "auto-impl/gh-issue-2129-692c8f35",
       "status": "review",
       "claimed_at": "2026-07-07T06:12:07Z",
-      "last_updated": "2026-07-07T06:31:46Z",
+      "last_updated": "2026-07-07T08:25:50Z",
       "status_changed_at": "2026-07-07T06:31:46Z",
       "pr_number": 2146,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2146",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=2146 status=partial specialist=react-native scope_drift=true code_reuse_warn=none note=typed 4/5 screens against @ppt/api-client + lease relabel; FormsScreen deferred (snake_case /forms/available vs camelCase generated FormSummary); typecheck+biome+71 unit tests green",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=type-derivations verified vs generated; relabel correct; FormsScreen deferral justified; scope_drift=owner-label-only",
+      "last_reviewed_oid": "e0b24fdb38c5aea50e29726c7370c26f33b5ddc8",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-07T08:25:50Z"
     }
   ]
 }

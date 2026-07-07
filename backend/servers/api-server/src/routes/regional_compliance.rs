@@ -428,9 +428,9 @@ async fn export_slovak_accounting(
     // metrics by putting B's id in the body. The body field is now ignored for
     // scoping.
     let org_id = rls.tenant_id();
-    // Named struct instead of a positional 6-tuple (#2122): field identity for
-    // the same-typed monetary slots (revenue vs receivables, expenses vs
-    // payables) is compiler-enforced across the repo→handler seam.
+    // Named-struct result (#2122): field access below is compiler-checked, so a
+    // revenue↔receivables (or expenses↔payables) transposition can no longer be
+    // introduced silently the way a positional tuple destructure allowed.
     let metrics = state
         .regional_compliance_repo
         .get_accounting_metrics(rls.conn(), org_id, payload.from_date, payload.to_date)
