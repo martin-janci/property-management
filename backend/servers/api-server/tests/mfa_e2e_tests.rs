@@ -13,18 +13,17 @@
 //! `totp_rs` (same library used by api-server). This avoids clock-skew issues
 //! and lets us exercise the real validation path.
 
-// Issue #487: `mod common;` was duplicated here even though the parent
-// `integration/mod.rs` already declares the test module. Redeclaring it
-// inside a sub-file links a second instance of `common` into the test
-// binary, which breaks any `OnceLock`-cached state shared via `common`.
-// We reuse the crate-root `common` module (declared by every top-level
-// test file) via `crate::common::*`.
+// #2158: promoted out of the never-compiled `tests/integration/` subtree to a
+// real top-level test binary. As the crate root of this binary, it declares the
+// shared `mod common;` harness itself (the standard pattern used by every other
+// top-level test file) and reaches into it via `crate::common::*`.
+mod common;
 
 use axum::{
     body::Body,
-    http::{Method, Request, StatusCode, header},
+    http::{header, Method, Request, StatusCode},
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use totp_rs::{Algorithm, Secret, TOTP};
 
@@ -118,7 +117,10 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
 
     // Setup returns only secret + qrUri; backupCodes moved to verify (Story 9.2)
     assert!(body["secret"].is_string(), "secret must be a string");
-    assert!(body["qrUri"].is_string(), "qrUri must be a string (camelCase)");
+    assert!(
+        body["qrUri"].is_string(),
+        "qrUri must be a string (camelCase)"
+    );
     assert!(
         body["backupCodes"].is_null(),
         "backupCodes must NOT appear in setup response (issued at verify); got: {}",
@@ -146,7 +148,11 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
     let recovery_codes = verify_body["recoveryCodes"]
         .as_array()
         .expect("recoveryCodes must be array in verify response");
-    assert_eq!(recovery_codes.len(), 10, "verify must return 10 recovery codes");
+    assert_eq!(
+        recovery_codes.len(),
+        10,
+        "verify must return 10 recovery codes"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -342,7 +348,10 @@ async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
     );
     // Should have real tokens
     assert!(
-        body["accessToken"].as_str().map(|s| !s.is_empty()).unwrap_or(false),
+        body["accessToken"]
+            .as_str()
+            .map(|s| !s.is_empty())
+            .unwrap_or(false),
         "accessToken must be non-empty; body: {}",
         body
     );
@@ -407,9 +416,7 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
         .uri("/api/v1/auth/mfa/disable")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            json!({ "code": disable_code }).to_string(),
-        ))
+        .body(Body::from(json!({ "code": disable_code }).to_string()))
         .unwrap();
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
@@ -531,7 +538,10 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
     let status_resp = app.execute(status_req).await;
     let status_body = status_resp.json_value();
     let remaining = status_body["backupCodesRemaining"].as_i64().unwrap_or(-1);
-    assert_eq!(remaining, 10, "backupCodesRemaining should be 10 after regen");
+    assert_eq!(
+        remaining, 10,
+        "backupCodesRemaining should be 10 after regen"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }

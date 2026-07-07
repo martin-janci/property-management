@@ -119,7 +119,7 @@ mod airbnb_integration {
         // Check Airbnb status
         let request = Request::builder()
             .method(Method::GET)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/airbnb/status?organization_id={}",
                 org_id
             ))
@@ -162,7 +162,7 @@ mod airbnb_integration {
         // Try to sync without connection
         let request = Request::builder()
             .method(Method::POST)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/airbnb/sync?organization_id={}",
                 org_id
             ))
@@ -233,7 +233,7 @@ mod booking_integration {
 
         let request = Request::builder()
             .method(Method::POST)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/booking/connect?organization_id={}",
                 org_id
             ))
@@ -279,7 +279,7 @@ mod booking_integration {
 
         let request = Request::builder()
             .method(Method::POST)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/booking/connect?organization_id={}",
                 org_id
             ))
@@ -326,7 +326,7 @@ mod booking_integration {
         // Try to disconnect (even if not connected)
         let request = Request::builder()
             .method(Method::POST)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/booking/disconnect?organization_id={}",
                 org_id
             ))
@@ -415,7 +415,7 @@ mod error_handling {
         // Stranger tries to access
         let request = Request::builder()
             .method(Method::GET)
-            .uri(&format!(
+            .uri(format!(
                 "/api/v1/integrations/airbnb/status?organization_id={}",
                 org_id
             ))
@@ -469,7 +469,7 @@ mod idempotency {
         for _ in 0..3 {
             let request = Request::builder()
                 .method(Method::POST)
-                .uri(&format!(
+                .uri(format!(
                     "/api/v1/integrations/booking/disconnect?organization_id={}",
                     org_id
                 ))

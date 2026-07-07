@@ -196,6 +196,23 @@ jobs:
         working-directory: backend
         run: ./scripts/check-migration-versions.test.sh
 
+      # Orphan-test guard (GH #2158). Fails if any crate ships `.rs` test code in
+      # a tests/ SUBDIRECTORY that no top-level test file `mod`-includes — i.e.
+      # test code cargo's auto-discovery never compiles (the `tests/integration/`
+      # subtree that silently never ran). Pure shell, no toolchain needed, so it
+      # runs early alongside the other structural gates.
+      - name: Orphan Test Check
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: ./scripts/check-no-orphan-tests.sh
+
+      # Regression test for the orphan-test guard itself (same rationale as the
+      # migration-guard self-test above): a pure-shell gate with no test can rot.
+      - name: Orphan Test Guard Self-Test
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: ./scripts/check-no-orphan-tests.test.sh
+
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
       # entire life of the repo (every `rg … || true` swallowed exit 127 and

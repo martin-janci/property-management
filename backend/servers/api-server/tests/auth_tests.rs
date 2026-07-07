@@ -70,7 +70,7 @@ mod registration {
 
         let request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
 
         let response = app.execute(request).await;
@@ -94,14 +94,16 @@ mod registration {
         // Register first time
         let request1 = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
-        app.execute(request1).await.assert_status(StatusCode::CREATED);
+        app.execute(request1)
+            .await
+            .assert_status(StatusCode::CREATED);
 
         // Try to register again with same email
         let request2 = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         let response = app.execute(request2).await;
 
@@ -185,7 +187,7 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -193,7 +195,7 @@ mod login {
         // Login
         let login_request = app
             .post("/api/v1/auth/login")
-            .json(&user.login_body())
+            .json(user.login_body())
             .build();
         let response = app.execute(login_request).await;
 
@@ -219,7 +221,7 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -268,14 +270,14 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
 
         // Try to login without verification
         let login_request = app
             .post("/api/v1/auth/login")
-            .json(&user.login_body())
+            .json(user.login_body())
             .build();
         let response = app.execute(login_request).await;
 
@@ -567,7 +569,7 @@ mod password_reset {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -686,7 +688,8 @@ mod mfa {
             "code": "000000"
         });
 
-        let request = auth_json_request(Method::POST, "/api/v1/auth/mfa/verify", &access_token, body);
+        let request =
+            auth_json_request(Method::POST, "/api/v1/auth/mfa/verify", &access_token, body);
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::BAD_REQUEST);
@@ -737,7 +740,7 @@ mod sessions {
 
         let json = response.json_value();
         let sessions = json["sessions"].as_array().unwrap();
-        assert!(sessions.len() >= 1, "Should have at least one session");
+        assert!(!sessions.is_empty(), "Should have at least one session");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -753,7 +756,11 @@ mod sessions {
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         // Revoke all sessions
-        let request = auth_request(Method::POST, "/api/v1/auth/sessions/revoke-all", &access_token);
+        let request = auth_request(
+            Method::POST,
+            "/api/v1/auth/sessions/revoke-all",
+            &access_token,
+        );
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);

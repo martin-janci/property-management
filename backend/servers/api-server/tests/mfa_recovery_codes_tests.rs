@@ -8,12 +8,20 @@
 //!   T4 — MFA not enabled returns 404
 //!   T5 — exhaustion: all 10 codes used → 11th attempt returns 400, not 410
 //!   T6 — disable MFA invalidates all codes; verify returns 400 afterwards
+//!
+//! #2158: promoted out of the never-compiled `tests/integration/` subtree to a
+//! real top-level test binary. It declares the shared `mod common;` harness
+//! itself and reaches into it via `crate::common::*`. These T1–T6 functional
+//! flows are NOT covered by the top-level `mfa_recovery_cross_user_idor_tests.rs`
+//! (that file audits only cross-user IDOR scoping).
+
+mod common;
 
 use axum::{
     body::Body,
-    http::{Method, Request, StatusCode, header},
+    http::{header, Method, Request, StatusCode},
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use totp_rs::{Algorithm, Secret, TOTP};
 
@@ -113,7 +121,11 @@ async fn test_valid_recovery_code_accepted_and_remaining_decrements(pool: PgPool
     assert_eq!(codes.len(), 10, "must issue 10 recovery codes");
 
     let (status, body) = post_recovery_verify(&app, &token, &codes[0]).await;
-    assert_eq!(status, StatusCode::OK, "first recovery code must be accepted; body: {body}");
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "first recovery code must be accepted; body: {body}"
+    );
     assert_eq!(
         body["codesRemaining"],
         json!(9),
@@ -158,8 +170,7 @@ async fn test_invalid_recovery_code_returns_400(pool: PgPool) {
     let (token, _) = create_authenticated_user(&app, &user).await;
     let _codes = enable_mfa_and_get_codes(&app, &token).await;
 
-    let (status, body) =
-        post_recovery_verify(&app, &token, "XXXX-XXXX-XXXX-INVALID").await;
+    let (status, body) = post_recovery_verify(&app, &token, "XXXX-XXXX-XXXX-INVALID").await;
     assert_eq!(
         status,
         StatusCode::BAD_REQUEST,
