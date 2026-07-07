@@ -1,0 +1,223 @@
+{
+  "date": "2026-07-07",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-07-05T03:10:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "46h since last routine run — exceeds the 36h threshold. Not stale (LAG_DAYS=1, <3).",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2100",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2933 lines changed in backend/crates/db/src/repositories/rental.rs this window (PR #2100 rental repo split); file has been deleted as part of the refactor. Cumulative-type re-emit — score_delta suppressed. Matched existing open item `refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs` which is now marked done via PR #2100 resolution.",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2100",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "594 lines in backend/crates/db/src/repositories/rental/oauth.rs (new sub-module from PR #2100 rental split); not in prior hotspot_history.",
+      "files": [
+        "backend/crates/db/src/repositories/rental/oauth.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2098, PR #2113",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "532 lines in backend/crates/db/src/models/multi_currency.rs across two PRs (#2098 initial enum-sync guard, #2113 hardening); not in prior hotspot_history. pm-security 2026-07-07 flagged enum_sync_guard is #[cfg(test)]-only + only asserts ALL.len().",
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment on 2026-07-07",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "frontend/apps/ppt-web/src/lib/queryKeys.ts:347 AUTHED_QUERY_KEY_ROOTS missing accounting/sentiment/notification-analytics/predictive-maintenance roots — AuthContext.logout() at contexts/AuthContext.tsx:542-544 leaves user A's TanStack Query cache readable to user B after same-tab session swap (cross-account PII leak in cached invoices/contacts/statements).",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/notification-analytics/hooks/useNotificationAnalytics.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-non-idempotent-post",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment on 2026-07-07",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/lib/api.ts:85-93 isRetryableError treats every !error.response as retryable; interceptor at :174-217 retries the same request up to MAX_RETRIES=3, no HTTP method check — real POST/PUT callers in features/sentiment/hooks/useSentiment.ts:93,108 and features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:76 fire duplicate acks/prediction jobs when the server processed the write but the response was lost.",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-init-auth-no-expiry-check",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-core segment on 2026-07-07",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389-424 initializeAuth() sees storedUser && accessToken and calls setUser() with no JWT exp check; decodeJwtPayload already exists in the same file (line 219). Boot-time flicker + 401 flap when the stored access token is expired.",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met the confidence=high + score>=3 + allowlist gate this run (churn-hotspots are refactor vector; code-review-findings are not in the allowlist; no screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise-lockfile / stalled-review signals fired)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors advanced vs HEAD",
+      "observed": "last_pr_seen 2093→2120, last_issue_seen 2087→2129, last_commit_sha updated, seen_signals +7",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal double-count",
+      "observed": "0 offenders",
+      "expected": "0"
+    },
+    {
+      "goal": "G5cap",
+      "passed": true,
+      "command": "score>8",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5decay",
+      "passed": true,
+      "command": "14d-old open items decayed or dropped",
+      "observed": "no items >14d old this run (all updated 2026-07-05)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plan promotions have adversarial-pass annotation",
+      "observed": "1/1 annotated",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, 15 sections, capability ticked, mode declared, files exist",
+      "observed": "1 plan, 4/4 meta, 11/11 heads, capability=C6 ticked, Mode=cloud-ok, 5/5 files exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases; brief line present",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans converge",
+      "observed": "0 vanished",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7>=7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency + kill switch",
+      "observed": "0 actions this run (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + GC7",
+      "observed": "pm_cursor 5→6, coverage_cursor 12→0, EPICS=13",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

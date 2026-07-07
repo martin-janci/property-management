@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-02T19:30:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-07T02:15:00Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [
       "epic-85",
@@ -1054,12 +1054,13 @@
       ],
       "owner_role": "pm-security",
       "evidence": [
-        "backend routes/mfa.rs setup/verify/disable/backup-codes",
+        "backend routes/mfa.rs setup/verify/disable/backup-codes (68 totp/mfa hits, verified 2026-07-07)",
         "ppt-web TwoFactorAuthPage + test; api-client mfa/",
-        "screen settings-two-factor shipped; PRs #8 #473 #723"
+        "screen settings-two-factor shipped; PRs #8 #473 #723",
+        "sprint-status: no change this run (2026-07-05 to 2026-07-06); 18 merged PRs did not touch MFA"
       ],
       "gaps": [],
-      "last_checked": "2026-07-02"
+      "last_checked": "2026-07-07"
     }
   ]
 }

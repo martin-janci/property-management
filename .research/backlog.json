@@ -3980,13 +3980,15 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2118",
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "resolved: PR #2118 merged 2026-07-06 (code-review-mobile-rn-screens-mock-data: wire mobile Meters/Leases/Forms/Threads screens to api-server) — verbatim ID match in PR title"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
       "plan": null
     },
     {
@@ -4065,18 +4067,135 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2100",
         "churn since 4829015b: 11 commits"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 merged 2026-07-05 (refactor-churn-hotspot-...-rental-rs: split rental repository into cohesive sub-modules) — file split into rental/{oauth,leases,tenants,bookings,guests,imports,...}; residual pattern-preservation concern tracked separately via pm-security action-list (pm-security-rental-repo-unscoped-methods)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "title": "PPT-web AUTHED_QUERY_KEY_ROOTS drift — accounting/sentiment/notification-analytics/predictive-maintenance not purged on logout (PII leak on same-tab session swap)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment on 2026-07-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 — AUTHED_QUERY_KEY_ROOTS is missing 'accounting' (defined same file line 142 — invoices/contacts/statements/statementLines/lineMatches — user-scoped financial PII), 'sentiment', 'notification-analytics', 'predictive-maintenance' roots.",
+        "AuthContext.logout (contexts/AuthContext.tsx:542-544) iterates AUTHED_QUERY_KEY_ROOTS and only removes those subtrees — on same-tab user-A→user-B session swap, cached invoices/contacts/statements/sentiment/predictive-maintenance data for user A survive and are readable to user B (cross-account PII leak in the TanStack Query cache).",
+        "queryKeys.ts:342-345 comment explicitly warns to add each new auth-scoped root here too — the design already anticipated this drift."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/notification-analytics/hooks/useNotificationAnalytics.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": "plans/code-review-ppt-web-core-authed-query-roots-drift.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-non-idempotent-post",
+      "title": "PPT-web axios retry interceptor retries non-idempotent POST/PUT on network failure — duplicate acks/prediction jobs/threshold thrash",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment on 2026-07-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:85-93 isRetryableError returns true for any !error.response; response interceptor at :174-217 retries same request up to MAX_RETRIES=3 with exponential backoff, no HTTP method check.",
+        "Real callers: features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:76 (POST run-prediction) and features/sentiment/hooks/useSentiment.ts:93 (POST acknowledgeAlert), :108 (PUT thresholds).",
+        "Duplicate side-effects when server processed the write but response was lost (TLS reset / mobile handoff / timeout) — only GET/HEAD should retry without an idempotency token."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-init-auth-no-expiry-check",
+      "title": "PPT-web initializeAuth() sets user from storage without JWT exp check — authed UI flicker + 401 flap on expired access token",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of ppt-web-core segment on 2026-07-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:389-424 initializeAuth() sees storedUser && accessToken and calls setUser(storedUser) with NO exp check.",
+        "decodeJwtPayload already exists in the same file (line 219) — checking payload.exp * 1000 < Date.now() before setUser is a two-line fix.",
+        "Refresh token is read on :394 but only used when accessToken is missing — a proactive refresh path would eliminate the flicker."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/oauth.rs (594 lines this run — new sub-module from PR #2100 rental split)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2100 (rental repo split)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/rental/oauth.rs — 594 lines changed in this window (created as a sub-module during PR #2100 rental split).",
+        "Watch: pm-security 2026-07-07 flagged that the split preserved a manual-org-filter pattern in guests.rs/bookings.rs; this file may need a follow-up scoping pass."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/oauth.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines across PRs #2098 + #2113)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2098 (enum-sync guard)",
+        "PR #2113 (enum-sync guard hardening)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/models/multi_currency.rs — 532 lines across two PRs (#2098 initial enum-sync guard, #2113 hardening).",
+        "pm-security 2026-07-07 flagged: enum_sync_guard is #[cfg(test)]-only and only asserts ALL.len(), not per-variant set equality — hardening opportunity."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
       "plan": null
     }
   ]
