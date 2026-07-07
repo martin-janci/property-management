@@ -393,18 +393,6 @@
       "retry_round": 1
     },
     {
-      "id": "gap-10a-1-rfc-9700-refresh-token-revocation-validation",
-      "action": "RFC 9700 refresh-token revocation validation (issue #481) (10a-1-oauth-authorization-server OAuth 2.0 Authorization Server) [also 10a-3-oauth-token-management]",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-7a-5-issue-485-resolved-per-pr-2003",
       "action": "Issue #485 resolved per PR #2003, but sprint-status not yet updated to reflect completion (7a-5-document-sharing Document Sharing)",
       "owner_role": "pm-backend",

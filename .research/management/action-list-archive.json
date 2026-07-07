@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T17:15:04Z",
+  "archived_at": "2026-07-07T17:23:02Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1762,6 +1762,19 @@
         "by": "dispatcher-exact-id-reconcile",
         "evidence": "PR #1358 merged 2026-06-13T20:13:58Z"
       }
+    },
+    {
+      "id": "gap-10a-1-rfc-9700-refresh-token-revocation-validation",
+      "action": "RFC 9700 refresh-token revocation validation (issue #481) (10a-1-oauth-authorization-server OAuth 2.0 Authorization Server) [also 10a-3-oauth-token-management]",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "verify-to-done 2026-07-07: #481 fixed on dev since 2026-05-26 (assignment done, no delta)"
     },
     {
       "id": "gap-10a-2-oauth-admin-ui",
