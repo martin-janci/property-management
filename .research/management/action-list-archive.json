@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T21:39:48Z",
+  "archived_at": "2026-07-07T23:30:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1828,6 +1828,32 @@
       "depends_on": []
     },
     {
+      "id": "gap-10a-reconcile-sprint-status-gates-closed",
+      "action": "Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 — gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T19:45:00Z",
+      "source": "gap-scan 2026-07-07 evening",
+      "gc1_closed": "merged 2026-07-07T23:29:18Z PR #2161 (dispatcher merge-confirm)"
+    },
+    {
+      "id": "gap-10b-1-frontend-ui-not-built-organizationspage-tsx",
+      "action": "Frontend UI not built (OrganizationsPage.tsx not found; buildStatus=planned not shipped) (10b-1-organization-management-dashboard Organization Management Dashboard)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-07T23:29:42Z PR #2164 (dispatcher merge-confirm)"
+    },
+    {
       "id": "gap-10b-4-system-announcements-backend",
       "action": "Implement platform_admin.rs system announcement SQLx handler bodies (create/list/get/update/delete system_announcements table); add migration for system_announcements table; backend counterpart to admin UI merged in PR#503 (story 10b-4)",
       "owner_role": "pm-backend",
@@ -2320,6 +2346,19 @@
       "depends_on": [
         "gap-82-6-kmp-android-home"
       ]
+    },
+    {
+      "id": "gap-83-2-ota-xml-message-parsing-generation-untested",
+      "action": "OTA XML message parsing + generation untested (83-2-booking-integration Booking.com OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T19:45:00Z",
+      "source": "gap-scan 2026-07-07 evening",
+      "gc1_closed": "merged 2026-07-07T23:29:23Z PR #2162 (dispatcher merge-confirm)"
     },
     {
       "id": "gap-83-2-ota-xml-transport",

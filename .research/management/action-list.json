@@ -465,18 +465,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "gap-10b-1-frontend-ui-not-built-organizationspage-tsx",
-      "action": "Frontend UI not built (OrganizationsPage.tsx not found; buildStatus=planned not shipped) (10b-1-organization-management-dashboard Organization Management Dashboard)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-81-1-create-new-schedule-endpoint-still-stubbed",
       "action": "Create new schedule endpoint still stubbed out (81-1-report-schedule-editing Report Schedule Editing)",
       "owner_role": "pm-backend",
@@ -645,18 +633,6 @@
       "retry_round": 1
     },
     {
-      "id": "gap-10a-reconcile-sprint-status-gates-closed",
-      "action": "Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 — gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
       "id": "gap-83-1-no-test-coverage-for-oauth-flow",
       "action": "No test coverage for OAuth flow (connect/sync/disconnect) (83-1-airbnb-integration Airbnb OAuth and Sync)",
       "owner_role": "pm-backend",
@@ -707,18 +683,6 @@
     {
       "id": "gap-83-2-no-test-coverage-for-any-booking",
       "action": "No test coverage for any Booking.com handler (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
-      "id": "gap-83-2-ota-xml-message-parsing-generation-untested",
-      "action": "OTA XML message parsing + generation untested (83-2-booking-integration Booking.com OAuth and Sync)",
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": null,
