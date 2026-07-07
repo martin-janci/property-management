@@ -16,6 +16,11 @@ kotlin {
 
         // Preserve the JVM target migrated in PR #378 (compilerOptions DSL).
         compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
+
+        // Run `commonTest` on the JVM host. Without this the AGP-9 KMP library plugin creates
+        // NO host test compilation at all, so `:shared:build` / `allTests` on Linux CI silently
+        // executed zero tests and the whole commonTest suite was dormant (surfaced by #2125).
+        withHostTest {}
     }
 
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
