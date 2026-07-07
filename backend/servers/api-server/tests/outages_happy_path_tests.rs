@@ -59,7 +59,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::{
-    create_authenticated_user_with_org, seed_membership, seed_org, TestApp, TestConfig, TestUser,
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, seed_org,
+    TestApp, TestConfig, TestUser,
 };
 
 const BASE: &str = "/api/v1/outages";
@@ -438,5 +439,82 @@ async fn full_lifecycle_via_real_login_transitions_status(pool: PgPool) {
         action_status(&resp),
         "cancelled",
         "cancel should set status=cancelled"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// RBAC deny: real login, NON-manager membership → mutating route 403s (#2121)
+//
+// Follow-up to #2107 / PR #2120. The `*_via_real_login_*` tests above prove a
+// real production-login token whose DB membership is `org_admin` is *allowed*
+// through the `rls.role().is_manager()` gate. This is the negative complement:
+// a real-login token whose DB-validated membership is a non-manager role
+// (`resident`) must be *denied* on a mutating outage route.
+//
+// Unlike `create_authenticated_user_with_org` (which seeds an `org_admin`
+// membership), we register/verify/login the user and then attach a `resident`
+// membership by hand, so the caller passes `AuthUser` and
+// `ValidatedTenantExtractor` (they ARE a member) but is rejected by the
+// DB-role manager gate — asserting the exact `403 FORBIDDEN` real behavior so
+// the test fails closed if a future change ever flips `is_manager()` open.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_outage_via_real_login_non_manager_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool).await;
+
+    // Real login flow (register → verify → login), then attach the user to the
+    // org as a NON-manager `resident` instead of the `org_admin` that
+    // `create_authenticated_user_with_org` would seed.
+    let user = TestUser::new();
+    let (token, _refresh) = create_authenticated_user(&app, &user).await;
+
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+
+    let org_id = seed_org(&app.pool, "outage-login-deny").await;
+    seed_membership(&app.pool, org_id, user_id, "resident").await;
+
+    // POST /api/v1/outages is manager-gated on the DB-validated role. A
+    // resident is a valid tenant member (passes the extractors) but must be
+    // rejected by `rls.role().is_manager()` with `403 FORBIDDEN`.
+    let r = app
+        .post(BASE)
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({
+            "title": "Unauthorized outage",
+            "description": "Resident should not be able to create this",
+            "commodity": "water",
+            "severity": "medium",
+            "scheduled_start": "2026-06-01T08:00:00Z",
+            "scheduled_end": "2026-06-01T12:00:00Z",
+            "supplier_name": "City Water Co.",
+        }))
+        .build();
+    let resp = app.execute(r).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "#2121: a real-login resident must be denied the manager-gated create \
+         outage route with 403, got {} body={}",
+        resp.status,
+        resp.text(),
+    );
+
+    // The handler tags this branch with the `FORBIDDEN` error code.
+    let body = resp.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "FORBIDDEN",
+        "#2121: 403 response must carry the FORBIDDEN code, body={}",
+        body
     );
 }
