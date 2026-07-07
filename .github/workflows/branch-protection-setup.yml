@@ -1,7 +1,9 @@
 name: Branch-protection setup
 
-# One-time (and idempotent) workflow that registers "security-gate-conclusion"
-# as a required status check on the `dev` branch protection rule.
+# One-time (and idempotent) workflow that registers the repo's gate check
+# contexts (see NEW_CHECKS below, e.g. "security-gate-conclusion" and the
+# script exec-bit gate) as required status checks on the `dev` branch
+# protection rule.
 #
 # WHY THIS EXISTS
 # ---------------
@@ -147,34 +149,48 @@ jobs:
         run: |
           set -euo pipefail
 
-          NEW_CHECK="security-gate-conclusion"
+          # Gate check contexts that must be REQUIRED on the dev protection
+          # rule. A gate workflow that is not listed here is advisory-only —
+          # its failure does not block a merge. The context of a GitHub
+          # Actions check is the job's `name`, so keep this list in sync
+          # with the gate job names.
+          NEW_CHECKS=$(printf '%s\n' \
+            "security-gate-conclusion" \
+            "Workflow scripts must be executable (100755)")
 
-          # Build the merged list of required status checks.
+          # Build the merged list of required status checks (existing ∪ new).
           MERGED=$(python3 -c "
-          import sys, json
-
           existing_raw = '''$EXISTING_CHECKS'''
-          new_check = '$NEW_CHECK'
+          new_raw = '''$NEW_CHECKS'''
 
           existing = [c.strip() for c in existing_raw.strip().splitlines() if c.strip()]
+          new = [c.strip() for c in new_raw.strip().splitlines() if c.strip()]
 
-          if new_check in existing:
-              print('\n'.join(existing))
-          else:
-              print('\n'.join(existing + [new_check]))
+          print('\n'.join(existing + [c for c in new if c not in existing]))
           ")
 
           echo "Required status checks after merge:"
           echo "$MERGED"
 
-          # Determine if the new check is already registered.
-          if echo "$EXISTING_CHECKS" | grep -qxF "$NEW_CHECK"; then
-            echo "INFO: '$NEW_CHECK' is already in required status checks — nothing to do."
+          # Determine which of the gate checks are not yet registered.
+          MISSING=$(python3 -c "
+          existing_raw = '''$EXISTING_CHECKS'''
+          new_raw = '''$NEW_CHECKS'''
+
+          existing = [c.strip() for c in existing_raw.strip().splitlines() if c.strip()]
+          new = [c.strip() for c in new_raw.strip().splitlines() if c.strip()]
+
+          print('\n'.join(c for c in new if c not in existing))
+          ")
+
+          if [ -z "$MISSING" ]; then
+            echo "INFO: all gate checks are already in required status checks — nothing to do."
             exit 0
           fi
 
           if [ "$DRY_RUN" = "true" ]; then
-            echo "DRY-RUN: would add '$NEW_CHECK' to dev branch required status checks."
+            echo "DRY-RUN: would add these to dev branch required status checks:"
+            echo "$MISSING" | sed 's/^/  - /'
             echo "DRY-RUN: no changes applied."
             exit 0
           fi
@@ -211,19 +227,22 @@ jobs:
             --input - <<< "$PAYLOAD"
 
           echo ""
-          echo "SUCCESS: '$NEW_CHECK' is now a required status check on dev."
+          echo "SUCCESS: these are now required status checks on dev:"
+          echo "$NEW_CHECKS" | sed 's/^/  - /'
           echo ""
           echo "Effect:"
           echo "  - Any PR labelled 'security' that ships without a test file will have"
           echo "    'security-gate-conclusion' fail, which blocks merge."
           echo "  - PRs without the 'security' label: 'security-test-gate' is skipped →"
           echo "    'security-gate-conclusion' succeeds → merge is not blocked."
+          echo "  - Any PR that drops the exec bit on a workflow helper script or an"
+          echo "    allowlisted runnable script fails the exec-bit gate, blocking merge."
 
-      - name: Self-check — verify security-gate-conclusion is required
+      - name: Self-check — verify gate checks are required
         # Idempotent audit step. Reads back required_status_checks from the
-        # API after the apply step ran and fails the run if
-        # 'security-gate-conclusion' is not present. This makes the workflow
-        # self-auditing: a green run guarantees the gate is registered.
+        # API after the apply step ran and fails the run if any gate check
+        # is not present. This makes the workflow self-auditing: a green
+        # run guarantees the gates are registered.
         #
         # In dry-run mode this only warns (the apply step did not patch).
         env:
@@ -232,7 +251,10 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
-          REQUIRED_CHECK="security-gate-conclusion"
+          # Keep in sync with NEW_CHECKS in the apply step above.
+          REQUIRED_CHECKS=$(printf '%s\n' \
+            "security-gate-conclusion" \
+            "Workflow scripts must be executable (100755)")
 
           echo "Reading back required status checks for dev..."
           RESPONSE=$(gh api "repos/$REPO/branches/dev/protection/required_status_checks" 2>&1) || {
@@ -265,12 +287,21 @@ jobs:
             echo "$NAMES" | sed 's/^/  - /'
           fi
 
-          if echo "$NAMES" | grep -qxF "$REQUIRED_CHECK"; then
+          MISSING=""
+          while IFS= read -r required; do
+            [ -n "$required" ] || continue
+            if ! echo "$NAMES" | grep -qxF "$required"; then
+              MISSING="$MISSING
+          $required"
+            fi
+          done <<< "$REQUIRED_CHECKS"
+
+          if [ -z "$MISSING" ]; then
             echo ""
-            echo "OK: '$REQUIRED_CHECK' is registered as a required status check on dev."
+            echo "OK: all gate checks are registered as required status checks on dev."
           else
             echo ""
-            echo "ERROR: '$REQUIRED_CHECK' is NOT in the required status checks for dev."
+            echo "ERROR: NOT in the required status checks for dev:$MISSING"
             if [ "$DRY_RUN" = "true" ]; then
               echo "DRY-RUN: not failing the run (apply step did not patch)."
               exit 0
@@ -288,7 +319,7 @@ jobs:
           echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| Branch | \`dev\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Required check added | \`security-gate-conclusion\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Required checks | \`security-gate-conclusion\`, \`Workflow scripts must be executable (100755)\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Dry-run | $DRY_RUN |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
