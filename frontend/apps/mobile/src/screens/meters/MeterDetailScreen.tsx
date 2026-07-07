@@ -13,14 +13,11 @@
  * malformed shape degrades to an empty history rather than crashing.
  */
 
-import type {
-  Meter as ApiMeter,
-  MeterReading as ApiMeterReading,
-  MeterResponse as ApiMeterResponse,
-} from '@ppt/api-client';
+import type { Meter, MeterReading, MeterResponse } from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface MeterReadingRecord {
@@ -30,10 +27,23 @@ export interface MeterReadingRecord {
   takenAt: string;
 }
 
-// `ApiMeter` / `ApiMeterReading` / `ApiMeterResponse` are the generated
-// `@ppt/api-client` payload types for `GET /api/v1/meters/{id}`
-// (`MeterResponse { meter, recent_readings }`). Typing the defensive parser
-// against them surfaces OpenAPI drift (field rename/type-change) at compile time.
+/**
+ * `Meter` from `GET /api/v1/meters/{id}`, typed against the generated
+ * `@ppt/api-client` payload so backend field renames surface at compile time.
+ * Relaxed to `Partial` (only `id` required) because the shape is validated
+ * defensively at runtime.
+ */
+export type ApiMeter = Partial<Meter> & Pick<Meter, 'id'>;
+
+/** `MeterReading` fields consumed from the `recent_readings` list. */
+export type ApiMeterReading = Pick<MeterReading, 'id' | 'reading' | 'reading_date'> &
+  Partial<Pick<MeterReading, 'created_at'>>;
+
+/** Validated subset of the generated `MeterResponse` envelope. */
+export interface ApiMeterResponse {
+  meter: ApiMeter;
+  recent_readings: ApiMeterReading[];
+}
 
 /** Parse a `Decimal`-as-string (or number) into a finite number, or null. */
 function toNumber(value: string | number | null | undefined): number | null {
@@ -56,15 +66,27 @@ function isApiMeterReading(value: unknown): value is ApiMeterReading {
  *  Tolerates any garbage top-level shape by returning null so the screen can
  *  fall back to its empty state instead of dereferencing `undefined.meter`. */
 export function parseMeterResponse(data: unknown): ApiMeterResponse | null {
+  const parsed = parseMeterResponseInner(data);
+  warnIfParseFailed('parseMeterResponse', data, parsed);
+  return parsed;
+}
+
+function parseMeterResponseInner(data: unknown): ApiMeterResponse | null {
   if (typeof data !== 'object' || data === null) return null;
   const v = data as Record<string, unknown>;
-  const meter = v.meter;
+  const meter = v['meter' satisfies keyof MeterResponse];
   if (typeof meter !== 'object' || meter === null) return null;
   const m = meter as Record<string, unknown>;
   if (typeof m.id !== 'string') return null;
-  const readings = Array.isArray(v.recent_readings)
-    ? (v.recent_readings as unknown[]).filter(isApiMeterReading)
-    : [];
+  const rawReadings = v['recent_readings' satisfies keyof MeterResponse];
+  const candidates: unknown[] | null = Array.isArray(rawReadings) ? rawReadings : null;
+  const readings = (candidates ?? []).filter(isApiMeterReading);
+  warnIfListDegraded(
+    'parseMeterResponse.recent_readings',
+    rawReadings,
+    candidates,
+    readings.length
+  );
   return { meter: meter as ApiMeter, recent_readings: readings };
 }
 

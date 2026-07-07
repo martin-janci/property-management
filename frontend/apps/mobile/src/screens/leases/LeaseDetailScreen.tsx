@@ -11,14 +11,11 @@
  * client, so it is validated defensively.
  */
 
-import type {
-  Lease as ApiLease,
-  LeasePayment as ApiLeasePayment,
-  LeaseWithDetails,
-} from '@ppt/api-client';
+import type { Lease as ApiLeasePayload, LeasePayment, LeaseWithDetails } from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import { type Lease, toUiLeaseStatus } from './LeasesScreen';
 
@@ -26,21 +23,29 @@ export interface LeasePaymentRow {
   id: string;
   period: string;
   amount: number;
-  paidAt: string | null;
+  dueDate: string;
 }
 
 /**
- * The subset of the generated `@ppt/api-client` `LeaseWithDetails` payload
- * (`GET /api/v1/leases/{id}`) that this screen consumes. Deriving it from the
- * generated type (rather than a hand-rolled interface) surfaces OpenAPI drift
- * — a field rename/type-change on `Lease`, `LeasePayment`, or `LeaseWithDetails`
- * breaks compilation here. `ApiLease` / `ApiLeasePayment` are the generated
- * entity types, used by the defensive parser casts below.
+ * `Lease` inside `LeaseWithDetails`, typed against the generated
+ * `@ppt/api-client` payload so backend field renames surface at compile time.
+ * Relaxed to `Partial` beyond the fields this screen requires, because the
+ * shape is validated defensively at runtime.
  */
-export type ApiLeaseDetail = Pick<
-  LeaseWithDetails,
-  'lease' | 'unit_name' | 'building_name' | 'upcoming_payments'
->;
+type ApiLease = Partial<ApiLeasePayload> &
+  Pick<ApiLeasePayload, 'id' | 'start_date' | 'end_date' | 'monthly_rent' | 'status'>;
+
+/** `LeasePayment` fields consumed from `upcoming_payments`. */
+type ApiLeasePayment = Pick<LeasePayment, 'id' | 'due_date' | 'amount'> &
+  Partial<Pick<LeasePayment, 'paid_at'>>;
+
+/** Validated subset of the generated `LeaseWithDetails` envelope. */
+export interface ApiLeaseDetail {
+  lease: ApiLease;
+  unit_name: string;
+  building_name: string;
+  upcoming_payments?: ApiLeasePayment[];
+}
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -50,19 +55,24 @@ function toNumber(value: string | number | null | undefined): number {
 
 /** Validate the raw `GET /api/v1/leases/{id}` body, or null on a bad shape. */
 export function parseLeaseDetail(data: unknown): ApiLeaseDetail | null {
+  const parsed = parseLeaseDetailInner(data);
+  warnIfParseFailed('parseLeaseDetail', data, parsed);
+  return parsed;
+}
+
+function parseLeaseDetailInner(data: unknown): ApiLeaseDetail | null {
   if (typeof data !== 'object' || data === null) return null;
   const v = data as Record<string, unknown>;
-  const lease = v.lease;
+  const lease = v['lease' satisfies keyof LeaseWithDetails];
   if (typeof lease !== 'object' || lease === null) return null;
   const l = lease as Record<string, unknown>;
   if (typeof l.id !== 'string') return null;
+  const payments = v['upcoming_payments' satisfies keyof LeaseWithDetails];
   return {
     lease: lease as ApiLease,
     unit_name: typeof v.unit_name === 'string' ? v.unit_name : '',
     building_name: typeof v.building_name === 'string' ? v.building_name : '',
-    upcoming_payments: Array.isArray(v.upcoming_payments)
-      ? (v.upcoming_payments as ApiLeasePayment[])
-      : [],
+    upcoming_payments: Array.isArray(payments) ? (payments as ApiLeasePayment[]) : [],
   };
 }
 
@@ -91,18 +101,20 @@ function periodLabel(dueDate: string): string {
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-/** Map api-server payments onto the UI payment rows, newest `due_date` first.
- *  Sorting is done on the raw ISO `due_date` (not the formatted month label,
- *  which would sort alphabetically). */
+/** Map api-server payments onto the UI payment rows, soonest `due_date` first.
+ *  `upcoming_payments` only carries scheduled payments (`due_date >= today`,
+ *  see `LeaseRepository`), so no paid/history state is derived here. Sorting is
+ *  done on the raw ISO `due_date` (not the formatted month label, which would
+ *  sort alphabetically). */
 export function toUiPayments(detail: ApiLeaseDetail): LeasePaymentRow[] {
   return (detail.upcoming_payments ?? [])
     .slice()
-    .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .map((p) => ({
       id: p.id,
       period: periodLabel(p.due_date),
       amount: toNumber(p.amount),
-      paidAt: p.paid_at ?? null,
+      dueDate: p.due_date,
     }));
 }
 
@@ -181,7 +193,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
             <Text style={styles.sectionTitle}>Upcoming payments</Text>
             {payments.length === 0 ? (
               <View style={s.card}>
-                <Text style={s.cardBody}>No payments recorded yet.</Text>
+                <Text style={s.cardBody}>No upcoming payments scheduled.</Text>
               </View>
             ) : (
               payments.map((payment) => (
@@ -193,9 +205,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
                     </Text>
                   </View>
                   <Text style={s.cardBody}>
-                    {payment.paidAt
-                      ? `Paid on ${new Date(payment.paidAt).toLocaleDateString()}`
-                      : 'Awaiting payment'}
+                    Due {new Date(payment.dueDate).toLocaleDateString()}
                   </Text>
                 </View>
               ))

@@ -1,5 +1,13 @@
 import { parseLeaseDetail, toUiLease, toUiPayments } from './LeaseDetailScreen';
 
+let warnSpy: jest.SpyInstance;
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
+
 const validDetail = {
   lease: {
     id: 'l-1',
@@ -34,6 +42,16 @@ describe('parseLeaseDetail', () => {
   ])('returns null for an unexpected shape: %s', (_label, input) => {
     expect(parseLeaseDetail(input)).toBeNull();
   });
+
+  it('emits a dev-only warning when a non-null payload fails to parse', () => {
+    parseLeaseDetail({ unit_name: 'x' });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('parseLeaseDetail'));
+  });
+
+  it('stays silent for a null payload (query not resolved yet)', () => {
+    parseLeaseDetail(null);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('toUiLease', () => {
@@ -63,10 +81,14 @@ describe('toUiLease', () => {
 });
 
 describe('toUiPayments', () => {
-  it('maps payments newest first with period labels and paid state', () => {
+  it('maps payments soonest first with period labels and due dates', () => {
     const rows = toUiPayments(parseLeaseDetail(validDetail)!);
-    expect(rows.map((r) => r.id)).toEqual(['p2', 'p1']);
-    expect(rows[0].paidAt).toBeNull();
-    expect(rows[1].paidAt).toBe('2026-03-01T09:00:00Z');
+    expect(rows.map((r) => r.id)).toEqual(['p1', 'p2']);
+    expect(rows[0]).toEqual({
+      id: 'p1',
+      period: 'March 2026',
+      amount: 850,
+      dueDate: '2026-03-01',
+    });
   });
 });

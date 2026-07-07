@@ -19,6 +19,7 @@ import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiQuery } from '../../hooks/useApi';
+import { warnIfListDegraded } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type MeterCommodity = 'water_cold' | 'water_hot' | 'water' | 'electricity' | 'gas' | 'heat';
@@ -33,11 +34,10 @@ export interface Meter {
 }
 
 /**
- * The unit route returns `Vec<Meter>`. The parser guarantees only `id` and
- * reads a defensive subset, so `ApiMeter` is a partial view of the generated
- * `@ppt/api-client` `Meter` payload (every field optional but `id`). Deriving
- * it from the generated type means an OpenAPI field rename/type-change surfaces
- * here at compile time instead of silently returning `undefined` at runtime.
+ * `Meter` row from `GET /api/v1/meters/units/{unit_id}`, typed against the
+ * generated `@ppt/api-client` payload so a regenerated client surfaces backend
+ * field renames at compile time. Relaxed to `Partial` (only `id` is required)
+ * because rows are validated defensively at runtime.
  */
 export type ApiMeter = Partial<ApiMeterPayload> & Pick<ApiMeterPayload, 'id'>;
 
@@ -55,12 +55,14 @@ function isApiMeter(value: unknown): value is ApiMeter {
  *  list. The unit route returns a bare `Vec<Meter>`; a `{ meters: [...] }`
  *  envelope is also accepted defensively. Any other shape yields `[]`. */
 export function parseMeters(data: unknown): ApiMeter[] {
-  const candidates: unknown[] = Array.isArray(data)
+  const candidates: unknown[] | null = Array.isArray(data)
     ? data
     : typeof data === 'object' && data !== null && Array.isArray((data as ApiMetersEnvelope).meters)
       ? (data as ApiMetersEnvelope).meters
-      : [];
-  return candidates.filter(isApiMeter);
+      : null;
+  const meters = (candidates ?? []).filter(isApiMeter);
+  warnIfListDegraded('parseMeters', data, candidates, meters.length);
+  return meters;
 }
 
 /** Map the api-server `meter_type` string onto the UI commodity enum. */

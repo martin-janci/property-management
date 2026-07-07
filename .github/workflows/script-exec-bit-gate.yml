@@ -17,30 +17,28 @@ name: Script exec-bit gate
 # mode revert. The check reads git's index modes directly (git ls-files
 # -s), so it is filesystem-independent and DB-free.
 #
-# IMPORTANT — this gate only BLOCKS a regression if it is wired as a
-# REQUIRED status check on the `dev` branch-protection rule / ruleset.
-# The pull_request trigger below is path-filtered and the push trigger
-# runs post-merge (advisory only). If the job
-# "Workflow scripts must be executable (100755)" is NOT marked required
-# in branch protection, a future exec-bit revert PR can still merge green
-# and defeat the gate. That required-check wiring is a repo-settings /
-# operator action (out of code scope); see issue #2128. Do not remove
-# this dependency silently on a settings change.
+# It also guards an explicit ALLOWLIST of repo-level scripts that are
+# documented to be invoked directly (./scripts/foo.sh) rather than via an
+# interpreter — see RUNNABLE_SCRIPTS below (#2128 finding 2).
 #
-# SCOPE — this gate is deliberately narrow: it guards only the workflow
-# helper scripts under .github/workflows/scripts/. Other tracked *.sh
-# meant to be run directly (e.g. scripts/*.sh) are NOT covered here.
-# Broadening the gate to an explicit allowlist of runnable repo scripts
-# is tracked separately as a low-priority hygiene item (issue #2128,
-# "better approach"); it is kept out of this file to avoid coupling
-# unrelated mode fixes across docker/, scripts/, and .research/ to this
-# workflow-scripts guard.
+# REQUIRED-CHECK DEPENDENCY (#2128)
+# ---------------------------------
+# This gate only BLOCKS a merge if its job — context
+# "Workflow scripts must be executable (100755)" — is registered as a
+# required status check on the `dev` branch-protection rule. Otherwise a
+# red run is advisory and an exec-bit revert PR can still merge green.
+# Registration is handled by branch-protection-setup.yml (NEW_CHECKS
+# list); keep that list in sync with this job's name, and do not remove
+# the check from branch protection without removing it there too.
+#
+# The pull_request trigger is intentionally NOT path-filtered: a required
+# status check that is skipped by a path filter never reports a status,
+# which would wedge every PR that does not touch the filtered paths. The
+# job costs one checkout plus `git ls-files`, so running it on every PR
+# is cheap.
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/scripts/**'
-      - '.github/workflows/script-exec-bit-gate.yml'
   push:
     branches: [dev]
     paths:
@@ -59,7 +57,16 @@ jobs:
       - name: Assert *.sh under .github/workflows/scripts are 100755
         run: |
           set -euo pipefail
-          offenders="$(git ls-files -s -- '.github/workflows/scripts/*.sh' \
+          # Allowlist of repo-level scripts documented to be run DIRECTLY
+          # (./scripts/foo.sh), not via `bash foo.sh` — they need the exec
+          # bit too (#2128 finding 2). Scripts only ever invoked through an
+          # interpreter or COPY'd + chmod'ed in a Dockerfile (e.g.
+          # docker/nginx/render-template.sh) are intentionally not listed.
+          RUNNABLE_SCRIPTS='
+          scripts/build-ios.sh
+          scripts/generate-rn-app-icons.sh
+          '
+          offenders="$(git ls-files -s -- '.github/workflows/scripts/*.sh' $RUNNABLE_SCRIPTS \
             | awk '$1 != "100755" { print $1 "  " $4 }')"
           if [ -n "$offenders" ]; then
             echo "::error::These workflow scripts are missing the executable bit (expected 100755):"
@@ -71,4 +78,4 @@ jobs:
             echo "Use a real 'git push' of a local commit instead."
             exit 1
           fi
-          echo "All shell scripts under .github/workflows/scripts are executable (100755)."
+          echo "All workflow scripts and allowlisted runnable scripts are executable (100755)."
