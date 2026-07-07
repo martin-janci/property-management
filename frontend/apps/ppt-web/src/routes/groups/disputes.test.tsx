@@ -174,8 +174,10 @@ describe('DisputeDetailRoute (/disputes/:disputeId)', () => {
     mocks.mutateAsync.mockResolvedValue({});
     renderDetailRoute();
 
-    const onUpdateStatus = (captured.detailProps as Record<string, unknown>)
-      .onUpdateStatus as (status: string, reason?: string) => Promise<void>;
+    const onUpdateStatus = (captured.detailProps as Record<string, unknown>).onUpdateStatus as (
+      status: string,
+      reason?: string
+    ) => Promise<void>;
     await onUpdateStatus('withdrawn', 'settled privately');
 
     expect(mocks.mutateAsync).toHaveBeenCalledWith({
@@ -190,8 +192,9 @@ describe('DisputeDetailRoute (/disputes/:disputeId)', () => {
     mocks.mutateAsync.mockRejectedValue(new Error('boom'));
     renderDetailRoute();
 
-    const onUpdateStatus = (captured.detailProps as Record<string, unknown>)
-      .onUpdateStatus as (status: string) => Promise<void>;
+    const onUpdateStatus = (captured.detailProps as Record<string, unknown>).onUpdateStatus as (
+      status: string
+    ) => Promise<void>;
     await onUpdateStatus('resolved');
 
     expect(mocks.mutateAsync).toHaveBeenCalledWith({
