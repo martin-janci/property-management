@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "code-review-mobile-rn-screens-mock-data",
-  "selected_at": "2026-07-06T04:08:47Z",
+  "epic_prefix": "bug-ios-searchview-uncompilable-retry1",
+  "selected_at": "2026-07-07T16:07:52Z",
   "last_action": "repick",
-  "reason": "prior target 'gh-issue-2102' exhausted; closest-to-done is 'code-review-mobile-rn-screens-mock-data' (open=1 claimable=1)",
+  "reason": "prior target 'code-review-mobile-rn-screens-mock-data' exhausted; closest-to-done is 'bug-ios-searchview-uncompilable-retry1' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

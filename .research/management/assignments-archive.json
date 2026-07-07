@@ -797,6 +797,30 @@
       "merge_attempted_at": "2026-06-24T02:25:33Z"
     },
     {
+      "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-d467ac04",
+      "status": "failed",
+      "claimed_at": "2026-06-24T00:18:49Z",
+      "last_updated": "2026-07-07T16:05:15Z",
+      "status_changed_at": "2026-07-07T16:05:15Z",
+      "pr_number": 1812,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1812",
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [Phase5.7 round1 2026-06-24T02:29:54Z: followup respawned implementer to fix stale rls-pool-field-baseline.txt + detector mod.rs gap; round-1 appears dead (head unchanged 3.6h); CI-fail is branch check-rls-enforcement.sh lost +x bit (100644 vs dev 100755) -> exit126; MCP push_files cannot restore exec bit + git push 403; needs manual chmod+x push] [stale-review SLA: red CI after 13d in review; escalating to issue #2152]",
+      "reviewer_summary": "verdict=approve note=move-only reality_portal split; code sound (clippy+fmt green); CI check job flaky-failed: check-rls-enforcement.sh Permission denied exit126 (infra not code) — re-trigger CI to merge",
+      "last_reviewed_oid": "bf0076c5a179a238d05ab1937ea5fd99554f2718",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-1c20c246",
       "status": "merged",
@@ -2917,5 +2941,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T14:17:25Z"
+  "archived_at": "2026-07-07T16:11:49Z"
 }

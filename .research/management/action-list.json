@@ -3,11 +3,11 @@
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) \u2192 reopened to claimable]",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -16,7 +16,7 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
-      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/\u221228 in PR #1297 PAP-142 IDOR scoping)",
+      "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -28,11 +28,11 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) \u2192 reopened to claimable]",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -41,7 +41,7 @@
     },
     {
       "id": "80-2-dispute-filing-flow",
-      "action": "Coverage gap [mvp]: Dispute Filing Flow \u2014 verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
+      "action": "Coverage gap [mvp]: Dispute Filing Flow — verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -52,7 +52,7 @@
     },
     {
       "id": "79-3-error-handling-toasts",
-      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications \u2014 verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -63,7 +63,7 @@
     },
     {
       "id": "83-3-portal-webhooks",
-      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks \u2014 verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
+      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -109,7 +109,7 @@
     },
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -294,7 +294,7 @@
     },
     {
       "id": "gh-issue-2129",
-      "action": "Follow-up: mobile RN screen wiring \u2014 type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
+      "action": "Follow-up: mobile RN screen wiring — type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "in-progress",
@@ -334,7 +334,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
-      "action": "booking_oauth_csrf_tests.rs hotspot \u2014 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
+      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -348,7 +348,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
-      "action": "booking_oauth_routes_tests.rs hotspot \u2014 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
+      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -362,7 +362,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -466,7 +466,7 @@
     },
     {
       "id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
-      "action": "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) \u2014 routing wiring incomplete (80-3-mediation-resolution Mediation and Resolution)",
+      "action": "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) — routing wiring incomplete (80-3-mediation-resolution Mediation and Resolution)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -631,6 +631,110 @@
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
+    },
+    {
+      "id": "gh-issue-2152",
+      "action": "stale-review: churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs (was PR #1812) (Closes #2152)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T16:06:02Z (#2152)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:02Z",
+      "issue_ref": {
+        "number": 2152,
+        "url": "https://github.com/martin-janci/property-management/issues/2152",
+        "labels": [
+          "follow-up",
+          "from-stalled-pr"
+        ]
+      }
+    },
+    {
+      "id": "bug-ios-searchview-uncompilable-retry1",
+      "action": "iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted [retry 1/2 of failed bug-ios-searchview-uncompilable]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=bug-ios-searchview-uncompilable reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "bug-ios-searchview-uncompilable",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-mobile-rn-report-fault-fake-submit reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-mobile-rn-report-fault-fake-submit",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-listing-page-ssr-crash-retry1",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields [retry 1/2 of failed code-review-reality-web-listing-page-ssr-crash]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-listing-page-ssr-crash reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-reality-web-listing-page-ssr-crash",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-share-comparison-404-retry1",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s [retry 1/2 of failed code-review-reality-web-share-comparison-404]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-share-comparison-404 reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-reality-web-share-comparison-404",
+      "retry_round": 1
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:12:35Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 1
+    },
+    {
+      "id": "10b-1-organization-management-dashboard-retry1",
+      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-1-organization-management-dashboard]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=10b-1-organization-management-dashboard reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:33:02Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "10b-1-organization-management-dashboard",
+      "retry_round": 1
     }
   ]
 }
