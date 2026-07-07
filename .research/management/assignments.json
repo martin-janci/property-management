@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T16:18:23Z",
+  "generated": "2026-07-07T17:09:54Z",
   "assignments": [
     {
       "task_id": "83-3-portal-webhooks",
@@ -52,15 +52,15 @@
     {
       "task_id": "gap-7a-5-issue-485-resolved-per-pr-2003",
       "branch": "auto-impl/gap-7a-5-issue-485-resolved-per-pr-2003-e844975e",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T17:15:00Z",
-      "last_updated": "2026-07-07T17:15:00Z",
-      "status_changed_at": "2026-07-07T17:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T17:09:54Z",
+      "status_changed_at": "2026-07-07T17:09:54Z",
+      "pr_number": 2154,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2154",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2154 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=7a-5 flipped to done; #485 already closed 2026-05-26; batch item + story md updated; yaml parses",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
