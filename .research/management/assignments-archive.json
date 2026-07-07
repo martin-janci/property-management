@@ -1461,6 +1461,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-10a-1-rfc-9700-refresh-token-revocation-validation",
+      "branch": "auto-impl/gap-10a-1-rfc-9700-refresh-token-revocation-validati-21649652",
+      "status": "done",
+      "claimed_at": "2026-07-07T17:15:00Z",
+      "last_updated": "2026-07-07T17:22:45Z",
+      "status_changed_at": "2026-07-07T17:22:45Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=stale task — issue #481 closed 2026-05-26; RFC 9700 fix (split revoked/including-revoked lookups) + regression test already on dev; no delta",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -3009,5 +3033,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T17:15:03Z"
+  "archived_at": "2026-07-07T17:22:45Z"
 }
