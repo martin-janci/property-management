@@ -1,0 +1,85 @@
+{
+  "date": "2026-07-07",
+  "since_iso": "2026-07-05T03:10:00Z",
+  "lag_hours": 47,
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "routine last ran 2026-07-05T03:10:00Z (47h ago) — >36h threshold"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "594 add+del lines this window (rank #2 after excluded refactor-of-file file). New sub-module created by rental.rs split (PR #2100) — one-time move-churn from cohesive-split refactor; expect settling next run.",
+      "files": ["backend/crates/db/src/repositories/rental/oauth.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "532 add+del lines this window. Touched by PR #2113 (enum-sync guard refactor); one-time.",
+      "files": ["backend/crates/db/src/models/multi_currency.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-bookings-rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "527 add+del lines this window. New sub-module created by rental.rs split (PR #2100).",
+      "files": ["backend/crates/db/src/repositories/rental/bookings.rs"]
+    },
+    {
+      "id": "dep-update-noise-pr-2014",
+      "type": "dep-update-noise",
+      "source": "PR #2014",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "dependabot: chore(deps): bump axum-test in /backend in the axum group — merged 2026-07-06"
+    },
+    {
+      "id": "dep-update-noise-pr-2020",
+      "type": "dep-update-noise",
+      "source": "PR #2020",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "dependabot: chore(deps): bump rust_xlsxwriter from 0.95.0 to 0.96.0 in /backend — merged 2026-07-06"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met allowlist + certainty bar (churn hotspots are analytical; no drift/orphan/lockfile/fixme/stalled candidates this run)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-07-07.md && grep '^# 2026-07-07$' head", "observed": "present", "expected": "present" },
+    { "goal": "G2", "passed": true,  "command": "jq compare staged state vs HEAD", "observed": "true (cursors + seen_signals advanced)", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq unique ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative id re-scored", "observed": "true (churn re-emit with +1 only for NEW files; dep-noise Δ=0)", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "score cap + decay", "observed": "no scores >8; no open items older than 14d (all updated 2026-07-05)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "adversarial pass annotation for new plans", "observed": "no new plans this run", "expected": "N/A" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans + all sections", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached only .research/", "observed": "only .research/", "expected": "only .research/" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff", "observed": "clean", "expected": "clean" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identity vs regen", "observed": "regenerated in place", "expected": "match" },
+    { "goal": "G11", "passed": true, "command": "phase failures listed + cursor not advanced", "observed": "no failed phases", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present or archived", "observed": "no plan movements this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count non-decreasing", "observed": "no archive changes this run", "expected": "≥HEAD" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity vs regen", "observed": "regenerated in place", "expected": "match" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (kill-switch, cap, idempotency, verify-all)", "observed": "no auto-fix actions this run", "expected": "≤3 actions, all disciplined" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run (token budget) — no-op gate", "expected": "N/A" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "clean", "expected": "clean" }
+  ]
+}

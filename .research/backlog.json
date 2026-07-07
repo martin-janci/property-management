@@ -3982,11 +3982,13 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #2118"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "[partial] PR #2118 (2026-07-06) wired Meters/Leases/Forms/Threads/MeterDetail/LeaseDetail/ThreadDetail/PersonMonths screens; BuildingsScreen.tsx and NotificationsScreen.tsx still contain MOCK_* arrays (verified: BuildingsScreen.tsx and NotificationsScreen.tsx:36 MOCK_NOTIFICATIONS)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
       "plan": null
     },
     {
@@ -4065,18 +4067,83 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 (2026-07-05) split rental.rs into cohesive sub-modules — original file deleted"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/oauth.rs (594 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --numstat 2026-07-05..2026-07-07",
+        "PR #2100"
+      ],
+      "evidence": [
+        "594 add+del lines this window; new sub-module created by rental.rs split (PR #2100). One-time move-churn; expected to settle."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/oauth.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-multi-currency-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/multi_currency.rs (532 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --numstat 2026-07-05..2026-07-07",
+        "PR #2113"
+      ],
+      "evidence": [
+        "532 add+del lines this window; touched by PR #2113 fix(db) enum-sync guard refactor (drives off enum variant set instead of hand list)."
+      ],
+      "files": [
+        "backend/crates/db/src/models/multi_currency.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-bookings-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental/bookings.rs (527 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --numstat 2026-07-05..2026-07-07",
+        "PR #2100"
+      ],
+      "evidence": [
+        "527 add+del lines this window; new sub-module created by rental.rs split (PR #2100). One-time move-churn."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental/bookings.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
       "plan": null
     }
   ]
