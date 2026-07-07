@@ -1,0 +1,172 @@
+{
+  "date": "2026-07-07",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "routine-cadence",
+      "score_delta": 0,
+      "evidence": "routine has not run in 2d 8h (56h) — last_run_iso=2026-07-05T03:10:00Z; on schedule after this run.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "churn since 2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": "top-3 churn since last run: backend/crates/integrations/src/booking/mod.rs — 2818 lines added+deleted",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "churn since 2026-07-05T03:10:00Z",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines added+deleted this window (prior recent_churn=378)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "churn since 2026-07-05T03:10:00Z",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: backend/servers/api-server/src/routes/auth.rs — 2648 lines added+deleted this window (prior recent_churn=78)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2→3 since 2026-06-02",
+      "score_delta": 1,
+      "evidence": "instability proxy: backend/servers/api-server/tests/oauth_integration_tests.rs in hotspot_history at runs_seen=2 (last_seen 2026-06-02); this run adds 2719 lines-churn",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/…; head -1 matches",
+      "observed": "PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-advance diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id-unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score-cap ≤8; open+updated_at≥14d decayed",
+      "observed": "true; no items >14d",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "no new plans",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached grep secrets/hosts",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-fail vs cursor-advance parity",
+      "observed": "no failed phases; Phase 1.5/1.6 skipped intentionally, cursors not advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or plans/_archive/",
+      "observed": "all 9 prior plans present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW vs HEAD",
+      "observed": "NOW=6 >= HEAD=6",
+      "expected": "NOW>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions",
+      "expected": "≤3 total, ≤1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "N/A — Phase 1.6 skipped in cloud mode",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
