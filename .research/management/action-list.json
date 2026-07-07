@@ -3,11 +3,11 @@
   "items": [
     {
       "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/\u221229 in PR #1294 Booking.com OTA retry)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) \u2192 reopened to claimable]",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -16,11 +16,11 @@
     },
     {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
-      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13)",
+      "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) \u2192 reopened to claimable]",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -29,7 +29,7 @@
     },
     {
       "id": "80-2-dispute-filing-flow",
-      "action": "Coverage gap [mvp]: Dispute Filing Flow \u2014 verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped \u2014 only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
+      "action": "Coverage gap [mvp]: Dispute Filing Flow — verify and finish to done. Gaps: Redesigned 5-step wizard (redesignStatus: in-progress) not shipped — only single-page form is live; Localized `disputes.draft*` i18n keys for 6 message bundles are a documented fast-follow (currently English-default t(key, defaultValue))",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -40,7 +40,7 @@
     },
     {
       "id": "79-3-error-handling-toasts",
-      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications \u2014 verify and finish to done. Gaps: no screen-map (orphan epic)",
+      "action": "Coverage gap [mvp]: Error Handling and Toast Notifications — verify and finish to done. Gaps: no screen-map (orphan epic)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "in-progress",
@@ -85,7 +85,7 @@
     },
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -270,7 +270,7 @@
     },
     {
       "id": "gh-issue-2129",
-      "action": "Follow-up: mobile RN screen wiring \u2014 type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
+      "action": "Follow-up: mobile RN screen wiring — type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "in-progress",
@@ -310,7 +310,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
-      "action": "booking_oauth_csrf_tests.rs hotspot \u2014 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
+      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -324,7 +324,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
-      "action": "booking_oauth_routes_tests.rs hotspot \u2014 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
+      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -338,7 +338,7 @@
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12\u21922026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -391,18 +391,6 @@
       "first_open_at": "2026-07-07T14:11:24Z",
       "retry_of": "triage-issue-1380",
       "retry_round": 1
-    },
-    {
-      "id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
-      "action": "MFA e2e brute-force/rate-limit test coverage (issue #487) (10a-1-oauth-authorization-server OAuth 2.0 Authorization Server)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
     },
     {
       "id": "gap-80-3-party-submissions-endpoints-unwired-apistatus-partial",
@@ -582,7 +570,7 @@
     },
     {
       "id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) \u2014 fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
       "owner_role": "pm-frontend",
       "priority": "high",
       "status": "open",
@@ -610,7 +598,7 @@
     },
     {
       "id": "10b-1-organization-management-dashboard-retry1",
-      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard \u2014 verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-1-organization-management-dashboard]",
+      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-1-organization-management-dashboard]",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -644,7 +632,7 @@
     },
     {
       "id": "10b-2-feature-flag-management-retry1",
-      "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management \u2014 verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-2-feature-flag-management]",
+      "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-2-feature-flag-management]",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -658,7 +646,7 @@
     },
     {
       "id": "gap-10a-reconcile-sprint-status-gates-closed",
-      "action": "Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 \u2014 gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped",
+      "action": "Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 — gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,

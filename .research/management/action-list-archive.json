@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T19:06:36Z",
+  "archived_at": "2026-07-07T21:39:48Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1776,6 +1776,19 @@
         "by": "dispatcher-exact-id-reconcile",
         "evidence": "PR #1358 merged 2026-06-13T20:13:58Z"
       }
+    },
+    {
+      "id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
+      "action": "MFA e2e brute-force/rate-limit test coverage (issue #487) (10a-1-oauth-authorization-server OAuth 2.0 Authorization Server)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-07T21:39:44Z PR #2157 (dispatcher merge-confirm)"
     },
     {
       "id": "gap-10a-1-rfc-9700-refresh-token-revocation-validation",
