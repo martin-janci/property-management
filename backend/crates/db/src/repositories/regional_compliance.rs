@@ -11,6 +11,27 @@ use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
+/// Metrics returned by [`RegionalComplianceRepository::get_accounting_metrics`]
+/// for the Slovak accounting export.
+///
+/// Named fields (rather than a positional tuple) so that same-type slots like
+/// `total_revenue` vs `total_receivables` cannot be silently transposed at the
+/// repo→handler seam (#2122, same honesty class as #2103).
+#[derive(Debug, Clone, PartialEq)]
+pub struct AccountingMetrics {
+    pub invoice_count: i32,
+    pub payment_count: i32,
+    pub total_revenue: Decimal,
+    /// **Not yet computed (#1906 finding-3, tracked by #2030):** always `None`
+    /// — no expense source is wired. `None` means "not available", never 0.
+    pub total_expenses: Option<Decimal>,
+    pub total_receivables: Decimal,
+    /// **Not yet computed (#1906 finding-3, tracked by #2030):** always `None`
+    /// — no accounts-payable source is wired. `None` means "not available",
+    /// never 0.
+    pub total_payables: Option<Decimal>,
+}
+
 /// Repository for regional legal compliance features.
 #[derive(Debug, Clone)]
 pub struct RegionalComplianceRepository;
@@ -477,26 +498,25 @@ impl RegionalComplianceRepository {
         Ok(row)
     }
 
-    /// Returns `(invoice_count, payment_count, total_revenue, total_expenses,
-    /// total_receivables, total_payables)` for the accounting export.
+    /// Returns the [`AccountingMetrics`] for the accounting export.
     ///
     /// **Not yet computed (#1906 finding-3, tracked by #2030):**
-    /// `total_expenses` and `total_payables` (the 4th and 6th tuple fields) are
-    /// returned as `None` — this export only has the receivables side
-    /// (`invoices` / `payments`) wired; there is no expense / accounts-payable
-    /// source in scope here. `None` is a deliberate "not available" signal, NOT
-    /// an accidental zero, and it is surfaced honestly to API clients via
-    /// `Option<Decimal>` + the `partial` / `unsupported_fields` flags on
-    /// [`SlovakAccountingExport`]. Computing real figures from an expense /
-    /// vendor-payables model is the tracked follow-up; until then a caller must
-    /// treat these two fields as "not available", not "zero".
+    /// `total_expenses` and `total_payables` are returned as `None` — this
+    /// export only has the receivables side (`invoices` / `payments`) wired;
+    /// there is no expense / accounts-payable source in scope here. `None` is a
+    /// deliberate "not available" signal, NOT an accidental zero, and it is
+    /// surfaced honestly to API clients via `Option<Decimal>` + the `partial` /
+    /// `unsupported_fields` flags on [`SlovakAccountingExport`]. Computing real
+    /// figures from an expense / vendor-payables model is the tracked
+    /// follow-up; until then a caller must treat these two fields as "not
+    /// available", not "zero".
     pub async fn get_accounting_metrics(
         &self,
         conn: &mut PgConnection,
         organization_id: Uuid,
         from_date: NaiveDate,
         to_date: NaiveDate,
-    ) -> Result<(i32, i32, Decimal, Option<Decimal>, Decimal, Option<Decimal>), SqlxError> {
+    ) -> Result<AccountingMetrics, SqlxError> {
         let (invoice_count, total_revenue): (i64, Option<Decimal>) = sqlx::query_as(
             r#"
             SELECT COUNT(*), SUM(total)
@@ -539,16 +559,16 @@ impl RegionalComplianceRepository {
         let total_revenue = total_revenue.unwrap_or(Decimal::ZERO);
         let total_receivables = total_receivables.unwrap_or(Decimal::ZERO);
 
-        Ok((
-            invoice_count as i32,
-            payment_count as i32,
+        Ok(AccountingMetrics {
+            invoice_count: invoice_count as i32,
+            payment_count: payment_count as i32,
             total_revenue,
             // Not computed — no expense source wired. `None` means "not
             // available", surfaced to clients as a null field, never 0.
-            None,
+            total_expenses: None,
             total_receivables,
             // Not computed — no accounts-payable source wired.
-            None,
-        ))
+            total_payables: None,
+        })
     }
 }
