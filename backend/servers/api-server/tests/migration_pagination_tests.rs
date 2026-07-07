@@ -440,10 +440,12 @@ async fn include_system_default_tie_group_is_deterministic_id_desc(pool: PgPool)
     let app = TestApp::new(pool.clone()).await;
     let (token, org_id) = create_platform_admin(&app, &TestUser::new(), "pgtiesys").await;
 
-    // Three org rows + one system row, all sharing a far-future updated_at =>
-    // a 4-row tie group guaranteed to sit at the head of the DESC ordering,
-    // ahead of the migration-seeded system templates.
-    let org_count = 3;
+    // Seven org rows + one system row, all sharing a far-future updated_at =>
+    // an 8-row tie group guaranteed to sit at the head of the DESC ordering,
+    // ahead of the migration-seeded system templates. A large tie group drives
+    // the false-pass probability of an insertion-order-equals-id-DESC accident
+    // down to ~1/8! (negligible) if the secondary `id DESC` key ever regressed.
+    let org_count = 7;
     let head_desc = seed_tied_org_and_system_templates(&pool, org_id, org_count).await;
     assert_eq!(
         head_desc.len(),
