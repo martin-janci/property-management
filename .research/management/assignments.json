@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T00:09:08Z",
+  "generated": "2026-07-07T00:11:38Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -68,6 +68,28 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-07-05T08:09:48Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes after 3 respawns; CI test job failing on head bde556fe"
+    },
+    {
+      "task_id": "gh-issue-2126",
+      "branch": "auto-impl/gh-issue-2126-c69b976a",
+      "status": "in-progress",
+      "claimed_at": "2026-07-07T00:11:38Z",
+      "last_updated": "2026-07-07T00:11:38Z",
+      "status_changed_at": "2026-07-07T00:11:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
