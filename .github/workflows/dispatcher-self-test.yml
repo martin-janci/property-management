@@ -6,9 +6,13 @@ on:
       - ".research/dispatcher-prompt.md"
       - ".research/dispatcher-self-test.sh"
       - ".research/backlog-refill.sh"
+      - ".research/backlog-reconcile.sh"
+      - ".research/retry-remint.sh"
       - ".research/issue-ingest.sh"
       - ".research/mcp-push-size-guard.sh"
       - ".research/test-backlog-refill.sh"
+      - ".research/test-backlog-reconcile.sh"
+      - ".research/test-retry-remint.sh"
       - ".research/test-issue-ingest.sh"
       - ".research/test-mcp-push-size-guard.sh"
       - ".research/management/assignments.json"
@@ -37,6 +41,10 @@ jobs:
         run: bash .research/dispatcher-self-test.sh
       - name: backlog-refill behavioral smoke test
         run: bash .research/test-backlog-refill.sh
+      - name: backlog-reconcile behavioral smoke test
+        run: bash .research/test-backlog-reconcile.sh
+      - name: retry-remint behavioral smoke test
+        run: bash .research/test-retry-remint.sh
       - name: issue-ingest behavioral smoke test
         run: bash .research/test-issue-ingest.sh
       - name: mcp-push-size-guard behavioral smoke test

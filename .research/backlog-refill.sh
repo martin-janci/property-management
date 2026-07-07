@@ -113,6 +113,10 @@ fi
 # are absent from assignments (active+archive) and whose deps are empty
 # (promoted rows always carry depends_on:[]; pre-existing dep-blocked rows are
 # conservatively excluded from "claimable" here, matching Phase 2.6).
+# Rows carrying `retry_of` (retry-remint.sh re-mints of FAILED tasks) are
+# exempt from the STEM exclusion only — their stem intentionally matches the
+# failed archive row they retry; excluding them would immediately re-starve
+# the buffer the re-mint just refilled. The exact-id exclusion still applies.
 HONEST=$(jq -n \
   --slurpfile al "$ACTION_LIST" \
   --argjson aids "$ASSIGN_IDS" '
@@ -122,7 +126,7 @@ HONEST=$(jq -n \
       | select(.status=="open")
       | select(((.depends_on // []) | length) == 0)
       | select((.id | IN($aids[])) | not)
-      | select((.id | stem | IN($astems[])) | not)
+      | select(((.retry_of? // null) != null) or ((.id | stem | IN($astems[])) | not))
     ] | length
 ')
 
