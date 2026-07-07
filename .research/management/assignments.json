@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T20:49:05Z",
+  "generated": "2026-07-07T20:51:16Z",
   "assignments": [
     {
       "task_id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
@@ -52,15 +52,15 @@
     {
       "task_id": "gap-10a-reconcile-sprint-status-gates-closed",
       "branch": "auto-impl/gap-10a-reconcile-sprint-status-gates-closed-20a058ee",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-07T20:47:34Z",
-      "status_changed_at": "2026-07-07T20:47:34Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T20:51:16Z",
+      "status_changed_at": "2026-07-07T20:51:16Z",
+      "pr_number": 2161,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2161",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2161 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=gates #481/#482/#487 gh-verified CLOSED; 10a-1/2/3 flipped to done + batch items closed + gate lines CLEARED + epic-10a done; YAML parses",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
