@@ -11,6 +11,11 @@
  * client, so it is validated defensively.
  */
 
+import type {
+  Lease as ApiLease,
+  LeasePayment as ApiLeasePayment,
+  LeaseWithDetails,
+} from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
@@ -24,32 +29,18 @@ export interface LeasePaymentRow {
   paidAt: string | null;
 }
 
-/** Subset of `Lease` inside `LeaseWithDetails`. */
-interface ApiLease {
-  id: string;
-  unit_id?: string;
-  landlord_name?: string;
-  tenant_name?: string;
-  start_date: string;
-  end_date: string;
-  monthly_rent: string | number;
-  status: string;
-}
-
-/** Subset of `LeasePayment` from `upcoming_payments`. */
-interface ApiLeasePayment {
-  id: string;
-  due_date: string;
-  amount: string | number;
-  paid_at?: string | null;
-}
-
-export interface ApiLeaseDetail {
-  lease: ApiLease;
-  unit_name: string;
-  building_name: string;
-  upcoming_payments?: ApiLeasePayment[];
-}
+/**
+ * The subset of the generated `@ppt/api-client` `LeaseWithDetails` payload
+ * (`GET /api/v1/leases/{id}`) that this screen consumes. Deriving it from the
+ * generated type (rather than a hand-rolled interface) surfaces OpenAPI drift
+ * — a field rename/type-change on `Lease`, `LeasePayment`, or `LeaseWithDetails`
+ * breaks compilation here. `ApiLease` / `ApiLeasePayment` are the generated
+ * entity types, used by the defensive parser casts below.
+ */
+export type ApiLeaseDetail = Pick<
+  LeaseWithDetails,
+  'lease' | 'unit_name' | 'building_name' | 'upcoming_payments'
+>;
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -187,7 +178,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
               </Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Payment history</Text>
+            <Text style={styles.sectionTitle}>Upcoming payments</Text>
             {payments.length === 0 ? (
               <View style={s.card}>
                 <Text style={s.cardBody}>No payments recorded yet.</Text>

@@ -13,6 +13,11 @@
  * malformed shape degrades to an empty history rather than crashing.
  */
 
+import type {
+  Meter as ApiMeter,
+  MeterReading as ApiMeterReading,
+  MeterResponse as ApiMeterResponse,
+} from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
@@ -25,30 +30,10 @@ export interface MeterReadingRecord {
   takenAt: string;
 }
 
-/** Subset of `Meter` from `GET /api/v1/meters/{id}`. */
-export interface ApiMeter {
-  id: string;
-  meter_number?: string | null;
-  meter_type?: string | null;
-  unit_of_measure?: string | null;
-  current_reading?: string | number | null;
-  last_reading_date?: string | null;
-  location?: string | null;
-  description?: string | null;
-}
-
-/** Subset of `MeterReading` from the `recent_readings` list. */
-export interface ApiMeterReading {
-  id: string;
-  reading: string | number;
-  reading_date: string;
-  created_at?: string;
-}
-
-export interface ApiMeterResponse {
-  meter: ApiMeter;
-  recent_readings: ApiMeterReading[];
-}
+// `ApiMeter` / `ApiMeterReading` / `ApiMeterResponse` are the generated
+// `@ppt/api-client` payload types for `GET /api/v1/meters/{id}`
+// (`MeterResponse { meter, recent_readings }`). Typing the defensive parser
+// against them surfaces OpenAPI drift (field rename/type-change) at compile time.
 
 /** Parse a `Decimal`-as-string (or number) into a finite number, or null. */
 function toNumber(value: string | number | null | undefined): number | null {

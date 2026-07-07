@@ -14,6 +14,7 @@
  * list.
  */
 
+import type { Meter as ApiMeterPayload } from '@ppt/api-client';
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,17 +32,14 @@ export interface Meter {
   lastReadingAt: string | null;
 }
 
-/** Subset of `Meter` from `GET /api/v1/meters/units/{unit_id}`. */
-export interface ApiMeter {
-  id: string;
-  meter_number?: string | null;
-  /** `MeterType` serialized snake_case: electricity|gas|water|heat|cold_water|hot_water|solar|other. */
-  meter_type?: string | null;
-  unit_of_measure?: string | null;
-  current_reading?: string | number | null;
-  last_reading_date?: string | null;
-  location?: string | null;
-}
+/**
+ * The unit route returns `Vec<Meter>`. The parser guarantees only `id` and
+ * reads a defensive subset, so `ApiMeter` is a partial view of the generated
+ * `@ppt/api-client` `Meter` payload (every field optional but `id`). Deriving
+ * it from the generated type means an OpenAPI field rename/type-change surfaces
+ * here at compile time instead of silently returning `undefined` at runtime.
+ */
+export type ApiMeter = Partial<ApiMeterPayload> & Pick<ApiMeterPayload, 'id'>;
 
 interface ApiMetersEnvelope {
   meters: ApiMeter[];
