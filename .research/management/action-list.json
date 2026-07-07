@@ -146,7 +146,7 @@
       "action": "Follow-up: add non-manager deny test for outage mutations (PR #2120) (Closes #2121)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2121)",
       "deadline": null,
       "dependency": null,
@@ -159,7 +159,8 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-07T02:08:49Z"
     },
     {
       "id": "gh-issue-2122",
