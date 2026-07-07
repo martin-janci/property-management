@@ -33,9 +33,9 @@ epics:
     stories_completed: 3
   epic-10a:
     name: "OAuth Provider Foundation"
-    status: in-progress
+    status: done
     stories_total: 3
-    stories_completed: 0
+    stories_completed: 3  # 10a-1/2/3 reconciled done 2026-07-07 — gates #481/#482/#487 all CLOSED (see test-hardening batch)
   epic-10b:
     name: "Platform Administration"
     status: in-progress
@@ -67,9 +67,9 @@ development_status:
   8a-2-critical-notification-override: done
   8a-3-notification-preference-sync: done  # WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25 — coverage.json: "WS half cleared by PR #472"). Mobile OS push (FCM/APNs) remains deferred; backend realtime tests tracked in #480/#484.
   # Epic 10A: OAuth Provider Foundation
-  10a-1-oauth-authorization-server: ready-for-dev
-  10a-2-oauth-client-registration: ready-for-dev
-  10a-3-oauth-token-management: ready-for-dev
+  10a-1-oauth-authorization-server: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): both gates CLEARED — #481 closed 2026-05-26 (revoked-token reuse fixed; regression in oauth_integration_tests.rs — revoked-token introspection + "revoked grant must not appear in list") and #487 closed 2026-05-26 (MFA e2e rate-limit coverage; live brute-force/rate-limit e2e via PR #2157, in review at reconcile time). Code shipped: full authorization-server endpoints in servers/api-server routes/oauth.rs (authorize/token/introspect/revoke, PKCE S256 enforcement per oauth_authz_server_edge_tests.rs); story md Status: completed.
+  10a-2-oauth-client-registration: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): gate #482 CLEARED — closed 2026-05-26 (ProtectedRoute tenants[0] role fallback fixed for multi-tenant users; unit tests landed at ppt-web + admin-web src/components/ProtectedRoute.test.tsx). Client registration endpoints in servers/api-server routes/oauth.rs (grant listing covered by oauth_integration_tests.rs); story md Status: completed.
+  10a-3-oauth-token-management: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): gate #481 CLEARED — closed 2026-05-26 (refresh-token revocation bypass fixed, revoked_at IS NULL restored; regression coverage in oauth_integration_tests.rs + token_scope_tests.rs). Token issue/introspect/revoke in servers/api-server routes/oauth.rs; story md Status: completed.
   # Epic 10B: Platform Administration
   10b-1-organization-management-dashboard: done
   10b-2-feature-flag-management: done
@@ -118,7 +118,7 @@ test_hardening_batch:
       story_gate:
         - 10a-1-oauth-authorization-server
         - 10a-3-oauth-token-management
-      status: open
+      status: closed   # closed 2026-05-26 — revoked_at IS NULL restored (revoked tokens rejected); regression coverage in oauth_integration_tests.rs + token_scope_tests.rs — 10a-1/10a-3 promoted to done 2026-07-07
 
     - issue: 482
       title: "ProtectedRoute role fallback uses tenants[0] — wrong for multi-tenant users; no tests"
@@ -128,7 +128,7 @@ test_hardening_batch:
       severity: medium        # auth UX + missing ProtectedRoute unit tests
       story_gate:
         - 10a-2-oauth-client-registration
-      status: open
+      status: closed   # closed 2026-05-26 — ProtectedRoute multi-tenant role fallback fixed + unit tests (ppt-web + admin-web ProtectedRoute.test.tsx) — 10a-2 promoted to done 2026-07-07
 
     - issue: 483
       title: "Voice device IDOR fix has no tests; list-commands leaks existence via empty vs 403"
@@ -179,13 +179,13 @@ test_hardening_batch:
       severity: medium        # missing MFA brute-force/rate-limit test coverage
       story_gate:
         - 10a-1-oauth-authorization-server   # MFA is part of auth foundation
-      status: open
+      status: closed   # closed 2026-05-26 — MFA e2e rate-limit coverage; live brute-force/rate-limit e2e follow-up via PR #2157 (in review at reconcile time) — 10a-1 promoted to done 2026-07-07
 
 # Stories that MUST NOT move to `done` until their batch item is resolved:
 #   8a-3-notification-preference-sync  → #480, #484
-#   10a-1-oauth-authorization-server   → #481, #487
-#   10a-2-oauth-client-registration    → #482
-#   10a-3-oauth-token-management        → #481
+#   10a-1-oauth-authorization-server   → #481, #487 (CLEARED: #481 closed 2026-05-26, #487 closed 2026-05-26 [live e2e via PR #2157] — 10a-1 promoted to done 2026-07-07)
+#   10a-2-oauth-client-registration    → #482 (CLEARED: #482 closed 2026-05-26 — 10a-2 promoted to done 2026-07-07)
+#   10a-3-oauth-token-management        → #481 (CLEARED: #481 closed 2026-05-26 — 10a-3 promoted to done 2026-07-07)
 #   7a-5-document-sharing              → #485 (CLEARED: #485 closed 2026-05-26; mobile parity PR #2003 merged 2026-07-01 — 7a-5 promoted to done 2026-07-07)
 #   6-2-announcement-viewing-acknowledgment → #486 (CLEARED: #486 closed/completed 2026-05-26 — 6-2 promoted to done 2026-06-25)
 #   6-5-direct-messaging               → #486 (CLEARED: #486 closed/completed 2026-05-26)
@@ -202,5 +202,6 @@ notes:
   - "Story 8A.3 WebSocket sync DONE - delivered by PR #472 (merged 2026-05-25); coverage.json confirms WS leg cleared"
   - "Story 8A.3 mobile OS integration deferred - requires mobile app implementation"
   - "2026-05-25: test-hardening batch thb-2026-05-25 slotted — issues #480-#487 must be closed or deferred before dependent stories can be promoted to done"
+  - "2026-07-07: Epic 10A reconciled (gap-10a-reconcile-sprint-status-gates-closed) — gates #481 (closed 2026-05-26), #482 (closed 2026-05-26), #487 (closed 2026-05-26; live MFA rate-limit e2e via PR #2157, in review) all verified CLOSED via gh; 10a-1/10a-2/10a-3 promoted ready-for-dev → done. Evidence: routes/oauth.rs endpoints + oauth_integration_tests.rs/oauth_authz_server_edge_tests.rs/token_scope_tests.rs revocation regressions, ProtectedRoute.test.tsx (ppt-web + admin-web), story mds already Status: completed. Batch thb-2026-05-25 stays in-progress (#480/#483/#484 still open)."
 
 blockers: []
