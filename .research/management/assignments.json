@@ -1,12 +1,12 @@
 {
-  "generated": "2026-07-07T12:08:08Z",
+  "generated": "2026-07-07T14:24:33Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-d467ac04",
       "status": "review",
       "claimed_at": "2026-06-24T00:18:49Z",
-      "last_updated": "2026-07-07T10:06:20Z",
+      "last_updated": "2026-07-07T14:06:50Z",
       "status_changed_at": "2026-06-24T04:11:20Z",
       "pr_number": 1812,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1812",
@@ -21,14 +21,16 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "83-3-portal-webhooks",
       "branch": "auto-impl/83-3-portal-webhooks-30907df2",
       "status": "review",
       "claimed_at": "2026-07-02T00:09:07Z",
-      "last_updated": "2026-07-07T10:06:20Z",
+      "last_updated": "2026-07-07T14:06:50Z",
       "status_changed_at": "2026-07-02T00:28:12Z",
       "pr_number": 2007,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2007",
@@ -43,53 +45,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2076",
-      "branch": "auto-impl/gh-issue-2076-04401b25",
-      "status": "quarantined",
-      "claimed_at": "2026-07-04T20:13:30Z",
-      "last_updated": "2026-07-06T08:10:37Z",
-      "status_changed_at": "2026-07-05T08:09:48Z",
-      "pr_number": 2089,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2089",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2089 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=lease units-join DB regression test; cargo check -p db clean (0 warn); DB-run deferred to CI (no local pg); drift=backend/crates/db/tests outside pm-tech-lead area [followup round=3: fixed DB test — seeded created_by FK (23503) via new seed_user helper; pushed bde556fe7; awaiting CI re-review]",
-      "reviewer_summary": "verdict=changes note=clippy-doc_lazy_continuation-resolved(fmt-clippy/lint/check-green)-but-test-job-still-red+draft;not-mergeable",
-      "last_reviewed_oid": "b0857acabc8050bafb0304ea3a64f1012b4a0f01",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 3,
       "merge_attempted_at": null,
-      "quarantined_at": "2026-07-05T08:09:48Z",
-      "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes after 3 respawns; CI test job failing on head bde556fe"
-    },
-    {
-      "task_id": "gh-issue-2125",
-      "branch": "auto-impl/gh-issue-2125-d70ab78e",
-      "status": "review",
-      "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T10:15:41Z",
-      "status_changed_at": "2026-07-07T08:27:25Z",
-      "pr_number": 2135,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2135",
-      "merged_at": null,
-      "specialist": "kotlin-mp",
-      "implementer_summary": "pr=2135 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=4 updateAuth tests+logout-rollback guard+test; local Gradle blocked (proxy 403), deferred to mobile-native.yml CI",
-      "reviewer_summary": "verdict=changes head_oid=0c3864d38e6218a82d1d6a66a7ef7d51456d7d43 note=lint-spotless-still-red-build+tests-skipped-deferred-verify-never-ran; NOTE(dispatcher): superseded by operator sweep #2150 (#2147 closes #2125); respawn deferred — Gradle+git-push proxy-blocked in cron env, fix_rounds=1",
-      "last_reviewed_oid": "0c3864d38e6218a82d1d6a66a7ef7d51456d7d43",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
+      "quarantined_at": null,
+      "quarantine_reason": null
     }
   ]
 }

@@ -102,7 +102,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "code-review api-core 2026-05-29",
         "ai.rs:2620",
@@ -124,7 +124,12 @@
       ],
       "created_at": "2026-05-29",
       "updated_at": "2026-06-01",
-      "plan": "plans/security-llm-doc-idor.md"
+      "plan": "plans/security-llm-doc-idor.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": 1857
+      }
     },
     {
       "id": "security-realtors-mark-inquiry-read-idor",
@@ -267,7 +272,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
       ],
@@ -283,7 +288,12 @@
       ],
       "created_at": "2026-06-06",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-search-stale-response-race",
@@ -291,7 +301,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06",
         "PR #1125"
@@ -307,7 +317,12 @@
       ],
       "created_at": "2026-06-06",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "dx-push-fanout-blpop-drain",
@@ -776,7 +791,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1085"
       ],
@@ -790,7 +805,12 @@
       ],
       "created_at": "2026-06-05",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-screen-map-drift-pr-1100-ppt",
@@ -798,7 +818,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1100"
       ],
@@ -812,7 +832,12 @@
       ],
       "created_at": "2026-06-05",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-screen-map-drift-pr-839-ppt",
@@ -945,7 +970,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #963"
       ],
@@ -959,7 +984,12 @@
       ],
       "created_at": "2026-06-03",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": 1919
+      }
     },
     {
       "id": "bug-webhook-airbnb-dup-sync-jobs",
@@ -3201,7 +3231,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "issue #1266",
         "PR #1257 (verify)"
@@ -3217,7 +3247,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
-      "plan": "plans/bug-ios-searchview-uncompilable.md"
+      "plan": "plans/bug-ios-searchview-uncompilable.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "bug-ios-deeplink-info-plist-missing",
@@ -3225,7 +3260,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "issue #1267",
         "PR #1256 (verify)"
@@ -3242,7 +3277,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
@@ -3250,7 +3290,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1288",
         "PAP-170"
@@ -3270,7 +3310,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
@@ -3278,7 +3323,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1287",
         "PAP-169",
@@ -3300,7 +3345,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
@@ -3308,7 +3358,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1289",
         "PAP-167",
@@ -3326,7 +3376,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
@@ -3334,7 +3389,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #1292",
         "PR #1287",
@@ -3353,7 +3408,12 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "closed-not-merged-pr-1274",
@@ -3626,7 +3686,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review reality-web 2026-06-14"
       ],
@@ -3640,7 +3700,12 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-share-comparison-404.md"
+      "plan": "plans/code-review-reality-web-share-comparison-404.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-reality-web-listing-page-ssr-crash",
@@ -3648,7 +3713,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review reality-web 2026-06-14"
       ],
@@ -3663,7 +3728,12 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-listing-page-ssr-crash.md"
+      "plan": "plans/code-review-reality-web-listing-page-ssr-crash.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-untranslated",
@@ -3671,7 +3741,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-06-14"
       ],
@@ -3687,7 +3757,12 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-15",
-      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md"
+      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "done",
+        "pr_number": null
+      }
     },
     {
       "id": "triage-issue-1380",
@@ -3960,7 +4035,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
@@ -3972,7 +4047,12 @@
       ],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
-      "plan": "plans/code-review-mobile-rn-report-fault-fake-submit.md"
+      "plan": "plans/code-review-mobile-rn-report-fault-fake-submit.md",
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-mobile-rn-screens-mock-data",
@@ -3980,7 +4060,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
@@ -3996,7 +4076,12 @@
       ],
       "created_at": "2026-06-16",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2118
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
@@ -4004,7 +4089,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
@@ -4017,7 +4102,12 @@
       ],
       "created_at": "2026-06-16",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "dx-stalled-review-pr-1179",
@@ -4045,7 +4135,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "churn since 4829015b: 12 commits"
       ],
@@ -4057,7 +4147,12 @@
       ],
       "created_at": "2026-07-05",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
@@ -4065,7 +4160,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn since 4829015b: 11 commits"
       ],
@@ -4077,7 +4172,12 @@
       ],
       "created_at": "2026-07-05",
       "updated_at": "2026-07-05",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-07T14:08:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2100
+      }
     }
   ]
 }

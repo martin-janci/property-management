@@ -6,11 +6,13 @@
       "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:21:22Z",
+      "last_updated": "2026-07-07T14:21:22Z"
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -29,11 +31,13 @@
       "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote)",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:21:22Z",
+      "last_updated": "2026-07-07T14:21:22Z"
     },
     {
       "id": "80-2-dispute-filing-flow",
@@ -327,6 +331,90 @@
           "dispatcher"
         ]
       }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
+      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T04:11:20Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
+      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T06:30:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T10:21:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts-retry1",
+      "action": "Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-app-config-ts]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-frontend-apps-mobile-app-config-ts reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-ts",
+      "retry_round": 1
+    },
+    {
+      "id": "dx-stalled-review-pr-988-retry1",
+      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 1/2 of failed dx-stalled-review-pr-988]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "dx-stalled-review-pr-988",
+      "retry_round": 1
+    },
+    {
+      "id": "triage-issue-1380-retry1",
+      "action": "Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured [retry 1/2 of failed triage-issue-1380]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=triage-issue-1380 reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "triage-issue-1380",
+      "retry_round": 1
     }
   ]
 }
