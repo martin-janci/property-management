@@ -1,0 +1,208 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-07-05T03:10:00Z; 48h elapsed (> 36h threshold)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "PR #1797 (fix(api-server) auth on OCR endpoints + manager-gate rental guest PII) open 13d as draft with no reviewDecision",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-1812",
+      "type": "stalled-review",
+      "source": "PR #1812",
+      "score_delta": 1,
+      "evidence": "PR #1812 (churn-hotspot reality_portal.rs split) open 13d as draft with no reviewDecision — potentially superseded by rental split #2100 pattern; needs triage",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat (window 2026-07-05..now)",
+      "score_delta": 0,
+      "evidence": "rental.rs -2933 lines this run — completed split refactor PR #2100 (file removed from repo, sub-modules under repositories/rental/)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat (window 2026-07-05..now)",
+      "score_delta": 1,
+      "evidence": "rental/oauth.rs +594 lines this run — new sub-module created by PR #2100 rental split; watch for stability going forward",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental/bookings.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat (window 2026-07-05..now)",
+      "score_delta": 1,
+      "evidence": "rental/bookings.rs +527 lines this run — new sub-module from PR #2100 rental split",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-leak-on-logout",
+      "type": "code-review-finding",
+      "source": "code review (ppt-web-core)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 — AUTHED_QUERY_KEY_ROOTS omits 'accounting' while queryKeys.accounting.* (invoices/contacts/statements/statementLines/lineMatches) are keyed on ['accounting', ...]; AuthContext.logout iterates only this list (AuthContext.tsx:542-544), so on logout the prior user's cached accounting data survives in the TanStack Query cache and is served to the next user on the same browser — the exact cross-session leak that #712 aimed to prevent for every other feature.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-listener-leak",
+      "type": "code-review-finding",
+      "source": "code review (ppt-web-core)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142,152-158 — window.addEventListener('load', collectNavigationTiming) + window.addEventListener('visibilitychange', ...) attached inside useEffect but cleanup only disconnects PerformanceObservers; neither listener is removed. Effect depends on [onReport, reportOnUnload] so each parent re-render leaks another visibilitychange listener.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-skips-role-rederive",
+      "type": "code-review-finding",
+      "source": "code review (ppt-web-core)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:400-410 — mount-time init refresh path calls authApi.refreshToken and persists new tokens but never calls deriveActiveRole against stored tenants nor re-persists updated user, so a returning user whose tenant role was promoted/demoted server-side while offline boots with stale role from localStorage until explicit logout/login.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal double-score check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score <= 8; decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan meta+headings+cap+mode+files exist",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached -- outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md diff",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phases match cursors",
+      "observed": "no failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "HEAD plans still present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md diff",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + kill-switch",
+      "observed": "0 actions, kill switch unset (Phase 5 no candidate)",
+      "expected": "<= 1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + pm/coverage cursor",
+      "observed": "PM 5→6, CC 12→0 (mod 13), artifacts parse",
+      "expected": "advanced + valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token forms",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

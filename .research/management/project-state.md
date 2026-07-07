@@ -42,6 +42,7 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **#1391** — FilterSheet Near Me location filter (Android/shared parity) [pm-frontend]
 - **#1401** — iOS CoreLocation Near Me integration (story 82.3) [pm-frontend]
 - **#1402** — Navigation state preservation (AC-4) proof [pm-frontend]
+- **2026-07-07** — 19 PRs merged since 2026-07-05 (#2094-#2130): rental repository split (#2100, -2933 lines / 8 sub-modules), mobile RN screens wired (#2118: Meters/Leases/Forms/Threads), outages DB-role authz fix (#2120, closes #2107), MCP-push size guard fix (#2130, closes #2126); 8 follow-up issues still open (#2121-#2125, #2127-#2129) — one open draft #2131 addresses #2121.
 
 ## What's next (top 5 actions)
 

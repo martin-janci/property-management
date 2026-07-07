@@ -247,7 +247,7 @@
       "action": "Follow-up: MCP-push size guard is a no-op as wired (post-commit --staged) (PR #2114) (Closes #2126)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "closed",
       "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2126)",
       "deadline": null,
       "dependency": null,
@@ -261,7 +261,7 @@
           "from-merged-review"
         ]
       },
-      "last_updated": "2026-07-07T00:11:38Z"
+      "last_updated": "2026-07-07T04:00:00Z"
     },
     {
       "id": "gh-issue-2127",

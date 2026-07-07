@@ -3980,13 +3980,15 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #2118"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "resolved: PR #2118 merged 2026-07-06 — code-review-mobile-rn-screens-mock-data: wire mobile Meters/Leases/Forms/Threads; code patterns not independently verified"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
       "plan": null
     },
     {
@@ -4067,16 +4069,115 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "git log --numstat (window 2026-07-05..now)"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "rental.rs -2933 lines this run — completed split refactor PR #2100 (file removed from repo, sub-modules under repositories/rental/)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-oauth-rs",
+      "title": "rental/oauth.rs +594 lines this run — new sub-module created by PR #2100 renta",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --numstat (window 2026-07-05..now)"
+      ],
+      "evidence": [
+        "rental/oauth.rs +594 lines this run — new sub-module created by PR #2100 rental split; watch for stability going forward"
+      ],
+      "files": [],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-bookings-rs",
+      "title": "rental/bookings.rs +527 lines this run — new sub-module from PR #2100 rental s",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --numstat (window 2026-07-05..now)"
+      ],
+      "evidence": [
+        "rental/bookings.rs +527 lines this run — new sub-module from PR #2100 rental split"
+      ],
+      "files": [],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-accounting-leak-on-logout",
+      "title": "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 — AUTHED_QUERY_KEY_ROOTS om",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code review (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347-368 — AUTHED_QUERY_KEY_ROOTS omits 'accounting' while queryKeys.accounting.* (invoices/contacts/statements/statementLines/lineMatches) are keyed on ['accounting', ...]; AuthContext.logout iterates only this list (AuthContext.tsx:542-544), so on logout the prior user's cached accounting data survives in the TanStack Query cache and is served to the next user on the same browser — the exact cross-session leak that #712 aimed to prevent for every other feature."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": "plans/code-review-ppt-web-core-accounting-leak-on-logout.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-listener-leak",
+      "title": "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142,152-158 — window.",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code review (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142,152-158 — window.addEventListener('load', collectNavigationTiming) + window.addEventListener('visibilitychange', ...) attached inside useEffect but cleanup only disconnects PerformanceObservers; neither listener is removed. Effect depends on [onReport, reportOnUnload] so each parent re-render leaks another visibilitychange listener."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-init-skips-role-rederive",
+      "title": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:400-410 — mount-time init r",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code review (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:400-410 — mount-time init refresh path calls authApi.refreshToken and persists new tokens but never calls deriveActiveRole against stored tenants nor re-persists updated user, so a returning user whose tenant role was promoted/demoted server-side while offline boots with stale role from localStorage until explicit logout/login."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
       "plan": null
     }
   ]
