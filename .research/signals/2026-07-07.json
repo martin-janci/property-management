@@ -1,0 +1,163 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine has not run in 1d 44h (last_run_iso=2026-07-05T03:10:00Z) — > 36h threshold; scheduled cron cadence gap",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "commit c7b92c6 / PR #2118",
+      "score_delta": 1,
+      "evidence": "273 additions+deletions this run (2026-07-05..2026-07-07); single-PR touch from mobile RN screens wiring — not repeated-churn yet",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "commit c7b92c6 / PR #2118",
+      "score_delta": 1,
+      "evidence": "215 additions+deletions this run; single-PR touch from mobile RN screens wiring — not repeated-churn yet",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "commit 6c11733 / PR #2117",
+      "score_delta": 1,
+      "evidence": "214 additions+deletions this run; single-PR touch from named-field SlovakAccountingExport::new refactor — not repeated-churn yet",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-07.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "cursors advanced (last_pr_seen 2093→2120, last_issue_seen 2087→2129, seen_signals +4)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id already in prev seen_signals w/ non-zero delta",
+      "observed": "all 4 signal ids are new",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "no scores > 8; no open items with updated_at older than 14d this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "no plans promoted this run",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has all sections",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "only .research/ paths (verified at commit time)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames",
+      "observed": "none",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "regenerated from backlog.json",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed matches cursor holdback",
+      "observed": "no phases failed",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or archive",
+      "observed": "no plans removed/deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD",
+      "observed": "archive count unchanged",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "regenerated from backlog.json triage rows",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix counts",
+      "observed": "auto_fix_actions=0 (no candidate met bar)",
+      "expected": "caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 is a no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in staged diff",
+      "observed": "none",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist this run"
+}

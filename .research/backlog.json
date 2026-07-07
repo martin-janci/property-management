@@ -3980,13 +3980,15 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+        "PR #2118"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "resolved: PR #2118 merged 2026-07-06 — 'code-review-mobile-rn-screens-mock-data: wire mobile Meters/Leases/Forms/Threads screens to api-server'; all three cited files (BuildingsScreen.tsx, MetersScreen.tsx, LeasesScreen.tsx) no longer contain MOCK_ patterns"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
       "plan": null
     },
     {
@@ -4065,18 +4067,86 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn since 4829015b: 11 commits"
+        "churn since 4829015b: 11 commits",
+        "PR #2100"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 merged 2026-07-05 — 'refactor-churn-hotspot-...-rental-rs: split rental repository into cohesive sub-modules'; source file backend/crates/db/src/repositories/rental.rs no longer exists (moved to rental/ sub-module directory)"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-lease-detail-screen",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx (273 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2118",
+        "commit c7b92c6"
+      ],
+      "evidence": [
+        "churn: 273 lines added+deleted this run (2026-07-05..2026-07-07), single-PR touch (mobile RN screen wiring)",
+        "first appearance in hotspot_history — no prior runs seen"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-thread-detail-screen",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx (215 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2118",
+        "commit c7b92c6"
+      ],
+      "evidence": [
+        "churn: 215 lines added+deleted this run, single-PR touch (mobile RN screen wiring)",
+        "first appearance in hotspot_history — no prior runs seen"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-regional-compliance-rs",
+      "title": "Churn hotspot: backend/crates/db/src/models/regional_compliance.rs (214 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2117",
+        "commit 6c11733"
+      ],
+      "evidence": [
+        "churn: 214 lines added+deleted this run, single-PR touch (SlovakAccountingExport::new named-field refactor)",
+        "first appearance in hotspot_history — no prior runs seen"
+      ],
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
       "plan": null
     }
   ]
