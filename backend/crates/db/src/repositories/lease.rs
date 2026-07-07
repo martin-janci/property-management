@@ -39,6 +39,29 @@ use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, Postgres};
 use uuid::Uuid;
 
+/// Explicit `leases` column list for `query_as::<_, Lease>` reads.
+///
+/// `leases.status` (`lease_status`) and `leases.termination_reason`
+/// (`termination_reason`) are Postgres ENUM columns, but the `Lease` model
+/// decodes them as `String` — sqlx cannot decode a user-defined enum straight
+/// into `String`, so a bare `SELECT *` fails at fetch with a `ColumnDecode`
+/// ("mismatched types") error. Casting the enum columns to `text` follows the
+/// established `status::text` precedent (#859, delegation `scopes::text[]`
+/// in PR #1972).
+const LEASE_COLUMNS: &str = "id, organization_id, unit_id, application_id, template_id, \
+     landlord_user_id, landlord_name, landlord_address, \
+     tenant_user_id, tenant_name, tenant_email, tenant_phone, occupants, \
+     start_date, end_date, term_months, is_fixed_term, \
+     monthly_rent, security_deposit, deposit_held_by, rent_due_day, \
+     late_fee_amount, late_fee_grace_days, utilities_included, parking_spaces, storage_units, \
+     pets_allowed, pet_deposit, max_occupants, smoking_allowed, \
+     document_url, document_version, status::text AS status, \
+     landlord_signed_at, tenant_signed_at, signature_request_id, \
+     terminated_at, termination_reason::text AS termination_reason, termination_notes, \
+     termination_initiated_by, previous_lease_id, renewed_to_lease_id, \
+     renewal_offered_at, renewal_offer_expires_at, \
+     notes, created_by, created_at, updated_at";
+
 /// Repository for lease operations.
 #[derive(Clone)]
 pub struct LeaseRepository {
@@ -297,7 +320,7 @@ impl LeaseRepository {
             r#"
             SELECT
                 a.id, a.unit_id, u.designation, b.name,
-                a.applicant_name, a.applicant_email, a.status,
+                a.applicant_name, a.applicant_email, a.status::text,
                 a.submitted_at, a.monthly_income, a.desired_move_in,
                 (SELECT COUNT(*) FROM tenant_screenings WHERE application_id = a.id) as screening_count,
                 COALESCE((SELECT bool_and(passed) FROM tenant_screenings WHERE application_id = a.id AND status = 'completed'), false) as screening_passed
@@ -816,10 +839,12 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(r#"SELECT * FROM leases WHERE id = $1"#)
-            .bind(id)
-            .fetch_optional(executor)
-            .await?;
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(format!(
+            "SELECT {LEASE_COLUMNS} FROM leases WHERE id = $1"
+        )))
+        .bind(id)
+        .fetch_optional(executor)
+        .await?;
 
         Ok(lease)
     }
@@ -1041,7 +1066,7 @@ impl LeaseRepository {
             SELECT
                 l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
-                l.start_date, l.end_date, l.monthly_rent, l.status,
+                l.start_date, l.end_date, l.monthly_rent, l.status::text,
                 (l.end_date - $6::date)::int8 as days_until_expiry
             FROM leases l
             JOIN units u ON u.id = l.unit_id
@@ -1491,7 +1516,7 @@ impl LeaseRepository {
             SELECT
                 l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
-                l.start_date, l.end_date, l.monthly_rent, l.status,
+                l.start_date, l.end_date, l.monthly_rent, l.status::text,
                 (l.end_date - $2::date)::int8 as days_until_expiry
             FROM leases l
             JOIN units u ON u.id = l.unit_id

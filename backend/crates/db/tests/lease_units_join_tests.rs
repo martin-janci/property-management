@@ -5,19 +5,28 @@
 //! #2060 fixed), the query `42703`-fails at fetch → 500 on the lease routes.
 //!
 //! This drives the four affected read paths through a real pool:
-//!   - `list_applications` (tenant-applications list)
-//!   - `list_leases` (leases list)
+//!   - `list_applications_rls` (tenant-applications list)
+//!   - `list_leases_rls` (leases list)
 //!   - `get_expiration_overview_rls` (expiring-leases list)
 //!   - `get_lease_with_details` (single-lease detail)
 //!
-//! and asserts both (a) no 42703 on the units join and (b) the returned unit
-//! label equals the seeded `units.designation`. It fails on the pre-#2060 SQL
-//! and passes with the correct `u.designation` projection.
+//! and asserts both (a) no error on the units join (42703 on drift) and (b) the
+//! returned unit label equals the seeded `units.designation`. It fails on the
+//! pre-#2060 SQL and passes with the correct `u.designation` projection.
+//!
+//! It additionally pins the enum-decode fix that this test flushed out:
+//! `tenant_applications.status` / `leases.status` / `leases.termination_reason`
+//! are Postgres ENUM columns, while the models decode them as `String` — the
+//! read paths must project `status::text` (and `find_lease_by_id_rls` must use
+//! the explicit `LEASE_COLUMNS` list instead of `SELECT *`) or every fetch
+//! fails with `ColumnDecode` ("mismatched types"). Seeding is done via raw SQL
+//! because the create paths (`create_application_rls` / `create_lease_rls`)
+//! still use `RETURNING *` and carry the same decode drift (known residual,
+//! tracked in the PR body).
 
 use chrono::{Duration, Utc};
-use db::models::lease::{ApplicationListQuery, CreateApplication, CreateLease, LeaseListQuery};
+use db::models::lease::{ApplicationListQuery, LeaseListQuery};
 use db::repositories::LeaseRepository;
-use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -64,19 +73,49 @@ async fn seed_unit(pool: &PgPool, building: Uuid, designation: &str) -> Uuid {
     .expect("seed unit")
 }
 
-async fn seed_user(pool: &PgPool, email: &str, name: &str) -> Uuid {
+/// Seed a tenant application via raw SQL (the repo's `create_application_rls`
+/// uses `RETURNING *`, which still trips the enum-decode drift on `status`).
+async fn seed_application(pool: &PgPool, org: Uuid, unit: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'staff')
+        INSERT INTO tenant_applications (
+            organization_id, unit_id, applicant_name, applicant_email, status, submitted_at
+        )
+        VALUES ($1, $2, 'Jane Applicant', 'jane@lease.test', 'draft', NOW())
         RETURNING id
         "#,
     )
-    .bind(email)
-    .bind(name)
+    .bind(org)
+    .bind(unit)
     .fetch_one(pool)
     .await
-    .expect("seed user")
+    .expect("seed tenant application")
+}
+
+/// Seed an active lease via raw SQL (the repo's `create_lease_rls` uses
+/// `RETURNING *`, same enum-decode drift). Ends in 20 days so it lands in the
+/// expiring overview's 30-day bucket (filters status = 'active' AND
+/// end_date <= today + 90d).
+async fn seed_lease(pool: &PgPool, org: Uuid, unit: Uuid) -> Uuid {
+    let today = Utc::now().date_naive();
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO leases (
+            organization_id, unit_id, landlord_name, tenant_name, tenant_email,
+            start_date, end_date, term_months, monthly_rent, security_deposit, status
+        )
+        VALUES ($1, $2, 'Landlord Ltd', 'Jane Applicant', 'jane@lease.test',
+                $3, $4, 12, 1000, 1000, 'active')
+        RETURNING id
+        "#,
+    )
+    .bind(org)
+    .bind(unit)
+    .bind(today - Duration::days(300))
+    .bind(today + Duration::days(20))
+    .fetch_one(pool)
+    .await
+    .expect("seed lease")
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -84,94 +123,10 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
     let org = seed_org(&pool, "units-join").await;
     let building = seed_building(&pool, org).await;
     let unit = seed_unit(&pool, building, DESIGNATION).await;
-    // `create_lease_rls` binds this user id to `leases.created_by`, which carries
-    // a `REFERENCES users(id)` FK — a random UUID here would 23503-fail the seed
-    // INSERT, so the creator must be a real, persisted user row.
-    let creator = seed_user(&pool, "creator@units-join.test", "Lease Creator").await;
+    seed_application(&pool, org, unit).await;
+    let lease = seed_lease(&pool, org, unit).await;
 
     let repo = LeaseRepository::new(pool.clone());
-
-    // Seed a tenant application on the unit.
-    repo.create_application_rls(
-        &pool,
-        org,
-        CreateApplication {
-            unit_id: unit,
-            applicant_name: "Jane Applicant".to_string(),
-            applicant_email: "jane@lease.test".to_string(),
-            applicant_phone: None,
-            date_of_birth: None,
-            national_id: None,
-            current_address: None,
-            current_landlord_name: None,
-            current_landlord_phone: None,
-            current_rent_amount: None,
-            current_tenancy_start: None,
-            employer_name: None,
-            employer_phone: None,
-            job_title: None,
-            employment_start: None,
-            monthly_income: None,
-            desired_move_in: None,
-            desired_lease_term_months: None,
-            proposed_rent: None,
-            co_applicants: None,
-            source: None,
-            referral_code: None,
-        },
-    )
-    .await
-    .expect("seed tenant application");
-
-    // Seed a lease on the same unit, ending soon so it shows in the expiring
-    // overview (which filters status = 'active' AND end_date <= today + 90d).
-    let today = Utc::now().date_naive();
-    let lease = repo
-        .create_lease_rls(
-            &pool,
-            org,
-            creator,
-            CreateLease {
-                unit_id: unit,
-                application_id: None,
-                template_id: None,
-                landlord_user_id: None,
-                landlord_name: "Landlord Ltd".to_string(),
-                landlord_address: None,
-                tenant_user_id: None,
-                tenant_name: "Jane Applicant".to_string(),
-                tenant_email: "jane@lease.test".to_string(),
-                tenant_phone: None,
-                occupants: None,
-                start_date: today - Duration::days(300),
-                end_date: today + Duration::days(20),
-                term_months: 12,
-                is_fixed_term: Some(true),
-                monthly_rent: Decimal::new(1000, 0),
-                security_deposit: Decimal::new(1000, 0),
-                deposit_held_by: None,
-                rent_due_day: Some(1),
-                late_fee_amount: None,
-                late_fee_grace_days: None,
-                utilities_included: None,
-                parking_spaces: None,
-                storage_units: None,
-                pets_allowed: None,
-                pet_deposit: None,
-                max_occupants: None,
-                smoking_allowed: None,
-                notes: None,
-            },
-        )
-        .await
-        .expect("seed lease");
-
-    // Activate the lease so the expiring-overview filter (status = 'active') keeps it.
-    sqlx::query("UPDATE leases SET status = 'active' WHERE id = $1")
-        .bind(lease.id)
-        .execute(&pool)
-        .await
-        .expect("activate lease");
 
     // 1) Tenant-applications list — joins units for `unit_name`.
     let (apps, _) = repo
@@ -191,6 +146,10 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
     assert_eq!(
         apps[0].unit_name, DESIGNATION,
         "application unit_name must equal the seeded units.designation"
+    );
+    assert_eq!(
+        apps[0].status, "draft",
+        "application status must decode via status::text"
     );
 
     // 2) Leases list — joins units for `unit_name`.
@@ -214,6 +173,10 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
         leases[0].unit_name, DESIGNATION,
         "lease unit_name must equal the seeded units.designation"
     );
+    assert_eq!(
+        leases[0].status, "active",
+        "lease status must decode via status::text"
+    );
 
     // 3) Expiring-leases list — joins units for `unit_name`.
     let overview = repo
@@ -230,15 +193,20 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
         "expiring-lease unit_name must equal the seeded units.designation"
     );
 
-    // 4) Single-lease detail — joins units for `unit_name`.
+    // 4) Single-lease detail — joins units for `unit_name`; also pins the
+    //    `LEASE_COLUMNS` enum-decode fix in `find_lease_by_id_rls`.
     #[allow(deprecated)]
     let details = repo
-        .get_lease_with_details(lease.id)
+        .get_lease_with_details(lease)
         .await
         .expect("get_lease_with_details must not 42703 on the units join (#2076)")
         .expect("the seeded lease must be found");
     assert_eq!(
         details.unit_name, DESIGNATION,
         "lease detail unit_name must equal the seeded units.designation"
+    );
+    assert_eq!(
+        details.lease.status, "active",
+        "lease status must decode via LEASE_COLUMNS status::text"
     );
 }
