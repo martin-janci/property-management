@@ -393,18 +393,6 @@
       "retry_round": 1
     },
     {
-      "id": "gap-7a-5-issue-485-resolved-per-pr-2003",
-      "action": "Issue #485 resolved per PR #2003, but sprint-status not yet updated to reflect completion (7a-5-document-sharing Document Sharing)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
       "action": "MFA e2e brute-force/rate-limit test coverage (issue #487) (10a-1-oauth-authorization-server OAuth 2.0 Authorization Server)",
       "owner_role": "pm-backend",
@@ -420,18 +408,6 @@
       "id": "gap-7a-2-ci-test-job-failing-document-folder",
       "action": "CI test job failing (document_folder_tests FK/isolation); reverted from done pending green CI (7a-2-folder-organization Folder Organization)",
       "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
-      "id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
-      "action": "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) — routing wiring incomplete (80-3-mediation-resolution Mediation and Resolution)",
-      "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
       "depends_on": [],

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T17:23:02Z",
+  "archived_at": "2026-07-07T17:36:42Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2109,6 +2109,19 @@
       "depends_on": []
     },
     {
+      "id": "gap-7a-5-issue-485-resolved-per-pr-2003",
+      "action": "Issue #485 resolved per PR #2003, but sprint-status not yet updated to reflect completion (7a-5-document-sharing Document Sharing)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-07T17:26:12Z (dispatcher merge-confirm)"
+    },
+    {
       "id": "gap-7a-5-mobile-share-ui",
       "action": "Implement mobile document sharing UI (user/role/public link/password) — backend share workflows already exist (7a-5 Document Sharing)",
       "owner_role": "pm-frontend",
@@ -2131,6 +2144,19 @@
       "source": "gap-scan 2026-05-24",
       "resolved": "2026-05-25 — web document sharing UI PRs #451/#467 merged",
       "depends_on": []
+    },
+    {
+      "id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
+      "action": "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) — routing wiring incomplete (80-3-mediation-resolution Mediation and Resolution)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-07T17:36:10Z (dispatcher merge-confirm)"
     },
     {
       "id": "gap-80-3-mediation-ui",

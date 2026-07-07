@@ -1485,6 +1485,54 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-7a-5-issue-485-resolved-per-pr-2003",
+      "branch": "auto-impl/gap-7a-5-issue-485-resolved-per-pr-2003-e844975e",
+      "status": "merged",
+      "claimed_at": "2026-07-07T17:15:00Z",
+      "last_updated": "2026-07-07T17:36:38Z",
+      "status_changed_at": "2026-07-07T17:36:38Z",
+      "pr_number": 2154,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2154",
+      "merged_at": "2026-07-07T17:26:12Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2154 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=7a-5 flipped to done; #485 already closed 2026-05-26; batch item + story md updated; yaml parses",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
+      "branch": "auto-impl/gap-80-3-disputedetailroute-in-app-tsx-is-stub-2b6c131b",
+      "status": "merged",
+      "claimed_at": "2026-07-07T17:15:00Z",
+      "last_updated": "2026-07-07T17:36:38Z",
+      "status_changed_at": "2026-07-07T17:36:38Z",
+      "pr_number": 2155,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2155",
+      "merged_at": "2026-07-07T17:36:10Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2155 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stub gap stale — already wired via #1108; shipped 4 route regression tests + screen-map log; typecheck/biome green, 3 pre-existing #1364 failures repro on clean dev",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -3033,5 +3081,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T17:22:45Z"
+  "archived_at": "2026-07-07T17:36:39Z"
 }
