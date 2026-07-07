@@ -13,6 +13,11 @@
  * so it is validated defensively.
  */
 
+import type {
+  MessageWithSender as ApiMessage,
+  ParticipantInfo as ApiParticipant,
+  ThreadDetailResponse,
+} from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -36,26 +41,12 @@ export interface Message {
   authorName: string;
 }
 
-/** Subset of `ParticipantInfo` (camelCase wire format). */
-interface ApiParticipant {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
-
-/** Subset of `MessageWithSender` (camelCase wire format). */
-interface ApiMessage {
-  id: string;
-  content: string;
-  createdAt: string;
-  sender?: ApiParticipant;
-}
-
-interface ApiThreadDetail {
-  participants?: ApiParticipant[];
-  messages?: ApiMessage[];
-}
+// `ApiParticipant` / `ApiMessage` are the generated `@ppt/api-client`
+// (camelCase) payload types; `ApiThreadDetail` is the subset of
+// `ThreadDetailResponse` (`GET /api/v1/messages/threads/{id}`) that this screen
+// consumes. Deriving from the generated types surfaces OpenAPI drift (field
+// rename/type-change) at compile time.
+type ApiThreadDetail = Pick<ThreadDetailResponse, 'participants' | 'messages'>;
 
 function participantName(p: ApiParticipant | undefined): string {
   if (!p) return '';
