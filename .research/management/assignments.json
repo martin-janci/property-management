@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T18:51:51Z",
+  "generated": "2026-07-07T19:06:35Z",
   "assignments": [
     {
       "task_id": "gap-10a-1-mfa-e2e-brute-force-rate-limit",
@@ -13,30 +13,6 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "gap-7a-2-ci-test-job-failing-document-folder",
-      "branch": "auto-impl/gap-7a-2-ci-test-job-failing-document-folder-e0384781",
-      "status": "review",
-      "claimed_at": "2026-07-07T17:15:00Z",
-      "last_updated": "2026-07-07T18:51:51Z",
-      "status_changed_at": "2026-07-07T18:51:51Z",
-      "pr_number": 2156,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2156",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2156 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=failure stale \u2014 dev CI green (27/27 document_folder_tests, run 28866124336); sprint-status 7a-2 flipped review->done; local :5433 repro inconclusive (PG I/O starvation)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,

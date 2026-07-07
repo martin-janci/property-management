@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T18:13:36Z",
+  "archived_at": "2026-07-07T19:06:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2009,6 +2009,19 @@
       "source": "gap-scan",
       "resolved": "2026-05-25 — mobile document upload UI PR #447 merged",
       "depends_on": []
+    },
+    {
+      "id": "gap-7a-2-ci-test-job-failing-document-folder",
+      "action": "CI test job failing (document_folder_tests FK/isolation); reverted from done pending green CI (7a-2-folder-organization Folder Organization)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-07T19:06:31Z PR #2156 (dispatcher merge-confirm)"
     },
     {
       "id": "gap-7a-2-folder-api",

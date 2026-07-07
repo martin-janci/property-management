@@ -405,18 +405,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "gap-7a-2-ci-test-job-failing-document-folder",
-      "action": "CI test job failing (document_folder_tests FK/isolation); reverted from done pending green CI (7a-2-folder-organization Folder Organization)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-80-3-party-submissions-endpoints-unwired-apistatus-partial",
       "action": "party submissions endpoints unwired (apiStatus: partial) (80-3-mediation-resolution Mediation and Resolution)",
       "owner_role": "pm-frontend",
