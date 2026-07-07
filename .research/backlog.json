@@ -3980,13 +3980,15 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2118",
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
       "evidence": [
         "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
-        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)"
+        "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
+        "resolved: PR #2118 merged 2026-07-06 — wire mobile Meters/Leases/Forms/Threads screens to api-server"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
@@ -3995,7 +3997,7 @@
         "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
       "plan": null
     },
     {
@@ -4065,18 +4067,103 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2100",
         "churn since 4829015b: 11 commits"
       ],
       "evidence": [
-        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)"
+        "top-2 file churn between last routine cursor (4829015b, 2026-06-16) and dev@HEAD (11 commits touching rental.rs)",
+        "resolved: PR #2100 merged 2026-07-05 — split rental repository into cohesive sub-modules"
       ],
       "files": [
         "backend/crates/db/src/repositories/rental.rs"
       ],
       "created_at": "2026-07-05",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "security-rustsec-2026-0204-crossbeam-epoch",
+      "title": "Bump crossbeam-epoch >=0.9.20 to clear RUSTSEC-2026-0204 (cargo-deny red on dev)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "issue #2141"
+      ],
+      "evidence": [
+        "cargo-deny advisory RUSTSEC-2026-0204 — crossbeam-epoch 0.9.18 has invalid-pointer-dereference in fmt::Pointer impl for Atomic/Shared (backend/Cargo.lock:122).",
+        "Dep chain: crossbeam-epoch -> metrics-util 0.15.1 -> metrics-exporter-prometheus 0.12.2, pulled by api-server / reality-server / accounting-server.",
+        "cargo-deny job on backend.yml red on dev; not currently a required status check so PRs still merge, but every backend PR shows a red advisory.",
+        "Proposed fix per issue #2141: cd backend && cargo update -p crossbeam-epoch --precise 0.9.20 (lockfile-only). Verify with cargo deny check advisories."
+      ],
+      "files": [
+        "backend/Cargo.lock"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": "plans/security-rustsec-2026-0204-crossbeam-epoch.md"
+    },
+    {
+      "id": "refactor-churn-hotspot-frontend-apps-mobile-src-screens-leases-lease-detail-screen-tsx",
+      "title": "Watch churn: frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2118"
+      ],
+      "evidence": [
+        "Top-1 code-churn file this run: 273 lines from PR #2118 (mobile screens wiring). New file — no prior hotspot history."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-frontend-apps-mobile-src-screens-messages-thread-detail-screen-tsx",
+      "title": "Watch churn: frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2118"
+      ],
+      "evidence": [
+        "Top-2 code-churn file this run: 215 lines from PR #2118 (mobile screens wiring). New file — no prior hotspot history."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-regional-compliance-rs",
+      "title": "Watch churn: backend/crates/db/src/models/regional_compliance.rs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2100 or subsequent"
+      ],
+      "evidence": [
+        "Top-3 code-churn file this run: 214 lines. New file — no prior hotspot history."
+      ],
+      "files": [
+        "backend/crates/db/src/models/regional_compliance.rs"
+      ],
+      "created_at": "2026-07-07",
+      "updated_at": "2026-07-07",
       "plan": null
     }
   ]

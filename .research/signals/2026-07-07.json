@@ -1,0 +1,72 @@
+{
+  "generated": "2026-07-07T06:15:00Z",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-05T03:10:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-07-05T03:10Z (48h ago > 36h threshold); missed the 2026-07-06 daily slot. Not stale (< 3 days).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": "Top-1 code-churn file this run: 273 lines from PR #2118 wiring mobile Meters/Leases/Forms/Threads screens to api-server. New file — no prior hotspot_history. Not instability, tracked so a repeated-churn fires if it churns again next run.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": "Top-2 code-churn file this run: 215 lines from PR #2118. New file — no prior hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/regional_compliance.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z",
+      "score_delta": 1,
+      "evidence": "Top-3 code-churn file this run: 214 lines. New file — no prior hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-advisory-rustsec-2026-0204-crossbeam-epoch",
+      "type": "code-review-finding",
+      "source": "issue #2141",
+      "score_delta": 3,
+      "evidence": "cargo-deny advisory RUSTSEC-2026-0204 — crossbeam-epoch 0.9.18 has invalid-pointer-dereference in fmt::Pointer impl for Atomic/Shared. backend/Cargo.lock:1896 pins the vulnerable version. Dep chain crossbeam-epoch -> metrics-util 0.15.1 -> metrics-exporter-prometheus 0.12.2 pulled by api-server / reality-server / accounting-server. Fix is `cd backend && cargo update -p crossbeam-epoch --precise 0.9.20` (lockfile-only). cargo-deny job now red on dev; not required-status so it does not block merges but every backend PR shows red.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist (RUSTSEC advisory action shape is transitive cargo update -p, not consumer-manifest caret bump; screen-map-drift/orphan/fixme/stalled-review not derived this run)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-07-07.md && first line == '# 2026-07-07'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json diff vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id in prior seen_signals with non-zero score_delta re-emit", "observed": "true (all 5 signal ids new to state)", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8 and decay applied", "observed": "cap ok; no open items older than 14 days so no decay required", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "new plans have adversarial-pass annotation in brief", "observed": "brief lists plans/security-rustsec-2026-0204-crossbeam-epoch.md with 'adversarial pass: passed' on the same line", "expected": "match" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings + Mode + ≥1 tick + Files paths exist", "observed": "1 new plan, all sections present, Mode: cloud-ok, C6 ticked, backend/Cargo.lock exists", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "git diff --cached scoped scan for secret patterns", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md <regen>", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "no failed phases claimed in brief; cursors advanced only for succeeded phases", "observed": "Phase 1.5/1.6 declared skipped in brief; last_pr_seen/last_issue_seen/last_commit_sha advanced; pm_cursor unchanged (Phase 1.6 skipped)", "expected": "match" },
+    { "goal": "G12", "passed": true, "command": "every HEAD plan slug appears as active or archived", "observed": "9 HEAD plans, all still active", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive tracked-file count non-decreasing", "observed": "6 == 6", "expected": ">= HEAD count" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <regen>", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps and idempotency", "observed": "auto_fix_actions=[]", "expected": "≤3 total, ≤1 per type, kill switch honored" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run — no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff", "observed": "0 hits", "expected": "0" }
+  ]
+}
