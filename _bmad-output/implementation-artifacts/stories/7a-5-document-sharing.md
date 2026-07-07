@@ -1,6 +1,6 @@
 # Story 7A.5: Document Sharing
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
