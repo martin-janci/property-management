@@ -5,6 +5,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
@@ -286,6 +287,160 @@ class ListingDetailViewModelTest {
             assertNotNull(vm.state.value.listing, "retry recovers the listing")
             assertNull(vm.state.value.errorMessage, "error cleared on successful retry")
             assertFalse(vm.state.value.isLoading)
+        }
+
+    // ─── updateAuth(): session change without disturbing the listing ──────────
+
+    @Test
+    fun updateAuth_keeps_loaded_listing_and_does_not_reset_to_spinner() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, """{"is_favorited": false}"""),
+                    scope = backgroundScope,
+                    isAuthenticated = true,
+                    listing = listingRepo(HttpStatusCode.OK, listingBody),
+                )
+
+            vm.start()
+            advanceUntilIdle()
+            assertNotNull(vm.state.value.listing, "precondition: listing is loaded")
+
+            // The regression under test (#2108/#2125): an auth-token change must NOT flip the
+            // screen back to the full-screen spinner or drop the already-loaded listing.
+            vm.updateAuth("new-token")
+            advanceUntilIdle()
+
+            val listing = assertNotNull(vm.state.value.listing, "listing survives the auth change")
+            assertEquals("lst-1", listing.id)
+            assertFalse(vm.state.value.isLoading, "auth change must not re-trigger the spinner")
+        }
+
+    @Test
+    fun updateAuth_logout_clears_favorite_heart() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, """{"is_favorited": true}"""),
+                    scope = backgroundScope,
+                    isAuthenticated = true,
+                )
+
+            vm.start()
+            advanceUntilIdle()
+            assertTrue(vm.state.value.isFavorite, "precondition: authenticated probe turns heart on")
+
+            // Logout: favorites require auth, so the heart can no longer reflect a user's state.
+            vm.updateAuth(null)
+            advanceUntilIdle()
+
+            assertFalse(vm.state.value.isFavorite, "logout resets the heart to off")
+            assertFalse(vm.state.value.isFavoriteLoading)
+        }
+
+    @Test
+    fun updateAuth_login_reprobes_favorite_state() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepo(HttpStatusCode.OK, """{"is_favorited": true}"""),
+                    scope = backgroundScope,
+                    isAuthenticated = false,
+                )
+
+            vm.start()
+            advanceUntilIdle()
+            assertFalse(vm.state.value.isFavorite, "no probe fires while unauthenticated")
+
+            // Login: updateAuth must re-probe loadFavoriteState() with the new token.
+            vm.updateAuth("test-token")
+            advanceUntilIdle()
+
+            assertTrue(vm.state.value.isFavorite, "login re-probes and reflects the server's true")
+        }
+
+    @Test
+    fun updateAuth_sameToken_is_noop_and_does_not_rebuild_repositories() =
+        runTest(StandardTestDispatcher()) {
+            var favoritesFactoryCalls = 0
+            val favorites = favoritesRepo(HttpStatusCode.OK, """{"is_favorited": true}""")
+            val vm =
+                ListingDetailViewModel(
+                    listingId = "lst-1",
+                    listingRepository = unusedListingRepo(),
+                    favoritesRepositoryFactory = {
+                        favoritesFactoryCalls++
+                        favorites
+                    },
+                    inquiryRepositoryFactory = { unusedInquiryRepo() },
+                    scope = backgroundScope,
+                    initialSessionToken = "test-token",
+                    errorMapper = { it.message ?: "error" },
+                )
+
+            // The factory is invoked exactly once, at construction time.
+            assertEquals(1, favoritesFactoryCalls, "precondition: repo built once on construction")
+
+            // An unchanged token must short-circuit: no repo rebuild, no re-probe.
+            vm.updateAuth("test-token")
+            advanceUntilIdle()
+
+            assertEquals(
+                1,
+                favoritesFactoryCalls,
+                "same-token updateAuth must be a no-op and not rebuild the favorites repository",
+            )
+        }
+
+    @Test
+    fun favoriteToggle_rollback_is_suppressed_after_logout() =
+        runTest(StandardTestDispatcher()) {
+            // GET .../check → favorited=true (so start() lights the heart); the DELETE write 500s,
+            // which would normally roll the heart back ON. But the user logs out mid-flight, so
+            // the stale rollback must be dropped and the heart must stay OFF (issue #2125).
+            val engine =
+                MockEngine { request ->
+                    if (request.method == HttpMethod.Get) {
+                        respond(
+                            content = ByteReadChannel("""{"is_favorited": true}"""),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    } else {
+                        respond(
+                            content = ByteReadChannel("""{"error":"boom"}"""),
+                            status = HttpStatusCode.InternalServerError,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    }
+                }
+            val repo =
+                FavoritesRepository(
+                    baseUrl = "https://example.test",
+                    sessionToken = "test-token",
+                    client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
+                )
+            val vm = viewModel(repo, scope = backgroundScope)
+
+            vm.start()
+            advanceUntilIdle()
+            assertTrue(vm.state.value.isFavorite, "precondition: heart is on before the toggle")
+
+            // Toggle OFF (optimistic), then log out before the failing write resolves.
+            vm.onFavoriteToggle()
+            assertFalse(vm.state.value.isFavorite, "optimistic toggle turns the heart off")
+            vm.updateAuth(null)
+            assertFalse(vm.state.value.isFavorite, "logout keeps the heart off")
+
+            advanceUntilIdle()
+
+            // Without the guard the 500 would roll back to previous(=true); the session-change
+            // guard drops that stale write so an unauthenticated user never sees a lit heart.
+            assertFalse(
+                vm.state.value.isFavorite,
+                "stale rollback after logout must not re-light the heart",
+            )
+            assertFalse(vm.state.value.isFavoriteLoading)
         }
 
     // ─── onSubmitInquiry() ────────────────────────────────────────────────────

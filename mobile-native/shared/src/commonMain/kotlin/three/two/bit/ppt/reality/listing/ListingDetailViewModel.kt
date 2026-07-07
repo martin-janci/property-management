@@ -166,11 +166,18 @@ class ListingDetailViewModel(
         if (current.isFavoriteLoading) return
         val previous = current.isFavorite
         val next = !previous
+        // Capture the session (and the repo bound to it) this write is launched against. If the
+        // session changes mid-flight (e.g. the user logs out), [updateAuth] has already reset the
+        // heart — the stale confirm/rollback below must not clobber that, or an un-favorited
+        // listing could show as favorited while unauthenticated (issue #2125).
+        val tokenAtLaunch = currentSessionToken
+        val repoAtLaunch = favoritesRepository
         _state.update { it.copy(isFavorite = next, isFavoriteLoading = true) }
         scope.launch {
             val result =
-                if (next) favoritesRepository.addFavorite(listingId)
-                else favoritesRepository.removeFavorite(listingId)
+                if (next) repoAtLaunch.addFavorite(listingId)
+                else repoAtLaunch.removeFavorite(listingId)
+            if (currentSessionToken != tokenAtLaunch) return@launch
             _state.update { s ->
                 if (result.isFailure) s.copy(isFavorite = previous, isFavoriteLoading = false)
                 else s.copy(isFavoriteLoading = false)
