@@ -106,7 +106,8 @@ describe('LeaseSignatureScreen', () => {
       refetch: jest.fn(),
     });
     renderScreen({ esignatureId: 'esig-1' });
-    expect(screen.getByText('Lease Agreement 2026')).toBeTruthy();
+    // Title renders in both the header subtitle and the document card.
+    expect(screen.getAllByText('Lease Agreement 2026').length).toBeGreaterThan(0);
     expect(screen.getByText('Anna Novak (Manager)')).toBeTruthy();
   });
 
