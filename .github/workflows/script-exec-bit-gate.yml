@@ -16,6 +16,25 @@ name: Script exec-bit gate
 # executable matches convention and prevents a repeat of the silent
 # mode revert. The check reads git's index modes directly (git ls-files
 # -s), so it is filesystem-independent and DB-free.
+#
+# IMPORTANT — this gate only BLOCKS a regression if it is wired as a
+# REQUIRED status check on the `dev` branch-protection rule / ruleset.
+# The pull_request trigger below is path-filtered and the push trigger
+# runs post-merge (advisory only). If the job
+# "Workflow scripts must be executable (100755)" is NOT marked required
+# in branch protection, a future exec-bit revert PR can still merge green
+# and defeat the gate. That required-check wiring is a repo-settings /
+# operator action (out of code scope); see issue #2128. Do not remove
+# this dependency silently on a settings change.
+#
+# SCOPE — this gate is deliberately narrow: it guards only the workflow
+# helper scripts under .github/workflows/scripts/. Other tracked *.sh
+# meant to be run directly (e.g. scripts/*.sh) are NOT covered here.
+# Broadening the gate to an explicit allowlist of runnable repo scripts
+# is tracked separately as a low-priority hygiene item (issue #2128,
+# "better approach"); it is kept out of this file to avoid coupling
+# unrelated mode fixes across docker/, scripts/, and .research/ to this
+# workflow-scripts guard.
 
 on:
   pull_request:
