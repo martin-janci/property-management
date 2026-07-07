@@ -159,6 +159,12 @@ class ListingDetailViewModel(
      * Optimistic favorite toggle: flip the heart immediately, then reconcile with the server. On
      * failure the state rolls back to the previous value so the icon never lies about persisted
      * state. No-op when unauthenticated or a toggle is already in flight.
+     *
+     * The write is pinned to the session it was launched under: both the repository and the token
+     * are captured at launch, and the rollback/completion state write is skipped when the session
+     * has changed in the meantime (issue #2125). Without the guard, toggling OFF and logging out
+     * before the server responds would let the failure-rollback closure resurrect `isFavorite =
+     * true` on top of the unauthenticated state [updateAuth] just wrote.
      */
     fun onFavoriteToggle() {
         if (!isAuthenticated) return
@@ -166,14 +172,22 @@ class ListingDetailViewModel(
         if (current.isFavoriteLoading) return
         val previous = current.isFavorite
         val next = !previous
+        val tokenAtLaunch = currentSessionToken
+        val repositoryAtLaunch = favoritesRepository
         _state.update { it.copy(isFavorite = next, isFavoriteLoading = true) }
         scope.launch {
             val result =
-                if (next) favoritesRepository.addFavorite(listingId)
-                else favoritesRepository.removeFavorite(listingId)
+                if (next) repositoryAtLaunch.addFavorite(listingId)
+                else repositoryAtLaunch.removeFavorite(listingId)
             _state.update { s ->
-                if (result.isFailure) s.copy(isFavorite = previous, isFavoriteLoading = false)
-                else s.copy(isFavoriteLoading = false)
+                when {
+                    // Session changed mid-flight (logout / re-login): updateAuth() already reset
+                    // the heart for the new session — only clear the spinner, never write a stale
+                    // isFavorite from the superseded session.
+                    currentSessionToken != tokenAtLaunch -> s.copy(isFavoriteLoading = false)
+                    result.isFailure -> s.copy(isFavorite = previous, isFavoriteLoading = false)
+                    else -> s.copy(isFavoriteLoading = false)
+                }
             }
         }
     }

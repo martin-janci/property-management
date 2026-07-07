@@ -4,8 +4,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
@@ -15,9 +18,12 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import three.two.bit.ppt.reality.favorites.FavoritesRepository
@@ -33,8 +39,14 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
  *
  * The favorites HTTP layer is driven through a real [FavoritesRepository] over a Ktor [MockEngine]
  * (same harness as `FavoritesToggleRepositoryTest`). The view-model runs on the `runTest`
- * [StandardTestDispatcher], so launched work is deferred until [advanceUntilIdle], letting us
+ * [StandardTestDispatcher], so launched work is deferred until the scheduler runs, letting us
  * assert the optimistic intermediate state before the server responds.
+ *
+ * NOTE on waiting: [MockEngine] resumes suspended HTTP calls on a real IO thread, so
+ * [advanceUntilIdle] does NOT reliably wait for a round-trip — the vm coroutine may still be parked
+ * off the virtual scheduler when it returns (surfaced by #2125 once the host-test task was
+ * enabled). Completion is therefore awaited by suspending on the observable outcome itself via
+ * `state.first { … }`, which `runTest` supports deterministically.
  */
 class ListingDetailViewModelTest {
 
@@ -88,7 +100,13 @@ class ListingDetailViewModelTest {
         return InquiryRepository(
             baseUrl = "https://example.test",
             sessionToken = "test-token",
-            client = HttpClient(engine) { install(ContentNegotiation) { json(json) } },
+            client =
+                HttpClient(engine) {
+                    install(ContentNegotiation) { json(json) }
+                    // The production HttpClientProvider sets this too; without it Ktor cannot
+                    // serialize the @Serializable request body passed to setBody().
+                    defaultRequest { contentType(ContentType.Application.Json) }
+                },
         )
     }
 
@@ -153,7 +171,7 @@ class ListingDetailViewModelTest {
             assertTrue(vm.state.value.isFavorite, "heart should flip on immediately (optimistic)")
             assertTrue(vm.state.value.isFavoriteLoading)
 
-            advanceUntilIdle()
+            vm.state.first { !it.isFavoriteLoading }
 
             // 201 → the optimistic value is confirmed, spinner cleared.
             assertTrue(vm.state.value.isFavorite, "successful add keeps the heart on")
@@ -173,7 +191,7 @@ class ListingDetailViewModelTest {
             assertTrue(vm.state.value.isFavorite)
             assertTrue(vm.state.value.isFavoriteLoading)
 
-            advanceUntilIdle()
+            vm.state.first { !it.isFavoriteLoading }
 
             // Rollback: heart returns to its previous (off) state and the spinner clears.
             assertFalse(vm.state.value.isFavorite, "failed add must roll back to previous value")
@@ -211,7 +229,7 @@ class ListingDetailViewModelTest {
             vm.onFavoriteToggle() // must be ignored while the first write is in flight
             assertTrue(vm.state.value.isFavorite)
 
-            advanceUntilIdle()
+            vm.state.first { !it.isFavoriteLoading }
 
             // Only the first toggle took effect; state settled on favorited.
             assertTrue(vm.state.value.isFavorite)
@@ -236,7 +254,7 @@ class ListingDetailViewModelTest {
             assertNull(vm.state.value.listing)
 
             vm.start()
-            advanceUntilIdle()
+            vm.state.first { !it.isLoading }
 
             val listing = assertNotNull(vm.state.value.listing, "listing should be loaded")
             assertEquals("lst-1", listing.id)
@@ -271,7 +289,7 @@ class ListingDetailViewModelTest {
                 )
 
             vm.start()
-            advanceUntilIdle()
+            vm.state.first { it.errorMessage != null }
 
             assertNull(vm.state.value.listing, "a failed load leaves no listing")
             assertNotNull(vm.state.value.errorMessage, "5xx surfaces an error message")
@@ -281,11 +299,189 @@ class ListingDetailViewModelTest {
             status = HttpStatusCode.OK
             body = listingBody
             vm.retry()
-            advanceUntilIdle()
+            vm.state.first { it.listing != null }
 
             assertNotNull(vm.state.value.listing, "retry recovers the listing")
             assertNull(vm.state.value.errorMessage, "error cleared on successful retry")
             assertFalse(vm.state.value.isLoading)
+        }
+
+    // ─── updateAuth(): session changes (issue #2125) ─────────────────────────
+
+    /**
+     * A FavoritesRepository whose `/check` probe returns `{"is_favorited": isFavorited}` and whose
+     * add/remove writes return [writeStatus] — lets one repo drive both the probe and the toggle.
+     */
+    private fun favoritesRepoCheckAndWrite(
+        isFavorited: Boolean,
+        writeStatus: HttpStatusCode = HttpStatusCode.InternalServerError,
+        writeBody: String = """{"error":"boom"}""",
+    ): FavoritesRepository {
+        val engine = MockEngine { request ->
+            if (request.url.encodedPath.endsWith("/check")) {
+                respond(
+                    content = ByteReadChannel("""{"is_favorited":$isFavorited}"""),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            } else {
+                respond(
+                    content = ByteReadChannel(writeBody),
+                    status = writeStatus,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            }
+        }
+        val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
+        return FavoritesRepository(
+            baseUrl = "https://example.test",
+            sessionToken = "test-token",
+            client = client,
+        )
+    }
+
+    @Test
+    fun updateAuth_newToken_keeps_listing_and_does_not_respin() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                viewModel(
+                    favorites = favoritesRepoCheckAndWrite(isFavorited = false),
+                    scope = backgroundScope,
+                    listing = listingRepo(HttpStatusCode.OK, listingBody),
+                )
+            vm.start()
+            vm.state.first { it.listing != null }
+
+            // Session token changes (re-login) → the listing must survive untouched and the
+            // screen must NOT flip back to the full-screen spinner (the #2108 regression).
+            vm.updateAuth("new-token")
+            assertNotNull(vm.state.value.listing, "auth change must not clear the loaded listing")
+            assertFalse(vm.state.value.isLoading, "auth change must not restart the spinner")
+        }
+
+    @Test
+    fun updateAuth_logout_clears_favorite_state() =
+        runTest(StandardTestDispatcher()) {
+            // Authenticated start(): the /check probe reports the listing as favorited.
+            val vm =
+                viewModel(
+                    favorites = favoritesRepoCheckAndWrite(isFavorited = true),
+                    scope = backgroundScope,
+                    listing = listingRepo(HttpStatusCode.OK, listingBody),
+                )
+            vm.start()
+            vm.state.first { it.isFavorite && it.listing != null }
+
+            vm.updateAuth(null) // logout — clears the heart synchronously
+
+            assertFalse(vm.state.value.isFavorite, "logout must clear the heart")
+            assertFalse(vm.state.value.isFavoriteLoading)
+            assertNotNull(vm.state.value.listing, "logout must not clear the loaded listing")
+        }
+
+    @Test
+    fun updateAuth_login_reprobes_favorite_state() =
+        runTest(StandardTestDispatcher()) {
+            // Token-aware factory: unauthenticated at construction, favorited once logged in.
+            val vm =
+                ListingDetailViewModel(
+                    listingId = "lst-1",
+                    listingRepository = listingRepo(HttpStatusCode.OK, listingBody),
+                    favoritesRepositoryFactory = { favoritesRepoCheckAndWrite(isFavorited = true) },
+                    inquiryRepositoryFactory = { unusedInquiryRepo() },
+                    scope = backgroundScope,
+                    initialSessionToken = null,
+                    errorMapper = { it.message ?: "error" },
+                )
+            vm.start()
+            vm.state.first { it.listing != null }
+            assertFalse(vm.state.value.isFavorite, "unauthenticated start leaves the heart off")
+
+            vm.updateAuth("test-token") // login
+            vm.state.first { it.isFavorite } // login must re-probe and light the heart
+
+            assertNotNull(vm.state.value.listing)
+        }
+
+    @Test
+    fun updateAuth_sameToken_is_noop() =
+        runTest(StandardTestDispatcher()) {
+            var factoryCalls = 0
+            val vm =
+                ListingDetailViewModel(
+                    listingId = "lst-1",
+                    listingRepository = listingRepo(HttpStatusCode.OK, listingBody),
+                    favoritesRepositoryFactory = {
+                        factoryCalls++
+                        favoritesRepoCheckAndWrite(isFavorited = true)
+                    },
+                    inquiryRepositoryFactory = { unusedInquiryRepo() },
+                    scope = backgroundScope,
+                    initialSessionToken = "test-token",
+                    errorMapper = { it.message ?: "error" },
+                )
+            assertEquals(1, factoryCalls, "construction builds the repo once")
+
+            vm.start()
+            // Wait for BOTH async loads (listing + favorite probe) so the state is settled.
+            vm.state.first { it.listing != null && it.isFavorite }
+            val before = vm.state.value
+
+            vm.updateAuth("test-token") // unchanged token → must be a complete no-op
+            advanceUntilIdle()
+
+            assertEquals(1, factoryCalls, "same-token updateAuth must not rebuild the repo")
+            assertEquals(before, vm.state.value, "same-token updateAuth must not touch state")
+        }
+
+    /**
+     * The #2125 correctness guard: a favorite write launched under one session must not write
+     * `isFavorite` after the session has changed. Here the toggle-OFF write 500s, which would
+     * normally roll the heart back to `true` — but the session switched mid-flight, so the guard
+     * must skip the rollback and only clear the spinner. The session change is token→token
+     * (re-login) rather than logout so the guard's effect is observable: on logout `updateAuth`
+     * itself already resets the heart, masking the same code path.
+     */
+    @Test
+    fun favoriteToggle_rollback_is_skipped_after_session_change_mid_flight() =
+        runTest(StandardTestDispatcher()) {
+            val vm =
+                ListingDetailViewModel(
+                    listingId = "lst-1",
+                    listingRepository = listingRepo(HttpStatusCode.OK, listingBody),
+                    favoritesRepositoryFactory = { token ->
+                        if (token == "test-token") {
+                            // Original session: favorited; the remove write will 500.
+                            favoritesRepoCheckAndWrite(
+                                isFavorited = true,
+                                writeStatus = HttpStatusCode.InternalServerError,
+                            )
+                        } else {
+                            // New session: not favorited.
+                            favoritesRepoCheckAndWrite(isFavorited = false)
+                        }
+                    },
+                    inquiryRepositoryFactory = { unusedInquiryRepo() },
+                    scope = backgroundScope,
+                    initialSessionToken = "test-token",
+                    errorMapper = { it.message ?: "error" },
+                )
+            vm.start()
+            vm.state.first { it.isFavorite }
+
+            vm.onFavoriteToggle() // optimistic OFF, failing remove-write in flight
+            assertFalse(vm.state.value.isFavorite)
+            assertTrue(vm.state.value.isFavoriteLoading)
+
+            vm.updateAuth("other-token") // session changes while the write is still in flight
+
+            // The failing write completes and clears the spinner, but its rollback (back to
+            // isFavorite=true) must be skipped — it belongs to the superseded session.
+            vm.state.first { !it.isFavoriteLoading }
+            assertFalse(
+                vm.state.value.isFavorite,
+                "a failed write from the superseded session must not resurrect the heart",
+            )
         }
 
     // ─── onSubmitInquiry() ────────────────────────────────────────────────────
@@ -304,8 +500,10 @@ class ListingDetailViewModelTest {
                                 """"created_at":"2026-04-26T10:00:00Z"}""",
                         ),
                 )
-            val events = mutableListOf<ListingDetailEvent>()
-            backgroundScope.launch { vm.events.collect { events += it } }
+            // Await the first emitted event; subscribe (via runCurrent) BEFORE the submit — a
+            // SharedFlow without replay drops emissions made while it has no subscribers.
+            val firstEvent = backgroundScope.async { vm.events.first() }
+            runCurrent()
 
             vm.onShowInquiryDialog()
             vm.onSubmitInquiry("Hello", "Jana", "jana@example.test", "+421900000000")
@@ -313,14 +511,14 @@ class ListingDetailViewModelTest {
             // Optimistic: the submit spinner is on before the server answers.
             assertTrue(vm.state.value.isInquirySubmitting)
 
-            advanceUntilIdle()
+            vm.state.first { !it.isInquirySubmitting }
 
             assertFalse(vm.state.value.isInquirySubmitting, "spinner clears on success")
             assertFalse(vm.state.value.showInquiryDialog, "dialog closes on success")
             assertNull(vm.state.value.inquiryError)
             assertEquals(
-                listOf<ListingDetailEvent>(ListingDetailEvent.InquirySubmitted),
-                events,
+                ListingDetailEvent.InquirySubmitted,
+                firstEvent.await(),
                 "a 201 must emit InquirySubmitted so the UI can navigate",
             )
         }
@@ -340,6 +538,7 @@ class ListingDetailViewModelTest {
 
             vm.onShowInquiryDialog()
             vm.onSubmitInquiry("Hello", null, null, null)
+            vm.state.first { it.inquiryError != null }
             advanceUntilIdle()
 
             assertNotNull(vm.state.value.inquiryError, "5xx surfaces an inquiry error")
