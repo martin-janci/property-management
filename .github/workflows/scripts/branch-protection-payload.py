@@ -30,8 +30,10 @@ required status-check contexts, produce the body for
   * required_status_checks.strict is ALWAYS true (never weaken; strengthen
     false -> true), and .checks is exactly the merged context list.
   * required_pull_request_reviews is PRESERVED when present (approval
-    count, dismiss-stale, code-owner, require_last_push_approval), else a
-    safe baseline (1 approval).
+    count, dismiss-stale, require_last_push_approval), else a safe
+    baseline (1 approval) — EXCEPT require_code_owner_reviews, which is
+    ALWAYS true (strengthen false -> true, never weaken; #2127: without
+    it every CODEOWNERS entry is advisory-only).
   * enforce_admins is preserved (dict {enabled} or bool), default true.
   * restrictions (push restrictions) are PRESERVED, never nulled, when
     present; null only when the current rule had none.
@@ -79,13 +81,14 @@ def build_payload(current: dict | None, checks: list[str]) -> dict:
     }
 
     # --- required_pull_request_reviews: preserve existing, else safe baseline ---
+    # require_code_owner_reviews is a strengthen-only toggle like strict:
+    # without it every CODEOWNERS entry (backend/deny.toml, Cargo.toml/lock
+    # guards) is advisory-only (#2127). Always true; never set false.
     cur_prr = cur.get("required_pull_request_reviews")
     if cur_prr:
         prr = {
             "dismiss_stale_reviews": bool(cur_prr.get("dismiss_stale_reviews", False)),
-            "require_code_owner_reviews": bool(
-                cur_prr.get("require_code_owner_reviews", False)
-            ),
+            "require_code_owner_reviews": True,
             "required_approving_review_count": int(
                 cur_prr.get("required_approving_review_count", 1)
             ),
@@ -98,7 +101,7 @@ def build_payload(current: dict | None, checks: list[str]) -> dict:
     else:
         prr = {
             "dismiss_stale_reviews": False,
-            "require_code_owner_reviews": False,
+            "require_code_owner_reviews": True,
             "required_approving_review_count": 1,
         }
 
@@ -253,12 +256,22 @@ def _self_test() -> int:
     # currently has strict=false comes back strict=true.
     weak_strict = {
         "required_status_checks": {"strict": False, "checks": []},
+        "required_pull_request_reviews": {
+            "dismiss_stale_reviews": False,
+            "require_code_owner_reviews": False,
+            "required_approving_review_count": 1,
+        },
     }
     p2 = build_payload(weak_strict, [NEW_CHECK])
     _check(
         "strict/strengthened",
         p2["required_status_checks"]["strict"] is True,
         "strict=false strengthened to strict=true (never weakened)",
+    )
+    _check(
+        "code-owner/strengthened",
+        p2["required_pull_request_reviews"]["require_code_owner_reviews"] is True,
+        "require_code_owner_reviews=false strengthened to true (#2127)",
     )
 
     # --- Fixture 3: no existing protection -> safe baseline. ---
@@ -272,6 +285,11 @@ def _self_test() -> int:
         "baseline/one-approval",
         p3["required_pull_request_reviews"]["required_approving_review_count"] == 1,
         "baseline requires 1 approval",
+    )
+    _check(
+        "baseline/code-owner-required",
+        p3["required_pull_request_reviews"]["require_code_owner_reviews"] is True,
+        "baseline enforces code-owner reviews (#2127)",
     )
     _check(
         "baseline/enforce-admins",
