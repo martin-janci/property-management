@@ -1305,6 +1305,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-listing-page-ssr-crash-retry1",
+      "branch": "auto-impl/code-review-reality-web-listing-page-ssr-94314ffa",
+      "status": "done",
+      "claimed_at": "2026-07-07T16:11:20Z",
+      "last_updated": "2026-07-07T16:17:43Z",
+      "status_changed_at": "2026-07-07T16:17:43Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done specialist=nextjs-web note=fix already merged on dev; branch diff empty (no-op retry re-mint)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-realtor-mgmt-untranslated",
       "branch": "auto-impl/code-review-reality-web-realtor-mgmt-unt-b2ba1fcf",
       "status": "done",
@@ -1338,6 +1360,28 @@
       "merged_at": null,
       "specialist": "nextjs-web",
       "implementer_summary": "pr=none status=done specialist=nextjs-web already-fixed in dev (ComparisonUrlHandler.tsx:43 getApiBase()/api/v1/listings + regression test) commit 1622e34; empty diff, no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-share-comparison-404-retry1",
+      "branch": "auto-impl/code-review-reality-web-share-comparison-711e923f",
+      "status": "done",
+      "claimed_at": "2026-07-07T16:11:20Z",
+      "last_updated": "2026-07-07T16:17:43Z",
+      "status_changed_at": "2026-07-07T16:17:43Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done specialist=nextjs-web note=already-fixed-on-dev (PR#1676); diff vs dev empty; regression test 2/2 green (no-op retry re-mint)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -2941,5 +2985,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T16:11:49Z"
+  "archived_at": "2026-07-07T16:17:53Z"
 }

@@ -681,34 +681,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-reality-web-listing-page-ssr-crash-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields [retry 1/2 of failed code-review-reality-web-listing-page-ssr-crash]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-listing-page-ssr-crash reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T16:06:35Z",
-      "retry_of": "code-review-reality-web-listing-page-ssr-crash",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-web-share-comparison-404-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s [retry 1/2 of failed code-review-reality-web-share-comparison-404]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-share-comparison-404 reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T16:06:35Z",
-      "retry_of": "code-review-reality-web-share-comparison-404",
-      "retry_round": 1
-    },
-    {
       "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
       "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
       "owner_role": "pm-frontend",

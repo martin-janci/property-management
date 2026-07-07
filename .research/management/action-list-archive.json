@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T04:10:23Z",
+  "archived_at": "2026-07-07T16:17:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1042,6 +1042,20 @@
       "depends_on": []
     },
     {
+      "id": "code-review-reality-web-listing-page-ssr-crash-retry1",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields [retry 1/2 of failed code-review-reality-web-listing-page-ssr-crash]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-listing-page-ssr-crash reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-reality-web-listing-page-ssr-crash",
+      "retry_round": 1
+    },
+    {
       "id": "code-review-reality-web-realtor-mgmt-untranslated",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de",
       "owner_role": "pm-frontend",
@@ -1062,6 +1076,20 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-reality-web-share-comparison-404-retry1",
+      "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s [retry 1/2 of failed code-review-reality-web-share-comparison-404]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-reality-web-share-comparison-404 reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-reality-web-share-comparison-404",
+      "retry_round": 1
     },
     {
       "id": "dx-documentsbrowse-folder-preselect",
