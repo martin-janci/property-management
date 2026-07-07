@@ -24,7 +24,7 @@ export {
 // Types
 export type { Fault, FaultCategory, FaultPriority, FaultStatus } from './faults';
 export { FaultsListScreen, ReportFaultScreen } from './faults';
-export type { FormStatus, ResidentForm } from './forms';
+export type { ResidentForm } from './forms';
 export { FormsScreen } from './forms';
 export type { ESignatureRequest, ESignatureStatus, Lease, LeaseRole, LeaseStatus } from './leases';
 export { LeaseDetailScreen, LeaseSignatureScreen, LeasesScreen } from './leases';

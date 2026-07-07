@@ -1,5 +1,13 @@
 import { parseThreadDetail, threadTitle, toUiMessages } from './ThreadDetailScreen';
 
+let warnSpy: jest.SpyInstance;
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
+
 const validDetail = {
   participants: [{ id: 'u-2', firstName: 'Building', lastName: 'Manager', email: 'm@x.sk' }],
   messages: [
@@ -28,6 +36,22 @@ describe('parseThreadDetail', () => {
       messages: [{ id: 'm1', content: 'ok', createdAt: 'x' }, null, { id: 'no-content' }],
     });
     expect(parsed?.messages).toHaveLength(1);
+  });
+
+  it('emits a dev-only warning for an unrecognized non-null payload', () => {
+    parseThreadDetail('nope');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('parseThreadDetail'));
+  });
+
+  it('emits a dev-only warning when every message row is dropped', () => {
+    parseThreadDetail({ messages: [{ id: 'no-content' }] });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('dropped all 1'));
+  });
+
+  it('stays silent for a null payload and an empty thread', () => {
+    parseThreadDetail(null);
+    parseThreadDetail({ participants: [], messages: [] });
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
 

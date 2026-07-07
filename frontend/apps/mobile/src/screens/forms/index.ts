@@ -1,2 +1,2 @@
-export type { FormStatus, ResidentForm } from './FormsScreen';
+export type { ResidentForm } from './FormsScreen';
 export { FormsScreen } from './FormsScreen';

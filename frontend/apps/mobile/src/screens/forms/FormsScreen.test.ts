@@ -1,5 +1,13 @@
 import { type ApiFormSummary, parseFormSummaries, toResidentForm } from './FormsScreen';
 
+let warnSpy: jest.SpyInstance;
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
+
 const validForm: ApiFormSummary = {
   id: 'f-1',
   title: 'Fire-safety declaration',
@@ -34,16 +42,31 @@ describe('parseFormSummaries', () => {
     const mixed = [validForm, null, 'garbage', { id: 'no-title' }, { title: 'no-id' }];
     expect(parseFormSummaries({ forms: mixed })).toEqual([validForm]);
   });
+
+  it('emits a dev-only warning for an unrecognized non-null payload', () => {
+    parseFormSummaries({ error: 'boom' });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('parseFormSummaries'));
+  });
+
+  it('emits a dev-only warning when every candidate row is dropped', () => {
+    parseFormSummaries({ forms: [{ noId: true }] });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('dropped all 1'));
+  });
+
+  it('stays silent for a legitimately empty response', () => {
+    parseFormSummaries({ forms: [] });
+    parseFormSummaries(null);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('toResidentForm', () => {
-  it('maps the api summary onto the UI form shape', () => {
+  it('maps the api summary onto the UI form shape (no per-resident status — see #2129)', () => {
     expect(toResidentForm(validForm)).toEqual({
       id: 'f-1',
       title: 'Fire-safety declaration',
       description: 'Confirm equipment is functional.',
       dueAt: '2026-04-30T23:59:00Z',
-      status: 'pending',
       required: true,
     });
   });
@@ -53,6 +76,5 @@ describe('toResidentForm', () => {
     expect(mapped.description).toBe('');
     expect(mapped.dueAt).toBeUndefined();
     expect(mapped.required).toBe(false);
-    expect(mapped.status).toBe('pending');
   });
 });

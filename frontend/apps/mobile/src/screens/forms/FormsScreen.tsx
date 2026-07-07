@@ -12,27 +12,36 @@
  * without a generated client, so it is validated defensively.
  *
  * `FormSummary` carries the form's own lifecycle status, not a per-resident
- * completion state, so the screen presents available forms as actionable
- * ("pending") and surfaces the signature requirement + submission deadline.
+ * completion state, so the screen renders available forms without a completion
+ * badge/counter and surfaces the signature requirement + submission deadline.
+ * A resident-scoped completion-status field is tracked as a backend follow-up
+ * (issue #2129).
  */
 
 import { useCallback } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { warnIfListDegraded } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
-
-export type FormStatus = 'pending' | 'in_progress' | 'completed';
 
 export interface ResidentForm {
   id: string;
   title: string;
   description: string;
   dueAt?: string;
-  status: FormStatus;
   required: boolean;
 }
 
-/** Subset of `FormSummary` from `GET /api/v1/forms/available`. */
+/**
+ * Subset of `FormSummary` from `GET /api/v1/forms/available`.
+ *
+ * Kept hand-rolled deliberately: the backend `db::models::form::FormSummary`
+ * serializes with default snake_case serde, while the `FormSummary` type in
+ * `@ppt/api-client` (`forms/types.ts`) declares camelCase keys — the generated
+ * client type has itself drifted from the wire format, so importing it here
+ * would type the parser against field names the server never sends (tracked in
+ * issue #2129).
+ */
 export interface ApiFormSummary {
   id: string;
   title: string;
@@ -57,39 +66,30 @@ function isApiFormSummary(value: unknown): value is ApiFormSummary {
  *  Accepts the `{ forms: [...] }` envelope and a bare array (defensively);
  *  any other shape yields `[]`. Malformed rows are dropped. */
 export function parseFormSummaries(data: unknown): ApiFormSummary[] {
-  const candidates: unknown[] =
+  const candidates: unknown[] | null =
     typeof data === 'object' &&
     data !== null &&
     Array.isArray((data as ApiAvailableFormsResponse).forms)
       ? (data as ApiAvailableFormsResponse).forms
       : Array.isArray(data)
         ? data
-        : [];
-  return candidates.filter(isApiFormSummary);
+        : null;
+  const forms = (candidates ?? []).filter(isApiFormSummary);
+  warnIfListDegraded('parseFormSummaries', data, candidates, forms.length);
+  return forms;
 }
 
 /** Map an api-server form summary onto the UI shape. Exported for unit
- *  testing without rendering the screen. */
+ *  testing without rendering the screen. No per-resident completion status is
+ *  derived — the endpoint does not expose one (see module docs). */
 export function toResidentForm(f: ApiFormSummary): ResidentForm {
   return {
     id: f.id,
     title: f.title,
     description: f.description?.trim() || '',
     dueAt: f.submission_deadline ?? undefined,
-    status: 'pending',
     required: f.require_signatures ?? false,
   };
-}
-
-function statusBadgeStyle(status: FormStatus) {
-  switch (status) {
-    case 'pending':
-      return { background: colors.dangerBg, color: colors.danger };
-    case 'in_progress':
-      return { background: colors.warningBg, color: colors.warningDark };
-    case 'completed':
-      return { background: colors.successBg, color: colors.successDark };
-  }
 }
 
 interface FormsScreenProps {
@@ -104,7 +104,6 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
   );
 
   const forms: ResidentForm[] = parseFormSummaries(data).map(toResidentForm);
-  const pending = forms.filter((f) => f.status !== 'completed').length;
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -114,9 +113,9 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
     <View style={s.container}>
       <View style={s.header}>
         <Text style={s.headerTitle}>Forms</Text>
-        {pending > 0 && (
+        {forms.length > 0 && (
           <Text style={s.headerSubtitle}>
-            {pending} form{pending === 1 ? '' : 's'} need{pending === 1 ? 's' : ''} attention
+            {forms.length} form{forms.length === 1 ? '' : 's'} available
           </Text>
         )}
       </View>
@@ -142,40 +141,32 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
             <Text style={s.emptyText}>You have no forms to complete right now.</Text>
           </View>
         ) : (
-          forms.map((form) => {
-            const style = statusBadgeStyle(form.status);
-            return (
-              <Pressable
-                key={form.id}
-                style={s.card}
-                onPress={() => onNavigate?.('FormFill', { formId: form.id })}
-              >
-                <View style={s.cardHeader}>
-                  <Text style={s.cardTitle} numberOfLines={2}>
-                    {form.title}
-                  </Text>
-                  <View style={[s.badge, { backgroundColor: style.background }]}>
-                    <Text style={[s.badgeText, { color: style.color }]}>
-                      {form.status.replace('_', ' ')}
-                    </Text>
+          forms.map((form) => (
+            <Pressable
+              key={form.id}
+              style={s.card}
+              onPress={() => onNavigate?.('FormFill', { formId: form.id })}
+            >
+              <View style={s.cardHeader}>
+                <Text style={s.cardTitle} numberOfLines={2}>
+                  {form.title}
+                </Text>
+              </View>
+              {form.description ? <Text style={s.cardBody}>{form.description}</Text> : null}
+              <View style={s.cardFooter}>
+                {form.required && (
+                  <View style={[s.badge, { backgroundColor: colors.dangerBg }]}>
+                    <Text style={[s.badgeText, { color: colors.danger }]}>Required</Text>
                   </View>
-                </View>
-                {form.description ? <Text style={s.cardBody}>{form.description}</Text> : null}
-                <View style={s.cardFooter}>
-                  {form.required && (
-                    <View style={[s.badge, { backgroundColor: colors.dangerBg }]}>
-                      <Text style={[s.badgeText, { color: colors.danger }]}>Required</Text>
-                    </View>
-                  )}
-                  {form.dueAt && (
-                    <Text style={[s.cardMeta, { marginLeft: 'auto' }]}>
-                      Due {new Date(form.dueAt).toLocaleDateString()}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
-            );
-          })
+                )}
+                {form.dueAt && (
+                  <Text style={[s.cardMeta, { marginLeft: 'auto' }]}>
+                    Due {new Date(form.dueAt).toLocaleDateString()}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
+          ))
         )}
 
         <View style={s.bottomSpacer} />
