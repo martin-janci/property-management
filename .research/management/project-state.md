@@ -45,14 +45,13 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 
 ## What's next (top 5 actions)
 
-(top of roadmap.md, deep scan 2026-07-07)
+(top of roadmap.md, deep scan 2026-07-07 evening)
 
-1. **[high] RFC 9700 refresh-token revocation validation (issue #481)** (10a-1 + 10a-3 OAuth) — pm-backend. Gates 2 of the 3 epic-10a stories.
-2. **[high] Resolve 7a-5 sprint-status drift** — issue #485 fixed by PR #2003 (merged 2026-07-01) but story still `ready-for-dev`; reconcile to done. — pm-backend
-3. **[high] MFA e2e brute-force/rate-limit coverage (issue #487)** (10a-1) — pm-backend/pm-security.
-4. **[high] Fix document_folder_tests CI red (7a-2)** — FK/isolation failure keeps folder-organization reverted from done. — pm-backend
-5. **[high] Wire DisputeDetailRoute in App.tsx to DisputeDetailPage.tsx (80-3)** — routing stub hides a fully-built page. — pm-frontend
-
+1. **[high] Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 — gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped** — pm-backend
+2. **[high] No application handler calling search_similar_documents or embedding-write flow (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
+3. **[high] RAG retrieval/query service (embedding generation + similarity search) not implemented in routes/repositories (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
+4. **[medium] Frontend UI not built (OrganizationsPage.tsx not found; buildStatus=planned not shipped) (10b-1-organization-management-dashboard Organization Management Dashboard)** — pm-frontend
+5. **[medium] Create new schedule endpoint still stubbed out (81-1-report-schedule-editing Report Schedule Editing)** — pm-backend
 
 ## Blockers
 

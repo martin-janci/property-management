@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T14:30:00Z",
+  "generated": "2026-07-07T19:45:00Z",
   "scan_kind": "deep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -32,95 +32,6 @@
     ]
   },
   "stories": [
-    {
-      "id": "10a-1-oauth-authorization-server",
-      "title": "OAuth 2.0 Authorization Server",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "sprint-status.yaml: ready-for-dev with story gates #481 (revocation security), #487 (MFA test coverage)",
-        "oauth.rs routes: 1198 lines, complete auth/token/revoke/introspect endpoints with PKCE, Argon2 hashing, audit logging",
-        "oauth_authorization_server_test.rs + oauth_integration_tests.rs: comprehensive test coverage including error paths",
-        "screen-map oauth-callback.md: shipped"
-      ],
-      "gaps": [
-        "RFC 9700 refresh-token revocation validation (issue #481)",
-        "MFA e2e brute-force/rate-limit test coverage (issue #487)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-10a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "10a-2-oauth-client-registration",
-      "title": "OAuth Client Registration",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "sprint-status.yaml: ready-for-dev with story gate #482 (ProtectedRoute + tests)",
-        "oauth.rs: register_client, list_clients, get_client, update_client, revoke_client, regenerate_client_secret handlers",
-        "OAuthClientsPage.tsx: admin console with full CRUD wired to backend endpoints",
-        "screen-map admin-oauth-clients.md: buildStatus shipped, apiStatus complete"
-      ],
-      "gaps": [
-        "ProtectedRoute role fallback fix for multi-tenant users (issue #482)",
-        "ProtectedRoute unit test coverage (issue #482)"
-      ],
-      "epic": "epic-10a",
-      "last_checked": "2026-07-07",
-      "screen_refs": [
-        {
-          "screen_id": "ppt/admin-oauth-clients",
-          "buildStatus": "shipped",
-          "apiStatus": "complete",
-          "redesignStatus": "not-started"
-        }
-      ]
-    },
-    {
-      "id": "10a-3-oauth-token-management",
-      "title": "OAuth Token Management",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "sprint-status.yaml: ready-for-dev with story gate #481 (revocation security)",
-        "oauth.rs: refresh_tokens, introspect_token, token revocation, user grant management",
-        "OAuthGrantsPage component: list/revoke user grants wired to backend",
-        "oauth_token_introspection_rotation_test.rs: token rotation tests"
-      ],
-      "gaps": [
-        "RFC 9700 refresh-token revocation validation (issue #481)"
-      ],
-      "epic": "epic-10a",
-      "last_checked": "2026-07-07",
-      "screen_refs": [
-        {
-          "screen_id": "ppt/settings-oauth-grants",
-          "buildStatus": "shipped",
-          "apiStatus": "complete",
-          "redesignStatus": "not-started"
-        }
-      ]
-    },
     {
       "id": "10b-1-organization-management-dashboard",
       "title": "Organization Management Dashboard",
@@ -590,204 +501,6 @@
       ]
     },
     {
-      "id": "7a-1-document-upload-metadata",
-      "title": "Document Upload with Metadata",
-      "phase": "mvp",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "Sprint-status: done (verified 2026-06-17)",
-        "Backend: POST /api/v1/documents/upload with multipart + S3 + RLS-aware create_rls",
-        "document_upload_tests.rs: 15 test cases incl. cross-tenant RLS",
-        "Screen-map ppt/upload-document buildStatus=shipped"
-      ],
-      "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-7a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "7a-2-folder-organization",
-      "title": "Folder Organization",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "Sprint-status: review (CI test job red, reverted from done pending green CI)",
-        "Backend: routes/documents/folders.rs complete with 6 endpoints",
-        "Frontend: FolderTreePage shipped with tree, rename, delete, move-to-folder",
-        "Screen-map ppt/document-folders buildStatus=shipped, apiStatus=complete"
-      ],
-      "gaps": [
-        "CI test job failing (document_folder_tests FK/isolation); reverted from done pending green CI",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-7a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "7a-3-permission-based-access",
-      "title": "Permission-Based Document Access",
-      "phase": "mvp",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "Sprint-status: done (verified 2026-07-04)",
-        "document_access_allowed gates all access + scope_membership_allows",
-        "document_access_test.rs (217 lines) + cross-tenant RLS tests",
-        "Defense-in-depth: RLS + explicit org re-check on download/preview"
-      ],
-      "gaps": [
-        "Frontend permission UI (AccessScopeSelector/RoleSelector/UserSelector) not shipped; backend enforcement complete",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-7a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "7a-4-document-download-preview",
-      "title": "Document Download & Preview",
-      "phase": "mvp",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "Sprint-status: done (verified 2026-07-04)",
-        "Backend: download + preview with presigned S3 URLs (15-min/1-hr TTL)",
-        "document_download_preview_tests.rs (15 cases)",
-        "Frontend: DocumentDetail.tsx + DocumentPreviewModal (lazy PDF.js); screen-map shipped"
-      ],
-      "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-7a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "7a-5-document-sharing",
-      "title": "Document Sharing",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend",
-        "mobile"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "Sprint-status: ready-for-dev (blocking issue #485 RESOLVED via PR #2003 merged 2026-07-01)",
-        "Backend: routes/documents/shares.rs with 6 endpoints",
-        "Frontend: DocumentSharePanel via PR #467; Mobile: DocumentShareSheet via PR #2003",
-        "gap-7a-5-mobile-share-ui + gap-7a-5 both merged"
-      ],
-      "gaps": [
-        "Issue #485 resolved per PR #2003, but sprint-status not yet updated to reflect completion",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-7a",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "80-1-disputes-api-integration",
-      "title": "Disputes API Integration",
-      "phase": "mvp",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend"
-      ],
-      "owner_role": "pm-backend",
-      "evidence": [
-        "sprint-status.yaml: 80-1 = done",
-        "disputes.rs: file/list/get/update-status/withdraw handlers present",
-        "db models: FileDispute, Dispute, DisputeEvidence, DisputeParty, DisputeQuery, DisputeStatistics",
-        "tests: dispute_evidence_auth_tests.rs, dispute_cross_org_idor_tests.rs"
-      ],
-      "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-80",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "80-2-dispute-filing-flow",
-      "title": "Dispute Filing Flow",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "frontend"
-      ],
-      "owner_role": "pm-frontend",
-      "evidence": [
-        "sprint-status.yaml: 80-2 = partial (AC-1/2/3/5 met, AC-4 unimplemented)",
-        "screen-map ppt/file-dispute buildStatus=shipped (FileDisputePage.tsx)",
-        "FileDisputePage + EvidenceUploader; 22 tests passing",
-        "useDraftStorage.ts hook PR #1100; wizard redesign in-progress"
-      ],
-      "gaps": [
-        "AC-4 draft persistence on 5-step wizard redesign (not single-page form)",
-        "wizard redesign still in-progress (redesignStatus: in-progress)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-80",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
-      "id": "80-3-mediation-resolution",
-      "title": "Mediation and Resolution",
-      "phase": "mvp",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend",
-        "frontend"
-      ],
-      "owner_role": "pm-frontend",
-      "evidence": [
-        "sprint-status.yaml: 80-3 = partial (verified 2026-05-25)",
-        "DisputeDetailPage.tsx + MediationPage.tsx implemented; all mediation hooks present",
-        "disputes.rs: mediation routes present (sessions, submissions, resolutions, votes)",
-        "screen-map ppt/dispute-detail buildStatus=shipped, apiStatus=partial; MediationWorkspacePage wired"
-      ],
-      "gaps": [
-        "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) \u2014 routing wiring incomplete",
-        "party submissions endpoints unwired (apiStatus: partial)",
-        "sessions/submissions workflow not fully threaded from App.tsx",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
-      ],
-      "epic": "epic-80",
-      "last_checked": "2026-07-07",
-      "screen_refs": []
-    },
-    {
       "id": "81-1-report-schedule-editing",
       "title": "Report Schedule Editing",
       "phase": "phase2",
@@ -952,112 +665,6 @@
       "epic": "epic-82",
       "last_checked": "2026-07-07",
       "screen_refs": []
-    },
-    {
-      "id": "83-1-airbnb-integration",
-      "title": "Airbnb OAuth and Sync",
-      "phase": "phase4",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend"
-      ],
-      "owner_role": "pm-integration",
-      "evidence": [
-        "airbnb.rs: full OAuth token types + sync result models",
-        "handle_airbnb_webhook() with HMAC-SHA256 verification + dedup",
-        "airbnb oauth/webhook/dedup test files all present",
-        "Routes: /airbnb/token/exchange, /airbnb/listings, /airbnb/reservations"
-      ],
-      "gaps": [],
-      "epic": "epic-83",
-      "last_checked": "2026-07-07",
-      "screen_refs": [
-        {
-          "screen_id": "reality/home",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        },
-        {
-          "screen_id": "reality/listings",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        }
-      ]
-    },
-    {
-      "id": "83-2-booking-integration",
-      "title": "Booking.com OAuth and Sync",
-      "phase": "phase4",
-      "status": "done",
-      "confidence": "high",
-      "platform": [
-        "backend"
-      ],
-      "owner_role": "pm-integration",
-      "evidence": [
-        "booking/mod.rs: OAuth config + credential types",
-        "booking_token_exchange() with manager-role gate + IDOR protection",
-        "OTA XML parsing via quick_xml ota_xml submodule",
-        "booking_oauth_routes_tests.rs + credential encryption tests"
-      ],
-      "gaps": [],
-      "epic": "epic-83",
-      "last_checked": "2026-07-07",
-      "screen_refs": [
-        {
-          "screen_id": "reality/home",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        },
-        {
-          "screen_id": "reality/listings",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        }
-      ]
-    },
-    {
-      "id": "83-3-portal-webhooks",
-      "title": "Real Estate Portal Webhooks",
-      "phase": "phase4",
-      "status": "partial",
-      "confidence": "high",
-      "platform": [
-        "backend"
-      ],
-      "owner_role": "pm-integration",
-      "evidence": [
-        "portals.rs: PortalConnection + PortalParser trait + Sreality/Bezrealitky/Immowelt parsers",
-        "handle_portal_webhook() with HMAC-SHA256 verification",
-        "portal_webhook_signature_tests.rs fail-closed (PR #874)",
-        "Routes: /webhooks/portal/{connection_id}"
-      ],
-      "gaps": [
-        "Webhook handler is stub: verifies signature but doesn't store parsed inquiries to database",
-        "PortalInquiry storage/retrieval not wired to handler",
-        "No inquiry acknowledgment or status tracking workflow"
-      ],
-      "epic": "epic-83",
-      "last_checked": "2026-07-07",
-      "screen_refs": [
-        {
-          "screen_id": "reality/home",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        },
-        {
-          "screen_id": "reality/listings",
-          "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
-        }
-      ]
     },
     {
       "id": "84-1-s3-presigned-urls",
@@ -1340,6 +947,401 @@
           "buildStatus": "shipped",
           "apiStatus": "complete",
           "redesignStatus": "not-started"
+        }
+      ]
+    },
+    {
+      "id": "7a-1-document-upload-metadata",
+      "title": "Document Upload with Metadata",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "sprint-status done (verified 2026-06-17)",
+        "POST /api/v1/documents/upload in routes/documents/core.rs",
+        "document_upload_tests.rs (T1-T15) cover AC-1/AC-2/AC-3",
+        "screen-map upload-document.md buildStatus=shipped"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-7a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "7a-2-folder-organization",
+      "title": "Folder Organization",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "sprint-status done (verified 2026-07-07 via PR #2156)",
+        "backend.yml run 28866124336 test job success: document_folder_tests 27 passed",
+        "routes/documents/folders.rs 6 endpoints shipped",
+        "frontend FolderTreePage shipped; screen-map buildStatus=shipped"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-7a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "7a-3-permission-based-access",
+      "title": "Permission-Based Document Access",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "sprint-status done (verified 2026-07-04)",
+        "routes/documents/core.rs gates list/download/preview",
+        "all five access scopes implemented",
+        "document_access_test.rs (217 lines)"
+      ],
+      "gaps": [
+        "frontend permission authoring UI (AccessScopeSelector/RoleSelector/UserSelector) not shipped - tracked separately",
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-7a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "7a-4-document-download-preview",
+      "title": "Document Download & Preview",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "sprint-status done (verified 2026-07-04)",
+        "download + preview endpoints with presigned S3 URLs (15min/1hr TTL)",
+        "document_download_preview_tests.rs (15 tests)",
+        "DocumentDetail.tsx + DocumentPreviewModal shipped"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-7a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "7a-5-document-sharing",
+      "title": "Document Sharing",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend",
+        "mobile"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "sprint-status done (verified 2026-07-07 via PR #2154)",
+        "routes/documents/shares.rs share CRUD + document_share_access_tests.rs",
+        "web DocumentSharePanel.tsx with ConfirmationDialog + UUID validation",
+        "mobile DocumentShareSheet via PR #2003; story gate #485 cleared"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-7a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "10a-1-oauth-authorization-server",
+      "title": "OAuth 2.0 Authorization Server",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "oauth.rs (1198 lines): complete auth/token/revoke/introspect with PKCE, Argon2, audit logging",
+        "test_revoked_refresh_token_rejected_at_token_endpoint + comprehensive oauth test files",
+        "Issue #481 CLOSED 2026-05-26 (revoked-filtering + family-reuse detection paths)",
+        "Issue #487 CLOSED: test_mfa_verify_rate_limited present (#[ignore] pending middleware), mod-common fix applied"
+      ],
+      "gaps": [
+        "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed \u2014 reconcile gate note",
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-10a",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "10a-2-oauth-client-registration",
+      "title": "OAuth Client Registration",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "oauth.rs: register/list/get/update/revoke client + regenerate_client_secret handlers",
+        "OAuthClientsPage.tsx admin console full CRUD",
+        "Issue #482 CLOSED: ProtectedRoute.test.tsx covers deny-missing-role/allow-correct/deny-wrong",
+        "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete"
+      ],
+      "gaps": [
+        "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
+      ],
+      "epic": "epic-10a",
+      "last_checked": "2026-07-07",
+      "screen_refs": [
+        {
+          "screen_id": "ppt/admin-oauth-clients",
+          "buildStatus": "shipped",
+          "apiStatus": "complete",
+          "redesignStatus": "not-started"
+        }
+      ]
+    },
+    {
+      "id": "10a-3-oauth-token-management",
+      "title": "OAuth Token Management",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "oauth.rs: refresh_tokens, introspect_token, revocation, user grant management",
+        "OAuthGrantsPage list/revoke wired",
+        "oauth_token_introspection_rotation_test.rs",
+        "Issue #481 CLOSED 2026-05-26"
+      ],
+      "gaps": [
+        "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
+      ],
+      "epic": "epic-10a",
+      "last_checked": "2026-07-07",
+      "screen_refs": [
+        {
+          "screen_id": "ppt/settings-oauth-grants",
+          "buildStatus": "shipped",
+          "apiStatus": "complete",
+          "redesignStatus": "not-started"
+        }
+      ]
+    },
+    {
+      "id": "80-1-disputes-api-integration",
+      "title": "Disputes API Integration",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "routes/disputes.rs 28+ endpoints wired",
+        "DisputesPageRoute wired to useDisputes",
+        "sprint-status done",
+        "api-client hooks generated"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-80",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "80-2-dispute-filing-flow",
+      "title": "Dispute Filing Flow",
+      "phase": "mvp",
+      "status": "partial",
+      "confidence": "high",
+      "platform": [
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "AC-1/2/3/5 implemented + 22 tests passing",
+        "AC-4 draft persistence NOW IMPLEMENTED via useDraftStorage.ts (debounced localStorage, tested)",
+        "FileDisputePage auto-saves via useDraftStorage(DISPUTE_DRAFT_KEY)",
+        "sprint-status: stays partial, 5-step wizard redesign in-progress"
+      ],
+      "gaps": [
+        "5-step wizard redesign still in-progress per sprint-status annotation",
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-80",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "80-3-mediation-resolution",
+      "title": "Mediation and Resolution",
+      "phase": "mvp",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend",
+        "frontend"
+      ],
+      "owner_role": "pm-frontend",
+      "evidence": [
+        "Promoted done 2026-06-25 per sprint-status; morning stub finding stale",
+        "DisputeDetailRoute wired to real DisputeDetailPage (routes/groups/disputes.tsx) \u2014 PR #2155 added 4 route regression tests",
+        "party-submission endpoints wired (backend lines 1040-1107) + useDisputeSubmissions/useSubmitResponse + MediationSubmissionsPanel tab",
+        "screen-map dispute-detail buildStatus=shipped apiStatus=complete; 152 dispute tests green"
+      ],
+      "gaps": [
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+      ],
+      "epic": "epic-80",
+      "last_checked": "2026-07-07",
+      "screen_refs": []
+    },
+    {
+      "id": "83-1-airbnb-integration",
+      "title": "Airbnb OAuth and Sync",
+      "phase": "phase4",
+      "status": "partial",
+      "confidence": "high",
+      "platform": [
+        "backend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "airbnb.rs 664L OAuth + listings + reservations + API client",
+        "routes wired: status/connect/sync/disconnect/direct-connect/availability-sync",
+        "token_rotation.rs + airbnb_connections.rs",
+        "endpoint checklist: status=done (IDOR tested), connect/sync/disconnect=partial"
+      ],
+      "gaps": [
+        "No test coverage for OAuth flow (connect/sync/disconnect)",
+        "direct-connect and availability-sync enqueue handlers lack tests",
+        "frontend integrations UI not wired (settings/integrations not routed)"
+      ],
+      "epic": "epic-83",
+      "last_checked": "2026-07-07",
+      "screen_refs": [
+        {
+          "screen_id": "reality/home",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
+        },
+        {
+          "screen_id": "reality/listings",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
+        }
+      ]
+    },
+    {
+      "id": "83-2-booking-integration",
+      "title": "Booking.com OAuth and Sync",
+      "phase": "phase4",
+      "status": "partial",
+      "confidence": "high",
+      "platform": [
+        "backend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "booking/mod.rs 664L + ota_xml.rs 58K Connectivity API + OTA XML",
+        "routes wired: status/connect/sync/push-availability/push-rates + DELETE",
+        "booking_channel.rs listing push + conflict detection",
+        "PR #2081 (2026-07-02) documented dual-auth model"
+      ],
+      "gaps": [
+        "No test coverage for any Booking.com handler",
+        "OTA XML message parsing + generation untested",
+        "frontend property mapping wizard not wired",
+        "rate/availability push integration deferred"
+      ],
+      "epic": "epic-83",
+      "last_checked": "2026-07-07",
+      "screen_refs": [
+        {
+          "screen_id": "reality/home",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
+        },
+        {
+          "screen_id": "reality/listings",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
+        }
+      ]
+    },
+    {
+      "id": "83-3-portal-webhooks",
+      "title": "Real Estate Portal Webhooks",
+      "phase": "phase4",
+      "status": "done",
+      "confidence": "high",
+      "platform": [
+        "backend"
+      ],
+      "owner_role": "pm-backend",
+      "evidence": [
+        "portal_webhooks.rs 8 endpoints routed at /api/v1/webhooks/portals; morning stub finding WRONG (read integrations/webhook.rs, not the shipped routes file)",
+        "signature verification fails closed (401) per #833; portal_webhook_signature_tests.rs 4 cases",
+        "inquiry persistence VERIFIED: process_inquiry_webhook -> record_webhook_event INSERT + syndication stats",
+        "acknowledgment workflow exists: POST /portal-inquiries/{id}/read; PR #2007 doc alignment merged"
+      ],
+      "gaps": [
+        "No handler-level tests for portal-specific inquiry parsers",
+        "frontend inquiry list/reply UI not wired"
+      ],
+      "epic": "epic-83",
+      "last_checked": "2026-07-07",
+      "screen_refs": [
+        {
+          "screen_id": "reality/home",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
+        },
+        {
+          "screen_id": "reality/listings",
+          "buildStatus": "shipped",
+          "apiStatus": "partial",
+          "redesignStatus": "in-progress"
         }
       ]
     }
