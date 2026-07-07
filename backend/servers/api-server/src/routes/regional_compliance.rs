@@ -428,14 +428,10 @@ async fn export_slovak_accounting(
     // metrics by putting B's id in the body. The body field is now ignored for
     // scoping.
     let org_id = rls.tenant_id();
-    let (
-        invoice_count,
-        payment_count,
-        total_revenue,
-        total_expenses,
-        total_receivables,
-        total_payables,
-    ) = state
+    // Named-struct result (#2122): field access below is compiler-checked, so a
+    // revenue↔receivables (or expenses↔payables) transposition can no longer be
+    // introduced silently the way a positional tuple destructure allowed.
+    let metrics = state
         .regional_compliance_repo
         .get_accounting_metrics(rls.conn(), org_id, payload.from_date, payload.to_date)
         .await
@@ -446,7 +442,7 @@ async fn export_slovak_accounting(
             )
         })?;
 
-    let journal_entry_count = invoice_count + payment_count;
+    let journal_entry_count = metrics.invoice_count + metrics.payment_count;
 
     // Build via the smart constructor (#2086): `partial` + `unsupported_fields`
     // are derived inside `new` from the `Option` monetary fields, so this
@@ -460,13 +456,13 @@ async fn export_slovak_accounting(
         from_date: payload.from_date,
         to_date: payload.to_date,
         format: payload.format,
-        invoice_count,
-        payment_count,
+        invoice_count: metrics.invoice_count,
+        payment_count: metrics.payment_count,
         journal_entry_count,
-        total_revenue,
-        total_expenses,
-        total_receivables,
-        total_payables,
+        total_revenue: metrics.total_revenue,
+        total_expenses: metrics.total_expenses,
+        total_receivables: metrics.total_receivables,
+        total_payables: metrics.total_payables,
         download_url: Some(format!(
             "/api/v1/regional-compliance/slovak/accounting/download/{}",
             Uuid::new_v4()

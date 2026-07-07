@@ -447,6 +447,36 @@ pub struct SlovakAccountingExportInput {
     pub generated_at: DateTime<Utc>,
 }
 
+/// Named-field result of
+/// [`RegionalComplianceRepository::get_accounting_metrics`](crate::repositories::regional_compliance::RegionalComplianceRepository::get_accounting_metrics).
+///
+/// Replaces the positional 6-tuple
+/// `(i32, i32, Decimal, Option<Decimal>, Decimal, Option<Decimal>)` (#2122).
+/// Four of those slots were type-identical and interleaved — two bare
+/// `Decimal` (`total_revenue` / `total_receivables`) and two `Option<Decimal>`
+/// (`total_expenses` / `total_payables`) — so transposing revenue↔receivables
+/// (or the two options) at the return site or the destructuring call site
+/// compiled cleanly and silently shipped wrong accounting figures. That is the
+/// exact #2103 honesty class, one layer upstream of the
+/// [`SlovakAccountingExportInput`] ctor that #2103 fixed. Naming each field
+/// here makes the compiler enforce the
+/// revenue/receivables/expenses/payables identity end-to-end, from the
+/// repository query assembly through to the handler that feeds
+/// [`SlovakAccountingExport::new`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AccountingMetrics {
+    pub invoice_count: i32,
+    pub payment_count: i32,
+    pub total_revenue: Decimal,
+    /// `None` = **not available**, not zero — see
+    /// [`SlovakAccountingExport::total_expenses`].
+    pub total_expenses: Option<Decimal>,
+    pub total_receivables: Decimal,
+    /// `None` = **not available**, not zero — see
+    /// [`SlovakAccountingExport::total_payables`].
+    pub total_payables: Option<Decimal>,
+}
+
 impl SlovakAccountingExport {
     /// Smart constructor: the ONLY way to build a `SlovakAccountingExport`.
     ///
