@@ -764,6 +764,53 @@ if [ -x "$INGEST" ]; then note "issue-ingest.sh present + executable"
 else fail "issue-ingest.sh missing or not executable ($INGEST)"; fi
 echo
 
+# --- T31: supply-chain hardening wiring (2026-07-07) ------------------------
+# Four starvation/stall fixes must stay encoded:
+#   (a) backlog-reconcile.sh + retry-remint.sh exist, are executable, and the
+#       prompt wires them (Phase 2.6 backlog-honesty pass + Tier 1c);
+#   (b) the prompt encodes the Phase 5.8 merge-confirm sweep and the Phase 2
+#       escalation SLA (stale red reviews + quarantine exit);
+#   (c) every retry_of-carrying action-list row is well-formed: retry_of is a
+#       string, retry_round a number >= 1, and the id ends in -retry<N>
+#       (the suffix is what satisfies the exact-id archive exclusion);
+#   (d) an OPEN retry row's ORIGINAL (retry_of) must NOT be merged/done in the
+#       archive — retrying landed work is duplicate work.
+echo "T31 supply-chain hardening: reconcile/retry/merge-confirm/SLA wiring"
+for s in backlog-reconcile.sh retry-remint.sh; do
+  if [ -x ".research/$s" ]; then note "$s present + executable"
+  else fail "$s missing or not executable"; fi
+done
+if [ -f "$PROMPT" ]; then
+  grep -q 'backlog-reconcile.sh' "$PROMPT" && note "prompt wires backlog-honesty pass" || fail "prompt missing backlog-reconcile wiring"
+  grep -q 'retry-remint.sh' "$PROMPT"      && note "prompt wires Tier 1c retry re-mint" || fail "prompt missing retry-remint wiring"
+  grep -q 'Phase 5.8 — Merge-confirm sweep' "$PROMPT" && note "prompt encodes merge-confirm sweep" || fail "prompt missing Phase 5.8 merge-confirm sweep"
+  grep -q 'quarantine escalation SLA' "$PROMPT" && note "prompt encodes escalation SLA" || fail "prompt missing escalation SLA"
+fi
+if [ -f "$ACTION_LIST" ]; then
+  BAD31=$(jq -r '
+    [ .items[]
+      | select(has("retry_of"))
+      | select((.retry_of | type) != "string"
+               or ((.retry_round // 0) | type) != "number"
+               or (.retry_round // 0) < 1
+               or ((.id | type) != "string")
+               or ((.id | test("-retry[0-9]+$")) | not)) ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD31" = "0" ]; then note "all retry_of rows well-formed"
+  else fail "$BAD31 malformed retry_of row(s) in action-list"; fi
+  if [ -f "$ASSIGN_ARCHIVE" ]; then
+    BAD31b=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile arc "$ASSIGN_ARCHIVE" '
+      ([ $arc[0].assignments[]? | select(.status=="merged" or .status=="done") | .task_id ] | unique) as $landed
+      | [ $al[0].items[]
+          | select(has("retry_of") and .status=="open")
+          | select(.retry_of as $o | $landed | index($o)) ]
+      | length')
+    if [ "$BAD31b" = "0" ]; then note "no open retry row targets landed work"
+    else fail "$BAD31b open retry row(s) whose original already merged/done"; fi
+  fi
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
