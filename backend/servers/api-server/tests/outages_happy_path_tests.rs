@@ -59,7 +59,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::{
-    create_authenticated_user_with_org, seed_membership, seed_org, TestApp, TestConfig, TestUser,
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, seed_org,
+    TestApp, TestConfig, TestUser,
 };
 
 const BASE: &str = "/api/v1/outages";
@@ -438,5 +439,82 @@ async fn full_lifecycle_via_real_login_transitions_status(pool: PgPool) {
         action_status(&resp),
         "cancelled",
         "cancel should set status=cancelled"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// RBAC deny: real-login non-manager gets 403 on mutations (follow-up #2121)
+//
+// The real-login tests above only exercise the allowed (manager) side of the
+// `rls.role().is_manager()` gate. This is the deny side: a real-login user
+// whose DB membership is `resident` (below the manager threshold) passes
+// `AuthUser` and `ValidatedTenantExtractor` but must be rejected by the RBAC
+// check inside the handler — mirroring `report_schedule_rbac_tests.rs`. Without
+// it, a future change that flips the gate open would go uncaught.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_outage_via_real_login_non_manager_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Register + verify + login a real user (production flow: the access token
+    // carries no `role` claim), then attach them to a fresh org as a
+    // non-manager `resident` — `TenantRole::Resident::is_manager()` is false.
+    let user = TestUser::new();
+    let (token, _refresh) = create_authenticated_user(&app, &user).await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let org_id = seed_org(&app.pool, "outage-login-deny").await;
+    seed_membership(&app.pool, org_id, user_id, "resident").await;
+
+    let r = app
+        .post(BASE)
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({
+            "title": "Planned water shutoff",
+            "description": "RBAC deny outage",
+            "commodity": "water",
+            "severity": "medium",
+            "scheduled_start": "2026-06-01T08:00:00Z",
+            "scheduled_end": "2026-06-01T12:00:00Z",
+            "supplier_name": "City Water Co.",
+        }))
+        .build();
+    let resp = app.execute(r).await;
+
+    // The RBAC check inside the handler must fire — not the outer JWT gate
+    // (401) and not the membership gate (the user IS an active member).
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "#2121: real-login resident must be rejected by `rls.role().is_manager()` \
+         with 403, got {} body={}",
+        resp.status,
+        resp.text(),
+    );
+    let body = resp.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "FORBIDDEN",
+        "#2121: 403 response must carry the FORBIDDEN code, body={}",
+        body
+    );
+
+    // The deny must also be effective: no outage row was created.
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM outages WHERE organization_id = $1")
+        .bind(org_id)
+        .fetch_one(&app.pool)
+        .await
+        .expect("count outages");
+    assert_eq!(
+        count, 0,
+        "#2121: a 403'd create must not insert an outage row"
     );
 }
