@@ -140,6 +140,186 @@
         ]
       },
       "last_updated": "2026-07-04T20:13:30Z"
+    },
+    {
+      "id": "gh-issue-2121",
+      "action": "Follow-up: add non-manager deny test for outage mutations (PR #2120) (Closes #2121)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2121)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2121,
+        "url": "https://github.com/martin-janci/property-management/issues/2121",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2122",
+      "action": "Follow-up: get_accounting_metrics positional tuple still allows same-type transposition (PR #2117) (Closes #2122)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2122)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2122,
+        "url": "https://github.com/martin-janci/property-management/issues/2122",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2123",
+      "action": "Follow-up: enlarge tie group in include_system pagination test (PR #2116) (Closes #2123)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2123)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2123,
+        "url": "https://github.com/martin-janci/property-management/issues/2123",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2124",
+      "action": "Follow-up: enum-sync ALL completeness is not compiler-enforced (PR #2113) (Closes #2124)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2124)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2124,
+        "url": "https://github.com/martin-janci/property-management/issues/2124",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2125",
+      "action": "Follow-up: test ListingDetail updateAuth() + guard favorite-toggle rollback after logout (PR #2115) (Closes #2125)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2125)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2125,
+        "url": "https://github.com/martin-janci/property-management/issues/2125",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2126",
+      "action": "Follow-up: MCP-push size guard is a no-op as wired (post-commit --staged) (PR #2114) (Closes #2126)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2126)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2126,
+        "url": "https://github.com/martin-janci/property-management/issues/2126",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2127",
+      "action": "Follow-up: deny.toml CODEOWNERS gate is advisory-only; add CI ban-presence check (PR #2111) (Closes #2127)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2127)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2127,
+        "url": "https://github.com/martin-janci/property-management/issues/2127",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2128",
+      "action": "Follow-up: exec-bit gate only blocks if wired as a required status check on dev (PR #2119) (Closes #2128)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2128)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2128,
+        "url": "https://github.com/martin-janci/property-management/issues/2128",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2129",
+      "action": "Follow-up: mobile RN screen wiring — type drift + misleading Leases/Forms status + polish (PR #2118) (Closes #2129)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-07T00:05:06Z (#2129)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T00:05:06Z",
+      "issue_ref": {
+        "number": 2129,
+        "url": "https://github.com/martin-janci/property-management/issues/2129",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
