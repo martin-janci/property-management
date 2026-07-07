@@ -553,6 +553,30 @@
       "merge_attempted_at": "2026-07-02T04:12:00Z"
     },
     {
+      "task_id": "83-3-portal-webhooks",
+      "branch": "auto-impl/83-3-portal-webhooks-30907df2",
+      "status": "merged",
+      "claimed_at": "2026-07-02T00:09:07Z",
+      "last_updated": "2026-07-07T17:15:03Z",
+      "status_changed_at": "2026-07-07T17:15:03Z",
+      "pr_number": 2007,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2007",
+      "merged_at": "2026-07-07T17:14:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2007 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=verify-to-done: receivers already ship (Epic105/105.4); added UC-32.9 + Story 83.3 traceability doc-comment; cargo check blocked by pre-existing swagger-ui build env issue",
+      "reviewer_summary": "verdict=approve note=doc-comment-only(5 lines), HMAC untouched, CI green except unrelated cargo-deny; existing approve-comment at same SHA (dedup) | head advanced to c6f56 via clean human Merge-branch-dev (net diff unchanged: +5/1-file doc comment already approved at cd78); oid carried, no redundant re-review",
+      "last_reviewed_oid": "c6f56c684cbe8f3a921a286e5a446992c0a7d787",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-07T17:20:00Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "84-4-notification-triggers",
       "branch": "auto-impl/84-4-notification-triggers-0c5567ab",
       "status": "failed",
@@ -2985,5 +3009,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T16:17:53Z"
+  "archived_at": "2026-07-07T17:15:03Z"
 }

@@ -50,18 +50,6 @@
       "depends_on": []
     },
     {
-      "id": "83-3-portal-webhooks",
-      "action": "Coverage gap [phase4]: Real Estate Portal Webhooks — verify and finish to done. Gaps: Implemented and labeled under Epic 105 'Portal Syndication / Story 105.4' in code; functionally covers this story's portal-webhook scope but story-id alignment is indirect",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-28 (coverage partial-story gaps; conservative)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-06T14:07:23Z"
-    },
-    {
       "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
       "action": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "owner_role": "pm-qa",
