@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T22:04:23Z",
+  "generated": "2026-07-07T22:14:25Z",
   "assignments": [
     {
       "task_id": "gh-issue-2158",
@@ -52,15 +52,15 @@
     {
       "task_id": "gap-83-1-no-test-coverage-for-oauth-flow",
       "branch": "auto-impl/gap-83-1-no-test-coverage-for-oauth-flow-bab951d7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-07T20:47:34Z",
-      "status_changed_at": "2026-07-07T20:47:34Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T22:14:25Z",
+      "status_changed_at": "2026-07-07T22:14:25Z",
+      "pr_number": 2166,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2166",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2166 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=16 route tests for airbnb connect/sync/disconnect; compile+clippy green, PG:5433 stalled so compile-gate-only verification noted in PR",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -108,7 +108,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/2162",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=2162 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=22 additive ota_xml unit tests (module already had 28 — scan gap partially stale); cargo test -p integrations 246 passed; clippy+fmt clean",
+      "implementer_summary": "pr=2162 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=22 additive ota_xml unit tests (module already had 28 \u2014 scan gap partially stale); cargo test -p integrations 246 passed; clippy+fmt clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
