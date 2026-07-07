@@ -777,6 +777,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "bug-ios-searchview-uncompilable-retry1",
+      "branch": "auto-impl/bug-ios-searchview-uncompilable-retry1-11632a5f",
+      "status": "done",
+      "claimed_at": "2026-07-07T18:03:00Z",
+      "last_updated": "2026-07-07T18:06:00Z",
+      "status_changed_at": "2026-07-07T18:06:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ios-swiftui",
+      "implementer_summary": "pr=none status=blocked specialist=ios-swiftui — GHOST retry: fix already merged on dev (commit 727d9c3, SearchView.swift complete + SearchViewTests present); empty diff, no PR. Marked done (not failed) to stop ghost re-mint loop (cf #2153).",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "bug-risky-churn-pr-963-api-main-rs",
       "branch": "auto-impl/bug-risky-churn-pr-963-api-main-rs-951d92ab",
       "status": "failed",
@@ -3081,5 +3105,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T17:36:39Z"
+  "archived_at": "2026-07-07T18:13:36Z"
 }
