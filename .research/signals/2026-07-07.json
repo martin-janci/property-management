@@ -62,7 +62,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -71,21 +71,23 @@
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:258 \u2014 createConnection/syncPlatforms mutations invalidate on success but never surface errors via toast",
         "frontend/apps/ppt-web/src/routes/groups/financial.tsx:296 \u2014 matchMutation/autoMatchMutation only handle onSuccess; payment-allocation failures look like success"
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "_note": "score_delta zeroed on re-emit (same-day rerun convergence \u2014 already counted in earlier commit's seen_signals)"
     },
     {
       "id": "code-review-ppt-web-core-hardcoded-i18n-strings",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "refactor",
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:245,297,373 \u2014 toast titles/messages hardcoded English ('Saved'/'Bulk entry failed'/'Deleted'/'Save failed'), bypassing react-i18next used in sibling files",
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:399 \u2014 literal '<div>Booking not found</div>' rendered without t()"
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "_note": "score_delta zeroed on re-emit (same-day rerun convergence \u2014 already counted in earlier commit's seen_signals)"
     },
     {
       "id": "dep-update-noise-pr-2018-aes-gcm",
