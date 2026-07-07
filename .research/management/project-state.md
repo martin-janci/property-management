@@ -45,11 +45,14 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 
 ## What's next (top 5 actions)
 
-1. **[high] URGENT: Land #1435 or #1436 to restore `dev` backend compile** (issue #1437) — pm-devops + pm-backend. Until this lands every backend PR's CI is red regardless of its own quality.
-2. **[high] Add `cargo check --workspace --tests` smoke gate on `dev` push** (not just PR) — pm-devops + pm-backend. Would have caught #1426 → #1437 before propagation.
-3. **[high] Triage remaining open follow-up issues #1403-#1413 + #1422** (post-merge-review) — pm-scrum-master. Yesterday's pm-qa rotation cleared 4 of #1360-#1377 via merged PRs; new batch needs owner assignment.
-4. **[medium] Confirm EAS mobile workflows green on workflow_dispatch** — pm-devops. Both files now exist; pins/secrets verification still owed.
-5. **[medium] Decide stale draft PRs #1316 (~3d), #1197 (~7d), #988 (epic-scale)** — pm-scrum-master. Promote, rebase, or close.
+(top of roadmap.md, deep scan 2026-07-07)
+
+1. **[high] RFC 9700 refresh-token revocation validation (issue #481)** (10a-1 + 10a-3 OAuth) — pm-backend. Gates 2 of the 3 epic-10a stories.
+2. **[high] Resolve 7a-5 sprint-status drift** — issue #485 fixed by PR #2003 (merged 2026-07-01) but story still `ready-for-dev`; reconcile to done. — pm-backend
+3. **[high] MFA e2e brute-force/rate-limit coverage (issue #487)** (10a-1) — pm-backend/pm-security.
+4. **[high] Fix document_folder_tests CI red (7a-2)** — FK/isolation failure keeps folder-organization reverted from done. — pm-backend
+5. **[high] Wire DisputeDetailRoute in App.tsx to DisputeDetailPage.tsx (80-3)** — routing stub hides a fully-built page. — pm-frontend
+
 
 ## Blockers
 
