@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T04:19:53Z",
+  "generated": "2026-07-07T04:27:48Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
@@ -94,18 +94,18 @@
     {
       "task_id": "gh-issue-2122",
       "branch": "auto-impl/gh-issue-2122-ee76237a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-07T04:09:49Z",
-      "last_updated": "2026-07-07T04:09:49Z",
-      "status_changed_at": "2026-07-07T04:09:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-07T04:27:48Z",
+      "status_changed_at": "2026-07-07T04:27:48Z",
+      "pr_number": 2136,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2136",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2136 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=named AccountingMetrics replaces 6-tuple; db check+clippy clean, api-server full-compile deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
