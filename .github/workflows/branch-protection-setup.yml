@@ -2,9 +2,9 @@ name: Branch-protection setup
 
 # One-time (and idempotent) workflow that registers the repo's gate check
 # contexts (see NEW_CHECKS below, e.g. "security-gate-conclusion",
-# "deny-toml-ban-gate") as required status checks on the `dev` branch
-# protection rule, and ensures "Require review from Code Owners" is
-# enabled so CODEOWNERS entries actually block (#2127).
+# "deny-toml-ban-gate", the script exec-bit gate) as required status checks
+# on the `dev` branch protection rule, and ensures "Require review from
+# Code Owners" is enabled so CODEOWNERS entries actually block (#2127).
 #
 # WHY THIS EXISTS
 # ---------------
@@ -157,7 +157,8 @@ jobs:
           # with the gate job names.
           NEW_CHECKS=$(printf '%s\n' \
             "security-gate-conclusion" \
-            "deny-toml-ban-gate")
+            "deny-toml-ban-gate" \
+            "Workflow scripts must be executable (100755)")
 
           # Build the merged list of required status checks (existing ∪ new).
           MERGED=$(python3 -c "
@@ -260,6 +261,8 @@ jobs:
           echo "    'security-gate-conclusion' succeeds → merge is not blocked."
           echo "  - Any PR that removes a quick-xml half-range ban line from"
           echo "    backend/deny.toml fails 'deny-toml-ban-gate', which blocks merge."
+          echo "  - Any PR that drops the exec bit on a workflow helper script or an"
+          echo "    allowlisted runnable script fails the exec-bit gate, blocking merge."
           echo "  - CODEOWNERS-guarded paths (backend/deny.toml, Cargo.toml/lock)"
           echo "    now require a code-owner review before merge."
 
@@ -280,7 +283,8 @@ jobs:
           # Keep in sync with NEW_CHECKS in the apply step above.
           REQUIRED_CHECKS=$(printf '%s\n' \
             "security-gate-conclusion" \
-            "deny-toml-ban-gate")
+            "deny-toml-ban-gate" \
+            "Workflow scripts must be executable (100755)")
 
           echo "Reading back required status checks for dev..."
           RESPONSE=$(gh api "repos/$REPO/branches/dev/protection/required_status_checks" 2>&1) || {
@@ -362,7 +366,7 @@ jobs:
           echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| Branch | \`dev\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Required checks | \`security-gate-conclusion\`, \`deny-toml-ban-gate\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Required checks | \`security-gate-conclusion\`, \`deny-toml-ban-gate\`, \`Workflow scripts must be executable (100755)\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Code-owner reviews | enforced (strengthen-only) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Dry-run | $DRY_RUN |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
