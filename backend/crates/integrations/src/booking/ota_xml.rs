@@ -1466,4 +1466,386 @@ mod tests {
         assert_eq!(r.amount, "120.50".parse::<Decimal>().unwrap());
         assert_eq!(r.currency, "EUR");
     }
+
+    // ----------------------------------------------------------------
+    // Empty payloads (gap 83-2): generators must emit valid documents
+    // for zero messages, and those documents must round-trip.
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_build_avail_notif_rq_empty_messages_round_trips() {
+        let xml = build_avail_notif_rq("H-EMPTY", &[]).unwrap();
+        assert!(xml.contains("OTA_HotelAvailNotifRQ"));
+        assert!(xml.contains("HotelCode=\"H-EMPTY\""));
+        let parsed = parse_avail_notif_rq(&xml).unwrap();
+        assert_eq!(parsed.hotel_code, "H-EMPTY");
+        assert!(parsed.messages.is_empty());
+    }
+
+    #[test]
+    fn test_build_rate_amount_notif_rq_empty_updates_round_trips() {
+        let xml = build_rate_amount_notif_rq("H-EMPTY2", &[]).unwrap();
+        assert!(xml.contains("OTA_HotelRateAmountNotifRQ"));
+        assert!(xml.contains("HotelCode=\"H-EMPTY2\""));
+        let parsed = parse_rate_amount_notif_rq(&xml).unwrap();
+        assert_eq!(parsed.hotel_code, "H-EMPTY2");
+        assert!(parsed.rates.is_empty());
+    }
+
+    // ----------------------------------------------------------------
+    // EchoToken (idempotency key) determinism
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_compute_echo_token_deterministic_and_content_sensitive() {
+        let a = compute_echo_token("avail", "H1|DBL:STD");
+        let b = compute_echo_token("avail", "H1|DBL:STD");
+        let c = compute_echo_token("avail", "H1|SGL:STD");
+        assert_eq!(a, b, "same payload must yield the same token");
+        assert_ne!(a, c, "different payload must yield a different token");
+        assert_eq!(a.len(), 32, "128-bit hex prefix");
+        assert!(a.chars().all(|ch| ch.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_compute_echo_token_kind_namespacing() {
+        // Equal canonical bodies must not collide across message kinds.
+        let avail = compute_echo_token("avail", "same-body");
+        let rate = compute_echo_token("rate", "same-body");
+        assert_ne!(avail, rate, "kind must namespace the digest");
+    }
+
+    #[test]
+    fn test_build_avail_notif_rq_stamps_stable_echo_token() {
+        let msgs = vec![AvailStatusMessage {
+            room_type_code: "DBL".to_string(),
+            rate_plan_code: Some("STD".to_string()),
+            start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(),
+            booking_limit: 2,
+            status: "Open".to_string(),
+            los_restrictions: None,
+        }];
+        let first = build_avail_notif_rq("H-ET", &msgs).unwrap();
+        let second = build_avail_notif_rq("H-ET", &msgs).unwrap();
+        assert!(first.contains("EchoToken=\""), "EchoToken missing");
+        assert_eq!(
+            first, second,
+            "identical payload must serialize identically (retry dedup)"
+        );
+    }
+
+    // ----------------------------------------------------------------
+    // parse_res_notif_rq_raw: multi-reservation + fallback paths
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_multiple_reservations() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <HotelReservations>
+<HotelReservation ResStatus="Commit">
+  <HotelReservationID ResID_Value="BK-100"/>
+</HotelReservation>
+<HotelReservation ResStatus="Modify">
+  <HotelReservationID ResID_Value="BK-200"/>
+</HotelReservation>
+<HotelReservation ResStatus="Cancel">
+  <HotelReservationID ResID_Value="BK-300"/>
+</HotelReservation>
+  </HotelReservations>
+</OTA_HotelResNotifRQ>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert_eq!(notifs.len(), 3);
+        assert_eq!(
+            notifs
+                .iter()
+                .map(|(id, status, _)| (id.as_str(), status.as_str()))
+                .collect::<Vec<_>>(),
+            vec![
+                ("BK-100", "Commit"),
+                ("BK-200", "Modify"),
+                ("BK-300", "Cancel")
+            ]
+        );
+        // Each fragment is the standalone element for independent re-parsing.
+        for (_, _, frag) in &notifs {
+            assert!(frag.starts_with("<HotelReservation"));
+            assert!(frag.ends_with("</HotelReservation>"));
+        }
+    }
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_missing_res_status_defaults_to_commit() {
+        let xml = r#"<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+<HotelReservation>
+  <HotelReservationID ResID_Value="BK-DEF"/>
+</HotelReservation>
+</OTA_HotelResNotifRQ>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert_eq!(notifs.len(), 1);
+        assert_eq!(
+            notifs[0].1, "Commit",
+            "missing ResStatus defaults to Commit"
+        );
+        assert_eq!(notifs[0].0, "BK-DEF");
+    }
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_falls_back_to_id_attr() {
+        let xml = r#"<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+<HotelReservation ResStatus="Commit">
+  <UniqueID ID="LEGACY-42"/>
+</HotelReservation>
+</OTA_HotelResNotifRQ>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert_eq!(notifs.len(), 1);
+        assert_eq!(notifs[0].0, "LEGACY-42", "must fall back to ID attribute");
+    }
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_no_id_generates_uuid() {
+        let xml = r#"<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+<HotelReservation ResStatus="Commit"></HotelReservation>
+</OTA_HotelResNotifRQ>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert_eq!(notifs.len(), 1);
+        assert!(
+            uuid::Uuid::parse_str(&notifs[0].0).is_ok(),
+            "missing IDs must yield a synthetic UUID, got {}",
+            notifs[0].0
+        );
+    }
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_unclosed_element_stops_cleanly() {
+        // A truncated document (open tag without matching close) must not
+        // loop or panic; the dangling reservation is simply skipped.
+        let xml = r#"<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+<HotelReservation ResStatus="Commit">
+  <HotelReservationID ResID_Value="BK-OK"/>
+</HotelReservation>
+<HotelReservation ResStatus="Cancel">
+  <HotelReservationID ResID_Value="BK-TRUNCATED"/>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert_eq!(notifs.len(), 1, "only the complete element is returned");
+        assert_eq!(notifs[0].0, "BK-OK");
+    }
+
+    #[test]
+    fn test_parse_res_notif_rq_raw_empty_document() {
+        let xml = r#"<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <HotelReservations/>
+</OTA_HotelResNotifRQ>"#;
+        let notifs = parse_res_notif_rq_raw(xml).unwrap();
+        assert!(notifs.is_empty());
+    }
+
+    // ----------------------------------------------------------------
+    // Date boundaries
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_parse_avail_notif_rq_leap_day_ok_and_invalid_leap_day_errors() {
+        let valid = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H-LEAP">
+<AvailStatusMessage BookingLimit="1">
+  <StatusApplicationControl Start="2024-02-29" End="2024-03-01" InvTypeCode="DBL"/>
+  <RestrictionStatus Status="Open"/>
+</AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+        let parsed = parse_avail_notif_rq(valid).unwrap();
+        assert_eq!(
+            parsed.messages[0].start_date,
+            NaiveDate::from_ymd_opt(2024, 2, 29).unwrap()
+        );
+
+        // 2025 is not a leap year: Feb 29 must be a hard InvalidMessage.
+        let invalid = valid.replace("2024-02-29", "2025-02-29");
+        let err = parse_avail_notif_rq(&invalid).unwrap_err();
+        assert!(matches!(err, BookingError::InvalidMessage(_)));
+    }
+
+    #[test]
+    fn test_parse_avail_notif_rq_missing_dates_default_to_epoch() {
+        // A missing Start/End attribute is tolerated (epoch), only a present
+        // but malformed value is an error.
+        let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H-NODATE">
+<AvailStatusMessage BookingLimit="1">
+  <StatusApplicationControl InvTypeCode="DBL"/>
+  <RestrictionStatus Status="Open"/>
+</AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+        let parsed = parse_avail_notif_rq(xml).unwrap();
+        let epoch = NaiveDate::from_ymd_opt(1970, 1, 1).unwrap();
+        assert_eq!(parsed.messages[0].start_date, epoch);
+        assert_eq!(parsed.messages[0].end_date, epoch);
+    }
+
+    #[test]
+    fn test_avail_round_trip_single_day_range() {
+        // Start == End (single-night update) must round-trip unchanged.
+        let day = NaiveDate::from_ymd_opt(2025, 12, 31).unwrap();
+        let msgs = vec![AvailStatusMessage {
+            room_type_code: "DBL".to_string(),
+            rate_plan_code: Some("STD".to_string()),
+            start_date: day,
+            end_date: day,
+            booking_limit: 1,
+            status: "Open".to_string(),
+            los_restrictions: None,
+        }];
+        let xml = build_avail_notif_rq("H-1D", &msgs).unwrap();
+        let parsed = parse_avail_notif_rq(&xml).unwrap();
+        assert_eq!(parsed.messages, msgs);
+    }
+
+    // ----------------------------------------------------------------
+    // Malformed-XML error paths
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_parse_avail_notif_rq_mismatched_tags_is_xml_error() {
+        let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H1">
+</WrongClose>
+</OTA_HotelAvailNotifRQ>"#;
+        let err = parse_avail_notif_rq(xml).unwrap_err();
+        assert!(
+            matches!(err, BookingError::Xml(_)),
+            "mismatched tags must be BookingError::Xml, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_parse_rate_amount_notif_rq_mismatched_tags_is_xml_error() {
+        let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+</Nope>
+</OTA_HotelRateAmountNotifRQ>"#;
+        let err = parse_rate_amount_notif_rq(xml).unwrap_err();
+        assert!(matches!(err, BookingError::Xml(_)));
+    }
+
+    // ----------------------------------------------------------------
+    // Rate parsing defaults + precedence
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_parse_rate_amount_notif_rq_first_base_amount_wins() {
+        let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+<RateAmountMessage>
+  <StatusApplicationControl Start="2025-08-01" End="2025-08-02" InvTypeCode="DBL" RatePlanCode="STD"/>
+  <Rates><Rate><BaseByGuestAmts>
+    <BaseByGuestAmt AmountAfterTax="100.00" CurrencyCode="EUR"/>
+    <BaseByGuestAmt AmountAfterTax="999.99" CurrencyCode="USD"/>
+  </BaseByGuestAmts></Rate></Rates>
+</RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+        let parsed = parse_rate_amount_notif_rq(xml).unwrap();
+        assert_eq!(parsed.rates.len(), 1);
+        assert_eq!(parsed.rates[0].amount, "100.00".parse::<Decimal>().unwrap());
+        assert_eq!(parsed.rates[0].currency, "EUR", "first BaseByGuestAmt wins");
+    }
+
+    #[test]
+    fn test_parse_rate_amount_notif_rq_before_tax_fallback() {
+        // AmountAfterTax absent -> AmountBeforeTax is used.
+        let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+<RateAmountMessage>
+  <StatusApplicationControl Start="2025-08-01" End="2025-08-02" InvTypeCode="DBL"/>
+  <Rates><Rate><BaseByGuestAmts>
+    <BaseByGuestAmt AmountBeforeTax="80.00" CurrencyCode="CZK"/>
+  </BaseByGuestAmts></Rate></Rates>
+</RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+        let parsed = parse_rate_amount_notif_rq(xml).unwrap();
+        assert_eq!(parsed.rates[0].amount, "80.00".parse::<Decimal>().unwrap());
+        assert_eq!(parsed.rates[0].currency, "CZK");
+    }
+
+    #[test]
+    fn test_parse_rate_amount_notif_rq_missing_amount_defaults() {
+        // No BaseByGuestAmt at all -> amount Decimal::ZERO, currency "EUR".
+        let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+<RateAmountMessage>
+  <StatusApplicationControl Start="2025-08-01" End="2025-08-02" InvTypeCode="DBL"/>
+</RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+        let parsed = parse_rate_amount_notif_rq(xml).unwrap();
+        assert_eq!(parsed.rates[0].amount, Decimal::ZERO);
+        assert_eq!(parsed.rates[0].currency, "EUR");
+    }
+
+    // ----------------------------------------------------------------
+    // Attribute escaping round-trip + res notif RS defaults
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_avail_round_trip_escapes_special_chars_in_attributes() {
+        // quick-xml must escape `&`/`<` in attribute values on write and
+        // unescape them on read — codes containing entities must round-trip.
+        let msgs = vec![AvailStatusMessage {
+            room_type_code: "A&B<C".to_string(),
+            rate_plan_code: Some("R\"Q".to_string()),
+            start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(),
+            booking_limit: 1,
+            status: "Open".to_string(),
+            los_restrictions: None,
+        }];
+        let xml = build_avail_notif_rq("H&M", &msgs).unwrap();
+        assert!(
+            !xml.contains("HotelCode=\"H&M\""),
+            "raw ampersand must be escaped"
+        );
+        let parsed = parse_avail_notif_rq(&xml).unwrap();
+        assert_eq!(parsed.hotel_code, "H&M");
+        assert_eq!(parsed.messages, msgs);
+    }
+
+    #[test]
+    fn test_build_res_notif_rs_error_default_text() {
+        let xml = build_res_notif_rs(false, None).unwrap();
+        assert!(
+            xml.contains("Processing error"),
+            "default error text missing"
+        );
+        let (ok, err) = parse_response_status(&xml);
+        assert!(!ok);
+        assert_eq!(err.as_deref(), Some("Processing error"));
+    }
+
+    #[test]
+    fn test_build_res_notif_rs_round_trips_through_parse_response_status() {
+        let xml = build_res_notif_rs(true, None).unwrap();
+        let (ok, err) = parse_response_status(&xml);
+        assert!(ok);
+        assert!(err.is_none());
+    }
+
+    // ----------------------------------------------------------------
+    // extract_xml_element
+    // ----------------------------------------------------------------
+
+    #[test]
+    fn test_extract_xml_element_basic_missing_and_empty() {
+        let frag = r#"<Root><GuestCount>2</GuestCount><Empty></Empty></Root>"#;
+        assert_eq!(
+            extract_xml_element(frag, "GuestCount").as_deref(),
+            Some("2")
+        );
+        assert_eq!(extract_xml_element(frag, "Missing"), None);
+        // Empty content is filtered to None (not Some("")).
+        assert_eq!(extract_xml_element(frag, "Empty"), None);
+    }
 }
