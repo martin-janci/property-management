@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T06:33:42Z",
+  "archived_at": "2026-07-08T08:20:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1834,6 +1834,18 @@
       "source": "gap-scan 2026-05-24",
       "resolved": "2026-05-25 — OAuth provider client-management admin UI PRs #468/#469/#471 merged",
       "depends_on": []
+    },
+    {
+      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
+      "action": "[RECONCILED-DONE: implementer verified #482 deriveActiveRole+ProtectedRoute fix already on dev, 919 ppt-web tests green, zero diff] ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07"
     },
     {
       "id": "gap-10a-3-user-grants-ui",

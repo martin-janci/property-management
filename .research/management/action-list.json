@@ -417,18 +417,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
-      "action": "ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-10a-2-protectedroute-unit-test-coverage-issue-482",
       "action": "ProtectedRoute unit test coverage (issue #482) (10a-2-oauth-client-registration OAuth Client Registration)",
       "owner_role": "pm-backend",

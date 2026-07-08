@@ -1555,6 +1555,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
+      "branch": "auto-impl/gap-10a-2-protectedroute-role-fallback-f-8359b2ae",
+      "status": "failed",
+      "claimed_at": "2026-07-08T08:09:43Z",
+      "last_updated": "2026-07-08T08:18:14Z",
+      "status_changed_at": "2026-07-08T08:18:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=#482 fix already present+tested on dev (deriveActiveRole in AuthContext, ProtectedRoute gating); zero code diff, 919 ppt-web tests green — no PR needed [no-op: work pre-existing on dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-10a-reconcile-sprint-status-gates-closed",
       "branch": "auto-impl/gap-10a-reconcile-sprint-status-gates-closed-20a058ee",
       "status": "merged",
@@ -3481,5 +3503,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T06:33:42Z"
+  "archived_at": "2026-07-08T08:20:09Z"
 }
