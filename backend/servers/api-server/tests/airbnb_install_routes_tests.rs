@@ -416,9 +416,12 @@ async fn connect_happy_path_returns_auth_url(pool: PgPool) {
         "auth_url must carry the OAuth state parameter: {auth_url}"
     );
     assert!(!state.is_empty(), "OAuth state must be non-empty");
+    // The state lands in the URL query-encoded (`:` -> `%3A`), so compare the
+    // encoded form rather than the raw token.
+    let encoded_state = state.replace(':', "%3A");
     assert!(
-        auth_url.contains(state),
-        "the returned state must appear in the auth_url (state={state}, url={auth_url})"
+        auth_url.contains(&encoded_state),
+        "the returned state must appear (URL-encoded) in the auth_url (state={state}, url={auth_url})"
     );
 }
 
