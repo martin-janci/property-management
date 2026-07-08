@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-84",
-  "selected_at": "2026-07-08T04:05:21Z",
+  "epic_prefix": "10b-1-organization-management-dashboard-retry1",
+  "selected_at": "2026-07-08T08:06:24Z",
   "last_action": "repick",
-  "reason": "prior target 'code-review-mobile-rn-report-fault-fake-submit-retry1' exhausted; closest-to-done is 'gap-84' (open=1 claimable=1)",
+  "reason": "prior target 'gap-84' exhausted; closest-to-done is '10b-1-organization-management-dashboard-retry1' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

@@ -423,7 +423,7 @@
       "priority": "medium",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -435,7 +435,7 @@
       "priority": "medium",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -447,7 +447,7 @@
       "priority": "medium",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -459,7 +459,7 @@
       "priority": "medium",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -663,6 +663,42 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-detail-path-inject",
+      "action": "security: ListingRepository.getListingDetail (ListingRepository.kt:46) splices listingId raw into the URL path with no encodeURLPathPart(), unlike ApiClient.getListing which hardens via pathSegment(); listingId is deep-link/nav sourced so '/','?','#','..' can smuggle extra path segments. Apply the same encoding.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T08:10:10Z"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-analytics-stub",
+      "action": "gap: MyListings and ListingAnalytics routes (Navigation.kt:440,:458) are live in the nav graph but render hardcoded emptyList()/isLoading=false with no repository/ApiClient backing; realtor listing dashboard + analytics are permanent empty stubs in production. Wire to a listings/analytics API.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T08:10:10Z"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-notifrepo-no-test",
+      "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T08:10:10Z"
     }
   ]
 }
