@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-08",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor); oldest-unreviewed among segments not already covered today (review_cursor 2026-06-14 — churn hotspots map only to api-handlers and ppt-web-ui, both already carry 2026-07-08 signal files); not backlog-saturated",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-crm-import-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:471 — the whole CRM import surface (CrmConnection.tsx has zero next-intl usage; FeedImport.tsx similarly) hardcodes English UI strings ('API Key', 'Enter your API key', 'Instance URL', field labels) in an app that ships sk/cs/de/en, so non-English locales render raw English on the agency import flow."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-aria-labels-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/ui/Header.tsx:183 — hardcoded English aria-labels not wrapped in t() (Header 'Toggle menu'; SearchBar.tsx:162 'Clear search'; RealtorManagement.tsx:570 'Close'; ListingFilters.tsx:128 'Close filters'; saved-searches/page.tsx:116 'Delete saved search'), leaving accessibility labels untranslated across all four locales."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-stray-console-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:60 — console.error left in committed client code (also RealtorManagement.tsx:548); both sit in catch blocks that already set a user-facing error state (setError(t('loadError'))), so the console call is stray debug logging shipping to prod."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
