@@ -501,48 +501,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:12:35Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T16:06:35Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
-      "retry_round": 1
-    },
-    {
-      "id": "10b-1-organization-management-dashboard-retry1",
-      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-1-organization-management-dashboard]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=10b-1-organization-management-dashboard reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:33:02Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T16:06:35Z",
-      "retry_of": "10b-1-organization-management-dashboard",
-      "retry_round": 1
-    },
-    {
-      "id": "10b-2-feature-flag-management-retry1",
-      "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-2-feature-flag-management]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T17:03:51Z (retry_of=10b-2-feature-flag-management reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:33:02Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T17:03:51Z",
-      "retry_of": "10b-2-feature-flag-management",
-      "retry_round": 1
-    },
-    {
       "id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
       "action": "direct-connect and availability-sync enqueue handlers lack tests (83-1-airbnb-integration Airbnb OAuth and Sync)",
       "owner_role": "pm-backend",
