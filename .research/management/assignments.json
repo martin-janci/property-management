@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T06:01:29Z",
+  "generated": "2026-07-08T06:01:46Z",
   "assignments": [
     {
       "task_id": "gh-issue-2158",
@@ -142,15 +142,15 @@
     {
       "task_id": "gh-issue-2170",
       "branch": "auto-impl/gh-issue-2170-d269d12a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-08T05:47:02Z",
-      "last_updated": "2026-07-08T05:47:02Z",
-      "status_changed_at": "2026-07-08T05:47:02Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-08T06:01:46Z",
+      "status_changed_at": "2026-07-08T06:01:46Z",
+      "pr_number": 2175,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2175",
       "merged_at": null,
       "specialist": "react-web",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2175 status=done specialist=react-web note=DestructiveConfirmDialog reuse with audit reasons wired to API + usePlatformStats gated on audit_read; 59/59 admin-web + 105/105 api-client tests green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
