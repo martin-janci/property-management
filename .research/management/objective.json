@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "code-review-api-handlers-shares-revoke-doc-mismatch",
-  "selected_at": "2026-07-08T14:06:04Z",
+  "epic_prefix": "10b-1-organization-management-dashboard-retry1",
+  "selected_at": "2026-07-08T16:06:26Z",
   "last_action": "repick",
-  "reason": "prior target 'code-review-mobile-native-kmp-mylistings-analytics-stub' exhausted; closest-to-done is 'code-review-api-handlers-shares-revoke-doc-mismatch' (open=1 claimable=1)",
+  "reason": "prior target 'code-review-api-handlers-shares-revoke-doc-mismatch' exhausted; closest-to-done is '10b-1-organization-management-dashboard-retry1' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
