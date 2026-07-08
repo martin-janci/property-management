@@ -7,7 +7,8 @@
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, NewReportSchedule, ReportExecution, ReportSchedule, ReportScheduleRow,
+    ExecutionHistoryResponse, NewReportSchedule, ReportExecution, ReportSchedule,
+    ReportScheduleRow,
 };
 use crate::DbPool;
 use chrono::{Duration, Utc};

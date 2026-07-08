@@ -40,13 +40,11 @@ async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
 
 /// Count schedules owned by an org.
 async fn count_schedules(pool: &PgPool, org_id: Uuid) -> i64 {
-    sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM report_schedules WHERE organization_id = $1",
-    )
-    .bind(org_id)
-    .fetch_one(pool)
-    .await
-    .expect("count schedules")
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM report_schedules WHERE organization_id = $1")
+        .bind(org_id)
+        .fetch_one(pool)
+        .await
+        .expect("count schedules")
 }
 
 /// Build an authenticated `POST /api/v1/reports/schedules` request.
@@ -75,7 +73,11 @@ async fn manager_creates_schedule_persists(pool: PgPool) {
     let manager_user_id = user_id_for(&pool, &manager.email).await;
     seed_membership(&pool, org, manager_user_id, "manager").await;
 
-    assert_eq!(count_schedules(&pool, org).await, 0, "pre: no schedules yet");
+    assert_eq!(
+        count_schedules(&pool, org).await,
+        0,
+        "pre: no schedules yet"
+    );
 
     let report_id = Uuid::new_v4();
     let response = app
@@ -108,8 +110,14 @@ async fn manager_creates_schedule_persists(pool: PgPool) {
         Some(org.to_string().as_str()),
         "org must be derived from the authenticated tenant, body={body}"
     );
-    assert_eq!(body.get("name").and_then(|v| v.as_str()), Some("Weekly occupancy"));
-    assert_eq!(body.get("frequency").and_then(|v| v.as_str()), Some("weekly"));
+    assert_eq!(
+        body.get("name").and_then(|v| v.as_str()),
+        Some("Weekly occupancy")
+    );
+    assert_eq!(
+        body.get("frequency").and_then(|v| v.as_str()),
+        Some("weekly")
+    );
     assert_eq!(body.get("is_active").and_then(|v| v.as_bool()), Some(true));
     assert_eq!(body.get("status").and_then(|v| v.as_str()), Some("active"));
 
@@ -196,5 +204,9 @@ async fn invalid_frequency_rejected(pool: PgPool) {
         response.status,
         response.text()
     );
-    assert_eq!(count_schedules(&pool, org).await, 0, "no row on validation failure");
+    assert_eq!(
+        count_schedules(&pool, org).await,
+        0,
+        "no row on validation failure"
+    );
 }
