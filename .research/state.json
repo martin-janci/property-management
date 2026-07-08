@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-05T03:10:00Z",
-  "last_run_ms": 4321,
-  "last_pr_seen": 2093,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "7e09d77d",
+  "last_run_iso": "2026-07-08T22:30:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2182,
+  "last_issue_seen": 2170,
+  "last_commit_sha": "a965a28d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -113,9 +113,9 @@
       "recent_churn": 193
     },
     "backend/servers/api-server/tests/oauth_integration_tests.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-06-02",
-      "recent_churn": 378
+      "runs_seen": 3,
+      "last_seen": "2026-07-08",
+      "recent_churn": 2719
     },
     "backend/servers/api-server/tests/ws_integration_tests.rs": {
       "runs_seen": 1,
@@ -148,9 +148,9 @@
       "recent_churn": 134
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 78
+      "runs_seen": 2,
+      "last_seen": "2026-07-08",
+      "recent_churn": 2648
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -331,6 +331,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-05",
       "recent_churn": 11
+    },
+    "backend/crates/integrations/src/booking/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-08",
+      "recent_churn": 2818
     }
   },
   "seen_signals": [
@@ -566,7 +571,15 @@
     "stalled-review-pr-1179",
     "lag-warning-2026-07-05",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
-    "churn-hotspot-backend-crates-db-src-repositories-rental-rs"
+    "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+    "lag-warning-2026-07-08",
+    "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+    "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+    "stalled-review-pr-1797",
+    "dep-update-noise-pr-2018",
+    "dep-update-noise-pr-2016"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -580,8 +593,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 41,
-    "vectors_created": 175,
+    "runs": 42,
+    "vectors_created": 179,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0

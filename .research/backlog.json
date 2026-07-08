@@ -4178,6 +4178,93 @@
         "assignment_status": "merged",
         "pr_number": 2100
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 2818 lines this run (Booking.com OTA XML + oauth test additions)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2162",
+        "PR #2167",
+        "commit range 570ed17..a965a28"
+      ],
+      "evidence": [
+        "churn: 2818 lines (top-3 code hotspot 2026-07-05→08); runs_seen 0→1"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-08",
+      "updated_at": "2026-07-08",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2166",
+        "PR #2167",
+        "commit range 570ed17..a965a28"
+      ],
+      "evidence": [
+        "churn: 2719 lines (top-3); runs_seen 2→3 (prior last_seen 2026-06-02)",
+        "repeated-churn: hotspot_history.runs_seen=2 (last_seen=2026-06-02) → +1 stacks; instability proxy"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-07-08",
+      "updated_at": "2026-07-08",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2648 lines this run (MFA rate-limit hardening PR #2172)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2172",
+        "commit range 570ed17..a965a28"
+      ],
+      "evidence": [
+        "churn: 2648 lines (top-3); runs_seen 0→1; driven by /auth/mfa/verify rate-limit (gh-issue-2159)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-08",
+      "updated_at": "2026-07-08",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-1797",
+      "title": "Stalled review: PR #1797 (fix(api-server) OCR auth + rental PII manager-gate) — open 15d, draft, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1797"
+      ],
+      "evidence": [
+        "draft=true, open 15d, no reviewDecision; two security-hardening fixes (Closes #1772, #1766) parked in draft"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs",
+        "backend/servers/api-server/src/routes/rental.rs"
+      ],
+      "created_at": "2026-07-08",
+      "updated_at": "2026-07-08",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,212 @@
+{
+  "date": "2026-07-08",
+  "generated_at": "2026-07-08T22:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-08",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-07-05T03:10:00Z",
+      "score_delta": 0,
+      "evidence": "Last routine run 3d0h ago (2026-07-05T03:10:00Z → 2026-07-08T22:30:00Z). LAG_DAYS=3 ≥ 3 → stale_routine_alert. Dispatcher is still ticking (last commit a965a28dcc0b, 2026-07-08 22:06 UTC) so cloud loop for routine specifically is delayed while dispatcher advances.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z --numstat",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking/mod.rs — 2818 lines churn in window (top-3 code hotspot). Runs_seen 0→1.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/crates/integrations/src/booking/mod.rs"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z --numstat",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines churn (top-3). Runs_seen 2→3 (previously seen 2026-06-02).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/tests/oauth_integration_tests.rs"
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history + git log",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/oauth_integration_tests.rs — hotspot_history.runs_seen=2 (last_seen=2026-06-02). Now churning again (Airbnb + Booking OAuth test additions via PRs #2166 #2167). Instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/tests/oauth_integration_tests.rs"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-05T03:10:00Z --numstat",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/auth.rs — 2648 lines churn (top-3). Runs_seen 0→1. Driven by MFA rate-limit hardening (PR #2172, gh-issue-2159).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/auth.rs"
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads (#1772, #1766)) — draft=true, open 15d, no reviewDecision. Two security-hardening fixes stuck in draft.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2018",
+      "type": "dep-update-noise",
+      "source": "PR #2018",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2018 — bump aes-gcm 0.10.3 → 0.11.0. Log-only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2016",
+      "type": "dep-update-noise",
+      "source": "PR #2016",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2016 — bump dtolnay/rust-toolchain 1.94.1 → 1.100.0 (actions-minor-patch group). Log-only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev …",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == unique | length' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev … signals.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items with updated_at >= today-14 (0 items to decay)",
+      "observed": "0/0",
+      "expected": "0/0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous truth",
+      "observed": "0 plans",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "diff-filter=A .research/plans/ *.md count",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached … grep -E 'sk-ant-|…'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none' — no failed cursors",
+      "observed": "none",
+      "expected": "brief line matches skipped cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs present in working tree or _archive/",
+      "observed": "converges",
+      "expected": "converges"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run ≥ HEAD",
+      "observed": "7≥7",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no auto-fix branch pushed",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token pattern in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score >= 3 + allowlist type)"
+}
