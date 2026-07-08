@@ -21,7 +21,7 @@ sharedComponents:
 diagrams: []
 useCases: []
 epics:
-  - "14"
+  - Epic-14
 designSources: []
 owner: pm-frontend
 ---

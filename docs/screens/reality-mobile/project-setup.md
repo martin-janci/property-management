@@ -22,8 +22,8 @@ sharedComponents: []
 diagrams: []
 useCases: []
 epics:
-  - "82"
-  - "85"
+  - Epic-82
+  - Epic-85
 designSources: []
 owner: reality-frontend
 ---

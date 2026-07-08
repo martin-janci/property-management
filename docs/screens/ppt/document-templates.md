@@ -20,7 +20,7 @@ sharedComponents:
 diagrams: []
 useCases: []
 epics:
-  - 7B
+  - Epic-7B
 designSources: []
 owner: pm-frontend
 ---
