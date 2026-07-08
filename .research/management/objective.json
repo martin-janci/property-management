@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "code-review-mobile-rn-report-fault-fake-submit-retry1",
   "selected_at": "2026-07-07T20:04:50Z",
-  "last_action": "repick",
-  "reason": "prior target 'bug-ios-searchview-uncompilable-retry1' exhausted; closest-to-done is 'code-review-mobile-rn-report-fault-fake-submit-retry1' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

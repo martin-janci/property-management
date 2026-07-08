@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T00:13:00Z",
+  "archived_at": "2026-07-08T00:23:14Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1063,6 +1063,26 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
+      "action": "[dispatcher-manual-reconcile 2026-07-08: dev-content verified — ReportFaultScreen.tsx already POSTs /api/v1/faults via apiRequest (0 setTimeout), fake-submit fix landed out-of-band; ghost retry per issue #2153] [archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-mobile-rn-report-fault-fake-submit reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T16:06:35Z",
+      "retry_of": "code-review-mobile-rn-report-fault-fake-submit",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "verified_file": "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx",
+        "note": "real apiRequest POST /api/v1/faults present; setTimeout removed",
+        "at": "2026-07-08T00:11:16Z",
+        "ref": "#2153"
+      }
     },
     {
       "id": "code-review-mobile-rn-screens-mock-data",
@@ -2239,6 +2259,18 @@
       ]
     },
     {
+      "id": "gap-80-3-party-submissions-endpoints-unwired-apistatus-partial",
+      "action": "[dispatcher 2026-07-08: already wired on dev via PR 2026-06-25 — stale snapshot, no diff] party submissions endpoints unwired (apiStatus: partial) (80-3-mediation-resolution Mediation and Resolution)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07"
+    },
+    {
       "id": "gap-81-1-report-schedule-cron-column",
       "action": "Report schedule editing round-trips cron through overloaded `time` field — add dedicated cron_expression column (migration+repo+route) (coverage 81-1; issue #616)",
       "owner_role": "pm-backend",
@@ -2388,19 +2420,6 @@
       "source": "gap-scan 2026-05-25",
       "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
       "depends_on": []
-    },
-    {
-      "id": "gap-84-5-rag-retrieval-query-service-embedding-generation",
-      "action": "RAG retrieval/query service (embedding generation + similarity search) not implemented in routes/repositories (84-5-pgvector-rag pgvector RAG Migration)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07",
-      "gc1_closed": "merged 2026-07-08T00:06:26Z PR #2165 (dispatcher merge-confirm)"
     },
     {
       "id": "gap-85-1-mobile-env-config",

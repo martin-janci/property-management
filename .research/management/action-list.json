@@ -393,25 +393,13 @@
       "retry_round": 1
     },
     {
-      "id": "gap-80-3-party-submissions-endpoints-unwired-apistatus-partial",
-      "action": "party submissions endpoints unwired (apiStatus: partial) (80-3-mediation-resolution Mediation and Resolution)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-80-3-sessions-submissions-workflow-not-fully-threaded",
       "action": "sessions/submissions workflow not fully threaded from App.tsx (80-3-mediation-resolution Mediation and Resolution)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -543,20 +531,6 @@
           "from-stalled-pr"
         ]
       }
-    },
-    {
-      "id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T16:06:35Z (retry_of=code-review-mobile-rn-report-fault-fake-submit reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T16:06:35Z",
-      "retry_of": "code-review-mobile-rn-report-fault-fake-submit",
-      "retry_round": 1
     },
     {
       "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
@@ -691,6 +665,46 @@
       "deadline": null,
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening"
+    },
+    {
+      "id": "gh-issue-2159",
+      "action": "security: /auth/mfa/verify has no rate limiter — brute-force window on TOTP verification (Closes #2159)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-08T00:05:23Z (#2159)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T00:05:23Z",
+      "issue_ref": {
+        "number": 2159,
+        "url": "https://github.com/martin-janci/property-management/issues/2159",
+        "labels": [
+          "security",
+          "backend"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2163",
+      "action": "test: mock clock / shrink rate-limit windows in mfa_brute_force_rate_limit_tests to cut CI test-job duration (Closes #2163)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-08T00:05:23Z (#2163)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T00:05:23Z",
+      "issue_ref": {
+        "number": 2163,
+        "url": "https://github.com/martin-janci/property-management/issues/2163",
+        "labels": [
+          "backend",
+          "follow-up"
+        ]
+      }
     }
   ]
 }

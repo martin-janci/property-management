@@ -1653,6 +1653,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-80-3-party-submissions-endpoints-unwired-apistatus-partial",
+      "branch": "auto-impl/gap-80-3-party-submissions-endpoints-unw-a635ab7d",
+      "status": "done",
+      "claimed_at": "2026-07-08T00:11:16Z",
+      "last_updated": "2026-07-08T00:21:41Z",
+      "status_changed_at": "2026-07-08T00:21:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stale task; party-submissions already fully wired on dev (api+hooks+MediationSubmissionsPanel tab+i18n+tests) via PR 2026-06-25; no diff needed [dispatcher: done-not-failed per #2153]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-83-2-ota-xml-message-parsing-generation-untested",
       "branch": "auto-impl/gap-83-2-ota-xml-message-parsing-generation-untested-cae7b2ab",
       "status": "merged",
@@ -1681,22 +1703,22 @@
       "branch": "auto-impl/gap-84-5-rag-retrieval-query-service-embedding-gener-a431891f",
       "status": "merged",
       "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-08T00:13:00Z",
-      "status_changed_at": "2026-07-08T00:13:00Z",
+      "last_updated": "2026-07-08T00:21:13Z",
+      "status_changed_at": "2026-07-08T00:21:13Z",
       "pr_number": 2165,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2165",
       "merged_at": "2026-07-08T00:06:26Z",
       "specialist": "rust-backend",
       "implementer_summary": "pr=2165 status=done specialist=rust-backend scope_drift=false code_reuse_warn=note note=gap partially stale (search+route existed); added EmbeddingProvider trait+stub and upsert_document_embedding wrapper; sqlx section compile-gated only (PG :5533 migration timeout), suite BIT-351-quarantined",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=be65ba5d3e7229b57749d18a4a7208b82c671b7f note=new-trait+upsert-wrapper genuinely-new (no dev dupe), SQL/cols match, CI green (21 checks), tests ok",
+      "last_reviewed_oid": "be65ba5d3e7229b57749d18a4a7208b82c671b7f",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
+      "merge_attempted_at": "2026-07-08T00:16:32Z",
       "quarantined_at": null,
       "quarantine_reason": null
     },
@@ -3249,5 +3271,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T00:13:00Z"
+  "archived_at": "2026-07-08T00:23:14Z"
 }
