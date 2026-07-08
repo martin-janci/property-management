@@ -561,26 +561,6 @@
       "retry_round": 1
     },
     {
-      "id": "gh-issue-2153",
-      "action": "dispatcher: Tier-1c retry-remint re-mints work already merged on dev (ghost retries waste claim slots) (Closes #2153)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-07T17:03:33Z (#2153)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T17:03:33Z",
-      "issue_ref": {
-        "number": 2153,
-        "url": "https://github.com/martin-janci/property-management/issues/2153",
-        "labels": [
-          "follow-up",
-          "dispatcher"
-        ]
-      }
-    },
-    {
       "id": "10b-2-feature-flag-management-retry1",
       "action": "[RECONCILED-DONE: screen-map admin-feature-flags.md shipped on dev via PR#1912; verify-first implementer found nothing to add] Coverage gap [mvp]: Feature Flag Management — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-2-feature-flag-management]",
       "owner_role": "pm-frontend",
@@ -679,27 +659,6 @@
         "labels": [
           "bug",
           "backend",
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2170",
-      "action": "admin-web OrganizationsPage (PR #2164): reuse DestructiveConfirmDialog (audit-reason + a11y) and gate usePlatformStats on capability (Closes #2170)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-08T02:06:30Z (#2170)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T02:06:30Z",
-      "issue_ref": {
-        "number": 2170,
-        "url": "https://github.com/martin-janci/property-management/issues/2170",
-        "labels": [
-          "frontend",
           "follow-up",
           "from-merged-review"
         ]

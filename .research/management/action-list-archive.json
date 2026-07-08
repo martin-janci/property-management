@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T06:01:29Z",
+  "archived_at": "2026-07-08T06:33:42Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3655,6 +3655,27 @@
       "last_updated": "2026-07-07T04:10:17Z"
     },
     {
+      "id": "gh-issue-2153",
+      "action": "dispatcher: Tier-1c retry-remint re-mints work already merged on dev (ghost retries waste claim slots) (Closes #2153)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-07T17:03:33Z (#2153)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T17:03:33Z",
+      "issue_ref": {
+        "number": 2153,
+        "url": "https://github.com/martin-janci/property-management/issues/2153",
+        "labels": [
+          "follow-up",
+          "dispatcher"
+        ]
+      },
+      "gc1_closed": "merged PR #2174 (dispatcher merge-confirm)"
+    },
+    {
       "id": "gh-issue-2163",
       "action": "test: mock clock / shrink rate-limit windows in mfa_brute_force_rate_limit_tests to cut CI test-job duration (Closes #2163)",
       "owner_role": "pm-backend",
@@ -3674,6 +3695,28 @@
         ]
       },
       "gc1_closed": "verify-to-done 2026-07-08: #2163 premise disproved with CI evidence, issue closed, no code change"
+    },
+    {
+      "id": "gh-issue-2170",
+      "action": "admin-web OrganizationsPage (PR #2164): reuse DestructiveConfirmDialog (audit-reason + a11y) and gate usePlatformStats on capability (Closes #2170)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-08T02:06:30Z (#2170)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T02:06:30Z",
+      "issue_ref": {
+        "number": 2170,
+        "url": "https://github.com/martin-janci/property-management/issues/2170",
+        "labels": [
+          "frontend",
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": "merged PR #2175 (dispatcher merge-confirm)"
     },
     {
       "id": "pm-backend-fix-ai-equipment-idor",
