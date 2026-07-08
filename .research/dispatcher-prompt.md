@@ -962,7 +962,18 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
   failure in the stem group, `RETRY_MAX_ROUNDS` (default 2) lifetime rounds per
   stem, never for stems with landed work or any active/live sibling (T24 +
   PR 5/5 hold), ≤ `RETRY_REMINT_CAP` (default 6) per run, never past
-  `BUFFER_CEIL` headroom, append-only fail-closed. The `retry_of` field is what
+  `BUFFER_CEIL` headroom, append-only fail-closed. **Dev-truth guards (issue
+  #2153 — ghost retries):** the archive ledger alone is a blind spot — work
+  can land on dev OUT OF BAND under a different task_id/PR (observed: 2
+  reality-web `code-review-*` retries whose fixes had merged via #1676 etc.,
+  plus `10b-2-feature-flag-management-retry1` for a story coverage already
+  marked done). So before minting, the script also excludes (a) stems whose
+  story id is `status="done"` in `coverage.json` (`COVERAGE_FILE` injectable;
+  missing file degrades to no exclusion), and (b) stems matched by an anchored
+  `<id>:` commit-subject prefix on `origin/dev` — the same squash-merge join
+  convention as `dev-reconcile.sh`, never a loose body grep (`DEV_LOG_FILE`
+  injectable for tests; default `git log origin/dev --format=%s -300`;
+  unreachable remote degrades to no exclusion). The `retry_of` field is what
   Phase 3 and backlog-refill.sh honor to exempt the row from the STEM-aware
   archive exclusion (exact-id exclusion still applies — satisfied by the
   `-retry<N>` suffix). Smoke-tested by `.research/test-retry-remint.sh`.

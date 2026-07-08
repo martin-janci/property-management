@@ -3,7 +3,9 @@
 # Exercises: retryable classification (pr_number=null only), cool-down gate,
 # retry-round cap, landed-stem exclusion, active-stem exclusion, live
 # action-list stem exclusion (T24), minted-id idempotency, retry_of/round
-# stamping, per-run cap + ceil headroom, append-only count guard.
+# stamping, per-run cap + ceil headroom, append-only count guard, and the
+# issue #2153 dev-truth guards (coverage-done exclusion + anchored dev-log
+# subject exclusion, both degrading gracefully when their input is missing).
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -19,6 +21,8 @@ AL="$TMP/action-list.json"
 ALA="$TMP/action-list-archive.json"
 ASG="$TMP/assignments.json"
 ASGA="$TMP/assignments-archive.json"
+COV="$TMP/coverage.json"
+DEVLOG="$TMP/dev-log.txt"
 NOW="2026-07-07T12:00:00Z"          # fixtures fail at 2026-06-20 → 17d ago
 
 seed() {
@@ -64,13 +68,31 @@ EOF
   { "task_id": "bug-second-round",        "status": "failed", "pr_number": null,
     "last_updated": "2026-06-10T00:00:00Z" },
   { "task_id": "bug-second-round-retry1", "status": "failed", "pr_number": null,
-    "last_updated": "2026-06-15T00:00:00Z" }
+    "last_updated": "2026-06-15T00:00:00Z" },
+  { "task_id": "bug-cov-done",        "status": "failed", "pr_number": null,
+    "last_updated": "2026-06-20T00:00:00Z" },
+  { "task_id": "bug-on-dev",          "status": "failed", "pr_number": null,
+    "last_updated": "2026-06-20T00:00:00Z" }
 ] }
+EOF
+  # Dev-truth fixtures (issue #2153): a coverage story flipped "done" out of
+  # band, and a dev commit whose SUBJECT starts with an anchored "<id>:".
+  cat > "$COV" <<'EOF'
+{ "stories": [
+  { "id": "bug-cov-done",  "status": "done" },
+  { "id": "bug-retryable", "status": "partial" }
+] }
+EOF
+  cat > "$DEVLOG" <<'EOF'
+bug-on-dev: fix landed out-of-band on dev (#1676)
+fix(reality-web): unrelated conventional-commit subject
+dispatcher notes bug-second-round: loose mention must NOT match (space before colon)
 EOF
 }
 
 run() {
   ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" \
+  COVERAGE_FILE="$COV" DEV_LOG_FILE="$DEVLOG" \
   RETRY_NOW="$NOW" bash "$SCRIPT" "$@"
 }
 
@@ -85,6 +107,10 @@ grep -q "bug-landed"       <<<"$OUT" && bad "landed stem must not re-mint" || ok
 grep -q "bug-exhausted"    <<<"$OUT" && bad "exhausted retry budget must stop" || ok "retry cap (2 rounds) enforced"
 grep -q "active-stem-task" <<<"$OUT" && bad "active assignment stem must block" || ok "active-stem excluded"
 grep -q "live-stem-task"   <<<"$OUT" && bad "live action-list stem must block (T24)" || ok "live action-list stem excluded"
+grep -q "bug-cov-done"     <<<"$OUT" && bad "coverage-done story must not re-mint (#2153)" || ok "coverage-done stem excluded"
+grep -q "bug-on-dev"       <<<"$OUT" && bad "anchored dev-log subject must block (#2153)" || ok "dev-log subject-prefix excluded"
+grep -q "bug-second-round-retry2" <<<"$OUT" && ok "loose (non-anchored) dev-log mention does NOT exclude" || bad "non-anchored mention wrongly excluded bug-second-round"
+grep -q "bug-retryable-retry1"    <<<"$OUT" && ok "coverage status=partial does NOT exclude" || bad "coverage partial wrongly excluded bug-retryable"
 [ "$(jq '.items | length' "$AL")" = "2" ] && ok "dry-run leaves file untouched" || bad "dry-run mutated action-list"
 
 echo "T2 apply: row shape + metadata inheritance + append-only"
@@ -108,13 +134,13 @@ grep -q "nothing to re-mint" <<<"$OUT" && ok "second run no-op (minted ids now l
 
 echo "T4 per-run cap"
 seed
-OUT=$(RETRY_REMINT_CAP=1 ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" RETRY_NOW="$NOW" bash "$SCRIPT" --apply)
+OUT=$(RETRY_REMINT_CAP=1 ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" COVERAGE_FILE="$COV" DEV_LOG_FILE="$DEVLOG" RETRY_NOW="$NOW" bash "$SCRIPT" --apply)
 grep -q "re-minting 1 of 2" <<<"$OUT" && ok "cap=1 mints exactly 1" || bad "cap not enforced: $OUT"
 grep -q "bug-second-round-retry2" <<<"$OUT" && ok "oldest failure wins under cap" || bad "deterministic order broken"
 
 echo "T5 ceil headroom"
 seed
-OUT=$(BUFFER_CEIL=1 ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" RETRY_NOW="$NOW" bash "$SCRIPT" --apply)
+OUT=$(BUFFER_CEIL=1 ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" COVERAGE_FILE="$COV" DEV_LOG_FILE="$DEVLOG" RETRY_NOW="$NOW" bash "$SCRIPT" --apply)
 grep -q "no headroom" <<<"$OUT" && ok "ceil blocks minting" || bad "ceil not enforced: $OUT"
 
 echo "T6 missing files no-op"
@@ -123,6 +149,16 @@ OUT=$(ACTION_LIST="$TMP/nope.json" bash "$SCRIPT" 2>&1); [ $? -eq 0 ] \
 seed
 OUT=$(ACTION_LIST="$AL" ASSIGN="$TMP/no1.json" ASSIGN_ARCHIVE="$TMP/no2.json" bash "$SCRIPT" 2>&1)
 grep -q "no failures to retry" <<<"$OUT" && ok "missing assignments exits clean" || bad "missing assignments: $OUT"
+
+echo "T7 dev-truth guards degrade gracefully when inputs are missing (#2153)"
+seed
+OUT=$(ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" \
+      COVERAGE_FILE="$TMP/no-cov.json" DEV_LOG_FILE="$TMP/no-devlog.txt" \
+      RETRY_NOW="$NOW" bash "$SCRIPT" 2>&1); RC=$?
+[ "$RC" -eq 0 ] && ok "missing coverage + dev-log exits 0" || bad "missing guard inputs errored (rc=$RC): $OUT"
+grep -q "bug-retryable-retry1" <<<"$OUT" && ok "still mints without guard inputs" || bad "no-guard-input run minted nothing: $OUT"
+grep -q "bug-cov-done-retry1"  <<<"$OUT" && ok "coverage guard inert when file missing" || bad "coverage guard fired without file"
+grep -q "bug-on-dev-retry1"    <<<"$OUT" && ok "dev-log guard inert when file missing" || bad "dev-log guard fired without file"
 
 echo
 [ "$FAIL" = "0" ] && { echo "ALL PASS"; exit 0; } || { echo "FAILURES"; exit 1; }
