@@ -8,21 +8,24 @@
 use crate::state::AppState;
 use api_core::extractors::PortalPrincipal;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{get, patch, post},
     Json, Router,
 };
+use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 /// Create portal listings router.
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_listing))
+        .route("/", get(list_my_listings))
         .route("/{id}", get(get_my_listing))
         .route("/{id}", patch(update_listing))
+        .route("/{id}/analytics", get(get_my_listing_analytics))
 }
 
 // ============================================================================
@@ -372,4 +375,231 @@ pub async fn update_listing(
         })?;
 
     Ok(Json(map_listing(listing)))
+}
+
+// ============================================================================
+// Realtor "my listings" LIST + per-listing analytics (Epic 15 / Story 33.4).
+//
+// These close the backend gap that left the mobile MyListings / ListingAnalytics
+// screens and the web realtor dashboard rendering permanent empty stubs: there
+// was no LIST endpoint over a portal user's own listings and no HTTP surface for
+// the existing per-listing `get_listing_analytics` repo method. Both are gated by
+// `PortalPrincipal` (portal owners have no org membership) and scoped to the
+// caller's own rows via the portal-owner RLS context / SECURITY DEFINER ownership
+// check — never cross-user.
+// ============================================================================
+
+/// Query parameters for listing a portal user's own listings.
+#[derive(Debug, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+pub struct MyListingsQuery {
+    /// Optional status filter (e.g. `draft`, `active`, `paused`, `sold`,
+    /// `rented`, `archived`). Omit to return all of the caller's listings.
+    pub status: Option<String>,
+    /// Page size (default 20, clamped to 1..=100).
+    pub limit: Option<i32>,
+    /// Row offset (default 0).
+    pub offset: Option<i32>,
+}
+
+/// Paginated response for a portal user's own listings.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MyListingsResponse {
+    pub listings: Vec<PortalListingResponse>,
+    pub total: i64,
+}
+
+/// List the authenticated portal user's own listings.
+///
+/// GET /api/v1/my/listings
+#[utoipa::path(
+    get,
+    path = "/api/v1/my/listings",
+    tag = "PortalListings",
+    params(MyListingsQuery),
+    responses(
+        (status = 200, description = "The caller's listings", body = MyListingsResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn list_my_listings(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Query(query): Query<MyListingsQuery>,
+) -> Result<Json<MyListingsResponse>, (axum::http::StatusCode, String)> {
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+    let offset = query.offset.unwrap_or(0).max(0);
+    let status = query.status.as_deref();
+
+    let listings = state
+        .reality_portal_repo
+        .list_portal_listings(principal.user_id, status, limit, offset)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, user_id = %principal.user_id, "Failed to list portal listings");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to list listings".to_string(),
+            )
+        })?;
+
+    let total = state
+        .reality_portal_repo
+        .count_portal_listings(principal.user_id, status)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, user_id = %principal.user_id, "Failed to count portal listings");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to count listings".to_string(),
+            )
+        })?;
+
+    Ok(Json(MyListingsResponse {
+        listings: listings.into_iter().map(map_listing).collect(),
+        total,
+    }))
+}
+
+/// Query parameters for per-listing analytics.
+#[derive(Debug, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+pub struct ListingAnalyticsQuery {
+    /// Inclusive lower bound on the analytics day (ISO-8601 date). Omit for no
+    /// lower bound.
+    pub from_date: Option<NaiveDate>,
+    /// Inclusive upper bound on the analytics day (ISO-8601 date). Omit for no
+    /// upper bound.
+    pub to_date: Option<NaiveDate>,
+}
+
+/// One day's analytics counters — camelCase wire mirror of
+/// `db::models::ListingAnalytics` (the model is snake_case; the rest of the
+/// portal API is camelCase, so the endpoint serves a camelCase DTO for a
+/// consistent, wireable contract).
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DailyListingAnalytics {
+    pub date: NaiveDate,
+    pub views: i32,
+    pub unique_views: i32,
+    pub favorites_added: i32,
+    pub favorites_removed: i32,
+    pub inquiries: i32,
+    pub phone_clicks: i32,
+    pub share_clicks: i32,
+    pub source_website: i32,
+    pub source_mobile: i32,
+    pub source_search: i32,
+    pub source_direct: i32,
+}
+
+fn map_daily_analytics(a: db::models::ListingAnalytics) -> DailyListingAnalytics {
+    DailyListingAnalytics {
+        date: a.date,
+        views: a.views,
+        unique_views: a.unique_views,
+        favorites_added: a.favorites_added,
+        favorites_removed: a.favorites_removed,
+        inquiries: a.inquiries,
+        phone_clicks: a.phone_clicks,
+        share_clicks: a.share_clicks,
+        source_website: a.source_website,
+        source_mobile: a.source_mobile,
+        source_search: a.source_search,
+        source_direct: a.source_direct,
+    }
+}
+
+/// Analytics summary + daily series for one of the caller's listings.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListingAnalyticsResponse {
+    pub listing_id: Uuid,
+    pub total_views: i64,
+    pub total_inquiries: i64,
+    pub total_favorites: i64,
+    pub days_on_market: i32,
+    pub daily_analytics: Vec<DailyListingAnalytics>,
+}
+
+/// Get analytics for one of the authenticated portal user's own listings.
+///
+/// GET /api/v1/my/listings/{id}/analytics
+///
+/// Ownership is enforced up front via `portal_get_listing` (SECURITY DEFINER,
+/// migration 00186): a listing the caller does not own yields 404, so a realtor
+/// can never read another realtor's analytics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/my/listings/{id}/analytics",
+    tag = "PortalListings",
+    params(
+        ("id" = Uuid, Path, description = "Listing ID"),
+        ListingAnalyticsQuery
+    ),
+    responses(
+        (status = 200, description = "Analytics summary + daily series", body = ListingAnalyticsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not found or not owned")
+    )
+)]
+pub async fn get_my_listing_analytics(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+    Query(query): Query<ListingAnalyticsQuery>,
+) -> Result<Json<ListingAnalyticsResponse>, (axum::http::StatusCode, String)> {
+    // Ownership gate: only the portal owner may read analytics for their listing.
+    let listing = state
+        .reality_portal_repo
+        .get_portal_listing(id, principal.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, listing_id = %id, user_id = %principal.user_id, "Failed to load listing for analytics");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to load listing".to_string(),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found or not owned".to_string(),
+            )
+        })?;
+
+    let daily = state
+        .reality_portal_repo
+        .get_listing_analytics(id, query.from_date, query.to_date)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, listing_id = %id, "Failed to load listing analytics");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to load analytics".to_string(),
+            )
+        })?;
+
+    let total_views: i64 = daily.iter().map(|d| i64::from(d.views)).sum();
+    let total_inquiries: i64 = daily.iter().map(|d| i64::from(d.inquiries)).sum();
+    // Net favorites = added − removed, floored at 0 (a listing can't have a
+    // negative favorite count even if a day removed more than it added).
+    let total_favorites: i64 = daily
+        .iter()
+        .map(|d| i64::from(d.favorites_added) - i64::from(d.favorites_removed))
+        .sum::<i64>()
+        .max(0);
+    let days_on_market = i32::try_from((chrono::Utc::now() - listing.created_at).num_days().max(0))
+        .unwrap_or(i32::MAX);
+
+    Ok(Json(ListingAnalyticsResponse {
+        listing_id: id,
+        total_views,
+        total_inquiries,
+        total_favorites,
+        days_on_market,
+        daily_analytics: daily.into_iter().map(map_daily_analytics).collect(),
+    }))
 }

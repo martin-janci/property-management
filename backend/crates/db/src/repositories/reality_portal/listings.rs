@@ -124,6 +124,79 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// List a portal user's own listings (Epic 15 — realtor "my listings").
+    ///
+    /// The `listings` table is `FORCE ROW LEVEL SECURITY` (migration 00110), so
+    /// unlike the sibling CRUD helpers — which use `SECURITY DEFINER` functions
+    /// to bypass RLS — this method establishes the **portal-owner** RLS context
+    /// (context 5 of `listings_five_context`, migration 00186:
+    /// `portal_owner_id = get_current_portal_user_id()`) before selecting.
+    ///
+    /// The context is set with `set_config(..., is_local => true)` so it is
+    /// scoped to the transaction and auto-cleared on commit — no risk of RLS
+    /// context bleeding onto the pooled connection (the leak class the
+    /// `tenant_context` helpers guard against). The explicit
+    /// `portal_owner_id = $1` predicate is defense-in-depth so the query stays
+    /// correct even for a DB role that bypasses RLS.
+    pub async fn list_portal_listings(
+        &self,
+        user_id: Uuid,
+        status: Option<&str>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<Listing>, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+        let listings = sqlx::query_as::<_, Listing>(
+            r#"
+            SELECT * FROM listings
+            WHERE portal_owner_id = $1
+              AND ($2::text IS NULL OR status = $2)
+            ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4
+            "#,
+        )
+        .bind(user_id)
+        .bind(status)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(listings)
+    }
+
+    /// Count a portal user's own listings, matching the same filter as
+    /// [`list_portal_listings`](Self::list_portal_listings). Lets paginated
+    /// routes surface the true `total` instead of the current page's `len()`.
+    pub async fn count_portal_listings(
+        &self,
+        user_id: Uuid,
+        status: Option<&str>,
+    ) -> Result<i64, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+        let total = sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM listings
+            WHERE portal_owner_id = $1
+              AND ($2::text IS NULL OR status = $2)
+            "#,
+        )
+        .bind(user_id)
+        .bind(status)
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(total)
+    }
+
     // ========================================================================
     // Listing Analytics (Story 33.4)
     // ========================================================================

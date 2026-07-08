@@ -203,6 +203,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::portal_listings::create_listing,
         routes::portal_listings::get_my_listing,
         routes::portal_listings::update_listing,
+        routes::portal_listings::list_my_listings,
+        routes::portal_listings::get_my_listing_analytics,
         // Compare (UC-48)
         routes::compare::get_compare_list,
         routes::compare::add_to_compare,
@@ -301,6 +303,9 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::portal_listings::PortalListingResponse,
         routes::portal_listings::CreatePortalListingRequest,
         routes::portal_listings::UpdatePortalListingRequest,
+        routes::portal_listings::MyListingsResponse,
+        routes::portal_listings::ListingAnalyticsResponse,
+        routes::portal_listings::DailyListingAnalytics,
         // Compare (UC-48)
         routes::compare::CompareEntry,
         routes::compare::CompareListResponse,
