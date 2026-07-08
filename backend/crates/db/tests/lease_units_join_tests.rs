@@ -19,14 +19,21 @@
 //! are Postgres ENUM columns, while the models decode them as `String` — the
 //! read paths must project `status::text` (and `find_lease_by_id_rls` must use
 //! the explicit `LEASE_COLUMNS` list instead of `SELECT *`) or every fetch
-//! fails with `ColumnDecode` ("mismatched types"). Seeding is done via raw SQL
-//! because the create paths (`create_application_rls` / `create_lease_rls`)
-//! still use `RETURNING *` and carry the same decode drift (known residual,
-//! tracked in the PR body).
+//! fails with `ColumnDecode` ("mismatched types").
+//!
+//! #2169 (follow-up to PR #2150): the residual `SELECT *` in
+//! `get_lease_with_details_rls` and the `RETURNING *` in every lease write
+//! method (`create_lease_rls` / `update_lease_rls` / `terminate_lease_rls` /
+//! `renew_lease_rls` / `mark_sent_for_signature_rls`) carried the same drift and
+//! 500'd GET /leases/{id} and all lease mutations. The second test in this file
+//! (`lease_rls_detail_and_write_paths_decode_enum_status`) drives those exact
+//! paths through the repo — no raw-SQL seeding — and asserts the enum-backed
+//! `status` / `termination_reason` decode as text.
 
 use chrono::{Duration, Utc};
-use db::models::lease::{ApplicationListQuery, LeaseListQuery};
+use db::models::lease::{ApplicationListQuery, CreateLease, LeaseListQuery, TerminateLease};
 use db::repositories::LeaseRepository;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -208,5 +215,115 @@ async fn lease_read_paths_project_units_designation_as_unit_label(pool: PgPool) 
     assert_eq!(
         details.lease.status, "active",
         "lease status must decode via LEASE_COLUMNS status::text"
+    );
+}
+
+async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO users (email, password_hash, name) VALUES ($1, 'x', 'Lease User') RETURNING id",
+    )
+    .bind(email)
+    .fetch_one(pool)
+    .await
+    .expect("seed user")
+}
+
+/// #2169 regression. Drives the RLS single-lease detail read and the lease
+/// write paths (create + terminate) that previously used `SELECT *` /
+/// `RETURNING *` and 500'd with `ColumnDecode` because `leases.status`
+/// (`lease_status`) and `leases.termination_reason` (`termination_reason`) are
+/// Postgres ENUMs decoded as `String`. Pre-fix, `get_lease_with_details_rls`
+/// and every mutation fail at fetch; post-fix, the enum columns decode as text.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn lease_rls_detail_and_write_paths_decode_enum_status(pool: PgPool) {
+    let org = seed_org(&pool, "rls-detail").await;
+    let building = seed_building(&pool, org).await;
+    let unit = seed_unit(&pool, building, "B-202-RLS").await;
+    let user = seed_user(&pool, "creator@lease.test").await;
+
+    let repo = LeaseRepository::new(pool.clone());
+    let today = Utc::now().date_naive();
+
+    // 1) create_lease_rls — INSERT ... RETURNING LEASE_COLUMNS. Pre-fix this
+    //    used `RETURNING *` and failed to decode the `status` enum.
+    let created = repo
+        .create_lease_rls(
+            &pool,
+            org,
+            user,
+            CreateLease {
+                unit_id: unit,
+                application_id: None,
+                template_id: None,
+                landlord_user_id: None,
+                landlord_name: "Landlord Ltd".to_string(),
+                landlord_address: None,
+                tenant_user_id: None,
+                tenant_name: "Jane Tenant".to_string(),
+                tenant_email: "jane@lease.test".to_string(),
+                tenant_phone: None,
+                occupants: None,
+                start_date: today - Duration::days(10),
+                end_date: today + Duration::days(355),
+                term_months: 12,
+                is_fixed_term: Some(true),
+                monthly_rent: Decimal::new(1000, 0),
+                security_deposit: Decimal::new(1000, 0),
+                deposit_held_by: None,
+                rent_due_day: Some(1),
+                late_fee_amount: None,
+                late_fee_grace_days: None,
+                utilities_included: None,
+                parking_spaces: None,
+                storage_units: None,
+                pets_allowed: None,
+                pet_deposit: None,
+                max_occupants: None,
+                smoking_allowed: None,
+                notes: None,
+            },
+        )
+        .await
+        .expect("create_lease_rls must decode the status enum (RETURNING LEASE_COLUMNS, #2169)");
+    assert_eq!(
+        created.status, "draft",
+        "newly created lease status must decode via status::text"
+    );
+
+    // 2) get_lease_with_details_rls — the exact #2169 500. Pre-fix used
+    //    `SELECT *` and failed at fetch on the `status` enum.
+    let details = repo
+        .get_lease_with_details_rls(&pool, created.id)
+        .await
+        .expect("get_lease_with_details_rls must not ColumnDecode on status (#2169)")
+        .expect("the created lease must be found");
+    assert_eq!(
+        details.lease.status, "draft",
+        "RLS detail lease status must decode via LEASE_COLUMNS status::text"
+    );
+
+    // 3) terminate_lease_rls — UPDATE ... RETURNING LEASE_COLUMNS. Exercises the
+    //    `termination_reason` enum decode as well as `status`.
+    let terminated = repo
+        .terminate_lease_rls(
+            &pool,
+            created.id,
+            user,
+            TerminateLease {
+                termination_reason: "mutual_agreement".to_string(),
+                termination_notes: Some("closed early".to_string()),
+                effective_date: Some(today),
+            },
+        )
+        .await
+        .expect("terminate_lease_rls must decode status + termination_reason enums (#2169)");
+    assert_eq!(
+        terminated.status, "terminated",
+        "terminated lease status must decode via status::text"
+    );
+    assert_eq!(
+        terminated.termination_reason.as_deref(),
+        Some("mutual_agreement"),
+        "termination_reason enum must decode via termination_reason::text"
     );
 }
