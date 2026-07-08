@@ -25,12 +25,12 @@
 //!    the limiter cannot be raced/bypassed by eventually guessing right.
 //! 2. **Lockout scoping** — the limiter is keyed on the email, so one user's
 //!    brute-force lockout must not lock out anybody else.
-//! 3. **`/api/v1/auth/mfa/verify`** — the setup-completion endpoint has no
-//!    dedicated limiter yet; the `#[ignore]`d stub documents that gap (same
-//!    contract as the dead-subtree stub from PR #548, now in a binary that
-//!    actually compiles). Note the recovery-code path
-//!    (`/api/v1/users/me/mfa/recovery-codes/verify`) *is* limited (GH #1523)
-//!    and is covered by `mfa_recovery_cross_user_idor_tests.rs`.
+//! 3. **`/api/v1/auth/mfa/verify`** — the setup-completion endpoint now has a
+//!    dedicated per-user brute-force limiter (issue #2159): the (N+1)th
+//!    verification within the window is `429 RATE_LIMITED`, closing the
+//!    unthrottled 10^6-code-space brute-force window. Note the recovery-code
+//!    path (`/api/v1/users/me/mfa/recovery-codes/verify`) *is* likewise limited
+//!    (GH #1523) and is covered by `mfa_recovery_cross_user_idor_tests.rs`.
 
 // Each integration-test binary compiles `common` independently and uses only a
 // subset of its helpers; without this the rest trip `-D dead_code` under CI's
@@ -299,17 +299,20 @@ async fn login_with_valid_totp_succeeds_without_prior_failures(pool: PgPool) {
     cleanup_test_user(&pool, &user.email).await;
 }
 
-/// Issue #487 stub (ported from the never-compiled
+/// Issue #2159 (originally the #487 stub, ported from the never-compiled
 /// `tests/integration/mfa_e2e_tests.rs` copy added in PR #548): the
-/// setup-completion endpoint `/api/v1/auth/mfa/verify` has no dedicated
-/// brute-force limiter yet. The exposure is smaller than login (the caller is
-/// already authenticated and *received* the pending secret from `/setup`),
-/// but a throttle is still defense-in-depth — e.g. against a confused-deputy
-/// client replaying codes. Un-`#[ignore]` and keep the 429 assertion once a
-/// limiter (mirroring `MFA_RECOVERY_RATE_LIMITER` in `routes/mfa.rs`, GH
-/// #1523) lands on this route.
+/// setup-completion endpoint `/api/v1/auth/mfa/verify` now has a dedicated
+/// per-user brute-force limiter (`MFA_SETUP_VERIFY_RATE_LIMITER` in
+/// `routes/mfa.rs`, mirroring `MFA_RECOVERY_RATE_LIMITER`, GH #1523). A 6-digit
+/// TOTP has only a 10^6 code space, so an unthrottled `/verify` is
+/// brute-forceable even though the caller is already authenticated and holds
+/// the pending secret from `/setup`.
+///
+/// The limiter trips by *count* within its window
+/// (`MFA_SETUP_VERIFY_MAX_ATTEMPTS = 10`): this test hammers 11 quick requests
+/// and asserts the 11th is 429. It performs NO real-time waits — deliberately,
+/// so it does not reintroduce the CI-duration blow-up flagged in issue #2163.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "Awaiting rate-limit on POST /api/v1/auth/mfa/verify — issue #487"]
 async fn mfa_setup_verify_is_rate_limited(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
