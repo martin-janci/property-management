@@ -1117,6 +1117,125 @@ impl LlmDocumentRepository {
         })
     }
 
+    /// Upsert a document-embedding chunk, org-scoped (Story 84.5).
+    ///
+    /// Fast path: calls the `upsert_document_embedding` SQL function shipped by
+    /// migration 00081 (present only when the pgvector extension is installed),
+    /// which stores the vector in the native `embedding_vector` column.
+    ///
+    /// Fallback (stock PostgreSQL, e.g. CI): mirrors the SQL function's
+    /// select-then-update/insert semantics against the JSONB `embedding`
+    /// column, additionally scoped to `organization_id` so a chunk can never
+    /// be rewritten across org boundaries even on a privileged connection.
+    ///
+    /// `document_embeddings` is FORCE-RLS: the connection must carry the org
+    /// GUC (or global-read context) or both paths return zero rows / fail the
+    /// policy `WITH CHECK`.
+    ///
+    /// Returns the id of the inserted or updated row.
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every query runs on the
+    /// same RLS-context connection.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn upsert_embedding(
+        &self,
+        conn: &mut PgConnection,
+        organization_id: Uuid,
+        document_id: Uuid,
+        chunk_index: i32,
+        chunk_text: &str,
+        embedding: &[f32],
+        metadata: serde_json::Value,
+    ) -> Result<Uuid, SqlxError> {
+        // Check whether migration 00081's pgvector upsert function exists.
+        let function_exists: Option<bool> = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'upsert_document_embedding')",
+        )
+        .fetch_optional(&mut *conn)
+        .await?;
+
+        if function_exists == Some(true) {
+            let embedding_str = format!(
+                "[{}]",
+                embedding
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
+
+            let id: Uuid = sqlx::query_scalar(
+                "SELECT upsert_document_embedding($1, $2, $3, $4, $5::vector, $6)",
+            )
+            .bind(organization_id)
+            .bind(document_id)
+            .bind(chunk_index)
+            .bind(chunk_text)
+            .bind(&embedding_str)
+            .bind(&metadata)
+            .fetch_one(&mut *conn)
+            .await?;
+
+            return Ok(id);
+        }
+
+        // Fallback: JSONB upsert with the same (document_id, chunk_index)
+        // identity, org-scoped.
+        let embedding_json = serde_json::to_value(embedding).unwrap_or_default();
+
+        let existing: Option<Uuid> = sqlx::query_scalar(
+            r#"
+            SELECT id FROM document_embeddings
+            WHERE organization_id = $1 AND document_id = $2 AND chunk_index = $3
+            "#,
+        )
+        .bind(organization_id)
+        .bind(document_id)
+        .bind(chunk_index)
+        .fetch_optional(&mut *conn)
+        .await?;
+
+        if let Some(id) = existing {
+            sqlx::query(
+                r#"
+                UPDATE document_embeddings SET
+                    chunk_text = $2,
+                    embedding = $3,
+                    metadata = $4,
+                    updated_at = NOW()
+                WHERE id = $1
+                "#,
+            )
+            .bind(id)
+            .bind(chunk_text)
+            .bind(&embedding_json)
+            .bind(&metadata)
+            .execute(&mut *conn)
+            .await?;
+            return Ok(id);
+        }
+
+        let id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO document_embeddings (
+                organization_id, document_id, chunk_index, chunk_text, embedding, metadata
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            "#,
+        )
+        .bind(organization_id)
+        .bind(document_id)
+        .bind(chunk_index)
+        .bind(chunk_text)
+        .bind(&embedding_json)
+        .bind(&metadata)
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(id)
+    }
+
     /// Migrate pending JSONB embeddings to pgvector format (Story 103.5).
     ///
     /// Returns the number of embeddings migrated.

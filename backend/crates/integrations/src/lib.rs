@@ -33,6 +33,9 @@ pub mod redis;
 // Epic 64: Advanced AI & LLM Capabilities
 pub mod llm;
 
+// Story 84.5: Embedding provider abstraction for RAG (OpenAI + deterministic stub)
+pub mod embedding;
+
 // Story 3.1 AC3 (BIT-200): Building geocoding
 pub mod geocoding;
 
@@ -120,6 +123,9 @@ pub use llm::{
     ListingDescriptionInput, ListingDescriptionResult, LlmClient, LlmConfig, LlmError,
     SentimentResult, TenantAiConfig, TokenUsage,
 };
+
+// Story 84.5: Embedding provider abstraction for RAG
+pub use embedding::{EmbeddingProvider, StubEmbeddingProvider, DEFAULT_EMBEDDING_DIM};
 
 // Story 84.2: E-Signature Email Integration
 pub use esignature::{
