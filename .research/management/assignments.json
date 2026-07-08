@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T08:44:33Z",
+  "generated": "2026-07-08T08:47:06Z",
   "assignments": [
     {
       "task_id": "gap-84-5-no-application-handler-calling-search-similar",
@@ -48,18 +48,18 @@
     {
       "task_id": "gap-81-1-create-new-schedule-endpoint-still-stubbed",
       "branch": "auto-impl/gap-81-1-create-new-schedule-endpoint-st-c0d1172c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-08T08:09:43Z",
-      "last_updated": "2026-07-08T08:09:43Z",
-      "status_changed_at": "2026-07-08T08:09:43Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-08T08:47:06Z",
+      "status_changed_at": "2026-07-08T08:47:06Z",
+      "pr_number": 2179,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2179",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2179 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added POST /reports/schedules create handler + repo create() + NewReportSchedule + tests; check/clippy/unit-tests(31) green, sqlx e2e deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
