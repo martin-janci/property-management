@@ -28,7 +28,9 @@ export type AuditReasonAction =
   | 'force_update_floor_bump'
   | 'maintenance_mode_on'
   | 'feature_flag_toggle'
-  | 'oauth_scope_grant';
+  | 'oauth_scope_grant'
+  | 'agency_suspend'
+  | 'agency_reactivate';
 
 export interface AuditReasonPromptProps {
   action: AuditReasonAction;
@@ -100,6 +102,18 @@ const ACTION_META: Record<AuditReasonAction, ActionMeta> = {
     defaultMinLength: 20,
     helper:
       'Explain why the OAuth scope list for this client is being changed. Include the business justification and which scopes are being added or removed.',
+    risk: 'amber',
+  },
+  agency_suspend: {
+    defaultMinLength: 20,
+    helper:
+      'Explain why this organization is being suspended. All member sessions are revoked immediately; this reason is stored in the audit log and shown on the organization record.',
+    risk: 'red',
+  },
+  agency_reactivate: {
+    defaultMinLength: 20,
+    helper:
+      'Optionally note why this organization is being reactivated (e.g. invoices settled, dispute resolved). Stored in the audit log.',
     risk: 'amber',
   },
 };

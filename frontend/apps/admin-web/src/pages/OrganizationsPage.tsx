@@ -24,6 +24,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DestructiveConfirmDialog } from '../components/DestructiveConfirmDialog';
 import { useToast } from '../components/Toast';
 
 const PAGE_SIZE = 20;
@@ -158,208 +159,6 @@ const buttonSecondary: React.CSSProperties = {
   fontWeight: 500,
 };
 
-function buttonPrimary(disabled: boolean, danger = false): React.CSSProperties {
-  return {
-    padding: '7px 14px',
-    borderRadius: 8,
-    border: 'none',
-    background: danger ? 'var(--ppt-danger-600, #dc2626)' : 'var(--ppt-brand-600, #2563eb)',
-    color: '#fff',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontSize: 13,
-    fontWeight: 500,
-    opacity: disabled ? 0.5 : 1,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Suspend confirmation dialog
-// ---------------------------------------------------------------------------
-
-interface SuspendDialogProps {
-  org: AdminOrganizationSummary;
-  onClose: () => void;
-}
-
-function SuspendDialog({ org, onClose }: SuspendDialogProps) {
-  const { t } = useTranslation();
-  const { showToast } = useToast();
-  const [reason, setReason] = useState('');
-  const suspend = useSuspendOrganization();
-
-  const handleConfirm = () => {
-    const trimmed = reason.trim();
-    if (!trimmed) return;
-    suspend.mutate(
-      { id: org.id, data: { reason: trimmed } },
-      {
-        onSuccess: (result) => {
-          showToast({
-            type: 'success',
-            title: t('admin.organizations.suspend.successTitle', 'Organization suspended'),
-            message: result.message,
-          });
-          onClose();
-        },
-        onError: () => {
-          showToast({
-            type: 'error',
-            title: t('admin.organizations.suspend.failedTitle', 'Suspend failed'),
-            message: t(
-              'admin.organizations.suspend.failedMessage',
-              'Could not suspend the organization.'
-            ),
-          });
-        },
-      }
-    );
-  };
-
-  return (
-    <ModalShell label={t('admin.organizations.suspend.dialogLabel', 'Suspend organization')}>
-      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-        {t('admin.organizations.suspend.title', 'Suspend {{name}}?', { name: org.name })}
-      </h2>
-      <p style={{ margin: 0, fontSize: 13, color: 'var(--ppt-fg-secondary, #374151)' }}>
-        {t(
-          'admin.organizations.suspend.warning',
-          'All members of this organization will be logged out immediately and will not be able to sign in until the organization is reactivated.'
-        )}
-      </p>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13 }}>
-        {t('admin.organizations.suspend.reasonLabel', 'Reason (required, kept for audit)')}
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={3}
-          placeholder={t('admin.organizations.suspend.reasonPlaceholder', 'e.g. Unpaid invoices')}
-          style={{
-            padding: '6px 10px',
-            borderRadius: 6,
-            border: '1px solid var(--ppt-border-default, #e5e7eb)',
-            fontSize: 13,
-            fontFamily: 'inherit',
-            resize: 'vertical',
-          }}
-        />
-      </label>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={suspend.isPending}
-          style={buttonSecondary}
-        >
-          {t('admin.common.cancel', 'Cancel')}
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={suspend.isPending || !reason.trim()}
-          style={buttonPrimary(suspend.isPending || !reason.trim(), true)}
-        >
-          {suspend.isPending
-            ? t('admin.organizations.suspend.pending', 'Suspending…')
-            : t('admin.organizations.suspend.confirm', 'Suspend organization')}
-        </button>
-      </div>
-    </ModalShell>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Reactivate confirmation dialog
-// ---------------------------------------------------------------------------
-
-interface ReactivateDialogProps {
-  org: AdminOrganizationSummary;
-  onClose: () => void;
-}
-
-function ReactivateDialog({ org, onClose }: ReactivateDialogProps) {
-  const { t } = useTranslation();
-  const { showToast } = useToast();
-  const [note, setNote] = useState('');
-  const reactivate = useReactivateOrganization();
-
-  const handleConfirm = () => {
-    const trimmed = note.trim();
-    reactivate.mutate(
-      { id: org.id, data: { note: trimmed ? trimmed : null } },
-      {
-        onSuccess: (result) => {
-          showToast({
-            type: 'success',
-            title: t('admin.organizations.reactivate.successTitle', 'Organization reactivated'),
-            message: result.message,
-          });
-          onClose();
-        },
-        onError: () => {
-          showToast({
-            type: 'error',
-            title: t('admin.organizations.reactivate.failedTitle', 'Reactivate failed'),
-            message: t(
-              'admin.organizations.reactivate.failedMessage',
-              'Could not reactivate the organization.'
-            ),
-          });
-        },
-      }
-    );
-  };
-
-  return (
-    <ModalShell label={t('admin.organizations.reactivate.dialogLabel', 'Reactivate organization')}>
-      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-        {t('admin.organizations.reactivate.title', 'Reactivate {{name}}?', { name: org.name })}
-      </h2>
-      <p style={{ margin: 0, fontSize: 13, color: 'var(--ppt-fg-secondary, #374151)' }}>
-        {t(
-          'admin.organizations.reactivate.info',
-          'Members of this organization will be able to sign in again.'
-        )}
-      </p>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13 }}>
-        {t('admin.organizations.reactivate.noteLabel', 'Note (optional)')}
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={2}
-          style={{
-            padding: '6px 10px',
-            borderRadius: 6,
-            border: '1px solid var(--ppt-border-default, #e5e7eb)',
-            fontSize: 13,
-            fontFamily: 'inherit',
-            resize: 'vertical',
-          }}
-        />
-      </label>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={reactivate.isPending}
-          style={buttonSecondary}
-        >
-          {t('admin.common.cancel', 'Cancel')}
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={reactivate.isPending}
-          style={buttonPrimary(reactivate.isPending)}
-        >
-          {reactivate.isPending
-            ? t('admin.organizations.reactivate.pending', 'Reactivating…')
-            : t('admin.organizations.reactivate.confirm', 'Reactivate organization')}
-        </button>
-      </div>
-    </ModalShell>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Detail drill-in dialog
 // ---------------------------------------------------------------------------
@@ -483,6 +282,7 @@ function DetailDialog({ orgId, onClose }: DetailDialogProps) {
 
 const OrganizationsPage: React.FC = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const canSuspend = useCapability('agencies_suspend');
   const canReadStats = useCapability('audit_read');
 
@@ -501,7 +301,58 @@ const OrganizationsPage: React.FC = () => {
     status: statusFilter || undefined,
     search: search || undefined,
   });
-  const statsQuery = usePlatformStats();
+  // /stats requires audit_read server-side — skip the guaranteed-403 otherwise.
+  const statsQuery = usePlatformStats({ enabled: canReadStats });
+
+  const suspend = useSuspendOrganization();
+  const reactivate = useReactivateOrganization();
+
+  const handleSuspendConfirm = async (reason: string) => {
+    if (!suspendTarget) return;
+    try {
+      const result = await suspend.mutateAsync({ id: suspendTarget.id, data: { reason } });
+      showToast({
+        type: 'success',
+        title: t('admin.organizations.suspend.successTitle', 'Organization suspended'),
+        message: result.message,
+      });
+      setSuspendTarget(null);
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('admin.organizations.suspend.failedTitle', 'Suspend failed'),
+        message: t(
+          'admin.organizations.suspend.failedMessage',
+          'Could not suspend the organization.'
+        ),
+      });
+    }
+  };
+
+  const handleReactivateConfirm = async (note: string) => {
+    if (!reactivateTarget) return;
+    try {
+      const result = await reactivate.mutateAsync({
+        id: reactivateTarget.id,
+        data: { note: note ? note : null },
+      });
+      showToast({
+        type: 'success',
+        title: t('admin.organizations.reactivate.successTitle', 'Organization reactivated'),
+        message: result.message,
+      });
+      setReactivateTarget(null);
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('admin.organizations.reactivate.failedTitle', 'Reactivate failed'),
+        message: t(
+          'admin.organizations.reactivate.failedMessage',
+          'Could not reactivate the organization.'
+        ),
+      });
+    }
+  };
 
   const orgs = listQuery.data?.organizations ?? [];
   const total = listQuery.data?.total ?? 0;
@@ -795,12 +646,37 @@ const OrganizationsPage: React.FC = () => {
       )}
 
       {/* Dialogs */}
-      {suspendTarget && (
-        <SuspendDialog org={suspendTarget} onClose={() => setSuspendTarget(null)} />
-      )}
-      {reactivateTarget && (
-        <ReactivateDialog org={reactivateTarget} onClose={() => setReactivateTarget(null)} />
-      )}
+      <DestructiveConfirmDialog
+        open={suspendTarget !== null}
+        title={t('admin.organizations.suspend.title', 'Suspend {{name}}?', {
+          name: suspendTarget?.name ?? '',
+        })}
+        body={t(
+          'admin.organizations.suspend.warning',
+          'All members of this organization will be logged out immediately and will not be able to sign in until the organization is reactivated.'
+        )}
+        confirmText={suspendTarget?.name ?? ''}
+        confirmLabel={t('admin.organizations.suspend.confirmLabel', 'Type the name to confirm')}
+        reasonAction="agency_suspend"
+        onConfirm={handleSuspendConfirm}
+        onCancel={() => setSuspendTarget(null)}
+      />
+      <DestructiveConfirmDialog
+        open={reactivateTarget !== null}
+        title={t('admin.organizations.reactivate.title', 'Reactivate {{name}}?', {
+          name: reactivateTarget?.name ?? '',
+        })}
+        body={t(
+          'admin.organizations.reactivate.info',
+          'Members of this organization will be able to sign in again.'
+        )}
+        confirmText={reactivateTarget?.name ?? ''}
+        confirmLabel={t('admin.organizations.reactivate.confirmLabel', 'Type the name to confirm')}
+        reasonAction="agency_reactivate"
+        reasonRequired={false}
+        onConfirm={handleReactivateConfirm}
+        onCancel={() => setReactivateTarget(null)}
+      />
       {detailId && <DetailDialog orgId={detailId} onClose={() => setDetailId(null)} />}
     </section>
   );

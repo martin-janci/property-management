@@ -331,12 +331,17 @@ export function useReactivateOrganization() {
 
 /**
  * Platform-wide statistics from `GET /api/v1/platform-admin/stats`.
+ *
+ * The endpoint requires the `audit_read` capability server-side — pass
+ * `{ enabled: canReadStats }` to avoid a guaranteed-403 round-trip when the
+ * operator lacks it (mirrors the `enabled: !!id` pattern in `useOrganization`).
  */
-export function usePlatformStats() {
+export function usePlatformStats(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: adminKeys.platformStats(),
     queryFn: ({ signal }) => fetchPlatformStats(signal),
     staleTime: 30_000,
+    enabled: options?.enabled ?? true,
   });
 }
 
