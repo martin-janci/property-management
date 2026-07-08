@@ -3059,6 +3059,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2159",
+      "branch": "auto-impl/gh-issue-2159-94a9ef60",
+      "status": "merged",
+      "claimed_at": "2026-07-08T02:13:32Z",
+      "last_updated": "2026-07-08T08:28:42Z",
+      "status_changed_at": "2026-07-08T08:28:42Z",
+      "pr_number": 2172,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2172",
+      "merged_at": "2026-07-08T08:28:20Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2172 status=done specialist=rust-backend scope_drift=true(false-positive:code at routes/mfa.rs) code_reuse_warn=none note=rate-limited /auth/mfa/verify (shared limiter), de-ignored test (no waits per #2163); DB tests deferred to CI [fix-round 1 by dispatcher: setup-verify test was missing org membership + X-Tenant-ID; rewired via create_authenticated_user_with_org + .tenant()]",
+      "reviewer_summary": "verdict=approve head_oid=a2e8d5c9a44767c9e3294b82f5ce6fe97848bcaf note=mfa-verify-rate-limiter-correct-scopedrift-false-positive-confirmed-review-posted-as-comment-cannot-self-approve",
+      "last_reviewed_oid": "a2e8d5c9a44767c9e3294b82f5ce6fe97848bcaf",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2163",
       "branch": "auto-impl/gh-issue-2163-c2d9a16b",
       "status": "done",
@@ -3503,5 +3525,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T08:20:09Z"
+  "archived_at": "2026-07-08T08:28:42Z"
 }
