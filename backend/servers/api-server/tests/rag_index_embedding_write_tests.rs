@@ -77,7 +77,8 @@ async fn rag_index_persists_chunks(pool: PgPool) {
         .expect("embedding_ids array");
     assert_eq!(ids.len(), 2, "one embedding id per chunk");
     assert!(
-        ids.iter().all(|v| v.as_str().is_some_and(|s| !s.is_empty())),
+        ids.iter()
+            .all(|v| v.as_str().is_some_and(|s| !s.is_empty())),
         "embedding ids must be non-empty UUIDs"
     );
 }
@@ -101,11 +102,21 @@ async fn rag_index_is_idempotent(pool: PgPool) {
     });
 
     let first = app
-        .execute(session.post("/api/v1/ai/llm/rag/index").json(&payload).build())
+        .execute(
+            session
+                .post("/api/v1/ai/llm/rag/index")
+                .json(&payload)
+                .build(),
+        )
         .await;
     assert_eq!(first.status, StatusCode::CREATED, "body={}", first.text());
     let second = app
-        .execute(session.post("/api/v1/ai/llm/rag/index").json(&payload).build())
+        .execute(
+            session
+                .post("/api/v1/ai/llm/rag/index")
+                .json(&payload)
+                .build(),
+        )
         .await;
     assert_eq!(second.status, StatusCode::CREATED, "body={}", second.text());
 
