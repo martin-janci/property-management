@@ -32,6 +32,36 @@ fn live_openai_key_present() -> bool {
     std::env::var("OPENAI_API_KEY").is_ok()
 }
 
+/// Resolve the id of a previously registered test user by email.
+async fn resolve_user_id(app: &TestApp, user: &TestUser) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id")
+}
+
+/// Seed a `documents` row with an explicit id so the embedding-write FK
+/// (`document_embeddings.document_id → documents(id)`, migration 00081) is
+/// satisfied. The index handler stores embeddings keyed by the caller-supplied
+/// `document_id`, so the referenced document must already exist — otherwise both
+/// the pgvector and JSONB-fallback INSERT paths fail the foreign key with a 500.
+async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, id: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO documents
+               (id, organization_id, title, category, file_key, file_name,
+                mime_type, size_bytes, created_by)
+           VALUES ($1, $2, 'RAG Source', 'other', $3, 'rag.txt', 'text/plain', 1024, $4)"#,
+    )
+    .bind(id)
+    .bind(org_id)
+    .bind(format!("{org_id}/{id}.txt"))
+    .bind(created_by)
+    .execute(pool)
+    .await
+    .expect("seed document");
+}
+
 // POST /api/v1/ai/llm/rag/index → 201, persists one embedding row per chunk.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn rag_index_persists_chunks(pool: PgPool) {
@@ -43,7 +73,11 @@ async fn rag_index_persists_chunks(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "rag-index-1").await;
     let session = app.session(token, org_id);
 
+    // The RAG store is FK-bound to `documents`; seed the referenced row first.
+    let user_id = resolve_user_id(&app, &user).await;
     let document_id = Uuid::new_v4();
+    seed_document(&app.pool, org_id, user_id, document_id).await;
+
     let resp = app
         .execute(
             session
@@ -95,7 +129,10 @@ async fn rag_index_is_idempotent(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "rag-index-2").await;
     let session = app.session(token, org_id);
 
+    // The RAG store is FK-bound to `documents`; seed the referenced row first.
+    let user_id = resolve_user_id(&app, &user).await;
     let document_id = Uuid::new_v4();
+    seed_document(&app.pool, org_id, user_id, document_id).await;
     let payload = json!({
         "document_id": document_id,
         "chunks": ["The reserve fund covers roof repairs."],
