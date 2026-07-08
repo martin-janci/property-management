@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T16:10:26Z",
+  "archived_at": "2026-07-08T18:10:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1038,6 +1038,25 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
+      "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-07-08 | gc1-reconcile 2026-07-08T18:10:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2181,
+        "merged_at": "2026-07-08T18:03:00Z",
+        "at": "2026-07-08T18:10:39Z"
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
