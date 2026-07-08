@@ -23,6 +23,7 @@ use db::models::{
     GenerateListingDescriptionRequest, UpdateEscalationConfig,
 };
 use db::RlsPool;
+use integrations::{EmbeddingProvider, StubEmbeddingProvider};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use uuid::Uuid;
@@ -57,10 +58,201 @@ pub fn llm_router() -> Router<AppState> {
         .route("/voice/devices", post(link_voice_device))
         .route("/voice/devices/{id}", delete(unlink_voice_device))
         .route("/voice/commands/{device_id}", get(list_voice_commands))
+        // RAG indexing / embedding-write flow (Story 84.5 / 103.5)
+        .route("/rag/index", post(index_document))
         // Statistics
         .route("/statistics", get(get_ai_statistics))
         .route("/requests", get(list_generation_requests))
         .route("/requests/{id}", get(get_generation_request))
+}
+
+// ============================================================================
+// Story 84.5 / 103.5: pgvector RAG embedding-write flow
+// ============================================================================
+
+/// Request to index a document's text chunks into the RAG store.
+#[derive(Debug, Deserialize)]
+struct IndexDocumentRequest {
+    /// Logical document identifier the chunks belong to. Embeddings are stored
+    /// org-scoped (RLS) and keyed by `(document_id, chunk_index)`.
+    document_id: Uuid,
+    /// Pre-split text chunks to embed and store. Empty / whitespace-only
+    /// entries are dropped.
+    chunks: Vec<String>,
+    /// Optional human-readable title, folded into each chunk's metadata as
+    /// `title` (used by the retrieval path for `source_title`).
+    #[serde(default)]
+    title: Option<String>,
+    /// Optional extra metadata merged into every chunk's metadata object.
+    #[serde(default)]
+    metadata: Option<serde_json::Value>,
+}
+
+/// Result of an indexing run.
+#[derive(Debug, Serialize)]
+struct IndexDocumentResponse {
+    document_id: Uuid,
+    /// Number of chunks embedded and upserted.
+    chunks_indexed: usize,
+    /// IDs of the upserted `document_embeddings` rows, in chunk order.
+    embedding_ids: Vec<Uuid>,
+    /// Embedding provider used: `"openai"` when a key is configured, otherwise
+    /// the deterministic offline stub.
+    provider: String,
+}
+
+/// Upper bound on chunks per request — guards against unbounded embedding cost
+/// and connection hold time.
+const MAX_INDEX_CHUNKS: usize = 512;
+
+/// Index a document into the pgvector RAG store (Story 84.5 / 103.5).
+///
+/// This is the missing application-side embedding-write flow: it generates an
+/// embedding per chunk via the [`EmbeddingProvider`] abstraction and upserts it
+/// through `LlmDocumentRepository::upsert_embedding` (pgvector
+/// `upsert_document_embedding` when the extension is present, JSONB fallback
+/// otherwise). Retrieval (`/chat/enhanced`, `ai_chat_router`) then reads these
+/// rows via the pgvector `search_similar_documents` path.
+///
+/// Provider selection: the live OpenAI embedding backend when an API key is
+/// configured; otherwise a deterministic [`StubEmbeddingProvider`] so indexing
+/// still succeeds in CI / air-gapped deployments instead of hard-failing.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/rag/index",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "Document chunks embedded and stored"),
+        (status = 400, description = "No usable chunks / too many chunks", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 502, description = "Embedding provider failed", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn index_document(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Json(req): Json<IndexDocumentRequest>,
+) -> Result<(StatusCode, Json<IndexDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
+    let tenant_id = rls.tenant_id();
+
+    // Normalise chunks: trim + drop empties.
+    let chunks: Vec<String> = req
+        .chunks
+        .iter()
+        .map(|c| c.trim().to_string())
+        .filter(|c| !c.is_empty())
+        .collect();
+
+    if chunks.is_empty() {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_INPUT",
+                "chunks must contain at least one non-empty entry",
+            )),
+        ));
+    }
+    if chunks.len() > MAX_INDEX_CHUNKS {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_INPUT",
+                "too many chunks in a single request",
+            )),
+        ));
+    }
+
+    // Provider selection (Story 84.5): live OpenAI when configured, else the
+    // deterministic offline stub so indexing works without a key.
+    let (provider, provider_name): (Box<dyn EmbeddingProvider>, &str) =
+        if state.llm_client.has_openai_key() {
+            (Box::new(state.llm_client.clone()), "openai")
+        } else {
+            (Box::new(StubEmbeddingProvider::new()), "stub-deterministic")
+        };
+
+    // Generate embeddings first. `embed_batch` may make (slow) network calls;
+    // we intentionally do this BEFORE the write loop but the RLS connection is
+    // still held — acceptable for an admin/indexing endpoint and mirrors the
+    // module's other write handlers.
+    let embeddings = match provider.embed_batch(&chunks).await {
+        Ok(e) => e,
+        Err(e) => {
+            rls.release().await;
+            tracing::warn!("RAG embedding generation failed: {}", e);
+            return Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "EMBEDDING_FAILED",
+                    "Failed to generate embeddings",
+                )),
+            ));
+        }
+    };
+
+    // Base metadata: caller-provided object (if any) plus an optional title.
+    let mut base_meta = req
+        .metadata
+        .filter(|v| v.is_object())
+        .unwrap_or_else(|| serde_json::json!({}));
+    if let (Some(title), Some(obj)) = (req.title.as_ref(), base_meta.as_object_mut()) {
+        obj.entry("title")
+            .or_insert_with(|| serde_json::Value::String(title.clone()));
+    }
+
+    // Upsert each chunk (pgvector-aware, JSONB fallback) on the RLS connection.
+    let mut embedding_ids = Vec::with_capacity(chunks.len());
+    for (idx, (chunk, emb)) in chunks.iter().zip(embeddings.iter()).enumerate() {
+        match state
+            .llm_document_repo
+            .upsert_embedding(
+                rls.conn(),
+                tenant_id,
+                req.document_id,
+                idx as i32,
+                chunk,
+                &emb.embedding,
+                base_meta.clone(),
+            )
+            .await
+        {
+            Ok(id) => embedding_ids.push(id),
+            Err(e) => {
+                rls.release().await;
+                tracing::error!("RAG embedding upsert failed: {}", e);
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to store embeddings",
+                    )),
+                ));
+            }
+        }
+    }
+    rls.release().await;
+
+    tracing::info!(
+        "RAG indexed {} chunk(s) for document {} (org {}) via {}",
+        embedding_ids.len(),
+        req.document_id,
+        tenant_id,
+        provider_name
+    );
+
+    Ok((
+        StatusCode::CREATED,
+        Json(IndexDocumentResponse {
+            document_id: req.document_id,
+            chunks_indexed: embedding_ids.len(),
+            embedding_ids,
+            provider: provider_name.to_string(),
+        }),
+    ))
 }
 
 // ============================================================================

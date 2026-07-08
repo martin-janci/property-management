@@ -520,10 +520,18 @@ async fn send_message(
                     .await
                 {
                     Ok(embedding_result) => {
-                        // Search documents by embedding similarity
+                        // Search documents by embedding similarity.
+                        //
+                        // Story 84.5 / 103.5: prefer the pgvector-native path
+                        // (`search_similar_documents` SQL function, IVFFlat cosine
+                        // index) which pushes the top-k similarity search into
+                        // Postgres instead of streaming every org row into Rust.
+                        // `search_documents_pgvector` transparently falls back to
+                        // the application-level cosine scan when the pgvector
+                        // extension / function is absent, so this is a safe swap.
                         match state
                             .llm_document_repo
-                            .search_documents_by_embedding(
+                            .search_documents_pgvector(
                                 &mut *guard.conn(),
                                 tenant_id,
                                 &embedding_result.embedding,
