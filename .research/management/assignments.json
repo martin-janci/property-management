@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T02:20:22Z",
+  "generated": "2026-07-08T02:32:29Z",
   "assignments": [
     {
       "task_id": "gh-issue-2158",
@@ -21,30 +21,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 2,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "gap-83-1-no-test-coverage-for-oauth-flow",
-      "branch": "auto-impl/gap-83-1-no-test-coverage-for-oauth-flow-bab951d7",
-      "status": "review",
-      "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-08T02:13:32Z",
-      "status_changed_at": "2026-07-08T02:13:32Z",
-      "pr_number": 2166,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2166",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2166 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=16 route tests for airbnb connect/sync/disconnect; compile+clippy green, PG:5433 stalled so compile-gate-only verification noted in PR",
-      "reviewer_summary": "verdict=approve head_oid=e54302d26a3d2c5d635f638819ef95a0ac614211 note=test-only-coverage-clean-ci-green(build-in-progress)-posted-as-comment-self-approval-blocked",
-      "last_reviewed_oid": "e54302d26a3d2c5d635f638819ef95a0ac614211",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
