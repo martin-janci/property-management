@@ -78,9 +78,6 @@ export const FileDisputePage = lazy(() =>
 export const DisputeDetailPage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.DisputeDetailPage }))
 );
-export const MediationPage = lazy(() =>
-  import('../features/disputes').then((m) => ({ default: m.MediationPage }))
-);
 export const MediationWorkspacePage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.MediationWorkspacePage }))
 );

@@ -414,15 +414,20 @@ function DisputeDetailRoute() {
  *
  * Route: /disputes/:disputeId/mediation
  *
- * Replaces the previous MediationPage stub with the full MediationWorkspacePage:
+ * Renders the full MediationWorkspacePage, which threads the complete
+ * sessions/submissions/resolution workflow to the backend:
  *   - Dispute timeline wired to useDisputeTimeline (real API)
  *   - Manager/tenant chat thread via useMediationNotes + useAddMediationNote
+ *   - Mediation sessions (schedule / reschedule / cancel) via useMediationSessions
+ *     + useScheduleSession + useUpdateSession + useCancelSession
+ *   - Party submissions via the MediationSubmissionsPanel (real API)
  *   - Resolution form using useResolveDispute
  *   - Escalate dialog using useEscalateDispute
  *   - Assign mediator dialog using useAssignMediator
  *
- * The legacy MediationPage (sessions/submissions) remains in the codebase for
- * the session-scheduling sub-feature pending a future backend endpoint.
+ * The former standalone MediationPage (a prop-driven sessions/submissions stub
+ * that was never routed) has been removed now that the workspace page threads
+ * the whole flow end-to-end.
  */
 function DisputeMediationRoute() {
   const { t } = useTranslation();
