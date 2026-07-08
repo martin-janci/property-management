@@ -111,9 +111,17 @@ mod basic_health {
         // Check if uptime is included
         let json = response.json_value();
         if let Some(uptime) = json.get("uptime_seconds") {
-            let uptime_val = uptime.as_u64().or_else(|| uptime.as_f64().map(|f| f as u64));
-            assert!(uptime_val.is_some(), "Uptime should be a number");
-            assert!(uptime_val.unwrap() >= 0, "Uptime should be non-negative");
+            let uptime_val = uptime
+                .as_u64()
+                .or_else(|| uptime.as_f64().map(|f| f as u64));
+            // Must be present and parse as an unsigned integer. Being u64 it is
+            // inherently non-negative, so presence-as-a-number is the real check
+            // (a literal `>= 0` on a u64 is a useless comparison and trips
+            // `-D warnings` now that this file actually compiles — #2158).
+            assert!(
+                uptime_val.is_some(),
+                "Uptime should be a non-negative number"
+            );
         }
     }
 }
@@ -133,10 +141,7 @@ mod readiness {
 
     /// Find a dependency by name in the readiness response. Returns the
     /// dependency object so callers can assert on `status`/`latency_ms`/etc.
-    fn find_dep<'a>(
-        json: &'a serde_json::Value,
-        name: &str,
-    ) -> Option<&'a serde_json::Value> {
+    fn find_dep<'a>(json: &'a serde_json::Value, name: &str) -> Option<&'a serde_json::Value> {
         json.get("dependencies")?
             .as_array()?
             .iter()
@@ -173,7 +178,8 @@ mod readiness {
         response.assert_status(StatusCode::OK);
 
         let json = response.json_value();
-        let db = find_dep(&json, "database").expect("readiness must report a `database` dependency");
+        let db =
+            find_dep(&json, "database").expect("readiness must report a `database` dependency");
         let status = db
             .get("status")
             .and_then(|s| s.as_str())

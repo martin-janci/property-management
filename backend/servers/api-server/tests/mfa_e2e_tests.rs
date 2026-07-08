@@ -13,24 +13,32 @@
 //! `totp_rs` (same library used by api-server). This avoids clock-skew issues
 //! and lets us exercise the real validation path.
 
-// Issue #487: `mod common;` was duplicated here even though the parent
-// `integration/mod.rs` already declares the test module. Redeclaring it
-// inside a sub-file links a second instance of `common` into the test
-// binary, which breaks any `OnceLock`-cached state shared via `common`.
-// We reuse the crate-root `common` module (declared by every top-level
-// test file) via `crate::common::*`.
+// #2158: promoted out of the never-compiled `tests/integration/` subtree to a
+// real top-level test binary. As the crate root of this binary, it declares the
+// shared `mod common;` harness itself (the standard pattern used by every other
+// top-level test file) and reaches into it via `crate::common::*`.
+mod common;
 
 use axum::{
     body::Body,
-    http::{Method, Request, StatusCode, header},
+    http::{header, Method, Request, StatusCode},
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use totp_rs::{Algorithm, Secret, TOTP};
+use uuid::Uuid;
 
-use crate::common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
+use crate::common::{cleanup_test_user, create_authenticated_user_with_org, TestApp, TestUser};
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+//
+// #2158: every MFA endpoint (setup/verify/disable/status/backup-codes) takes
+// `RlsConnection`, whose extractor requires BOTH an `X-Tenant-ID` header and an
+// active `organization_members` row — otherwise the request is rejected with
+// 400/403 before the handler runs (see `tests/common/mod.rs:574-590`). So the
+// helpers thread `org_id` through and stamp the tenant header, and the tests
+// provision the user via `create_authenticated_user_with_org`. Login requests
+// (`/api/v1/auth/login`) are NOT RLS-gated and need no tenant header.
 
 /// Generate the current TOTP code from a base32-encoded secret.
 fn current_totp_code(secret: &str) -> String {
@@ -51,11 +59,12 @@ fn current_totp_code(secret: &str) -> String {
 }
 
 /// Call POST /api/v1/auth/mfa/setup and return the parsed JSON body.
-async fn do_mfa_setup(app: &TestApp, access_token: &str) -> Value {
+async fn do_mfa_setup(app: &TestApp, access_token: &str, org_id: Uuid) -> Value {
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/setup")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let resp = app.execute(req).await;
@@ -65,11 +74,17 @@ async fn do_mfa_setup(app: &TestApp, access_token: &str) -> Value {
 
 /// Call POST /api/v1/auth/mfa/verify with a generated code.
 /// Returns (status, json_body).
-async fn do_mfa_verify(app: &TestApp, access_token: &str, code: &str) -> (StatusCode, Value) {
+async fn do_mfa_verify(
+    app: &TestApp,
+    access_token: &str,
+    org_id: Uuid,
+    code: &str,
+) -> (StatusCode, Value) {
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/verify")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(json!({ "code": code }).to_string()))
         .unwrap();
@@ -77,13 +92,12 @@ async fn do_mfa_verify(app: &TestApp, access_token: &str, code: &str) -> (Status
     (resp.status, resp.json_value())
 }
 
-/// Setup MFA and immediately verify with a valid TOTP code. Returns the
-/// access_token so subsequent calls can continue to use it.
-async fn setup_and_enable_mfa(app: &TestApp, access_token: &str) {
-    let setup_body = do_mfa_setup(app, access_token).await;
+/// Setup MFA and immediately verify with a valid TOTP code.
+async fn setup_and_enable_mfa(app: &TestApp, access_token: &str, org_id: Uuid) {
+    let setup_body = do_mfa_setup(app, access_token, org_id).await;
     let secret = setup_body["secret"].as_str().expect("secret field");
     let code = current_totp_code(secret);
-    let (status, body) = do_mfa_verify(app, access_token, &code).await;
+    let (status, body) = do_mfa_verify(app, access_token, org_id, &code).await;
     assert_eq!(
         status,
         StatusCode::OK,
@@ -103,12 +117,13 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "shape").await;
 
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/setup")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let resp = app.execute(req).await;
@@ -118,7 +133,10 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
 
     // Setup returns only secret + qrUri; backupCodes moved to verify (Story 9.2)
     assert!(body["secret"].is_string(), "secret must be a string");
-    assert!(body["qrUri"].is_string(), "qrUri must be a string (camelCase)");
+    assert!(
+        body["qrUri"].is_string(),
+        "qrUri must be a string (camelCase)"
+    );
     assert!(
         body["backupCodes"].is_null(),
         "backupCodes must NOT appear in setup response (issued at verify); got: {}",
@@ -136,7 +154,7 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
     // Verify → 10 single-use recovery codes are returned (not at setup)
     let secret = body["secret"].as_str().unwrap();
     let code = current_totp_code(secret);
-    let (verify_status, verify_body) = do_mfa_verify(&app, &access_token, &code).await;
+    let (verify_status, verify_body) = do_mfa_verify(&app, &access_token, org_id, &code).await;
     assert_eq!(
         verify_status,
         StatusCode::OK,
@@ -146,7 +164,11 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
     let recovery_codes = verify_body["recoveryCodes"]
         .as_array()
         .expect("recoveryCodes must be array in verify response");
-    assert_eq!(recovery_codes.len(), 10, "verify must return 10 recovery codes");
+    assert_eq!(
+        recovery_codes.len(),
+        10,
+        "verify must return 10 recovery codes"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -160,17 +182,17 @@ async fn test_mfa_full_setup_and_verify_with_valid_code(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "full").await;
 
     // Step 1: initiate setup
-    let setup_body = do_mfa_setup(&app, &access_token).await;
+    let setup_body = do_mfa_setup(&app, &access_token, org_id).await;
     let secret = setup_body["secret"].as_str().expect("secret field");
 
     // Step 2: generate a valid code from the returned secret (same as scanning QR)
     let valid_code = current_totp_code(secret);
 
     // Step 3: verify → MFA should now be enabled
-    let (status, body) = do_mfa_verify(&app, &access_token, &valid_code).await;
+    let (status, body) = do_mfa_verify(&app, &access_token, org_id, &valid_code).await;
     assert_eq!(
         status,
         StatusCode::OK,
@@ -190,10 +212,10 @@ async fn test_mfa_verify_invalid_code_returns_400(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    do_mfa_setup(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "invcode").await;
+    do_mfa_setup(&app, &access_token, org_id).await;
 
-    let (status, body) = do_mfa_verify(&app, &access_token, "000000").await;
+    let (status, body) = do_mfa_verify(&app, &access_token, org_id, "000000").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body["code"], json!("INVALID_CODE"));
 
@@ -209,12 +231,13 @@ async fn test_mfa_status_disabled_before_setup(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "stdis").await;
 
     let req = Request::builder()
         .method(Method::GET)
         .uri("/api/v1/auth/mfa/status")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let resp = app.execute(req).await;
@@ -234,13 +257,14 @@ async fn test_mfa_status_enabled_after_verify(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "sten").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     let req = Request::builder()
         .method(Method::GET)
         .uri("/api/v1/auth/mfa/status")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let resp = app.execute(req).await;
@@ -265,8 +289,8 @@ async fn test_login_returns_mfa_required_when_mfa_enabled_and_code_absent(pool: 
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "mfareq").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     // Login without two_factor_code
     let req = Request::builder()
@@ -305,16 +329,16 @@ async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "loginok").await;
 
     // Setup & enable MFA, capture the secret for later use.
-    let setup_body = do_mfa_setup(&app, &access_token).await;
+    let setup_body = do_mfa_setup(&app, &access_token, org_id).await;
     let secret = setup_body["secret"]
         .as_str()
         .expect("secret field")
         .to_string();
     let enable_code = current_totp_code(&secret);
-    let (status, _) = do_mfa_verify(&app, &access_token, &enable_code).await;
+    let (status, _) = do_mfa_verify(&app, &access_token, org_id, &enable_code).await;
     assert_eq!(status, StatusCode::OK);
 
     // Login again, this time providing the two_factor_code
@@ -342,7 +366,10 @@ async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
     );
     // Should have real tokens
     assert!(
-        body["accessToken"].as_str().map(|s| !s.is_empty()).unwrap_or(false),
+        body["accessToken"]
+            .as_str()
+            .map(|s| !s.is_empty())
+            .unwrap_or(false),
         "accessToken must be non-empty; body: {}",
         body
     );
@@ -357,8 +384,8 @@ async fn test_login_fails_with_invalid_mfa_code(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "loginbad").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     let login_body = json!({
         "email": user.email,
@@ -388,16 +415,16 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "disok").await;
 
     // Setup MFA, capture secret
-    let setup_body = do_mfa_setup(&app, &access_token).await;
+    let setup_body = do_mfa_setup(&app, &access_token, org_id).await;
     let secret = setup_body["secret"]
         .as_str()
         .expect("secret field")
         .to_string();
     let verify_code = current_totp_code(&secret);
-    let (st, _) = do_mfa_verify(&app, &access_token, &verify_code).await;
+    let (st, _) = do_mfa_verify(&app, &access_token, org_id, &verify_code).await;
     assert_eq!(st, StatusCode::OK, "enable must succeed");
 
     // Disable with a fresh TOTP code
@@ -406,10 +433,9 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/disable")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            json!({ "code": disable_code }).to_string(),
-        ))
+        .body(Body::from(json!({ "code": disable_code }).to_string()))
         .unwrap();
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
@@ -421,6 +447,7 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
         .method(Method::GET)
         .uri("/api/v1/auth/mfa/status")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let status_resp = app.execute(status_req).await;
@@ -442,13 +469,14 @@ async fn test_mfa_disable_with_invalid_code_returns_400(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "disbad").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/disable")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(json!({ "code": "000000" }).to_string()))
         .unwrap();
@@ -469,17 +497,17 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "regen").await;
 
     // Enable MFA; recovery codes are issued by verify (not setup) in Story 9.2.
-    let setup_body = do_mfa_setup(&app, &access_token).await;
+    let setup_body = do_mfa_setup(&app, &access_token, org_id).await;
     let secret = setup_body["secret"]
         .as_str()
         .expect("secret field")
         .to_string();
 
     let verify_code = current_totp_code(&secret);
-    let (st, verify_body) = do_mfa_verify(&app, &access_token, &verify_code).await;
+    let (st, verify_body) = do_mfa_verify(&app, &access_token, org_id, &verify_code).await;
     assert_eq!(st, StatusCode::OK);
     let original_backup_codes = verify_body["recoveryCodes"]
         .as_array()
@@ -494,6 +522,7 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/backup-codes/regenerate")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(json!({ "code": regen_code }).to_string()))
         .unwrap();
@@ -526,12 +555,16 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
         .method(Method::GET)
         .uri("/api/v1/auth/mfa/status")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let status_resp = app.execute(status_req).await;
     let status_body = status_resp.json_value();
     let remaining = status_body["backupCodesRemaining"].as_i64().unwrap_or(-1);
-    assert_eq!(remaining, 10, "backupCodesRemaining should be 10 after regen");
+    assert_eq!(
+        remaining, 10,
+        "backupCodesRemaining should be 10 after regen"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -543,13 +576,14 @@ async fn test_mfa_backup_codes_regeneration_invalid_code(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "regenbad").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/backup-codes/regenerate")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(json!({ "code": "000000" }).to_string()))
         .unwrap();
@@ -599,14 +633,15 @@ async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "conflict").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     // Try to initiate setup again
     let req = Request::builder()
         .method(Method::POST)
         .uri("/api/v1/auth/mfa/setup")
         .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_id.to_string())
         .body(Body::empty())
         .unwrap();
     let resp = app.execute(req).await;
@@ -631,8 +666,8 @@ async fn test_mfa_verify_rate_limited(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access_token, _) = create_authenticated_user(&app, &user).await;
-    setup_and_enable_mfa(&app, &access_token).await;
+    let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "ratelim").await;
+    setup_and_enable_mfa(&app, &access_token, org_id).await;
 
     // Hammer the verify endpoint with wrong codes.
     let mut final_status: StatusCode = StatusCode::OK;
@@ -641,6 +676,7 @@ async fn test_mfa_verify_rate_limited(pool: PgPool) {
             .method(Method::POST)
             .uri("/api/v1/auth/mfa/verify")
             .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+            .header("X-Tenant-ID", org_id.to_string())
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(json!({"code": "000000"}).to_string()))
             .unwrap();

@@ -3,13 +3,12 @@
 //!
 //! # Why this lives at the top level of `tests/`
 //!
-//! The functional flows for this endpoint exist under
-//! `tests/integration/mfa_recovery_codes_tests.rs` (T1–T6), but that directory
-//! is **never compiled** — nothing declares `mod integration;` and there is no
-//! `tests/integration/main.rs`, so Cargo's auto-discovery skips it (see the note
-//! in `tests/auth_enumeration_tests.rs`). A test placed there proves nothing
-//! because it never runs. This file is a real top-level test target and runs
-//! under `cargo test --workspace`.
+//! The functional flows for this endpoint live in the top-level
+//! `tests/mfa_recovery_codes_tests.rs` (T1–T6). Those were once orphaned under
+//! the never-compiled `tests/integration/` subtree but were promoted to a real
+//! top-level binary in #2158. This file covers only the cross-user IDOR scoping
+//! and complements — does not duplicate — those functional flows. Both are real
+//! top-level test targets and run under `cargo test --workspace`.
 //!
 //! # What it proves (IG3)
 //!

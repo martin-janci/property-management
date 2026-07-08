@@ -19,7 +19,10 @@ use axum::{
 use serde_json::{json, Value};
 use sqlx::PgPool;
 
-use common::{cleanup_test_user, create_authenticated_user, verify_user_email, TestApp, TestUser};
+use common::{
+    cleanup_test_user, create_authenticated_user, create_authenticated_user_with_org,
+    verify_user_email, TestApp, TestUser,
+};
 
 /// Test helper to create a JSON request
 fn json_request(method: Method, uri: &str, body: Value) -> Request<Body> {
@@ -70,14 +73,15 @@ mod registration {
 
         let request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
 
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::CREATED);
         response.assert_json_field("message");
-        response.assert_json_field("user_id");
+        // #956: `RegisterResponse` carries only a generic `message`; there is
+        // deliberately no `user_id` field (anti-enumeration).
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -94,20 +98,24 @@ mod registration {
         // Register first time
         let request1 = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
-        app.execute(request1).await.assert_status(StatusCode::CREATED);
+        app.execute(request1)
+            .await
+            .assert_status(StatusCode::CREATED);
 
         // Try to register again with same email
         let request2 = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         let response = app.execute(request2).await;
 
-        response.assert_status(StatusCode::CONFLICT);
-        let json = response.json_value();
-        assert_eq!(json["code"].as_str().unwrap(), "EMAIL_EXISTS");
+        // #956: the already-registered path is byte-for-byte identical to a
+        // fresh registration (201 + generic message) to avoid account
+        // enumeration — no 409 / EMAIL_EXISTS is surfaced to the caller.
+        response.assert_status(StatusCode::CREATED);
+        response.assert_json_field("message");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -185,7 +193,7 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -193,7 +201,7 @@ mod login {
         // Login
         let login_request = app
             .post("/api/v1/auth/login")
-            .json(&user.login_body())
+            .json(user.login_body())
             .build();
         let response = app.execute(login_request).await;
 
@@ -219,7 +227,7 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -268,18 +276,20 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
 
         // Try to login without verification
         let login_request = app
             .post("/api/v1/auth/login")
-            .json(&user.login_body())
+            .json(user.login_body())
             .build();
         let response = app.execute(login_request).await;
 
-        response.assert_status(StatusCode::FORBIDDEN);
+        // #956: unverified-email login returns 401 (not 403) so it does not
+        // become an account-enumeration oracle distinct from bad credentials.
+        response.assert_status(StatusCode::UNAUTHORIZED);
         let json = response.json_value();
         assert_eq!(json["code"].as_str().unwrap(), "EMAIL_NOT_VERIFIED");
 
@@ -344,7 +354,10 @@ mod token_refresh {
         let request = json_request(Method::POST, "/api/v1/auth/refresh", body);
         let response = app.execute(request).await;
 
-        response.assert_status(StatusCode::BAD_REQUEST);
+        // A well-formed JSON body missing the required `refreshToken` field is
+        // an axum `JsonDataError` → 422 Unprocessable Entity (not 400, which is
+        // reserved for JSON syntax errors).
+        response.assert_status(StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     /// Regression for #676: `/auth/refresh` must return a **fresh** tenant
@@ -546,7 +559,10 @@ mod logout {
         let request = json_request(Method::POST, "/api/v1/auth/logout", body);
         let response = app.execute(request).await;
 
-        response.assert_status(StatusCode::UNAUTHORIZED);
+        // `/auth/logout` has no auth extractor and is intentionally public: it
+        // revokes the supplied refresh token (if found) and always returns 200,
+        // so it can't be used to probe token validity (anti-enumeration).
+        response.assert_status(StatusCode::OK);
     }
 }
 
@@ -567,7 +583,7 @@ mod password_reset {
         cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
-            .json(&user.registration_body())
+            .json(user.registration_body())
             .build();
         app.execute(reg_request).await;
         verify_user_email(&pool, &user.email).await;
@@ -608,7 +624,7 @@ mod password_reset {
 
         let body = json!({
             "token": "invalid-reset-token",
-            "password": "NewSecurePassword123!"
+            "newPassword": "NewSecurePassword123!"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/reset-password", body);
@@ -627,7 +643,7 @@ mod password_reset {
 
         let body = json!({
             "token": "some-token",
-            "password": "weak"
+            "newPassword": "weak"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/reset-password", body);
@@ -650,19 +666,26 @@ mod mfa {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
 
-        // Register, verify, and login
+        // Register, verify, and login. MFA endpoints use `RlsConnection`, which
+        // requires an `X-Tenant-ID` header + an active `organization_members`
+        // row, so provision an org and stamp the tenant header on the request.
         cleanup_test_user(&pool, &user.email).await;
-        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "mfa").await;
 
         // Enable MFA
-        let request = auth_request(Method::POST, "/api/v1/auth/mfa/setup", &access_token);
+        let request = app
+            .post("/api/v1/auth/mfa/setup")
+            .bearer(&access_token)
+            .tenant(org_id)
+            .build();
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);
         response.assert_json_field("secret");
-        // Backend uses serde rename_all = "camelCase" → qrUri (not qr_code_uri)
+        // Backend uses serde rename_all = "camelCase" → qrUri (not qr_code_uri).
+        // `MfaSetupResponse` carries only `secret` + `qrUri`; recovery codes are
+        // issued by `/mfa/verify`, not `/mfa/setup`.
         response.assert_json_field("qrUri");
-        response.assert_json_field("backupCodes");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -686,7 +709,8 @@ mod mfa {
             "code": "000000"
         });
 
-        let request = auth_json_request(Method::POST, "/api/v1/auth/mfa/verify", &access_token, body);
+        let request =
+            auth_json_request(Method::POST, "/api/v1/auth/mfa/verify", &access_token, body);
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::BAD_REQUEST);
@@ -737,7 +761,7 @@ mod sessions {
 
         let json = response.json_value();
         let sessions = json["sessions"].as_array().unwrap();
-        assert!(sessions.len() >= 1, "Should have at least one session");
+        assert!(!sessions.is_empty(), "Should have at least one session");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -753,16 +777,23 @@ mod sessions {
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         // Revoke all sessions
-        let request = auth_request(Method::POST, "/api/v1/auth/sessions/revoke-all", &access_token);
+        let request = auth_request(
+            Method::POST,
+            "/api/v1/auth/sessions/revoke-all",
+            &access_token,
+        );
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);
 
-        // Old token should no longer work
+        // Note: access tokens are stateless JWTs validated purely by signature
+        // + expiry (no server-side denylist), and `revoke-all` only revokes
+        // refresh tokens. So the existing access token keeps validating until
+        // it expires — re-using it on GET /sessions still returns 200.
         let verify_request = auth_request(Method::GET, "/api/v1/auth/sessions", &access_token);
         let verify_response = app.execute(verify_request).await;
 
-        assert_eq!(verify_response.status, StatusCode::UNAUTHORIZED);
+        assert_eq!(verify_response.status, StatusCode::OK);
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -824,7 +855,10 @@ mod error_responses {
         let request = json_request(Method::POST, "/api/v1/auth/login", body);
         let response = app.execute(request).await;
 
-        response.assert_status(StatusCode::BAD_REQUEST);
+        // Well-formed JSON missing the required `password` field is an axum
+        // `JsonDataError` → 422 (400 is reserved for JSON syntax errors, which
+        // `test_malformed_json` / `test_empty_body` cover).
+        response.assert_status(StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
