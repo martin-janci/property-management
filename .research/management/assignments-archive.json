@@ -1309,6 +1309,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
+      "branch": "auto-impl/code-review-mobile-rn-report-fault-fake-71b31778",
+      "status": "done",
+      "claimed_at": "2026-07-08T02:13:32Z",
+      "last_updated": "2026-07-08T02:20:22Z",
+      "status_changed_at": "2026-07-08T02:20:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=pm-frontend scope_drift=false code_reuse_warn=none note=already-fixed-on-dev-no-op (ghost retry; ReportFaultScreen handleSubmit already calls real /api/v1/faults with regression test on dev)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-screens-mock-data",
       "branch": "auto-impl/code-review-mobile-rn-screens-mock-data-a538fec4",
       "status": "merged",
@@ -1673,6 +1695,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-80-3-sessions-submissions-workflow-not-fully-threaded",
+      "branch": "auto-impl/gap-80-3-sessions-submissions-workflow-n-ff7d3251",
+      "status": "merged",
+      "claimed_at": "2026-07-08T00:11:16Z",
+      "last_updated": "2026-07-08T02:20:22Z",
+      "status_changed_at": "2026-07-08T02:20:22Z",
+      "pr_number": 2168,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2168",
+      "merged_at": "2026-07-08T02:16:40Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2168 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=removed orphaned MediationPage+MediationSessionCard; workspace page already threads sessions/submissions; added 7-case threading regression test; typecheck+163 disputes tests+biome green",
+      "reviewer_summary": "verdict=approve head_oid=f43e9922b9e1ec3f3d41a487aab11711b163044b note=orphan-MediationPage-removal-verified+meaningful-threading-test-ci-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "f43e9922b9e1ec3f3d41a487aab11711b163044b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-08T02:13:32Z"
     },
     {
       "task_id": "gap-83-2-no-test-coverage-for-any-booking",
@@ -3295,5 +3339,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T00:54:36Z"
+  "archived_at": "2026-07-08T02:20:22Z"
 }

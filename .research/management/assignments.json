@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T02:13:32Z",
+  "generated": "2026-07-08T02:20:22Z",
   "assignments": [
     {
       "task_id": "gh-issue-2158",
@@ -50,28 +50,6 @@
       "quarantine_reason": null
     },
     {
-      "task_id": "gap-80-3-sessions-submissions-workflow-not-fully-threaded",
-      "branch": "auto-impl/gap-80-3-sessions-submissions-workflow-n-ff7d3251",
-      "status": "review",
-      "claimed_at": "2026-07-08T00:11:16Z",
-      "last_updated": "2026-07-08T02:13:32Z",
-      "status_changed_at": "2026-07-08T00:31:14Z",
-      "pr_number": 2168,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2168",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=2168 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=removed orphaned MediationPage+MediationSessionCard; workspace page already threads sessions/submissions; added 7-case threading regression test; typecheck+163 disputes tests+biome green",
-      "reviewer_summary": "verdict=approve head_oid=f43e9922b9e1ec3f3d41a487aab11711b163044b note=orphan-MediationPage-removal-verified+meaningful-threading-test-ci-green-posted-as-comment-self-approval-blocked",
-      "last_reviewed_oid": "f43e9922b9e1ec3f3d41a487aab11711b163044b",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-07-08T02:13:32Z"
-    },
-    {
       "task_id": "gh-issue-2169",
       "branch": "auto-impl/gh-issue-2169-4ab7ed4c",
       "status": "in-progress",
@@ -96,28 +74,6 @@
     {
       "task_id": "gh-issue-2159",
       "branch": "auto-impl/gh-issue-2159-94a9ef60",
-      "status": "in-progress",
-      "claimed_at": "2026-07-08T02:13:32Z",
-      "last_updated": "2026-07-08T02:13:32Z",
-      "status_changed_at": "2026-07-08T02:13:32Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
-      "branch": "auto-impl/code-review-mobile-rn-report-fault-fake-71b31778",
       "status": "in-progress",
       "claimed_at": "2026-07-08T02:13:32Z",
       "last_updated": "2026-07-08T02:13:32Z",
