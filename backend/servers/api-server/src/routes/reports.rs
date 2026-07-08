@@ -210,6 +210,8 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
+        // gap-81-1: Create a new report schedule
+        .route("/schedules", axum::routing::post(create_schedule))
         // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
         .route("/schedules/{id}", axum::routing::put(update_schedule))
         // Epic 81: Story 81.1 — Schedule pause/resume
@@ -1874,6 +1876,250 @@ pub async fn retry_execution(
 }
 
 // ============================================================================
+// gap-81-1: Create report schedule
+// ============================================================================
+
+/// Allowed schedule frequencies (matches the `report_schedules.frequency`
+/// CHECK constraint in migration 00162).
+const VALID_SCHEDULE_FREQUENCIES: &[&str] = &["daily", "weekly", "monthly"];
+
+/// Allowed export formats for a schedule.
+const VALID_SCHEDULE_FORMATS: &[&str] = &["pdf", "excel", "csv"];
+
+/// Default delivery time (HH:MM) when the caller omits `time`.
+const DEFAULT_SCHEDULE_TIME: &str = "08:00";
+
+/// Validate an `HH:MM` 24-hour time-of-day string.
+fn validate_time_hhmm(s: &str) -> bool {
+    let Some((h, m)) = s.split_once(':') else {
+        return false;
+    };
+    // Reject empty components and non-numeric input; enforce 24h/60m bounds.
+    match (h.parse::<u32>(), m.parse::<u32>()) {
+        (Ok(hour), Ok(minute)) => !h.is_empty() && !m.is_empty() && hour <= 23 && minute <= 59,
+        _ => false,
+    }
+}
+
+/// Request body for `POST /api/v1/reports/schedules`.
+///
+/// `organization_id` is intentionally absent — it is derived from the
+/// authenticated tenant so a caller cannot create a schedule in another org.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateScheduleRequest {
+    /// Report definition this schedule generates.
+    pub report_id: Uuid,
+    /// Human-readable schedule name.
+    pub name: String,
+    /// Delivery cadence: `daily`, `weekly`, or `monthly`.
+    pub frequency: String,
+    /// Day of week (0=Sunday … 6=Saturday). Required when `frequency = weekly`.
+    pub day_of_week: Option<i32>,
+    /// Day of month (1–31). Required when `frequency = monthly`.
+    pub day_of_month: Option<i32>,
+    /// Delivery time of day in `HH:MM` (24h). Defaults to `08:00`.
+    pub time: Option<String>,
+    /// IANA timezone for the delivery time. Defaults to `UTC`.
+    pub timezone: Option<String>,
+    /// Export format: `pdf`, `excel`, or `csv`. Defaults to `pdf`.
+    pub format: Option<String>,
+    /// Recipient email addresses (max 50).
+    #[serde(default)]
+    pub recipients: Vec<String>,
+}
+
+/// Create a new report schedule (gap-81-1).
+///
+/// Persists a new `report_schedules` row for the authenticated tenant and
+/// returns it with `201 Created`. Replaces the previous stub which never
+/// persisted the schedule.
+///
+/// # Security
+///
+/// Uses `RlsConnection` so the caller's role and tenant are re-verified against
+/// the database (not JWT claims). Manager role or above is required, and the
+/// new schedule's `organization_id` is taken from `rls.tenant_id()` — never the
+/// request body — preventing cross-tenant creation.
+#[utoipa::path(
+    post,
+    path = "/api/v1/reports/schedules",
+    tag = "reports",
+    request_body = CreateScheduleRequest,
+    responses(
+        (status = 201, description = "Schedule created", body = ReportSchedule),
+        (status = 400, description = "Validation error", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+    )
+)]
+pub async fn create_schedule(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Json(req): Json<CreateScheduleRequest>,
+) -> Result<(StatusCode, Json<ReportSchedule>), (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may create report schedules. Role is derived
+    // from the DB-backed `RlsConnection`, NOT from JWT claims.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to create report schedules",
+            )),
+        ));
+    }
+    // Tenant for the new schedule comes from the authenticated context.
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
+    // --- Validation --------------------------------------------------------
+    let name = req.name.trim();
+    if name.is_empty() {
+        return Err(bad_request("EMPTY_NAME", "Schedule name must not be empty"));
+    }
+
+    let frequency = req.frequency.to_lowercase();
+    if !VALID_SCHEDULE_FREQUENCIES.contains(&frequency.as_str()) {
+        return Err(bad_request(
+            "INVALID_FREQUENCY",
+            "frequency must be one of: daily, weekly, monthly",
+        ));
+    }
+
+    // Weekly schedules need a day-of-week; monthly schedules need a day-of-month.
+    match frequency.as_str() {
+        "weekly" => match req.day_of_week {
+            Some(d) if (0..=6).contains(&d) => {}
+            _ => {
+                return Err(bad_request(
+                    "INVALID_DAY_OF_WEEK",
+                    "weekly schedules require day_of_week in 0..=6 (0=Sunday)",
+                ))
+            }
+        },
+        "monthly" => match req.day_of_month {
+            Some(d) if (1..=31).contains(&d) => {}
+            _ => {
+                return Err(bad_request(
+                    "INVALID_DAY_OF_MONTH",
+                    "monthly schedules require day_of_month in 1..=31",
+                ))
+            }
+        },
+        _ => {}
+    }
+    // Range-check any provided day fields even when not required by frequency.
+    if let Some(d) = req.day_of_week {
+        if !(0..=6).contains(&d) {
+            return Err(bad_request(
+                "INVALID_DAY_OF_WEEK",
+                "day_of_week must be in 0..=6 (0=Sunday)",
+            ));
+        }
+    }
+    if let Some(d) = req.day_of_month {
+        if !(1..=31).contains(&d) {
+            return Err(bad_request(
+                "INVALID_DAY_OF_MONTH",
+                "day_of_month must be in 1..=31",
+            ));
+        }
+    }
+
+    let time = req
+        .time
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .unwrap_or(DEFAULT_SCHEDULE_TIME)
+        .to_string();
+    if !validate_time_hhmm(&time) {
+        return Err(bad_request(
+            "INVALID_TIME",
+            "time must be a 24-hour HH:MM value (e.g. \"08:30\")",
+        ));
+    }
+
+    let format = req
+        .format
+        .as_deref()
+        .map(str::to_lowercase)
+        .unwrap_or_else(|| "pdf".to_string());
+    if !VALID_SCHEDULE_FORMATS.contains(&format.as_str()) {
+        return Err(bad_request(
+            "INVALID_FORMAT",
+            "format must be one of: pdf, excel, csv",
+        ));
+    }
+
+    if req.recipients.len() > 50 {
+        return Err(bad_request(
+            "TOO_MANY_RECIPIENTS",
+            "A schedule may have at most 50 recipients",
+        ));
+    }
+    for email in &req.recipients {
+        if !crate::services::auth::AuthService::validate_email(email) {
+            return Err(bad_request(
+                "INVALID_RECIPIENT_EMAIL",
+                format!("Invalid recipient email address: {email}"),
+            ));
+        }
+    }
+
+    let timezone = req
+        .timezone
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .unwrap_or("UTC")
+        .to_string();
+
+    // --- Persist -----------------------------------------------------------
+    let schedule = state
+        .report_schedule_repo
+        .create(db::models::report_schedule::NewReportSchedule {
+            organization_id: caller_org_id,
+            report_id: req.report_id,
+            name: name.to_string(),
+            frequency,
+            day_of_week: req.day_of_week,
+            day_of_month: req.day_of_month,
+            time,
+            timezone,
+            format,
+            recipients: req.recipients,
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                org_id = %caller_org_id,
+                report_id = %req.report_id,
+                "Failed to create report schedule"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to create schedule")),
+            )
+        })?;
+
+    Ok((StatusCode::CREATED, Json(schedule)))
+}
+
+/// Small helper to build a `400 Bad Request` error tuple.
+fn bad_request(
+    code: &'static str,
+    message: impl Into<String>,
+) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new(code, message.into())),
+    )
+}
+
+// ============================================================================
 // gap-81-1: Update report schedule (cron_expression, recipients, enabled)
 // ============================================================================
 
@@ -2072,7 +2318,25 @@ pub async fn update_schedule(
 
 #[cfg(test)]
 mod tests {
-    use super::validate_cron_expression;
+    use super::{validate_cron_expression, validate_time_hhmm};
+
+    // --- validate_time_hhmm (gap-81-1: create schedule) ---
+
+    #[test]
+    fn time_valid_values() {
+        for t in ["00:00", "08:00", "08:30", "23:59", "9:05", "0:0"] {
+            assert!(validate_time_hhmm(t), "{t:?} should be a valid HH:MM time");
+        }
+    }
+
+    #[test]
+    fn time_invalid_values() {
+        for t in [
+            "", ":", "24:00", "08:60", "08", "08:", ":30", "aa:bb", "-1:00", "12:-5", "8:0:0",
+        ] {
+            assert!(!validate_time_hhmm(t), "{t:?} should be rejected");
+        }
+    }
 
     // --- valid expressions ---
 
