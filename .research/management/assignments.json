@@ -1,28 +1,6 @@
 {
-  "generated": "2026-07-08T12:22:09Z",
+  "generated": "2026-07-08T13:05:30Z",
   "assignments": [
-    {
-      "task_id": "gap-84-5-no-application-handler-calling-search-similar",
-      "branch": "auto-impl/gap-84-5-no-application-handler-calling-68a6e390",
-      "status": "review",
-      "claimed_at": "2026-07-08T04:07:35Z",
-      "last_updated": "2026-07-08T12:19:17Z",
-      "status_changed_at": "2026-07-08T04:38:29Z",
-      "pr_number": 2173,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2173",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2173 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=wired pgvector search_similar_documents into /chat/enhanced + added POST /ai/llm/rag/index embedding-write handler; check+clippy green; sqlx tests deferred to CI",
-      "reviewer_summary": "verdict=approve head_oid=361c0672fb4089d4848caa16c7639026e74b8885 note=code-clean-ci-still-running",
-      "last_reviewed_oid": "361c0672fb4089d4848caa16c7639026e74b8885",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 2,
-      "merge_attempted_at": null
-    },
     {
       "task_id": "gap-81-1-create-new-schedule-endpoint-still-stubbed",
       "branch": "auto-impl/gap-81-1-create-new-schedule-endpoint-st-c0d1172c",
