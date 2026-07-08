@@ -25,6 +25,7 @@ import { createPortal } from 'react-dom';
 import {
   type AuditReasonAction,
   AuditReasonPrompt,
+  auditReasonMinLength,
   useAuditReasonValid,
 } from './AuditReasonPrompt';
 
@@ -40,7 +41,17 @@ export interface DestructiveConfirmDialogProps {
   confirmLabel?: string;
   delayMs?: number;
   reasonAction?: AuditReasonAction;
-  onConfirm: () => Promise<void>;
+  /**
+   * When false (and `reasonAction` is set), an empty reason is accepted —
+   * but a non-empty reason must still pass audit-reason validation.
+   * Defaults to true (reason required).
+   */
+  reasonRequired?: boolean;
+  /**
+   * Called with the audit reason (trimmed; empty string when no
+   * `reasonAction` is configured or an optional reason was left blank).
+   */
+  onConfirm: (reason: string) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -221,6 +232,7 @@ export function DestructiveConfirmDialog({
   confirmLabel = 'Type the name to confirm',
   delayMs,
   reasonAction,
+  reasonRequired = true,
   onConfirm,
   onCancel,
 }: DestructiveConfirmDialogProps) {
@@ -235,9 +247,12 @@ export function DestructiveConfirmDialog({
   const titleId = useId();
   const delayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const reasonIsValid = useAuditReasonValid(reason, 20); // min 20 for any action
+  const reasonMinLength = reasonAction ? auditReasonMinLength(reasonAction) : 20;
+  const reasonIsValid = useAuditReasonValid(reason, reasonMinLength);
   const typedMatches = typed === confirmText;
-  const reasonSatisfied = reasonAction ? reasonIsValid : true;
+  const reasonSatisfied = reasonAction
+    ? reasonIsValid || (!reasonRequired && reason.trim() === '')
+    : true;
 
   // Start delay countdown when typed matches (and delay configured)
   useEffect(() => {
@@ -312,11 +327,11 @@ export function DestructiveConfirmDialog({
     if (isPending) return;
     setIsPending(true);
     try {
-      await onConfirm();
+      await onConfirm(reason.trim());
     } finally {
       setIsPending(false);
     }
-  }, [isPending, onConfirm]);
+  }, [isPending, onConfirm, reason]);
 
   const delayInProgress = delayMs !== undefined && delayMs > 0 && delayRemainingMs > 0;
   const confirmDisabled = !typedMatches || !reasonSatisfied || delayInProgress || isPending;
@@ -349,7 +364,12 @@ export function DestructiveConfirmDialog({
         <div className="ppt-dcd-body">{body}</div>
 
         {reasonAction && (
-          <AuditReasonPrompt action={reasonAction} value={reason} onChange={setReason} required />
+          <AuditReasonPrompt
+            action={reasonAction}
+            value={reason}
+            onChange={setReason}
+            required={reasonRequired}
+          />
         )}
 
         <div className="ppt-dcd-input-group">

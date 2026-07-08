@@ -7,9 +7,11 @@
  *  3. Organization rows + platform stats cards render from responses.
  *  4. Empty state renders when the platform has no organizations.
  *  5. Suspend/Reactivate buttons hidden without `agencies_suspend`.
- *  6. Suspend flow: confirmation dialog requires a reason, POSTs it.
- *  7. Reactivate flow: confirmation dialog POSTs to /reactivate.
+ *  6. Suspend flow (shared DestructiveConfirmDialog): requires typing the org
+ *     name + a valid audit reason (min 20 chars), POSTs the reason.
+ *  7. Reactivate flow: name confirmation, note optional, POSTs to /reactivate.
  *  8. Details dialog fetches and renders the org detail (incl. suspension).
+ *  9. Stats endpoint is not called without `audit_read` (capability gate).
  */
 
 import { CapabilityProvider } from '@ppt/admin-ui';
@@ -212,7 +214,7 @@ describe('OrganizationsPage', () => {
     expect(screen.getAllByText('Details').length).toBe(2);
   });
 
-  it('suspend flow requires a reason and POSTs it to /suspend', async () => {
+  it('suspend flow requires name confirmation + a valid audit reason and POSTs it to /suspend', async () => {
     const postSpy = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -239,18 +241,26 @@ describe('OrganizationsPage', () => {
     const user = userEvent.setup();
     await user.click(screen.getByText('Suspend'));
 
-    // Confirmation dialog opens
-    const dialog = await screen.findByRole('dialog', { name: /suspend organization/i });
+    // Shared DestructiveConfirmDialog opens, labelled by its title
+    // (i18n isn't initialized in tests, so {{name}} stays uninterpolated)
+    const dialog = await screen.findByRole('dialog', { name: /suspend/i });
     expect(dialog).toBeDefined();
 
-    // Confirm button disabled until a reason is typed
-    const confirmBtn = screen.getByRole('button', { name: 'Suspend organization' });
+    // Confirm disabled until org name typed AND audit reason is valid
+    const confirmBtn = screen.getByRole('button', { name: 'Confirm' });
     expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
 
-    await user.type(
-      screen.getByPlaceholderText('e.g. Unpaid invoices'),
-      'Terms of service violation'
-    );
+    // Type the org name — still disabled: audit reason missing
+    await user.type(screen.getByLabelText('Type "Acme Property" to confirm'), 'Acme Property');
+    expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
+
+    // A too-short reason (< 20 chars) is rejected
+    const reasonBox = screen.getByLabelText('Audit reason');
+    await user.type(reasonBox, 'x');
+    expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
+
+    await user.clear(reasonBox);
+    await user.type(reasonBox, 'Terms of service violation');
     expect((confirmBtn as HTMLButtonElement).disabled).toBe(false);
     await user.click(confirmBtn);
 
@@ -260,9 +270,12 @@ describe('OrganizationsPage', () => {
     expect(JSON.parse(calledOpts.body as string)).toEqual({
       reason: 'Terms of service violation',
     });
+
+    // Dialog closes on success
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /suspend/i })).toBeNull());
   });
 
-  it('reactivate flow POSTs to /reactivate for a suspended org', async () => {
+  it('reactivate flow confirms by name (note optional) and POSTs to /reactivate', async () => {
     const postSpy = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -289,12 +302,19 @@ describe('OrganizationsPage', () => {
     const user = userEvent.setup();
     await user.click(screen.getByText('Reactivate'));
 
-    await screen.findByRole('dialog', { name: /reactivate organization/i });
-    await user.click(screen.getByRole('button', { name: 'Reactivate organization' }));
+    await screen.findByRole('dialog', { name: /reactivate/i });
+
+    // Note is optional — confirm enables as soon as the org name is typed
+    const confirmBtn = screen.getByRole('button', { name: 'Confirm' });
+    expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
+    await user.type(screen.getByLabelText('Type "Shady Homes" to confirm'), 'Shady Homes');
+    expect((confirmBtn as HTMLButtonElement).disabled).toBe(false);
+    await user.click(confirmBtn);
 
     await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(1));
-    const calledUrl: string = postSpy.mock.calls[0][0] as string;
+    const [calledUrl, calledOpts] = postSpy.mock.calls[0] as [string, RequestInit];
     expect(calledUrl).toContain(`/platform-admin/organizations/${ORG_SUSPENDED.id}/reactivate`);
+    expect(JSON.parse(calledOpts.body as string)).toEqual({ note: null });
   });
 
   it('details dialog fetches and renders the org detail with suspension info', async () => {
@@ -324,5 +344,19 @@ describe('OrganizationsPage', () => {
     expect(screen.getByText(/Unpaid invoices/)).toBeDefined();
     // metrics: members "5 (4 active)"
     expect(screen.getByText('5 (4 active)')).toBeDefined();
+  });
+
+  it('does not call /stats without audit_read capability', async () => {
+    mockListAndStats();
+    renderPage({ capabilities: ['agencies_read'] });
+    await waitFor(() => expect(screen.getByText('Acme Property')).toBeDefined());
+
+    // No stats cards…
+    expect(screen.queryByText('Active orgs')).toBeNull();
+    // …and, more importantly, no request was ever fired at /stats
+    const statsCalls = vi
+      .mocked(fetch)
+      .mock.calls.filter(([input]) => input.toString().includes('/platform-admin/stats'));
+    expect(statsCalls.length).toBe(0);
   });
 });
