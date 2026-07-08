@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T14:32:50Z",
+  "generated": "2026-07-08T16:12:02Z",
   "assignments": [
     {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
@@ -16,6 +16,28 @@
       "reviewer_summary": "verdict=approve head_oid=66e6c18ca569d1df9b69b8fc7a06e74929cff4d3 note=IDOR-cross-document-revoke-guarded-404-regression-test-solid-CI-pending-merge-next-cycle",
       "last_reviewed_oid": "66e6c18ca569d1df9b69b8fc7a06e74929cff4d3",
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "10b-1-organization-management-dashboard-retry1",
+      "branch": "auto-impl/10b-1-organization-management-dashboard-bf205805",
+      "status": "in-progress",
+      "claimed_at": "2026-07-08T16:10:07Z",
+      "last_updated": "2026-07-08T16:10:07Z",
+      "status_changed_at": "2026-07-08T16:10:07Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,

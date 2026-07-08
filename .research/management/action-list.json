@@ -559,18 +559,6 @@
       }
     },
     {
-      "id": "code-review-mobile-native-kmp-listing-detail-path-inject",
-      "action": "security: ListingRepository.getListingDetail (ListingRepository.kt:46) splices listingId raw into the URL path with no encodeURLPathPart(), unlike ApiClient.getListing which hardens via pathSegment(); listingId is deep-link/nav sourced so '/','?','#','..' can smuggle extra path segments. Apply the same encoding.",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1d-devreview 2026-07-08",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T08:10:10Z"
-    },
-    {
       "id": "code-review-mobile-native-kmp-notifrepo-no-test",
       "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
       "owner_role": "pm-frontend",

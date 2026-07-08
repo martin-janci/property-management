@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T14:07:19Z",
+  "archived_at": "2026-07-08T16:10:26Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1060,6 +1060,25 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-detail-path-inject",
+      "action": "security: ListingRepository.getListingDetail (ListingRepository.kt:46) splices listingId raw into the URL path with no encodeURLPathPart(), unlike ApiClient.getListing which hardens via pathSegment(); listingId is deep-link/nav sourced so '/','?','#','..' can smuggle extra path segments. Apply the same encoding.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-07-08 | gc1-reconcile 2026-07-08T16:04:44Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T08:10:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2180,
+        "merged_at": "2026-07-08T14:11:12Z",
+        "at": "2026-07-08T16:04:44Z"
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-mylistings-analytics-stub",
