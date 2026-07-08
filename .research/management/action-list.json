@@ -643,18 +643,6 @@
       "source": "gap-scan 2026-07-07 evening"
     },
     {
-      "id": "gap-83-2-no-test-coverage-for-any-booking",
-      "action": "No test coverage for any Booking.com handler (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
       "id": "gap-83-2-rate-availability-push-integration-deferred",
       "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync)",
       "owner_role": "pm-backend",

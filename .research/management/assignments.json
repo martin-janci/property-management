@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T00:31:14Z",
+  "generated": "2026-07-08T00:54:36Z",
   "assignments": [
     {
       "task_id": "gh-issue-2158",
@@ -45,30 +45,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "gap-83-2-no-test-coverage-for-any-booking",
-      "branch": "auto-impl/gap-83-2-no-test-coverage-for-any-booking-added676",
-      "status": "review",
-      "claimed_at": "2026-07-07T20:47:34Z",
-      "last_updated": "2026-07-08T00:16:32Z",
-      "status_changed_at": "2026-07-07T22:57:59Z",
-      "pr_number": 2167,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2167",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2167 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=reclaimed 895-line test file compiled clean on current dev; clippy+fmt green; compile-gate-only (no live DB); reclaim 1/1 succeeded",
-      "reviewer_summary": "verdict=approve head_oid=408bae670b4b445d38cab4b2d80d92c9812befec note=test-only booking route coverage; snake_case DTOs (json-key-case ok), authz+error-codes match handlers; CI green except test-job in-progress (runtime gate)",
-      "last_reviewed_oid": "408bae670b4b445d38cab4b2d80d92c9812befec",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
