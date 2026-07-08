@@ -736,20 +736,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "code-review-mobile-rn-report-fault-fake-submit-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) \u2014 fault reports never reach backend (App.tsx:126 wires this) [retry 1/2 of failed code-review-mobile-rn-report-fault-fake-submit]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-retry-remint 2026-07-08T02:07:04Z (retry_of=code-review-mobile-rn-report-fault-fake-submit reason=failed-no-pr cooldown_ok newest_failure=2026-06-27T10:20:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T02:07:04Z",
-      "retry_of": "code-review-mobile-rn-report-fault-fake-submit",
-      "retry_round": 1
     }
   ]
 }
