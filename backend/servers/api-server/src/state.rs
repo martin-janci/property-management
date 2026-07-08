@@ -150,6 +150,35 @@ impl StripeAppConfig {
     }
 }
 
+/// Portal (real-estate listing-site) inbound-webhook configuration loaded once
+/// at startup. Mirrors [`AirbnbAppConfig`]/[`StripeAppConfig`]: the signing
+/// secret is read from the environment at boot, never accepted from a request
+/// body, and an empty `webhook_secret` fails closed at the handler so an
+/// unverified, attacker-forged payload is never processed.
+///
+/// Backs the connection-scoped receiver
+/// `POST /api/v1/integrations/webhooks/portal/{connection_id}` in
+/// `routes/integrations/webhook.rs`. (The per-portal
+/// `<PORTAL>_WEBHOOK_SECRET` receivers in `routes/portal_webhooks.rs` are a
+/// separate surface keyed by portal name.)
+#[derive(Debug, Clone, Default)]
+pub struct PortalAppConfig {
+    /// `PORTAL_WEBHOOK_SECRET` — HMAC-SHA256 signing secret for inbound portal
+    /// webhook signature verification (`X-Webhook-Signature` header). Required
+    /// to accept a portal webhook; empty ⇒ the receiver fails closed.
+    pub webhook_secret: String,
+}
+
+impl PortalAppConfig {
+    /// Load from the standard env var. An empty string is preserved so the
+    /// handler can fail closed on a missing secret.
+    pub fn from_env() -> Self {
+        Self {
+            webhook_secret: std::env::var("PORTAL_WEBHOOK_SECRET").unwrap_or_default(),
+        }
+    }
+}
+
 /// A single realtime preference-sync event captured by a
 /// [`PreferenceEventRecorder`] (issue #1376).
 ///
@@ -413,6 +442,11 @@ pub struct AppState {
     /// [BIT-181]). Handlers fail closed when `secret_key`/`webhook_secret`
     /// are empty.
     pub stripe_config: StripeAppConfig,
+    /// Portal inbound-webhook configuration loaded once at startup. The
+    /// connection-scoped portal webhook receiver fails closed when
+    /// `webhook_secret` is empty and verifies the `X-Webhook-Signature` HMAC
+    /// over the raw body before acting.
+    pub portal_config: PortalAppConfig,
 }
 
 impl AppState {
@@ -713,6 +747,10 @@ impl AppState {
             booking_config: BookingOAuthAppConfig::from_env(),
             // Story 11.5 (BIT-181): Stripe Checkout env vars cached at startup.
             stripe_config: StripeAppConfig::from_env(),
+            // Portal inbound-webhook signing secret cached at startup so the
+            // connection-scoped receiver can fail closed and verify signatures
+            // without a per-request env read.
+            portal_config: PortalAppConfig::from_env(),
         }
     }
 

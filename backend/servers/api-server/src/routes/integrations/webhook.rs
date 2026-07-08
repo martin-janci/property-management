@@ -1030,7 +1030,42 @@ pub async fn booking_push_notification(
 
 // ==================== Inbound: Portal Webhook ====================
 
-/// Handle incoming portal webhook (public endpoint, no auth required).
+/// Verify the `X-Webhook-Signature` HMAC-SHA256 over a portal webhook's raw
+/// body.
+///
+/// The header value is the hex-encoded HMAC of the raw body under the shared
+/// `PORTAL_WEBHOOK_SECRET`, optionally `sha256=`-prefixed (matching the format
+/// this service emits for its own outbound webhook test deliveries — see
+/// [`test_webhook`]). A missing header, an empty secret, or a mismatching
+/// digest all yield `false`. The comparison is constant-time (delegated to
+/// [`integrations::verify_webhook_signature`]) so it cannot leak the expected
+/// signature through timing.
+fn verify_portal_webhook_signature(
+    secret: &str,
+    body: &str,
+    signature_header: Option<&str>,
+) -> bool {
+    if secret.is_empty() {
+        return false;
+    }
+    let Some(signature) = signature_header else {
+        return false;
+    };
+    let signature = signature.trim_start_matches("sha256=");
+    integrations::verify_webhook_signature(secret, body, signature)
+}
+
+/// Handle incoming portal webhook (public endpoint, no session auth).
+///
+/// The endpoint has no request principal — external portals POST here using the
+/// URL handed to them at connection time. Authenticity is instead established by
+/// verifying the `X-Webhook-Signature` HMAC-SHA256 over the raw body against the
+/// shared `PORTAL_WEBHOOK_SECRET` **before** the payload is parsed or acted on,
+/// exactly like the sibling Airbnb ([`handle_airbnb_webhook`]) and Stripe
+/// ([`handle_payment_webhook`]) receivers. The receiver fails closed: an unset
+/// secret is a `500 CONFIG_ERROR` and an invalid/absent signature is a
+/// `401 INVALID_SIGNATURE` — an unverified, attacker-forged payload is never
+/// processed.
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/webhooks/portal/{connection_id}",
@@ -1045,7 +1080,7 @@ pub async fn booking_push_notification(
     tag = "Integrations - Portals"
 )]
 pub async fn handle_portal_webhook(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<ConnectionIdPath>,
     headers: HeaderMap,
     body: String,
@@ -1055,6 +1090,39 @@ pub async fn handle_portal_webhook(
         "Received portal webhook"
     );
 
+    // Fail closed when the signing secret is not configured — never accept an
+    // unverified webhook.
+    let secret = state.portal_config.webhook_secret.as_str();
+    if secret.is_empty() {
+        tracing::error!("PORTAL_WEBHOOK_SECRET is not configured — refusing portal webhook");
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "CONFIG_ERROR",
+                "Portal webhook signature verification is not configured",
+            )),
+        ));
+    }
+
+    // Verify the HMAC signature over the raw body BEFORE parsing or acting.
+    let signature = headers
+        .get("X-Webhook-Signature")
+        .and_then(|v| v.to_str().ok());
+
+    if !verify_portal_webhook_signature(secret, &body, signature) {
+        tracing::warn!(
+            connection_id = %path.connection_id,
+            "Portal webhook signature verification failed"
+        );
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNATURE",
+                "Webhook signature verification failed",
+            )),
+        ));
+    }
+
     let _: serde_json::Value = serde_json::from_str(&body).map_err(|e| {
         tracing::warn!(error = %e, "Failed to parse webhook body");
         (
@@ -1062,11 +1130,6 @@ pub async fn handle_portal_webhook(
             Json(ErrorResponse::new("PARSE_ERROR", "Invalid JSON body")),
         )
     })?;
-
-    if let Some(signature) = headers.get("X-Webhook-Signature") {
-        let _sig = signature.to_str().unwrap_or_default();
-        tracing::debug!("Webhook signature present");
-    }
 
     Ok(StatusCode::OK)
 }
@@ -1758,5 +1821,83 @@ mod airbnb_webhook_tests {
         let later = RESERVATION_NO_ID.replace("00:00:00Z", "00:05:00Z");
         let c = super::airbnb_dedup_key(&parse(&later));
         assert_ne!(a, c);
+    }
+}
+
+// ==================== Portal webhook signature verification tests ====================
+//
+// Regression cover for the latent auth bypass: the connection-scoped portal
+// webhook receiver read `X-Webhook-Signature` but never verified it, so any
+// unauthenticated caller was accepted (200). These tests pin the fixed
+// contract of `verify_portal_webhook_signature` — the guard the handler now
+// runs before parsing/acting on the payload.
+#[cfg(test)]
+mod portal_webhook_signature_tests {
+    use super::verify_portal_webhook_signature;
+    use hmac::{Hmac, KeyInit, Mac};
+    use sha2::Sha256;
+
+    type HmacSha256 = Hmac<Sha256>;
+
+    const SECRET: &str = "portal_webhook_secret";
+    const BODY: &str = r#"{"event":"listing.viewed","external_id":"abc123"}"#;
+
+    fn sign(secret: &str, body: &str) -> String {
+        let mut mac =
+            HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
+        mac.update(body.as_bytes());
+        hex::encode(mac.finalize().into_bytes())
+    }
+
+    #[test]
+    fn accepts_valid_hex_signature() {
+        let sig = sign(SECRET, BODY);
+        assert!(verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+    }
+
+    #[test]
+    fn accepts_valid_signature_with_sha256_prefix() {
+        let sig = format!("sha256={}", sign(SECRET, BODY));
+        assert!(verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+    }
+
+    #[test]
+    fn rejects_missing_signature_header() {
+        // The pre-fix bug: no signature header was still accepted. Now rejected.
+        assert!(!verify_portal_webhook_signature(SECRET, BODY, None));
+    }
+
+    #[test]
+    fn rejects_wrong_signature() {
+        assert!(!verify_portal_webhook_signature(
+            SECRET,
+            BODY,
+            Some("deadbeef")
+        ));
+    }
+
+    #[test]
+    fn rejects_signature_for_tampered_body() {
+        let sig = sign(SECRET, BODY);
+        let tampered = r#"{"event":"listing.viewed","external_id":"evil999"}"#;
+        assert!(!verify_portal_webhook_signature(
+            SECRET,
+            tampered,
+            Some(&sig)
+        ));
+    }
+
+    #[test]
+    fn rejects_signature_under_wrong_secret() {
+        let sig = sign("attacker_secret", BODY);
+        assert!(!verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+    }
+
+    #[test]
+    fn rejects_when_secret_empty() {
+        // Defense-in-depth: even a syntactically valid signature cannot pass
+        // when the server secret is unset (the handler also fails closed).
+        let sig = sign("", BODY);
+        assert!(!verify_portal_webhook_signature("", BODY, Some(&sig)));
     }
 }
