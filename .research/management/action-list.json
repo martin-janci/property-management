@@ -583,18 +583,6 @@
       "first_open_at": "2026-07-08T08:10:10Z"
     },
     {
-      "id": "code-review-mobile-native-kmp-mylistings-analytics-stub",
-      "action": "gap: MyListings and ListingAnalytics routes (Navigation.kt:440,:458) are live in the nav graph but render hardcoded emptyList()/isLoading=false with no repository/ApiClient backing; realtor listing dashboard + analytics are permanent empty stubs in production. Wire to a listings/analytics API.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1d-devreview 2026-07-08",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T08:10:10Z"
-    },
-    {
       "id": "code-review-mobile-native-kmp-notifrepo-no-test",
       "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
       "owner_role": "pm-frontend",
@@ -605,6 +593,42 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-08T08:10:10Z"
+    },
+    {
+      "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
+      "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z"
+    },
+    {
+      "id": "code-review-api-handlers-webhook-portal-signature-not-verified",
+      "action": "security (latent auth bypass): backend/servers/api-server/src/routes/integrations/webhook.rs handle_portal_webhook (public no-auth endpoint at :97-98 `/api/v1/integrations/webhooks/portal/{connection_id}`, handed to external portals as callback at install.rs:1673) reads X-Webhook-Signature (:1066) but never verifies it (`let _sig = signature.to_str()...; debug!(\"present\")`) and returns 200. OpenAPI advertises a 401 invalid-signature response the code can never emit. Currently low-impact (handler only parses JSON, no state mutation) but a latent bypass the moment it acts on the payload. Verify HMAC over the raw body like the sibling Airbnb (:1157) / Stripe (:1452) handlers before acting.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z"
+    },
+    {
+      "id": "gap-realtor-listings-analytics-endpoints",
+      "action": "backend gap (blocks realtor dashboard on mobile + web): the api-server nests only POST /listings, GET /listings/{id}, PATCH /listings/{id} — there is no realtor 'my listings' LIST endpoint (GET /api/v1/my/listings or /api/v1/realtors/me/listings) and no realtor-level analytics HTTP route (only a per-listing DB get_listing_analytics with no list_portal_listings DB method). Mobile MyListings/ListingAnalytics (Navigation.kt:440,:458) and web useMyListings(/api/v1/realtors/me/listings) + useAgencyListings(/api/v1/agencies/{id}/listings) all target these unimplemented endpoints and render permanent empty stubs. Implement the realtor listings-list + analytics endpoints (repo method + route + tenant/RLS scoping) so the clients can be wired. Discovered by the blocked implementer for code-review-mobile-native-kmp-mylistings-analytics-stub.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-impl-blocked 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z"
     }
   ]
 }
