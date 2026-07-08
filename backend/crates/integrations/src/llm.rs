@@ -124,6 +124,17 @@ impl LlmClient {
         }
     }
 
+    /// Whether an OpenAI API key is configured.
+    ///
+    /// Callers use this to decide between the live OpenAI embedding provider
+    /// and the deterministic offline [`crate::embedding::StubEmbeddingProvider`]
+    /// (Story 84.5) — e.g. the RAG embedding-write flow degrades to the stub
+    /// when no key is present so indexing still works in CI / air-gapped
+    /// deployments instead of hard-failing with `MissingApiKey`.
+    pub fn has_openai_key(&self) -> bool {
+        self.config.openai_api_key.is_some()
+    }
+
     /// Complete a chat using OpenAI API.
     pub async fn openai_chat(
         &self,
