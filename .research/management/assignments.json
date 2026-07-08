@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T08:28:42Z",
+  "generated": "2026-07-08T08:44:33Z",
   "assignments": [
     {
       "task_id": "gap-84-5-no-application-handler-calling-search-similar",
@@ -22,30 +22,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2152",
-      "branch": "auto-impl/gh-issue-2152-d86861fc",
-      "status": "review",
-      "claimed_at": "2026-07-08T05:47:02Z",
-      "last_updated": "2026-07-08T08:18:14Z",
-      "status_changed_at": "2026-07-08T06:16:26Z",
-      "pr_number": 2176,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2176",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2176 status=done specialist=rust-backend note=redid reality_portal split vs current dev (1812 red was rustup infra flake); move-only verified by line-multiset diff; workspace check+clippy+RLS gate green",
-      "reviewer_summary": "verdict=approve head_oid=ad31e3b7ad32fd6e8993b8485d01103667cbb892 note=move-only-verified-71/71-pubfn-identical-rls-baseline-relocated-ci-green",
-      "last_reviewed_oid": "ad31e3b7ad32fd6e8993b8485d01103667cbb892",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
     },
     {
       "task_id": "gap-10a-2-protectedroute-unit-test-coverage-issue-482",
