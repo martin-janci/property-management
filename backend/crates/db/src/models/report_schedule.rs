@@ -65,6 +65,27 @@ pub struct ReportSchedule {
     pub cron_expression: Option<String>,
 }
 
+/// Input for creating a new report schedule (gap-81-1).
+///
+/// Carries only the fields a caller supplies; `organization_id` is derived from
+/// the authenticated tenant (never from the request body) and all other columns
+/// (`id`, `status`, `is_active`, timestamps, `cron_expression`) take their DB
+/// defaults. `recipients` is exposed as `Vec<String>` here and serialised to a
+/// JSONB array by the repository.
+#[derive(Debug, Clone)]
+pub struct NewReportSchedule {
+    pub organization_id: Uuid,
+    pub report_id: Uuid,
+    pub name: String,
+    pub frequency: String,
+    pub day_of_week: Option<i32>,
+    pub day_of_month: Option<i32>,
+    pub time: String,
+    pub timezone: String,
+    pub format: String,
+    pub recipients: Vec<String>,
+}
+
 /// Raw DB row for `report_schedules`.
 ///
 /// `recipients` is stored as JSONB so we use `serde_json::Value` for
