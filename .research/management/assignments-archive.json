@@ -1577,6 +1577,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-10a-2-protectedroute-unit-test-coverage-issue-482",
+      "branch": "auto-impl/gap-10a-2-protectedroute-unit-test-cover-5a7fc874",
+      "status": "merged",
+      "claimed_at": "2026-07-08T08:09:43Z",
+      "last_updated": "2026-07-08T10:19:19Z",
+      "status_changed_at": "2026-07-08T10:19:19Z",
+      "pr_number": 2177,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2177",
+      "merged_at": "2026-07-08T10:19:19Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2177 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added ProtectedRoute.routing.test.tsx (9 tests: loading/redirect/return-url/role pass-through); 18 total pass, typecheck+biome clean; kept separate from sibling ProtectedRoute.test.tsx",
+      "reviewer_summary": "verdict=approve head_oid=8b9e0dabc84360d1beca67355f422cd4387b8280 note=test-only 1 file 9 meaningful tests; CI green; no scope drift (self-approve blocked by GH - author==bot)",
+      "last_reviewed_oid": "8b9e0dabc84360d1beca67355f422cd4387b8280",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-08T10:19:19Z"
+    },
+    {
       "task_id": "gap-10a-reconcile-sprint-status-gates-closed",
       "branch": "auto-impl/gap-10a-reconcile-sprint-status-gates-closed-20a058ee",
       "status": "merged",
@@ -1835,6 +1857,28 @@
       "merge_attempted_at": "2026-07-08T00:16:32Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "gap-screens-normalize-epic-frontmatter",
+      "branch": "auto-impl/gap-screens-normalize-epic-frontmatter-ca92442f",
+      "status": "merged",
+      "claimed_at": "2026-07-08T08:09:43Z",
+      "last_updated": "2026-07-08T10:19:19Z",
+      "status_changed_at": "2026-07-08T10:19:19Z",
+      "pr_number": 2178,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2178",
+      "merged_at": "2026-07-08T10:19:19Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2178 status=done specialist=generic scope_drift=false code_reuse_warn=none note=normalized 28 screen-map epics frontmatter to Epic-N; /screens validate --strict clean (162/0/0)",
+      "reviewer_summary": "verdict=approve head_oid=35de977a3a460c6438838634e3c01e861fcab99c note=docs-only frontmatter normalized to Epic-N; CI green (screen-map validate); posted as comment (self-approve blocked)",
+      "last_reviewed_oid": "35de977a3a460c6438838634e3c01e861fcab99c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-08T10:19:19Z"
     },
     {
       "task_id": "gh-issue-1680",
@@ -3549,5 +3593,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T08:44:33Z"
+  "archived_at": "2026-07-08T10:27:09Z"
 }
