@@ -31,7 +31,13 @@
 #     - nothing in the stem group ever merged/done (work didn't land);
 #     - no NON-TERMINAL action-list row and no active assignment
 #       (in-progress/review/quarantined) shares the stem (T24 + PR 5/5);
-#     - the minted id itself exists nowhere in action-list or assignments.
+#     - the minted id itself exists nowhere in action-list or assignments;
+#     - dev-truth guards (issue #2153 — ghost retries): the stem's story is
+#       NOT status="done" in coverage.json (work landed on dev under a
+#       DIFFERENT task/PR), and no commit subject on origin/dev starts with
+#       an anchored "<id>:" prefix that stems to the candidate stem (same
+#       join convention as dev-reconcile.sh). Both degrade gracefully when
+#       their input is missing (no exclusion).
 #
 #   Minted rows carry `retry_of` (the original failed task_id) and
 #   `retry_round`. `retry_of` is the field Phase 3 and backlog-refill.sh use
@@ -44,7 +50,9 @@
 #   ./.research/retry-remint.sh            # dry-run: print re-mint set
 #   ./.research/retry-remint.sh --apply    # append rows to action-list.json
 #   Injectables (tests): ACTION_LIST, ASSIGN, ASSIGN_ARCHIVE, ACTION_ARCHIVE,
-#     RETRY_NOW, RETRY_COOLDOWN_DAYS, RETRY_MAX_ROUNDS, RETRY_REMINT_CAP, BUFFER_CEIL
+#     COVERAGE_FILE, DEV_LOG_FILE (one commit subject per line; default is
+#     `git log origin/dev --format=%s -300`), RETRY_NOW, RETRY_COOLDOWN_DAYS,
+#     RETRY_MAX_ROUNDS, RETRY_REMINT_CAP, BUFFER_CEIL
 
 set -euo pipefail
 
@@ -53,6 +61,8 @@ ACTION_LIST="${ACTION_LIST:-$REPO_ROOT/.research/management/action-list.json}"
 ACTION_ARCHIVE="${ACTION_ARCHIVE:-$REPO_ROOT/.research/management/action-list-archive.json}"
 ASSIGN="${ASSIGN:-$REPO_ROOT/.research/management/assignments.json}"
 ASSIGN_ARCHIVE="${ASSIGN_ARCHIVE:-$REPO_ROOT/.research/management/assignments-archive.json}"
+COVERAGE_FILE="${COVERAGE_FILE:-$REPO_ROOT/.research/management/coverage.json}"
+DEV_LOG_MAX="${DEV_LOG_MAX:-300}"
 NOW="${RETRY_NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 COOLDOWN_DAYS="${RETRY_COOLDOWN_DAYS:-7}"
 MAX_ROUNDS="${RETRY_MAX_ROUNDS:-2}"
@@ -90,6 +100,31 @@ else
   echo '[]' > "$WORK/arch-items.json"
 fi
 
+# Dev-truth guard (a) — coverage-done (issue #2153): story ids already "done"
+# in coverage.json. The archive ledger misses work that landed on dev under a
+# DIFFERENT task_id/branch; coverage.json tracks dev truth per story. Optional
+# file; missing/unparseable degrades gracefully to "no exclusion".
+if [ -f "$COVERAGE_FILE" ]; then
+  jq '[ .stories[]? | select(.status=="done") | .id ]' "$COVERAGE_FILE" \
+    > "$WORK/cov-done.json" 2>/dev/null || echo '[]' > "$WORK/cov-done.json"
+else
+  echo '[]' > "$WORK/cov-done.json"
+fi
+
+# Dev-truth guard (b) — dev-log subject join (issue #2153): a commit on
+# origin/dev whose SUBJECT begins with an anchored "<id>:" prefix (up to the
+# first colon, no spaces — the same squash-merge join convention as
+# dev-reconcile.sh, never a loose body grep) proves the stem's work landed
+# even when no archive row recorded it. DEV_LOG_FILE (one subject per line)
+# is injectable for offline tests; an unreachable remote degrades to
+# "nothing landed" rather than aborting the dispatcher.
+if [ -n "${DEV_LOG_FILE:-}" ]; then
+  DEV_SUBJECTS=$(cat "$DEV_LOG_FILE" 2>/dev/null || true)
+else
+  DEV_SUBJECTS=$(git -C "$REPO_ROOT" log origin/dev --format=%s -"$DEV_LOG_MAX" 2>/dev/null || true)
+fi
+printf '%s\n' "$DEV_SUBJECTS" | jq -R . | jq -s . > "$WORK/dev-subjects.json"
+
 # Headroom: never lift the open pool past BUFFER_CEIL.
 OPEN_NOW=$(jq '[ .items[] | select(.status=="open") ] | length' "$ACTION_LIST")
 HEADROOM=$(( BUFFER_CEIL - OPEN_NOW ))
@@ -102,6 +137,8 @@ fi
 CANDIDATES=$(jq -n \
   --slurpfile assign_f "$WORK/assign.json" \
   --slurpfile arch_f "$WORK/arch-items.json" \
+  --slurpfile cov_done_f "$WORK/cov-done.json" \
+  --slurpfile devlog_f "$WORK/dev-subjects.json" \
   --slurpfile al "$ACTION_LIST" \
   --arg now "$NOW" \
   --argjson cooldown_days "$COOLDOWN_DAYS" \
@@ -121,6 +158,13 @@ CANDIDATES=$(jq -n \
   | ([ $al[0].items[] | select(.status != "done" and .status != "dropped") | (.id | stem) ] | unique) as $al_live_stems
   # Every id already known anywhere (exact-id idempotency for the minted id).
   | ([ $assign[].task_id ] + [ $al[0].items[].id ] | unique) as $known_ids
+  # Dev-truth (a): coverage.json stories already done — work landed on dev
+  # under a different task/PR (issue #2153 ghost retries).
+  | ($cov_done_f[0] | map(stem) | unique) as $cov_done_stems
+  # Dev-truth (b): anchored "<id>:" subject prefixes on origin/dev, stemmed —
+  # same join convention as dev-reconcile.sh (prefix must contain no spaces,
+  # so a chore commit merely MENTIONING an id never matches).
+  | ([ $devlog_f[0][] | capture("^(?<p>[^:\\s]+):") | .p | stem ] | unique) as $dev_landed_stems
 
   | ([ $assign[] | select(.status=="failed") ]
      | group_by(.task_id | stem)
@@ -141,6 +185,8 @@ CANDIDATES=$(jq -n \
          and ((.stem | IN($landed_stems[])) | not)
          and ((.stem | IN($active_stems[])) | not)
          and ((.stem | IN($al_live_stems[])) | not)
+         and ((.stem | IN($cov_done_stems[])) | not)
+         and ((.stem | IN($dev_landed_stems[])) | not)
          and (($now_e - (.newest_failure | epoch)) >= $cooldown_s)
        ))
      | map(. + { mint_id: (.stem + "-retry" + ((.rounds_used + 1) | tostring)) })
