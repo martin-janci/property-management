@@ -21,6 +21,13 @@ class ListingRepository(
         sessionToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
     }
 
+    /**
+     * Percent-encode a value before splicing it into a request path so that ids containing `/`,
+     * `?`, `#`, or `..` cannot smuggle extra path segments or query parameters into the request
+     * (path-injection). Deep-link / nav-sourced ids are untrusted.
+     */
+    private fun pathSegment(value: String): String = value.encodeURLPathPart()
+
     /** Search listings with filters and pagination. */
     suspend fun searchListings(request: ListingSearchRequest): Result<ListingSearchResponse> {
         return try {
@@ -43,7 +50,8 @@ class ListingRepository(
     /** Get listing details by ID. */
     suspend fun getListingDetail(listingId: String): Result<ListingDetail> {
         return try {
-            val response = client.get("$baseUrl/api/v1/listings/$listingId") { configureRequest() }
+            val response =
+                client.get("$baseUrl/api/v1/listings/${pathSegment(listingId)}") { configureRequest() }
 
             if (response.status.isSuccess()) {
                 Result.success(response.body())

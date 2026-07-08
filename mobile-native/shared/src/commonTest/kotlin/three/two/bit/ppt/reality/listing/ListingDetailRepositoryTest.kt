@@ -166,4 +166,25 @@ class ListingDetailRepositoryTest {
         assertTrue(result.isFailure, "5xx should surface as failure, got $result")
         assertTrue(result.exceptionOrNull() is ListingException)
     }
+
+    /**
+     * Security (#87ed762c): the listingId is deep-link / nav-sourced and is spliced into the
+     * request path, so it must be percent-encoded — mirroring `ApiClient.getListing` /
+     * `pathSegment()` — so a hostile id cannot smuggle extra path segments or query parameters
+     * (path-injection). A `/`, `?`, `#`, or `..`-bearing id must NOT escape its segment.
+     */
+    @Test
+    fun getListingDetail_url_encodes_listing_id_path_segment() = runTest {
+        val cap = Captured()
+        val repo = repoCapturing(cap, HttpStatusCode.OK, fullDetailBody)
+
+        repo.getListingDetail("../admin/secret")
+
+        // The `/` characters must be percent-encoded; the path stays anchored under /listings/.
+        assertEquals(
+            "/api/v1/listings/..%2Fadmin%2Fsecret",
+            cap.path,
+            "listingId must be percent-encoded into a single path segment",
+        )
+    }
 }
