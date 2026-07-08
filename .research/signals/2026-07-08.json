@@ -1,0 +1,126 @@
+{
+  "date": "2026-07-08",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-08",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "last_run_iso=2026-07-05T03:10:00Z, ~72h gap; cloud routine may have paused; dispatcher still ran on separate branch."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-handler-routes-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-07-05..2026-07-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/booking_handler_routes_tests.rs — 898 lines (1 commit) — new test file for Booking.com handlers (PR #2167)."
+      ],
+      "files": ["backend/servers/api-server/tests/booking_handler_routes_tests.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-airbnb-install-routes-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-07-05..2026-07-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/airbnb_install_routes_tests.rs — 839 lines (1 commit) — new test file for Airbnb connect/sync/disconnect (PR #2166)."
+      ],
+      "files": ["backend/servers/api-server/tests/airbnb_install_routes_tests.rs"]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-organizations-page-tsx",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-07-05..2026-07-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/admin-web/src/pages/OrganizationsPage.tsx — 809 lines (1 commit) — new Organization Management Dashboard (PR #2164)."
+      ],
+      "files": ["frontend/apps/admin-web/src/pages/OrganizationsPage.tsx"]
+    },
+    {
+      "id": "screen-map-drift-pr-2168-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2168",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2168 (5e2908da1) touched frontend/apps/ppt-web/src/routes/groups/disputes.tsx and lazyRoutes.tsx with no update to docs/screens/ppt/*.md."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "code-review-api-core-mfa-bypass-on-db-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-08 (api-core)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:693 — `let mfa_check_result = state.two_factor_repo.get_by_user_id(user.id).await;` at :694 uses `if let Ok(Some(mfa_record)) = mfa_check_result { ... }` which silently drops `Err(_)` — DB failure on 2FA lookup leaves `mfa_presented = false` and proceeds to token issuance at :836+.",
+        "backend/servers/api-server/src/routes/auth.rs:810 — AuthPolicyEnforcer only blocks when org policy requires MFA-for-role; personally-enrolled 2FA has no downstream gate, so a transient DB error yields a password-only login for a 2FA-protected account (MFA bypass)."
+      ],
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/routes/auth.rs"],
+      "title": "close MFA-bypass when two_factor_repo query errors on login"
+    },
+    {
+      "id": "code-review-api-core-fake-download-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-08 (api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs:1234-1254 — when `operations_repo.create_background_job(...)` fails and format is PDF/Excel, handler builds synthetic download URL `/api/v1/reports/download/{report_type}-{timestamp}.{format}` and returns 202 ACCEPTED with a 24h `expires_at` though no job was queued (see the `tracing::warn!` at :1242 calling it a fallback).",
+        "backend/servers/api-server/src/routes/reports.rs:1247-1254 — response is indistinguishable from real 202 async success, so clients poll or open a dead URL and cannot tell the export failed."
+      ],
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/routes/reports.rs"],
+      "title": "propagate 5xx instead of fake 202 with placeholder URL"
+    }
+  ],
+  "code_review_meta": {
+    "segment_reviewed": "api-core",
+    "selection_reason": "churn-aligned",
+    "experts_used": ["rust"],
+    "findings_count": 2
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-07-08.md && head -1 | grep '^# 2026-07-08$'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "jq slurpfile prev HEAD:state.json | compare cursors", "observed": "true", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))'", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal double-scored", "observed": "true", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "brief annotates each new plan with 'adversarial pass:'", "observed": "brief has 'adversarial pass: passed' for plans/security-mfa-bypass-on-db-err.md", "expected": "annotation present"},
+    {"goal": "G7", "passed": true, "command": "1 new plan; 4 metadata + 11 headings; Mode: cloud-ok; files exist", "observed": "count=1 meta=4 headings=11 mode=cloud-ok files=OK", "expected": "count<=2 meta=4 headings=11 mode declared files exist"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "git diff --cached (excl 4 baseline docs) | grep -E secret/hostname patterns", "observed": "0", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "identical", "expected": "identical"},
+    {"goal": "G11", "passed": true, "command": "parse 'Phases that failed' line in brief", "observed": "none — no cursors held back", "expected": "no failed phase / cursor held"},
+    {"goal": "G12", "passed": true, "command": "every prior-run plan slug present in plans/ or plans/_archive/", "observed": "all present", "expected": "all present"},
+    {"goal": "G13", "passed": true, "command": "archive count now >= HEAD", "observed": "now=7 head=7", "expected": "now >= head"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from triage rows)", "observed": "identical", "expected": "identical"},
+    {"goal": "G15", "passed": true, "command": "jq caps on auto_fix_actions", "observed": "true (empty)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run → no-op", "observed": "pm_cursor.next_index unchanged (5 → 5)", "expected": "no-op when Phase 1.6 skipped"},
+    {"goal": "G17", "passed": true, "command": "grep added lines for Telegram bot-token value", "observed": "0", "expected": "0"}
+  ]
+}
