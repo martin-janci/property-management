@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T18:10:58Z",
+  "archived_at": "2026-07-08T22:12:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1057,6 +1057,18 @@
         "merged_at": "2026-07-08T18:03:00Z",
         "at": "2026-07-08T18:10:39Z"
       }
+    },
+    {
+      "id": "code-review-api-handlers-webhook-portal-signature-not-verified",
+      "action": "[RECONCILED-DONE: merged via PR #2182 on dev 2026-07-08T22:05:05Z] security (latent auth bypass): backend/servers/api-server/src/routes/integrations/webhook.rs handle_portal_webhook (public no-auth endpoint at :97-98 `/api/v1/integrations/webhooks/portal/{connection_id}`, handed to external portals as callback at install.rs:1673) reads X-Webhook-Signature (:1066) but never verifies it (`let _sig = signature.to_str()...; debug!(\"present\")`) and returns 200. OpenAPI advertises a 401 invalid-signature response the code can never emit. Currently low-impact (handler only parses JSON, no state mutation) but a latent bypass the moment it acts on the payload. Verify HMAC over the raw body like the sibling Airbnb (:1157) / Stripe (:1452) handlers before acting.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-07-08",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z"
     },
     {
       "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",

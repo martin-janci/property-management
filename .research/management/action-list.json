@@ -447,7 +447,7 @@
       "priority": "low",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
@@ -495,7 +495,7 @@
       "priority": "low",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening"
@@ -507,7 +507,7 @@
       "priority": "low",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening"
@@ -571,18 +571,6 @@
       "first_open_at": "2026-07-08T08:10:10Z"
     },
     {
-      "id": "code-review-api-handlers-webhook-portal-signature-not-verified",
-      "action": "security (latent auth bypass): backend/servers/api-server/src/routes/integrations/webhook.rs handle_portal_webhook (public no-auth endpoint at :97-98 `/api/v1/integrations/webhooks/portal/{connection_id}`, handed to external portals as callback at install.rs:1673) reads X-Webhook-Signature (:1066) but never verifies it (`let _sig = signature.to_str()...; debug!(\"present\")`) and returns 200. OpenAPI advertises a 401 invalid-signature response the code can never emit. Currently low-impact (handler only parses JSON, no state mutation) but a latent bypass the moment it acts on the payload. Verify HMAC over the raw body like the sibling Airbnb (:1157) / Stripe (:1452) handlers before acting.",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1d-devreview 2026-07-08",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T12:21:22Z"
-    },
-    {
       "id": "gap-realtor-listings-analytics-endpoints",
       "action": "backend gap (blocks realtor dashboard on mobile + web): the api-server nests only POST /listings, GET /listings/{id}, PATCH /listings/{id} — there is no realtor 'my listings' LIST endpoint (GET /api/v1/my/listings or /api/v1/realtors/me/listings) and no realtor-level analytics HTTP route (only a per-listing DB get_listing_analytics with no list_portal_listings DB method). Mobile MyListings/ListingAnalytics (Navigation.kt:440,:458) and web useMyListings(/api/v1/realtors/me/listings) + useAgencyListings(/api/v1/agencies/{id}/listings) all target these unimplemented endpoints and render permanent empty stubs. Implement the realtor listings-list + analytics endpoints (repo method + route + tenant/RLS scoping) so the clients can be wired. Discovered by the blocked implementer for code-review-mobile-native-kmp-mylistings-analytics-stub.",
       "owner_role": "pm-backend",
@@ -593,20 +581,6 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-08T12:21:22Z"
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-08T14:05:00Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:12:35Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T14:05:00Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
-      "retry_round": 1
     }
   ]
 }
