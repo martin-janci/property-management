@@ -40,7 +40,9 @@
 mod common;
 
 use axum::http::StatusCode;
-use common::{cleanup_test_user, verify_user_email, TestApp, TestUser};
+use common::{
+    cleanup_test_user, create_authenticated_user_with_org, verify_user_email, TestApp, TestUser,
+};
 use serde_json::json;
 use sqlx::PgPool;
 use totp_rs::{Algorithm, Secret, TOTP};
@@ -318,27 +320,15 @@ async fn mfa_setup_verify_is_rate_limited(pool: PgPool) {
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    // Register + verify + login (MFA not yet enabled) to get a bearer token.
-    let reg = app
-        .post("/api/v1/auth/register")
-        .json(user.registration_body())
-        .build();
-    app.execute(reg).await.assert_status(StatusCode::CREATED);
-    verify_user_email(&pool, &user.email).await;
-    let login = app
-        .post("/api/v1/auth/login")
-        .json(user.login_body())
-        .send()
-        .await;
-    login.assert_status(StatusCode::OK);
-    let token = login.json_value()["accessToken"]
-        .as_str()
-        .expect("access token")
-        .to_string();
+    // Register + verify + login (MFA not yet enabled) with an org membership —
+    // the MFA setup/verify routes are tenant-scoped and reject requests
+    // without a valid `X-Tenant-ID` header.
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "mfa-rl-setup").await;
 
     // Start MFA enrolment so there is a pending secret to verify against.
     app.post("/api/v1/auth/mfa/setup")
         .bearer(&token)
+        .tenant(org_id)
         .send()
         .await
         .assert_status(StatusCode::OK);
@@ -349,6 +339,7 @@ async fn mfa_setup_verify_is_rate_limited(pool: PgPool) {
         let resp = app
             .post("/api/v1/auth/mfa/verify")
             .bearer(&token)
+            .tenant(org_id)
             .json(json!({ "code": "000000" }))
             .send()
             .await;
