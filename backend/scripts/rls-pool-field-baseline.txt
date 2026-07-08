@@ -70,7 +70,7 @@ owner_analytics.rs
 platform_admin.rs
 portal.rs
 portfolio_performance.rs
-reality_portal.rs
+reality_portal/mod.rs   # split into reality_portal/ (move-only refactor #2152); tracked as a directory module
 rental/mod.rs   # split into rental/ (move-only refactor #2100); tracked as a directory module
 report_schedule.rs
 role.rs
