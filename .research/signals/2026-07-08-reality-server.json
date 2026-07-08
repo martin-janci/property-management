@@ -1,0 +1,24 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-08",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor); oldest-unreviewed among segments not already covered today (review_cursor 2026-06-11), also churn-adjacent (reality_portal.rs is the top-churned source file)",
+  "experts_used": [
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-server-saved-search-dup-alerts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 — after a successful enqueue_search_alert (queued += 1) the watermark advance `let _ = self.repo.mark_saved_search_matched(...).await` swallows any DB error; if the update fails, the next due poll re-reads the same `last_matched_at` window (line 175/185/202), re-finds the same listing IDs via find_new_match_listing_ids, and re-enqueues them, sending duplicate saved-search alerts to the user. Unlike the enqueue-failure branch at 216-230 (which intentionally leaves the watermark to force a retry), a swallowed error here has no retry-vs-duplicate distinction and no logging."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

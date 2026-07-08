@@ -1243,6 +1243,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-native-kmp-listing-detail-path-inject",
+      "branch": "auto-impl/code-review-mobile-native-kmp-listing-de-87ed762c",
+      "status": "merged",
+      "claimed_at": "2026-07-08T10:10:09Z",
+      "last_updated": "2026-07-08T14:16:03Z",
+      "status_changed_at": "2026-07-08T14:16:03Z",
+      "pr_number": 2180,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2180",
+      "merged_at": "2026-07-08T14:11:12Z",
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=2180 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=url-encoded listingId via pathSegment/encodeURLPathPart + regression test; gradle build egress-blocked, deferred to mobile-native.yml CI",
+      "reviewer_summary": "verdict=approve head_oid=5d8451b56b0c5d490c5254ba4fb5ebbc554d210b note=dispatcher-reveiw-ktfmt-blocker-resolved-CI-green-security-hardening-correct",
+      "last_reviewed_oid": "5d8451b56b0c5d490c5254ba4fb5ebbc554d210b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-08T14:16:03Z"
+    },
+    {
       "task_id": "code-review-mobile-native-kmp-mylistings-analytics-stub",
       "branch": "auto-impl/code-review-mobile-native-kmp-mylistings-a3a240b1",
       "status": "failed",
@@ -1783,6 +1805,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-08T02:13:32Z"
+    },
+    {
+      "task_id": "gap-81-1-create-new-schedule-endpoint-still-stubbed",
+      "branch": "auto-impl/gap-81-1-create-new-schedule-endpoint-st-c0d1172c",
+      "status": "merged",
+      "claimed_at": "2026-07-08T08:09:43Z",
+      "last_updated": "2026-07-08T14:16:03Z",
+      "status_changed_at": "2026-07-08T14:16:03Z",
+      "pr_number": 2179,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2179",
+      "merged_at": "2026-07-08T14:10:40Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2179 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added POST /reports/schedules create handler + repo create() + NewReportSchedule + tests; check/clippy/unit-tests(31) green, sqlx e2e deferred to CI",
+      "reviewer_summary": "verdict=approve head_oid=b28f91203e9e60e615cfbfd852997fb695c5cfb5 note=fmt-blocker-resolved-hot-path-clean-test-job-still-running",
+      "last_reviewed_oid": "b28f91203e9e60e615cfbfd852997fb695c5cfb5",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-08T14:16:03Z"
     },
     {
       "task_id": "gap-83-1-no-test-coverage-for-oauth-flow",
@@ -3637,5 +3681,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T13:05:30Z"
+  "archived_at": "2026-07-08T14:16:59Z"
 }
