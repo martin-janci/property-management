@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T06:05:34Z",
+  "generated": "2026-07-08T06:16:26Z",
   "assignments": [
     {
       "task_id": "gh-issue-2159",
@@ -48,15 +48,15 @@
     {
       "task_id": "gh-issue-2152",
       "branch": "auto-impl/gh-issue-2152-d86861fc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-08T05:47:02Z",
-      "last_updated": "2026-07-08T05:47:02Z",
-      "status_changed_at": "2026-07-08T05:47:02Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-08T06:16:26Z",
+      "status_changed_at": "2026-07-08T06:16:26Z",
+      "pr_number": 2176,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2176",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": null,
+      "implementer_summary": "pr=2176 status=done specialist=rust-backend note=redid reality_portal split vs current dev (1812 red was rustup infra flake); move-only verified by line-multiset diff; workspace check+clippy+RLS gate green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
