@@ -51,7 +51,9 @@ class ListingRepository(
     suspend fun getListingDetail(listingId: String): Result<ListingDetail> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/listings/${pathSegment(listingId)}") { configureRequest() }
+                client.get("$baseUrl/api/v1/listings/${pathSegment(listingId)}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(response.body())
