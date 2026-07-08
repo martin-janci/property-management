@@ -619,20 +619,6 @@
       "first_open_at": "2026-07-08T14:05:00Z",
       "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
       "retry_round": 1
-    },
-    {
-      "id": "10b-1-organization-management-dashboard-retry1",
-      "action": "[RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 10b-1-organization-management-dashboard]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-08T14:05:00Z (retry_of=10b-1-organization-management-dashboard reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:33:02Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T14:05:00Z",
-      "retry_of": "10b-1-organization-management-dashboard",
-      "retry_round": 1
     }
   ]
 }

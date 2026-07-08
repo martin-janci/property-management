@@ -36,7 +36,7 @@
       "id": "10b-1-organization-management-dashboard",
       "title": "Organization Management Dashboard",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -47,13 +47,12 @@
         "Sprint status: done",
         "Backend API routes complete (list/get/suspend/reactivate organization, get_platform_stats)",
         "Screen-map buildStatus=planned (frontend component not yet built; only api-client generated)",
-        "apiStatus=complete"
+        "apiStatus=complete",
+        "Verified shipped 2026-07-08 (dispatcher verify-first): admin-web OrganizationsPage.tsx + route platform/organizations + api-client hooks + test; merged via PR#2164/#2175; screen-map ppt/admin-organizations buildStatus=shipped. Prior partial was a slug/platform mismatch (coverage pointed at ppt-web; impl is admin-web)."
       ],
-      "gaps": [
-        "Frontend UI not built (OrganizationsPage.tsx not found; buildStatus=planned not shipped)"
-      ],
+      "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-07",
+      "last_checked": "2026-07-08",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-organizations",
@@ -259,7 +258,7 @@
         "Screen-maps announcement-new/announcement-edit buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -283,7 +282,7 @@
         "Mobile AnnouncementDetailScreen ships auto-read + acknowledge"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -307,7 +306,7 @@
         "Frontend: AnnouncementComments with nested replies + tombstones"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -331,7 +330,7 @@
         "Frontend: PinnedAnnouncementsBand + Pin/Unpin button"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -355,7 +354,7 @@
         "Frontend: MessagesPage, ThreadDetailPage, NewMessagePage; screen-maps shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -379,7 +378,7 @@
         "Screen-map ppt/neighbors.md buildStatus=shipped; mobile shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-07",
@@ -401,7 +400,7 @@
         "All five ACs verified: announcements/faults/documents/voting/error-handling wired"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-79",
       "last_checked": "2026-07-07",
@@ -519,7 +518,7 @@
       ],
       "gaps": [
         "Create new schedule endpoint still stubbed out",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-81",
       "last_checked": "2026-07-07",
@@ -543,7 +542,7 @@
         "buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-81",
       "last_checked": "2026-07-07",
@@ -566,7 +565,7 @@
         "Merged PRs: #1123, #501, #1514/#1515"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-07",
@@ -589,7 +588,7 @@
         "Merged PRs: #1516, #1256, #1298"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-07",
@@ -612,7 +611,7 @@
         "Merged PRs: #533, #1391, #1401, #1357; coverage verified 2026-06-23"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-07",
@@ -635,7 +634,7 @@
         "Merged PRs: #641, #540, #1221, #1541"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-07",
@@ -660,7 +659,7 @@
       "gaps": [
         "screen-map buildStatus not synced: inquiries.md and account.md still in-progress despite code shipped",
         "iOS builds unverifiable in CI (no macOS runner)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-07",
@@ -685,7 +684,7 @@
         "report_execution_download_retry_e2e_tests.rs validates presigned downloads"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-84",
       "last_checked": "2026-07-07",
@@ -739,7 +738,7 @@
         "Screen-map reality/favorites buildStatus=shipped with sort-by-price"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-84",
       "last_checked": "2026-07-07",
@@ -795,7 +794,7 @@
       "gaps": [
         "RAG retrieval/query service (embedding generation + similarity search) not implemented in routes/repositories",
         "No application handler calling search_similar_documents or embedding-write flow",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-84",
       "last_checked": "2026-07-07",
@@ -818,7 +817,7 @@
         "RN Expo app.config.ts with .env.{development,staging,production,example}"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-85",
       "last_checked": "2026-07-07",
@@ -842,7 +841,7 @@
       ],
       "gaps": [
         "Per-flavor app-icon artwork pending (icon sets scaffolded, no badge images)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-85",
       "last_checked": "2026-07-07",
@@ -866,7 +865,7 @@
         "NotificationSettingsPage shipped; screen-map buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-07",
@@ -890,7 +889,7 @@
       ],
       "gaps": [
         "mobile UI for critical notifications not implemented (design out-of-scope for MVP)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-07",
@@ -907,7 +906,7 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "sprint-status: done \u2014 WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25)",
+        "sprint-status: done — WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25)",
         "handler publishes preference.updated to Redis notifications:{user_id}",
         "notification_preference_realtime_sync_tests.rs S1-S13 matrix",
         "PreferenceEventRecorder for CI-executable publish contract (issue #1376)"
@@ -915,7 +914,7 @@
       "gaps": [
         "mobile OS integration (FCM/APNs) deferred per sprint-status",
         "test-hardening issues #480/#484 open but non-blocking",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-07",
@@ -933,7 +932,7 @@
       ],
       "owner_role": "pm-security",
       "evidence": [
-        "RFC-6238 TOTP crypto in accounting-core/src/crypto.rs (HMAC-SHA1, \u00b11 window)",
+        "RFC-6238 TOTP crypto in accounting-core/src/crypto.rs (HMAC-SHA1, ±1 window)",
         "/api/v1/platform/2fa/enroll + /confirm wired (PR #1946 merged 2026-06-29)",
         "MfaChallengeModal + MfaEnrollmentScreen + TwoFactorAuthPage wired to all hooks",
         "Screen-map ppt/settings-two-factor buildStatus=shipped + apiStatus=complete; recovery codes SHA-256-hashed"
@@ -968,7 +967,7 @@
         "screen-map upload-document.md buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-07-07",
@@ -992,7 +991,7 @@
         "frontend FolderTreePage shipped; screen-map buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-07-07",
@@ -1017,7 +1016,7 @@
       ],
       "gaps": [
         "frontend permission authoring UI (AccessScopeSelector/RoleSelector/UserSelector) not shipped - tracked separately",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-07-07",
@@ -1041,7 +1040,7 @@
         "DocumentDetail.tsx + DocumentPreviewModal shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-07-07",
@@ -1066,7 +1065,7 @@
         "mobile DocumentShareSheet via PR #2003; story gate #485 cleared"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
       "last_checked": "2026-07-07",
@@ -1090,8 +1089,8 @@
         "Issue #487 CLOSED: test_mfa_verify_rate_limited present (#[ignore] pending middleware), mod-common fix applied"
       ],
       "gaps": [
-        "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed \u2014 reconcile gate note",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed — reconcile gate note",
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-07",
@@ -1115,7 +1114,7 @@
         "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete"
       ],
       "gaps": [
-        "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
+        "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed — reconcile gate note"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-07",
@@ -1146,7 +1145,7 @@
         "Issue #481 CLOSED 2026-05-26"
       ],
       "gaps": [
-        "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
+        "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed — reconcile gate note"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-07",
@@ -1177,7 +1176,7 @@
         "api-client hooks generated"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-80",
       "last_checked": "2026-07-07",
@@ -1201,7 +1200,7 @@
       ],
       "gaps": [
         "5-step wizard redesign still in-progress per sprint-status annotation",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-80",
       "last_checked": "2026-07-07",
@@ -1220,12 +1219,12 @@
       "owner_role": "pm-frontend",
       "evidence": [
         "Promoted done 2026-06-25 per sprint-status; morning stub finding stale",
-        "DisputeDetailRoute wired to real DisputeDetailPage (routes/groups/disputes.tsx) \u2014 PR #2155 added 4 route regression tests",
+        "DisputeDetailRoute wired to real DisputeDetailPage (routes/groups/disputes.tsx) — PR #2155 added 4 route regression tests",
         "party-submission endpoints wired (backend lines 1040-1107) + useDisputeSubmissions/useSubmitResponse + MediationSubmissionsPanel tab",
         "screen-map dispute-detail buildStatus=shipped apiStatus=complete; 152 dispute tests green"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-80",
       "last_checked": "2026-07-07",
