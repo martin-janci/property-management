@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-07T23:30:19Z",
+  "archived_at": "2026-07-08T00:13:00Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2388,6 +2388,19 @@
       "source": "gap-scan 2026-05-25",
       "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
       "depends_on": []
+    },
+    {
+      "id": "gap-84-5-rag-retrieval-query-service-embedding-generation",
+      "action": "RAG retrieval/query service (embedding generation + similarity search) not implemented in routes/repositories (84-5-pgvector-rag pgvector RAG Migration)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07",
+      "gc1_closed": "merged 2026-07-08T00:06:26Z PR #2165 (dispatcher merge-confirm)"
     },
     {
       "id": "gap-85-1-mobile-env-config",

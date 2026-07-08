@@ -1677,6 +1677,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-84-5-rag-retrieval-query-service-embedding-generation",
+      "branch": "auto-impl/gap-84-5-rag-retrieval-query-service-embedding-gener-a431891f",
+      "status": "merged",
+      "claimed_at": "2026-07-07T20:47:34Z",
+      "last_updated": "2026-07-08T00:13:00Z",
+      "status_changed_at": "2026-07-08T00:13:00Z",
+      "pr_number": 2165,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2165",
+      "merged_at": "2026-07-08T00:06:26Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2165 status=done specialist=rust-backend scope_drift=false code_reuse_warn=note note=gap partially stale (search+route existed); added EmbeddingProvider trait+stub and upsert_document_embedding wrapper; sqlx section compile-gated only (PG :5533 migration timeout), suite BIT-351-quarantined",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -3225,5 +3249,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-07T23:30:19Z"
+  "archived_at": "2026-07-08T00:13:00Z"
 }
