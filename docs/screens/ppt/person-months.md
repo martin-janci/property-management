@@ -17,7 +17,7 @@ sharedComponents: []
 diagrams: []
 useCases: []
 epics:
-  - "Epic 3 / Story 3.5"
+  - Epic-3-5
 designSources: []
 owner: pm-frontend
 ---

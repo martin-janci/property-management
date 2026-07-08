@@ -26,7 +26,7 @@ diagrams: []
 useCases:
   - UC-51
 epics:
-  - "82"
+  - Epic-82
 designSources: []
 owner: reality-frontend
 ---

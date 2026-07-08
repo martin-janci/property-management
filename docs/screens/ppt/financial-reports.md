@@ -18,7 +18,7 @@ sharedComponents: []
 diagrams: []
 useCases: []
 epics:
-  - "Epic 11 / Story 11.7 — Financial statement reports"
+  - Epic-11-7
 designSources: []
 owner: pm-frontend
 ---
