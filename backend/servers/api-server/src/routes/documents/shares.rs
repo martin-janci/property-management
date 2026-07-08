@@ -344,12 +344,12 @@ async fn revoke_share(
     }
 
     // Check share exists
-    match state
+    let share = match state
         .document_repo
         .find_share_by_id_rls(&mut **rls.conn(), share_id)
         .await
     {
-        Ok(Some(_)) => {}
+        Ok(Some(s)) => s,
         Ok(None) => {
             return Err((
                 StatusCode::NOT_FOUND,
@@ -363,6 +363,20 @@ async fn revoke_share(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to find share")),
             ));
         }
+    };
+
+    // The share must belong to the document named in the path. Authorization
+    // above was checked against the path document `id`, but the share is looked
+    // up purely by `share_id`; RLS only scopes to the tenant. Without this
+    // guard a creator of document A could revoke a share of document B in the
+    // same tenant by passing A's id (to pass the creator check) plus B's
+    // share_id (IDOR). Return 404 to avoid leaking the existence of the
+    // cross-document share, mirroring the "Share not found" shape above.
+    if share.document_id != id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Share not found")),
+        ));
     }
 
     match state
