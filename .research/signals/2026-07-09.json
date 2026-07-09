@@ -1,6 +1,6 @@
 {
   "date": "2026-07-09",
-  "generated_iso": "2026-07-09T18:23:50Z",
+  "generated_iso": "2026-07-09T18:26:00Z",
   "goal_checks": [
     {
       "goal": "G1",
@@ -210,6 +210,20 @@
       ],
       "confidence": "high",
       "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-finding-issue-2199-portal-analytics-rls",
+      "type": "code-review-finding",
+      "source": "Issue #2199 (post-merge review of PR #2183)",
+      "score_delta": 3,
+      "evidence": [
+        "listing_analytics_tenant_isolation policy at backend/crates/db/migrations/00113_rls_reality_portal_professional.sql:70-75 branches only on is_super_admin() OR listings.organization_id = get_current_org_id()",
+        "Migration 00186 introduced portal_owner_id ownership (nullable organization_id) on listings but did not extend the listing_analytics policy",
+        "RealityPortalRepository::get_listing_analytics at backend/crates/db/src/repositories/reality_portal/listings.rs:215-235 reads on RLS-subject pool with no app.current_user_id set",
+        "Test analytics_owner_returns_200 in backend/servers/reality-server/tests/portal_listings_my_list_analytics_tests.rs runs as superuser (bypasses RLS) and seeds zero rows — bug masked in CI"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
     }
   ],
   "auto_fix_actions": [],
@@ -223,5 +237,6 @@
     "phase_5_autofix": "no candidate — code-review-finding is not on the allowlist; no dep-update-noise lockfile-drift; no fixme-in-merged-code surfaced this run",
     "phase_6_commit": "ok"
   },
-  "rerun_note": "Same-day rerun at 2026-07-09T18:23:50Z folded in 8 afternoon PR merges (#2184, #2186, #2187, #2188, #2191, #2192, #2193, #2194), 10 follow-up issues (#2195–#2204), and 1 closed-unmerged dependabot PR (#2016). Phases 1.5 and 1.6 skipped to avoid overwriting already-fresh morning artifacts; cursors preserved."
+  "rerun_note": "Same-day rerun at 2026-07-09T18:23:50Z folded in 8 afternoon PR merges (#2184, #2186, #2187, #2188, #2191, #2192, #2193, #2194), 10 follow-up issues (#2195–#2204), and 1 closed-unmerged dependabot PR (#2016). Phases 1.5 and 1.6 skipped to avoid overwriting already-fresh morning artifacts; cursors preserved.",
+  "refill_note": "Buffer-low fire: promoted 1 new plan (security-listing-analytics-portal-rls-2199) sourced from post-merge review issue #2199 (HIGH severity RLS scoping gap on /my/listings/{id}/analytics). Adversarial pass: passed."
 }

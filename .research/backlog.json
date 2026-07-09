@@ -4318,6 +4318,37 @@
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
       "plan": null
+    },
+    {
+      "id": "security-listing-analytics-portal-rls-2199",
+      "title": "portal /my/listings/{id}/analytics returns empty data — listing_analytics RLS policy has no portal-owner branch",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2199",
+        "PR #2183",
+        "migration 00113",
+        "migration 00186"
+      ],
+      "evidence": [
+        "Issue #2199 body — RealityPortalRepository::get_listing_analytics (listings.rs:215-235) reads listing_analytics on the RLS-subject pool with no context set",
+        "listing_analytics_tenant_isolation policy (00113:70-75) only branches on is_super_admin() OR listings.organization_id = get_current_org_id() — no portal_owner_id branch",
+        "Portal listings have organization_id = NULL after migration 00186 — every analytics row filtered for portal callers",
+        "analytics_owner_returns_200 test runs as superuser (bypasses RLS) and seeds zero rows, so the bug is masked in CI",
+        "Fix: add SECURITY DEFINER portal_get_listing_analytics function mirroring portal_get_listing (00186), route the analytics read through it, and extend the tests to seed rows + assert non-zero totals"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal/listings.rs",
+        "backend/servers/reality-server/src/routes/portal_listings.rs",
+        "backend/servers/reality-server/tests/portal_listings_my_list_analytics_tests.rs",
+        "backend/crates/db/migrations/00113_rls_reality_portal_professional.sql",
+        "backend/crates/db/migrations/00186_portal_listing_ownership.sql"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": "plans/security-listing-analytics-portal-rls-2199.md"
     }
   ]
 }
