@@ -13,7 +13,8 @@ endpoints: []
 relatedScreens: []
 sharedComponents: []
 diagrams: []
-useCases: []
+useCases:
+  - UC-33
 epics: []
 designSources: []
 owner: pm-frontend
@@ -34,8 +35,14 @@ already built but unrouted; this screen is now reachable on web.
 ## Notes
 
 ### Specific (recent)
+- 2026-07-09 — Linked UC-33 (Tenant Screening). This detail screen is the
+  screening workspace for a single application: request background check
+  (UC-33.1), verify income (UC-33.2), view credit score (UC-33.4), generate
+  the screening report (UC-33.6), and approve/reject the application
+  (UC-33.7/33.8) with GDPR-compliant consent handling (UC-33.11/33.12).
 - 2026-06-08 — PAP-20: mounted route group; renders against the dev stack with
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-07-09 — agent: linked UC-33 (Tenant Screening) to useCases frontmatter — screening actions live on the application-detail screen.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).

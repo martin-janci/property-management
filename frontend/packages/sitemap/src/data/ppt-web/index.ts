@@ -174,6 +174,17 @@ export const pptWebRoutes: FrontendRoute[] = [
     tags: ['settings', 'protected'],
   },
   {
+    id: 'ppt-settings-integrations',
+    app: 'ppt-web',
+    path: '/settings/integrations',
+    name: 'Integrations',
+    description: 'External channel integrations — Airbnb OAuth connect & sync',
+    auth: { required: true, tenantContext: { required: true } },
+    component: 'IntegrationsPage',
+    feature: 'Epic-83',
+    tags: ['settings', 'integrations', 'airbnb', 'protected'],
+  },
+  {
     id: 'ppt-settings-notifications',
     app: 'ppt-web',
     path: '/settings/notifications',
