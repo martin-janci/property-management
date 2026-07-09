@@ -309,34 +309,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
-      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T04:11:20Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
-      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T06:30:13Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
-      "retry_round": 1
-    },
-    {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
       "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
       "owner_role": "pm-backend",
@@ -348,20 +320,6 @@
       "depends_on": [],
       "first_open_at": "2026-07-07T14:11:24Z",
       "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts-retry1",
-      "action": "Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-app-config-ts]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-frontend-apps-mobile-app-config-ts reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-ts",
       "retry_round": 1
     },
     {
@@ -583,6 +541,125 @@
       "first_open_at": "2026-07-09T02:08:12Z",
       "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
       "retry_round": 1
+    },
+    {
+      "id": "bug-revoke-all-sessions-cookie-blindness",
+      "action": "revoke_all_sessions ignores refresh cookie — signs the caller out too",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "security-forgot-password-no-rate-limit",
+      "action": "/forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": "plans/security-forgot-password-no-rate-limit.md",
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "bug-refresh-empty-cookie-shadows-body-token",
+      "action": "/refresh and /logout — empty refresh_token cookie shadows valid body token",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-routes-auth",
+      "action": "api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-integrations-booking-mod",
+      "action": "backend integrations booking/mod.rs — instability watch after PR #2176 split",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "test-gap-repeated-churn-oauth-integration-tests",
+      "action": "oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "dx-routine-lag-catchup-2026-07",
+      "action": "Cloud routine cadence recovery — reduce 3–4d gaps between runs",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=0 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 0,
+        "vector": "dx"
+      }
     }
   ]
 }

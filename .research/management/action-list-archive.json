@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-09T02:19:31Z",
+  "archived_at": "2026-07-09T04:11:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -900,6 +900,27 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
+      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T04:11:20Z) | gc1-reconcile 2026-07-09T04:11:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2186,
+        "merged_at": "2026-07-09T04:09:08Z",
+        "at": "2026-07-09T04:11:54Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
       "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage)",
       "owner_role": "pm-backend",
@@ -915,6 +936,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
+      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T06:30:13Z) | gc1-reconcile 2026-07-09T04:11:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2187,
+        "merged_at": "2026-07-09T04:09:18Z",
+        "at": "2026-07-09T04:11:54Z"
       }
     },
     {
@@ -968,6 +1010,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts-retry1",
+      "action": "Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-app-config-ts]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-frontend-apps-mobile-app-config-ts reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z) | gc1-reconcile 2026-07-09T04:07:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-ts",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2185,
+        "merged_at": "2026-07-09T02:19:15Z",
+        "at": "2026-07-09T04:07:01Z"
       }
     },
     {

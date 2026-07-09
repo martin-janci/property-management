@@ -1067,6 +1067,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-d2bdd912",
+      "status": "merged",
+      "claimed_at": "2026-07-09T00:10:59Z",
+      "last_updated": "2026-07-09T04:10:55Z",
+      "status_changed_at": "2026-07-09T04:10:55Z",
+      "pr_number": 2186,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2186",
+      "merged_at": "2026-07-09T04:09:08Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=61c2875d36b109cd073b47c749562d521456bf71 note=test-only-5-assertions-verified-vs-handler-source-scope-clean-CI-green-except-inprogress-test-job",
+      "last_reviewed_oid": "61c2875d36b109cd073b47c749562d521456bf71",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-0a93ed34",
       "status": "failed",
@@ -1081,6 +1103,28 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-dbf0e2e6",
+      "status": "merged",
+      "claimed_at": "2026-07-09T00:10:59Z",
+      "last_updated": "2026-07-09T04:10:55Z",
+      "status_changed_at": "2026-07-09T04:10:55Z",
+      "pr_number": 2187,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2187",
+      "merged_at": "2026-07-09T04:09:18Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=ca0babf97b357c75af32e3155d13707fb000ca43 note=test-only-coverage-verified-against-handler-and-tenantextractor-self-approve-blocked-posted-comment",
+      "last_reviewed_oid": "ca0babf97b357c75af32e3155d13707fb000ca43",
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -3791,5 +3835,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-09T02:19:15Z"
+  "archived_at": "2026-07-09T04:11:54Z"
 }
