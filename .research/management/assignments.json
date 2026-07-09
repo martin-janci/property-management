@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-09T10:20:54Z",
+  "generated": "2026-07-09T10:30:56Z",
   "assignments": [
     {
       "task_id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
@@ -70,18 +70,18 @@
     {
       "task_id": "gh-issue-2195",
       "branch": "auto-impl/gh-issue-2195-2b7bcda3",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-09T10:08:39Z",
-      "last_updated": "2026-07-09T10:08:39Z",
-      "status_changed_at": "2026-07-09T10:08:39Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-09T10:30:56Z",
+      "status_changed_at": "2026-07-09T10:30:56Z",
+      "pr_number": 2213,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2213",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=2213 status=done specialist=kotlin-mp scope_drift=true code_reuse_warn=none note=owner-glob mismatch only (diff is mobile-native KMP repos per #2195); gradle verify env-blocked (403), low-risk+test-covered, formatting hand-checked vs ktfmt",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
