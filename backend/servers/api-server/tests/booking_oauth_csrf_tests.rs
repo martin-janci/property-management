@@ -294,9 +294,64 @@ async fn booking_token_exchange_returns_503_when_not_configured(pool: PgPool) {
     );
 }
 
+/// Manager-role gate: a caller who *is* a member of the org but only holds a
+/// `resident` role must still be rejected with 403. Binding a paid OTA
+/// integration is a manager-level action, so `verify_org_access` (membership)
+/// passing is necessary but not sufficient — `verify_manager_role_in_org` runs
+/// after it and must fail closed for a non-manager member.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn booking_token_exchange_rejects_non_manager_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "bk-resident").await;
+    let user_id = seed_user(&pool, "bk-resident@test.local").await;
+    // Member of the org, but only a `resident` — not a manager tier.
+    seed_membership(&pool, org_id, user_id, "resident").await;
+    let token = mint_token(user_id, org_id);
+
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &booking_exchange_uri(org_id),
+            &token,
+            org_id,
+            json!({"code": "some-code"}),
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "resident member Booking token-exchange must be 403 (manager gate); got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
 // ===========================================================================
 // Airbnb OAuth CSRF-state callback tests
 // ===========================================================================
+
+/// Unauthenticated GET to the Airbnb callback is rejected before any state
+/// processing. Even a well-formed `state` must not let an anonymous caller
+/// drive a token exchange — the `AuthUser` extractor gates the handler.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_rejects_unauthenticated(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-anon").await;
+
+    let well_formed_state = format!("{org_id}:{}", Uuid::new_v4());
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(airbnb_callback_uri(org_id, "auth-code", &well_formed_state))
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.execute(req).await;
+
+    assert!(
+        is_protected(resp.status),
+        "unauthenticated Airbnb callback must be rejected; got {}",
+        resp.status
+    );
+}
 
 /// Missing (empty) `state` → 400 `INVALID_STATE`. An OAuth callback with no
 /// CSRF token must never proceed to a token exchange.
@@ -395,6 +450,78 @@ async fn airbnb_callback_rejects_org_mismatch_state(pool: PgPool) {
     );
 }
 
+/// `state` whose first segment is present (so the `{a}:{b}` format check passes)
+/// but is NOT a parseable UUID → 400 `STATE_MISMATCH`. This exercises the
+/// `Uuid::parse_str(...).ok() == None` branch, distinct from the valid-but-
+/// different-org UUID case above: a non-UUID prefix can never equal the path
+/// org, so the callback must reject it as a mismatch rather than 500.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_rejects_non_uuid_org_prefix(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-nonuuid").await;
+    let user_id = seed_user(&pool, "cb-nonuuid@test.local").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    // Two segments (passes the `< 2` format check) but the first is not a UUID.
+    let bad_prefix_state = format!("not-a-uuid:{}", Uuid::new_v4());
+    let resp = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &bad_prefix_state),
+            &token,
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "non-UUID state org prefix must return 400; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert!(
+        resp.text().contains("STATE_MISMATCH"),
+        "non-UUID org prefix must be rejected as STATE_MISMATCH: {}",
+        resp.text()
+    );
+}
+
+/// A `state` with extra trailing `:`-segments (`{path_org}:{nonce}:extra`) still
+/// clears the stateless org-prefix gate: `split(':')` yields ≥2 parts and
+/// `parts[0]` equals the path org, so the callback proceeds past the CSRF gate
+/// to the (unconfigured) token exchange → 503. Pins the `split(':')` len≥2
+/// contract so a future stricter parse doesn't silently change acceptance.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_accepts_state_with_extra_segments(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-extra").await;
+    let user_id = seed_user(&pool, "cb-extra@test.local").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    let state = format!("{org_id}:{}:extra-segment", Uuid::new_v4());
+    let resp = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &state),
+            &token,
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "state with extra segments but a matching org prefix must clear the gate \
+         and reach the unconfigured token exchange → 503; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    let body = resp.text();
+    assert!(
+        !body.contains("INVALID_STATE") && !body.contains("STATE_MISMATCH"),
+        "extra-segment state with a matching org prefix must not be CSRF-rejected: {body}"
+    );
+}
+
 /// Valid `state` (correct `{path_org}:{nonce}` shape) clears the CSRF gate. With
 /// no Redis the single-use store is `StoreUnavailable`, so the flow falls
 /// through to the membership check and then to "Airbnb not configured" → 503.
@@ -457,6 +584,38 @@ async fn airbnb_callback_idor_rejects_non_member(pool: PgPool) {
         resp.status,
         StatusCode::FORBIDDEN,
         "non-member Airbnb callback must be 403 after the state gate; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// Membership-gate boundary: unlike the token-exchange POST (which additionally
+/// requires a manager role), the browser callback gates only on `verify_org_access`
+/// (membership). A `resident` member therefore clears the state gate AND the
+/// membership check and reaches the unconfigured token exchange → 503 (NOT 403).
+/// Pins this deliberate asymmetry so a future gate change is caught.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_resident_member_passes_membership_gate(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-resident").await;
+    let user_id = seed_user(&pool, "cb-resident@test.local").await;
+    // Only a `resident` — still a member, and the callback has no manager gate.
+    seed_membership(&pool, org_id, user_id, "resident").await;
+    let token = mint_token(user_id, org_id);
+
+    let state = format!("{org_id}:{}", Uuid::new_v4());
+    let resp = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &state),
+            &token,
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "resident member must clear the membership-only callback gate → 503, \
+         not 403; got {}: {}",
         resp.status,
         resp.text()
     );
