@@ -424,12 +424,15 @@
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
+    "code-review-mobile-native-kmp-create-listing-stub",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-path-not-encoded",
     "code-review-mobile-native-kmp-search-stale-response-race",
+    "code-review-mobile-native-kmp-sso-no-tests",
     "code-review-mobile-rn-deeplink-init-unhandled",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-report-fault-fake-submit",
@@ -581,7 +584,7 @@
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
-    "mobile-native-kmp": "2026-06-06"
+    "mobile-native-kmp": "2026-07-09"
   },
   "stats": {
     "runs": 42,

@@ -4180,6 +4180,73 @@
         "assignment_status": "merged",
         "pr_number": 2100
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "title": "KMP CreateListingScreen.onSubmit is a permanent NotImplementedError stub (UC-51.4 broken)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-09"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:452 \u2014 CreateListingScreen.onSubmit is hard-wired to Result.failure(NotImplementedError(\"Wire to listing API\")), so tapping Publish always fails with the generic publish_failed banner (UC-51.4 broken). Reachable in production via AgencyHub (Navigation.kt:392) and MyListings (Navigation.kt:443) \u2014 both routes wire onCreateClick to Screen.CreateListing."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-path-not-encoded",
+      "title": "KMP path-injection: 5 repositories splice raw IDs/slugs into URLs (agency/realtor/inquiry/notifications)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-09"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt:61 \u2014 getAgencyBySlug splices $slug into the URL without encodeURLPathPart(); the doc-comment marks this as the deep-link handler, so slug is untrusted input that can smuggle extra path segments or query params (path-injection variant of the PR #2180 fix that only covered ListingRepository.getListingDetail).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt:43,79 \u2014 getAgency and listMembers splice $agencyId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt:49 \u2014 getProfile splices $userId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:110,149,212 \u2014 getInquiry / replyToInquiry / cancelViewing splice $inquiryId / $viewingId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt:80,116 \u2014 markAsRead / deleteNotification splice $notificationId unencoded."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-no-tests",
+      "title": "KMP SsoService (9 auth methods, drives AuthState for every consumer) has no test coverage in any target",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-09"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 \u2014 SsoService is the shared auth surface (loginWithPassword, register, requestPasswordReset, confirmPasswordReset, updateProfile, createMobileToken, validateAndLogin, restoreSession, refreshSession) and drives AuthState for every consumer, yet there is no SsoServiceTest.kt in mobile-native/shared/src/commonTest/ (or in any androidUnitTest / iosTest tree \u2014 those directories don't exist). Every other shared repository has at least a contract test; the most security-sensitive one has none."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
     }
   ]
 }

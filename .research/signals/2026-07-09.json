@@ -35,6 +35,49 @@
       "evidence": "PR #2176 (refactor(db): split reality_portal repository into cohesive sub-modules) landed 2026-07-08 \u2014 resolves the churn-hotspot on backend/crates/db/src/repositories/reality_portal.rs by decomposing it into agencies/imports/inquiries/listings/realtors/searches/tests submodules. Prior backlog row was already dropped after decay.",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:452 \u2014 CreateListingScreen.onSubmit is hard-wired to Result.failure(NotImplementedError(\"Wire to listing API\")), so tapping Publish always fails with the generic publish_failed banner (UC-51.4 broken). Reachable in production via AgencyHub (Navigation.kt:392) and MyListings (Navigation.kt:443) \u2014 both routes wire onCreateClick to Screen.CreateListing."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-path-not-encoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt:61 \u2014 getAgencyBySlug splices $slug into the URL without encodeURLPathPart(); the doc-comment marks this as the deep-link handler, so slug is untrusted input that can smuggle extra path segments or query params (path-injection variant of the PR #2180 fix that only covered ListingRepository.getListingDetail).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt:43,79 \u2014 getAgency and listMembers splice $agencyId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt:49 \u2014 getProfile splices $userId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:110,149,212 \u2014 getInquiry / replyToInquiry / cancelViewing splice $inquiryId / $viewingId unencoded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt:80,116 \u2014 markAsRead / deleteNotification splice $notificationId unencoded."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 \u2014 SsoService is the shared auth surface (loginWithPassword, register, requestPasswordReset, confirmPasswordReset, updateProfile, createMobileToken, validateAndLogin, restoreSession, refreshSession) and drives AuthState for every consumer, yet there is no SsoServiceTest.kt in mobile-native/shared/src/commonTest/ (or in any androidUnitTest / iosTest tree \u2014 those directories don't exist). Every other shared repository has at least a contract test; the most security-sensitive one has none."
+      ],
+      "expert": "tester"
     }
   ],
   "auto_fix_actions": [],
@@ -78,14 +121,14 @@
       "goal": "G6",
       "passed": true,
       "command": "adversarial pass on new plans",
-      "observed": "N/A \u2014 0 new plans",
+      "observed": "N/A \u2014 0 new plans (3 new backlog rows below threshold)",
       "expected": "annotated"
     },
     {
       "goal": "G7",
       "passed": true,
       "command": "<=2 new plans + template check",
-      "observed": "0 new plans",
+      "observed": "0 new plans (3 fresh code-review-finding rows below threshold \u2014 highest score=2)",
       "expected": "<=2"
     },
     {
