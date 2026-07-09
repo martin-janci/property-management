@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-09T04:24:32Z",
+  "generated": "2026-07-09T04:57:40Z",
   "assignments": [
     {
       "task_id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
@@ -72,18 +72,18 @@
     {
       "task_id": "bug-revoke-all-sessions-cookie-blindness",
       "branch": "auto-impl/bug-revoke-all-sessions-cookie-blindness-4607b8f8",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-09T04:10:55Z",
-      "last_updated": "2026-07-09T04:10:55Z",
-      "status_changed_at": "2026-07-09T04:10:55Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-09T04:57:40Z",
+      "status_changed_at": "2026-07-09T04:57:40Z",
+      "pr_number": 2190,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2190",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2190 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=cookie-first session resolution in revoke-all/list-sessions; 6/6 sessions tests pass, IG3 fails-on-main confirmed (revokedCount 2->1, isCurrent 0->1); clippy clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
