@@ -95,6 +95,15 @@ pub async fn verify_and_consume(
     oauth_state: &str,
     org_id: Uuid,
 ) -> ConsumeOutcome {
+    // Issue #2203: a test-installed in-memory store takes precedence so the
+    // real consume path (`Consumed` on a freshly-issued state, `Rejected` on a
+    // replayed / already-consumed one) is exercisable at the handler level in
+    // CI, which wires no Redis. `oauth_state_store` is `None` in production, so
+    // this branch is inert there and the Redis path below is authoritative.
+    if let Some(store) = &state.oauth_state_store {
+        return store.consume(oauth_state, org_id);
+    }
+
     let Some(redis) = &state.redis_client else {
         return ConsumeOutcome::StoreUnavailable;
     };
@@ -145,6 +154,53 @@ fn decide_consume(record: Option<OAuthStateRecord>, path_org_id: Uuid) -> Consum
             tracing::warn!("OAuth state not found or already consumed (possible replay)");
             ConsumeOutcome::Rejected
         }
+    }
+}
+
+/// Test-only in-memory OAuth state store (issue #2203).
+///
+/// Production single-use enforcement lives in Redis (`AppState::redis_client`).
+/// Because CI wires no Redis, [`verify_and_consume`] always returned
+/// [`ConsumeOutcome::StoreUnavailable`] under the integration-test harness, so
+/// the handler's replay-rejection branch (`Rejected → 400 INVALID_STATE`) — the
+/// actual heart of the CSRF single-use check — had zero handler-level coverage.
+///
+/// This store mirrors the Redis consume semantics exactly: a state is bound to
+/// an `org_id` when issued ([`seed`](Self::seed)) and removed on first lookup
+/// ([`consume`](Self::consume)), so a second callback with the same state hits
+/// the `None` (replay) arm of [`decide_consume`]. Installed into `AppState`
+/// only by tests via `AppState::with_oauth_state_store`; it is `None` in
+/// production and never touched by real traffic.
+#[derive(Clone, Default)]
+pub struct OAuthStateStore {
+    inner: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, OAuthStateRecord>>>,
+}
+
+impl OAuthStateStore {
+    /// Create an empty store.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Seed a freshly-issued, single-use `oauth_state` bound to `org_id` /
+    /// `user_id`, exactly as [`issue`] would have persisted it in Redis.
+    pub fn seed(&self, oauth_state: &str, org_id: Uuid, user_id: Uuid) {
+        self.inner
+            .lock()
+            .expect("oauth state store mutex poisoned")
+            .insert(oauth_state.to_string(), OAuthStateRecord { org_id, user_id });
+    }
+
+    /// Look up + consume (remove) the record for `oauth_state`, then apply the
+    /// same accept/reject decision as the Redis path. Single-use: a second call
+    /// for the same state finds no record and is [`ConsumeOutcome::Rejected`].
+    fn consume(&self, oauth_state: &str, org_id: Uuid) -> ConsumeOutcome {
+        let record = self
+            .inner
+            .lock()
+            .expect("oauth state store mutex poisoned")
+            .remove(oauth_state);
+        decide_consume(record, org_id)
     }
 }
 
@@ -211,6 +267,45 @@ mod tests {
         // (single-use replay). Either way the callback must be rejected.
         assert!(matches!(
             decide_consume(None, Uuid::new_v4()),
+            ConsumeOutcome::Rejected
+        ));
+    }
+
+    // ---- In-memory OAuthStateStore single-use semantics (#2203) -----------
+
+    #[test]
+    fn store_consumes_seeded_state_once_then_rejects_replay() {
+        let org_id = Uuid::new_v4();
+        let user_id = Uuid::new_v4();
+        let oauth_state = format!("{org_id}:{}", Uuid::new_v4());
+
+        let store = OAuthStateStore::new();
+        store.seed(&oauth_state, org_id, user_id);
+
+        // First use: found + org-bound => Consumed.
+        assert!(matches!(
+            store.consume(&oauth_state, org_id),
+            ConsumeOutcome::Consumed
+        ));
+        // Replay of the SAME state: already removed => Rejected (the branch the
+        // handler turns into 400 INVALID_STATE).
+        assert!(matches!(
+            store.consume(&oauth_state, org_id),
+            ConsumeOutcome::Rejected
+        ));
+    }
+
+    #[test]
+    fn store_rejects_state_bound_to_a_different_org() {
+        let issued_org = Uuid::new_v4();
+        let oauth_state = format!("{issued_org}:{}", Uuid::new_v4());
+
+        let store = OAuthStateStore::new();
+        store.seed(&oauth_state, issued_org, Uuid::new_v4());
+
+        // Consumed against a DIFFERENT path org => cross-org replay => Rejected.
+        assert!(matches!(
+            store.consume(&oauth_state, Uuid::new_v4()),
             ConsumeOutcome::Rejected
         ));
     }
