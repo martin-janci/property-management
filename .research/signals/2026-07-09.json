@@ -1,6 +1,6 @@
 {
   "date": "2026-07-09",
-  "generated_iso": "2026-07-09T02:31:00Z",
+  "generated_iso": "2026-07-09T18:23:50Z",
   "goal_checks": [
     {
       "goal": "G1",
@@ -199,6 +199,17 @@
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
+    },
+    {
+      "id": "dep-update-noise-pr-2016",
+      "type": "dep-update-noise",
+      "source": "PR #2016",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2016 (bump dtolnay/rust-toolchain 1.94.1 → 1.100.0 in actions-minor-patch group) — closed unmerged 2026-07-09T06:01:37Z; logged for audit, no score change"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
     }
   ],
   "auto_fix_actions": [],
@@ -211,5 +222,6 @@
     "phase_4_write": "ok",
     "phase_5_autofix": "no candidate — code-review-finding is not on the allowlist; no dep-update-noise lockfile-drift; no fixme-in-merged-code surfaced this run",
     "phase_6_commit": "ok"
-  }
+  },
+  "rerun_note": "Same-day rerun at 2026-07-09T18:23:50Z folded in 8 afternoon PR merges (#2184, #2186, #2187, #2188, #2191, #2192, #2193, #2194), 10 follow-up issues (#2195–#2204), and 1 closed-unmerged dependabot PR (#2016). Phases 1.5 and 1.6 skipped to avoid overwriting already-fresh morning artifacts; cursors preserved."
 }
