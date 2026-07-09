@@ -798,6 +798,180 @@ mod sessions {
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
     }
+
+    // ------------------------------------------------------------------
+    // Regression: revoke-all / list-sessions cookie blindness
+    //
+    // After the P0-12 cookie migration, ppt-web sends the refresh token ONLY
+    // via the HttpOnly `refresh_token` cookie — never the `X-Refresh-Token`
+    // header. `revoke_all_sessions` and `list_sessions` used to read the header
+    // only, so cookie callers resolved to `None`:
+    //   * revoke-all revoked the caller's OWN live session ("sign out other
+    //     devices" signed the caller out too), and
+    //   * list-sessions could never mark any row `isCurrent`.
+    // The fix resolves the current session cookie-first / header-fallback via
+    // `resolve_current_session_id`. These tests fail on `main` and pass after.
+    // ------------------------------------------------------------------
+
+    /// Log an already-registered+verified user in again to open a second
+    /// concurrent session. Returns `(access_token, refresh_token)`.
+    async fn login_again(app: &TestApp, user: &TestUser) -> (String, String) {
+        let login_req = app.post("/api/v1/auth/login").json(user.login_body()).build();
+        let resp = app.execute(login_req).await;
+        assert_eq!(resp.status, StatusCode::OK, "second login should succeed");
+        let json = resp.json_value();
+        (
+            json["accessToken"].as_str().expect("accessToken").to_string(),
+            json["refreshToken"].as_str().expect("refreshToken").to_string(),
+        )
+    }
+
+    /// Cookie-based caller: revoke-all must revoke ONLY the other device and
+    /// leave the caller's own session alive. On `main` the cookie is ignored,
+    /// `current_session_id = None`, and BOTH sessions are revoked
+    /// (`revokedCount == 2`) — the first assert below fails there.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn revoke_all_sessions_preserves_cookie_caller(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        // Session 1 is the caller; session 2 is another device.
+        let (access1, refresh1) = create_authenticated_user(&app, &user).await;
+        let (_access2, refresh2) = login_again(&app, &user).await;
+
+        // Caller hits revoke-all as a cookie-based ppt-web client: refresh
+        // token lives ONLY in the HttpOnly cookie, no X-Refresh-Token header.
+        let req = app
+            .post("/api/v1/auth/sessions/revoke-all")
+            .bearer(&access1)
+            .header("Cookie", &format!("refresh_token={}", refresh1))
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+
+        let count = resp.json_value()["revokedCount"].as_u64().unwrap();
+        assert_eq!(
+            count, 1,
+            "cookie caller must revoke only the other session (main revokes both)"
+        );
+
+        // Caller's own refresh token still works => session survived.
+        let refresh_ok = app
+            .post("/api/v1/auth/refresh")
+            .header("Cookie", &format!("refresh_token={}", refresh1))
+            .json(json!({ "refreshToken": "" }))
+            .build();
+        let refresh_resp = app.execute(refresh_ok).await;
+        assert_eq!(
+            refresh_resp.status,
+            StatusCode::OK,
+            "caller's own session must survive revoke-all"
+        );
+
+        // The other device's refresh token is now revoked.
+        let refresh_bad = app
+            .post("/api/v1/auth/refresh")
+            .header("Cookie", &format!("refresh_token={}", refresh2))
+            .json(json!({ "refreshToken": "" }))
+            .build();
+        let bad_resp = app.execute(refresh_bad).await;
+        assert_eq!(
+            bad_resp.status,
+            StatusCode::UNAUTHORIZED,
+            "the other device must be signed out"
+        );
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    /// Header-based caller (mobile RN / legacy ppt-web): behavior is unchanged
+    /// — revoke-all still preserves the caller's session. Passes on `main` too;
+    /// guards against a regression in the fallback path.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn revoke_all_sessions_preserves_header_caller(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (access1, refresh1) = create_authenticated_user(&app, &user).await;
+        let (_access2, _refresh2) = login_again(&app, &user).await;
+
+        let req = app
+            .post("/api/v1/auth/sessions/revoke-all")
+            .bearer(&access1)
+            .header("X-Refresh-Token", &refresh1)
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+
+        let count = resp.json_value()["revokedCount"].as_u64().unwrap();
+        assert_eq!(count, 1, "header caller must revoke only the other session");
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    /// No cookie and no header: neither source resolves a current session, so
+    /// revoke-all revokes EVERY session for the user. Documents the
+    /// intentional `None` branch of `revoke_all_user_tokens`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn revoke_all_sessions_without_token_revokes_everything(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (access1, _refresh1) = create_authenticated_user(&app, &user).await;
+        let (_access2, _refresh2) = login_again(&app, &user).await;
+
+        let req = app
+            .post("/api/v1/auth/sessions/revoke-all")
+            .bearer(&access1)
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+
+        let count = resp.json_value()["revokedCount"].as_u64().unwrap();
+        assert_eq!(count, 2, "with no current session, all sessions are revoked");
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    /// Cookie-based caller: list-sessions must mark exactly one row
+    /// `isCurrent = true` and it must be the caller's session. On `main` the
+    /// cookie is ignored so no row is ever current (count == 0) — fails there.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn list_sessions_marks_cookie_caller_current(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (access1, refresh1) = create_authenticated_user(&app, &user).await;
+        let (_access2, _refresh2) = login_again(&app, &user).await;
+
+        let req = app
+            .get("/api/v1/auth/sessions")
+            .bearer(&access1)
+            .header("Cookie", &format!("refresh_token={}", refresh1))
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+
+        let json = resp.json_value();
+        let sessions = json["sessions"].as_array().unwrap();
+        assert_eq!(sessions.len(), 2, "user has two live sessions");
+
+        let current: Vec<&Value> = sessions
+            .iter()
+            .filter(|s| s["isCurrent"].as_bool().unwrap_or(false))
+            .collect();
+        assert_eq!(
+            current.len(),
+            1,
+            "exactly one session must be marked current for the cookie caller"
+        );
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
 }
 
 // =============================================================================
