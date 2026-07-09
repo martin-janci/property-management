@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "bug-revoke-all-sessions-cookie-blindness",
-  "selected_at": "2026-07-09T04:09:40Z",
+  "epic_prefix": "bug-refresh-empty-cookie-shadows-body-token",
+  "selected_at": "2026-07-09T08:06:31Z",
   "last_action": "repick",
-  "reason": "prior target 'test-gap-screen-map-drift-pr-1100-ppt-retry1' exhausted; closest-to-done is 'bug-revoke-all-sessions-cookie-blindness' (open=1 claimable=1)",
+  "reason": "prior target 'bug-revoke-all-sessions-cookie-blindness' exhausted; closest-to-done is 'bug-refresh-empty-cookie-shadows-body-token' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

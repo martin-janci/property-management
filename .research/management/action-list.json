@@ -309,34 +309,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T10:21:29Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "dx-stalled-review-pr-988-retry1",
-      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 1/2 of failed dx-stalled-review-pr-988]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "dx-stalled-review-pr-988",
-      "retry_round": 1
-    },
-    {
       "id": "triage-issue-1380-retry1",
       "action": "Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured [retry 1/2 of failed triage-issue-1380]",
       "owner_role": "pm-tech-lead",
@@ -411,42 +383,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "gap-screens-link-uc-29",
-      "action": "Link UC-29 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
-      "id": "gap-screens-link-uc-33",
-      "action": "Link UC-33 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
-      "id": "gap-screens-link-uc-40",
-      "action": "Link UC-40 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
       "action": "direct-connect and availability-sync enqueue handlers lack tests (83-1-airbnb-integration Airbnb OAuth and Sync)",
       "owner_role": "pm-backend",
@@ -466,30 +402,6 @@
       "dependency": null,
       "depends_on": [],
       "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
-      "id": "gap-83-2-frontend-property-mapping-wizard-not-wired",
-      "action": "frontend property mapping wizard not wired (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
-      "id": "gap-83-2-rate-availability-push-integration-deferred",
-      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
       "deadline": null,
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening"

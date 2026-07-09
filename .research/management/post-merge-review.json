@@ -1,28 +1,112 @@
 {
-  "last_review": "2026-07-08T00:31:14Z",
+  "generated": "2026-07-09T08:27:55Z",
   "window": "14d",
   "base": "dev",
-  "reviewed": [
+  "scope": null,
+  "runs": [
     {
-      "pr": 2150,
-      "title": "lease enum-decode fix",
-      "verdict": "issues",
-      "issue": 2169,
-      "severity": "high",
-      "summary": "enum-decode fix incomplete: get_lease_with_details_rls (GET /leases/{id} +3 routes) still SELECT *; lease mutations still RETURNING * -> 500"
+      "run_at": "2026-07-09T08:27:55Z",
+      "prs_scanned": 15,
+      "clean": [
+        2192,
+        2191,
+        2188,
+        2178,
+        2187
+      ],
+      "with_issues": [
+        {
+          "pr": 2182,
+          "issue": 2196,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "webhook HMAC correct+constant-time; low-sev follow-ups: env-secret provisioning + replay protection"
+        },
+        {
+          "pr": 2181,
+          "issue": 2197,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "revoke_share guard correct (404, no existence leak); low-sev defense-in-depth: push share<->document scope into repo layer"
+        },
+        {
+          "pr": 2180,
+          "issue": 2195,
+          "findings": 2,
+          "specialist": "kotlin-mp",
+          "note": "url-encode fix correct but one-off; 9 sibling raw path-param splices still unencoded; propose shared commonMain pathSegment util (also copy-pasted 3x)"
+        },
+        {
+          "pr": 2183,
+          "issue": 2199,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "per-listing analytics returns empty for portal listings - listing_analytics FORCE-RLS policy (migration 00113) missing portal-owner branch, read sets no context; LIST half correct"
+        },
+        {
+          "pr": 2179,
+          "issue": 2198,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "real create-schedule handler w/ RBAC+tenant-scope+validation+DB tests; gaps: report_id persisted with no FK/ownership check, next_run_at left NULL on create, timezone unvalidated"
+        },
+        {
+          "pr": 2177,
+          "issue": 2200,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "ProtectedRoute suite solid; one tautological test renders /login on a sibling route so ProtectedRoute never mounts -> LOGIN_PATH guard uncovered"
+        },
+        {
+          "pr": 2173,
+          "issue": 2201,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "pgvector RAG wiring correct+org-scoped; follow-ups: DB conn held across embedding HTTP call, no provider/model provenance (silent retrieval corruption), FK violation -> 500 on bad document_id"
+        },
+        {
+          "pr": 2184,
+          "issue": 2202,
+          "findings": 3,
+          "specialist": "react-web",
+          "note": "integrations route reachable by URL but not in settings nav/command-palette; all strings hardcoded (no react-i18next); Airbnb OAuth connect discards CSRF state and has no callback handler"
+        },
+        {
+          "pr": 2186,
+          "issue": 2203,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "CSRF tests meaningful (verified vs oauth.rs); no camelCase/snake_case bug; CSRF replay/single-use Rejected branch untested (no Redis in TestApp) + minor is_protected looseness"
+        },
+        {
+          "pr": 2185,
+          "issue": 2204,
+          "findings": 3,
+          "specialist": "react-native",
+          "note": "env resolution now deterministic; getAppEnv() NODE_ENV/invalid-APP_ENV fallback uncovered, duplicates plugin resolveAppEnv(), dotenv mock precedence contradicts documented CI sentinel-override"
+        }
+      ]
     },
     {
-      "pr": 2164,
-      "title": "admin-web Organization Management Dashboard",
-      "verdict": "issues",
-      "issue": 2170,
-      "severity": "medium",
-      "summary": "reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
+      "run_at": "2026-07-08T00:31:14Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2150,
+          "issue": 2169,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "lease enum-decode fix incomplete: get_lease_with_details_rls (GET /leases/{id} +3 routes) still SELECT *; lease mutations still RETURNING * -> 500"
+        },
+        {
+          "pr": 2164,
+          "issue": 2170,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "admin-web Org dashboard: reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
+        }
+      ]
     }
-  ],
-  "issues_opened": [
-    2169,
-    2170
-  ],
-  "note": "post-merge review ran via dispatcher Phase 2.5 nested reviewers (PR 2150, 2164); parent agent did not self-finalize (nested-wait), dispatcher folded findings into GitHub issues + this record."
+  ]
 }
