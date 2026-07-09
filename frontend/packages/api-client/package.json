@@ -19,7 +19,7 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
     "typescript": "^5.3.0",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "version": "0.3.218"
 }
