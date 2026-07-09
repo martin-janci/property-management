@@ -572,6 +572,206 @@
         "score": 0,
         "vector": "dx"
       }
+    },
+    {
+      "id": "gh-issue-2195",
+      "action": "Follow-up: url-encode remaining raw-spliced path params in mobile-native repositories + extract shared pathSegment helper (PR #2180) (Closes #2195)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2195)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2195,
+        "url": "https://github.com/martin-janci/property-management/issues/2195",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2196",
+      "action": "Follow-up: provision PORTAL_WEBHOOK_SECRET + replay-protection note for portal webhook receiver (PR #2182) (Closes #2196)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2196)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2196,
+        "url": "https://github.com/martin-janci/property-management/issues/2196",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2197",
+      "action": "Follow-up: enforce share-document scoping in the repo layer, not just the handler guard (PR #2181) (Closes #2197)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2197)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2197,
+        "url": "https://github.com/martin-janci/property-management/issues/2197",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2198",
+      "action": "Follow-up: create-schedule persists unvalidated report_id / timezone and never sets next_run_at (PR #2179) (Closes #2198)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2198)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2198,
+        "url": "https://github.com/martin-janci/property-management/issues/2198",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2199",
+      "action": "Follow-up: per-listing analytics endpoint returns empty data in production for portal-owned listings (PR #2183) (Closes #2199)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2199)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2199,
+        "url": "https://github.com/martin-janci/property-management/issues/2199",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2200",
+      "action": "Follow-up: \"does not store login page as return URL\" test never exercises the guard it claims to cover (PR #2177) (Closes #2200)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2200)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2200,
+        "url": "https://github.com/martin-janci/property-management/issues/2200",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2201",
+      "action": "Follow-up: harden RAG embedding-write path — connection-holding, provider provenance, FK error shape (PR #2173) (Closes #2201)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2201)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2201,
+        "url": "https://github.com/martin-janci/property-management/issues/2201",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2202",
+      "action": "Follow-up: integrations settings route is undiscoverable, hardcodes strings, and leaves the Airbnb OAuth handshake half-wired (PR #2184) (Closes #2202)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2202)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2202,
+        "url": "https://github.com/martin-janci/property-management/issues/2202",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2203",
+      "action": "Follow-up: OAuth CSRF replay/single-use rejection branch has no handler-level test (PR #2186) (Closes #2203)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2203)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2203,
+        "url": "https://github.com/martin-janci/property-management/issues/2203",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2204",
+      "action": "Follow-up: app.config.env test leaves getAppEnv() fallback uncovered + duplicates plugin resolver (PR #2185) (Closes #2204)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2204)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2204,
+        "url": "https://github.com/martin-janci/property-management/issues/2204",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
