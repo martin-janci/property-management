@@ -44,6 +44,11 @@ const SessionsPage = lazy(() =>
   import('../../features/settings/pages/SessionsPage').then((m) => ({ default: m.SessionsPage }))
 );
 
+// Integrations settings page (Gap 83-1 — Airbnb OAuth & Sync) — lazy-loaded.
+const IntegrationsPage = lazy(() =>
+  import('../../features/settings').then((m) => ({ default: m.IntegrationsPage }))
+);
+
 export function Home() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
@@ -184,6 +189,15 @@ export function settingsRoutes() {
         element={
           <ProtectedRoute>
             <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* External integrations — Airbnb OAuth & Sync (Gap 83-1) */}
+      <Route
+        path="/settings/integrations"
+        element={
+          <ProtectedRoute>
+            <IntegrationsPage />
           </ProtectedRoute>
         }
       />
