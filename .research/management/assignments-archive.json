@@ -2013,6 +2013,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-realtor-listings-analytics-endpoints",
+      "branch": "auto-impl/gap-realtor-listings-analytics-endpoints-1d115e0b",
+      "status": "merged",
+      "claimed_at": "2026-07-08T20:08:26Z",
+      "last_updated": "2026-07-09T00:18:50Z",
+      "status_changed_at": "2026-07-09T00:18:50Z",
+      "pr_number": 2183,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2183",
+      "merged_at": "2026-07-09T00:17:22Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2183 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added GET /api/v1/my/listings + /{id}/analytics on reality-server + list_portal_listings/count repo methods (portal-owner RLS ctx); 6/6 tests, clippy+fmt clean",
+      "reviewer_summary": "verdict=approve head_oid=35276d5940438511248d7acb8a7491034baaee29 note=rls-guc-matches-context5,ownership-gate-404,json-camelcase-ok; approved-as-comment(self-pr)",
+      "last_reviewed_oid": "35276d5940438511248d7acb8a7491034baaee29",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-09T00:16:20Z"
+    },
+    {
       "task_id": "gap-screens-normalize-epic-frontmatter",
       "branch": "auto-impl/gap-screens-normalize-epic-frontmatter-ca92442f",
       "status": "merged",
@@ -3747,5 +3769,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-08T22:12:12Z"
+  "archived_at": "2026-07-09T00:22:56Z"
 }
