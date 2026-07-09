@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-09T04:11:54Z",
+  "archived_at": "2026-07-09T08:22:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -978,6 +978,27 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T10:21:29Z) | gc1-reconcile 2026-07-09T08:22:43Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-09T08:22:43Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
       "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
       "owner_role": "pm-frontend",
@@ -1363,6 +1384,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "dx-stalled-review-pr-988-retry1",
+      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 1/2 of failed dx-stalled-review-pr-988]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z) | gc1-reconcile 2026-07-09T08:04:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:11:24Z",
+      "retry_of": "dx-stalled-review-pr-988",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-09T08:04:26Z"
       }
     },
     {
@@ -2560,6 +2602,25 @@
       "gc1_closed": "merged 2026-07-08T02:32:14Z PR #2166 (dispatcher merge-confirm)"
     },
     {
+      "id": "gap-83-2-frontend-property-mapping-wizard-not-wired",
+      "action": "frontend property mapping wizard not wired (83-2-booking-integration Booking.com OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T19:45:00Z",
+      "source": "gap-scan 2026-07-07 evening | gc1-reconcile 2026-07-09T08:22:43Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2194,
+        "merged_at": "2026-07-09T08:20:23Z",
+        "at": "2026-07-09T08:22:43Z"
+      }
+    },
+    {
       "id": "gap-83-2-no-test-coverage-for-any-booking",
       "action": "No test coverage for any Booking.com handler (83-2-booking-integration Booking.com OAuth and Sync)",
       "owner_role": "pm-backend",
@@ -2600,6 +2661,25 @@
         "merged_pr": 1045,
         "merged_at": "2026-06-04T07:15:34Z",
         "at": "2026-06-04T09:44:03Z"
+      }
+    },
+    {
+      "id": "gap-83-2-rate-availability-push-integration-deferred",
+      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "first_open_at": "2026-07-07T19:45:00Z",
+      "source": "gap-scan 2026-07-07 evening | gc1-reconcile 2026-07-09T08:04:26Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-09T08:04:26Z"
       }
     },
     {
@@ -2708,6 +2788,63 @@
         "merged_pr": 2183,
         "merged_at": "2026-07-09T00:17:22Z",
         "at": "2026-07-09T02:07:22Z"
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-29",
+      "action": "Link UC-29 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07 | gc1-reconcile 2026-07-09T08:22:43Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2193,
+        "merged_at": "2026-07-09T08:16:55Z",
+        "at": "2026-07-09T08:22:43Z"
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-33",
+      "action": "Link UC-33 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07 | gc1-reconcile 2026-07-09T08:22:43Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2192,
+        "merged_at": "2026-07-09T08:14:03Z",
+        "at": "2026-07-09T08:22:43Z"
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-40",
+      "action": "Link UC-40 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-07T14:30:00Z",
+      "source": "gap-scan 2026-07-07 | gc1-reconcile 2026-07-09T08:22:43Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2191,
+        "merged_at": "2026-07-09T08:13:10Z",
+        "at": "2026-07-09T08:22:43Z"
       }
     },
     {
