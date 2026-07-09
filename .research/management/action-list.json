@@ -618,7 +618,7 @@
       "action": "Follow-up: enforce share-document scoping in the repo layer, not just the handler guard (PR #2181) (Closes #2197)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2197)",
       "deadline": null,
       "dependency": null,
