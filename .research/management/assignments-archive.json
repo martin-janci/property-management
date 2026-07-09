@@ -1961,6 +1961,28 @@
       "merge_attempted_at": "2026-07-08T14:16:03Z"
     },
     {
+      "task_id": "gap-83-1-frontend-integrations-ui-not-wired-settings",
+      "branch": "auto-impl/gap-83-1-frontend-integrations-ui-not-wi-8063a9f1",
+      "status": "merged",
+      "claimed_at": "2026-07-08T22:06:00Z",
+      "last_updated": "2026-07-09T04:24:32Z",
+      "status_changed_at": "2026-07-09T04:24:32Z",
+      "pr_number": 2184,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2184",
+      "merged_at": "2026-07-09T04:20:53Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2184 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired /settings/integrations to existing airbnb api-client hooks (stale label: clean under pm-frontend); also fixed pre-existing stale sitemap route-count test (13->19)",
+      "reviewer_summary": "verdict=approve head_oid=706b9add3d13bcfc6c78b9103e7ee530de1493c1 note=ci-sitemap-test-now-green-route-count-19-head-advanced-from-7ea04b1",
+      "last_reviewed_oid": "706b9add3d13bcfc6c78b9103e7ee530de1493c1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 2,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-83-1-no-test-coverage-for-oauth-flow",
       "branch": "auto-impl/gap-83-1-no-test-coverage-for-oauth-flow-bab951d7",
       "status": "merged",
@@ -2099,6 +2121,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-09T00:16:20Z"
+    },
+    {
+      "task_id": "gap-screens-link-uc-10",
+      "branch": "auto-impl/gap-screens-link-uc-10-f1b2e913",
+      "status": "merged",
+      "claimed_at": "2026-07-08T22:06:00Z",
+      "last_updated": "2026-07-09T04:24:32Z",
+      "status_changed_at": "2026-07-09T04:24:32Z",
+      "pr_number": 2188,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2188",
+      "merged_at": "2026-07-09T04:20:41Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=2d49c367f8fbc27ae3a344f1f03ed68c769906dd note=uc-10-person-months-exact-match-docs-only-no-drift",
+      "last_reviewed_oid": "2d49c367f8fbc27ae3a344f1f03ed68c769906dd",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-screens-normalize-epic-frontmatter",
@@ -3835,5 +3879,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-09T04:11:54Z"
+  "archived_at": "2026-07-09T04:24:32Z"
 }
