@@ -131,6 +131,28 @@ async fn seed_org_level_airbnb_connection(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed org-level airbnb connection")
 }
 
+/// Seed a real `users` row and return its id.
+///
+/// The availability-sync happy paths persist a `background_jobs` row whose
+/// `created_by` column carries a foreign key to `users(id)`. The authenticated
+/// caller must therefore be a real seeded user — a random `Uuid::new_v4()`
+/// would violate the FK and turn the enqueue INSERT into a 500 instead of the
+/// expected 202. (The rejection tests never reach the enqueue, so they keep
+/// their throwaway ids.)
+async fn seed_user(pool: &PgPool) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at)
+        VALUES ($1, 'hash', 'Gap 83-1 Enqueue Caller', 'active', NOW())
+        RETURNING id
+        "#,
+    )
+    .bind(format!("gap83-1-enqueue-{}@test.local", Uuid::new_v4()))
+    .fetch_one(pool)
+    .await
+    .expect("seed user")
+}
+
 // ---------------------------------------------------------------------------
 // Request helpers
 // ---------------------------------------------------------------------------
@@ -576,7 +598,7 @@ async fn availability_sync_happy_path_enqueues_job(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "as-happy").await;
     let conn_id = seed_org_level_airbnb_connection(&pool, org_id).await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_user(&pool).await;
 
     let token = mint_manager_token(user_id, org_id);
     let resp = app
@@ -637,7 +659,7 @@ async fn availability_sync_platform_admin_bypasses_tenant_mismatch(pool: PgPool)
     let org_a = seed_org(&pool, "as-pa-a").await; // target org
     let org_b = seed_org(&pool, "as-pa-b").await; // admin's own JWT tenant
     seed_org_level_airbnb_connection(&pool, org_a).await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_user(&pool).await;
 
     let token = mint_token_with_role(user_id, Some(org_b), "platform_admin");
     let resp = app
