@@ -68,10 +68,16 @@ pub struct ReportSchedule {
 /// Input for creating a new report schedule (gap-81-1).
 ///
 /// Carries only the fields a caller supplies; `organization_id` is derived from
-/// the authenticated tenant (never from the request body) and all other columns
-/// (`id`, `status`, `is_active`, timestamps, `cron_expression`) take their DB
-/// defaults. `recipients` is exposed as `Vec<String>` here and serialised to a
-/// JSONB array by the repository.
+/// the authenticated tenant (never from the request body) and the remaining
+/// columns (`id`, `status`, `is_active`, timestamps, `cron_expression`) take
+/// their DB defaults. `recipients` is exposed as `Vec<String>` here and
+/// serialised to a JSONB array by the repository.
+///
+/// `next_run_at` is computed by the handler from `frequency` + day + `time` +
+/// `timezone` at insert time (issue #2198). It is `Option` so a caller that
+/// cannot compute a first run (e.g. an unparseable schedule that slipped past
+/// validation) still persists with a NULL `next_run_at` for a later backfill,
+/// rather than failing the insert — but in the normal path it is always `Some`.
 #[derive(Debug, Clone)]
 pub struct NewReportSchedule {
     pub organization_id: Uuid,
@@ -84,6 +90,9 @@ pub struct NewReportSchedule {
     pub timezone: String,
     pub format: String,
     pub recipients: Vec<String>,
+    /// First scheduled fire time (UTC), computed at creation. `None` leaves the
+    /// column NULL for a later backfill tick.
+    pub next_run_at: Option<DateTime<Utc>>,
 }
 
 /// Raw DB row for `report_schedules`.
