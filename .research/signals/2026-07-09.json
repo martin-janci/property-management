@@ -1,0 +1,162 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-09",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine has not run in ~4d (last_run_iso=2026-07-05T03:10:00Z, ~96h lag \u2014 over 36h threshold). Dispatcher branch was active during the interval; cloud routine cron was quiet.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "closed-not-merged-pr-2135",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2135",
+      "score_delta": 0,
+      "evidence": "PR #2135 (test(reality): pin ListingDetail updateAuth + guard favorite rollback) closed unmerged 2026-07-07 \u2014 superseded by the follow-up sweep PR #2150 which closed #2125 (its parent issue). No abandonment.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-2139",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2139",
+      "score_delta": 0,
+      "evidence": "PR #2139 (ci: wire exec-bit gate as required check on dev) closed unmerged 2026-07-07 \u2014 superseded by the follow-up sweep PR #2150 which closed #2128 (its parent issue). No abandonment.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-churn-hotspot-reality-portal-rs-split-pr-2176",
+      "type": "churn-hotspot",
+      "source": "PR #2176",
+      "score_delta": 0,
+      "evidence": "PR #2176 (refactor(db): split reality_portal repository into cohesive sub-modules) landed 2026-07-08 \u2014 resolves the churn-hotspot on backend/crates/db/src/repositories/reality_portal.rs by decomposing it into agencies/imports/inquiries/listings/realtors/searches/tests submodules. Prior backlog row was already dropped after decay.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + decay-safety",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "N/A \u2014 0 new plans",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + template check",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff clean",
+      "expected": "diff clean"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases \u2192 cursor unchanged",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-count non-shrinking",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff clean",
+      "expected": "diff clean"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto_fix_actions this run (no allowlisted signal)",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 skipped)",
+      "observed": "skipped \u2014 no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
