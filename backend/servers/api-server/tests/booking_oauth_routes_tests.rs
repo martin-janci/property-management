@@ -157,6 +157,53 @@ fn anon_post(uri: &str, body: serde_json::Value) -> Request<Body> {
         .unwrap()
 }
 
+/// Authenticated POST that deliberately omits the `X-Tenant-ID` header, to
+/// exercise the `TenantExtractor` guard (which runs before the handler body).
+fn authed_post_no_tenant(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+/// Authenticated POST carrying a syntactically invalid (non-UUID) `X-Tenant-ID`.
+fn authed_post_bad_tenant(
+    uri: &str,
+    token: &str,
+    tenant_raw: &str,
+    body: serde_json::Value,
+) -> Request<Body> {
+    Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(header::CONTENT_TYPE, "application/json")
+        .header("X-Tenant-ID", tenant_raw)
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+/// Authenticated POST with an arbitrary raw (possibly non-JSON) body, so the
+/// `Json` extractor's rejection path can be exercised.
+fn authed_post_raw_body(
+    uri: &str,
+    token: &str,
+    tenant_id: Uuid,
+    raw_body: &'static str,
+) -> Request<Body> {
+    Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(header::CONTENT_TYPE, "application/json")
+        .header("X-Tenant-ID", tenant_id.to_string())
+        .body(Body::from(raw_body))
+        .unwrap()
+}
+
 /// `protected` = a 4xx in the auth/validation range (not 404/405).
 fn is_protected(status: StatusCode) -> bool {
     matches!(
@@ -498,5 +545,175 @@ async fn token_exchange_rejects_manager_of_a_different_org(pool: PgPool) {
         "manager of org A must not bind org B's OTA integration as a plain member; got {}: {}",
         resp.status,
         resp.text()
+    );
+}
+
+// ===========================================================================
+// TenantExtractor guard — X-Tenant-ID must be present and well-formed
+// ===========================================================================
+
+/// The handler declares `_tenant: TenantExtractor`, which runs before the
+/// handler body and requires a resolvable tenant. An authenticated caller with
+/// a valid access token but NO `X-Tenant-ID` header must be rejected with 400
+/// *by the extractor* — before the empty-code / IDOR / provider logic runs.
+/// This pins that the tenant guard cannot be skipped by omitting the header.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_missing_tenant_header(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "te-no-tenant").await;
+    let user_id = seed_user(&pool, "te-no-tenant@booking-routes.test").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    // Valid, non-empty code — so a 400 here can only come from the missing
+    // tenant header, not from the MISSING_CODE branch.
+    let resp = app
+        .execute(authed_post_no_tenant(
+            &token_exchange_uri(org_id),
+            &token,
+            json!({"code": "a-real-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "authenticated request without X-Tenant-ID must be 400; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    let body = resp.text();
+    assert!(
+        body.contains("X-Tenant-ID") || body.contains("Tenant"),
+        "400 body should point at the missing tenant header, not MISSING_CODE: {body}"
+    );
+}
+
+/// A syntactically invalid (non-UUID) `X-Tenant-ID` must be rejected by the
+/// `TenantExtractor` with 400 — the header is parsed as a UUID and a garbage
+/// value cannot silently resolve to a tenant.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_malformed_tenant_header(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "te-bad-tenant").await;
+    let user_id = seed_user(&pool, "te-bad-tenant@booking-routes.test").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    let resp = app
+        .execute(authed_post_bad_tenant(
+            &token_exchange_uri(org_id),
+            &token,
+            "not-a-valid-uuid",
+            json!({"code": "a-real-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "malformed X-Tenant-ID must be rejected with 400; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+// ===========================================================================
+// Guard ordering — cheap validation before DB authorization
+// ===========================================================================
+
+/// The handler checks for an empty `code` (400 `MISSING_CODE`) BEFORE it runs
+/// `verify_org_access`. This pins that documented ordering: a NON-member who
+/// sends an empty code gets the cheap 400 validation error, not the 403 IDOR
+/// error — no DB authz round-trip is spent on a request that is invalid on its
+/// face, and the status never leaks org membership. (A non-member sending a
+/// *real* code still gets 403 — see `token_exchange_idor_guard_rejects_non_member`.)
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_empty_code_precedes_idor_check(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "order-a").await; // target org (caller is NOT a member)
+    let org_b = seed_org(&pool, "order-b").await; // caller's own org
+    let user_b = seed_user(&pool, "order-b@booking-routes.test").await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
+    let token_b = mint_token(user_b, org_b);
+
+    // Non-member of org_a + empty code. X-Tenant-ID = org_b is valid (caller is
+    // a member), so the TenantExtractor passes and the handler body runs; the
+    // empty-code guard must fire before the IDOR check.
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &token_exchange_uri(org_a),
+            &token_b,
+            org_b,
+            json!({"code": ""}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "empty code must short-circuit to 400 before the IDOR 403; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert!(
+        resp.text().contains("MISSING_CODE"),
+        "expected MISSING_CODE (validation), not an IDOR error: {}",
+        resp.text()
+    );
+}
+
+// ===========================================================================
+// Malformed body + wrong method
+// ===========================================================================
+
+/// A body that is not valid JSON must be rejected by the `Json` extractor with
+/// a 4xx client error — never a 500 (which would imply the malformed body
+/// reached handler logic) and never a 2xx.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_malformed_json_body(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "te-bad-json").await;
+    let user_id = seed_user(&pool, "te-bad-json@booking-routes.test").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    let resp = app
+        .execute(authed_post_raw_body(
+            &token_exchange_uri(org_id),
+            &token,
+            org_id,
+            "this is definitely not json",
+        ))
+        .await;
+    assert!(
+        resp.status.is_client_error(),
+        "malformed JSON body must yield a 4xx client error; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert_ne!(
+        resp.status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "malformed JSON must not reach handler logic (no 500)"
+    );
+}
+
+/// The token-exchange route is registered for POST only. A GET to the same
+/// path must return 405 `METHOD_NOT_ALLOWED` (the path exists) rather than 404
+/// (path missing) or a 2xx. Method routing happens before extractors, so no
+/// auth is required to observe the 405. Complements `token_exchange_route_is_mounted`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_wrong_method(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = Uuid::new_v4();
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(token_exchange_uri(org_id))
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.execute(req).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::METHOD_NOT_ALLOWED,
+        "GET on the POST-only token-exchange route must be 405; got {}",
+        resp.status
     );
 }

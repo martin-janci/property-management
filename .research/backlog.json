@@ -4178,6 +4178,146 @@
         "assignment_status": "merged",
         "pr_number": 2100
       }
+    },
+    {
+      "id": "dx-routine-lag-catchup-2026-07",
+      "title": "Cloud routine cadence recovery — reduce 3–4d gaps between runs",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 0,
+      "status": "open",
+      "sources": [
+        "routine self-signal 2026-07-09"
+      ],
+      "evidence": [
+        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look."
+      ],
+      "files": [
+        ".research/state.json"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-integrations-booking-mod",
+      "title": "backend integrations booking/mod.rs — instability watch after PR #2176 split",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-07-05..2026-07-09"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs — 2818 lines add+del in the 4-day window; new file location after PR #2176 split. Old booking.rs had hotspot_history.runs_seen=1. Watch for whether the split stabilises the file across the next incremental window; if it re-churns, promote."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "test-gap-repeated-churn-oauth-integration-tests",
+      "title": "oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-07-05..2026-07-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines add+del in window; hotspot_history runs_seen 2 → 3 (last_seen 2026-06-02). Same test file being rewritten across three routine windows suggests the OAuth handlers under test are still moving. Investigate whether coverage keeps up or whether the churn is test-only maintenance."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-routes-auth",
+      "title": "api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-07-05..2026-07-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs — 2648 lines add+del in window; hotspot_history runs_seen 1 → 2 (last_seen 2026-05-30). Phase 1.5 static review of api-handlers flagged 3 findings in this exact file (revoke-all cookie blindness, forgot-password rate limit, refresh empty-cookie fallback). Churn correlates with quality drift."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "bug-revoke-all-sessions-cookie-blindness",
+      "title": "revoke_all_sessions ignores refresh cookie — signs the caller out too",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-09 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:2013 — revoke_all_sessions only reads X-Refresh-Token header, never calls parse_refresh_cookie. After the P0-12 cookie migration, ppt-web sends only the HttpOnly cookie, so current_session_id resolves to None and revoke_all_user_tokens(user_id, None) hits the branch that revokes ALL user tokens — including the caller's live session. list_sessions (line 1821) has the same regression (every session shows isCurrent=false). User asks to 'sign out other devices' and gets signed out of the browser they just clicked in."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md"
+    },
+    {
+      "id": "security-forgot-password-no-rate-limit",
+      "title": "/forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-09 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:1461 — check_rate_limit is only invoked on /login (line 555). /forgot-password and /resend-verification generate + persist a token and enqueue an email on every request with NO per-email, per-IP, or global throttle. Attacker who knows a target email can mailbomb their inbox (phishing amplification) and burn the org's email-service quota. The intentional generic response also means there's no feedback loop to detect abuse. And because every hit invalidates prior tokens, a bystander who knows the email can break an in-flight password reset."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": "plans/security-forgot-password-no-rate-limit.md"
+    },
+    {
+      "id": "bug-refresh-empty-cookie-shadows-body-token",
+      "title": "/refresh and /logout — empty refresh_token cookie shadows valid body token",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-09 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:1078 — cookie_token.as_deref().unwrap_or(req.refresh_token.as_str()) only falls back to body when the Cookie header is absent. parse_refresh_cookie on 'Cookie: refresh_token=' returns Some(\"\"), which as_deref preserves as Some(\"\") and short-circuits the fallback. Downstream is_empty() check returns 401 MISSING_TOKEN even though the client also sent a valid body token. Same pattern at line 1385 (logout). Repros on transitional states where the logout Max-Age=0 clear-cookie has not yet expired but the client is retrying /refresh with a body-stored token."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "plan": null
     }
   ]
 }

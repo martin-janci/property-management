@@ -1,0 +1,37 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-09",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "note": "Tier-1d demand-driven run (action-list starved: claimable=10 < floor=36). CHURN_FILES empty, so oldest-unreviewed wins: mobile-native-kmp review_cursor=2026-06-06. Segment was also reviewed 2026-07-07 and 2026-07-08; the Kotlin+Tester experts' first-pass hits (createlisting-stub, ssoservice-no-test, notifrepo-no-test, inquiryrepo-no-test, listing-detail-path-inject, mylistings-analytics-stub, no-http-timeout) all duplicate ids already emitted on those runs, so they were discarded. The two signals below are deliberately fresh findings surfaced by a follow-on static sweep, chosen to add new backlog signal rather than re-emit existing ids. All `!!` sites the Kotlin expert checked (ListingDetailScreen 105/109/115/132/143, AccountScreen:174, InquiriesScreen:169, FavoritesScreen:164) are guarded by matching when/if null-checks and are NOT crash paths.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-pathseg-not-propagated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt:61 — getAgencyBySlug(slug) splices the deep-link-supplied slug raw into the path (client.get(\"$baseUrl/api/v1/agencies/by-slug/$slug\")); the doc comment explicitly says 'used by deep-link handlers', so slug is user-controlled and can smuggle '/', '?', '#', '..' into the request.",
+        "The pathSegment()/encodeURLPathPart() hardening that guards Listing (ListingRepository.kt:29/54), ApiClient (ApiClient.kt:44/84/128/158) and Favorites (FavoritesRepository.kt:30/60/87/117) was NOT propagated to the sibling repositories: AgencyRepository.kt:43 ($agencyId), :79 ($agencyId/members); RealtorRepository.kt:49 ($userId/profile); InquiryRepository.kt:110 ($inquiryId), :149 ($inquiryId/replies), :212 (viewings/$viewingId); NotificationRepository.kt:80 ($notificationId/read), :116 ($notificationId). Same class of path-injection the earlier listing-detail-path-inject finding fixed, left inconsistent across the codebase — apply pathSegment() to every interpolated id."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-realtorrepo-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt — zero references in shared/commonTest (verified: 0 matching test files). Its suspend methods getMyProfile/getProfile(userId)/listRealtors carry non-trivial branch logic (NotFound->RealtorException, Unauthorized->'Please sign in', agency-members fallback when the list endpoint is unimplemented server-side) that is entirely uncovered. Distinct from the already-emitted ssoservice/notifrepo/inquiryrepo test-gap findings; RealtorRepository and AgencyRepository (1 incidental ref) are the last untested repositories in the shared module."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

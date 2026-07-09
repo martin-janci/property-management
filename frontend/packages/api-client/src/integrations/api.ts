@@ -473,10 +473,15 @@ export async function listAirbnbReservations(limit = 50): Promise<AirbnbReservat
 
 // ============================================
 // Booking.com Channel (Gap 83.2)
+//
+// These handlers require an authenticated org-scoped session, so — like the
+// Airbnb calls above — they go through `authenticatedFetchJson` to attach the
+// bearer token (and the MFA retry flow). The legacy unauthenticated
+// `apiRequest` helper is intentionally NOT used here.
 // ============================================
 
 export async function getBookingStatus(organizationId: string): Promise<BookingChannelStatus> {
-  return apiRequest<BookingChannelStatus>(
+  return authenticatedFetchJson<BookingChannelStatus>(
     `${API_BASE}/organizations/${organizationId}/booking/status`
   );
 }
@@ -485,7 +490,7 @@ export async function connectBooking(
   organizationId: string,
   data: BookingConnectRequest
 ): Promise<BookingConnectResponse> {
-  return apiRequest<BookingConnectResponse>(
+  return authenticatedFetchJson<BookingConnectResponse>(
     `${API_BASE}/organizations/${organizationId}/booking/connect`,
     {
       method: 'POST',
@@ -497,7 +502,7 @@ export async function connectBooking(
 export async function disconnectBooking(
   organizationId: string
 ): Promise<BookingDisconnectResponse> {
-  return apiRequest<BookingDisconnectResponse>(
+  return authenticatedFetchJson<BookingDisconnectResponse>(
     `${API_BASE}/organizations/${organizationId}/booking`,
     {
       method: 'DELETE',
@@ -506,13 +511,16 @@ export async function disconnectBooking(
 }
 
 export async function syncBooking(organizationId: string): Promise<BookingSyncResult> {
-  return apiRequest<BookingSyncResult>(`${API_BASE}/organizations/${organizationId}/booking/sync`, {
-    method: 'POST',
-  });
+  return authenticatedFetchJson<BookingSyncResult>(
+    `${API_BASE}/organizations/${organizationId}/booking/sync`,
+    {
+      method: 'POST',
+    }
+  );
 }
 
 export async function getBookingConflicts(organizationId: string): Promise<BookingConflictCheck> {
-  return apiRequest<BookingConflictCheck>(
+  return authenticatedFetchJson<BookingConflictCheck>(
     `${API_BASE}/organizations/${organizationId}/booking/conflicts`
   );
 }

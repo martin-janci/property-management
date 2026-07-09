@@ -309,76 +309,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs-retry1",
-      "action": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T04:11:20Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs-retry1",
-      "action": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T06:30:13Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 1/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T10:21:29Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "retry_round": 1
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts-retry1",
-      "action": "Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-app-config-ts]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=churn-hotspot-frontend-apps-mobile-app-config-ts reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-ts",
-      "retry_round": 1
-    },
-    {
-      "id": "dx-stalled-review-pr-988-retry1",
-      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 1/2 of failed dx-stalled-review-pr-988]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-07T14:11:24Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-06-24T14:31:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:11:24Z",
-      "retry_of": "dx-stalled-review-pr-988",
-      "retry_round": 1
-    },
-    {
       "id": "triage-issue-1380-retry1",
       "action": "Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured [retry 1/2 of failed triage-issue-1380]",
       "owner_role": "pm-tech-lead",
@@ -453,42 +383,6 @@
       "source": "gap-scan 2026-07-07"
     },
     {
-      "id": "gap-screens-link-uc-29",
-      "action": "Link UC-29 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
-      "id": "gap-screens-link-uc-33",
-      "action": "Link UC-33 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
-      "id": "gap-screens-link-uc-40",
-      "action": "Link UC-40 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T14:30:00Z",
-      "source": "gap-scan 2026-07-07"
-    },
-    {
       "id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
       "action": "direct-connect and availability-sync enqueue handlers lack tests (83-1-airbnb-integration Airbnb OAuth and Sync)",
       "owner_role": "pm-backend",
@@ -508,30 +402,6 @@
       "dependency": null,
       "depends_on": [],
       "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
-      "id": "gap-83-2-frontend-property-mapping-wizard-not-wired",
-      "action": "frontend property mapping wizard not wired (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-07T19:45:00Z",
-      "source": "gap-scan 2026-07-07 evening"
-    },
-    {
-      "id": "gap-83-2-rate-availability-push-integration-deferred",
-      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
       "deadline": null,
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening"
@@ -583,6 +453,325 @@
       "first_open_at": "2026-07-09T02:08:12Z",
       "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
       "retry_round": 1
+    },
+    {
+      "id": "bug-revoke-all-sessions-cookie-blindness",
+      "action": "revoke_all_sessions ignores refresh cookie — signs the caller out too",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "security-forgot-password-no-rate-limit",
+      "action": "/forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": "plans/security-forgot-password-no-rate-limit.md",
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "bug-refresh-empty-cookie-shadows-body-token",
+      "action": "/refresh and /logout — empty refresh_token cookie shadows valid body token",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-routes-auth",
+      "action": "api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-integrations-booking-mod",
+      "action": "backend integrations booking/mod.rs — instability watch after PR #2176 split",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "test-gap-repeated-churn-oauth-integration-tests",
+      "action": "oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "dx-routine-lag-catchup-2026-07",
+      "action": "Cloud routine cadence recovery — reduce 3–4d gaps between runs",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=0 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 0,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "gh-issue-2195",
+      "action": "Follow-up: url-encode remaining raw-spliced path params in mobile-native repositories + extract shared pathSegment helper (PR #2180) (Closes #2195)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2195)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2195,
+        "url": "https://github.com/martin-janci/property-management/issues/2195",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2196",
+      "action": "Follow-up: provision PORTAL_WEBHOOK_SECRET + replay-protection note for portal webhook receiver (PR #2182) (Closes #2196)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2196)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2196,
+        "url": "https://github.com/martin-janci/property-management/issues/2196",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2197",
+      "action": "Follow-up: enforce share-document scoping in the repo layer, not just the handler guard (PR #2181) (Closes #2197)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2197)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2197,
+        "url": "https://github.com/martin-janci/property-management/issues/2197",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2198",
+      "action": "Follow-up: create-schedule persists unvalidated report_id / timezone and never sets next_run_at (PR #2179) (Closes #2198)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2198)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2198,
+        "url": "https://github.com/martin-janci/property-management/issues/2198",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2199",
+      "action": "Follow-up: per-listing analytics endpoint returns empty data in production for portal-owned listings (PR #2183) (Closes #2199)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2199)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2199,
+        "url": "https://github.com/martin-janci/property-management/issues/2199",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2200",
+      "action": "Follow-up: \"does not store login page as return URL\" test never exercises the guard it claims to cover (PR #2177) (Closes #2200)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2200)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2200,
+        "url": "https://github.com/martin-janci/property-management/issues/2200",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2201",
+      "action": "Follow-up: harden RAG embedding-write path — connection-holding, provider provenance, FK error shape (PR #2173) (Closes #2201)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2201)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2201,
+        "url": "https://github.com/martin-janci/property-management/issues/2201",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2202",
+      "action": "Follow-up: integrations settings route is undiscoverable, hardcodes strings, and leaves the Airbnb OAuth handshake half-wired (PR #2184) (Closes #2202)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2202)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2202,
+        "url": "https://github.com/martin-janci/property-management/issues/2202",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2203",
+      "action": "Follow-up: OAuth CSRF replay/single-use rejection branch has no handler-level test (PR #2186) (Closes #2203)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2203)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2203,
+        "url": "https://github.com/martin-janci/property-management/issues/2203",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2204",
+      "action": "Follow-up: app.config.env test leaves getAppEnv() fallback uncovered + duplicates plugin resolver (PR #2185) (Closes #2204)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2204)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2204,
+        "url": "https://github.com/martin-janci/property-management/issues/2204",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
