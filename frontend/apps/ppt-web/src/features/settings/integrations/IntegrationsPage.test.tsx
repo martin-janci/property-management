@@ -1,15 +1,19 @@
 /**
- * Regression test for the Integrations settings surface (Gap 83-1).
+ * Regression test for the Integrations settings surface (Gap 83-1 + Gap 83-2).
  *
  * Pins the wiring that `IntegrationsPage` adds: the Airbnb card renders its
  * live status and the connect/sync controls are wired to the corresponding
  * `@ppt/api-client` integrations hooks. This layer did not exist on `dev`
  * (the api-client hooks were built but no ppt-web route rendered them), so
  * this test fails without the page + route wiring.
+ *
+ * Gap 83-2 adds the Booking.com card: the property-mapping wizard (hotel ID +
+ * Supply-XML credentials) drives `useConnectBooking`, and sync/disconnect
+ * controls appear once connected.
  */
 
 /// <reference types="vitest/globals" />
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntegrationsPage } from './IntegrationsPage';
 
@@ -22,6 +26,17 @@ const syncMutateAsync = vi
   .mockResolvedValue({ success: true, items_synced: 3, synced_at: '' });
 const disconnectMutateAsync = vi.fn().mockResolvedValue(undefined);
 
+// ── api-client: Booking.com channel hooks ──
+const bookingConnectMutateAsync = vi
+  .fn()
+  .mockResolvedValue({ success: true, message: 'Connected', hotel_id: 'H1' });
+const bookingSyncMutateAsync = vi
+  .fn()
+  .mockResolvedValue({ success: true, items_synced: 2, synced_at: '' });
+const bookingDisconnectMutateAsync = vi
+  .fn()
+  .mockResolvedValue({ success: true, message: 'Disconnected' });
+
 let airbnbStatus: {
   data?: { connected: boolean; listings_count: number; reservations_count: number } | undefined;
   isLoading: boolean;
@@ -32,12 +47,27 @@ let airbnbStatus: {
   isError: false,
 };
 
+let bookingStatus: {
+  data?: { connected: boolean; properties_count: number; reservations_count: number } | undefined;
+  isLoading: boolean;
+  isError: boolean;
+} = {
+  data: { connected: false, properties_count: 0, reservations_count: 0 },
+  isLoading: false,
+  isError: false,
+};
+
 vi.mock('@ppt/api-client', () => ({
   useAirbnbStatus: () => airbnbStatus,
   useAirbnbListingMappings: () => ({ data: [], isLoading: false }),
   useConnectAirbnb: () => ({ mutateAsync: connectMutateAsync, isPending: false }),
   useSyncAirbnb: () => ({ mutateAsync: syncMutateAsync, isPending: false }),
   useDisconnectAirbnb: () => ({ mutateAsync: disconnectMutateAsync, isPending: false }),
+  useBookingStatus: () => bookingStatus,
+  useBookingConflicts: () => ({ data: { conflicts_found: 0, conflicts: [], truncated: false } }),
+  useConnectBooking: () => ({ mutateAsync: bookingConnectMutateAsync, isPending: false }),
+  useSyncBooking: () => ({ mutateAsync: bookingSyncMutateAsync, isPending: false }),
+  useDisconnectBooking: () => ({ mutateAsync: bookingDisconnectMutateAsync, isPending: false }),
 }));
 
 vi.mock('../../../contexts', () => ({
@@ -54,9 +84,17 @@ describe('IntegrationsPage (Gap 83-1)', () => {
     connectMutateAsync.mockClear();
     syncMutateAsync.mockClear();
     disconnectMutateAsync.mockClear();
+    bookingConnectMutateAsync.mockClear();
+    bookingSyncMutateAsync.mockClear();
+    bookingDisconnectMutateAsync.mockClear();
     mockShowToast.mockClear();
     airbnbStatus = {
       data: { connected: false, listings_count: 0, reservations_count: 0 },
+      isLoading: false,
+      isError: false,
+    };
+    bookingStatus = {
+      data: { connected: false, properties_count: 0, reservations_count: 0 },
       isLoading: false,
       isError: false,
     };
@@ -84,5 +122,46 @@ describe('IntegrationsPage (Gap 83-1)', () => {
     await userEvent.click(screen.getByRole('button', { name: /sync now/i }));
     expect(syncMutateAsync).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
+  });
+
+  // ── Gap 83-2: Booking.com channel ──
+
+  it('renders the Booking.com card', () => {
+    render(<IntegrationsPage />);
+    expect(screen.getByRole('heading', { level: 2, name: /booking\.com/i })).toBeInTheDocument();
+  });
+
+  it('drives the property-mapping wizard through useConnectBooking', async () => {
+    render(<IntegrationsPage />);
+    await userEvent.click(screen.getByRole('button', { name: /connect booking\.com/i }));
+    // Wizard fields appear
+    await userEvent.type(screen.getByLabelText(/hotel id/i), 'H1');
+    await userEvent.type(screen.getByLabelText(/supply-xml username/i), 'user');
+    await userEvent.type(screen.getByLabelText(/supply-xml password/i), 'secret');
+    await userEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+    expect(bookingConnectMutateAsync).toHaveBeenCalledTimes(1);
+    expect(bookingConnectMutateAsync).toHaveBeenCalledWith({
+      hotel_id: 'H1',
+      username: 'user',
+      password: 'secret',
+    });
+  });
+
+  it('exposes Booking.com sync + disconnect once connected', async () => {
+    bookingStatus = {
+      data: { connected: true, properties_count: 3, reservations_count: 7 },
+      isLoading: false,
+      isError: false,
+    };
+    render(<IntegrationsPage />);
+    // Two "Sync now" buttons may exist (Airbnb + Booking) only if both connected;
+    // here only Booking is connected, so scope by the Booking section.
+    const bookingHeading = screen.getByRole('heading', { level: 2, name: /booking\.com/i });
+    const section = bookingHeading.closest('section');
+    expect(section).not.toBeNull();
+    const sectionEl = section as HTMLElement;
+    await userEvent.click(within(sectionEl).getByRole('button', { name: /sync now/i }));
+    expect(bookingSyncMutateAsync).toHaveBeenCalledTimes(1);
+    expect(within(sectionEl).getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
   });
 });
