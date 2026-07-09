@@ -158,22 +158,42 @@ impl DocumentRepository {
             .collect())
     }
 
-    /// Revoke a share with RLS context.
-    pub async fn revoke_share_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<(), SqlxError>
+    /// Revoke a share with RLS context, scoped to its owning document.
+    ///
+    /// The `document_id` predicate is a defense-in-depth invariant (#2197):
+    /// `document_shares` RLS only scopes to the tenant, so a bare
+    /// `WHERE id = $1` update lets a caller who passed a per-document
+    /// authorization check for document A revoke a share belonging to document
+    /// B in the same tenant (a cross-document IDOR). Constraining the update to
+    /// `document_id = $2` pushes that invariant into the data layer so a future
+    /// caller cannot reintroduce the vulnerability by dropping the handler
+    /// guard.
+    ///
+    /// Returns the number of rows affected: `0` means no share with that id
+    /// belongs to `document_id` (already revoked, non-existent, or a
+    /// cross-document mismatch), which the caller should map to a 404 without
+    /// leaking whether the share exists under a different document.
+    pub async fn revoke_share_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        document_id: Uuid,
+    ) -> Result<u64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE document_shares
             SET revoked_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND document_id = $2
             "#,
         )
         .bind(id)
+        .bind(document_id)
         .execute(executor)
         .await?;
-        Ok(())
+        Ok(result.rows_affected())
     }
 
     /// Log share access with RLS context.
@@ -280,16 +300,19 @@ impl DocumentRepository {
         self.get_shares_rls(&self.pool, document_id).await
     }
 
-    /// Revoke a share.
+    /// Revoke a share, scoped to its owning document.
     ///
     /// **Deprecated**: Use `revoke_share_rls` with an RLS-enabled connection instead.
+    ///
+    /// Returns the number of rows affected (see `revoke_share_rls`); `0` means
+    /// no share with that id belongs to `document_id`.
     #[deprecated(
         since = "0.2.276",
         note = "Use revoke_share_rls with RlsConnection instead"
     )]
     #[allow(deprecated)]
-    pub async fn revoke_share(&self, id: Uuid) -> Result<(), SqlxError> {
-        self.revoke_share_rls(&self.pool, id).await
+    pub async fn revoke_share(&self, id: Uuid, document_id: Uuid) -> Result<u64, SqlxError> {
+        self.revoke_share_rls(&self.pool, id, document_id).await
     }
 
     /// Verify share password.
