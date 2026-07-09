@@ -192,6 +192,38 @@ async fn rag_index_rejects_empty_chunks(pool: PgPool) {
     );
 }
 
+// Non-existent document_id → 404 BEFORE any embedding work (#2201 fk-error-shape).
+// Embeddings are FK-bound to `documents`; the handler pre-checks existence and
+// returns 404 rather than paying for an embed and surfacing a 500 FK violation.
+// No live-key skip needed: the 404 is returned before the embed phase.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rag_index_missing_document_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "rag-index-404").await;
+    let session = app.session(token, org_id);
+
+    // Deliberately do NOT seed a `documents` row — the id does not exist.
+    let resp = app
+        .execute(
+            session
+                .post("/api/v1/ai/llm/rag/index")
+                .json(json!({
+                    "document_id": Uuid::new_v4(),
+                    "chunks": ["orphan chunk that must not be embedded"],
+                }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "indexing against a non-existent document must be 404; body={}",
+        resp.text()
+    );
+}
+
 // Unauthenticated request → 401 (RlsConnection extractor guards the route).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn rag_index_requires_auth(pool: PgPool) {

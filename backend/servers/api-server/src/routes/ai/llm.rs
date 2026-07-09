@@ -125,7 +125,9 @@ const MAX_INDEX_CHUNKS: usize = 512;
         (status = 201, description = "Document chunks embedded and stored"),
         (status = 400, description = "No usable chunks / too many chunks", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Referenced document does not exist / not org-visible", body = ErrorResponse),
         (status = 502, description = "Embedding provider failed", body = ErrorResponse),
+        (status = 503, description = "Stub embeddings refused in production", body = ErrorResponse),
     ),
     tag = "AI LLM"
 )]
@@ -134,8 +136,11 @@ async fn index_document(
     mut rls: RlsConnection,
     Json(req): Json<IndexDocumentRequest>,
 ) -> Result<(StatusCode, Json<IndexDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
-    // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
+    // RLS context (org GUC) is set on rls.conn(); tenant_id/user_id are the
+    // authoritative principal (copied out so we can release the pooled
+    // connection before the slow embed phase — see below).
     let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Normalise chunks: trim + drop empties.
     let chunks: Vec<String> = req
@@ -166,6 +171,46 @@ async fn index_document(
         ));
     }
 
+    // fk-error-shape (#2201): validate the referenced document exists and is
+    // org-visible BEFORE embedding. Embeddings are FK-bound to `documents`
+    // (migration 00081); pre-checking here turns a missing / cross-org id into
+    // a 404 instead of a generic 500 FK violation surfaced *after* the (paid)
+    // embedding round-trip. Runs on the request-scoped RLS connection we
+    // already hold.
+    let doc_exists = state
+        .llm_document_repo
+        .document_exists_for_org(&mut **rls.conn(), req.document_id, tenant_id)
+        .await;
+
+    // connection-holding (#2201): release the pooled RLS connection BEFORE the
+    // (slow, network-bound) embed phase so a single indexing request can't pin a
+    // pool connection across many OpenAI round-trips and starve concurrent RLS
+    // work (head-of-line blocking). A short-lived org-context connection is
+    // re-acquired only for the write loop, mirroring `generate_lease`.
+    rls.release().await;
+
+    match doc_exists {
+        Ok(true) => {}
+        Ok(false) => {
+            // 404 (not 403) mirrors the rest of this module: do not confirm the
+            // existence of another org's document to a caller who cannot see it.
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("RAG document existence check failed: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to validate document",
+                )),
+            ));
+        }
+    }
+
     // Provider selection (Story 84.5): live OpenAI when configured, else the
     // deterministic offline stub so indexing works without a key.
     let (provider, provider_name): (Box<dyn EmbeddingProvider>, &str) =
@@ -175,14 +220,38 @@ async fn index_document(
             (Box::new(StubEmbeddingProvider::new()), "stub-deterministic")
         };
 
-    // Generate embeddings first. `embed_batch` may make (slow) network calls;
-    // we intentionally do this BEFORE the write loop but the RLS connection is
-    // still held — acceptable for an admin/indexing endpoint and mirrors the
-    // module's other write handlers.
+    // provider-provenance (#2201): the stub produces 1536-dim vectors that are
+    // dimension-identical to OpenAI's but semantically meaningless. Warn loudly
+    // whenever we index with it, and refuse outright in production unless
+    // explicitly opted in — otherwise a prod deployment silently writes noise
+    // vectors that later corrupt cosine retrieval.
+    if provider_name != "openai" {
+        let is_production = std::env::var("RUST_ENV").as_deref() == Ok("production");
+        let allow_stub = std::env::var("ALLOW_STUB_EMBEDDINGS")
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
+        if is_production && !allow_stub {
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "EMBEDDING_UNAVAILABLE",
+                    "Embedding provider not configured; refusing to index stub vectors in production",
+                )),
+            ));
+        }
+        tracing::warn!(
+            organization_id = %tenant_id,
+            document_id = %req.document_id,
+            "RAG indexing via deterministic stub provider — vectors are NOT semantically \
+             meaningful and must not be mixed with a real embedding space at retrieval time"
+        );
+    }
+
+    // Generate embeddings with NO DB connection held (see connection-holding
+    // note above).
     let embeddings = match provider.embed_batch(&chunks).await {
         Ok(e) => e,
         Err(e) => {
-            rls.release().await;
             tracing::warn!("RAG embedding generation failed: {}", e);
             return Err((
                 StatusCode::BAD_GATEWAY,
@@ -195,6 +264,8 @@ async fn index_document(
     };
 
     // Base metadata: caller-provided object (if any) plus an optional title.
+    // Per-vector provenance (`embedding_model`) is folded in by the repository's
+    // `upsert_embedding`.
     let mut base_meta = req
         .metadata
         .filter(|v| v.is_object())
@@ -204,25 +275,55 @@ async fn index_document(
             .or_insert_with(|| serde_json::Value::String(title.clone()));
     }
 
-    // Upsert each chunk (pgvector-aware, JSONB fallback) on the RLS connection.
+    // Re-acquire a short-lived org-context connection for the write loop only
+    // (PAP-150: no handler-side raw `state.db`).
+    let mut guard = match RlsPool::new(state.db.clone())
+        .acquire_with_rls(tenant_id, user_id, false)
+        .await
+    {
+        Ok(g) => g,
+        Err(e) => {
+            tracing::error!("Failed to acquire db connection for RAG write: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to store embeddings",
+                )),
+            ));
+        }
+    };
+
+    // Upsert each chunk (pgvector-aware, JSONB fallback) on the write connection.
     let mut embedding_ids = Vec::with_capacity(chunks.len());
     for (idx, (chunk, emb)) in chunks.iter().zip(embeddings.iter()).enumerate() {
         match state
             .llm_document_repo
             .upsert_embedding(
-                rls.conn(),
+                guard.conn(),
                 tenant_id,
                 req.document_id,
                 idx as i32,
                 chunk,
                 &emb.embedding,
+                &emb.model,
                 base_meta.clone(),
             )
             .await
         {
             Ok(id) => embedding_ids.push(id),
             Err(e) => {
-                rls.release().await;
+                guard.release().await;
+                // fk-error-shape (#2201): a 23503 FK violation here means the
+                // document vanished between the pre-check and the write (race)
+                // — report it as 404, not a generic 500.
+                if e.as_database_error().and_then(|d| d.code()).as_deref() == Some("23503") {
+                    tracing::warn!("RAG embedding upsert hit FK violation: {}", e);
+                    return Err((
+                        StatusCode::NOT_FOUND,
+                        Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+                    ));
+                }
                 tracing::error!("RAG embedding upsert failed: {}", e);
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -234,7 +335,7 @@ async fn index_document(
             }
         }
     }
-    rls.release().await;
+    guard.release().await;
 
     tracing::info!(
         "RAG indexed {} chunk(s) for document {} (org {}) via {}",

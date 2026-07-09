@@ -163,6 +163,42 @@ impl LlmDocumentRepository {
         Ok(exists.unwrap_or(false))
     }
 
+    /// Check that a `documents` row exists and is visible to `org_id` (#2201).
+    ///
+    /// The RAG embedding-write flow keys `document_embeddings` by a
+    /// caller-supplied `document_id` with a FK onto `documents(id)`
+    /// (migration 00081). Callers use this to pre-validate the reference
+    /// *before* generating (paid) embeddings, so a missing / cross-org id is
+    /// rejected as a 404 instead of surfacing as a generic 500 FK violation
+    /// after the embed cost has already been paid.
+    ///
+    /// The `organization_id` predicate is defensive-in-depth: on a FORCE-RLS
+    /// org-context connection the row is already invisible cross-org, but the
+    /// explicit filter mirrors [`Self::unit_belongs_to_org`] and holds even on
+    /// a global-read connection.
+    pub async fn document_exists_for_org<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let exists: Option<bool> = sqlx::query_scalar(
+            r#"
+            SELECT TRUE
+            FROM documents
+            WHERE id = $1 AND organization_id = $2
+            "#,
+        )
+        .bind(document_id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await?;
+        Ok(exists.unwrap_or(false))
+    }
+
     /// Update generation request status.
     #[allow(clippy::too_many_arguments)]
     pub async fn update_generation_status<'e, E>(
@@ -982,6 +1018,15 @@ impl LlmDocumentRepository {
     ///
     /// Multi-statement: takes `&mut PgConnection` so every query runs on the
     /// same RLS-context connection.
+    ///
+    /// `model_filter` (#2201): when `Some(model)`, rows whose stored
+    /// `metadata.embedding_model` is *known to differ* from `model` are dropped
+    /// before returning — cosine similarity is only meaningful within a single
+    /// embedding space, and stub vectors are 1536-dim exactly like OpenAI's, so
+    /// mixing them silently returns garbage. Legacy rows that predate provenance
+    /// tagging (no `embedding_model` key) are kept so this stays backward
+    /// compatible. When a filter is set we over-fetch and truncate back to
+    /// `limit` so the filtered result still fills the top-k where possible.
     pub async fn search_documents_pgvector(
         &self,
         conn: &mut PgConnection,
@@ -989,8 +1034,16 @@ impl LlmDocumentRepository {
         query_embedding: &[f32],
         limit: i32,
         min_similarity: Option<f64>,
+        model_filter: Option<&str>,
     ) -> Result<Vec<(DocumentEmbedding, f64)>, SqlxError> {
         let min_sim = min_similarity.unwrap_or(0.5);
+        // Over-fetch when a provenance filter is active so post-filtering still
+        // returns up to `limit` compatible rows (capped to avoid unbounded scans).
+        let fetch_limit = if model_filter.is_some() {
+            limit.saturating_mul(4).clamp(limit, 200)
+        } else {
+            limit
+        };
 
         // Check if pgvector extension and function exist
         let pgvector_available: Option<bool> = sqlx::query_scalar(
@@ -1018,7 +1071,7 @@ impl LlmDocumentRepository {
             )
             .bind(organization_id)
             .bind(&embedding_str)
-            .bind(limit)
+            .bind(fetch_limit)
             .bind(min_sim)
             .fetch_all(&mut *conn)
             .await?;
@@ -1040,18 +1093,50 @@ impl LlmDocumentRepository {
                 embeddings.push((emb, similarity));
             }
 
-            return Ok(embeddings);
+            return Ok(Self::filter_by_embedding_model(
+                embeddings,
+                model_filter,
+                limit,
+            ));
         }
 
         // Fallback to the existing application-level search
-        self.search_documents_by_embedding(
-            conn,
-            organization_id,
-            query_embedding,
+        let fallback = self
+            .search_documents_by_embedding(
+                conn,
+                organization_id,
+                query_embedding,
+                fetch_limit,
+                min_similarity,
+            )
+            .await?;
+        Ok(Self::filter_by_embedding_model(
+            fallback,
+            model_filter,
             limit,
-            min_similarity,
-        )
-        .await
+        ))
+    }
+
+    /// Drop rows whose stored `metadata.embedding_model` is known to differ from
+    /// `model_filter`, then truncate to `limit` (#2201). Rows with no
+    /// `embedding_model` provenance are retained for backward compatibility.
+    fn filter_by_embedding_model(
+        mut rows: Vec<(DocumentEmbedding, f64)>,
+        model_filter: Option<&str>,
+        limit: i32,
+    ) -> Vec<(DocumentEmbedding, f64)> {
+        if let Some(model) = model_filter {
+            rows.retain(|(emb, _)| {
+                match emb.metadata.get("embedding_model").and_then(|v| v.as_str()) {
+                    Some(stored) => stored == model,
+                    None => true,
+                }
+            });
+        }
+        if limit >= 0 {
+            rows.truncate(limit as usize);
+        }
+        rows
     }
 
     /// Get RAG statistics for an organization using the v_rag_statistics view (Story 103.5).
@@ -1145,8 +1230,28 @@ impl LlmDocumentRepository {
         chunk_index: i32,
         chunk_text: &str,
         embedding: &[f32],
+        model: &str,
         metadata: serde_json::Value,
     ) -> Result<Uuid, SqlxError> {
+        // Provenance (#2201): fold the embedding provider/model into metadata so
+        // retrieval can avoid comparing incompatible vector spaces of the same
+        // dimension (stub vs OpenAI are both 1536-dim). Stored under
+        // `embedding_model`; a caller-supplied value is overwritten so the row
+        // always reflects the model that actually produced the vector.
+        let metadata = {
+            let mut metadata = metadata;
+            if !metadata.is_object() {
+                metadata = serde_json::json!({});
+            }
+            if let Some(obj) = metadata.as_object_mut() {
+                obj.insert(
+                    "embedding_model".to_string(),
+                    serde_json::Value::String(model.to_string()),
+                );
+            }
+            metadata
+        };
+
         // Check whether migration 00081's pgvector upsert function exists.
         let function_exists: Option<bool> = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'upsert_document_embedding')",
