@@ -74,6 +74,9 @@ Key workspace dependencies:
 | `JWT_SECRET` | Yes | Secret key for JWT signing (min 32 chars) |
 | `RUST_LOG` | No | Log level (default: info) |
 | `CORS_ALLOWED_ORIGINS` | No | Comma-separated list of allowed CORS origins |
+| `PORTAL_WEBHOOK_SECRET` | If receiving portal webhooks | HMAC secret for the inbound portal webhook receiver; receiver fails closed (500 `CONFIG_ERROR`) when unset |
+| `AIRBNB_WEBHOOK_SECRET` | If receiving Airbnb webhooks | HMAC secret for the inbound Airbnb webhook receiver; fails closed (500 `NOT_CONFIGURED`) when unset |
+| `STRIPE_WEBHOOK_SECRET` | If receiving Stripe webhooks | Signing secret for the Stripe payment-confirmation webhook receiver; fails closed (503 `NOT_CONFIGURED`) when unset |
 
 ```bash
 # Required
