@@ -1029,14 +1029,23 @@ fn build_refresh_cookie(
 }
 
 /// Parse the `refresh_token` cookie out of the `Cookie:` header. Returns
-/// `None` if the header is absent or the cookie name isn't present.
-/// Deliberately permissive whitespace handling — we don't validate the
-/// token shape here; the JWT validation downstream rejects garbage.
+/// `None` if the header is absent, the cookie name isn't present, or the
+/// cookie is present but empty (e.g. `refresh_token=;`). Treating an empty
+/// cookie as absent is deliberate: a present-but-empty cookie must NOT
+/// shadow a valid token supplied in the request body — callers use
+/// `.unwrap_or(body_token)`, so returning `Some("")` here would silently
+/// override a legitimate body/header token and break `/refresh` and
+/// `/logout`. Deliberately permissive whitespace handling otherwise — we
+/// don't validate the token shape here; the JWT validation downstream
+/// rejects garbage.
 fn parse_refresh_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
     let raw = headers.get(axum::http::header::COOKIE)?.to_str().ok()?;
     for part in raw.split(';') {
         let part = part.trim();
         if let Some(rest) = part.strip_prefix("refresh_token=") {
+            if rest.is_empty() {
+                return None;
+            }
             return Some(rest.to_string());
         }
     }
@@ -2643,6 +2652,41 @@ mod cookie_security_tests {
         assert!(
             result.is_none(),
             "Should not match cookie names that merely contain 'refresh_token': {result:?}"
+        );
+    }
+
+    /// Regression: a present-but-EMPTY `refresh_token` cookie must NOT shadow
+    /// a valid token supplied in the request body / `X-Refresh-Token` header.
+    ///
+    /// Both `refresh_token()` and `logout()` resolve the token as
+    /// `parse_refresh_cookie(&headers).as_deref().unwrap_or(body_token)`.
+    /// Before the fix, `parse_refresh_cookie` returned `Some("")` for a
+    /// `refresh_token=;` cookie, so `unwrap_or` kept the empty string and the
+    /// legitimate body token was ignored — `/refresh` returned MISSING_TOKEN
+    /// and `/logout` hashed the empty string, silently failing to revoke.
+    /// `parse_refresh_cookie` must now return `None` for an empty cookie so
+    /// the body/header token wins.
+    #[test]
+    fn parse_refresh_cookie_empty_cookie_does_not_shadow_body_token() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "session_id=abc; refresh_token=; other=y".parse().unwrap(),
+        );
+
+        // The cookie is present but empty -> must be treated as absent.
+        let cookie_token = parse_refresh_cookie(&headers);
+        assert!(
+            cookie_token.is_none(),
+            "Empty refresh_token cookie must parse as None, got {cookie_token:?}"
+        );
+
+        // Replicate the handler resolution: cookie (None) falls back to body.
+        let body_token = "valid.body.jwt";
+        let resolved = cookie_token.as_deref().unwrap_or(body_token);
+        assert_eq!(
+            resolved, body_token,
+            "Valid body token must be used when the cookie is present-but-empty"
         );
     }
 }
