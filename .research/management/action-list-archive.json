@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-08T22:12:52Z",
+  "archived_at": "2026-07-09T02:19:31Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2627,6 +2627,25 @@
       "source": "gap-scan",
       "resolved": "2026-05-25 — PR #441 merged (MFA frontend integration); e2e coverage PR #473 merged",
       "depends_on": []
+    },
+    {
+      "id": "gap-realtor-listings-analytics-endpoints",
+      "action": "backend gap (blocks realtor dashboard on mobile + web): the api-server nests only POST /listings, GET /listings/{id}, PATCH /listings/{id} — there is no realtor 'my listings' LIST endpoint (GET /api/v1/my/listings or /api/v1/realtors/me/listings) and no realtor-level analytics HTTP route (only a per-listing DB get_listing_analytics with no list_portal_listings DB method). Mobile MyListings/ListingAnalytics (Navigation.kt:440,:458) and web useMyListings(/api/v1/realtors/me/listings) + useAgencyListings(/api/v1/agencies/{id}/listings) all target these unimplemented endpoints and render permanent empty stubs. Implement the realtor listings-list + analytics endpoints (repo method + route + tenant/RLS scoping) so the clients can be wired. Discovered by the blocked implementer for code-review-mobile-native-kmp-mylistings-analytics-stub.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-impl-blocked 2026-07-08 | gc1-reconcile 2026-07-09T02:07:22Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T12:21:22Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2183,
+        "merged_at": "2026-07-09T00:17:22Z",
+        "at": "2026-07-09T02:07:22Z"
+      }
     },
     {
       "id": "gap-security-435-cookie-scope",

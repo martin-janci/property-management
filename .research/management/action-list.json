@@ -571,16 +571,18 @@
       "first_open_at": "2026-07-08T08:10:10Z"
     },
     {
-      "id": "gap-realtor-listings-analytics-endpoints",
-      "action": "backend gap (blocks realtor dashboard on mobile + web): the api-server nests only POST /listings, GET /listings/{id}, PATCH /listings/{id} — there is no realtor 'my listings' LIST endpoint (GET /api/v1/my/listings or /api/v1/realtors/me/listings) and no realtor-level analytics HTTP route (only a per-listing DB get_listing_analytics with no list_portal_listings DB method). Mobile MyListings/ListingAnalytics (Navigation.kt:440,:458) and web useMyListings(/api/v1/realtors/me/listings) + useAgencyListings(/api/v1/agencies/{id}/listings) all target these unimplemented endpoints and render permanent empty stubs. Implement the realtor listings-list + analytics endpoints (repo method + route + tenant/RLS scoping) so the clients can be wired. Discovered by the blocked implementer for code-review-mobile-native-kmp-mylistings-analytics-stub.",
-      "owner_role": "pm-backend",
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-impl-blocked 2026-07-08",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-07-09T02:08:12Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-06-28T10:12:35Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-07-08T12:21:22Z"
+      "first_open_at": "2026-07-09T02:08:12Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 1
     }
   ]
 }
