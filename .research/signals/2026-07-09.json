@@ -1,215 +1,47 @@
 {
   "date": "2026-07-09",
-  "generated_iso": "2026-07-09T02:31:00Z",
-  "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test brief + head match",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "cursor / signals advanced",
-      "observed": "PASS",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "backlog ids unique",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "no double-scored non-cumulative signal",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "no score > 8; decay N/A (0 open items at run start)",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "both new plans annotated with adversarial pass in brief",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "≤2 new plans; 4 metadata + 11 headings; capability tick; Mode declared; Files exist",
-      "observed": "PASS (2 plans)",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "staged diff only under .research/",
-      "observed": "0 non-.research paths",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "no secrets / private hostnames in staged diff (post-fix)",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "backlog.md byte-identical to regeneration",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "failed phases surfaced in brief (Phase 1.6 skipped noted)",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior plans present in plans/ or _archive/",
-      "observed": "missing=0",
-      "expected": "missing=0"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive count now ≥ HEAD count",
-      "observed": "7 ≥ 7",
-      "expected": "≥"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "IDEAS_TRIAGE.md byte-identical to regen",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto-fix caps 0/1/1/1; kill switch respected (Phase 5 no candidate)",
-      "observed": "PASS",
-      "expected": "PASS"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "Phase 1.6 skipped this run → no-op",
-      "observed": "PASS (no-op)",
-      "expected": "PASS or PASS(no-op)"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "no Telegram token literal in staged added lines",
-      "observed": "0",
-      "expected": "0"
-    }
-  ],
-  "signals": [
-    {
-      "id": "lag-warning-2026-07-09",
-      "type": "lag_warning",
-      "source": "state.last_run_iso=2026-07-05T03:10:00Z",
-      "score_delta": 0,
-      "evidence": [
-        "routine has not run in 3d 21h since last successful commit (well over the 36h threshold); previous run was itself a 19-day catch-up, so cloud cron cadence is still recovering"
-      ],
-      "confidence": "high",
-      "candidate_vector": "dx"
-    },
-    {
-      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
-      "type": "churn-hotspot",
-      "source": "commits 2026-07-05..2026-07-09 on dev",
-      "score_delta": 1,
-      "evidence": [
-        "backend/crates/integrations/src/booking/mod.rs — 2818 lines add+del in window (top-3 non-generated hotspot); new file location after PR #2176 split; hotspot_history.booking.rs (old path) had runs_seen=1"
-      ],
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
-      "type": "repeated-churn",
-      "source": "commits 2026-07-05..2026-07-09 on dev",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines add+del in window; hotspot_history runs_seen 2 → 3 (last_seen 2026-06-02); instability proxy — same test file being rewritten across runs suggests the OAuth handlers under test are still moving"
-      ],
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
-      "type": "churn-hotspot",
-      "source": "commits 2026-07-05..2026-07-09 on dev",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/src/routes/auth.rs — 2648 lines add+del in window; hotspot_history runs_seen 1 → 2 (last_seen 2026-05-30); the same file where Phase 1.5 flagged 3 findings this run — churn correlates with quality concerns"
-      ],
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
-      "type": "code-review-finding",
-      "source": "Phase 1.5 static review of api-handlers segment (2026-07-09)",
-      "score_delta": 3,
-      "evidence": [
-        "backend/servers/api-server/src/routes/auth.rs:2013 — revoke_all_sessions only reads X-Refresh-Token header, never calls parse_refresh_cookie; cookie-based clients (ppt-web after P0-12 cookie migration) send no header → current_session_id=None → revoke_all_user_tokens(user_id, None) revokes ALL user tokens including caller's live session — silently signs the user out from the browser they clicked 'sign out other devices' in. list_sessions (line 1821) has the same regression (every session shows isCurrent=false)."
-      ],
-      "confidence": "high",
-      "candidate_vector": "bug"
-    },
-    {
-      "id": "code-review-api-handlers-forgot-password-no-rate-limit",
-      "type": "code-review-finding",
-      "source": "Phase 1.5 static review of api-handlers segment (2026-07-09)",
-      "score_delta": 2,
-      "evidence": [
-        "backend/servers/api-server/src/routes/auth.rs:1461 — check_rate_limit is only invoked on /login (line 555). /forgot-password and /resend-verification generate + persist a token and enqueue an email on every request with NO per-email, per-IP, or global throttle. Enables mailbomb / phishing amplification against any known email; burns org email-service quota; also invalidates prior tokens on every hit, weaponizable to break in-flight resets by a bystander who knows the email."
-      ],
-      "confidence": "high",
-      "candidate_vector": "security"
-    },
-    {
-      "id": "code-review-api-handlers-refresh-empty-cookie-shadows-body",
-      "type": "code-review-finding",
-      "source": "Phase 1.5 static review of api-handlers segment (2026-07-09)",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/src/routes/auth.rs:1078 — cookie_token.as_deref().unwrap_or(req.refresh_token.as_str()) falls back to body only when the Cookie header is absent; parse_refresh_cookie on 'Cookie: refresh_token=' returns Some(\"\"), which as_deref preserves as Some(\"\") and short-circuits the fallback. Subsequent is_empty() check returns 401 MISSING_TOKEN even though the client also sent a valid body token. Same pattern at line 1385 (logout). Repros on transitional states where the logout Max-Age=0 clear-cookie has not yet expired but the client is retrying /refresh with a body-stored token."
-      ],
-      "confidence": "medium",
-      "candidate_vector": "bug"
-    }
-  ],
-  "auto_fix_actions": [],
+  "generated_iso": "2026-07-09T08:15:00Z",
+  "rerun_of": "2026-07-09T02:31:00Z",
+  "rerun_note": "Same-day rerun 5h38m after primary. Primary run's 7 derived signals are already in state.seen_signals (audit trail preserved in prior commit's signals/2026-07-09.json). Phase 1 dedup rule drops all 7 from this run's signals[]: lag_warning + 3 code-review-finding are one-shot non-cumulative types (dropped by default when already seen); 2 churn-hotspot + 1 repeated-churn are cumulative types but had no NEW churn evidence in the 5h38m window between runs (6 merged PRs — 3 docs, 2 backend tests, 1 UI wire — none contributed material churn to the flagged files), so no re-emit is triggered.",
   "phase_status": {
-    "phase_1_observe": "ok",
-    "phase_1_5_review": "ok — api-handlers reviewed, 3 findings",
-    "phase_1_6_pm": "skipped — 4-day catch-up run, budget-guarded; skill invocation deferred to next incremental run; cursors not advanced",
-    "phase_2_decide": "ok",
-    "phase_3_promote": "ok",
-    "phase_4_write": "ok",
-    "phase_5_autofix": "no candidate — code-review-finding is not on the allowlist; no dep-update-noise lockfile-drift; no fixme-in-merged-code surfaced this run",
-    "phase_6_commit": "ok"
-  }
+    "phase_1_observe": "success",
+    "phase_1_5_review": "skipped_same_day_rerun",
+    "phase_1_6_pm": "skipped_same_day_rerun",
+    "phase_2_decide": "success_no_op",
+    "phase_3_promote": "success_no_op",
+    "phase_3_5_adversarial": "skipped_no_new_plans",
+    "phase_4_write": "success",
+    "phase_5_autofix": "success_no_candidate",
+    "phase_6_commit": "pending"
+  },
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — signals[] empty this run; nothing eligible for the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review)",
+  "same_day_merged_prs_since_primary": [
+    { "number": 2184, "title": "gap-83-1 wire ppt-web /settings/integrations route (Airbnb OAuth & Sync)", "merged_at": "2026-07-09T04:20:53Z", "test_diff": true, "screen_map_updated": true },
+    { "number": 2186, "title": "churn-hotspot-booking-oauth-csrf-tests: +5 tests", "merged_at": "2026-07-09T04:09:08Z", "test_only": true },
+    { "number": 2187, "title": "churn-hotspot-booking-oauth-routes-tests: +5 guards on POST /booking/token/exchange", "merged_at": "2026-07-09T04:09:18Z", "test_only": true },
+    { "number": 2188, "title": "gap-screens-link-uc-10 → person-months", "merged_at": "2026-07-09T04:20:41Z", "docs_only": true },
+    { "number": 2191, "title": "gap-screens-link-uc-40 → financial-budgets", "merged_at": "2026-07-09T08:13:10Z", "docs_only": true },
+    { "number": 2192, "title": "gap-screens-link-uc-33 → lease-application[/-detail]", "merged_at": "2026-07-09T08:14:03Z", "docs_only": true }
+  ],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 matches '# 2026-07-09'", "observed": "PASS", "expected": "PASS" },
+    { "goal": "G2",  "passed": true,  "command": "state advanced vs HEAD",                                    "observed": "last_pr_seen 2185→2192, last_commit_sha 5877ade→02d0906, stats.runs 42→43", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq '[.items[].id] | length == unique|length' backlog.json", "observed": "true",  "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no non-cumulative signal in signals[] with id in prev seen_signals and score_delta!=0", "observed": "signals[] is empty; vacuously true", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "no score>8; no open item aged >14d needing decay this run", "observed": "PASS (backlog rows all updated_at=2026-07-09; nothing yet 14d old)", "expected": "PASS" },
+    { "goal": "G6",  "passed": true,  "command": "each new plan has adversarial pass annotation",             "observed": "N/A — 0 new plans this run",       "expected": "PASS" },
+    { "goal": "G7",  "passed": true,  "command": "≤2 new plans; each meets readiness gates",                  "observed": "0 new plans (≤2)",                  "expected": "true" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only outside .research/",           "observed": "0 (verified pre-commit)",           "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "grep for secrets/private hostnames in staged diff",          "observed": "0 (verified pre-commit)",           "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "backlog.md byte-identical to regen from backlog.json",       "observed": "PASS (timestamp widget refreshed to 08:15Z; backlog.json unchanged this run)", "expected": "diff exit 0" },
+    { "goal": "G11", "passed": true,  "command": "no phase failed OR failed phases named in brief + cursor held", "observed": "no failures",                    "expected": "PASS" },
+    { "goal": "G12", "passed": true,  "command": "every prior plan slug still present or archived",             "observed": "PASS — 2 plans from primary still in plans/", "expected": "PASS" },
+    { "goal": "G13", "passed": true,  "command": "archive count ≥ HEAD",                                        "observed": "12 == 12 (archive unchanged this run)",       "expected": "≥" },
+    { "goal": "G14", "passed": true,  "command": "IDEAS_TRIAGE.md byte-identical to regen",                     "observed": "PASS (timestamp widget refreshed to 08:15Z; backlog.json unchanged)", "expected": "diff exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto-fix caps + kill-switch respected + verify-all gated",    "observed": "auto_fix_actions=[], 0 actions",              "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "mgmt artifacts valid when Phase 1.6 ran",                     "observed": "N/A — Phase 1.6 skipped this run (same-day rerun)", "expected": "PASS" },
+    { "goal": "G17", "passed": true,  "command": "no literal Telegram bot-token in staged diff",                 "observed": "0 (verified pre-commit)",                       "expected": "0" }
+  ]
 }
