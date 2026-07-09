@@ -816,13 +816,22 @@ mod sessions {
     /// Log an already-registered+verified user in again to open a second
     /// concurrent session. Returns `(access_token, refresh_token)`.
     async fn login_again(app: &TestApp, user: &TestUser) -> (String, String) {
-        let login_req = app.post("/api/v1/auth/login").json(user.login_body()).build();
+        let login_req = app
+            .post("/api/v1/auth/login")
+            .json(user.login_body())
+            .build();
         let resp = app.execute(login_req).await;
         assert_eq!(resp.status, StatusCode::OK, "second login should succeed");
         let json = resp.json_value();
         (
-            json["accessToken"].as_str().expect("accessToken").to_string(),
-            json["refreshToken"].as_str().expect("refreshToken").to_string(),
+            json["accessToken"]
+                .as_str()
+                .expect("accessToken")
+                .to_string(),
+            json["refreshToken"]
+                .as_str()
+                .expect("refreshToken")
+                .to_string(),
         )
     }
 
@@ -931,7 +940,10 @@ mod sessions {
         resp.assert_status(StatusCode::OK);
 
         let count = resp.json_value()["revokedCount"].as_u64().unwrap();
-        assert_eq!(count, 2, "with no current session, all sessions are revoked");
+        assert_eq!(
+            count, 2,
+            "with no current session, all sessions are revoked"
+        );
 
         cleanup_test_user(&pool, &user.email).await;
     }
