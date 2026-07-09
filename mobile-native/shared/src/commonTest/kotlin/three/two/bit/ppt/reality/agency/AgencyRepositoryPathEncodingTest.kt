@@ -18,8 +18,9 @@ import kotlinx.serialization.json.Json
 /**
  * Security regression (#2195): agency ids and slugs are deep-link / nav-sourced and are spliced
  * into the request path, so they must be percent-encoded via the shared `String.asPathSegment()`
- * helper — a `/`, `?`, `#`, or `..`-bearing value must NOT escape its path segment (path-injection).
- * Mirrors `ListingDetailRepositoryTest.getListingDetail_url_encodes_listing_id_path_segment`.
+ * helper — a `/`, `?`, `#`, or `..`-bearing value must NOT escape its path segment
+ * (path-injection). Mirrors
+ * `ListingDetailRepositoryTest.getListingDetail_url_encodes_listing_id_path_segment`.
  */
 class AgencyRepositoryPathEncodingTest {
 
