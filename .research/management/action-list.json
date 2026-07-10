@@ -752,6 +752,20 @@
           "backend"
         ]
       }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts-retry1",
+      "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-10T16:11:52Z (retry_of=churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts reason=failed-no-pr cooldown_ok newest_failure=2026-07-03T14:09:28Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-10T16:11:52Z",
+      "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "retry_round": 1
     }
   ]
 }
