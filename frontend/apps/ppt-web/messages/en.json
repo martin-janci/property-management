@@ -82,7 +82,8 @@
     "neighbors": "Neighbors",
     "aiChat": "AI Assistant",
     "admin": "Admin",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integrations"
   },
   "auth": {
     "signIn": "Sign In",
@@ -3387,6 +3388,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integrations",
+      "subtitle": "Connect external booking channels to sync listings and reservations.",
+      "noOrganization": "No organization is selected for your account, so integrations cannot be managed.",
+      "status": {
+        "checking": "Checking…",
+        "connected": "Connected",
+        "notConnected": "Not connected"
+      },
+      "common": {
+        "lastSync": "Last sync",
+        "reservations": "Reservations",
+        "lastSyncError": "Last sync error: {{error}}",
+        "syncNow": "Sync now",
+        "syncing": "Syncing…",
+        "disconnect": "Disconnect",
+        "disconnecting": "Disconnecting…",
+        "itemsSynced": "{{items}} item(s) synced.",
+        "syncIncomplete": "The sync did not complete.",
+        "unexpectedError": "An unexpected error occurred."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "OAuth-connected channel for short-term rental listings and reservations.",
+        "loadError": "Could not load Airbnb status.",
+        "account": "Account",
+        "listings": "Listings",
+        "connect": "Connect Airbnb",
+        "redirecting": "Redirecting…",
+        "mappings": {
+          "title": "Listing mappings",
+          "loading": "Loading listings…",
+          "empty": "No Airbnb listings mapped yet.",
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "toast": {
+          "connectFailedTitle": "Could not start Airbnb connection",
+          "syncedTitle": "Airbnb synced",
+          "syncFailedTitle": "Airbnb sync failed",
+          "disconnectedTitle": "Airbnb disconnected",
+          "disconnectedMessage": "The Airbnb integration has been removed.",
+          "disconnectFailedTitle": "Could not disconnect Airbnb"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Supply-XML channel for short-term rental availability, rates and reservations.",
+        "loadError": "Could not load Booking.com status.",
+        "hotelId": "Hotel ID",
+        "properties": "Properties",
+        "connect": "Connect Booking.com",
+        "conflicts": "{{count}} cross-platform reservation conflict(s) detected.",
+        "conflictsTruncated": " Results may be incomplete.",
+        "wizard": {
+          "title": "Map your property to Booking.com",
+          "username": "Supply-XML username",
+          "password": "Supply-XML password",
+          "connect": "Connect",
+          "connecting": "Connecting…",
+          "cancel": "Cancel"
+        },
+        "toast": {
+          "connectedTitle": "Booking.com connected",
+          "connectFailedTitle": "Could not connect Booking.com",
+          "syncedTitle": "Booking.com synced",
+          "syncFailedTitle": "Booking.com sync failed",
+          "disconnectedTitle": "Booking.com disconnected",
+          "disconnectFailedTitle": "Could not disconnect Booking.com"
+        }
+      }
+    },
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
@@ -3644,10 +3717,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Go to Integrations"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Connect Airbnb & Booking.com channels and manage sync"
     }
   },
   "documentTemplates": {
