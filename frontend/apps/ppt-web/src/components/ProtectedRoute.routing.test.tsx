@@ -8,7 +8,9 @@
  *   - unauthenticated users are redirected to /login (Navigate)
  *   - the `redirectTo` override targets a custom path
  *   - the current location (path + query) is persisted as the return URL
- *   - the login page itself is never stored as a return URL
+ *   - the login page itself (bare and with a ?next= query) is never stored as
+ *     a return URL — with ProtectedRoute actually mounted at /login so the
+ *     storeReturnUrl guard is exercised rather than bypassed
  *   - authenticated users pass through when no roles are required
  *   - an empty `requiredRoles` array skips the role gate
  *   - a user holding any one of several accepted roles is allowed
@@ -102,6 +104,37 @@ function renderAt(entry: string, props: { requiredRoles?: string[]; redirectTo?:
   );
 }
 
+/**
+ * Mount ProtectedRoute *itself* at `entry` so its own `storeReturnUrl` guard is
+ * actually exercised for the login path.
+ *
+ * The shared `renderAt` router wires `/login` to a sibling `<Route>`, so an
+ * entry of `/login` matches that exact route and ProtectedRoute (on `path="*"`)
+ * never mounts — the storeReturnUrl effect never runs and the "don't store
+ * /login" assertion passes trivially. Here ProtectedRoute is the element for
+ * `path="/login"`, so its effect runs with `location.pathname === '/login'`,
+ * driving the `returnUrl !== LOGIN_PATH` guard. A distinct `redirectTo`
+ * landing route absorbs the unauthenticated `Navigate` without redirect-looping
+ * back onto the path under test.
+ */
+function renderProtectedAtLogin(entry: string) {
+  return render(
+    <MemoryRouter initialEntries={[entry]}>
+      <Routes>
+        <Route path="/landing" element={<div>Landing</div>} />
+        <Route
+          path="/login"
+          element={
+            <ProtectedRoute redirectTo="/landing">
+              <div>Secret content</div>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
 beforeEach(() => {
   // Start each test from a clean return-URL slot.
   if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
@@ -144,8 +177,23 @@ describe('ProtectedRoute redirect behaviour', () => {
   });
 
   it('does not store the login page as a return URL', () => {
+    // ProtectedRoute is mounted *at* /login here (not on the catch-all), so its
+    // storeReturnUrl effect genuinely runs with pathname === '/login'. The
+    // `returnUrl !== LOGIN_PATH` guard must reject it — removing that guard
+    // flips this test red instead of leaving it trivially green.
     mockAuth = unauthenticated();
-    renderAt('/login');
+    renderProtectedAtLogin('/login');
+    expect(screen.getByText('Landing')).toBeInTheDocument();
+    expect(getAndClearReturnUrl()).toBeNull();
+  });
+
+  it('does not store the login page with a query (?next=) as a return URL', () => {
+    // Locks in the second half of the guard:
+    // `!returnUrl.startsWith(`${LOGIN_PATH}?`)`. Without it, a login URL that
+    // carries a next-hop query would be stored as its own return URL.
+    mockAuth = unauthenticated();
+    renderProtectedAtLogin('/login?next=/buildings/42');
+    expect(screen.getByText('Landing')).toBeInTheDocument();
     expect(getAndClearReturnUrl()).toBeNull();
   });
 });
