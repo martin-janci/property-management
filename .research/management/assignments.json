@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T16:26:59Z",
+  "generated": "2026-07-10T16:32:39Z",
   "assignments": [
     {
       "task_id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
@@ -226,15 +226,15 @@
       "branch": "auto-impl/gh-issue-2222-b34d9530",
       "status": "review",
       "claimed_at": "2026-07-10T16:13:59Z",
-      "last_updated": "2026-07-10T16:26:59Z",
+      "last_updated": "2026-07-10T16:32:39Z",
       "status_changed_at": "2026-07-10T16:26:59Z",
       "pr_number": 2223,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2223",
       "merged_at": null,
       "specialist": "generic",
       "implementer_summary": "pr=2223 status=done specialist=generic scope_drift=false code_reuse_warn=none note=4-way sharded test-shard matrix + aggregator preserves required test context; actionlint+partition self-test green; CI must confirm shards green",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=f0472fddc925857863d377cfdc506801441a0847 note=sharded-test-aggregator-gates-all-shards-no-false-green; posted as COMMENT (self-approval blocked by GitHub)",
+      "last_reviewed_oid": "f0472fddc925857863d377cfdc506801441a0847",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
