@@ -422,8 +422,7 @@ pub struct AppState {
     /// [`AppState::with_oauth_state_store`] so the Airbnb-callback consume path
     /// (`ConsumeOutcome::Consumed` / `Rejected → 400 INVALID_STATE`) can be
     /// exercised at the handler level without a live Redis daemon.
-    pub oauth_state_store:
-        Option<crate::routes::integrations::oauth_state::OAuthStateStore>,
+    pub oauth_state_store: Option<crate::routes::integrations::oauth_state::OAuthStateStore>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
     /// Epic 18 / Story 18.2 (#1687): provider-agnostic guest ID-document OCR

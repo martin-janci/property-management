@@ -188,7 +188,10 @@ impl OAuthStateStore {
         self.inner
             .lock()
             .expect("oauth state store mutex poisoned")
-            .insert(oauth_state.to_string(), OAuthStateRecord { org_id, user_id });
+            .insert(
+                oauth_state.to_string(),
+                OAuthStateRecord { org_id, user_id },
+            );
     }
 
     /// Look up + consume (remove) the record for `oauth_state`, then apply the
