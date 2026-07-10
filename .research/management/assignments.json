@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T18:22:01Z",
+  "generated": "2026-07-10T20:12:49Z",
   "assignments": [
     {
       "task_id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
@@ -202,10 +202,10 @@
     {
       "task_id": "gh-issue-2203",
       "branch": "auto-impl/gh-issue-2203-be726466",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-09T20:12:04Z",
-      "last_updated": "2026-07-10T18:20:21Z",
-      "status_changed_at": "2026-07-10T18:20:21Z",
+      "last_updated": "2026-07-10T20:08:19Z",
+      "status_changed_at": "2026-07-10T20:08:19Z",
       "pr_number": 2219,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2219",
       "merged_at": null,
@@ -224,10 +224,10 @@
     {
       "task_id": "gh-issue-2222",
       "branch": "auto-impl/gh-issue-2222-b34d9530",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-10T16:13:59Z",
-      "last_updated": "2026-07-10T18:22:01Z",
-      "status_changed_at": "2026-07-10T18:22:01Z",
+      "last_updated": "2026-07-10T20:08:19Z",
+      "status_changed_at": "2026-07-10T20:08:19Z",
       "pr_number": 2223,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2223",
       "merged_at": null,

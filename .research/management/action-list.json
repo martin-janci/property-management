@@ -766,6 +766,26 @@
       "first_open_at": "2026-07-10T16:11:52Z",
       "retry_of": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
       "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2224",
+      "action": "Follow-up: integrations i18n keys added to en.json only — 5 locales missing (PR #2217) (Closes #2224)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-10T20:09:50Z (#2224)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-10T20:09:50Z",
+      "issue_ref": {
+        "number": 2224,
+        "url": "https://github.com/martin-janci/property-management/issues/2224",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
