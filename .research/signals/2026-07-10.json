@@ -1,0 +1,173 @@
+{
+  "date": "2026-07-10",
+  "generated_iso": "2026-07-10T03:11:30Z",
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped-catchup-mode",
+    "phase_1_6_pm": "skipped-catchup-mode",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "ok-no-promotions",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "no-candidate"
+  },
+  "signals": [
+    {
+      "id": "bug-backend-test-hang-on-dev-2026-07-10",
+      "type": "bug",
+      "source": "dispatcher commits 8214c9a / 98ddc1f / 3bee955 / fd55fff on dev between 2026-07-09 and 2026-07-10; PR #2214 (docs+comment-only) fails the same way as backend-code PRs",
+      "score_delta": 3,
+      "evidence": [
+        "Dispatcher forensic proof over 4+ runs: backend CI 'test' job hangs ~107-111min then wall-clock-kills to FAILURE identically across every backend PR incl. docs-only #2214 (proves the wedge is on dev baseline, not per-PR diff). 8+ approved backend PRs cannot merge (#2189 #2190 #2205 #2214 #2215 #2220 #2218 #2221 #2219).",
+        "Last green backend run 4ed9b140 was byte-identical backend code per dispatcher — so something in dev's environment between then and now flipped a test into a deterministic hang.",
+        "Dispatcher cannot re-trigger CI (rerun 403 no actions:write) — merge pipeline wedged pending operator to (a) rerun and confirm deterministic vs transient, (b) run cargo test --test-threads=1 -- --nocapture on dev HEAD to locate the hanging test, (c) fix or disable + open follow-up issue."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "dispatcher-buffer-starved-2026-07-10",
+      "type": "dep-update-noise",
+      "source": "dispatcher commit 8214c9a (2026-07-10 02:12)",
+      "score_delta": 0,
+      "evidence": [
+        "Dispatcher goal check GC3-buffer-bounds=FAIL across multiple runs — claimable backlog 10/72, floor 36. Buffer refill Tier-1b/1c/1d dry; Tier-2 planner-kick unreachable (DISPATCHER_URL points at Anthropic API, not planner trigger — operator secret misconfiguration). Recorded here for visibility; no scoring — dispatcher-owned state.",
+        "Consumption blocked anyway by the backend-CI-wedge above (WIP saturated at 10 > cap 8, free_slots=0)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "lag-warning-2026-07-10-ok",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-09T02:37:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine ran ~24h after previous run — WITHIN 36h threshold, cadence recovered this cycle. Logged as informational (not a warning): 3 consecutive over-cadence runs preceded this one (19d, 3d21h, 24h)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-10.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-advance vs prev",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup vs seen (non-cumulative types)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8; decay N/A (no open items older than 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plan files this run — vacuous",
+      "observed": "0 new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run — cap 2 satisfied vacuously",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached grep -v .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged .research (excl 4 baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs render",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-failed = none; no cursors held",
+      "observed": "consistent",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in staged plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "7=7",
+      "expected": "staged >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs render",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidates matched)",
+      "observed": "length=0",
+      "expected": "disciplined"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is a no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token pattern in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

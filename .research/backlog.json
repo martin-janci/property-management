@@ -4187,16 +4187,18 @@
       "score": 0,
       "status": "open",
       "sources": [
-        "routine self-signal 2026-07-09"
+        "routine self-signal 2026-07-09",
+        "dispatcher commit 8214c9a"
       ],
       "evidence": [
-        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look."
+        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look.",
+        "2026-07-10 run: ~24h since last run — routine cadence recovered this cycle; keep watching for regression"
       ],
       "files": [
         ".research/state.json"
       ],
       "created_at": "2026-07-09",
-      "updated_at": "2026-07-09",
+      "updated_at": "2026-07-10",
       "plan": null
     },
     {
@@ -4317,6 +4319,31 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "bug-backend-test-job-hang-on-dev-ci",
+      "title": "Backend CI \"test\" job hangs ~110min then FAILs on dev — blocks 8+ approved PRs including docs-only #2214",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "dispatcher commits 8214c9a (2026-07-10 02:12), 98ddc1f (2026-07-10 00:23), 3bee955 (2026-07-09 20:17), fd55fff (2026-07-09 12:19)",
+        "PR #2214 (docs+comment-only) fails identically",
+        "last green backend run 4ed9b140 was byte-identical backend code"
+      ],
+      "evidence": [
+        "Dispatcher forensic proof over 4+ consecutive runs: backend CI 'test' job on dev hangs ~107–111min then wall-clock-kills into FAILURE, identically across every backend PR (#2189 #2190 #2205 #2214 #2215 #2220 #2218 #2221 #2219 = 9 approved-but-unmergeable). PR #2214 is docs-and-comment-only yet its backend test job fails identically to the code PRs — proves the wedge is on the dev baseline, not any individual PR's diff.",
+        "Last green backend run 4ed9b140 (2026-07-09) was byte-identical backend code according to dispatcher — so a change to dev 's base between then and now flipped a test into a hang, or a resource / env change flipped one green.",
+        "Dispatcher cannot rerun-failed-jobs (403 no actions:write) → cannot self-heal; needs operator to (a) rerun the job to distinguish transient vs deterministic, then (b) locate the hanging test with `cargo test -- --nocapture --test-threads=1` on dev HEAD and fix or disable it."
+      ],
+      "files": [
+        ".github/workflows/backend.yml",
+        "backend/servers/api-server/tests/"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
       "plan": null
     }
   ]
