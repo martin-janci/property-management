@@ -3929,18 +3929,20 @@
       "score": 0,
       "status": "dropped",
       "sources": [
-        "local git numstat since 2026-06-15 (commit 67c24bd..origin/dev)"
+        "local git numstat since 2026-06-15 (commit 67c24bd..origin/dev)",
+        "PR #2186"
       ],
       "evidence": [
         "484 lines (new test file from PR #1393 — Booking.com OAuth handler/CSRF + secure-credential-replacement coverage, then merged via #1424)",
         "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
-        "dropped: score hit 0 after decay"
+        "dropped: score hit 0 after decay",
+        "2026-07-10 re-emit (cumulative): PR#2186 added +159 lines closing five handler-level gaps (manager-role gate on token exchange, Airbnb callback auth, non-UUID state prefix, extra-segment state, membership-only gate). Same file, third routine window with material churn."
       ],
       "files": [
         "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-10",
       "plan": null
     },
     {
@@ -3951,18 +3953,20 @@
       "score": 0,
       "status": "dropped",
       "sources": [
-        "local git numstat since 2026-06-15"
+        "local git numstat since 2026-06-15",
+        "PR #2187"
       ],
       "evidence": [
         "381 lines (new test file from PR #1393 — booking OAuth routes coverage)",
         "decayed: no new signals in 14+ days (routine ran 2026-07-05 after ~19d lag)",
-        "dropped: score hit 0 after decay"
+        "dropped: score hit 0 after decay",
+        "2026-07-10 re-emit (cumulative): PR#2187 added +217 lines strengthening five branches (X-Tenant-ID missing/malformed, guard-ordering short-circuit, malformed JSON, GET-on-POST-only). Same file, third routine window with material churn."
       ],
       "files": [
         "backend/servers/api-server/tests/booking_oauth_routes_tests.rs"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-07-05",
+      "updated_at": "2026-07-10",
       "plan": null
     },
     {
@@ -4190,13 +4194,14 @@
         "routine self-signal 2026-07-09"
       ],
       "evidence": [
-        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look."
+        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look.",
+        "2026-07-10 run: 41h since last routine run (>36h threshold) — cadence still recovering; not yet back to 24h daily."
       ],
       "files": [
         ".research/state.json"
       ],
       "created_at": "2026-07-09",
-      "updated_at": "2026-07-09",
+      "updated_at": "2026-07-10",
       "plan": null
     },
     {
@@ -4317,6 +4322,156 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-ppt-web-integrations-page",
+      "title": "Churn hotspot: IntegrationsPage.tsx grew 3x across PR#2184/#2194/#2217 in 48h",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2184",
+        "PR #2194",
+        "PR #2217",
+        "commits 2026-07-09..2026-07-10"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx — 709 lines add+del across three merges in 48h (PR#2184 created it at 239 lines; PR#2194 added Booking wizard +281 lines; PR#2217 refactored to i18n +121 lines). Now ~500 LOC hosting both Airbnb + Booking OAuth flows, a property-mapping wizard, and toast/loading UI. Watch whether the file stabilises or continues splitting apart into feature-scoped subcomponents (integrations/{IntegrationsPage,AirbnbCard,BookingCard,PropertyMappingWizard}.tsx)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "test-gap-repeated-churn-booking-oauth-routes-tests",
+      "title": "booking_oauth_routes_tests.rs repeated-churn — runs_seen 1 → 2 (PR#1393 create, PR#2187 strengthen)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1393",
+        "PR #2187"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs — hotspot_history runs_seen 1 → 2 (last_seen 2026-06-16 → 2026-07-10). Same test file being rewritten across two routine windows suggests the booking OAuth token-exchange handler still needs coverage; scope keeps expanding to new branches (X-Tenant-ID/guard-ordering/malformed JSON/405). Investigate whether more handler branches remain untested or whether the file has stabilised."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "test-gap-repeated-churn-booking-oauth-csrf-tests",
+      "title": "booking_oauth_csrf_tests.rs repeated-churn — runs_seen 1 → 2 (PR#1393/#1424 create, PR#2186 strengthen)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1393",
+        "PR #1424",
+        "PR #2186"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs — hotspot_history runs_seen 1 → 2 (last_seen 2026-06-16 → 2026-07-10). CSRF/state-validation coverage is still being extended (five new tests this round). Watch for a fourth window: if it re-churns, the underlying handlers are still in flux; consider promoting to a stabilisation plan."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2217-ppt",
+      "title": "Screen-map drift: PR #2217 touched App.tsx (nav-link + i18n) without updating docs/screens/ppt/*",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2217"
+      ],
+      "evidence": [
+        "PR#2217 modified frontend/apps/ppt-web/src/App.tsx (added a settings/integrations nav-link + t('nav.integrations')) plus the command-palette useNavigationCommands.tsx entry — a route-adjacent change — without touching any docs/screens/ppt/*.md. The settings-integrations screen-map exists (added by PR#2184) but its Agent Log / redesignStatus wasn't refreshed to reflect the new nav-link + i18n reconciliation.",
+        "Heuristic caveat: this signal is a mechanical trigger on the App.tsx path; PR#2217 didn't add a new route, so a human should confirm whether the settings-integrations screen-map warrants an Agent Log entry vs. dropping the signal."
+      ],
+      "files": [
+        "docs/screens/ppt/settings-integrations.md",
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-mutation-errors",
+      "title": "PaymentMatchingPage.tsx confirm/reject mutations have no isError UI — manager sees no feedback on backend failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-10 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:329 — confirmMutation.mutate(m.id) fires from the Confirm button; no isError / onError surface renders. Only uploadMutation.isError is displayed at line 112, so a 401/409/500 on Confirm is invisible.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:337 — same gap on rejectMutation.mutate(m.id): backend failure silently swallowed; managers cannot tell whether Reject landed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-page-no-i18n",
+      "title": "PaymentMatchingPage.tsx — entire manager surface hardcoded EN; no useTranslation import while product ships sk/cs/de/en",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-10 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:79 — headers, buttons, empty states, error messages (Payment Matching / Bank Statements / Upload CSV / Choose File / Processing upload… / Upload failed / No statements uploaded yet / Transactions / Match Review / Variable Symbol / Counterparty IBAN / Confidence Score) are all raw English literals. The file has no useTranslation import; the product otherwise ships four locales."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-cmd-palette-en-keywords",
+      "title": "Command palette keywords are English-only — sk/cs/de users cannot search commands in their locale",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-10 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/command-palette/hooks/useNavigationCommands.tsx:30 — all 15 commands ship English-only keywords arrays (['home','main','dashboard','start'], ['sensors','devices','iot','registry'], …). Labels/descriptions are translated but CommandPaletteDialog.tsx:67 filters via cmd.keywords.some(k => k.toLowerCase().includes(lowerQuery)); localized search terms never match."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/command-palette/hooks/useNavigationCommands.tsx",
+        "frontend/apps/ppt-web/src/features/command-palette/CommandPaletteDialog.tsx"
+      ],
+      "created_at": "2026-07-10",
+      "updated_at": "2026-07-10",
       "plan": null
     }
   ]

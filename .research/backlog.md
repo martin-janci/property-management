@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-09 02:36 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-10 20:20 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -18,6 +18,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | test-gap | `test-gap-screen-map-drift-pr-2217-ppt` | Screen-map drift: PR #2217 touched App.tsx (nav-link + i18n) without updating docs/screens/ppt/* | open | 2026-07-10 |  |
+| 2 | bug | `code-review-ppt-web-ui-payment-mutation-errors` | PaymentMatchingPage.tsx confirm/reject mutations have no isError UI — manager sees no feedback on backend failure | open | 2026-07-10 |  |
 | 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | ready | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
@@ -62,6 +64,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-ppt-web-integrations-page` | Churn hotspot: IntegrationsPage.tsx grew 3x across PR#2184/#2194/#2217 in 48h | open | 2026-07-10 |  |
+| 1 | test-gap | `test-gap-repeated-churn-booking-oauth-routes-tests` | booking_oauth_routes_tests.rs repeated-churn — runs_seen 1 → 2 (PR#1393 create, PR#2187 strengthen) | open | 2026-07-10 |  |
+| 1 | test-gap | `test-gap-repeated-churn-booking-oauth-csrf-tests` | booking_oauth_csrf_tests.rs repeated-churn — runs_seen 1 → 2 (PR#1393/#1424 create, PR#2186 strengthen) | open | 2026-07-10 |  |
+| 1 | refactor | `code-review-ppt-web-ui-payment-page-no-i18n` | PaymentMatchingPage.tsx — entire manager surface hardcoded EN; no useTranslation import while product ships sk/cs/de/en | open | 2026-07-10 |  |
+| 1 | refactor | `code-review-ppt-web-ui-cmd-palette-en-keywords` | Command palette keywords are English-only — sk/cs/de users cannot search commands in their locale | open | 2026-07-10 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | open | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | open | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | open | 2026-07-09 |  |
@@ -149,7 +156,9 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | done | 2026-05-31 |  |
-| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | open | 2026-07-09 |  |
+| 0 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs` | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | dropped | 2026-07-10 |  |
+| 0 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs` | booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) | dropped | 2026-07-10 |  |
+| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | open | 2026-07-10 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-emergency-rs` | Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-vendors-rs` | Churn hotspot: 929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs` | Churn hotspot: 709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening. | dropped | 2026-07-05 |  |
@@ -179,8 +188,6 @@
 | 0 | refactor | `churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts` | Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2) | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-frontend-apps-mobile-app-config-ts` | Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2) | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-form-rs` | Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock) | dropped | 2026-07-05 |  |
-| 0 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs` | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | dropped | 2026-07-05 |  |
-| 0 | refactor | `churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs` | booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) | dropped | 2026-07-05 |  |
 | 0 | refactor | `repeated-churn-backend-servers-api-server-src-routes-forms-rs` | forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening) | dropped | 2026-07-05 |  |
 | 0 | dx | `closed-not-merged-pr-1425` | PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394 | dropped | 2026-07-05 |  |
 | 0 | dx | `dx-stalled-review-pr-1179` | PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision | dropped | 2026-07-05 |  |

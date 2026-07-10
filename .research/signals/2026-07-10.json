@@ -1,0 +1,246 @@
+{
+  "generated": "2026-07-10T20:20:00Z",
+  "run_iso": "2026-07-10T20:20:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-10",
+      "type": "lag_warning",
+      "source": "routine self-signal",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Last routine run 2026-07-09T02:37:00Z → 41h ago (> 36h threshold). Cadence still recovering; not yet back to daily."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-settings-integrations-IntegrationsPage-tsx",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-09..2026-07-10",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx — 709 lines add+del across PR#2184 (create 239 LOC) + PR#2194 (add Booking wizard +281) + PR#2217 (i18n refactor +121) in 48h. runs_seen: 0 → 1."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-09..2026-07-10",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs — 217 lines add+del (PR#2187 strengthen). Cumulative re-emit: ID already in state.seen_signals from prior window; score_delta not re-applied per Phase 1 dedup rule."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-07-09..2026-07-10",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs — hotspot_history runs_seen 1 → 2 (last_seen 2026-06-16 → 2026-07-10). Same test file churning across two routine windows; PR#1393 created, PR#2187 strengthened."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-09..2026-07-10",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs — 159 lines add+del (PR#2186 strengthen). Cumulative re-emit: ID already in state.seen_signals from prior window; score_delta not re-applied per Phase 1 dedup rule."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-07-09..2026-07-10",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs — hotspot_history runs_seen 1 → 2 (last_seen 2026-06-16 → 2026-07-10). Same test file churning across two routine windows; PR#1393/#1424 created, PR#2186 strengthened."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2217-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR#2217 modified frontend/apps/ppt-web/src/App.tsx (nav-link) + useNavigationCommands.tsx (command-palette entry) — route-adjacent — without touching docs/screens/ppt/*.md. Heuristic caveat: PR added no new route; likely a false positive for the existing settings-integrations screen-map (added in PR#2184)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:329 — confirmMutation.mutate(m.id) fires from a user-facing Confirm button with no isError UI (only uploadMutation.isError is rendered at line 112); on failure the manager sees no feedback and cannot tell whether the match landed.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:337 — rejectMutation.mutate(m.id) has the same gap: no isError/onError surface for the Reject action, so backend failures (401/409/500) are silently swallowed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:79 — entire manager-facing surface uses hardcoded English strings ('Payment Matching', 'Bank Statements', 'Upload CSV', 'Choose File', 'Processing upload...', 'Upload failed', 'No statements uploaded yet', 'Transactions', 'Match Review', 'Variable Symbol', 'Counterparty IBAN', 'Confidence Score'); no useTranslation import in the file while the product ships in sk/cs/de/en."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-cmd-palette-en-keywords",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/command-palette/hooks/useNavigationCommands.tsx:30 — all 15 command entries use English-only keywords arrays (e.g. ['home','main','dashboard','start'], ['sensors','devices','iot','registry']) while labels/descriptions are translated; CommandPaletteDialog.tsx:67 filters via cmd.keywords.some(k => k.toLowerCase().includes(lowerQuery)), so sk/cs/de users cannot match commands by localized search terms."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && grep header",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase cursor honesty",
+      "observed": "no phase failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 ≥ 7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency",
+      "observed": "0 actions",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + GC7",
+      "observed": "CC_HEAD=12→CC_NOW=0, PM 5→6, epics=13",
+      "expected": "CC in [0,13)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist match"
+}

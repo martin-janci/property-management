@@ -1,6 +1,10 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-07-10 — daily PM rotation (Scrum Master + pm-security lightweight upkeep; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next); coverage_cursor idx 12 → 0 (epic-9 → epic-10a rotate); last full scan 2026-07-07._
+
+_Refresh note (2026-07-10):_ 9 PRs merged since last routine run (PR#2186–#2217, all `post-merge-reviewed`): Booking.com property-mapping wizard wired to `/settings/integrations` (PR#2194, gap-83-2 → epic-83 story 2 done), integrations discoverability + i18n + Airbnb OAuth redirect (PR#2217, closes #2202), ProtectedRoute /login return-URL guard test (PR#2216, closes #2200), booking OAuth token-exchange + CSRF handler-level coverage (PR#2186/#2187), and four screen-map ↔ use-case links (UC-10/UC-29/UC-33/UC-40). Draft queue: 11 dispatcher-authored + 6 dependabot open. CI wedge: `-p common --lib` timeout (#2222) — PR#2223 shard fix in review, approved. Follow-up backlog: 9 open `from-merged-review` issues (#2195–#2204, +#2224 for i18n locale-parity gap in PR#2217). No new critical blockers introduced this run.
+
+---
 
 ## Executive summary
 
