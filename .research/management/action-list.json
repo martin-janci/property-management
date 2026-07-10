@@ -674,26 +674,6 @@
       }
     },
     {
-      "id": "gh-issue-2200",
-      "action": "Follow-up: \"does not store login page as return URL\" test never exercises the guard it claims to cover (PR #2177) (Closes #2200)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2200)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2200,
-        "url": "https://github.com/martin-janci/property-management/issues/2200",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2201",
       "action": "Follow-up: harden RAG embedding-write path — connection-holding, provider provenance, FK error shape (PR #2173) (Closes #2201)",
       "owner_role": "pm-tech-lead",
@@ -707,26 +687,6 @@
       "issue_ref": {
         "number": 2201,
         "url": "https://github.com/martin-janci/property-management/issues/2201",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2202",
-      "action": "Follow-up: integrations settings route is undiscoverable, hardcodes strings, and leaves the Airbnb OAuth handshake half-wired (PR #2184) (Closes #2202)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2202)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2202,
-        "url": "https://github.com/martin-janci/property-management/issues/2202",
         "labels": [
           "follow-up",
           "from-merged-review"
