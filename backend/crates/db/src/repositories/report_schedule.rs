@@ -198,8 +198,8 @@ impl ReportScheduleRepository {
         let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
             "INSERT INTO report_schedules \
              (report_id, organization_id, name, frequency, day_of_week, day_of_month, \
-              time, timezone, format, recipients, is_active, status) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11) \
+              time, timezone, format, recipients, is_active, status, next_run_at) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12) \
              RETURNING ",
             report_schedule_columns!()
         ))
@@ -214,6 +214,7 @@ impl ReportScheduleRepository {
         .bind(input.format)
         .bind(recipients_json)
         .bind(report_schedule_status::ACTIVE)
+        .bind(input.next_run_at)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| {

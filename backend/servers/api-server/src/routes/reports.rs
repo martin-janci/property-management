@@ -14,7 +14,8 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::NaiveDate;
+use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono_tz::Tz;
 use common::errors::ErrorResponse;
 use db::models::{
     report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
@@ -1889,16 +1890,85 @@ const VALID_SCHEDULE_FORMATS: &[&str] = &["pdf", "excel", "csv"];
 /// Default delivery time (HH:MM) when the caller omits `time`.
 const DEFAULT_SCHEDULE_TIME: &str = "08:00";
 
+/// Parse an `HH:MM` 24-hour time-of-day string into `(hour, minute)`.
+///
+/// Rejects empty components and non-numeric input; enforces 24h/60m bounds.
+fn parse_time_hhmm(s: &str) -> Option<(u32, u32)> {
+    let (h, m) = s.split_once(':')?;
+    if h.is_empty() || m.is_empty() {
+        return None;
+    }
+    let hour = h.parse::<u32>().ok()?;
+    let minute = m.parse::<u32>().ok()?;
+    (hour <= 23 && minute <= 59).then_some((hour, minute))
+}
+
 /// Validate an `HH:MM` 24-hour time-of-day string.
 fn validate_time_hhmm(s: &str) -> bool {
-    let Some((h, m)) = s.split_once(':') else {
-        return false;
-    };
-    // Reject empty components and non-numeric input; enforce 24h/60m bounds.
-    match (h.parse::<u32>(), m.parse::<u32>()) {
-        (Ok(hour), Ok(minute)) => !h.is_empty() && !m.is_empty() && hour <= 23 && minute <= 59,
-        _ => false,
+    parse_time_hhmm(s).is_some()
+}
+
+/// Compute the first `next_run_at` (UTC) for a freshly created schedule
+/// (issue #2198).
+///
+/// Walks forward from "now" in the schedule's `tz` to the first calendar day
+/// that satisfies the cadence, then anchors the `HH:MM` delivery time on that
+/// day and converts back to UTC. Returns `None` only if no matching day is
+/// found within the search horizon (should not happen for valid input).
+///
+/// Cadence rules (mirrors the create-schedule validation):
+/// - `daily`   — today if the time is still in the future, else tomorrow.
+/// - `weekly`  — the next date whose weekday matches `day_of_week`
+///   (0=Sunday … 6=Saturday), today included only if the time has not passed.
+/// - `monthly` — the next date whose day-of-month equals `day_of_month`. Months
+///   that lack that day (e.g. day 31 in April, or 29–31 in February) are
+///   skipped to the next month that has it, rather than clamped.
+///
+/// DST handling mirrors `services::quiet_hours::local_to_utc`: ambiguous local
+/// times (fall-back) take the earliest instant; a skipped local time
+/// (spring-forward gap) nudges forward one hour.
+fn compute_first_next_run(
+    frequency: &str,
+    day_of_week: Option<i32>,
+    day_of_month: Option<i32>,
+    hour: u32,
+    minute: u32,
+    tz: Tz,
+) -> Option<DateTime<Utc>> {
+    let now = Utc::now().with_timezone(&tz);
+    let today = now.date_naive();
+    let time = NaiveTime::from_hms_opt(hour, minute, 0)?;
+
+    // Horizon of ~2 years bounds the monthly day-of-month edge cases.
+    for add in 0..=800u64 {
+        let date = today.checked_add_days(chrono::Days::new(add))?;
+        let matches = match frequency {
+            "daily" => true,
+            "weekly" => {
+                day_of_week.is_some_and(|d| date.weekday().num_days_from_sunday() as i32 == d)
+            }
+            "monthly" => day_of_month.is_some_and(|d| date.day() as i32 == d),
+            _ => false,
+        };
+        if !matches {
+            continue;
+        }
+
+        let naive = date.and_time(time);
+        let candidate = match tz.from_local_datetime(&naive).earliest() {
+            Some(dt) => dt,
+            // Spring-forward gap: nudge forward an hour; worst case anchor in UTC.
+            None => tz
+                .from_local_datetime(&(naive + chrono::Duration::hours(1)))
+                .earliest()
+                .unwrap_or_else(|| Utc.from_utc_datetime(&naive).with_timezone(&tz)),
+        };
+
+        if candidate > now {
+            return Some(candidate.with_timezone(&Utc));
+        }
     }
+    None
 }
 
 /// Request body for `POST /api/v1/reports/schedules`.
@@ -1908,6 +1978,15 @@ fn validate_time_hhmm(s: &str) -> bool {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateScheduleRequest {
     /// Report definition this schedule generates.
+    ///
+    /// `report_id` is intentionally **opaque** (issue #2198): the reports this
+    /// system generates (fault statistics, occupancy, consumption, …) are
+    /// computed on demand from live data and are *not* rows in a
+    /// report-definitions table, so there is nothing to validate `report_id`
+    /// against for existence or ownership — and `report_schedules.report_id`
+    /// carries no foreign key by design. The handler rejects only the nil UUID
+    /// as an obvious client bug; any other value is stored verbatim and the
+    /// report-type it names is resolved by the scheduler at fire time.
     pub report_id: Uuid,
     /// Human-readable schedule name.
     pub name: String,
@@ -1974,6 +2053,16 @@ pub async fn create_schedule(
     rls.release().await;
 
     // --- Validation --------------------------------------------------------
+    // `report_id` is opaque (no report-definitions table / no FK — see the
+    // CreateScheduleRequest doc, issue #2198). Reject only the obviously-bogus
+    // nil UUID; any other value is persisted as-is.
+    if req.report_id.is_nil() {
+        return Err(bad_request(
+            "INVALID_REPORT_ID",
+            "report_id must not be the nil UUID",
+        ));
+    }
+
     let name = req.name.trim();
     if name.is_empty() {
         return Err(bad_request("EMPTY_NAME", "Schedule name must not be empty"));
@@ -2034,12 +2123,12 @@ pub async fn create_schedule(
         .filter(|t| !t.is_empty())
         .unwrap_or(DEFAULT_SCHEDULE_TIME)
         .to_string();
-    if !validate_time_hhmm(&time) {
+    let Some((time_hour, time_minute)) = parse_time_hhmm(&time) else {
         return Err(bad_request(
             "INVALID_TIME",
             "time must be a 24-hour HH:MM value (e.g. \"08:30\")",
         ));
-    }
+    };
 
     let format = req
         .format
@@ -2075,6 +2164,27 @@ pub async fn create_schedule(
         .filter(|t| !t.is_empty())
         .unwrap_or("UTC")
         .to_string();
+    // The timezone is the basis for the scheduler's delivery-time math, so an
+    // unrecognised value is a latent break — reject it at the edge (issue #2198)
+    // instead of storing e.g. "Mars/Phobos".
+    let Ok(tz) = timezone.parse::<Tz>() else {
+        return Err(bad_request(
+            "INVALID_TIMEZONE",
+            "timezone must be a valid IANA timezone name (e.g. \"Europe/Bratislava\")",
+        ));
+    };
+
+    // Compute the first fire time now so the row is schedulable immediately;
+    // otherwise a due-work query (`WHERE next_run_at <= NOW()`) would never
+    // pick up a freshly created schedule (issue #2198).
+    let next_run_at = compute_first_next_run(
+        &frequency,
+        req.day_of_week,
+        req.day_of_month,
+        time_hour,
+        time_minute,
+        tz,
+    );
 
     // --- Persist -----------------------------------------------------------
     let schedule = state
@@ -2090,6 +2200,7 @@ pub async fn create_schedule(
             timezone,
             format,
             recipients: req.recipients,
+            next_run_at,
         })
         .await
         .map_err(|e| {
@@ -2318,7 +2429,74 @@ pub async fn update_schedule(
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_cron_expression, validate_time_hhmm};
+    use super::{
+        compute_first_next_run, parse_time_hhmm, validate_cron_expression, validate_time_hhmm,
+    };
+    use chrono::{Datelike, Timelike};
+    use chrono_tz::Tz;
+
+    // --- parse_time_hhmm (issue #2198) ---
+
+    #[test]
+    fn parse_time_returns_components() {
+        assert_eq!(parse_time_hhmm("08:30"), Some((8, 30)));
+        assert_eq!(parse_time_hhmm("0:0"), Some((0, 0)));
+        assert_eq!(parse_time_hhmm("23:59"), Some((23, 59)));
+        assert_eq!(parse_time_hhmm("24:00"), None);
+        assert_eq!(parse_time_hhmm("aa:bb"), None);
+    }
+
+    // --- compute_first_next_run (issue #2198) ---
+
+    #[test]
+    fn next_run_daily_is_in_the_future() {
+        let tz: Tz = "Europe/Bratislava".parse().unwrap();
+        let next = compute_first_next_run("daily", None, None, 8, 30, tz)
+            .expect("daily schedule must yield a next run");
+        assert!(
+            next > chrono::Utc::now(),
+            "next_run_at must be in the future"
+        );
+        // Anchored at 08:30 local time.
+        let local = next.with_timezone(&tz);
+        assert_eq!((local.hour(), local.minute()), (8, 30));
+    }
+
+    #[test]
+    fn next_run_weekly_lands_on_requested_weekday() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // day_of_week = 3 (Wednesday, 0=Sunday).
+        let next = compute_first_next_run("weekly", Some(3), None, 9, 0, tz)
+            .expect("weekly schedule must yield a next run");
+        let local = next.with_timezone(&tz);
+        assert_eq!(
+            local.weekday().num_days_from_sunday(),
+            3,
+            "weekly next run must fall on the requested weekday"
+        );
+        assert!(next > chrono::Utc::now());
+    }
+
+    #[test]
+    fn next_run_monthly_lands_on_requested_day() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // day_of_month = 15.
+        let next = compute_first_next_run("monthly", None, Some(15), 6, 0, tz)
+            .expect("monthly schedule must yield a next run");
+        let local = next.with_timezone(&tz);
+        assert_eq!(local.day(), 15, "monthly next run must fall on day 15");
+        assert!(next > chrono::Utc::now());
+    }
+
+    #[test]
+    fn next_run_monthly_day_31_skips_short_months() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // Day 31 only exists in some months; the walker must still find one.
+        let next = compute_first_next_run("monthly", None, Some(31), 0, 0, tz)
+            .expect("day-31 schedule must resolve to a 31-day month");
+        assert_eq!(next.with_timezone(&tz).day(), 31);
+        assert!(next > chrono::Utc::now());
+    }
 
     // --- validate_time_hhmm (gap-81-1: create schedule) ---
 
