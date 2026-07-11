@@ -226,8 +226,8 @@ importers:
         specifier: ~55.0.13
         version: 55.0.13(expo@56.0.12)
       expo-localization:
-        specifier: ^56.0.6
-        version: 56.0.6(expo@56.0.12)(react@19.2.0)
+        specifier: ^57.0.0
+        version: 57.0.0(expo@56.0.12)(react@19.2.0)
       expo-location:
         specifier: ~56.0.18
         version: 56.0.18(expo@56.0.12)(typescript@5.9.3)
@@ -6746,8 +6746,8 @@ packages:
       invariant: 2.2.4
     dev: false
 
-  /expo-localization@56.0.6(expo@56.0.12)(react@19.2.0):
-    resolution: {integrity: sha512-zzBVoUFHCVNBywcxGsspoZeIXebihOo/AnmQYE4jMv8gHCSKlLNFT+ft+0+mWcZCMs9necvUs8S8TDonAu/xBA==}
+  /expo-localization@57.0.0(expo@56.0.12)(react@19.2.0):
+    resolution: {integrity: sha512-6/o4SE4p1K8f0vXrm5oqt7SxyRPLomdhsANsZOwAqduTC/rzkLsqh5FidgppoTR6lPKT58z+jfk5R3grmbjQtA==}
     peerDependencies:
       expo: '*'
       react: 19.2.0
