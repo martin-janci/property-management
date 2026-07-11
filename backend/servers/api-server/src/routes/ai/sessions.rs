@@ -537,6 +537,10 @@ async fn send_message(
                                 &embedding_result.embedding,
                                 5,         // Get top 5 relevant chunks
                                 Some(0.6), // Minimum similarity threshold
+                                // Provenance (#2201): only compare against rows
+                                // embedded with the same model — mixing stub and
+                                // OpenAI vectors (both 1536-dim) returns garbage.
+                                Some(embedding_result.model.as_str()),
                             )
                             .await
                         {
