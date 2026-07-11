@@ -570,9 +570,14 @@ pub async fn get_my_listing_analytics(
             )
         })?;
 
+    // Read via the ownership-gated SECURITY DEFINER path: `listing_analytics`
+    // is org-scoped under FORCE RLS with no portal-owner branch, so a plain
+    // RLS-subject SELECT returns an empty series for portal-owned listings
+    // (#2199). `get_portal_listing_analytics` bypasses that policy and gates on
+    // `portal_owner_id = user_id OR created_by = user_id`.
     let daily = state
         .reality_portal_repo
-        .get_listing_analytics(id, query.from_date, query.to_date)
+        .get_portal_listing_analytics(id, principal.user_id, query.from_date, query.to_date)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, listing_id = %id, "Failed to load listing analytics");

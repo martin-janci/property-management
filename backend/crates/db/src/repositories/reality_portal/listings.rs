@@ -211,7 +211,16 @@ impl RealityPortalRepository {
         Ok(())
     }
 
-    /// Get listing analytics.
+    /// Get listing analytics (org-scoped path).
+    ///
+    /// This runs a direct `SELECT` on the RLS-subject pool, so it only returns
+    /// rows the current org RLS context admits. It is **not** suitable for
+    /// portal-owned listings (`organization_id IS NULL`): `listing_analytics`
+    /// is `FORCE ROW LEVEL SECURITY` (migration 00113) with an org-only policy
+    /// and no portal-owner branch, so this method reads back an empty series for
+    /// them. Portal routes must use
+    /// [`get_portal_listing_analytics`](Self::get_portal_listing_analytics)
+    /// instead (see #2199).
     pub async fn get_listing_analytics(
         &self,
         listing_id: Uuid,
@@ -228,6 +237,35 @@ impl RealityPortalRepository {
             "#,
         )
         .bind(listing_id)
+        .bind(from_date)
+        .bind(to_date)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Get analytics for a **portal-user-owned** listing.
+    ///
+    /// Uses the SECURITY DEFINER `portal_get_listing_analytics` function
+    /// (migration 00213), ownership-gated on
+    /// `portal_owner_id = user_id OR created_by = user_id` — mirroring
+    /// [`get_portal_listing`](Self::get_portal_listing). Unlike
+    /// [`get_listing_analytics`](Self::get_listing_analytics), it bypasses the
+    /// org-scoped `listing_analytics` RLS policy (which has no portal-owner
+    /// branch), so portal listings return their real recorded analytics instead
+    /// of an empty series (#2199). Returns an empty vec when the listing is not
+    /// owned by `user_id`.
+    pub async fn get_portal_listing_analytics(
+        &self,
+        listing_id: Uuid,
+        user_id: Uuid,
+        from_date: Option<NaiveDate>,
+        to_date: Option<NaiveDate>,
+    ) -> Result<Vec<ListingAnalytics>, SqlxError> {
+        sqlx::query_as::<_, ListingAnalytics>(
+            r#"SELECT * FROM portal_get_listing_analytics($1, $2, $3, $4)"#,
+        )
+        .bind(listing_id)
+        .bind(user_id)
         .bind(from_date)
         .bind(to_date)
         .fetch_all(&self.pool)

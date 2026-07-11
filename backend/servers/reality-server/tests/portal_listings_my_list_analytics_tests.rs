@@ -301,6 +301,45 @@ async fn analytics_owner_returns_200(pool: PgPool) {
     assert!(json["dailyAnalytics"].is_array());
 }
 
+/// Owner reads analytics for a portal listing **with recorded views** → 200 and
+/// a non-zero summary. Regression lock for #2199: before the SECURITY DEFINER
+/// read path (migration 00213) the org-scoped `listing_analytics` RLS policy
+/// filtered every row for a portal listing, so the endpoint returned a zeroed
+/// body even with seeded views. (Note: `#[sqlx::test]` connects as the superuser
+/// which bypasses RLS, so the *deny* half is proven separately in
+/// `db::tests::portal_listing_analytics_force_rls_tests`; this test locks the
+/// end-to-end route wiring — seeded rows must surface, not read back empty.)
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn analytics_owner_with_views_returns_nonzero(pool: PgPool) {
+    let user = seed_portal_user(&pool, "an-views").await;
+    let listing_id = seed_listing(&pool, user, "analytics-views").await;
+
+    // Seed a day of recorded views for the portal listing.
+    sqlx::query(
+        "INSERT INTO listing_analytics (listing_id, date, views, source_website) \
+         VALUES ($1, CURRENT_DATE, 5, 5)",
+    )
+    .bind(listing_id)
+    .execute(&pool)
+    .await
+    .expect("seed analytics row");
+
+    let app = listings_router(pool);
+    let (status, json) = body_json(&app, analytics_req(listing_id, &mint_token(user))).await;
+
+    assert_eq!(status, StatusCode::OK, "owner analytics must return 200");
+    assert_eq!(
+        json["totalViews"].as_i64(),
+        Some(5),
+        "recorded views must surface in the analytics summary (#2199)"
+    );
+    assert_eq!(
+        json["dailyAnalytics"].as_array().map(|a| a.len()),
+        Some(1),
+        "the seeded daily analytics row must appear in the series"
+    );
+}
+
 /// User B requesting analytics for user A's listing → 404 (ownership gate),
 /// never leaking that the listing exists.
 #[sqlx::test(migrator = "db::MIGRATOR")]
