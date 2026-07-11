@@ -1,0 +1,224 @@
+{
+  "generated": "2026-07-11T00:15:00Z",
+  "since_iso": "2026-07-09T02:37:00Z",
+  "merged_pr_count": 9,
+  "open_pr_touched": 17,
+  "closed_not_merged_count": 2,
+  "new_issue_count": 12,
+  "commit_count_dev": 44,
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-11",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-09T02:37:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-07-09T02:37:00Z; 45h ago (>36h threshold). Cloud cadence still ~2d \u2014 feeds dx-routine-lag-catchup-2026-07.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-2217-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2217",
+      "score_delta": 2,
+      "evidence": "PR #2217 modified frontend/apps/ppt-web/src/App.tsx (added <Link to='/settings/integrations'>) with no docs/screens/ppt/*.md update. Heuristic \u2014 App.tsx aggregator, may not warrant a screen doc; treat as review candidate.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2194 + #2217",
+      "score_delta": 1,
+      "evidence": "PR #2194 added BookingIntegrationCard (~281 lines) and PR #2217 added i18n hooks (~189 lines) to IntegrationsPage.tsx \u2014 470 lines total. New hotspot (runs_seen: 1).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-1797",
+      "type": "stalled-review",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "evidence": "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads) draft since 2026-06-24 (17d idle), no reviewDecision. Security-adjacent \u2014 needs reviewer.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "stalled-review-pr-2018",
+      "type": "stalled-review",
+      "source": "PR #2018",
+      "score_delta": 1,
+      "evidence": "PR #2018 (dependabot: aes-gcm 0.10.3\u21920.11.0) open since 2026-07-03 (8d), no reviewDecision. Crypto crate \u2014 verify API before landing.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2206",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2206",
+      "score_delta": 1,
+      "evidence": "dependabot dtolnay/rust-toolchain 1.94.1\u21921.100.0 closed unmerged 2026-07-10T06:00:52Z \u2014 repeat of #2016 same title, both closed. Suggests dependabot config gap or manual reject with no ignore.",
+      "confidence": "medium",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2016",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2016",
+      "score_delta": 1,
+      "evidence": "dependabot dtolnay/rust-toolchain 1.94.1\u21921.100.0 closed unmerged 2026-07-09T06:01:37Z \u2014 first of two identical closes (see #2206).",
+      "confidence": "medium",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-path-inject-repo-sweep",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-native-kmp segment",
+      "score_delta": 3,
+      "evidence": "AgencyRepository.kt:43,61,79; RealtorRepository.kt:49; InquiryRepository.kt:110,149,212; NotificationRepository.kt:80,116 \u2014 all splice raw ids into request URL paths. PR #2180 fixed ListingRepository/FavoritesRepository via encodeURLPathPart() but did not sweep siblings. AgencyRepository.getAgencyBySlug is deep-link-fed \u2192 explicitly untrusted input. Already tracked by open draft PR #2213 (gh-issue-2195).",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-repo-test-coverage-gap",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-native-kmp segment",
+      "score_delta": 2,
+      "evidence": "commonTest/kotlin/three/two/bit/ppt/reality/ has no auth/, no agency/, no realtor/, no api/. SsoService (~349 lines, session state), AgencyRepository, RealtorRepository, InquiryRepository (createInquiry/replyToInquiry), NotificationRepository ship with zero unit tests. Fixture patterns from ListingDetailViewModelTest/SearchStateTest are reusable.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-wsurl-broad-replace",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-native-kmp segment",
+      "score_delta": 1,
+      "evidence": "ApiConfig.kt:27-28 \u2014 `val wsUrl: String get() = baseUrl.replace(\"http\", \"ws\")` is replace-all. A base URL whose host or path contains the literal `http` (e.g. https://http-relay.example.com/api) is silently rewritten to a nonexistent wss host. Use replaceFirst() or an explicit scheme swap.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-11.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative re-emit with score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets regex",
+      "observed": "0 after sanitizing http-relay.dev.rlt.sk -> example.com",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase-failure lines in brief",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still on disk or in _archive",
+      "observed": "11 active + 6 archived (unchanged this run)",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "6 >= 6",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty & kill switch check",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=3 with sub-caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors in range",
+      "observed": "pm_cursor=5, coverage_cursor=12, epics=13, all files parse",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token regex",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

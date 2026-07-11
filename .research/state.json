@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-09T02:37:00Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2185,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "5877ade",
+  "last_run_iso": "2026-07-11T00:15:00Z",
+  "last_run_ms": 4200,
+  "last_pr_seen": 2223,
+  "last_issue_seen": 2224,
+  "last_commit_sha": "ac3afb3",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -313,14 +313,14 @@
       "recent_churn": 53
     },
     "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-16",
-      "recent_churn": 484
+      "runs_seen": 2,
+      "last_seen": "2026-07-11",
+      "recent_churn": 159
     },
     "backend/servers/api-server/tests/booking_oauth_routes_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-16",
-      "recent_churn": 381
+      "runs_seen": 2,
+      "last_seen": "2026-07-11",
+      "recent_churn": 217
     },
     "backend/crates/db/src/models/mod.rs": {
       "runs_seen": 1,
@@ -336,6 +336,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-09",
       "recent_churn": 2818
+    },
+    "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-11",
+      "recent_churn": 470
     }
   },
   "seen_signals": [
@@ -404,6 +409,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
@@ -411,6 +417,8 @@
     "closed-not-merged-pr-1274",
     "closed-not-merged-pr-1378",
     "closed-not-merged-pr-1425",
+    "closed-not-merged-pr-2016",
+    "closed-not-merged-pr-2206",
     "closed-not-merged-pr-507",
     "closed-not-merged-pr-512",
     "closed-not-merged-pr-599",
@@ -437,7 +445,10 @@
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-path-inject-repo-sweep",
+    "code-review-mobile-native-kmp-repo-test-coverage-gap",
     "code-review-mobile-native-kmp-search-stale-response-race",
+    "code-review-mobile-native-kmp-wsurl-broad-replace",
     "code-review-mobile-rn-deeplink-init-unhandled",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-report-fault-fake-submit",
@@ -497,6 +508,7 @@
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
     "lag-warning-2026-07-09",
+    "lag-warning-2026-07-11",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -510,6 +522,7 @@
     "screen-map-drift-pr-1085-reality",
     "screen-map-drift-pr-1100-ppt",
     "screen-map-drift-pr-1418-ppt",
+    "screen-map-drift-pr-2217-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -517,6 +530,8 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stalled-review-pr-1179",
+    "stalled-review-pr-1797",
+    "stalled-review-pr-2018",
     "stalled-review-pr-988",
     "triage-issue-1151",
     "unchecked-todo-integration-marketplace-stubs",
@@ -589,11 +604,11 @@
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
-    "mobile-native-kmp": "2026-06-06"
+    "mobile-native-kmp": "2026-07-11"
   },
   "stats": {
-    "runs": 42,
-    "vectors_created": 182,
+    "runs": 43,
+    "vectors_created": 190,
     "plans_created": 14,
     "quiet_days": 1,
     "auto_fix_count": 0

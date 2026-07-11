@@ -1,9 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-09 02:36 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-11 00:15 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | security | `code-review-mobile-native-kmp-path-inject-repo-sweep` | KMP path-injection sweep — extend PR #2180 encoding to Agency/Realtor/Inquiry/Notification repos (issue #2195 open) | deferred | 2026-07-11 |  |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | ready | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
@@ -18,6 +19,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | test-gap | `screen-map-drift-pr-2217-ppt` | PR #2217 touched App.tsx nav without docs/screens/ppt/* update (heuristic drift) | open | 2026-07-11 |  |
+| 2 | dep-update | `dep-update-rust-toolchain-1100-cascade` | dependabot rust-toolchain 1.94.1→1.100.0 closed unmerged twice (#2016, #2206) — needs config or manual land | open | 2026-07-11 |  |
+| 2 | test-gap | `code-review-mobile-native-kmp-repo-test-coverage-gap` | commonTest gap for auth-critical KMP repos — SsoService, Agency/Realtor/Inquiry/Notification repos ship untested | open | 2026-07-11 |  |
 | 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | ready | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
@@ -62,6 +66,10 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-integrations-page-tsx` | IntegrationsPage.tsx new churn hotspot — 470 lines added across PR #2194 + #2217 | open | 2026-07-11 |  |
+| 1 | security | `stalled-review-pr-1797-ocr-pii` | PR #1797 (auth on OCR endpoints + rental guest PII manager-gate) — 17d stalled, security-adjacent | open | 2026-07-11 |  |
+| 1 | dep-update | `stalled-review-pr-2018-aes-gcm` | PR #2018 (dependabot aes-gcm 0.10.3→0.11.0) — 8d stalled crypto bump | open | 2026-07-11 |  |
+| 1 | bug | `code-review-mobile-native-kmp-wsurl-broad-replace` | ApiConfig.wsUrl uses replace() not replaceFirst() — any 'http' substring in host silently rewrites | open | 2026-07-11 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | open | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | open | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | open | 2026-07-09 |  |
