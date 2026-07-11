@@ -1,0 +1,213 @@
+{
+  "date": "2026-07-11",
+  "run_iso": "2026-07-11T16:32:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-11",
+      "type": "lag_warning",
+      "source": "state.json",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "last_run_iso=2026-07-09T02:37:00Z; now=2026-07-11T16:32:00Z; lag=62h (2d 14h) \u2014 over the 36h threshold, under the 72h stale-routine alert. Second consecutive lag_warning; previous run was 3d 21h."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-airbnb-direct-connect-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..4129d07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/airbnb_direct_connect_and_availability_sync_tests.rs"
+      ],
+      "evidence": [
+        "688 lines add+del in the 2d window; new file added by PR #2189 (gap-83-1) to cover Airbnb direct-connect and availability-sync enqueue handlers. Churn is a one-shot new-file spike, not repeated instability. hotspot_history runs_seen 0\u21921."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-settings-integrations-integrations-page-tsx",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..4129d07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx"
+      ],
+      "evidence": [
+        "470 lines add+del in the 2d window; PR #2217 (fix ppt-web integrations discoverable + i18n) and PR #2194 (property-mapping wizard wired). Rapid rework of a newly-shipped surface; expected while wiring stabilises. hotspot_history runs_seen 0\u21921."
+      ]
+    },
+    {
+      "id": "churn-hotspot-github-workflows-backend-yml",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..4129d07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "evidence": [
+        "245 lines add+del in the 2d window; PR #2223 sharded backend `test` job to end the -p common --lib timeout wedge (issue #2222 \u2014 dev baseline was ~119 min, blocking 8 approved PRs). hotspot_history runs_seen 0\u21921."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profilestats-sequential-fanout",
+      "type": "code-review-finding",
+      "source": "code-review 2026-07-11 mobile-native-kmp (Phase 1.5)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/account/ProfileStats.kt:41"
+      ],
+      "evidence": [
+        "ProfileStatsLoader.load() chains three .getOrNull()?.total calls (favorites, saved-searches, inquiries) sequentially at lines 42-45 instead of coroutineScope { async {} async {} async {} } + awaitAll.",
+        "Class kdoc explicitly notes 'The three calls are independent: a failure in one leaves the others intact' \u2014 perfect candidate for concurrent fan-out."
+      ],
+      "failure_scenario": "On a mobile network at ~300ms per request, the Account-screen stat strip blocks ~900ms of network time serially; concurrent fan-out cuts that to ~300ms. Verified inline: the three suspend calls are byte-for-byte independent, no data dependency between them."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiconfig-wsurl-naive-replace",
+      "type": "code-review-finding",
+      "source": "code-review 2026-07-11 mobile-native-kmp (Phase 1.5)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiConfig.kt:28"
+      ],
+      "evidence": [
+        "ApiConfig.wsUrl uses baseUrl.replace(\"http\", \"ws\") \u2014 an unanchored String.replace that rewrites every substring occurrence, not just the scheme prefix.",
+        "Currently unreferenced in mobile-native (grep for wsUrl finds only the declaration) \u2014 this is a latent trap for the first WebSocket wiring, not a live bug today."
+      ],
+      "failure_scenario": "A staging baseUrl like https://reality.example.com/http-proxy/api becomes wss://reality.example.com/ws-proxy/api \u2014 the /http-proxy/ segment gets mangled to /ws-proxy/ and the WebSocket connect resolves to a 404. Fix: baseUrl.replaceFirst(Regex(\"^https?\"), if (baseUrl.startsWith(\"https\")) \"wss\" else \"ws\")."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-11.md && head -1 == '# 2026-07-11'",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in prior seen_signals double-scored (no non-cumulative re-emit)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; nothing decays this run (no open items older than 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuously true",
+      "observed": "0 new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "no new plans this run \u2014 cap 2 not exceeded",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private-hostnames in staged diff (baseline docs excluded)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regeneration from backlog.json",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures reported; no cursor mismatches expected",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or plans/_archive/",
+      "observed": "true (bug-revoke-all-sessions-cookie-blindness moved to _archive; security-forgot-password-no-rate-limit still in plans/)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged 8 >= HEAD 7",
+      "observed": "8>=7",
+      "expected": "grows"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regeneration",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty this run \u2014 no PR/issue/comment opened",
+      "observed": "0 actions",
+      "expected": "\u22641 per category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 pm_cursor unchanged, gate is a no-op",
+      "observed": "no-op",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

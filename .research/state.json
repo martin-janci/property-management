@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-09T02:37:00Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2185,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "5877ade",
+  "last_run_iso": "2026-07-11T16:32:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2225,
+  "last_issue_seen": 2224,
+  "last_commit_sha": "4129d07",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -336,6 +336,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-09",
       "recent_churn": 2818
+    },
+    "backend/servers/api-server/tests/airbnb_direct_connect_and_availability_sync_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-11",
+      "recent_churn": 688
+    },
+    "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-11",
+      "recent_churn": 470
+    },
+    ".github/workflows/backend.yml": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-11",
+      "recent_churn": 245
     }
   },
   "seen_signals": [
@@ -358,6 +373,7 @@
     "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-tests-airbnb-direct-connect-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
@@ -387,6 +403,7 @@
     "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
     "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
     "churn-hotspot-frontend-apps-mobile-app-config-ts",
+    "churn-hotspot-frontend-apps-ppt-web-features-settings-integrations-integrations-page-tsx",
     "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/features/onboarding/TourOverlay.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx",
@@ -405,6 +422,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
+    "churn-hotspot-github-workflows-backend-yml",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
     "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
@@ -432,11 +450,13 @@
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
+    "code-review-mobile-native-kmp-apiconfig-wsurl-naive-replace",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-profilestats-sequential-fanout",
     "code-review-mobile-native-kmp-search-stale-response-race",
     "code-review-mobile-rn-deeplink-init-unhandled",
     "code-review-mobile-rn-hardcoded-locale",
@@ -497,6 +517,7 @@
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
     "lag-warning-2026-07-09",
+    "lag-warning-2026-07-11",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -589,11 +610,11 @@
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
-    "mobile-native-kmp": "2026-06-06"
+    "mobile-native-kmp": "2026-07-11"
   },
   "stats": {
-    "runs": 42,
-    "vectors_created": 182,
+    "runs": 43,
+    "vectors_created": 187,
     "plans_created": 14,
     "quiet_days": 1,
     "auto_fix_count": 0
