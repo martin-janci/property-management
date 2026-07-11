@@ -1,0 +1,63 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-11",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-09T02:37:00Z, now=2026-07-11T03:10:00Z",
+      "score_delta": 0,
+      "evidence": "48h since last run (>36h threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dx-stalled-review-pr-2018",
+      "type": "stalled-review",
+      "source": "PR #2018",
+      "score_delta": 1,
+      "evidence": "PR #2018 (dependabot backend aes-gcm 0.10.3 → 0.11.0) open 8 days, draft=false, reviewDecision null",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-sso-missing-csrf-state",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 code-review 2026-07-11 (mobile-native-kmp)",
+      "score_delta": 3,
+      "evidence": "MainActivity.kt:90-91 calls ssoService.validateAndLogin(target.token) directly; iOS AuthManager.beginSsoFlow/consumeSsoState enforces state; DeepLinkTarget.Sso (DeepLinkRouter.kt:22) has no state field",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "severity": "high"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-no-session-persistence",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 code-review 2026-07-11 (mobile-native-kmp)",
+      "score_delta": 2,
+      "evidence": "MainActivity.kt:35 constructs fresh SsoService per Activity; SsoService.kt:32 stores sessionToken in-memory only; no EncryptedSharedPreferences/DataStore token storage in androidApp; SsoService.restoreSession is dead code on Android",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "medium"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal matched allowlist + certainty bar",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-11.md && first line matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state cursors advance vs HEAD", "observed": "last_pr_seen 2185→2217, last_issue_seen 2087→2224, last_commit_sha 5877ade→ac3afb3, seen_signals 240→244", "expected": "at least one changed" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no signal id in prior seen_signals was double-scored", "observed": "all 4 emitted ids are fresh", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap 8 + 14d decay applied", "observed": "no items over cap; no open items >14d stale", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan has adversarial pass annotation in brief", "observed": "plans/security-android-sso-missing-csrf-state.md → adversarial pass: passed", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans, all 15 required sections, file existence", "observed": "1 new plan; 4 metadata + 11 headings; Mode: local-only; all 4 Files entries resolve on disk", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached only .research/", "observed": "verified before commit", "expected": "exit 0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff (baseline docs exempt)", "observed": "verified before commit", "expected": "exit 0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen", "observed": "regen matches staged", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures listed in brief; cursors advance for succeeded phases only", "observed": "no phase failed; brief says none", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "all prior plans present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ HEAD archive count", "observed": "6 == 6 (no archive changes this run)", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen", "observed": "regen matches staged", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill-switch", "observed": "auto_fix_actions=[]; certainty bar not met by any signal", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid (skip when Phase 1.6 not run)", "observed": "Phase 1.6 skipped this run — pm_cursor + coverage_cursor unchanged; gate is no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token in staged diff", "observed": "verified before commit", "expected": "exit 0" }
+  ]
+}

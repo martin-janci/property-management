@@ -4318,6 +4318,75 @@
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
       "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-2018",
+      "title": "PR #2018 (chore(deps): bump aes-gcm 0.10.3 → 0.11.0) — dependabot PR stalled at 8d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2018"
+      ],
+      "evidence": [
+        "PR #2018 (dependabot backend aes-gcm 0.10.3 → 0.11.0) open 8 days (created 2026-07-03T~), draft=false, reviewDecision null",
+        "process signal — dependabot bump waiting on manual approve; not a code vector"
+      ],
+      "files": [
+        "backend/Cargo.toml"
+      ],
+      "created_at": "2026-07-11",
+      "updated_at": "2026-07-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-sso-missing-csrf-state",
+      "title": "Android SSO deep-link handler skips CSRF state check — session-fixation via reality://sso?token=... (iOS enforces state)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-11 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "MainActivity.kt:90-91 calls ssoService.validateAndLogin(target.token) directly with no state nonce; iOS AuthManager.beginSsoFlow/consumeSsoState + DeepLinkHandler.ParseResult.ssoCallback(token, state) enforces it.",
+        "Shared DeepLinkTarget.Sso (DeepLinkRouter.kt:22) carries no `state` field — Android platform is structurally unable to verify CSRF state today.",
+        "Failure scenario: attacker fires reality://sso?token=<attacker-token> at Android device → victim logged in as attacker (session-fixation / forced-login)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
+        "mobile-native/iosApp/iosApp/Core/AuthManager.swift"
+      ],
+      "created_at": "2026-07-11",
+      "updated_at": "2026-07-11",
+      "plan": "plans/security-android-sso-missing-csrf-state.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-no-session-persistence",
+      "title": "Android app has no token persistence — SSO session lost on every cold start (iOS uses Keychain)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-07-11 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "MainActivity.kt:35 constructs a fresh SsoService per Activity; SsoService (SsoService.kt:32) stores sessionToken in-memory only.",
+        "iOS AuthManager + KeychainService writes access/refresh to Keychain and calls restoreSession; Android has no EncryptedSharedPreferences / DataStore token storage — 0 callsites in androidApp.",
+        "Users sign out on every process death / cold start on Android; SsoService.restoreSession(token) is dead code on that platform."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/RealityPortalApplication.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-07-11",
+      "updated_at": "2026-07-11",
+      "plan": null
     }
   ]
 }
