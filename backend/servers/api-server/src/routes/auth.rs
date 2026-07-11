@@ -1043,6 +1043,50 @@ fn parse_refresh_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
     None
 }
 
+/// Resolve the caller's *current* refresh-token session id.
+///
+/// Bug fix (revoke-all cookie blindness): after the P0-12 cookie migration,
+/// ppt-web sends the refresh token only via the `HttpOnly` `refresh_token`
+/// cookie — never the `X-Refresh-Token` header. The `list_sessions` and
+/// `revoke_all_sessions` handlers previously read the header only, so
+/// cookie-based callers resolved to `None`. For `revoke_all_sessions` that
+/// meant `revoke_all_user_tokens(user_id, None)` revoked the caller's *own*
+/// live session ("sign out other devices" signed YOU out); for
+/// `list_sessions` it meant `isCurrent` could never be `true`.
+///
+/// Mirror the cookie-first / header-fallback precedence already used by
+/// `refresh_token` (line ~1077) and `logout`: prefer the cookie, fall back to
+/// the header, hash the token, and look the session up. Header-only callers
+/// (mobile RN, older ppt-web builds) keep working unchanged because the header
+/// fallback still runs.
+async fn resolve_current_session_id(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Option<uuid::Uuid> {
+    let token = parse_refresh_cookie(headers).or_else(|| {
+        headers
+            .get("X-Refresh-Token")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string())
+    })?;
+    if token.is_empty() {
+        return None;
+    }
+
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(token.as_bytes());
+    let token_hash = hex::encode(hasher.finalize());
+
+    state
+        .session_repo
+        .find_by_token_hash(&token_hash)
+        .await
+        .ok()
+        .flatten()
+        .map(|session| session.id)
+}
+
 // ==================== Refresh Token (Story 1.3) ====================
 
 /// Refresh token request.
@@ -1815,16 +1859,11 @@ pub async fn list_sessions(
         )
     })?;
 
-    // Get current token hash to identify current session
-    use sha2::{Digest, Sha256};
-    let current_token_hash =
-        if let Some(refresh_token) = headers.get("X-Refresh-Token").and_then(|h| h.to_str().ok()) {
-            let mut hasher = Sha256::new();
-            hasher.update(refresh_token.as_bytes());
-            Some(hex::encode(hasher.finalize()))
-        } else {
-            None
-        };
+    // Identify the caller's current session. Prefer the HttpOnly cookie,
+    // fall back to the `X-Refresh-Token` header (see
+    // `resolve_current_session_id`). Cookie-based ppt-web clients used to
+    // resolve to `None` here, so no row could ever be marked `isCurrent`.
+    let current_session_id = resolve_current_session_id(&state, &headers).await;
 
     // Get all active sessions for user
     let sessions = match state.session_repo.find_user_sessions(user_id).await {
@@ -1844,9 +1883,9 @@ pub async fn list_sessions(
     let session_infos: Vec<SessionInfo> = sessions
         .into_iter()
         .map(|s| {
-            let is_current = current_token_hash
+            let is_current = current_session_id
                 .as_ref()
-                .map(|h| h == &s.token_hash)
+                .map(|id| id == &s.id)
                 .unwrap_or(false);
 
             SessionInfo {
@@ -2008,22 +2047,12 @@ pub async fn revoke_all_sessions(
         )
     })?;
 
-    // Get current session to exclude
-    let current_session_id =
-        if let Some(refresh_token) = headers.get("X-Refresh-Token").and_then(|h| h.to_str().ok()) {
-            use sha2::{Digest, Sha256};
-            let mut hasher = Sha256::new();
-            hasher.update(refresh_token.as_bytes());
-            let token_hash = hex::encode(hasher.finalize());
-
-            // Find session by hash
-            match state.session_repo.find_by_token_hash(&token_hash).await {
-                Ok(Some(session)) => Some(session.id),
-                _ => None,
-            }
-        } else {
-            None
-        };
+    // Get current session to exclude. Prefer the HttpOnly cookie, fall back
+    // to the `X-Refresh-Token` header (see `resolve_current_session_id`).
+    // Cookie-based ppt-web clients used to resolve to `None` here, which made
+    // `revoke_all_user_tokens(user_id, None)` revoke the caller's OWN live
+    // session — "sign out other devices" signed the caller out too.
+    let current_session_id = resolve_current_session_id(&state, &headers).await;
 
     // Revoke all sessions except current
     match state
