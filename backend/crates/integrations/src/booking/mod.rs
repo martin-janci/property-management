@@ -2341,7 +2341,11 @@ mod tests {
             result.is_ok(),
             "transport error on first attempt must be retried into success: {result:?}"
         );
-        assert_eq!(server.hits(), 2, "expected exactly one retry after the reset");
+        assert_eq!(
+            server.hits(),
+            2,
+            "expected exactly one retry after the reset"
+        );
     }
 
     #[tokio::test]
