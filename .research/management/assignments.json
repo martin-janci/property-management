@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T20:12:49Z",
+  "generated": "2026-07-11T08:13:37Z",
   "assignments": [
     {
       "task_id": "gap-83-1-direct-connect-and-availability-sync-enqueue",
@@ -224,15 +224,15 @@
     {
       "task_id": "gh-issue-2222",
       "branch": "auto-impl/gh-issue-2222-b34d9530",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-07-10T16:13:59Z",
-      "last_updated": "2026-07-10T20:08:19Z",
-      "status_changed_at": "2026-07-10T20:08:19Z",
+      "last_updated": "2026-07-11T08:13:37Z",
+      "status_changed_at": "2026-07-11T08:13:37Z",
       "pr_number": 2223,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2223",
       "merged_at": null,
       "specialist": "generic",
-      "implementer_summary": "pr=2223 status=done specialist=generic scope_drift=false code_reuse_warn=none note=4-way sharded test-shard matrix + aggregator preserves required test context; actionlint+partition self-test green; CI must confirm shards green [Phase 5.7 respawn 2026-07-10: shard-0 timeout fixed — split \"everything else\" into dedicated parallel test-rest job; all 4 shards now even (197 bins 50/49/49/49, 0 overlap/gap); aggregator gates test-rest; pushed, fresh CI triggered]",
+      "implementer_summary": "pr=2223 status=done specialist=generic scope_drift=false code_reuse_warn=none note=4-way sharded test-shard matrix + aggregator preserves required test context; actionlint+partition self-test green; CI must confirm shards green [Phase 5.7 respawn 2026-07-10: shard-0 timeout fixed — split \"everything else\" into dedicated parallel test-rest job; all 4 shards now even (197 bins 50/49/49/49, 0 overlap/gap); aggregator gates test-rest; pushed, fresh CI triggered] [dispatcher respawn 2026-07-11: test-rest CI leg failing (~25min, real failure not timeout); implementer respawned to complete sharding fix — keystone unblock for 8 wedged approved PRs]",
       "reviewer_summary": "verdict=approve head_oid=f0472fddc925857863d377cfdc506801441a0847 note=sharded-test-aggregator-gates-all-shards-no-false-green; posted as COMMENT (self-approval blocked by GitHub)",
       "last_reviewed_oid": "f0472fddc925857863d377cfdc506801441a0847",
       "scope_drift": false,
@@ -240,7 +240,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
