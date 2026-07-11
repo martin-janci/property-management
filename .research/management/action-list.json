@@ -19,13 +19,13 @@
       "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-07T14:21:22Z",
-      "last_updated": "2026-07-07T14:21:22Z"
+      "last_updated": "2026-07-11T16:24:52Z"
     },
     {
       "id": "80-2-dispute-filing-flow",
@@ -718,7 +718,7 @@
       "action": "Follow-up: app.config.env test leaves getAppEnv() fallback uncovered + duplicates plugin resolver (PR #2185) (Closes #2204)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2204)",
       "deadline": null,
       "dependency": null,
@@ -731,7 +731,8 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-11T16:24:52Z"
     },
     {
       "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts-retry1",
