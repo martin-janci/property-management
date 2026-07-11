@@ -50,9 +50,27 @@ jest.mock('node:fs', () => {
 
 type Env = 'development' | 'staging' | 'production';
 
-function loadConfig(appEnv: Env, extraProcessEnv: Record<string, string> = {}): ExpoConfig {
+/**
+ * `appEnv` argument:
+ *   - a valid `Env` literal -> assigned to `process.env.APP_ENV`
+ *   - any other string (e.g. `'garbage'`) -> assigned verbatim so the
+ *     invalid-`APP_ENV` fallback branch of `resolveAppEnv` can be exercised
+ *   - `null` -> `APP_ENV` is left cleared (deleted in `beforeEach`), so the
+ *     `NODE_ENV`-based fallback branch is exercised
+ */
+function loadConfig(
+  appEnv: Env | 'garbage' | null,
+  extraProcessEnv: Record<string, string> = {}
+): ExpoConfig {
   jest.resetModules();
-  process.env.APP_ENV = appEnv;
+  if (appEnv === null) {
+    delete process.env.APP_ENV;
+  } else {
+    // Cast: `'garbage'` is intentionally invalid so the resolver's
+    // invalid-APP_ENV fallback branch can be exercised. `process.env.APP_ENV`
+    // is typed to the valid `Env` union via a ProcessEnv augmentation.
+    process.env.APP_ENV = appEnv as Env;
+  }
   for (const [k, v] of Object.entries(extraProcessEnv)) {
     process.env[k] = v;
   }
@@ -125,10 +143,47 @@ describe('API_BASE_URL / WS_BASE_URL resolution', () => {
     expect(extra(cfg).WS_BASE_URL).toBe('wss://api.ppt.test');
   });
 
+  // NOTE (test-fidelity, #2204): this pins the *file-wins* precedence
+  // `envVars.X ?? process.env.X` (app.config.ts). It does NOT model the
+  // documented CI production-override path: the `dotenv` mock here returns
+  // `mockParsedEnv` directly and never mutates `process.env`, whereas the real
+  // sentinel-override path (#620 / #523) rewrites `.env.production` or sets
+  // `process.env` via `eas.json env` / `eas secret:create`. A `process.env`
+  // override alone would be shadowed by any file value under this precedence —
+  // so treat this case as documenting current precedence, not the CI path.
   it('prefers the parsed .env value over process.env', () => {
     mockParsedEnv = { API_BASE_URL: 'https://from-dotenv.test' };
     const cfg = loadConfig('staging', { API_BASE_URL: 'https://from-process.test' });
     expect(extra(cfg).API_BASE_URL).toBe('https://from-dotenv.test');
+  });
+});
+
+describe('APP_ENV fallback resolution (shared resolveAppEnv)', () => {
+  // These cases drive the fallback branch of the environment resolver through
+  // the default export. app.config.ts no longer keeps a private `getAppEnv`
+  // copy — it re-uses the exported `resolveAppEnv` from withIosBuildConfig.ts
+  // (#2204), so a single tested function backs both the JS runtime surface and
+  // the native xcconfig surface. With no `ENVIRONMENT` in the parsed .env,
+  // `extra.ENVIRONMENT` reflects exactly the resolved APP_ENV.
+
+  it('falls back to production when APP_ENV is unset and NODE_ENV=production', () => {
+    const cfg = loadConfig(null, { NODE_ENV: 'production' });
+    expect(extra(cfg).ENVIRONMENT).toBe('production');
+    // Production posture propagates: debug off + iOS ATS enforces HTTPS.
+    expect(extra(cfg).DEBUG_MODE).toBe(false);
+    expect(cfg.ios?.infoPlist?.NSAppTransportSecurity).toEqual({ NSAllowsArbitraryLoads: false });
+  });
+
+  it('falls back to development when both APP_ENV and NODE_ENV are unset', () => {
+    const cfg = loadConfig(null);
+    expect(extra(cfg).ENVIRONMENT).toBe('development');
+    expect(extra(cfg).DEBUG_MODE).toBe(true);
+  });
+
+  it('treats an unrecognised APP_ENV as development', () => {
+    const cfg = loadConfig('garbage');
+    expect(extra(cfg).ENVIRONMENT).toBe('development');
+    expect(extra(cfg).DEBUG_MODE).toBe(true);
   });
 });
 
