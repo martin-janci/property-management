@@ -47,7 +47,13 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 // (ios/xcconfig/{Development,Staging,Production}.xcconfig) into the generated
 // `ios/` project at prebuild and wires it as the baseConfigurationReference of
 // every Xcode build configuration. See plugins/withIosBuildConfig.ts.
-import withIosBuildConfig from './plugins/withIosBuildConfig';
+//
+// `resolveAppEnv` is re-used here as the single source of truth for the
+// APP_ENV -> environment mapping: the JS runtime layer (this file) and the
+// native xcconfig build layer (the plugin) must never disagree about which
+// environment a build is. Previously app.config.ts kept a private byte-for-byte
+// copy (`getAppEnv`) that was untested and could silently diverge — see #2204.
+import withIosBuildConfig, { resolveAppEnv } from './plugins/withIosBuildConfig';
 // Custom Expo config plugin -- re-adds legacy storage perms with
 // maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
 import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
@@ -148,15 +154,6 @@ function resolveIconVariant(env: AppEnvironment): IconVariant {
   return resolved;
 }
 
-function getAppEnv(): AppEnvironment {
-  const raw = process.env.APP_ENV ?? '';
-  if (raw === 'staging' || raw === 'production' || raw === 'development') {
-    return raw;
-  }
-  // Fall back to NODE_ENV-based detection
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
-}
-
 /**
  * Sentinel value written into `.env.production` — must be overridden by CI
  * (e.g. eas.json `env` or `eas secret:create`) before a production build is
@@ -183,7 +180,7 @@ function hasGoogleServicesJson(): boolean {
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const appEnv = getAppEnv();
+  const appEnv = resolveAppEnv();
   const envVars = loadEnvFile(appEnv);
 
   // Resolved values — single source of truth is the `.env.<appEnv>` file loaded
