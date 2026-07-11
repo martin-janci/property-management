@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-11T20:10:58Z",
+  "archived_at": "2026-07-11T20:21:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5122,6 +5122,21 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry1",
+      "action": "[DROPPED: coverage already landed on dev 6744441dd — esignature_workflow_repo_tests.rs + webhook_repo_dedup_tests.rs; retry moot] [archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods [retry 1/2 of failed test-gap-hotfix-no-test-pr-1288-webhook-rls]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=test-gap-hotfix-no-test-pr-1288-webhook-rls reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T12:16:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T14:11:06Z",
+      "retry_of": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+      "retry_round": 1,
+      "last_updated": "2026-07-11T20:21:22Z"
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
