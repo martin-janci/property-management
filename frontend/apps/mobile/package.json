@@ -40,7 +40,7 @@
     "expo-image-picker": "~56.0.18",
     "expo-local-authentication": "~55.0.13",
     "expo-localization": "^57.0.0",
-    "expo-location": "~56.0.18",
+    "expo-location": "~57.0.2",
     "expo-notifications": "~55.0.22",
     "expo-secure-store": "~56.0.4",
     "expo-sharing": "~55.0.20",

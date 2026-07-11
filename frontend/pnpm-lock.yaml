@@ -229,8 +229,8 @@ importers:
         specifier: ^57.0.0
         version: 57.0.0(expo@56.0.12)(react@19.2.0)
       expo-location:
-        specifier: ~56.0.18
-        version: 56.0.18(expo@56.0.12)(typescript@5.9.3)
+        specifier: ~57.0.2
+        version: 57.0.2(expo@56.0.12)(typescript@5.9.3)
       expo-notifications:
         specifier: ~55.0.22
         version: 55.0.22(expo@56.0.12)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
@@ -2340,7 +2340,7 @@ packages:
       '@expo/config-plugins': 56.0.12(typescript@5.9.3)
       '@expo/devcert': 1.2.1
       '@expo/env': 2.3.1
-      '@expo/image-utils': 0.10.1(typescript@5.9.3)
+      '@expo/image-utils': 0.10.2(typescript@5.9.3)
       '@expo/inline-modules': 0.0.12(typescript@5.9.3)
       '@expo/json-file': 10.2.0
       '@expo/log-box': 56.0.13(@expo/dom-webview@56.0.6)(expo@56.0.12)(react-native@0.86.0)(react@19.2.0)
@@ -2650,8 +2650,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@expo/image-utils@0.10.1(typescript@5.9.3):
-    resolution: {integrity: sha512-YDeefvmYdihS7Wp3ESDUVnOgOSWmj2Cczm9lVNDdm4MqQLdAKm/LPYg83HtFQPfefRlAxyHrQR/O9kIXN9C1Wg==}
+  /@expo/image-utils@0.10.2(typescript@5.9.3):
+    resolution: {integrity: sha512-qQUGaacqXduoFTCUQAMceIWYzlKU0xX4/BKTyh8TdVj0uHv9/W3MfHOy5yXoOqBVrSccXk++Gm4D/NfS5HnCNA==}
     dependencies:
       '@expo/require-utils': 56.1.4(typescript@5.9.3)
       '@expo/spawn-async': 1.8.0
@@ -2663,6 +2663,21 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  /@expo/image-utils@0.11.1(typescript@5.9.3):
+    resolution: {integrity: sha512-0JueH4vdgAZQmhlSYFvTQzt4b4NO5cnByDuApw7bMUIjhwLRnT46Ki3ritMrzJMQaO2lLK2flInZbsZbOuy8nw==}
+    dependencies:
+      '@expo/require-utils': 57.0.1(typescript@5.9.3)
+      '@expo/spawn-async': 1.8.0
+      chalk: 4.1.2
+      getenv: 2.0.0
+      jimp-compact: 0.16.1
+      parse-png: 2.1.0
+      semver: 7.8.5
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: false
 
   /@expo/image-utils@0.8.14(typescript@5.9.3):
     resolution: {integrity: sha512-5Sn+jG4Cw+shC2wDMXoqSAJnvERbiwzHn05FpWtD5IBflfTIs5gUmjzwiGVyjOdlMSQhgRrw/AymPbmO9h9mpQ==}
@@ -2885,7 +2900,7 @@ packages:
       '@expo/config': 56.0.11(typescript@5.9.3)
       '@expo/config-plugins': 56.0.12(typescript@5.9.3)
       '@expo/config-types': 56.0.7
-      '@expo/image-utils': 0.10.1(typescript@5.9.3)
+      '@expo/image-utils': 0.10.2(typescript@5.9.3)
       '@expo/json-file': 10.2.0
       '@react-native/normalize-colors': 0.85.3
       debug: 4.4.3
@@ -2941,7 +2956,6 @@ packages:
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /@expo/router-server@56.0.14(expo-constants@56.0.18)(expo-font@56.0.7)(expo-server@56.0.5)(expo@56.0.12)(react@19.2.0):
     resolution: {integrity: sha512-2UCTtZfcq1ZPgp3wk8/+sq9DvFI9UxrPr1jcEKMAF2DGAJLosnpc8GWNNg2hkjt6SHUOdFHIPxujWPYyho2y3A==}
@@ -6608,7 +6622,7 @@ packages:
       react: 19.2.0
       react-native: '*'
     dependencies:
-      '@expo/image-utils': 0.10.1(typescript@5.9.3)
+      '@expo/image-utils': 0.10.2(typescript@5.9.3)
       expo: 56.0.12(@babel/core@8.0.1)(@expo/dom-webview@56.0.6)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
       expo-constants: 56.0.18(expo@56.0.12)(react-native@0.86.0)
       react: 19.2.0
@@ -6757,12 +6771,12 @@ packages:
       rtl-detect: 1.1.2
     dev: false
 
-  /expo-location@56.0.18(expo@56.0.12)(typescript@5.9.3):
-    resolution: {integrity: sha512-6xP0UwGy8a7EEHAMeigYAp3HNo3yWHAg05tVPUfwrOWepWPpFXmjsfUBUxQdkpfpjddJ9r+f4PplxZqKI0LtjA==}
+  /expo-location@57.0.2(expo@56.0.12)(typescript@5.9.3):
+    resolution: {integrity: sha512-yyize0BsBfZjgelBQdhWFH2JUh9OLJOUt7fxz73Y70nbRV2rXZ7A9r0J6jfAa9lXqH7y/GDsFLqecfTc/PcFUQ==}
     peerDependencies:
       expo: '*'
     dependencies:
-      '@expo/image-utils': 0.10.1(typescript@5.9.3)
+      '@expo/image-utils': 0.11.1(typescript@5.9.3)
       expo: 56.0.12(@babel/core@8.0.1)(@expo/dom-webview@56.0.6)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
