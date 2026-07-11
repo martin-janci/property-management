@@ -1052,6 +1052,36 @@ fn parse_refresh_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
     None
 }
 
+/// Resolve the refresh token for `/refresh` and `/logout`, preferring the
+/// HttpOnly `refresh_token` cookie and falling back to the value supplied in
+/// the JSON body.
+///
+/// Centralizes the cookie-first / body-fallback precedence that both
+/// `refresh_token()` and `logout()` previously hand-rolled as
+/// `parse_refresh_cookie(&headers).as_deref().unwrap_or(body)`. Keeping the two
+/// paths on one helper is what prevents the empty-cookie-shadow class of bug
+/// (#2205) from being fixed in one handler but not the other: because
+/// `parse_refresh_cookie` already treats a present-but-empty `refresh_token=`
+/// cookie as absent (returns `None`), resolution correctly falls through to
+/// `body_token` here.
+fn resolve_refresh_token(headers: &axum::http::HeaderMap, body_token: &str) -> String {
+    parse_refresh_cookie(headers).unwrap_or_else(|| body_token.to_string())
+}
+
+/// SHA-256 hash (hex-encoded) of a refresh token, matching the digest stored in
+/// `refresh_tokens.token_hash`.
+///
+/// Centralized so login / refresh / logout / session-lookup all hash
+/// identically — this was hand-rolled as three byte-for-byte copies of the
+/// `Sha256::new(); update(token.as_bytes()); hex::encode(finalize())` dance
+/// that all had to stay in sync.
+fn hash_refresh_token(token: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(token.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
 /// Resolve the caller's *current* refresh-token session id.
 ///
 /// Bug fix (revoke-all cookie blindness): after the P0-12 cookie migration,
@@ -1082,10 +1112,7 @@ async fn resolve_current_session_id(
         return None;
     }
 
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    hasher.update(token.as_bytes());
-    let token_hash = hex::encode(hasher.finalize());
+    let token_hash = hash_refresh_token(&token);
 
     state
         .session_repo
@@ -1127,10 +1154,7 @@ pub async fn refresh_token(
     // in the body; cookie-based clients send only the cookie and an
     // empty body. Once all clients are migrated, the body field can
     // be removed.
-    let cookie_token = parse_refresh_cookie(&headers);
-    let token_str = cookie_token
-        .as_deref()
-        .unwrap_or(req.refresh_token.as_str());
+    let token_str = resolve_refresh_token(&headers, &req.refresh_token);
     if token_str.is_empty() {
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -1142,7 +1166,7 @@ pub async fn refresh_token(
     }
 
     // Validate the refresh token JWT
-    let claims = match state.jwt_service.validate_refresh_token(token_str) {
+    let claims = match state.jwt_service.validate_refresh_token(&token_str) {
         Ok(claims) => claims,
         Err(e) => {
             tracing::debug!(error = %e, "Invalid refresh token");
@@ -1157,10 +1181,7 @@ pub async fn refresh_token(
     };
 
     // Hash the token to look it up in database
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    hasher.update(token_str.as_bytes());
-    let token_hash = hex::encode(hasher.finalize());
+    let token_hash = hash_refresh_token(&token_str);
 
     // P1-01: refresh-token rotation with replay detection (RFC 9700).
     // Look up the token *regardless of revocation status* first. If the
@@ -1434,16 +1455,10 @@ pub async fn logout(
 ) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
     use axum::response::IntoResponse;
     // P0-12 (additive): accept cookie too.
-    let cookie_token = parse_refresh_cookie(&headers);
-    let token_str = cookie_token
-        .as_deref()
-        .unwrap_or(req.refresh_token.as_str());
+    let token_str = resolve_refresh_token(&headers, &req.refresh_token);
 
     // Hash the token to look it up
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    hasher.update(token_str.as_bytes());
-    let token_hash = hex::encode(hasher.finalize());
+    let token_hash = hash_refresh_token(&token_str);
 
     // Find and revoke the token
     match state.session_repo.find_by_token_hash(&token_hash).await {
@@ -2472,7 +2487,9 @@ mod me_tests {
 
 #[cfg(test)]
 mod cookie_security_tests {
-    use super::{build_refresh_cookie, parse_refresh_cookie};
+    use super::{
+        build_refresh_cookie, hash_refresh_token, parse_refresh_cookie, resolve_refresh_token,
+    };
 
     /// P0-12 / gap-security-435-cookie-scope: default SameSite must be Strict.
     ///
@@ -2716,6 +2733,71 @@ mod cookie_security_tests {
         assert_eq!(
             resolved, body_token,
             "Valid body token must be used when the cookie is present-but-empty"
+        );
+    }
+
+    // ==================== Token-resolution helper tests ====================
+    //
+    // `resolve_refresh_token` and `hash_refresh_token` centralize the
+    // cookie-first / body-fallback precedence and the SHA-256 token hashing
+    // that `/refresh` and `/logout` (and session lookup) previously hand-rolled
+    // as duplicated inline code. The duplication was the root cause of the
+    // recent bug cluster (#2190 cookie-blindness, #2205 empty-cookie-shadow),
+    // so these tests pin the shared behavior at the resolution level, not just
+    // at the `parse_refresh_cookie` level.
+
+    /// A present, non-empty `refresh_token` cookie wins over the body token.
+    #[test]
+    fn resolve_refresh_token_prefers_cookie() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "refresh_token=cookie.jwt".parse().unwrap(),
+        );
+        assert_eq!(resolve_refresh_token(&headers, "body.jwt"), "cookie.jwt");
+    }
+
+    /// Regression (#2205): a present-but-EMPTY cookie must NOT shadow the body
+    /// token — resolution must fall through to the body value.
+    #[test]
+    fn resolve_refresh_token_empty_cookie_falls_back_to_body() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "session_id=abc; refresh_token=; other=y".parse().unwrap(),
+        );
+        assert_eq!(resolve_refresh_token(&headers, "body.jwt"), "body.jwt");
+    }
+
+    /// With no Cookie header at all, resolution uses the body token — the
+    /// pre-migration localStorage flow keeps working.
+    #[test]
+    fn resolve_refresh_token_no_cookie_uses_body() {
+        let headers = axum::http::HeaderMap::new();
+        assert_eq!(resolve_refresh_token(&headers, "body.jwt"), "body.jwt");
+    }
+
+    /// `hash_refresh_token` is a stable SHA-256 hex digest matching the value
+    /// stored in `refresh_tokens.token_hash`. Pins a known-answer vector for the
+    /// empty input plus determinism/format for a fixed token so an accidental
+    /// algorithm swap is caught before it silently breaks session lookups.
+    #[test]
+    fn hash_refresh_token_is_stable_sha256_hex() {
+        // Known-answer vector: SHA-256 of the empty string.
+        assert_eq!(
+            hash_refresh_token(""),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+        let h = hash_refresh_token("some.refresh.jwt");
+        assert_eq!(h.len(), 64, "SHA-256 hex must be 64 chars: {h}");
+        assert_eq!(
+            h,
+            hash_refresh_token("some.refresh.jwt"),
+            "hashing must be deterministic"
+        );
+        assert!(
+            h.chars().all(|c| c.is_ascii_hexdigit()),
+            "digest must be lowercase hex: {h}"
         );
     }
 }
