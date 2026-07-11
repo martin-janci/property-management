@@ -131,6 +131,9 @@ function AppNavigation() {
           {t('nav.notificationAnalytics', { defaultValue: 'Notification Analytics' })}
         </Link>
       )}
+      <Link to="/settings/integrations">
+        {t('nav.integrations', { defaultValue: 'Integrations' })}
+      </Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
       <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>
