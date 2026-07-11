@@ -2,28 +2,6 @@
   "generated": "2026-07-11T18:18:43Z",
   "assignments": [
     {
-      "task_id": "gh-issue-2195",
-      "branch": "auto-impl/gh-issue-2195-2b7bcda3",
-      "status": "review",
-      "claimed_at": "2026-07-09T10:08:39Z",
-      "last_updated": "2026-07-11T18:08:39Z",
-      "status_changed_at": "2026-07-09T10:30:56Z",
-      "pr_number": 2213,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2213",
-      "merged_at": null,
-      "specialist": "kotlin-mp",
-      "implementer_summary": "pr=2213 status=done specialist=kotlin-mp scope_drift=true code_reuse_warn=none note=owner-glob mismatch only (diff is mobile-native KMP repos per #2195); gradle verify env-blocked (403), low-risk+test-covered, formatting hand-checked vs ktfmt",
-      "reviewer_summary": "verdict=changes head_oid=88e1619023642a1bbb3201c9640e63b502fe37d4 note=lint/spotless now GREEN; build-android RED on a REAL KMP test assertion (InquiryRepositoryPathEncodingTest AssertionError, not spotless-fixable). fix_rounds=1; respawn withheld this run (gradle env-blocked 403, cannot verify a blind fix); needs a gradle-capable pass or human",
-      "last_reviewed_oid": "88e1619023642a1bbb3201c9640e63b502fe37d4",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 2,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-tests-fo-ab511ff9",
       "status": "in-progress",
