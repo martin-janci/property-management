@@ -23,12 +23,12 @@ import kotlinx.serialization.json.Json
  *
  * The [NotificationModelsContractTest] pins the raw DTO encode/decode; this pins the *behaviour
  * contract* as seen through the repository:
- *  - `GET /api/v1/notifications` on 200 decodes a [NotificationsResponse] (so the alerts list can
- *    render title/body/type/unread-count),
- *  - a 401 on the read paths maps to the user-facing "Please sign in …" [NotificationException]
- *    while `getUnreadCount` degrades a 401 to a silent `0` (badge stays hidden for signed-out
- *    users),
- *  - `markAsRead` POSTs to `/{id}/read` and surfaces a non-2xx as a [NotificationException].
+ * - `GET /api/v1/notifications` on 200 decodes a [NotificationsResponse] (so the alerts list can
+ *   render title/body/type/unread-count),
+ * - a 401 on the read paths maps to the user-facing "Please sign in …" [NotificationException]
+ *   while `getUnreadCount` degrades a 401 to a silent `0` (badge stays hidden for signed-out
+ *   users),
+ * - `markAsRead` POSTs to `/{id}/read` and surfaces a non-2xx as a [NotificationException].
  */
 class NotificationRepositoryTest {
 
