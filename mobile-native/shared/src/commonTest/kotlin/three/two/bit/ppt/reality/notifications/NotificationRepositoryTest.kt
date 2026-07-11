@@ -120,7 +120,12 @@ class NotificationRepositoryTest {
     @Test
     fun getNotifications_maps_401_to_sign_in_failure() = runTest {
         val cap = Captured()
-        val repo = repoCapturing(cap, HttpStatusCode.Unauthorized, """{"error":"unauthenticated"}""")
+        val repo =
+            repoCapturing(
+                cap,
+                HttpStatusCode.Unauthorized,
+                """{"error":"unauthenticated"}""",
+            )
 
         val result = repo.getNotifications()
 
@@ -164,7 +169,12 @@ class NotificationRepositoryTest {
     @Test
     fun getUnreadCount_degrades_401_to_zero() = runTest {
         val cap = Captured()
-        val repo = repoCapturing(cap, HttpStatusCode.Unauthorized, """{"error":"unauthenticated"}""")
+        val repo =
+            repoCapturing(
+                cap,
+                HttpStatusCode.Unauthorized,
+                """{"error":"unauthenticated"}""",
+            )
 
         val result = repo.getUnreadCount()
 
