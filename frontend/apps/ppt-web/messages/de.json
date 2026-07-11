@@ -63,7 +63,8 @@
     "privacy": "Datenschutz",
     "admin": "Administration",
     "aiChat": "KI-Assistent",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integrationen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -1045,6 +1046,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integrationen",
+      "subtitle": "Verbinden Sie externe Buchungskanäle, um Inserate und Reservierungen zu synchronisieren.",
+      "noOrganization": "Für Ihr Konto ist keine Organisation ausgewählt, daher können Integrationen nicht verwaltet werden.",
+      "status": {
+        "checking": "Wird geprüft…",
+        "connected": "Verbunden",
+        "notConnected": "Nicht verbunden"
+      },
+      "common": {
+        "lastSync": "Letzte Synchronisierung",
+        "reservations": "Reservierungen",
+        "lastSyncError": "Fehler bei der letzten Synchronisierung: {{error}}",
+        "syncNow": "Jetzt synchronisieren",
+        "syncing": "Wird synchronisiert…",
+        "disconnect": "Trennen",
+        "disconnecting": "Wird getrennt…",
+        "itemsSynced": "{{items}} Element(e) synchronisiert.",
+        "syncIncomplete": "Die Synchronisierung wurde nicht abgeschlossen.",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "Über OAuth verbundener Kanal für Kurzzeitmiet-Inserate und -Reservierungen.",
+        "loadError": "Airbnb-Status konnte nicht geladen werden.",
+        "account": "Konto",
+        "listings": "Inserate",
+        "connect": "Airbnb verbinden",
+        "redirecting": "Weiterleitung…",
+        "mappings": {
+          "title": "Inserat-Zuordnungen",
+          "loading": "Inserate werden geladen…",
+          "empty": "Noch keine Airbnb-Inserate zugeordnet.",
+          "active": "Aktiv",
+          "inactive": "Inaktiv"
+        },
+        "toast": {
+          "connectFailedTitle": "Airbnb-Verbindung konnte nicht gestartet werden",
+          "syncedTitle": "Airbnb synchronisiert",
+          "syncFailedTitle": "Airbnb-Synchronisierung fehlgeschlagen",
+          "disconnectedTitle": "Airbnb getrennt",
+          "disconnectedMessage": "Die Airbnb-Integration wurde entfernt.",
+          "disconnectFailedTitle": "Airbnb konnte nicht getrennt werden"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Supply-XML-Kanal für Verfügbarkeit, Preise und Reservierungen von Kurzzeitmieten.",
+        "loadError": "Booking.com-Status konnte nicht geladen werden.",
+        "hotelId": "Hotel-ID",
+        "properties": "Objekte",
+        "connect": "Booking.com verbinden",
+        "conflicts": "{{count}} plattformübergreifende Reservierungskonflikt(e) erkannt.",
+        "conflictsTruncated": " Die Ergebnisse sind möglicherweise unvollständig.",
+        "wizard": {
+          "title": "Ordnen Sie Ihr Objekt Booking.com zu",
+          "username": "Supply-XML-Benutzername",
+          "password": "Supply-XML-Passwort",
+          "connect": "Verbinden",
+          "connecting": "Wird verbunden…",
+          "cancel": "Abbrechen"
+        },
+        "toast": {
+          "connectedTitle": "Booking.com verbunden",
+          "connectFailedTitle": "Booking.com konnte nicht verbunden werden",
+          "syncedTitle": "Booking.com synchronisiert",
+          "syncFailedTitle": "Booking.com-Synchronisierung fehlgeschlagen",
+          "disconnectedTitle": "Booking.com getrennt",
+          "disconnectFailedTitle": "Booking.com konnte nicht getrennt werden"
+        }
+      }
+    },
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
@@ -1302,10 +1375,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Zu Integrationen"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Airbnb- und Booking.com-Kanäle verbinden und Synchronisierung verwalten"
     }
   },
   "sentiment": {

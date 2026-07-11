@@ -63,7 +63,8 @@
     "privacy": "Soukromí",
     "admin": "Administrace",
     "aiChat": "AI asistent",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integrace"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -1096,6 +1097,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integrace",
+      "subtitle": "Připojte externí rezervační kanály pro synchronizaci nabídek a rezervací.",
+      "noOrganization": "Pro váš účet není vybrána žádná organizace, proto nelze integrace spravovat.",
+      "status": {
+        "checking": "Probíhá kontrola…",
+        "connected": "Připojeno",
+        "notConnected": "Nepřipojeno"
+      },
+      "common": {
+        "lastSync": "Poslední synchronizace",
+        "reservations": "Rezervace",
+        "lastSyncError": "Chyba poslední synchronizace: {{error}}",
+        "syncNow": "Synchronizovat nyní",
+        "syncing": "Probíhá synchronizace…",
+        "disconnect": "Odpojit",
+        "disconnecting": "Probíhá odpojování…",
+        "itemsSynced": "Synchronizováno položek: {{items}}.",
+        "syncIncomplete": "Synchronizace nebyla dokončena.",
+        "unexpectedError": "Došlo k neočekávané chybě."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "Kanál připojený přes OAuth pro nabídky a rezervace krátkodobých pronájmů.",
+        "loadError": "Nepodařilo se načíst stav Airbnb.",
+        "account": "Účet",
+        "listings": "Nabídky",
+        "connect": "Připojit Airbnb",
+        "redirecting": "Přesměrování…",
+        "mappings": {
+          "title": "Přiřazení nabídek",
+          "loading": "Načítání nabídek…",
+          "empty": "Zatím nejsou přiřazeny žádné nabídky Airbnb.",
+          "active": "Aktivní",
+          "inactive": "Neaktivní"
+        },
+        "toast": {
+          "connectFailedTitle": "Nepodařilo se spustit připojení k Airbnb",
+          "syncedTitle": "Airbnb synchronizováno",
+          "syncFailedTitle": "Synchronizace Airbnb selhala",
+          "disconnectedTitle": "Airbnb odpojeno",
+          "disconnectedMessage": "Integrace Airbnb byla odstraněna.",
+          "disconnectFailedTitle": "Nepodařilo se odpojit Airbnb"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Kanál Supply-XML pro dostupnost, ceny a rezervace krátkodobých pronájmů.",
+        "loadError": "Nepodařilo se načíst stav Booking.com.",
+        "hotelId": "ID hotelu",
+        "properties": "Nemovitosti",
+        "connect": "Připojit Booking.com",
+        "conflicts": "Zjištěny konflikty rezervací mezi platformami: {{count}}.",
+        "conflictsTruncated": " Výsledky mohou být neúplné.",
+        "wizard": {
+          "title": "Přiřaďte svou nemovitost k Booking.com",
+          "username": "Uživatelské jméno Supply-XML",
+          "password": "Heslo Supply-XML",
+          "connect": "Připojit",
+          "connecting": "Připojování…",
+          "cancel": "Zrušit"
+        },
+        "toast": {
+          "connectedTitle": "Booking.com připojeno",
+          "connectFailedTitle": "Nepodařilo se připojit Booking.com",
+          "syncedTitle": "Booking.com synchronizováno",
+          "syncFailedTitle": "Synchronizace Booking.com selhala",
+          "disconnectedTitle": "Booking.com odpojeno",
+          "disconnectFailedTitle": "Nepodařilo se odpojit Booking.com"
+        }
+      }
+    },
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
@@ -1353,10 +1426,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Přejít na Integrace"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Připojte kanály Airbnb a Booking.com a spravujte synchronizaci"
     }
   },
   "documentTemplates": {
