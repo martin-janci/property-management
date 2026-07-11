@@ -1131,6 +1131,13 @@ pub async fn handle_portal_webhook(
         )
     })?;
 
+    // FOLLOW-UP (issue #2196, replay-protection): HMAC verification above proves
+    // authenticity but not freshness — a captured valid request can be replayed.
+    // Harmless while this handler only parses and returns 200 (no state mutation).
+    // Before wiring this receiver to act on the payload, add a signed-timestamp
+    // tolerance window (e.g. an `X-Webhook-Timestamp` folded into the HMAC input
+    // with a max-skew check) and/or idempotency-key dedup, consistent with the
+    // Airbnb/Stripe receivers.
     Ok(StatusCode::OK)
 }
 
