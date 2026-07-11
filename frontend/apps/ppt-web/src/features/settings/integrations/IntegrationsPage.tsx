@@ -36,6 +36,7 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
 import { useAuth } from '../../../contexts';
 
@@ -56,6 +57,7 @@ function formatDate(value: string | null | undefined): string {
  * reservation conflicts detected by the backend.
  */
 const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organizationId }) => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const status = useBookingStatus(organizationId);
   const connectBooking = useConnectBooking(organizationId);
@@ -86,15 +88,18 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
       });
       showToast({
         type: res.success ? 'success' : 'error',
-        title: res.success ? 'Booking.com connected' : 'Could not connect Booking.com',
+        title: res.success
+          ? t('settings.integrations.booking.toast.connectedTitle')
+          : t('settings.integrations.booking.toast.connectFailedTitle'),
         message: res.message,
       });
       if (res.success) resetWizard();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Could not connect Booking.com',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.booking.toast.connectFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -104,16 +109,19 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
       const res = await syncBooking.mutateAsync();
       showToast({
         type: res.success ? 'success' : 'error',
-        title: res.success ? 'Booking.com synced' : 'Booking.com sync failed',
+        title: res.success
+          ? t('settings.integrations.booking.toast.syncedTitle')
+          : t('settings.integrations.booking.toast.syncFailedTitle'),
         message: res.success
-          ? `${res.items_synced} item(s) synced.`
-          : (res.error ?? 'The sync did not complete.'),
+          ? t('settings.integrations.common.itemsSynced', { items: res.items_synced })
+          : (res.error ?? t('settings.integrations.common.syncIncomplete')),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Booking.com sync failed',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.booking.toast.syncFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -123,14 +131,17 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
       const res = await disconnectBooking.mutateAsync();
       showToast({
         type: res.success ? 'success' : 'error',
-        title: res.success ? 'Booking.com disconnected' : 'Could not disconnect Booking.com',
+        title: res.success
+          ? t('settings.integrations.booking.toast.disconnectedTitle')
+          : t('settings.integrations.booking.toast.disconnectFailedTitle'),
         message: res.message,
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Could not disconnect Booking.com',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.booking.toast.disconnectFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -149,43 +160,45 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
             >
               B
             </span>
-            Booking.com
+            {t('settings.integrations.booking.name', { defaultValue: 'Booking.com' })}
           </h2>
-          <p className="text-sm text-gray-500">
-            Supply-XML channel for short-term rental availability, rates and reservations.
-          </p>
+          <p className="text-sm text-gray-500">{t('settings.integrations.booking.description')}</p>
         </div>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
             connected ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
           }`}
         >
-          {status.isLoading ? 'Checking…' : connected ? 'Connected' : 'Not connected'}
+          {status.isLoading
+            ? t('settings.integrations.status.checking')
+            : connected
+              ? t('settings.integrations.status.connected')
+              : t('settings.integrations.status.notConnected')}
         </span>
       </div>
 
       {status.isError && (
         <div className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
-          Could not load Booking.com status.
+          {t('settings.integrations.booking.loadError')}
         </div>
       )}
 
       {connected && status.data && (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
           <div>
-            <dt className="text-gray-500">Hotel ID</dt>
+            <dt className="text-gray-500">{t('settings.integrations.booking.hotelId')}</dt>
             <dd className="font-medium text-gray-900">{status.data.hotel_id ?? '—'}</dd>
           </div>
           <div>
-            <dt className="text-gray-500">Last sync</dt>
+            <dt className="text-gray-500">{t('settings.integrations.common.lastSync')}</dt>
             <dd className="font-medium text-gray-900">{formatDate(status.data.last_sync_at)}</dd>
           </div>
           <div>
-            <dt className="text-gray-500">Properties</dt>
+            <dt className="text-gray-500">{t('settings.integrations.booking.properties')}</dt>
             <dd className="font-medium text-gray-900">{status.data.properties_count}</dd>
           </div>
           <div>
-            <dt className="text-gray-500">Reservations</dt>
+            <dt className="text-gray-500">{t('settings.integrations.common.reservations')}</dt>
             <dd className="font-medium text-gray-900">{status.data.reservations_count}</dd>
           </div>
         </dl>
@@ -193,24 +206,26 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
 
       {connected && status.data?.sync_error && (
         <div className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
-          Last sync error: {status.data.sync_error}
+          {t('settings.integrations.common.lastSyncError', { error: status.data.sync_error })}
         </div>
       )}
 
       {connected && conflictCount > 0 && (
         <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800" role="alert">
-          {conflictCount} cross-platform reservation conflict(s) detected.
-          {conflicts.data?.truncated ? ' Results may be incomplete.' : ''}
+          {t('settings.integrations.booking.conflicts', { count: conflictCount })}
+          {conflicts.data?.truncated ? t('settings.integrations.booking.conflictsTruncated') : ''}
         </div>
       )}
 
       {/* Property mapping wizard (connect form) */}
       {!connected && showWizard && (
         <form onSubmit={handleConnect} className="space-y-3 rounded-md bg-gray-50 p-4">
-          <p className="text-sm font-medium text-gray-700">Map your property to Booking.com</p>
+          <p className="text-sm font-medium text-gray-700">
+            {t('settings.integrations.booking.wizard.title')}
+          </p>
           <div>
             <label htmlFor="booking-hotel-id" className="block text-xs font-medium text-gray-600">
-              Hotel ID
+              {t('settings.integrations.booking.hotelId')}
             </label>
             <input
               id="booking-hotel-id"
@@ -223,7 +238,7 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
           </div>
           <div>
             <label htmlFor="booking-username" className="block text-xs font-medium text-gray-600">
-              Supply-XML username
+              {t('settings.integrations.booking.wizard.username')}
             </label>
             <input
               id="booking-username"
@@ -236,7 +251,7 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
           </div>
           <div>
             <label htmlFor="booking-password" className="block text-xs font-medium text-gray-600">
-              Supply-XML password
+              {t('settings.integrations.booking.wizard.password')}
             </label>
             <input
               id="booking-password"
@@ -253,14 +268,16 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
               disabled={!canSubmit || connectBooking.isPending}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {connectBooking.isPending ? 'Connecting…' : 'Connect'}
+              {connectBooking.isPending
+                ? t('settings.integrations.booking.wizard.connecting')
+                : t('settings.integrations.booking.wizard.connect')}
             </button>
             <button
               type="button"
               onClick={resetWizard}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Cancel
+              {t('settings.integrations.booking.wizard.cancel')}
             </button>
           </div>
         </form>
@@ -275,7 +292,7 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
               disabled={!organizationId}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              Connect Booking.com
+              {t('settings.integrations.booking.connect')}
             </button>
           )
         ) : (
@@ -286,7 +303,9 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
               disabled={syncBooking.isPending}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {syncBooking.isPending ? 'Syncing…' : 'Sync now'}
+              {syncBooking.isPending
+                ? t('settings.integrations.common.syncing')
+                : t('settings.integrations.common.syncNow')}
             </button>
             <button
               type="button"
@@ -294,7 +313,9 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
               disabled={disconnectBooking.isPending}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              {disconnectBooking.isPending ? 'Disconnecting…' : 'Disconnect'}
+              {disconnectBooking.isPending
+                ? t('settings.integrations.common.disconnecting')
+                : t('settings.integrations.common.disconnect')}
             </button>
           </>
         )}
@@ -304,6 +325,7 @@ const BookingIntegrationCard: React.FC<{ organizationId: string }> = ({ organiza
 };
 
 export const IntegrationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? '';
@@ -318,16 +340,25 @@ export const IntegrationsPage: React.FC = () => {
 
   const handleConnect = async () => {
     try {
-      const res = await connectAirbnb.mutateAsync({
-        redirect_uri: `${window.location.origin}/settings/integrations`,
-      });
+      // The Airbnb OAuth callback is backend-owned: the browser is redirected
+      // to `GET /api/v1/integrations/organizations/{org}/airbnb/callback`, which
+      // exchanges the code and verifies+consumes the single-use, server-bound
+      // CSRF `state` (issued server-side in the connect handler and stored in
+      // Redis — see backend routes/integrations/oauth.rs::airbnb_oauth_callback).
+      // We therefore must NOT pass a frontend-origin `redirect_uri` (that would
+      // land the browser on this page with an unhandled `?code=&state=` and skip
+      // the token exchange), and we deliberately do not persist `res.state` —
+      // CSRF verification happens on the server, not the client. Omitting
+      // `redirect_uri` lets the backend use its configured callback URL.
+      const res = await connectAirbnb.mutateAsync({});
       // Backend returns the OAuth authorize URL; hand off to Airbnb.
       window.location.href = res.auth_url;
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Could not start Airbnb connection',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.airbnb.toast.connectFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -337,16 +368,19 @@ export const IntegrationsPage: React.FC = () => {
       const res = await syncAirbnb.mutateAsync();
       showToast({
         type: res.success ? 'success' : 'error',
-        title: res.success ? 'Airbnb synced' : 'Airbnb sync failed',
+        title: res.success
+          ? t('settings.integrations.airbnb.toast.syncedTitle')
+          : t('settings.integrations.airbnb.toast.syncFailedTitle'),
         message: res.success
-          ? `${res.items_synced} item(s) synced.`
-          : (res.error ?? 'The sync did not complete.'),
+          ? t('settings.integrations.common.itemsSynced', { items: res.items_synced })
+          : (res.error ?? t('settings.integrations.common.syncIncomplete')),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Airbnb sync failed',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.airbnb.toast.syncFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -356,14 +390,15 @@ export const IntegrationsPage: React.FC = () => {
       await disconnectAirbnb.mutateAsync();
       showToast({
         type: 'success',
-        title: 'Airbnb disconnected',
-        message: 'The Airbnb integration has been removed.',
+        title: t('settings.integrations.airbnb.toast.disconnectedTitle'),
+        message: t('settings.integrations.airbnb.toast.disconnectedMessage'),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Could not disconnect Airbnb',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('settings.integrations.airbnb.toast.disconnectFailedTitle'),
+        message:
+          err instanceof Error ? err.message : t('settings.integrations.common.unexpectedError'),
       });
     }
   };
@@ -371,9 +406,11 @@ export const IntegrationsPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <header>
-        <h1 className="text-2xl font-bold">Integrations</h1>
+        <h1 className="text-2xl font-bold">
+          {t('settings.integrations.title', { defaultValue: 'Integrations' })}
+        </h1>
         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Connect external booking channels to sync listings and reservations.
+          {t('settings.integrations.subtitle')}
         </p>
       </header>
 
@@ -382,7 +419,7 @@ export const IntegrationsPage: React.FC = () => {
           className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800"
           role="alert"
         >
-          No organization is selected for your account, so integrations cannot be managed.
+          {t('settings.integrations.noOrganization')}
         </div>
       )}
 
@@ -397,45 +434,47 @@ export const IntegrationsPage: React.FC = () => {
               >
                 A
               </span>
-              Airbnb
+              {t('settings.integrations.airbnb.name', { defaultValue: 'Airbnb' })}
             </h2>
-            <p className="text-sm text-gray-500">
-              OAuth-connected channel for short-term rental listings and reservations.
-            </p>
+            <p className="text-sm text-gray-500">{t('settings.integrations.airbnb.description')}</p>
           </div>
           <span
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
               connected ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
             }`}
           >
-            {status.isLoading ? 'Checking…' : connected ? 'Connected' : 'Not connected'}
+            {status.isLoading
+              ? t('settings.integrations.status.checking')
+              : connected
+                ? t('settings.integrations.status.connected')
+                : t('settings.integrations.status.notConnected')}
           </span>
         </div>
 
         {status.isError && (
           <div className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
-            Could not load Airbnb status.
+            {t('settings.integrations.airbnb.loadError')}
           </div>
         )}
 
         {connected && status.data && (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
             <div>
-              <dt className="text-gray-500">Account</dt>
+              <dt className="text-gray-500">{t('settings.integrations.airbnb.account')}</dt>
               <dd className="font-medium text-gray-900">
                 {status.data.external_account_id ?? '—'}
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Last sync</dt>
+              <dt className="text-gray-500">{t('settings.integrations.common.lastSync')}</dt>
               <dd className="font-medium text-gray-900">{formatDate(status.data.last_sync_at)}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">Listings</dt>
+              <dt className="text-gray-500">{t('settings.integrations.airbnb.listings')}</dt>
               <dd className="font-medium text-gray-900">{status.data.listings_count}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">Reservations</dt>
+              <dt className="text-gray-500">{t('settings.integrations.common.reservations')}</dt>
               <dd className="font-medium text-gray-900">{status.data.reservations_count}</dd>
             </div>
           </dl>
@@ -443,7 +482,7 @@ export const IntegrationsPage: React.FC = () => {
 
         {connected && status.data?.sync_error && (
           <div className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
-            Last sync error: {status.data.sync_error}
+            {t('settings.integrations.common.lastSyncError', { error: status.data.sync_error })}
           </div>
         )}
 
@@ -455,7 +494,9 @@ export const IntegrationsPage: React.FC = () => {
               disabled={!organizationId || connectAirbnb.isPending}
               className="rounded-md bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
             >
-              {connectAirbnb.isPending ? 'Redirecting…' : 'Connect Airbnb'}
+              {connectAirbnb.isPending
+                ? t('settings.integrations.airbnb.redirecting')
+                : t('settings.integrations.airbnb.connect')}
             </button>
           ) : (
             <>
@@ -465,7 +506,9 @@ export const IntegrationsPage: React.FC = () => {
                 disabled={syncAirbnb.isPending}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {syncAirbnb.isPending ? 'Syncing…' : 'Sync now'}
+                {syncAirbnb.isPending
+                  ? t('settings.integrations.common.syncing')
+                  : t('settings.integrations.common.syncNow')}
               </button>
               <button
                 type="button"
@@ -473,7 +516,9 @@ export const IntegrationsPage: React.FC = () => {
                 disabled={disconnectAirbnb.isPending}
                 className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                {disconnectAirbnb.isPending ? 'Disconnecting…' : 'Disconnect'}
+                {disconnectAirbnb.isPending
+                  ? t('settings.integrations.common.disconnecting')
+                  : t('settings.integrations.common.disconnect')}
               </button>
             </>
           )}
@@ -481,11 +526,17 @@ export const IntegrationsPage: React.FC = () => {
 
         {connected && (
           <div className="pt-2">
-            <h3 className="text-sm font-semibold text-gray-700">Listing mappings</h3>
+            <h3 className="text-sm font-semibold text-gray-700">
+              {t('settings.integrations.airbnb.mappings.title')}
+            </h3>
             {listings.isLoading ? (
-              <p className="text-sm text-gray-500">Loading listings…</p>
+              <p className="text-sm text-gray-500">
+                {t('settings.integrations.airbnb.mappings.loading')}
+              </p>
             ) : (listings.data?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No Airbnb listings mapped yet.</p>
+              <p className="text-sm text-gray-500">
+                {t('settings.integrations.airbnb.mappings.empty')}
+              </p>
             ) : (
               <ul className="mt-2 divide-y divide-gray-100 rounded-md border border-gray-100">
                 {listings.data?.map((mapping) => (
@@ -495,7 +546,9 @@ export const IntegrationsPage: React.FC = () => {
                   >
                     <span className="font-medium text-gray-900">{mapping.unit_name}</span>
                     <span className={mapping.is_active ? 'text-green-600' : 'text-gray-400'}>
-                      {mapping.is_active ? 'Active' : 'Inactive'}
+                      {mapping.is_active
+                        ? t('settings.integrations.airbnb.mappings.active')
+                        : t('settings.integrations.airbnb.mappings.inactive')}
                     </span>
                   </li>
                 ))}
