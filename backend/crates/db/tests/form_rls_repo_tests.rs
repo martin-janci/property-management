@@ -319,21 +319,13 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     }
 
     // --- Cleanup ---
-    set_ctx(&pool, None, None, true).await;
+    // Reuse the shared `drop_rls_role` helper (it re-establishes the super
+    // context, then REVOKEs every grant this test made + DROPs the role) so
+    // the REVOKE list lives in exactly one place — the write-path test below
+    // already goes through it. Keeping a hand-inlined copy here meant any new
+    // form table had to be added to the grant list twice.
     let _ = (form_b, user_b); // seeded for symmetry
-    for stmt in [
-        format!(
-            "REVOKE ALL ON forms, form_fields, form_submissions, form_downloads FROM \"{role}\""
-        ),
-        format!("REVOKE ALL ON organizations FROM \"{role}\""),
-        format!("REVOKE ALL ON users FROM \"{role}\""),
-        format!("DROP ROLE IF EXISTS \"{role}\""),
-    ] {
-        sqlx::query(sqlx::AssertSqlSafe(stmt))
-            .execute(&pool)
-            .await
-            .ok();
-    }
+    drop_rls_role(&pool, &role).await;
 }
 
 /// Write-path coverage for PAP-76 / issue #1369.
