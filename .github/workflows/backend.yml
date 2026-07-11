@@ -259,14 +259,41 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo check --workspace
 
-  # REQUIRED context `test`. Same always-run-and-conditionally-no-op shape as
-  # `check` (#1672). It still `needs: check` so on a backend PR it only runs
-  # after `check` passes; `changes` is pulled in transitively but listed
-  # explicitly because the step-level `if`s reference its output.
-  test:
-    runs-on: ubuntu-latest
+  # SHARDED backend tests (issue #2222).
+  # ------------------------------------
+  # `servers/api-server` owns ~197 integration test binaries (each statically
+  # links the whole server and provisions its own `#[sqlx::test]` DB), so the
+  # old single `cargo test --workspace` ran ~107-119 min — right at the
+  # `timeout --kill-after=1m 150m` ceiling. When the wrapper SIGKILLed the run,
+  # cargo blamed whichever target was in flight (observed `-p common --lib`,
+  # whose unit tests are all trivial synchronous `#[test]`s), i.e. pure
+  # wall-clock exhaustion, NOT a real failure. That wedged EVERY open backend
+  # PR on the shared `test` gate.
+  #
+  # This job fans the api-server integration test binaries out over MATRIX_COUNT
+  # parallel runners via scripts/ci-test-shard.sh (hash-partitioned by sorted
+  # position). EVERY shard — shard 0 included — now runs an identically-shaped,
+  # roughly equal-sized ~1/4 slice of those binaries and NOTHING else, so none
+  # approaches the timeout. The "everything else once" workload (all
+  # non-api-server workspace tests + api-server's lib/bins unit tests) used to
+  # ride on TOP of shard 0's partition, making shard 0 by far the heaviest
+  # shard — it tipped over its per-shard timeout (~53 min job wall) while shards
+  # 1-3 passed comfortably. That load now lives in a dedicated parallel job
+  # (`test-rest` below), off the shard hot path, so shard 0 has real headroom.
+  # This is NOT the required status context (branch protection requires exactly
+  # `test`, produced by the thin aggregator job below — one producer, per
+  # #1672); the matrix legs report `test-shard (0..N)` and skip cleanly on
+  # pure-frontend PRs.
+  test-shard:
     needs: [changes, check]
-    timeout-minutes: 180
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with MATRIX_COUNT passed to ci-test-shard.sh below.
+        shard: [0, 1, 2, 3]
     # Combining many integration-test binaries (each statically links the whole
     # server + deps) spikes peak memory during the parallel link step and the
     # runner OOM-kills the build (SIGTERM/143 with no compile error). Drop
@@ -293,9 +320,8 @@ jobs:
           --health-retries 5
       # Redis service for the WebSocket pub/sub fanout integration test
       # (issue #681). The test is marked #[ignore] because it needs a live
-      # Redis; the dedicated step below opts it in via --include-ignored
-      # with REDIS_URL pointing here. Default `cargo test --workspace`
-      # stays fast and ignored-test-skipping for the rest of the run.
+      # Redis; the dedicated step below (shard 0 only) opts it in via
+      # --include-ignored with REDIS_URL pointing here.
       redis:
         image: redis:7-alpine
         ports:
@@ -307,43 +333,34 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Required check satisfied (no backend paths changed)
-        if: needs.changes.outputs.backend != 'true'
-        run: |
-          echo "Pure-frontend PR — no backend/** changes; backend 'test' job not required to run."
-
       - uses: actions/checkout@v7
-        if: needs.changes.outputs.backend == 'true'
 
       - name: Install Rust
-        if: needs.changes.outputs.backend == 'true'
         uses: dtolnay/rust-toolchain@1.94.1
 
+      # Give each matrix leg its own cache namespace so parallel shards don't
+      # clobber one another's `Swatinem/rust-cache` entry.
       - name: Cache Cargo
-        if: needs.changes.outputs.backend == 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          key: test-shard-${{ matrix.shard }}
 
       # The voting PDF-report path (routes/voting.rs::render_pdf_report, added
       # in #1625) loads the LiberationSans TTFs from
       # `/usr/share/fonts/truetype/liberation` via `genpdf::fonts::from_files`.
       # GitHub's `ubuntu-latest` image does NOT ship `fonts-liberation`, so the
-      # `voting_report_tests` PDF E2E tests 500 on the render step and the whole
-      # `test` job goes red. Install the package the production code depends on
-      # so the tests exercise the same path they do in prod (issue #1645).
+      # `voting_report_tests` PDF E2E tests 500 on the render step. Install the
+      # package the production code depends on (issue #1645).
       - name: Install PDF report fonts
-        if: needs.changes.outputs.backend == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-liberation
 
-      # The GitHub-hosted runner's root disk fills during the link step of
-      # `cargo test --workspace` (the large workspace + test binaries), failing
-      # with "No space left on device". Reclaim the preinstalled toolchains we
-      # don't use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
+      # The GitHub-hosted runner's root disk fills during the link step of the
+      # api-server test binaries. Reclaim the preinstalled toolchains we don't
+      # use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
       - name: Free disk space
-        if: needs.changes.outputs.backend == 'true'
         run: |
           echo "Disk before cleanup:"; df -h /
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
@@ -351,62 +368,150 @@ jobs:
           sudo docker image prune --all --force >/dev/null 2>&1 || true
           echo "Disk after cleanup:"; df -h /
 
-      # Compile EVERY test target before running anything. `--no-fail-fast`
-      # (below) only governs test *execution* — a *compile* error still aborts
-      # the build at the first broken binary, so broken test files surface one
-      # per ~15-min CI cycle and get peeled one merge at a time (BIT-346).
-      # `--keep-going` makes cargo continue compiling the other independent test
-      # targets after one fails and report ALL compile errors in a single run,
-      # so a whole wave of broken files can be enumerated and fixed at once.
-      # NOTE: `--keep-going` is NOT accepted by `cargo test` in this toolchain
-      # (arg-parse error). `cargo build --workspace --tests --keep-going`
-      # compiles the same test targets (`--tests` => lib/bins-as-unittests +
-      # integration tests) and supports `--keep-going`.
-      - name: Compile all test targets (enumerate every compile failure)
-        if: needs.changes.outputs.backend == 'true'
+      # Run this shard's slice. The script only compiles the test binaries it
+      # selects (via `cargo test --test <name> ...`), so per-shard compile+link
+      # cost is a fraction of the old `--workspace` build too. Semantics kept
+      # from the monolith: --no-fail-fast (report every failing binary in one
+      # run, PAP-123), --test-threads=4 (cap concurrency to avoid Postgres pool
+      # exhaustion / silent hangs, BIT-334), and a per-invocation
+      # `timeout --kill-after=1m 120m` (SIGKILL a genuinely hung test — a hung
+      # cargo test process ignores SIGTERM, SIGKILL cannot be ignored).
+      - name: Run tests (shard ${{ matrix.shard }} of 4)
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
-        run: cargo build --workspace --tests --keep-going
+        run: ./scripts/ci-test-shard.sh ${{ matrix.shard }} 4 || { echo "::error::Backend test shard ${{ matrix.shard }} timed out or failed (exit $?)"; exit 1; }
 
-      - name: Run tests
-        if: needs.changes.outputs.backend == 'true'
-        working-directory: backend
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
-          RUST_ENV: development
-        # --no-fail-fast: report every failing test binary in one run.
-        # Without it, one red binary masks all later ones (alphabetical
-        # order), so the gate peels failures one merge at a time (PAP-123).
-        # --test-threads=4: cap concurrent test binaries to avoid Postgres
-        # connection pool exhaustion that causes silent 4h+ hangs (BIT-334).
-        # Each #[sqlx::test] provisions its own DB and runs the full migration
-        # set; capping concurrency also reduces the DB-create/migrate/app-pool
-        # contention that induced spurious 500s on the consolidated suite.
-        # timeout --kill-after=1m 150m: SIGTERM at 150m, SIGKILL 1m later.
-        # Both job-level timeout-minutes and plain `timeout` failed to stop
-        # a hung cargo test binary (observed: test process ignores SIGTERM).
-        # SIGKILL cannot be ignored by any process.
-        run: timeout --kill-after=1m 150m cargo test --workspace --no-fail-fast -- --test-threads=4 || { echo "::error::Tests timed out or failed (exit $?)"; exit 1; }
-
-      # WS pub/sub fanout — closes issue #681. The test
-      # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
-      # api-server/tests/ws_integration_tests.rs is marked `#[ignore]`
-      # because it requires a real Redis to exercise the actual pub/sub
-      # delivery path (the core value of the WebSocket push feature; the
-      # other 9 tests in that file only cover JWT + HTTP-upgrade
-      # mechanics). The Redis service container above provides the live
-      # instance; `--include-ignored` opts it in without un-ignoring it
-      # in source — local runs without REDIS_URL still skip it.
+      # WS pub/sub fanout — closes issue #681. `ws_pubsub_fanout_delivers_to_
+      # correct_subscriber` (api-server/tests/ws_integration_tests.rs) is
+      # `#[ignore]` because it needs a live Redis. Run it once, on shard 0,
+      # with --include-ignored against the Redis service above (local runs
+      # without REDIS_URL still skip it).
       - name: Run ignored WS+Redis integration tests
-        if: needs.changes.outputs.backend == 'true'
+        if: matrix.shard == 0
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           REDIS_URL: redis://localhost:6379
           RUST_ENV: development
         run: cargo test -p api-server --test ws_integration_tests -- --include-ignored
+
+  # Non-shard test leg (issue #2222 rebalance). Runs everything that is NOT an
+  # api-server integration test binary, exactly once: all non-api-server
+  # workspace tests (`--workspace --exclude api-server`) plus api-server's own
+  # lib/bins unit tests. This is the "everything else once" workload that used
+  # to ride on shard 0 and overload it; hosting it in its own parallel runner
+  # lets every `test-shard` leg carry only its equal-sized integration slice.
+  # Like the shards, this is NOT the required context — the aggregator `test`
+  # job below gates on it too (so coverage stays exactly-once, no false green,
+  # #1672) and it skips cleanly on pure-frontend PRs.
+  test-rest:
+    needs: [changes, check]
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    # Same peak-memory mitigations as test-shard: drop test/dev debuginfo and
+    # cap concurrent link jobs so the parallel link step stays under the
+    # runner's memory ceiling (no OOM SIGTERM/143 with no compile error).
+    env:
+      CARGO_PROFILE_TEST_DEBUG: "0"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_BUILD_JOBS: "2"
+
+    services:
+      # Non-api-server crates (reality-server, accounting-server, deploy-server,
+      # library crates) provision their own `#[sqlx::test]` databases against
+      # this Postgres, same as the shard job.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+
+      # Own cache namespace so this leg doesn't clobber a shard's cache entry.
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+          key: test-rest
+
+      # Parity with test-shard: the voting PDF-report path needs the Liberation
+      # TTFs, and some non-api-server crates exercise shared render helpers.
+      - name: Install PDF report fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-liberation
+
+      # Same disk-exhaustion guard as test-shard — the link step of the
+      # workspace test binaries fills the runner's root disk.
+      - name: Free disk space
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          echo "Disk after cleanup:"; df -h /
+
+      # Everything that is NOT an api-server integration binary, exactly once.
+      - name: Run tests (non-shard leg)
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+          RUST_ENV: development
+        run: ./scripts/ci-test-shard.sh rest || { echo "::error::Backend non-shard test leg timed out or failed (exit $?)"; exit 1; }
+
+  # REQUIRED context `test`. Produced by EXACTLY ONE job (#1672). It is a thin
+  # aggregator over the `test-shard` matrix + the `test-rest` leg: `if:
+  # always()`-style so the context is emitted on EVERY PR shape (backend, mixed,
+  # pure-frontend), and it fails red iff `check`, any shard, or the non-shard
+  # leg did not succeed. Keeping the heavy legs in separate (non-required) jobs
+  # and gating the single required context here preserves the
+  # one-producer-per-required-context invariant while giving the heavy work real
+  # parallel headroom.
+  test:
+    needs: [changes, check, test-shard, test-rest]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Required check satisfied (no backend paths changed)
+        if: needs.changes.outputs.backend != 'true'
+        run: |
+          echo "Pure-frontend PR — no backend/** changes; backend 'test' job not required to run."
+
+      - name: Aggregate backend test shard results
+        if: needs.changes.outputs.backend == 'true'
+        run: |
+          echo "check result:      ${{ needs.check.result }}"
+          echo "test-shard result: ${{ needs.test-shard.result }}"
+          echo "test-rest result:  ${{ needs.test-rest.result }}"
+          if [ "${{ needs.check.result }}" != "success" ]; then
+            echo "::error::Upstream 'check' job did not succeed (${{ needs.check.result }}); failing required 'test' context."
+            exit 1
+          fi
+          if [ "${{ needs.test-shard.result }}" != "success" ]; then
+            echo "::error::One or more backend test shards did not succeed (${{ needs.test-shard.result }})."
+            exit 1
+          fi
+          if [ "${{ needs.test-rest.result }}" != "success" ]; then
+            echo "::error::Backend non-shard test leg (test-rest) did not succeed (${{ needs.test-rest.result }})."
+            exit 1
+          fi
+          echo "All backend test shards and the non-shard leg passed."
 
   build:
     runs-on: ubuntu-latest
