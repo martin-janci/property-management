@@ -205,7 +205,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
     // The pgvector wrapper falls back to the same path when the SQL function
     // is absent (CI), so it must return the same top hit.
     let via_wrapper = repo
-        .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5))
+        .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5), None)
         .await
         .expect("pgvector wrapper search");
     assert_eq!(
@@ -345,6 +345,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             0,
             "original chunk text",
             &[1.0, 0.0, 0.0],
+            "test-model-v1",
             serde_json::json!({"rev": 1}),
         )
         .await
@@ -358,6 +359,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             0,
             "revised chunk text",
             &[0.0, 1.0, 0.0],
+            "test-model-v1",
             serde_json::json!({"rev": 2}),
         )
         .await
@@ -379,6 +381,12 @@ async fn rag_retrieval_correctness(pool: PgPool) {
         Some(&[0.0_f32, 1.0, 0.0][..])
     );
     assert_eq!(chunks[0].metadata["rev"], 2);
+    // Provenance (#2201): the model that produced the vector is folded into
+    // metadata on upsert so retrieval can filter to a single embedding space.
+    assert_eq!(
+        chunks[0].metadata["embedding_model"], "test-model-v1",
+        "upsert must persist embedding provenance into metadata"
+    );
 
     // A different chunk_index for the same document inserts a new row.
     let third_id = repo
@@ -389,6 +397,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             1,
             "second chunk",
             &[0.0, 0.0, 1.0],
+            "test-model-v1",
             serde_json::json!({}),
         )
         .await
