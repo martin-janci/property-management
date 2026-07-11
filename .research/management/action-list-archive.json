@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-11T14:17:49Z",
+  "archived_at": "2026-07-11T18:10:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -625,6 +625,30 @@
       "depends_on": []
     },
     {
+      "id": "bug-refresh-empty-cookie-shadows-body-token",
+      "action": "/refresh and /logout — empty refresh_token cookie shadows valid body token",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2205,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
       "id": "bug-report-schedule-update-no-cron-column",
       "action": "Report schedule cron edits round-trip through the overloaded `time` field; add a dedicated cron_expression column + migration and route schedule update through it (issue #616, story 81-1).",
       "owner_role": "pm-backend",
@@ -640,6 +664,30 @@
         "merged_at": null,
         "at": "2026-06-04T15:42:46Z",
         "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "bug-revoke-all-sessions-cookie-blindness",
+      "action": "revoke_all_sessions ignores refresh cookie — signs the caller out too",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=3 conf=high vector=bug) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T04:07:55Z",
+      "backlog_ref": {
+        "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2190,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
       }
     },
     {
@@ -4103,6 +4151,87 @@
       "gc1_closed": "merged PR #2175 (dispatcher merge-confirm)"
     },
     {
+      "id": "gh-issue-2196",
+      "action": "Follow-up: provision PORTAL_WEBHOOK_SECRET + replay-protection note for portal webhook receiver (PR #2182) (Closes #2196)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2196) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2196,
+        "url": "https://github.com/martin-janci/property-management/issues/2196",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2214,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
+      "id": "gh-issue-2198",
+      "action": "Follow-up: create-schedule persists unvalidated report_id / timezone and never sets next_run_at (PR #2179) (Closes #2198)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2198) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2198,
+        "url": "https://github.com/martin-janci/property-management/issues/2198",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2220,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
+      "id": "gh-issue-2199",
+      "action": "Follow-up: per-listing analytics endpoint returns empty data in production for portal-owned listings (PR #2183) (Closes #2199)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2199) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2199,
+        "url": "https://github.com/martin-janci/property-management/issues/2199",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2218,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
       "id": "gh-issue-2200",
       "action": "Follow-up: \"does not store login page as return URL\" test never exercises the guard it claims to cover (PR #2177) (Closes #2200)",
       "owner_role": "pm-tech-lead",
@@ -4130,6 +4259,33 @@
       }
     },
     {
+      "id": "gh-issue-2201",
+      "action": "Follow-up: harden RAG embedding-write path — connection-holding, provider provenance, FK error shape (PR #2173) (Closes #2201)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2201) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2201,
+        "url": "https://github.com/martin-janci/property-management/issues/2201",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2221,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
       "id": "gh-issue-2202",
       "action": "Follow-up: integrations settings route is undiscoverable, hardcodes strings, and leaves the Airbnb OAuth handshake half-wired (PR #2184) (Closes #2202)",
       "owner_role": "pm-tech-lead",
@@ -4154,6 +4310,33 @@
         "merged_pr": 2217,
         "merged_at": "2026-07-10T00:23:07Z",
         "at": "2026-07-10T00:23:44Z"
+      }
+    },
+    {
+      "id": "gh-issue-2203",
+      "action": "Follow-up: OAuth CSRF replay/single-use rejection branch has no handler-level test (PR #2186) (Closes #2203)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2203) | gc1-reconcile 2026-07-11T18:05:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-09T10:05:29Z",
+      "issue_ref": {
+        "number": 2203,
+        "url": "https://github.com/martin-janci/property-management/issues/2203",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2219,
+        "merged_at": "2026-07-11T16:18:10Z",
+        "at": "2026-07-11T18:05:18Z"
       }
     },
     {

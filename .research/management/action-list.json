@@ -455,23 +455,6 @@
       "retry_round": 1
     },
     {
-      "id": "bug-revoke-all-sessions-cookie-blindness",
-      "action": "revoke_all_sessions ignores refresh cookie — signs the caller out too",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T04:07:55Z",
-      "backlog_ref": {
-        "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "security-forgot-password-no-rate-limit",
       "action": "/forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber",
       "owner_role": "pm-security",
@@ -486,23 +469,6 @@
         "plan": "plans/security-forgot-password-no-rate-limit.md",
         "score": 2,
         "vector": "security"
-      }
-    },
-    {
-      "id": "bug-refresh-empty-cookie-shadows-body-token",
-      "action": "/refresh and /logout — empty refresh_token cookie shadows valid body token",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-09T04:07:55Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T04:07:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
@@ -594,26 +560,6 @@
       }
     },
     {
-      "id": "gh-issue-2196",
-      "action": "Follow-up: provision PORTAL_WEBHOOK_SECRET + replay-protection note for portal webhook receiver (PR #2182) (Closes #2196)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2196)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2196,
-        "url": "https://github.com/martin-janci/property-management/issues/2196",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2197",
       "action": "Follow-up: enforce share-document scoping in the repo layer, not just the handler guard (PR #2181) (Closes #2197)",
       "owner_role": "pm-tech-lead",
@@ -627,86 +573,6 @@
       "issue_ref": {
         "number": 2197,
         "url": "https://github.com/martin-janci/property-management/issues/2197",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2198",
-      "action": "Follow-up: create-schedule persists unvalidated report_id / timezone and never sets next_run_at (PR #2179) (Closes #2198)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2198)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2198,
-        "url": "https://github.com/martin-janci/property-management/issues/2198",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2199",
-      "action": "Follow-up: per-listing analytics endpoint returns empty data in production for portal-owned listings (PR #2183) (Closes #2199)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2199)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2199,
-        "url": "https://github.com/martin-janci/property-management/issues/2199",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2201",
-      "action": "Follow-up: harden RAG embedding-write path — connection-holding, provider provenance, FK error shape (PR #2173) (Closes #2201)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2201)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2201,
-        "url": "https://github.com/martin-janci/property-management/issues/2201",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2203",
-      "action": "Follow-up: OAuth CSRF replay/single-use rejection branch has no handler-level test (PR #2186) (Closes #2203)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-09T10:05:29Z (#2203)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-09T10:05:29Z",
-      "issue_ref": {
-        "number": 2203,
-        "url": "https://github.com/martin-janci/property-management/issues/2203",
         "labels": [
           "follow-up",
           "from-merged-review"
@@ -836,6 +702,48 @@
       "depends_on": [],
       "first_open_at": "2026-07-11T14:11:06Z",
       "retry_of": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+      "retry_round": 1
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1085-reality]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-11T18:06:00Z (retry_of=test-gap-screen-map-drift-pr-1085-reality reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:24:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T18:06:00Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1085-reality",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-mobile-native-search-screen-kt-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters) [retry 1/2 of failed churn-hotspot-mobile-native-search-screen-kt]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-11T18:06:00Z (retry_of=churn-hotspot-mobile-native-search-screen-kt reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T18:06:00Z",
+      "retry_of": "churn-hotspot-mobile-native-search-screen-kt",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap [retry 1/2 of failed code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-11T18:06:00Z (retry_of=code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T18:06:00Z",
+      "retry_of": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
       "retry_round": 1
     }
   ]
