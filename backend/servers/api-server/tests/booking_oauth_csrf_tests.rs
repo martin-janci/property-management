@@ -28,16 +28,26 @@
 //! org membership: the Booking.com token-exchange (`token_exchange_*` here) and
 //! the Airbnb callback (`airbnb_callback_idor_*`). The Airbnb back-channel
 //! token-exchange variant has equivalent coverage in
-//! `airbnb_oauth_routes_tests.rs`. The single-use + org-binding heart of the
-//! `state` CSRF check is unit-tested in `routes::integrations::oauth_state`
-//! (`decide_consume_*`).
+//! `airbnb_oauth_routes_tests.rs`.
+//!
+//! # Single-use / replay coverage (issue #2203)
+//!
+//! Most callback tests reach their expected status via the *stateless* fallback
+//! (`ConsumeOutcome::StoreUnavailable`, because `TestApp` wires no Redis). To
+//! also pin the stateful heart of the CSRF check — the single-use consume path
+//! and its `Rejected → 400 INVALID_STATE` branch — `airbnb_callback_rejects_replayed_state`
+//! and `airbnb_callback_rejects_unissued_state_when_store_active` install an
+//! in-memory `OAuthStateStore` (via `TestApp::with_oauth_state_store`) whose
+//! consume semantics mirror the Redis path. The pure decision (`decide_consume`)
+//! and the store's single-use behaviour are additionally unit-tested in
+//! `routes::integrations::oauth_state`.
 //!
 //! # Scope
 //!
 //! No live Airbnb/Booking.com calls (`AIRBNB_CLIENT_ID` / `BOOKING_CLIENT_ID`
-//! are unset in CI) and no Redis is wired into `TestApp`, so the state store is
-//! `StoreUnavailable` and the callback relies on the stateless org-prefix +
-//! membership checks — exactly the path these tests pin.
+//! are unset in CI). Tests that don't install a store rely on the stateless
+//! org-prefix + membership checks (the `StoreUnavailable` fallback); the two
+//! replay tests install the in-memory store to drive the real consume path.
 
 #![allow(dead_code)]
 
@@ -166,12 +176,16 @@ fn anon_post(uri: &str, body: serde_json::Value) -> Request<Body> {
         .unwrap()
 }
 
-/// "Protected" = a 4xx in the auth/validation range (not 404/405/5xx).
-fn is_protected(status: StatusCode) -> bool {
-    matches!(
-        status,
-        StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN | StatusCode::BAD_REQUEST
-    )
+/// "Auth-rejected" = the request was stopped by the authentication layer
+/// (`AuthUser` extractor) specifically — `401 UNAUTHORIZED` or `403 FORBIDDEN`.
+///
+/// Issue #2203 (test-quality): deliberately excludes `400 BAD_REQUEST`. The
+/// earlier `is_protected` helper accepted 400 too, so an unauthenticated test
+/// would still pass if the auth extractor were removed and the request instead
+/// failed later on state/validation with a 400. Narrowing to 401/403 means
+/// these tests can only pass when auth actually fired.
+fn is_auth_rejected(status: StatusCode) -> bool {
+    matches!(status, StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN)
 }
 
 fn booking_exchange_uri(org_id: Uuid) -> String {
@@ -198,8 +212,8 @@ async fn booking_token_exchange_rejects_unauthenticated(pool: PgPool) {
         ))
         .await;
     assert!(
-        is_protected(resp.status),
-        "unauthenticated Booking token-exchange must be rejected; got {}",
+        is_auth_rejected(resp.status),
+        "unauthenticated Booking token-exchange must be rejected by auth (401/403); got {}",
         resp.status
     );
 }
@@ -347,8 +361,8 @@ async fn airbnb_callback_rejects_unauthenticated(pool: PgPool) {
     let resp = app.execute(req).await;
 
     assert!(
-        is_protected(resp.status),
-        "unauthenticated Airbnb callback must be rejected; got {}",
+        is_auth_rejected(resp.status),
+        "unauthenticated Airbnb callback must be rejected by auth (401/403); got {}",
         resp.status
     );
 }
@@ -555,6 +569,115 @@ async fn airbnb_callback_valid_state_passes_csrf_gate(pool: PgPool) {
     assert!(
         !body.contains("INVALID_STATE") && !body.contains("STATE_MISMATCH"),
         "a valid state must not be rejected by the CSRF gate: {body}"
+    );
+}
+
+/// **Replay / single-use rejection at the handler level (issue #2203).**
+///
+/// The previous tests all reach their expected status via the *stateless*
+/// fallback (`ConsumeOutcome::StoreUnavailable`, because `TestApp` wires no
+/// Redis) — none exercises the stateful consume path. This test installs an
+/// in-memory `OAuthStateStore` (same single-use semantics as the Redis path)
+/// and drives the real `verify_and_consume` flow:
+///
+/// 1. A freshly-issued state is seeded, so the first callback → `Consumed` →
+///    clears the CSRF gate → membership passes → unconfigured Airbnb → 503.
+/// 2. The SAME state is replayed → the store already consumed it → `Rejected`
+///    → the handler returns **400 `INVALID_STATE`**.
+///
+/// This is the branch (oauth.rs `ConsumeOutcome::Rejected → 400`) that had zero
+/// coverage: if a regression made a consume failure fall through instead of
+/// rejecting, every store-unavailable test would still pass but this one fails.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_rejects_replayed_state(pool: PgPool) {
+    let (app, store) = TestApp::with_oauth_state_store(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-replay").await;
+    let user_id = seed_user(&pool, "cb-replay@test.local").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    // A genuinely-issued, single-use state bound to this org.
+    let valid_state = format!("{org_id}:{}", Uuid::new_v4());
+    store.seed(&valid_state, org_id, user_id);
+
+    // 1st callback: state is found + org-bound → Consumed → clears the CSRF
+    // gate → membership passes → unconfigured Airbnb → 503 (NOT a state rejection).
+    let first = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &valid_state),
+            &token,
+        ))
+        .await;
+    assert_eq!(
+        first.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "first use of a freshly-issued state must be Consumed and clear the gate \
+         → 503; got {}: {}",
+        first.status,
+        first.text()
+    );
+    assert!(
+        !first.text().contains("INVALID_STATE") && !first.text().contains("STATE_MISMATCH"),
+        "first use of a valid single-use state must not be CSRF-rejected: {}",
+        first.text()
+    );
+
+    // 2nd callback with the SAME state: already consumed → Rejected → 400.
+    let replay = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &valid_state),
+            &token,
+        ))
+        .await;
+    assert_eq!(
+        replay.status,
+        StatusCode::BAD_REQUEST,
+        "a replayed (already-consumed) state must return 400; got {}: {}",
+        replay.status,
+        replay.text()
+    );
+    assert!(
+        replay.text().contains("INVALID_STATE"),
+        "replayed state rejection must be INVALID_STATE: {}",
+        replay.text()
+    );
+}
+
+/// A well-formed state that the server never issued (not present in the store)
+/// is rejected on its FIRST use with 400 `INVALID_STATE` — proving the consume
+/// path (not just the stateless org-prefix gate) is authoritative when a store
+/// is wired. Complements the replay test: here the `None`/`Rejected` arm is hit
+/// without any prior successful use, so a forged token cannot ride the
+/// stateless fallback when single-use enforcement is active.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_callback_rejects_unissued_state_when_store_active(pool: PgPool) {
+    let (app, _store) = TestApp::with_oauth_state_store(pool.clone()).await;
+    let org_id = seed_org(&pool, "cb-forged").await;
+    let user_id = seed_user(&pool, "cb-forged@test.local").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, org_id);
+
+    // Correct `{org}:{nonce}` shape and matching org prefix, but never seeded
+    // into the store → not a genuine single-use token.
+    let forged_state = format!("{org_id}:{}", Uuid::new_v4());
+    let resp = app
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &forged_state),
+            &token,
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "an un-issued state must be rejected by the active consume path → 400; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert!(
+        resp.text().contains("INVALID_STATE"),
+        "un-issued state rejection must be INVALID_STATE: {}",
+        resp.text()
     );
 }
 

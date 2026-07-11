@@ -415,6 +415,14 @@ pub struct AppState {
     /// [`AppState::with_pref_event_recorder`] so the `preference.updated`
     /// publish contract can be asserted in CI without a live Redis daemon.
     pub pref_event_recorder: Option<PreferenceEventRecorder>,
+    /// Test-only in-memory OAuth `state` store (issue #2203).
+    ///
+    /// `None` in production, where single-use CSRF-state enforcement runs
+    /// against Redis (`redis_client`). Installed by tests via
+    /// [`AppState::with_oauth_state_store`] so the Airbnb-callback consume path
+    /// (`ConsumeOutcome::Consumed` / `Rejected → 400 INVALID_STATE`) can be
+    /// exercised at the handler level without a live Redis daemon.
+    pub oauth_state_store: Option<crate::routes::integrations::oauth_state::OAuthStateStore>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
     /// Epic 18 / Story 18.2 (#1687): provider-agnostic guest ID-document OCR
@@ -731,6 +739,9 @@ impl AppState {
             pubsub_service: None,
             // Issue #1376: test-only preference-sync recorder (None in prod).
             pref_event_recorder: None,
+            // Issue #2203: test-only OAuth state store (None in prod; Redis is
+            // authoritative). Installed by tests via `with_oauth_state_store`.
+            oauth_state_store: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
             // Story 18.2 (#1687): default guest ID-document OCR = not-configured
@@ -784,6 +795,26 @@ impl AppState {
         let recorder = PreferenceEventRecorder::new();
         self.pref_event_recorder = Some(recorder.clone());
         (self, recorder)
+    }
+
+    /// Install a test-only in-memory OAuth `state` store and return its handle
+    /// (issue #2203).
+    ///
+    /// Test-only: lets a CI integration test seed a freshly-issued single-use
+    /// state and then drive the Airbnb-callback consume path
+    /// (`ConsumeOutcome::Consumed` on first use, `Rejected → 400 INVALID_STATE`
+    /// on replay) without a live Redis. The returned handle shares the same
+    /// backing map as the one stored on the state, so the test can `seed(...)`
+    /// before issuing the callback request. `None` in production.
+    pub fn with_oauth_state_store(
+        mut self,
+    ) -> (
+        Self,
+        crate::routes::integrations::oauth_state::OAuthStateStore,
+    ) {
+        let store = crate::routes::integrations::oauth_state::OAuthStateStore::new();
+        self.oauth_state_store = Some(store.clone());
+        (self, store)
     }
 
     /// Set S3 storage service (Epic 103).
