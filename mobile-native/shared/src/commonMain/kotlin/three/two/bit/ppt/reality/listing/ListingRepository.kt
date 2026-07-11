@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for listing operations.
@@ -20,13 +21,6 @@ class ListingRepository(
     private fun HttpRequestBuilder.configureRequest() {
         sessionToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
     }
-
-    /**
-     * Percent-encode a value before splicing it into a request path so that ids containing `/`,
-     * `?`, `#`, or `..` cannot smuggle extra path segments or query parameters into the request
-     * (path-injection). Deep-link / nav-sourced ids are untrusted.
-     */
-    private fun pathSegment(value: String): String = value.encodeURLPathPart()
 
     /** Search listings with filters and pagination. */
     suspend fun searchListings(request: ListingSearchRequest): Result<ListingSearchResponse> {
@@ -51,7 +45,7 @@ class ListingRepository(
     suspend fun getListingDetail(listingId: String): Result<ListingDetail> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/listings/${pathSegment(listingId)}") {
+                client.get("$baseUrl/api/v1/listings/${listingId.asPathSegment()}") {
                     configureRequest()
                 }
 

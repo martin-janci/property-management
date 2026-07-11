@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for realtor profiles (UC-49).
@@ -46,7 +47,9 @@ class RealtorRepository(
     suspend fun getProfile(userId: String): Result<RealtorProfile> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/realtors/$userId/profile") { configureRequest() }
+                client.get("$baseUrl/api/v1/realtors/${userId.asPathSegment()}/profile") {
+                    configureRequest()
+                }
             if (response.status.isSuccess()) {
                 val payload: RealtorProfileResponse = response.body()
                 Result.success(payload.profile)

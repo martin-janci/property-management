@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for the agency directory (UC-51).
@@ -40,7 +41,10 @@ class AgencyRepository(
     /** Get a single agency by id. */
     suspend fun getAgency(agencyId: String): Result<Agency> {
         return try {
-            val response = client.get("$baseUrl/api/v1/agencies/$agencyId") { configureRequest() }
+            val response =
+                client.get("$baseUrl/api/v1/agencies/${agencyId.asPathSegment()}") {
+                    configureRequest()
+                }
             if (response.status.isSuccess()) {
                 val payload: AgencyResponse = response.body()
                 Result.success(payload.agency)
@@ -58,7 +62,9 @@ class AgencyRepository(
     suspend fun getAgencyBySlug(slug: String): Result<Agency> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/agencies/by-slug/$slug") { configureRequest() }
+                client.get("$baseUrl/api/v1/agencies/by-slug/${slug.asPathSegment()}") {
+                    configureRequest()
+                }
             if (response.status.isSuccess()) {
                 val payload: AgencyResponse = response.body()
                 Result.success(payload.agency)
@@ -76,7 +82,9 @@ class AgencyRepository(
     suspend fun listMembers(agencyId: String): Result<AgencyMembersResponse> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/agencies/$agencyId/members") { configureRequest() }
+                client.get("$baseUrl/api/v1/agencies/${agencyId.asPathSegment()}/members") {
+                    configureRequest()
+                }
             if (response.status.isSuccess()) {
                 Result.success(response.body())
             } else if (response.status == HttpStatusCode.Unauthorized) {

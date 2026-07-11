@@ -1040,7 +1040,8 @@ impl LlmDocumentRepository {
         // Over-fetch when a provenance filter is active so post-filtering still
         // returns up to `limit` compatible rows (capped to avoid unbounded scans).
         let fetch_limit = if model_filter.is_some() {
-            limit.saturating_mul(4).clamp(limit, 200)
+            // Not `clamp(limit, 200)`: that panics (min > max) when limit > 200.
+            limit.saturating_mul(4).min(200).max(limit)
         } else {
             limit
         };
