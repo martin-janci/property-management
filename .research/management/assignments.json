@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-11T22:29:13Z",
+  "generated": "2026-07-11T22:41:23Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
@@ -70,18 +70,18 @@
     {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-11T18:08:39Z",
-      "last_updated": "2026-07-11T22:29:13Z",
-      "status_changed_at": "2026-07-11T22:29:13Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-11T22:41:23Z",
+      "status_changed_at": "2026-07-11T22:41:23Z",
+      "pr_number": 2250,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2250",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[reclaim #1: sandbox-timeout, branch missing; respawned]",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2250 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=reclaim#1 fast-path; behavior-preserving extract of resolve_refresh_token+hash_refresh_token on churn hotspot; 2/3 static findings already fixed, 3rd out-of-scope; check+test(22)+clippy green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
