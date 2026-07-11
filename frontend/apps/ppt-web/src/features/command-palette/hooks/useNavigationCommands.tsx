@@ -156,6 +156,19 @@ export function useNavigationCommands() {
         icon: '🔒',
         action: () => navigate('/settings/privacy'),
       },
+      {
+        id: 'settings-integrations',
+        label: t('commandPalette.commands.goToIntegrations', {
+          defaultValue: 'Go to Integrations',
+        }),
+        description: t('commandPalette.descriptions.goToIntegrations', {
+          defaultValue: 'Connect Airbnb & Booking.com channels and manage sync',
+        }),
+        category: 'settings',
+        keywords: ['settings', 'integrations', 'airbnb', 'booking', 'channel', 'sync'],
+        icon: '🔌',
+        action: () => navigate('/settings/integrations'),
+      },
     ];
   }, [t, navigate]);
 
