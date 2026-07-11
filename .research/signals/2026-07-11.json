@@ -140,14 +140,14 @@
       "goal": "G6",
       "passed": true,
       "command": "no new plans this run",
-      "observed": "0 new plans",
-      "expected": "n/a"
+      "observed": "1 new plan (path-inject-repo-sweep), adversarial pass: passed, annotated in brief",
+      "expected": "each new plan annotated"
     },
     {
       "goal": "G7",
       "passed": true,
       "command": "count new plans",
-      "observed": "0",
+      "observed": "1",
       "expected": "<=2"
     },
     {
@@ -220,5 +220,10 @@
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "buffer_low_refill": {
+    "trigger": "buffer-low: claimable=12/72 \u2014 refill planner",
+    "action": "un-deferred code-review-mobile-native-kmp-path-inject-repo-sweep, promoted to plans/",
+    "rationale": "security fast-track qualifies (score 3, high, security); dispatcher buffer needs refill; plan serves as fallback if draft PR #2213 stalls"
+  }
 }
