@@ -14,65 +14,22 @@ use serde::{Deserialize, Serialize};
 use sqlx::Acquire;
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use utoipa::ToSchema;
 
+use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::state::AppState;
 
 // ── Generic per-user in-process brute-force throttle ────────────────────────
 //
 // Both the recovery-code verify (GH #1523/#1583) and the MFA setup-verify
 // (issue #2159) endpoints are bearer-authenticated brute-force surfaces keyed
-// on the authenticated `user_id`. They share one sliding-window limiter,
-// differing only in their backing map + tuning constants. This mirrors the
-// per-key in-process limiter in `routes/caddy_ask.rs`. NOTE: the counter is
-// per-process; a Redis-backed counter (the sessions Redis is already in the
-// stack) would hold the limit across instances — tracked as a follow-up.
+// on the authenticated `user_id`. They share one sliding-window limiter
+// (`routes::rate_limit`), differing only in their backing map + tuning
+// constants. The same limiter also guards the email-keyed
+// `/forgot-password` + `/resend-verification` surfaces in `routes::auth`.
 
-struct RateLimitEntry {
-    count: u32,
-    window_start: Instant,
-}
-
-type UserRateLimiter = Mutex<HashMap<uuid::Uuid, RateLimitEntry>>;
-
-/// Record an attempt for `user_id` in `limiter` and report whether it is within
-/// the limit. Returns `false` once more than `max_attempts` attempts occur in a
-/// rolling `window`.
-///
-/// Expired entries are evicted (GH #1583), but only once the map exceeds
-/// `sweep_threshold`, so the `retain` walk is amortized rather than run on every
-/// request. This matters because these maps are keyed on the whole user
-/// population on auth paths: without eviction an attacker enumerating user_ids
-/// could grow the map without bound (slow memory-exhaustion DoS).
-fn rate_limit_allowed(
-    limiter: &UserRateLimiter,
-    user_id: uuid::Uuid,
-    max_attempts: u32,
-    window: Duration,
-    sweep_threshold: usize,
-) -> bool {
-    let mut map = match limiter.lock() {
-        Ok(m) => m,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-    let now = Instant::now();
-
-    if map.len() > sweep_threshold {
-        map.retain(|_, e| now.duration_since(e.window_start) < window);
-    }
-
-    let entry = map.entry(user_id).or_insert(RateLimitEntry {
-        count: 0,
-        window_start: now,
-    });
-    if now.duration_since(entry.window_start) >= window {
-        entry.count = 0;
-        entry.window_start = now;
-    }
-    entry.count += 1;
-    entry.count <= max_attempts
-}
+type UserRateLimiter = InProcessRateLimiter<uuid::Uuid>;
 
 // ── Brute-force throttle for recovery-code verification (GH #1523) ──────────
 //
