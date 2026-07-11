@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for inquiries and viewing requests.
@@ -107,7 +108,10 @@ class InquiryRepository(
     /** Get inquiry by ID. */
     suspend fun getInquiry(inquiryId: String): Result<Inquiry> {
         return try {
-            val response = client.get("$baseUrl/api/v1/inquiries/$inquiryId") { configureRequest() }
+            val response =
+                client.get("$baseUrl/api/v1/inquiries/${inquiryId.asPathSegment()}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(response.body())
@@ -146,7 +150,7 @@ class InquiryRepository(
     suspend fun replyToInquiry(inquiryId: String, message: String): Result<InquiryResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/inquiries/$inquiryId/replies") {
+                client.post("$baseUrl/api/v1/inquiries/${inquiryId.asPathSegment()}/replies") {
                     configureRequest()
                     setBody(ReplyToInquiryRequest(message))
                 }
@@ -209,7 +213,9 @@ class InquiryRepository(
     suspend fun cancelViewing(viewingId: String): Result<Unit> {
         return try {
             val response =
-                client.delete("$baseUrl/api/v1/viewings/$viewingId") { configureRequest() }
+                client.delete("$baseUrl/api/v1/viewings/${viewingId.asPathSegment()}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)

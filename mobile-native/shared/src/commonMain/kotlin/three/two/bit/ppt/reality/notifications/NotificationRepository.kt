@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for notifications and alerts.
@@ -77,7 +78,9 @@ class NotificationRepository(
     suspend fun markAsRead(notificationId: String): Result<Unit> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/notifications/$notificationId/read") {
+                client.post(
+                    "$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}/read"
+                ) {
                     configureRequest()
                 }
 
@@ -113,7 +116,7 @@ class NotificationRepository(
     suspend fun deleteNotification(notificationId: String): Result<Unit> {
         return try {
             val response =
-                client.delete("$baseUrl/api/v1/notifications/$notificationId") {
+                client.delete("$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}") {
                     configureRequest()
                 }
 
