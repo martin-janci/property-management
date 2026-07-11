@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-10",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer 11 < floor 36; backlog/retry pools dry). Oldest-unreviewed by effective coverage: state.review_cursor is stale for dispatcher-driven runs (per state.json _pointer note, only the routine advances it), so dated per-segment signal files are the real cursor. api-core & mobile-rn already claimed today (2026-07-10); mobile-native-kmp has fresh 07-07/08/09 files (would duplicate). ppt-web-core's last real signal file is 2026-07-07 (3d old) — genuinely oldest-unreviewed. 0 open code-review findings in backlog for this segment, no saturation.",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-apiclient-no-token",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:258 — configureApiClient(config) is the ONLY place that wires a token getter into the local axios singleton (it sets module-global tokenGetter via createAxiosInstance(config)), but a repo-wide grep shows it is never invoked anywhere in app code (only its definition, doc comment, and a re-export in lib/index.ts). Every consumer instead calls getApiClient() (api.ts:233), which lazily builds the instance via createAxiosInstance() with an empty config, leaving tokenGetter undefined; the request interceptor at api.ts:162 is `if (tokenGetter)`, so NO Authorization header is ever attached and onUnauthorized never fires.",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:9 — the code comment explicitly claims \"getApiClient() ensures the shared axios interceptors apply: Bearer-token ...\"; that contract is violated. Its GET/POST calls (lines 33/50/63/76) and features/sentiment/hooks/useSentiment.ts (getApiClient at :7) therefore hit authenticated api-server endpoints with no JWT, so predictive-maintenance and sentiment API calls 401 in production — both features are silently broken for logged-in users. Traced full path: no init call site exists, so this is certainly reachable."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-retry-non-idempotent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:185 — the response interceptor retries (up to MAX_RETRIES=3) on isRetryableError, which returns true for ALL network errors with no response (api.ts:87) and for 5xx codes 500/502/503/504 (RETRYABLE_STATUS_CODES, api.ts:76), with no guard on the HTTP method. Non-idempotent mutations are retried blindly: e.g. usePredictiveMaintenance.ts:76 issues a POST via getApiClient(). If the original POST actually reached the server and it was the response/connection that failed (network drop, gateway 502/504 after the write committed), the automatic retry re-sends the mutation and duplicates the operation. Retries should be restricted to idempotent methods (GET/HEAD/PUT/DELETE) or gated on an idempotency key."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-eager-default-export",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:281 — `export default getApiClient()` evaluates the singleton eagerly at module-import time, before any bootstrap code could call configureApiClient(). Any module doing `import api from '../lib/api'` binds permanently to that pre-configuration, tokenless instance; a later configureApiClient() reassigns the module-level apiInstance but cannot retrofit already-captured default-import bindings. This is the root design flaw that makes the api.ts:258 mis-wiring (see apiclient-no-token) easy to hit and hard to fix. Prefer exporting the getApiClient getter only and dropping the eager default, or make the default a lazy proxy."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "deferred_findings": [],
+  "findings_count": 3
+}

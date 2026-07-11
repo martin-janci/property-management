@@ -3659,6 +3659,50 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2200",
+      "branch": "auto-impl/gh-issue-2200-0493661a",
+      "status": "merged",
+      "claimed_at": "2026-07-09T20:12:04Z",
+      "last_updated": "2026-07-10T00:23:07Z",
+      "status_changed_at": "2026-07-10T00:23:07Z",
+      "pr_number": 2216,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2216",
+      "merged_at": "2026-07-10T00:23:07Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=976d92d7562ba0628b722a45c901da5a4f964b1d note=test-only guard-exercise verified; ci-green; approve posted as comment (self-PR)",
+      "last_reviewed_oid": "976d92d7562ba0628b722a45c901da5a4f964b1d",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2202",
+      "branch": "auto-impl/gh-issue-2202-483b9a26",
+      "status": "merged",
+      "claimed_at": "2026-07-09T20:12:04Z",
+      "last_updated": "2026-07-10T00:23:07Z",
+      "status_changed_at": "2026-07-10T00:23:07Z",
+      "pr_number": 2217,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2217",
+      "merged_at": "2026-07-10T00:23:07Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=9f0abf3355925c381981e3dbbc6bc71ebf5194bd note=frontend-only i18n+nav+airbnb-oauth-redirect clean; ci-green; approve posted as comment (self-PR)",
+      "last_reviewed_oid": "9f0abf3355925c381981e3dbbc6bc71ebf5194bd",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
       "branch": "auto-impl/refactor-churn-hotspot-backend-crates-db-496685db",
       "status": "failed",
@@ -4057,5 +4101,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-09T08:22:43Z"
+  "archived_at": "2026-07-10T00:23:33Z"
 }
