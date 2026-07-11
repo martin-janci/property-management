@@ -312,7 +312,7 @@ mod tests {
     #[test]
     fn test_metadata() {
         let sitemap = Sitemap::load();
-        assert_eq!(sitemap.metadata.stats.ppt_web_routes, 13);
+        assert_eq!(sitemap.metadata.stats.ppt_web_routes, 19);
         assert_eq!(sitemap.metadata.stats.reality_web_routes, 9);
         assert_eq!(sitemap.metadata.stats.mobile_screens, 6);
     }
