@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-10",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor); oldest-unreviewed by effective coverage — mobile-native-kmp cursor is oldest but has fresh 07-07/08/09 signal files, so api-core (cursor 2026-06-15, no recent signal file) is the genuinely oldest-unreviewed segment; 0 open code-review findings in backlog, no saturation",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-core-apicall-ssrf-dns-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:150-207 — validate_external_url only rejects internal targets when host.parse::<IpAddr>() succeeds (IP literals). Any DNS hostname (e.g. attacker-controlled name resolving to 169.254.169.254 or 10.0.0.1) skips the is_blocked_v4/v6 branch entirely, so the guard passes and reqwest then resolves+connects to the internal IP — classic DNS-based SSRF (and DNS-rebinding) bypass of the cloud-metadata/internal-network protection.",
+        "Reachability: ApiCallExecutor is registered in the default action registry (services/actions/mod.rs:206) and invoked by the workflow_executor for user/admin-configured 'api_call' workflow actions, so an authenticated workflow author reaches this path in production.",
+        "Fix direction: resolve the host and validate every resolved IP against is_blocked_v4/v6 (or pin the connection to the validated IP), not just literal-IP hosts."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-110 — the reqwest::Client is built with only .timeout()/.user_agent() and no .redirect(Policy::...), so it follows the default of up to 10 redirects. validate_external_url runs once on the initial URL only (line ~256), so a permitted external endpoint that responds 30x to http://169.254.169.254/latest/meta-data/ (or any internal host) is followed without re-validation — SSRF bypass via redirect.",
+        "Same production reachability as the DNS-bypass finding (registered ApiCallExecutor via workflow engine).",
+        "Fix direction: set reqwest redirect Policy::none() and re-run validate_external_url on each hop, or Policy::custom() that rejects non-external hops."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-core-apicall-unbounded-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:322 — response.text().await.unwrap_or_default() reads the entire remote response body into memory with no size cap; the text is then stored into the ActionResult output JSON (persisted on the workflow execution record). A malicious or compromised endpoint returning a very large / chunked body can drive memory exhaustion (DoS) and bloat the persisted execution row.",
+        "Fix direction: bound the read (e.g. stream with a max-bytes limit / Content-Length check, or reqwest .bytes() with a cap) before decoding, and truncate what is stored in ActionResult."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
