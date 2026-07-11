@@ -26,6 +26,101 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ============================================================================
+// Notification recipient policy (single source of truth — #2029)
+// ============================================================================
+//
+// The fault-lifecycle notification recipient rules are extracted into pure
+// functions so the production handlers below and the recipient tests in
+// `tests/fault_notification_recipient_tests.rs` assert against the *same*
+// logic. Previously the tests re-implemented the selection inline, so the
+// handler's real policy (self-exclusion, dedup, `assigned_to`/manager
+// handling) could drift while the tests stayed green (#1974 / #2029).
+
+/// Recipients for a `triage_fault` notification (#1793).
+///
+/// The reporter (unless they are the triaging manager) plus the assigned
+/// technician if triage set one (skipping the actor and any duplicate).
+pub fn triage_fault_recipients(
+    reporter_id: Uuid,
+    actor_id: Uuid,
+    assigned_to: Option<Uuid>,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if reporter_id != actor_id {
+        recipients.push(reporter_id);
+    }
+    if let Some(assignee) = assigned_to {
+        if assignee != actor_id && !recipients.contains(&assignee) {
+            recipients.push(assignee);
+        }
+    }
+    recipients
+}
+
+/// Recipients for a `confirm_fault` notification (#1793).
+///
+/// The assignee who did the work (unless they are the confirming reporter)
+/// plus the org's managers, excluding the actor and any duplicate.
+pub fn confirm_fault_recipients(
+    assigned_to: Option<Uuid>,
+    actor_id: Uuid,
+    manager_ids: impl IntoIterator<Item = Uuid>,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if let Some(assignee) = assigned_to {
+        if assignee != actor_id {
+            recipients.push(assignee);
+        }
+    }
+    for mid in manager_ids {
+        if mid != actor_id && !recipients.contains(&mid) {
+            recipients.push(mid);
+        }
+    }
+    recipients
+}
+
+/// Recipients for an `assign_fault` notification (Story 4.3 / #2085).
+///
+/// The newly assigned technician (unless the assigning manager assigned it to
+/// themselves) plus the reporter, excluding the actor and de-duplicating the
+/// reporter against the assignee.
+pub fn assign_fault_recipients(
+    assigned_to: Option<Uuid>,
+    reporter_id: Uuid,
+    actor_id: Uuid,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    if let Some(assignee) = assigned_to {
+        if assignee != actor_id {
+            recipients.push(assignee);
+        }
+    }
+    if reporter_id != actor_id && Some(reporter_id) != assigned_to {
+        recipients.push(reporter_id);
+    }
+    recipients
+}
+
+/// Recipients for a manager-broadcast notification (fault created / reopened).
+///
+/// The org's managers, excluding the acting user and any duplicate ids. Shared
+/// by the create (Story 4.1) and reopen (Story 4.6) handlers so the
+/// self-exclusion + dedup policy stays in one place (#2085).
+pub fn manager_recipients(
+    manager_ids: impl IntoIterator<Item = Uuid>,
+    actor_id: Uuid,
+) -> Vec<Uuid> {
+    let mut recipients: Vec<Uuid> = Vec::new();
+    for mid in manager_ids {
+        if mid != actor_id && !recipients.contains(&mid) {
+            recipients.push(mid);
+        }
+    }
+    recipients
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 //
@@ -433,10 +528,7 @@ async fn create_fault(
         .await
     {
         Ok(manager_ids) => {
-            let recipients: Vec<Uuid> = manager_ids
-                .into_iter()
-                .filter(|id| *id != principal.user_id)
-                .collect();
+            let recipients = manager_recipients(manager_ids, principal.user_id);
             if !recipients.is_empty() {
                 let notification = Notification::new(
                     Uuid::nil(),
@@ -826,16 +918,10 @@ async fn triage_fault(
     // #1793: notify the reporter (and the assigned technician, if triage set
     // one) that the fault has been triaged — the first manager touch on a fault.
     // Best-effort, mirroring the other transitions: a dispatch failure is logged
-    // and never fails the mutation.
-    let mut recipients: Vec<Uuid> = Vec::new();
-    if fault.reporter_id != principal.user_id {
-        recipients.push(fault.reporter_id);
-    }
-    if let Some(assignee) = fault.assigned_to {
-        if assignee != principal.user_id && !recipients.contains(&assignee) {
-            recipients.push(assignee);
-        }
-    }
+    // and never fails the mutation. Recipient policy lives in the shared
+    // `triage_fault_recipients` (#2029) so the tests exercise this exact logic.
+    let recipients =
+        triage_fault_recipients(fault.reporter_id, principal.user_id, fault.assigned_to);
     if !recipients.is_empty() {
         let notification = Notification::new(
             Uuid::nil(),
@@ -909,16 +995,11 @@ async fn assign_fault(
         })?;
 
     // Story 4.3: notify assignee + reporter (relevant parties). Best-effort.
+    // Recipient policy lives in the shared `assign_fault_recipients` (#2085) so
+    // the handler and the recipient tests assert against the same logic.
     {
-        let mut recipients: Vec<Uuid> = Vec::new();
-        if fault.assigned_to != Some(principal.user_id) {
-            if let Some(assignee) = fault.assigned_to {
-                recipients.push(assignee);
-            }
-        }
-        if fault.reporter_id != principal.user_id && Some(fault.reporter_id) != fault.assigned_to {
-            recipients.push(fault.reporter_id);
-        }
+        let recipients =
+            assign_fault_recipients(fault.assigned_to, fault.reporter_id, principal.user_id);
         if !recipients.is_empty() {
             let notification = Notification::new(
                 Uuid::nil(),
@@ -1182,31 +1263,24 @@ async fn confirm_fault(
     // #1793: the reporter has confirmed (and rated) the resolution — typically
     // the closing transition. Notify the assignee who did the work plus the
     // org's managers so the lifecycle gets a closure signal. Best-effort.
-    let mut recipients: Vec<Uuid> = Vec::new();
-    if let Some(assignee) = fault.assigned_to {
-        if assignee != principal.user_id {
-            recipients.push(assignee);
-        }
-    }
-    match MembershipRepository::new(state.db.clone())
+    let manager_ids = match MembershipRepository::new(state.db.clone())
         .list_manager_ids(tenant_id)
         .await
     {
-        Ok(manager_ids) => {
-            for mid in manager_ids {
-                if mid != principal.user_id && !recipients.contains(&mid) {
-                    recipients.push(mid);
-                }
-            }
-        }
+        Ok(manager_ids) => manager_ids,
         Err(e) => {
             tracing::error!(
                 fault_id = %fault.id,
                 error = %e,
                 "Failed to load manager ids for FaultConfirmed notification"
             );
+            Vec::new()
         }
-    }
+    };
+    // Recipient policy lives in the shared `confirm_fault_recipients` (#2029)
+    // so the tests exercise this exact selection (assignee + managers, minus
+    // the confirming reporter, deduplicated).
+    let recipients = confirm_fault_recipients(fault.assigned_to, principal.user_id, manager_ids);
     if !recipients.is_empty() {
         let notification = Notification::new(
             Uuid::nil(),
@@ -1282,10 +1356,7 @@ async fn reopen_fault(
         .await
     {
         Ok(manager_ids) => {
-            let recipients: Vec<Uuid> = manager_ids
-                .into_iter()
-                .filter(|id| *id != principal.user_id)
-                .collect();
+            let recipients = manager_recipients(manager_ids, principal.user_id);
             if !recipients.is_empty() {
                 let notification = Notification::new(
                     Uuid::nil(),
@@ -1785,4 +1856,188 @@ async fn get_statistics(
         })?;
 
     Ok(Json(StatisticsResponse { statistics }))
+}
+
+// ============================================================================
+// Recipient-policy unit tests (#2054)
+// ============================================================================
+//
+// The DB-backed R7/R8 integration cases in
+// `tests/fault_notification_recipient_tests.rs` seed *distinct* actor /
+// reporter / assignee, so the actor is never in the candidate set and the
+// self-exclusion (`!= actor_id`) and dedup (`!recipients.contains(..)`)
+// branches never fire — a regression that deleted them would keep those
+// tests green (#2054). These pure-function cases put the actor *into* the
+// candidate set to exercise exactly those branches. They need no DB.
+#[cfg(test)]
+mod recipient_policy_tests {
+    use super::{
+        assign_fault_recipients, confirm_fault_recipients, manager_recipients,
+        triage_fault_recipients,
+    };
+    use uuid::Uuid;
+
+    // --- triage_fault_recipients -------------------------------------------
+
+    /// Self-exclusion via the reporter path: the triaging manager IS the
+    /// reporter, so `reporter_id == actor_id` must drop them.
+    #[test]
+    fn triage_excludes_actor_when_reporter_is_the_triaging_manager() {
+        let actor = Uuid::new_v4(); // triaging manager == reporter
+        let assignee = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(actor, actor, Some(assignee));
+
+        assert!(
+            !recipients.contains(&actor),
+            "reporter == actor must be excluded (self-notify guard)"
+        );
+        assert_eq!(recipients, vec![assignee]);
+    }
+
+    /// Self-exclusion via the assignee path: the fault is self-assigned to the
+    /// actor, so `assignee != actor_id` must drop them.
+    #[test]
+    fn triage_excludes_actor_when_self_assigned() {
+        let actor = Uuid::new_v4();
+        let reporter = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(reporter, actor, Some(actor));
+
+        assert!(
+            !recipients.contains(&actor),
+            "self-assigned actor must be excluded"
+        );
+        assert_eq!(recipients, vec![reporter]);
+    }
+
+    /// Dedup: reporter and assignee are the same person, so
+    /// `!recipients.contains(&assignee)` must keep them to a single entry.
+    #[test]
+    fn triage_dedups_when_reporter_is_also_assignee() {
+        let actor = Uuid::new_v4();
+        let both = Uuid::new_v4();
+
+        let recipients = triage_fault_recipients(both, actor, Some(both));
+
+        assert_eq!(
+            recipients,
+            vec![both],
+            "reporter == assignee must appear exactly once"
+        );
+        assert_eq!(recipients.len(), 1);
+    }
+
+    // --- confirm_fault_recipients ------------------------------------------
+
+    /// Self-exclusion via `manager_ids`: the confirming reporter is also a
+    /// seeded manager, so `mid != actor_id` must drop the actor.
+    #[test]
+    fn confirm_excludes_actor_present_in_manager_ids() {
+        let actor = Uuid::new_v4(); // confirming reporter, also a manager
+        let assignee = Uuid::new_v4();
+        let other_manager = Uuid::new_v4();
+
+        let recipients = confirm_fault_recipients(Some(assignee), actor, [actor, other_manager]);
+
+        assert!(
+            !recipients.contains(&actor),
+            "actor present in manager_ids must be excluded"
+        );
+        assert_eq!(recipients, vec![assignee, other_manager]);
+    }
+
+    /// Dedup: a manager id equals the assignee already collected, so
+    /// `!recipients.contains(&mid)` must keep them to a single entry.
+    #[test]
+    fn confirm_dedups_manager_equal_to_assignee() {
+        let actor = Uuid::new_v4();
+        let assignee = Uuid::new_v4(); // also listed in manager_ids
+
+        let recipients = confirm_fault_recipients(Some(assignee), actor, [assignee]);
+
+        assert_eq!(
+            recipients,
+            vec![assignee],
+            "assignee also listed as manager must appear exactly once"
+        );
+        assert_eq!(recipients.len(), 1);
+    }
+
+    // --- assign_fault_recipients -------------------------------------------
+
+    /// Self-exclusion via the assignee path: the assigning manager assigned the
+    /// fault to themselves, so `assignee != actor_id` must drop them. The
+    /// guard-removed set would include the actor.
+    #[test]
+    fn assign_excludes_actor_when_self_assigned() {
+        let actor = Uuid::new_v4(); // assigning manager == assignee
+        let reporter = Uuid::new_v4();
+
+        let recipients = assign_fault_recipients(Some(actor), reporter, actor);
+
+        assert!(
+            !recipients.contains(&actor),
+            "self-assigned actor must be excluded"
+        );
+        assert_eq!(recipients, vec![reporter]);
+        // Guard-removed output (naive assignee + reporter) would differ.
+        assert_eq!(recipients.len(), 1);
+    }
+
+    /// Self-exclusion via the reporter path: the assigning manager is also the
+    /// reporter, so `reporter_id != actor_id` must drop them.
+    #[test]
+    fn assign_excludes_actor_when_reporter_is_the_assigning_manager() {
+        let actor = Uuid::new_v4(); // assigning manager == reporter
+        let assignee = Uuid::new_v4();
+
+        let recipients = assign_fault_recipients(Some(assignee), actor, actor);
+
+        assert!(
+            !recipients.contains(&actor),
+            "reporter == actor must be excluded (self-notify guard)"
+        );
+        assert_eq!(recipients, vec![assignee]);
+        assert_eq!(recipients.len(), 1);
+    }
+
+    /// Dedup: reporter and assignee are the same non-actor person, so
+    /// `Some(reporter_id) != assigned_to` must keep them to a single entry.
+    #[test]
+    fn assign_dedups_when_reporter_is_also_assignee() {
+        let actor = Uuid::new_v4();
+        let both = Uuid::new_v4();
+
+        let recipients = assign_fault_recipients(Some(both), both, actor);
+
+        assert_eq!(
+            recipients,
+            vec![both],
+            "reporter == assignee must appear exactly once"
+        );
+        // Guard-removed output would push `both` twice (len 2); the dedup guard
+        // keeps it at one.
+        assert_eq!(recipients.len(), 1);
+    }
+
+    // --- manager_recipients ------------------------------------------------
+
+    /// Self-exclusion + dedup for the manager broadcast: the acting manager
+    /// appears in the list (dropped) and a duplicate id collapses to one.
+    #[test]
+    fn manager_recipients_excludes_actor_and_dedups() {
+        let actor = Uuid::new_v4();
+        let manager = Uuid::new_v4();
+
+        let recipients = manager_recipients([actor, manager, manager], actor);
+
+        assert!(
+            !recipients.contains(&actor),
+            "acting manager must be excluded"
+        );
+        assert_eq!(recipients, vec![manager]);
+        // Guard-removed output (raw list) would be len 3; the guard yields 1.
+        assert_eq!(recipients.len(), 1);
+    }
 }

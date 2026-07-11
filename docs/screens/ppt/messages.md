@@ -17,7 +17,7 @@ diagrams: []
 useCases:
   - UC-07
 epics:
-  - "6-5"
+  - Epic-6-5
 designSources: []
 owner: pm-frontend
 ---

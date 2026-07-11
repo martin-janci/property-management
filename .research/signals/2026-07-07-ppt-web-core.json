@@ -1,0 +1,50 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-07",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-action-queue-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:282-297 — executeAction useMutation is a mocked stub: mutationFn contains `// TODO: Replace with actual API call`, only awaits a 500ms setTimeout and always returns { success: true }; user-facing dashboard actions (dismiss/approve/complete via dismissItem:302 and handleAction:310) silently no-op against the backend.",
+        "No onError handler on the mutation either, so once the real API call is wired in, failures would still be invisible to the user."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-base-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:32-36 — buildWsUrl reads window.__API_BASE_URL__ through an `as unknown as Record<string, unknown>` cast; when the global is unset, httpBase falls back to '' and the function returns a path-only string ('/api/v1/iot/sensors/ws?...') which `new WebSocket()` rejects (WS URLs must be absolute), so the IoT live feed silently fails to connect in any deployment that doesn't inject the global.",
+        "Fix: fall back to a derived absolute origin (location.origin with ws/wss scheme swap) or VITE_API_BASE_URL instead of ''."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-console-logs",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:178-191 — exported logPerformanceMetrics() ships ~9 console.log/console.group calls in committed code; guarded by import.meta.env.DEV but the dead branch still lands in source and the metrics never reach any real monitoring sink — consider routing to an analytics/monitoring API or stripping the util."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

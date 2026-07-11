@@ -1,0 +1,68 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-07",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:452 — CreateListing screen is wired into the production nav graph (reachable via MyListings → CreateListing), but its onSubmit is a stub returning Result.failure(NotImplementedError(\"Wire to listing API\")); every listing-creation submit silently fails in production with no backing API call."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 — the shared HttpClient installs only ContentNegotiation + Logging and no HttpTimeout plugin; a stalled connection has no request/socket timeout, so a suspend call (e.g. ListingDetailViewModel.loadListing) can hang indefinitely leaving the screen's spinner spinning with no error surfaced, and isNetworkError()'s timeout hints never trigger."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt — 348-line auth/session core (createMobileToken, validateAndLogin, loginWithPassword, restoreSession, session-token storage, 401→logout handling) has no test file anywhere; token handling and the Unauthorized-triggers-logout branches are entirely uncovered, a security-sensitive path."
+      ],
+      "expert": "tester"
+    }
+  ],
+  "deferred_findings": [
+    {
+      "id": "code-review-mobile-native-kmp-listing-path-inject",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "note": "ListingRepository.kt:46 getListingDetail splices listingId raw into URL path without encodeURLPathPart, bypassing ApiClient.getListing pathSegment() hardening; listingId flows from deep links. Below the 3-finding cap this run."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-notifrepo-no-test",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "note": "NotificationRepository.kt (227 lines) fetch/mark-read/mapping has no repository test. Below cap."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiryrepo-no-test",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "note": "InquiryRepository.kt (228 lines) submission + response mapping has no repository test. Below cap."
+    }
+  ]
+}

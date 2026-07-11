@@ -1,0 +1,66 @@
+name: deny.toml ban gate
+
+# Why this exists
+# ---------------
+# Issue #2127 (follow-up to #2106 / PR #2111): the quick-xml XXE /
+# billion-laughs safety pin in backend/deny.toml is enforced as a PAIR of
+# half-range ban lines:
+#
+#   { name = "quick-xml", version = "<0.41.0", ... }
+#   { name = "quick-xml", version = ">0.41.0", ... }
+#
+# Deleting those lines does NOT make `cargo deny check bans` fail — with
+# the bans gone there is simply nothing left to trip, so the check stays
+# green. The CODEOWNERS entry on backend/deny.toml is advisory-only
+# (review-from-code-owners is a branch-protection setting, and cargo-deny
+# itself is not a required check), which leaves the exact silent-reopen
+# threat #2106 describes: a PR can drop the pin and merge green.
+#
+# This gate closes that gap with a review-independent CI assertion: it
+# fails whenever either half-range quick-xml ban line is absent from
+# backend/deny.toml. The check is a pure fixed-string grep — DB-free,
+# compile-free, and fast.
+#
+# NOTE: like security-gate-conclusion and the other gates, this only
+# BLOCKS a merge if "deny-toml-ban-gate" is registered as a required
+# status check on the `dev` branch-protection rule. Registration is
+# handled by .github/workflows/branch-protection-setup.yml — keep the
+# NEW_CHECKS list there in sync with this job's name.
+#
+# The pull_request trigger is intentionally NOT path-filtered: a required
+# status check that is skipped by a path filter never reports a status,
+# which would wedge every PR that does not touch the filtered paths. The
+# job costs a checkout plus two greps, so running it on every PR is cheap.
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+    paths:
+      - 'backend/deny.toml'
+      - '.github/workflows/deny-toml-ban-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deny-toml-ban-gate:
+    name: deny-toml-ban-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Assert quick-xml half-range ban lines are present in backend/deny.toml
+        run: |
+          set -euo pipefail
+          fail=0
+          for ver in '<0.41.0' '>0.41.0'; do
+            needle="{ name = \"quick-xml\", version = \"${ver}\""
+            if ! grep -qF "$needle" backend/deny.toml; then
+              echo "::error file=backend/deny.toml::Missing quick-xml ban line: ${needle}, ... } — the XXE/billion-laughs safety pin (GH #2084/#2106/#2127) must not be removed. Changing the pinned version requires a focused ota_xml::tests entity-guard review AND updating this gate."
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Both quick-xml half-range ban lines are present in backend/deny.toml."

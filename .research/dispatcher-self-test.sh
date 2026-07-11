@@ -42,9 +42,11 @@ FAIL=0
 note() { printf '  ok    %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1" >&2; FAIL=1; }
 # warn() — advisory only: prints but does NOT set FAIL. Used for invariants
-# that are self-healing on the next run (e.g. action-list archive bloat, which
-# action-list-reconcile.sh sweeps) so introducing the check doesn't retroactively
-# hard-fail an already-bloated dev snapshot.
+# that are self-healing on the next run (e.g. T28 gc1 archive-terminal drift,
+# which gc1-reconcile.sh sweeps) so introducing the check doesn't retroactively
+# hard-fail an already-drifted dev snapshot. (T26 was formerly a warn of this
+# kind but was promoted to fail in #2102 once Phase 6 began running the
+# action-list reconcile before the pre-commit self-test gate.)
 warn() { printf '  WARN  %s\n' "$1" >&2; }
 
 echo "==> dispatcher-self-test"
@@ -618,14 +620,19 @@ fi
 # Spec (dispatcher-prompt.md Phase 1 step 4): action-list.json carries only
 # open/in-progress items; done/dropped live in action-list-archive.json. Bloat
 # from un-archived terminal rows is what pushed the file past the MCP inline
-# push limit and corrupted it on dev. Advisory (warn, not fail) because
-# action-list-reconcile.sh --apply is self-healing on the next Phase 6.
-echo "T26 action-list.json holds non-terminal items only (issue #1014; advisory)"
+# push limit and corrupted it on dev. ENFORCED (fail) as of #2102: Phase 6 now
+# runs `bash .research/action-list-reconcile.sh --apply` BEFORE the pre-commit
+# self-test gate, so a clean action-list is guaranteed on the commit path. A
+# terminal row surviving to this check therefore means the reconcile was
+# skipped or failed — a real invariant breach that must block the MCP push
+# (a bloated action-list.json is the #1014 truncation vector), not transient
+# self-healing bloat. Promoting warn→fail is only safe BECAUSE of that wiring.
+echo "T26 action-list.json holds non-terminal items only (issue #1014; enforced)"
 if [ -f "$ACTION_LIST" ]; then
   TERM=$(jq -r '[.items[] | select(.status=="done" or .status=="dropped" or .status=="merged" or .status=="failed")] | length' "$ACTION_LIST")
   if [ "$TERM" = "0" ]; then note "no terminal items in action-list.json (archive split clean)"
   else
-    warn "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
+    fail "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
   fi
 else
   printf '  skip  %s not found\n' "$ACTION_LIST"
@@ -694,6 +701,113 @@ if [ -f "$ACTION_LIST" ] && [ -f "$ASSIGN_ARCHIVE" ]; then
   fi
 else
   printf '  skip  %s or %s not found\n' "$ACTION_LIST" "$ASSIGN_ARCHIVE"
+fi
+echo
+
+# --- T29: anti-starvation wiring (aging + backlog self-refill; 2026-07-02) --
+# Two starvation fixes must stay encoded and well-formed:
+#   (a) every action-list item's first_open_at is iso-8601 or null/absent
+#       (the Phase 3 aging term reads it; a malformed value would mis-age);
+#   (b) the prompt encodes the aging boost AND the Tier-1b backlog self-refill,
+#       and the backlog-refill.sh helper exists and is executable.
+echo "T29 anti-starvation wiring: first_open_at well-formed + aging/backlog-refill encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD29=$(jq -r '
+    [ .items[]
+      | select(has("first_open_at") and .first_open_at != null
+               and ((.first_open_at | type) != "string"
+                    or (.first_open_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$") | not))) ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD29" = "0" ]; then note "all first_open_at values are iso-8601 or null"
+  else
+    fail "$BAD29 action-list item(s) with malformed first_open_at"
+    jq -r '.items[] | select(has("first_open_at") and .first_open_at != null and ((.first_open_at|type)!="string" or (.first_open_at|test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?Z$")|not))) | "    \(.id) first_open_at=\(.first_open_at)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+PROMPT="${PROMPT:-.research/dispatcher-prompt.md}"
+if [ -f "$PROMPT" ]; then
+  grep -q 'Anti-starvation aging' "$PROMPT"     && note "prompt encodes Phase 3 aging" || fail "prompt missing Phase 3 aging block"
+  grep -q 'backlog-refill.sh' "$PROMPT"          && note "prompt wires Tier-1b backlog-refill" || fail "prompt missing Tier-1b backlog-refill wiring"
+fi
+REFILL="${REFILL:-.research/backlog-refill.sh}"
+if [ -x "$REFILL" ]; then note "backlog-refill.sh present + executable"
+else fail "backlog-refill.sh missing or not executable ($REFILL)"; fi
+echo
+
+# --- T30: open-issue ingestion wiring (2026-07-02 — get things done) --------
+# gh-issue-<N> rows must carry issue_ref.number (drives the post-merge MCP
+# close); the prompt must encode the ingest + explicit-close loop; the helper
+# must exist + be executable.
+echo "T30 issue-ingest wiring: gh-issue-<N> rows carry issue_ref + ingest/close encoded"
+if [ -f "$ACTION_LIST" ]; then
+  BAD30=$(jq -r '
+    [ .items[]
+      | select(.id | type=="string" and startswith("gh-issue-"))
+      | select((.issue_ref // {} | .number | type) != "number") ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD30" = "0" ]; then note "all gh-issue-<N> rows carry issue_ref.number"
+  else
+    fail "$BAD30 gh-issue-<N> row(s) missing issue_ref.number"
+    jq -r '.items[] | select(.id|type=="string" and startswith("gh-issue-")) | select((.issue_ref//{}|.number|type)!="number") | "    \(.id)"' "$ACTION_LIST" >&2
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'issue-ingest.sh' "$PROMPT"        && note "prompt wires open-issue ingestion" || fail "prompt missing issue-ingest wiring"
+  grep -q 'mcp__github__update_issue' "$PROMPT" && note "prompt encodes explicit issue-close loop" || fail "prompt missing post-merge issue-close loop"
+fi
+INGEST="${INGEST:-.research/issue-ingest.sh}"
+if [ -x "$INGEST" ]; then note "issue-ingest.sh present + executable"
+else fail "issue-ingest.sh missing or not executable ($INGEST)"; fi
+echo
+
+# --- T31: supply-chain hardening wiring (2026-07-07) ------------------------
+# Four starvation/stall fixes must stay encoded:
+#   (a) backlog-reconcile.sh + retry-remint.sh exist, are executable, and the
+#       prompt wires them (Phase 2.6 backlog-honesty pass + Tier 1c);
+#   (b) the prompt encodes the Phase 5.8 merge-confirm sweep and the Phase 2
+#       escalation SLA (stale red reviews + quarantine exit);
+#   (c) every retry_of-carrying action-list row is well-formed: retry_of is a
+#       string, retry_round a number >= 1, and the id ends in -retry<N>
+#       (the suffix is what satisfies the exact-id archive exclusion);
+#   (d) an OPEN retry row's ORIGINAL (retry_of) must NOT be merged/done in the
+#       archive — retrying landed work is duplicate work.
+echo "T31 supply-chain hardening: reconcile/retry/merge-confirm/SLA wiring"
+for s in backlog-reconcile.sh retry-remint.sh; do
+  if [ -x ".research/$s" ]; then note "$s present + executable"
+  else fail "$s missing or not executable"; fi
+done
+if [ -f "$PROMPT" ]; then
+  grep -q 'backlog-reconcile.sh' "$PROMPT" && note "prompt wires backlog-honesty pass" || fail "prompt missing backlog-reconcile wiring"
+  grep -q 'retry-remint.sh' "$PROMPT"      && note "prompt wires Tier 1c retry re-mint" || fail "prompt missing retry-remint wiring"
+  grep -q 'Phase 5.8 — Merge-confirm sweep' "$PROMPT" && note "prompt encodes merge-confirm sweep" || fail "prompt missing Phase 5.8 merge-confirm sweep"
+  grep -q 'quarantine escalation SLA' "$PROMPT" && note "prompt encodes escalation SLA" || fail "prompt missing escalation SLA"
+fi
+if [ -f "$ACTION_LIST" ]; then
+  BAD31=$(jq -r '
+    [ .items[]
+      | select(has("retry_of"))
+      | select((.retry_of | type) != "string"
+               or ((.retry_round // 0) | type) != "number"
+               or (.retry_round // 0) < 1
+               or ((.id | type) != "string")
+               or ((.id | test("-retry[0-9]+$")) | not)) ]
+    | length' "$ACTION_LIST")
+  if [ "$BAD31" = "0" ]; then note "all retry_of rows well-formed"
+  else fail "$BAD31 malformed retry_of row(s) in action-list"; fi
+  if [ -f "$ASSIGN_ARCHIVE" ]; then
+    BAD31b=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile arc "$ASSIGN_ARCHIVE" '
+      ([ $arc[0].assignments[]? | select(.status=="merged" or .status=="done") | .task_id ] | unique) as $landed
+      | [ $al[0].items[]
+          | select(has("retry_of") and .status=="open")
+          | select(.retry_of as $o | $landed | index($o)) ]
+      | length')
+    if [ "$BAD31b" = "0" ]; then note "no open retry row targets landed work"
+    else fail "$BAD31b open retry row(s) whose original already merged/done"; fi
+  fi
 fi
 echo
 

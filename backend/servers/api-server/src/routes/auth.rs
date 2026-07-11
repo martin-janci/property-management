@@ -1029,18 +1029,71 @@ fn build_refresh_cookie(
 }
 
 /// Parse the `refresh_token` cookie out of the `Cookie:` header. Returns
-/// `None` if the header is absent or the cookie name isn't present.
-/// Deliberately permissive whitespace handling — we don't validate the
-/// token shape here; the JWT validation downstream rejects garbage.
+/// `None` if the header is absent, the cookie name isn't present, or the
+/// cookie is present but empty (e.g. `refresh_token=;`). Treating an empty
+/// cookie as absent is deliberate: a present-but-empty cookie must NOT
+/// shadow a valid token supplied in the request body — callers use
+/// `.unwrap_or(body_token)`, so returning `Some("")` here would silently
+/// override a legitimate body/header token and break `/refresh` and
+/// `/logout`. Deliberately permissive whitespace handling otherwise — we
+/// don't validate the token shape here; the JWT validation downstream
+/// rejects garbage.
 fn parse_refresh_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
     let raw = headers.get(axum::http::header::COOKIE)?.to_str().ok()?;
     for part in raw.split(';') {
         let part = part.trim();
         if let Some(rest) = part.strip_prefix("refresh_token=") {
+            if rest.is_empty() {
+                return None;
+            }
             return Some(rest.to_string());
         }
     }
     None
+}
+
+/// Resolve the caller's *current* refresh-token session id.
+///
+/// Bug fix (revoke-all cookie blindness): after the P0-12 cookie migration,
+/// ppt-web sends the refresh token only via the `HttpOnly` `refresh_token`
+/// cookie — never the `X-Refresh-Token` header. The `list_sessions` and
+/// `revoke_all_sessions` handlers previously read the header only, so
+/// cookie-based callers resolved to `None`. For `revoke_all_sessions` that
+/// meant `revoke_all_user_tokens(user_id, None)` revoked the caller's *own*
+/// live session ("sign out other devices" signed YOU out); for
+/// `list_sessions` it meant `isCurrent` could never be `true`.
+///
+/// Mirror the cookie-first / header-fallback precedence already used by
+/// `refresh_token` (line ~1077) and `logout`: prefer the cookie, fall back to
+/// the header, hash the token, and look the session up. Header-only callers
+/// (mobile RN, older ppt-web builds) keep working unchanged because the header
+/// fallback still runs.
+async fn resolve_current_session_id(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Option<uuid::Uuid> {
+    let token = parse_refresh_cookie(headers).or_else(|| {
+        headers
+            .get("X-Refresh-Token")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string())
+    })?;
+    if token.is_empty() {
+        return None;
+    }
+
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(token.as_bytes());
+    let token_hash = hex::encode(hasher.finalize());
+
+    state
+        .session_repo
+        .find_by_token_hash(&token_hash)
+        .await
+        .ok()
+        .flatten()
+        .map(|session| session.id)
 }
 
 // ==================== Refresh Token (Story 1.3) ====================
@@ -1815,16 +1868,11 @@ pub async fn list_sessions(
         )
     })?;
 
-    // Get current token hash to identify current session
-    use sha2::{Digest, Sha256};
-    let current_token_hash =
-        if let Some(refresh_token) = headers.get("X-Refresh-Token").and_then(|h| h.to_str().ok()) {
-            let mut hasher = Sha256::new();
-            hasher.update(refresh_token.as_bytes());
-            Some(hex::encode(hasher.finalize()))
-        } else {
-            None
-        };
+    // Identify the caller's current session. Prefer the HttpOnly cookie,
+    // fall back to the `X-Refresh-Token` header (see
+    // `resolve_current_session_id`). Cookie-based ppt-web clients used to
+    // resolve to `None` here, so no row could ever be marked `isCurrent`.
+    let current_session_id = resolve_current_session_id(&state, &headers).await;
 
     // Get all active sessions for user
     let sessions = match state.session_repo.find_user_sessions(user_id).await {
@@ -1844,9 +1892,9 @@ pub async fn list_sessions(
     let session_infos: Vec<SessionInfo> = sessions
         .into_iter()
         .map(|s| {
-            let is_current = current_token_hash
+            let is_current = current_session_id
                 .as_ref()
-                .map(|h| h == &s.token_hash)
+                .map(|id| id == &s.id)
                 .unwrap_or(false);
 
             SessionInfo {
@@ -2008,22 +2056,12 @@ pub async fn revoke_all_sessions(
         )
     })?;
 
-    // Get current session to exclude
-    let current_session_id =
-        if let Some(refresh_token) = headers.get("X-Refresh-Token").and_then(|h| h.to_str().ok()) {
-            use sha2::{Digest, Sha256};
-            let mut hasher = Sha256::new();
-            hasher.update(refresh_token.as_bytes());
-            let token_hash = hex::encode(hasher.finalize());
-
-            // Find session by hash
-            match state.session_repo.find_by_token_hash(&token_hash).await {
-                Ok(Some(session)) => Some(session.id),
-                _ => None,
-            }
-        } else {
-            None
-        };
+    // Get current session to exclude. Prefer the HttpOnly cookie, fall back
+    // to the `X-Refresh-Token` header (see `resolve_current_session_id`).
+    // Cookie-based ppt-web clients used to resolve to `None` here, which made
+    // `revoke_all_user_tokens(user_id, None)` revoke the caller's OWN live
+    // session — "sign out other devices" signed the caller out too.
+    let current_session_id = resolve_current_session_id(&state, &headers).await;
 
     // Revoke all sessions except current
     match state
@@ -2643,6 +2681,41 @@ mod cookie_security_tests {
         assert!(
             result.is_none(),
             "Should not match cookie names that merely contain 'refresh_token': {result:?}"
+        );
+    }
+
+    /// Regression: a present-but-EMPTY `refresh_token` cookie must NOT shadow
+    /// a valid token supplied in the request body / `X-Refresh-Token` header.
+    ///
+    /// Both `refresh_token()` and `logout()` resolve the token as
+    /// `parse_refresh_cookie(&headers).as_deref().unwrap_or(body_token)`.
+    /// Before the fix, `parse_refresh_cookie` returned `Some("")` for a
+    /// `refresh_token=;` cookie, so `unwrap_or` kept the empty string and the
+    /// legitimate body token was ignored — `/refresh` returned MISSING_TOKEN
+    /// and `/logout` hashed the empty string, silently failing to revoke.
+    /// `parse_refresh_cookie` must now return `None` for an empty cookie so
+    /// the body/header token wins.
+    #[test]
+    fn parse_refresh_cookie_empty_cookie_does_not_shadow_body_token() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "session_id=abc; refresh_token=; other=y".parse().unwrap(),
+        );
+
+        // The cookie is present but empty -> must be treated as absent.
+        let cookie_token = parse_refresh_cookie(&headers);
+        assert!(
+            cookie_token.is_none(),
+            "Empty refresh_token cookie must parse as None, got {cookie_token:?}"
+        );
+
+        // Replicate the handler resolution: cookie (None) falls back to body.
+        let body_token = "valid.body.jwt";
+        let resolved = cookie_token.as_deref().unwrap_or(body_token);
+        assert_eq!(
+            resolved, body_token,
+            "Valid body token must be used when the cookie is present-but-empty"
         );
     }
 }

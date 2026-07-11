@@ -190,6 +190,81 @@
       "helpTooltip": "Onboarding tours guide new admin users through key workflows step by step.",
       "navLabel": "Onboarding"
     },
+    "organizations": {
+      "navLabel": "Organizations",
+      "title": "Organizations",
+      "loadError": "Failed to load organizations. Check your connection and try again.",
+      "empty": "No organizations.",
+      "searchPlaceholder": "Search by name or slug…",
+      "searchLabel": "Search organizations",
+      "searchButton": "Search",
+      "statusFilterLabel": "Filter by status",
+      "statusAll": "All statuses",
+      "statusActive": "Active",
+      "statusSuspended": "Suspended",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "members": "Members",
+        "buildings": "Buildings",
+        "created": "Created",
+        "status": "Status"
+      },
+      "actions": {
+        "details": "Details",
+        "suspend": "Suspend",
+        "reactivate": "Reactivate"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {{page}} of {{totalPages}}",
+        "total": "{{total}} organizations"
+      },
+      "stats": {
+        "activeOrgs": "Active orgs",
+        "suspendedOrgs": "Suspended orgs",
+        "activeUsers": "Active users",
+        "totalBuildings": "Buildings",
+        "totalUnits": "Units"
+      },
+      "suspend": {
+        "dialogLabel": "Suspend organization",
+        "title": "Suspend {{name}}?",
+        "warning": "All members of this organization will be logged out immediately and will not be able to sign in until the organization is reactivated.",
+        "reasonLabel": "Reason (required, kept for audit)",
+        "reasonPlaceholder": "e.g. Unpaid invoices",
+        "confirm": "Suspend organization",
+        "pending": "Suspending…",
+        "successTitle": "Organization suspended",
+        "failedTitle": "Suspend failed",
+        "failedMessage": "Could not suspend the organization."
+      },
+      "reactivate": {
+        "dialogLabel": "Reactivate organization",
+        "title": "Reactivate {{name}}?",
+        "info": "Members of this organization will be able to sign in again.",
+        "noteLabel": "Note (optional)",
+        "confirm": "Reactivate organization",
+        "pending": "Reactivating…",
+        "successTitle": "Organization reactivated",
+        "failedTitle": "Reactivate failed",
+        "failedMessage": "Could not reactivate the organization."
+      },
+      "detail": {
+        "dialogLabel": "Organization details",
+        "title": "Organization details",
+        "loadError": "Failed to load organization details.",
+        "contactEmail": "Contact email",
+        "members": "Members",
+        "activeSuffix": "active",
+        "units": "Units",
+        "suspendedHeading": "Suspended",
+        "suspensionReason": "Reason",
+        "suspendedAt": "Since",
+        "close": "Close"
+      }
+    },
     "health": {
       "activeOnly": "Active only",
       "helpTooltip": "Real-time API server metrics and alerts. Auto-refreshes every 60 seconds. Acknowledge alerts to record your review in the audit log.",

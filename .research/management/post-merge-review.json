@@ -1,1 +1,130 @@
-{"generated":"2026-07-01T10:10:05Z","window":"14d","base":"dev","scope":null,"runs":[{"run_at":"2026-07-01T10:10:05Z","prs_scanned":5,"clean":[],"with_issues":[{"pr":1994,"issue":1997,"findings":3,"specialist":"rust-backend","note":"SQL-side template pagination shape right; follow-ups: no composite index for ORDER BY updated_at DESC on import_templates; unstable sort (no id tiebreak -> page shuffle on equal updated_at); pagination/count path + per_page clamp untested"},{"pr":1993,"issue":1998,"findings":3,"specialist":"rust-backend","note":"soft-delete deleted_at exclusion + set-based blocked_among_rls correct, coexist w/ #1773 watermark on one join; #1771 regression test #[ignore]d (BIT-351) so zero running coverage; stale count_unread_rls doc cites #1968/reconcile-at-merge already done; UNION vs UNION ALL nit"},{"pr":1992,"issue":1999,"findings":3,"specialist":"rust-backend","note":"HIGH-value: enqueue+advance run as two autocommitted statements (no tx) on one conn; advance recomputes MAX(changed_at) independently so a price-history row committed between them is enqueued-skipped yet stepped-over -> permanently dropped alert. fix: wrap pair in REPEATABLE READ tx or advance only to enqueued rows. Also idempotency test #[ignore]d; status flap-dedupe note (acceptable)"},{"pr":1991,"issue":2000,"findings":2,"specialist":"rust-backend","note":"CountryCode/SupportedCurrency use rename_all=SCREAMING_SNAKE_CASE which mangles acronym variants (SK->\"S_K\", EUR->\"E_U_R\"); breaks BOTH wire (clients must send ugly non-ISO) and sqlx (Postgres enum labels are 'SK'/'EUR' per 00101). Fix: rename_all=UPPERCASE on both + revert test payloads. typespec drift: enums modeled as plain string. decimals-as-strings/::text casts/CREATED->OK all correct"},{"pr":1983,"issue":2001,"findings":2,"specialist":"rust-backend","note":"source fixes correct (units.designation not unit_number = real 500 fix on runtime query_as; messaging conn deref-coerce ripple; no key-case regression). BUT finance.md flips ~59 endpoints (market_pricing 31 + multi_currency 28) done<-partial citing tests still #[ignore]d -> 100% coverage illusory; person_months assertion widened to accept 500. reconcile doc/CI or revert to partial"}]},{"run_at":"2026-06-28T00:08:44Z","prs_scanned":8,"clean":[1752,1856,1864,1898],"with_issues":[{"pr":1683,"issue":1907,"findings":3,"specialist":"rust-backend","note":"document.rs split is behavior-preserving + RLS-safe; 3 low: re-export comment says pub(crate) but fns are pub; SQL still duplicated across modules; split is mechanical (CRUD spread by entity not concern)"},{"pr":1755,"issue":1904,"findings":2,"specialist":"db-migration","note":"renumber 192->193 safe, RLS ok, dup-version guard works; follow-up: guard has no test + hardcoded migration-dir list will drift"},{"pr":1859,"issue":1905,"findings":5,"specialist":"rust-backend","note":"dup migration 00196 collides w/ ocr_meter (blocks fresh-DB migrate; body mislabels 00194); import/export still stubbed behind DB facade (upload never persists bytes, validate seeds hardcoded errors, export auto-Ready w/ storage.example.com URL) yet checklist flips all 23 done; in-memory pagination in list_templates; tests assert the mock; key-case clean; authz+RLS+SQLi clean"},{"pr":1861,"issue":1906,"findings":7,"specialist":"rust-backend","note":"genuinely de-stubs 19 handlers + RLS-FORCE migration 00197; HIGH: validate_slovak/czech_vote pass legal_reference() as get_quorum_rule key but seeded decision_type holds simple_majority keys -> DB lookup never matches, seeded quorum table dead code; CZ 3/4 ref mismatch (SS1210 seed vs SS1209 code); get_accounting_metrics hardcodes 0 expenses/payables; export trusts body organization_id not rls.tenant_id(); no RequireCapability gate on compliance writes; zero tests on buggiest handlers"}]},{"run_at":"2026-06-20T22:14:49Z","prs_scanned":12,"clean":[1606,1613,1616,1617,1618,1619,1620,1621,1623,1624],"with_issues":[{"pr":1615,"issue":1626,"findings":1,"specialist":"rust-backend","note":"authz granularity: airbnb connections list readable by any org member incl. residents (membership-only verify_org_access); low; consistent w/ sibling /airbnb/listings read"},{"pr":1622,"issue":1627,"findings":1,"specialist":"rust-backend","note":"alerts list hardcoded LIMIT 100 no pagination -> silent truncation, badge can exceed list; indexes already exist (no perf gap)"}]},{"run_at":"2026-06-18T16:21:42Z","prs_scanned":15,"clean":[1578,1579],"with_issues":[{"pr":1582,"issue":1590,"findings":2,"specialist":"frontend","note":"correctness PASS (constant==old literal, no behavior change); test-only nits: pin-test asserts constant not wiring, stale comment"},{"pr":1557,"issue":1589,"findings":3,"specialist":"frontend","note":"move-to-root no-op (backend COALESCE ignores null parent_id); flattenTree duplication; utils-only tests; i18n clean"},{"pr":1555,"issue":1588,"findings":4,"specialist":"frontend","note":"delete needs confirm dialog; use API closed_count not derived; stats stale after delete; test gaps"},{"pr":1581,"issue":1592,"findings":1,"specialist":"devops","note":"rustfmt-only no-op; CI-process gap: rustfmt lint not a blocking pre-merge gate (#1527/#1523 merged red)"},{"pr":1580,"issue":1583,"findings":3,"specialist":"security","note":"limiter closes #1523; unbounded-HashMap leak (DoS), audit-action mislabel, test uses global static"},{"pr":1565,"issue":1586,"findings":3,"specialist":"rust-backend","note":"fix correct but same u.full_name bug still live in board_meetings.rs:138/895; test gap; enum-cast boilerplate"},{"pr":1564,"issue":1593,"findings":1,"specialist":"rust-backend","note":"key-case OK (non-vacuous); COALESCE-regression catch is timing-probabilistic, suggest deterministic seeded viewed_at"},{"pr":1561,"issue":1584,"findings":5,"specialist":"security","note":"IDOR claim sound; follow-ups: agency_members bypass, agency_id/user_id mismatch, admit-any-kind untested, extractor dup, per-req users query"},{"pr":1563,"issue":1594,"findings":2,"specialist":"security","note":"solid SELECT isolation but write-path (INSERT/UPDATE/DELETE WITH CHECK) untested despite grants; minor migration-number typo"},{"pr":1562,"issue":1591,"findings":3,"specialist":"security","note":"entity/XXE guards pass vacuously (if-let-Ok skips assert); assert ==\"\"; namespace-parity solid"},{"pr":1552,"issue":1585,"findings":3,"specialist":"security","note":"core fix sound (hole closed, active-membership-scoped, both endpoints); derive role set from TenantRole::is_manager, add airbnb cross-org test, clarify retained _tenant"},{"pr":1548,"issue":1587,"findings":3,"specialist":"frontend","note":"Harness diverges from real route container; production onError/toast wiring untested; happy-path assertions solid"}]},{"run_at":"2026-06-11T22:26:30Z","prs_scanned":14,"clean":[1291,1289,1280,1232,1227],"with_issues":[{"pr":1297,"issue":1300,"findings":2,"specialist":"rust-backend","note":"core fix correct; test-gap + agency_id/user_id conflation"},{"pr":1290,"issue":1301,"findings":1,"specialist":"rust-backend","note":"security shape correct; low idempotency wrinkle on mark_invitation_viewed re-view"},{"pr":1293,"issue":1303,"findings":1,"specialist":"rust-backend","note":"3 dev-portal tables still unforced (oauth-apps/grants/usage-logs)"},{"pr":1292,"issue":1304,"findings":4,"specialist":"rust-backend","note":"acquire_public clears context (not real RLS); mixed model in disable_mfa; stale comment; no IG3"},{"pr":1287,"issue":1305,"findings":3,"specialist":"rust-backend","note":"shape correct, public read preserved; test-coverage gaps only"},{"pr":1281,"issue":1307,"findings":1,"specialist":"rust-backend","note":"fix correct+complete; only gap is RLS policy layer untested under superuser pool"},{"pr":1295,"issue":1308,"findings":1,"specialist":"rust-backend","note":"json-key-case clean; coverage gap = realtime publish leg under replay untested"},{"pr":1284,"issue":1309,"findings":1,"specialist":"generic","note":"dangling section-above ref in rebaser+followup prompts; extraction byte-identical"},{"pr":1283,"issue":1310,"findings":2,"specialist":"generic","note":"projection correct; sufficiency-doc omits IDEAS_TRIAGE/G14 + field-list reads as whitelist (low)"}]},{"run_at":"2026-06-10T20:28:40Z","prs_scanned":15,"clean":[1263,1262,1259,1260,1258,1247,1222,1207,1255,1219,1246,1251,1250],"with_issues":[{"pr":1257,"issue":1266,"findings":1,"specialist":"ios-swiftui","note":"verify-only PR recorded but did not track a compile-blocking iOS defect: SearchView.swift performSearch()/scheduleSearch(for:) undefined, resultsGrid corrupted, AC-4 loadMoreResults() unwired, braces +2 (born broken at dbbae71). Android/KMP path fine. Filed #1266 for an ios-swiftui repair."},{"pr":1256,"issue":1267,"findings":1,"specialist":"ios-swiftui","note":"verify-only PR recorded but did not track a runtime gap: iOS deep-link layer fully implemented+unit-tested but dead at runtime — Info.plist missing CFBundleURLTypes for realityportal scheme + no applinks entitlement, so onOpenURL never fires. Filed #1267 (pm-mobile)."}]},{"run_at":"2026-06-06T02:17:25Z","prs_scanned":15,"clean":[1135,1129,1131,1130,1128,1127,1124,1125,1059,1064,1065,1122,1121,1118],"with_issues":[{"pr":1132,"issue":1137,"findings":1,"specialist":"rust-backend","note":"behavior-preserving oauth.rs dedup is sound; test-quality nit only: test_pkce_verification positive assertion became a tautology (pkce_challenge(v)==pkce_challenge(v)) and dropped the plain-rejection path. Suggest RFC7636 known-answer vector."}]},{"run_at":"2026-06-04T21:02:36Z","prs_scanned":13,"clean":[1072,1076,1026],"with_issues":[{"pr":1044,"issue":1089,"findings":3,"specialist":"rust","note":"FALSE POSITIVE (reviewer read stale local dev) — CLOSED. PKCE challenge-less guard exists on origin/dev oauth.rs:466; #1044 test passed in CI."},{"pr":1073,"issue":1091,"findings":2,"specialist":"generic","note":"core throughput change sound; 2 prose refill-threshold literals (<18 ~L503, Tier-2 <12 ~L810) not scaled with BUFFER_FLOOR 18->36."},{"pr":1074,"issue":1088,"findings":2,"specialist":"frontend","note":"Playwright e2e specs never run in CI (frontend.yml = vitest only); inaccurate setReturnUrl-sanitizes comments. vitest itself solid."},{"pr":1075,"issue":1095,"findings":1,"specialist":"frontend","note":"FileDisputePageRoute partial-fail orchestration (apiUploadEvidence/toast/failedEvidence nav) untested at any level; extract+test."},{"pr":1077,"issue":1090,"findings":1,"specialist":"rust","note":"tests correct; promote ~duplicated seed_org/seed_membership/authed_member into common/mod.rs create_authenticated_user_with_org."},{"pr":1078,"issue":1096,"findings":1,"specialist":"frontend","note":"locale keys clean; 3 hardcoded date locales (en-US OcrStatusBadge + 2x en-GB SubmissionStatusPage) ignore UI language."},{"pr":1080,"issue":1092,"findings":1,"specialist":"frontend","note":"low: announcement category filter inert end-to-end (toUiAnnouncement hardcodes general; no API category field); test exercises unreachable path."},{"pr":1081,"issue":1094,"findings":1,"specialist":"frontend","note":"minor: test pins #990 normalization well, but docblock claims loading-state coverage while only empty+error asserted."},{"pr":1082,"issue":1093,"findings":3,"specialist":"frontend","note":"FALSE POSITIVE (reviewer read stale local dev) — CLOSED. origin/dev App.tsx:167 forwards documentId; DocumentDetailScreen consumes it."},{"pr":1022,"issue":1097,"findings":2,"specialist":"frontend","note":"low: type-drift cleanup — inaccurate MoveDocumentResponse type + duplicated ApiFolderTreeNode interface. Contract/i18n/invalidation all correct."}]},{"run_at":"2026-05-28T16:24:12Z","prs_scanned":15,"clean":[634,631,584,566,558,638,637,635],"with_issues":[{"pr":643,"issue":710,"findings":2,"specialist":"rust-backend","note":"get_by_id/pause/resume still lack org-scoped WHERE (IDOR); regression tests accept any 4xx instead of exercising RBAC gate"},{"pr":538,"issue":711,"findings":3,"specialist":"rust-backend","note":"no webhook dedup table (at-least-once delivery gap); env vars read at request time not startup; duplicate sync jobs under rapid webhook delivery"},{"pr":630,"issue":712,"findings":2,"specialist":"pm-frontend","note":"queryClient.clear() too aggressive (wipes non-user-scoped queries); no test for cache purge on logout"},{"pr":567,"issue":713,"findings":2,"specialist":"pm-frontend","note":"_alreadyRetried is a leaky public param on authenticatedFetchJson; admin/mfa-handler.ts shim has no @deprecated annotation"},{"pr":623,"issue":714,"findings":2,"specialist":"pm-frontend","note":"CronPicker cron validation and detectPreset round-trip have no tests; ambiguous preset detection for edge-case cron expressions"},{"pr":595,"issue":715,"findings":2,"specialist":"pm-devops","note":"eas-cli devDep redundant alongside expo-github-action (adds ~80MB); --no-wait hides EAS build failures from CI"},{"pr":556,"issue":716,"findings":2,"specialist":"pm-frontend","note":"buildFolderCrumbs pure helper has no tests; verification ran with exit 2 masking potential type errors in +1810 LOC diff"}]},{"run_at":"2026-05-28T14:42:00Z","prs_scanned":10,"clean":[691],"skipped":[660,687,664,663,658,656,655,653,652,650],"with_issues":[{"pr":643,"issue":696,"findings":3,"specialist":"rust-backend","note":"tests only hit JWT gate (401) — RBAC extractor and cross-tenant WHERE clause never exercised; .sqlx cache likely stale after SQL stub replacement; seed helpers use sqlx::query not sqlx::query!"},{"pr":688,"issue":697,"findings":4,"specialist":"kotlin-mp","note":"raw-string empty body (medium); priceChanged direction bug (low); missing isFavorite repo mock test (low); addFavorite dual-implementation fragility (low)"},{"pr":686,"issue":698,"findings":4,"specialist":"ios-swiftui","note":"nested-NavigationStack; missing NSUserNotificationUsageDescription; unstable repo computed var; UserDefaults test pollution"},{"pr":654,"issue":699,"findings":3,"specialist":"rust-backend","note":"ON_DELETE_CASCADE destroys immutable audit log; missing RLS; untyped props silently empty"},{"pr":690,"issue":700,"findings":1,"specialist":"generic","note":"GC2 silently passes when HEAD baseline missing — shallow clone will defeat PR2 hard fail"},{"pr":640,"issue":701,"findings":3,"specialist":"rust-backend","note":"T13 assertion accepts any 4xx (should be 413-only); T12 boundary untested near MAX_FILE_SIZE; T11b missing orphan-record DB check"},{"pr":689,"issue":702,"findings":6,"specialist":"react-web","note":"double-fire mutation on last step; skip-step calls complete API; toast/overlay z-index tie at 1000; no RTL tests; missing screen-map for /platform/onboarding; dead label field in STATUS_STYLE"},{"pr":661,"issue":704,"findings":4,"specialist":"rust-backend","note":"duplicate tests (2); weak assert on deactivated client; missing principal_kind refresh test; hardcoded JWT secret"},{"pr":633,"issue":703,"findings":5,"specialist":"react-web","note":"dialog Escape/focus regression (medium); label-input unlabelled (medium); watch() perf pattern (low); missing dialog tests (low); screen-map not updated (low)"}]},{"run_at":"2026-05-28T13:41:05Z","prs_scanned":2,"clean":[],"with_issues":[{"pr":687,"issue":692,"findings":1,"specialist":"generic","note":"admin-web missing from pm-frontend owner-areas.json — scope_drift=true on every future admin-web task"},{"pr":660,"issue":693,"findings":2,"specialist":"rust-backend","note":"cross-tenant tests use no-JWT requests (hit auth gate, not DB org scope); delete_schedule listed in audit but endpoint does not exist"}],"skipped":[664,663,658,656,655,653,652,650,649,648,645,642,636]},{"run_at":"2026-05-28T11:19:16Z","prs_scanned":15,"clean":[642,648,649,652,653,655,656,663,664],"with_issues":[{"pr":542,"issue":673,"findings":1,"specialist":"pm-security","note":"e-sig nonce not persisted — replay still possible for full 7-day TTL; no tracking issue filed before PR merged"},{"pr":632,"issue":676,"findings":1,"specialist":"pm-frontend","note":"ppt_tenants localStorage not refreshed on token refresh — stale role persists after server-side membership removal"},{"pr":645,"issue":677,"findings":1,"specialist":"pm-security","note":"audit-hash domain changed (PascalCase→snake_case) without backfill — existing rows will fail verify_integrity"},{"pr":636,"issue":679,"findings":1,"specialist":"pm-qa","note":"IDOR test uses unauthenticated request — doesn't exercise authenticated cross-org RLS path"},{"pr":650,"issue":681,"findings":1,"specialist":"pm-qa","note":"Redis pub/sub fanout test is #[ignore] with no CI path — core WS delivery guarantee untested"},{"pr":658,"issue":683,"findings":1,"specialist":"pm-devops","note":"branch-protection-setup.yml post-merge action may not have been run — security-gate-conclusion still advisory"}]},{"run_at":"2026-05-27T14:30:00Z","prs_scanned":12,"clean":[563,557,609,607],"with_issues":[{"pr":531,"issue":614,"findings":3,"specialist":"rust-backend","note":"update_schedule bypasses RequireCapability; list_schedule_executions has no RBAC; cron stored in time column — schema debt"},{"pr":612,"issue":615,"findings":2,"specialist":"rust-backend","note":"thiserror still uses {0:?} Debug in log chain; no test for canonical_name() output in audit API"},{"pr":611,"issue":616,"findings":3,"specialist":"db-migration","note":"migration number comment wrong (00159 vs 00162); cron_expression column missing; no sqlx prepare --check"},{"pr":565,"issue":617,"findings":2,"specialist":"rust-backend","note":"portal_session Path=/api/v1/sso breaking change unverified; SameSite env-var read on hot path not in AppState"},{"pr":540,"issue":618,"findings":2,"specialist":"ios-swiftui","note":"DragGesture conflicts with TabView swipe at 1x scale; removeFavorite flicker on revert"},{"pr":568,"issue":619,"findings":2,"specialist":"react-web","note":"AuthCallbackPage not actually lazy-loaded (dead lazy export); loginWithSsoCode missing setTokenProvider call"},{"pr":535,"issue":620,"findings":2,"specialist":"react-native","note":"production safety guard removed — placeholder URL ships silently; EXPO_PUBLIC_ prefix inconsistency"},{"pr":606,"issue":621,"findings":1,"specialist":"react-web","note":"STATUS_OPTIONS recreated on every render — needs useMemo"}]}],"_truncated_note":"Older run history (pre-2026-05-27) retained on dev; this dispatcher push could not include the full 35KB file inline without risk — see run summary. Full history preserved in git at the prior commit."}
+{
+  "generated": "2026-07-10T18:22:01Z",
+  "window": "14d",
+  "base": "dev",
+  "scope": null,
+  "runs": [
+    {
+      "run_at": "2026-07-10T18:22:01Z",
+      "prs_scanned": 4,
+      "clean": [
+        2193,
+        2194,
+        2216
+      ],
+      "with_issues": [
+        {
+          "pr": 2217,
+          "issue": 2224,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "integrations discoverability + Airbnb OAuth reconcile correct; i18n extraction landed keys in en.json only - sk/cs/de/hu/pl missing settings.integrations.*/nav.integrations/command-palette keys (iotAlerts precedent covered all 6); graceful English fallback so CI green"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-07-09T08:27:55Z",
+      "prs_scanned": 15,
+      "clean": [
+        2192,
+        2191,
+        2188,
+        2178,
+        2187
+      ],
+      "with_issues": [
+        {
+          "pr": 2182,
+          "issue": 2196,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "webhook HMAC correct+constant-time; low-sev follow-ups: env-secret provisioning + replay protection"
+        },
+        {
+          "pr": 2181,
+          "issue": 2197,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "revoke_share guard correct (404, no existence leak); low-sev defense-in-depth: push share<->document scope into repo layer"
+        },
+        {
+          "pr": 2180,
+          "issue": 2195,
+          "findings": 2,
+          "specialist": "kotlin-mp",
+          "note": "url-encode fix correct but one-off; 9 sibling raw path-param splices still unencoded; propose shared commonMain pathSegment util (also copy-pasted 3x)"
+        },
+        {
+          "pr": 2183,
+          "issue": 2199,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "per-listing analytics returns empty for portal listings - listing_analytics FORCE-RLS policy (migration 00113) missing portal-owner branch, read sets no context; LIST half correct"
+        },
+        {
+          "pr": 2179,
+          "issue": 2198,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "real create-schedule handler w/ RBAC+tenant-scope+validation+DB tests; gaps: report_id persisted with no FK/ownership check, next_run_at left NULL on create, timezone unvalidated"
+        },
+        {
+          "pr": 2177,
+          "issue": 2200,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "ProtectedRoute suite solid; one tautological test renders /login on a sibling route so ProtectedRoute never mounts -> LOGIN_PATH guard uncovered"
+        },
+        {
+          "pr": 2173,
+          "issue": 2201,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "pgvector RAG wiring correct+org-scoped; follow-ups: DB conn held across embedding HTTP call, no provider/model provenance (silent retrieval corruption), FK violation -> 500 on bad document_id"
+        },
+        {
+          "pr": 2184,
+          "issue": 2202,
+          "findings": 3,
+          "specialist": "react-web",
+          "note": "integrations route reachable by URL but not in settings nav/command-palette; all strings hardcoded (no react-i18next); Airbnb OAuth connect discards CSRF state and has no callback handler"
+        },
+        {
+          "pr": 2186,
+          "issue": 2203,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "CSRF tests meaningful (verified vs oauth.rs); no camelCase/snake_case bug; CSRF replay/single-use Rejected branch untested (no Redis in TestApp) + minor is_protected looseness"
+        },
+        {
+          "pr": 2185,
+          "issue": 2204,
+          "findings": 3,
+          "specialist": "react-native",
+          "note": "env resolution now deterministic; getAppEnv() NODE_ENV/invalid-APP_ENV fallback uncovered, duplicates plugin resolveAppEnv(), dotenv mock precedence contradicts documented CI sentinel-override"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-07-08T00:31:14Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2150,
+          "issue": 2169,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "lease enum-decode fix incomplete: get_lease_with_details_rls (GET /leases/{id} +3 routes) still SELECT *; lease mutations still RETURNING * -> 500"
+        },
+        {
+          "pr": 2164,
+          "issue": 2170,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "admin-web Org dashboard: reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
+        }
+      ]
+    }
+  ]
+}

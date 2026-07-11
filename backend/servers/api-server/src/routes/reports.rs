@@ -14,7 +14,8 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::NaiveDate;
+use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono_tz::Tz;
 use common::errors::ErrorResponse;
 use db::models::{
     report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
@@ -210,6 +211,8 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
+        // gap-81-1: Create a new report schedule
+        .route("/schedules", axum::routing::post(create_schedule))
         // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
         .route("/schedules/{id}", axum::routing::put(update_schedule))
         // Epic 81: Story 81.1 — Schedule pause/resume
@@ -1874,6 +1877,360 @@ pub async fn retry_execution(
 }
 
 // ============================================================================
+// gap-81-1: Create report schedule
+// ============================================================================
+
+/// Allowed schedule frequencies (matches the `report_schedules.frequency`
+/// CHECK constraint in migration 00162).
+const VALID_SCHEDULE_FREQUENCIES: &[&str] = &["daily", "weekly", "monthly"];
+
+/// Allowed export formats for a schedule.
+const VALID_SCHEDULE_FORMATS: &[&str] = &["pdf", "excel", "csv"];
+
+/// Default delivery time (HH:MM) when the caller omits `time`.
+const DEFAULT_SCHEDULE_TIME: &str = "08:00";
+
+/// Parse an `HH:MM` 24-hour time-of-day string into `(hour, minute)`.
+///
+/// Rejects empty components and non-numeric input; enforces 24h/60m bounds.
+fn parse_time_hhmm(s: &str) -> Option<(u32, u32)> {
+    let (h, m) = s.split_once(':')?;
+    if h.is_empty() || m.is_empty() {
+        return None;
+    }
+    let hour = h.parse::<u32>().ok()?;
+    let minute = m.parse::<u32>().ok()?;
+    (hour <= 23 && minute <= 59).then_some((hour, minute))
+}
+
+/// Validate an `HH:MM` 24-hour time-of-day string.
+fn validate_time_hhmm(s: &str) -> bool {
+    parse_time_hhmm(s).is_some()
+}
+
+/// Compute the first `next_run_at` (UTC) for a freshly created schedule
+/// (issue #2198).
+///
+/// Walks forward from "now" in the schedule's `tz` to the first calendar day
+/// that satisfies the cadence, then anchors the `HH:MM` delivery time on that
+/// day and converts back to UTC. Returns `None` only if no matching day is
+/// found within the search horizon (should not happen for valid input).
+///
+/// Cadence rules (mirrors the create-schedule validation):
+/// - `daily`   — today if the time is still in the future, else tomorrow.
+/// - `weekly`  — the next date whose weekday matches `day_of_week`
+///   (0=Sunday … 6=Saturday), today included only if the time has not passed.
+/// - `monthly` — the next date whose day-of-month equals `day_of_month`. Months
+///   that lack that day (e.g. day 31 in April, or 29–31 in February) are
+///   skipped to the next month that has it, rather than clamped.
+///
+/// DST handling mirrors `services::quiet_hours::local_to_utc`: ambiguous local
+/// times (fall-back) take the earliest instant; a skipped local time
+/// (spring-forward gap) nudges forward one hour.
+fn compute_first_next_run(
+    frequency: &str,
+    day_of_week: Option<i32>,
+    day_of_month: Option<i32>,
+    hour: u32,
+    minute: u32,
+    tz: Tz,
+) -> Option<DateTime<Utc>> {
+    let now = Utc::now().with_timezone(&tz);
+    let today = now.date_naive();
+    let time = NaiveTime::from_hms_opt(hour, minute, 0)?;
+
+    // Horizon of ~2 years bounds the monthly day-of-month edge cases.
+    for add in 0..=800u64 {
+        let date = today.checked_add_days(chrono::Days::new(add))?;
+        let matches = match frequency {
+            "daily" => true,
+            "weekly" => {
+                day_of_week.is_some_and(|d| date.weekday().num_days_from_sunday() as i32 == d)
+            }
+            "monthly" => day_of_month.is_some_and(|d| date.day() as i32 == d),
+            _ => false,
+        };
+        if !matches {
+            continue;
+        }
+
+        let naive = date.and_time(time);
+        let candidate = match tz.from_local_datetime(&naive).earliest() {
+            Some(dt) => dt,
+            // Spring-forward gap: nudge forward an hour; worst case anchor in UTC.
+            None => tz
+                .from_local_datetime(&(naive + chrono::Duration::hours(1)))
+                .earliest()
+                .unwrap_or_else(|| Utc.from_utc_datetime(&naive).with_timezone(&tz)),
+        };
+
+        if candidate > now {
+            return Some(candidate.with_timezone(&Utc));
+        }
+    }
+    None
+}
+
+/// Request body for `POST /api/v1/reports/schedules`.
+///
+/// `organization_id` is intentionally absent — it is derived from the
+/// authenticated tenant so a caller cannot create a schedule in another org.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateScheduleRequest {
+    /// Report definition this schedule generates.
+    ///
+    /// `report_id` is intentionally **opaque** (issue #2198): the reports this
+    /// system generates (fault statistics, occupancy, consumption, …) are
+    /// computed on demand from live data and are *not* rows in a
+    /// report-definitions table, so there is nothing to validate `report_id`
+    /// against for existence or ownership — and `report_schedules.report_id`
+    /// carries no foreign key by design. The handler rejects only the nil UUID
+    /// as an obvious client bug; any other value is stored verbatim and the
+    /// report-type it names is resolved by the scheduler at fire time.
+    pub report_id: Uuid,
+    /// Human-readable schedule name.
+    pub name: String,
+    /// Delivery cadence: `daily`, `weekly`, or `monthly`.
+    pub frequency: String,
+    /// Day of week (0=Sunday … 6=Saturday). Required when `frequency = weekly`.
+    pub day_of_week: Option<i32>,
+    /// Day of month (1–31). Required when `frequency = monthly`.
+    pub day_of_month: Option<i32>,
+    /// Delivery time of day in `HH:MM` (24h). Defaults to `08:00`.
+    pub time: Option<String>,
+    /// IANA timezone for the delivery time. Defaults to `UTC`.
+    pub timezone: Option<String>,
+    /// Export format: `pdf`, `excel`, or `csv`. Defaults to `pdf`.
+    pub format: Option<String>,
+    /// Recipient email addresses (max 50).
+    #[serde(default)]
+    pub recipients: Vec<String>,
+}
+
+/// Create a new report schedule (gap-81-1).
+///
+/// Persists a new `report_schedules` row for the authenticated tenant and
+/// returns it with `201 Created`. Replaces the previous stub which never
+/// persisted the schedule.
+///
+/// # Security
+///
+/// Uses `RlsConnection` so the caller's role and tenant are re-verified against
+/// the database (not JWT claims). Manager role or above is required, and the
+/// new schedule's `organization_id` is taken from `rls.tenant_id()` — never the
+/// request body — preventing cross-tenant creation.
+#[utoipa::path(
+    post,
+    path = "/api/v1/reports/schedules",
+    tag = "reports",
+    request_body = CreateScheduleRequest,
+    responses(
+        (status = 201, description = "Schedule created", body = ReportSchedule),
+        (status = 400, description = "Validation error", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+    )
+)]
+pub async fn create_schedule(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Json(req): Json<CreateScheduleRequest>,
+) -> Result<(StatusCode, Json<ReportSchedule>), (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may create report schedules. Role is derived
+    // from the DB-backed `RlsConnection`, NOT from JWT claims.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to create report schedules",
+            )),
+        ));
+    }
+    // Tenant for the new schedule comes from the authenticated context.
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
+    // --- Validation --------------------------------------------------------
+    // `report_id` is opaque (no report-definitions table / no FK — see the
+    // CreateScheduleRequest doc, issue #2198). Reject only the obviously-bogus
+    // nil UUID; any other value is persisted as-is.
+    if req.report_id.is_nil() {
+        return Err(bad_request(
+            "INVALID_REPORT_ID",
+            "report_id must not be the nil UUID",
+        ));
+    }
+
+    let name = req.name.trim();
+    if name.is_empty() {
+        return Err(bad_request("EMPTY_NAME", "Schedule name must not be empty"));
+    }
+
+    let frequency = req.frequency.to_lowercase();
+    if !VALID_SCHEDULE_FREQUENCIES.contains(&frequency.as_str()) {
+        return Err(bad_request(
+            "INVALID_FREQUENCY",
+            "frequency must be one of: daily, weekly, monthly",
+        ));
+    }
+
+    // Weekly schedules need a day-of-week; monthly schedules need a day-of-month.
+    match frequency.as_str() {
+        "weekly" => match req.day_of_week {
+            Some(d) if (0..=6).contains(&d) => {}
+            _ => {
+                return Err(bad_request(
+                    "INVALID_DAY_OF_WEEK",
+                    "weekly schedules require day_of_week in 0..=6 (0=Sunday)",
+                ))
+            }
+        },
+        "monthly" => match req.day_of_month {
+            Some(d) if (1..=31).contains(&d) => {}
+            _ => {
+                return Err(bad_request(
+                    "INVALID_DAY_OF_MONTH",
+                    "monthly schedules require day_of_month in 1..=31",
+                ))
+            }
+        },
+        _ => {}
+    }
+    // Range-check any provided day fields even when not required by frequency.
+    if let Some(d) = req.day_of_week {
+        if !(0..=6).contains(&d) {
+            return Err(bad_request(
+                "INVALID_DAY_OF_WEEK",
+                "day_of_week must be in 0..=6 (0=Sunday)",
+            ));
+        }
+    }
+    if let Some(d) = req.day_of_month {
+        if !(1..=31).contains(&d) {
+            return Err(bad_request(
+                "INVALID_DAY_OF_MONTH",
+                "day_of_month must be in 1..=31",
+            ));
+        }
+    }
+
+    let time = req
+        .time
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .unwrap_or(DEFAULT_SCHEDULE_TIME)
+        .to_string();
+    let Some((time_hour, time_minute)) = parse_time_hhmm(&time) else {
+        return Err(bad_request(
+            "INVALID_TIME",
+            "time must be a 24-hour HH:MM value (e.g. \"08:30\")",
+        ));
+    };
+
+    let format = req
+        .format
+        .as_deref()
+        .map(str::to_lowercase)
+        .unwrap_or_else(|| "pdf".to_string());
+    if !VALID_SCHEDULE_FORMATS.contains(&format.as_str()) {
+        return Err(bad_request(
+            "INVALID_FORMAT",
+            "format must be one of: pdf, excel, csv",
+        ));
+    }
+
+    if req.recipients.len() > 50 {
+        return Err(bad_request(
+            "TOO_MANY_RECIPIENTS",
+            "A schedule may have at most 50 recipients",
+        ));
+    }
+    for email in &req.recipients {
+        if !crate::services::auth::AuthService::validate_email(email) {
+            return Err(bad_request(
+                "INVALID_RECIPIENT_EMAIL",
+                format!("Invalid recipient email address: {email}"),
+            ));
+        }
+    }
+
+    let timezone = req
+        .timezone
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .unwrap_or("UTC")
+        .to_string();
+    // The timezone is the basis for the scheduler's delivery-time math, so an
+    // unrecognised value is a latent break — reject it at the edge (issue #2198)
+    // instead of storing e.g. "Mars/Phobos".
+    let Ok(tz) = timezone.parse::<Tz>() else {
+        return Err(bad_request(
+            "INVALID_TIMEZONE",
+            "timezone must be a valid IANA timezone name (e.g. \"Europe/Bratislava\")",
+        ));
+    };
+
+    // Compute the first fire time now so the row is schedulable immediately;
+    // otherwise a due-work query (`WHERE next_run_at <= NOW()`) would never
+    // pick up a freshly created schedule (issue #2198).
+    let next_run_at = compute_first_next_run(
+        &frequency,
+        req.day_of_week,
+        req.day_of_month,
+        time_hour,
+        time_minute,
+        tz,
+    );
+
+    // --- Persist -----------------------------------------------------------
+    let schedule = state
+        .report_schedule_repo
+        .create(db::models::report_schedule::NewReportSchedule {
+            organization_id: caller_org_id,
+            report_id: req.report_id,
+            name: name.to_string(),
+            frequency,
+            day_of_week: req.day_of_week,
+            day_of_month: req.day_of_month,
+            time,
+            timezone,
+            format,
+            recipients: req.recipients,
+            next_run_at,
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                org_id = %caller_org_id,
+                report_id = %req.report_id,
+                "Failed to create report schedule"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to create schedule")),
+            )
+        })?;
+
+    Ok((StatusCode::CREATED, Json(schedule)))
+}
+
+/// Small helper to build a `400 Bad Request` error tuple.
+fn bad_request(
+    code: &'static str,
+    message: impl Into<String>,
+) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new(code, message.into())),
+    )
+}
+
+// ============================================================================
 // gap-81-1: Update report schedule (cron_expression, recipients, enabled)
 // ============================================================================
 
@@ -2072,7 +2429,92 @@ pub async fn update_schedule(
 
 #[cfg(test)]
 mod tests {
-    use super::validate_cron_expression;
+    use super::{
+        compute_first_next_run, parse_time_hhmm, validate_cron_expression, validate_time_hhmm,
+    };
+    use chrono::{Datelike, Timelike};
+    use chrono_tz::Tz;
+
+    // --- parse_time_hhmm (issue #2198) ---
+
+    #[test]
+    fn parse_time_returns_components() {
+        assert_eq!(parse_time_hhmm("08:30"), Some((8, 30)));
+        assert_eq!(parse_time_hhmm("0:0"), Some((0, 0)));
+        assert_eq!(parse_time_hhmm("23:59"), Some((23, 59)));
+        assert_eq!(parse_time_hhmm("24:00"), None);
+        assert_eq!(parse_time_hhmm("aa:bb"), None);
+    }
+
+    // --- compute_first_next_run (issue #2198) ---
+
+    #[test]
+    fn next_run_daily_is_in_the_future() {
+        let tz: Tz = "Europe/Bratislava".parse().unwrap();
+        let next = compute_first_next_run("daily", None, None, 8, 30, tz)
+            .expect("daily schedule must yield a next run");
+        assert!(
+            next > chrono::Utc::now(),
+            "next_run_at must be in the future"
+        );
+        // Anchored at 08:30 local time.
+        let local = next.with_timezone(&tz);
+        assert_eq!((local.hour(), local.minute()), (8, 30));
+    }
+
+    #[test]
+    fn next_run_weekly_lands_on_requested_weekday() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // day_of_week = 3 (Wednesday, 0=Sunday).
+        let next = compute_first_next_run("weekly", Some(3), None, 9, 0, tz)
+            .expect("weekly schedule must yield a next run");
+        let local = next.with_timezone(&tz);
+        assert_eq!(
+            local.weekday().num_days_from_sunday(),
+            3,
+            "weekly next run must fall on the requested weekday"
+        );
+        assert!(next > chrono::Utc::now());
+    }
+
+    #[test]
+    fn next_run_monthly_lands_on_requested_day() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // day_of_month = 15.
+        let next = compute_first_next_run("monthly", None, Some(15), 6, 0, tz)
+            .expect("monthly schedule must yield a next run");
+        let local = next.with_timezone(&tz);
+        assert_eq!(local.day(), 15, "monthly next run must fall on day 15");
+        assert!(next > chrono::Utc::now());
+    }
+
+    #[test]
+    fn next_run_monthly_day_31_skips_short_months() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // Day 31 only exists in some months; the walker must still find one.
+        let next = compute_first_next_run("monthly", None, Some(31), 0, 0, tz)
+            .expect("day-31 schedule must resolve to a 31-day month");
+        assert_eq!(next.with_timezone(&tz).day(), 31);
+        assert!(next > chrono::Utc::now());
+    }
+
+    // --- validate_time_hhmm (gap-81-1: create schedule) ---
+
+    #[test]
+    fn time_valid_values() {
+        for t in ["00:00", "08:00", "08:30", "23:59", "9:05", "0:0"] {
+            assert!(validate_time_hhmm(t), "{t:?} should be a valid HH:MM time");
+        }
+    }
+
+    #[test]
+    fn time_invalid_values() {
+        for t in [
+            "", ":", "24:00", "08:60", "08", "08:", ":30", "aa:bb", "-1:00", "12:-5", "8:0:0",
+        ] {
+            assert!(!validate_time_hhmm(t), "{t:?} should be rejected");
+        }
+    }
 
     // --- valid expressions ---
 

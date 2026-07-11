@@ -154,6 +154,12 @@ export function AdminLayout() {
           </SidebarGroup>
 
           <SidebarGroup label="PLATFORM">
+            {canAgenciesRead ? (
+              <NavItem
+                to="/platform/organizations"
+                label={t('admin.organizations.navLabel', 'Organizations')}
+              />
+            ) : null}
             {canSiteSettingsWrite ? (
               <NavItem to="/platform/settings" label={t('admin.platform.title', 'Settings')} />
             ) : null}

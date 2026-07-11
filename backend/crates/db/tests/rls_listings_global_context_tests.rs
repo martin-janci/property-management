@@ -174,7 +174,7 @@ impl TestDb {
 ///   * agency B staff           → 2 (both B's).
 ///   * PlatformHost (global)    → 2 (the one published row from each of A, B).
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn four_context_listings_visibility() {
     let db = TestDb::new()
         .await
@@ -308,7 +308,7 @@ async fn four_context_listings_visibility() {
 /// attempted write fails. This is the schema-level guarantee that the global
 /// portal cannot be a write surface.
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn platform_host_cannot_write_listings() {
     let db = TestDb::new()
         .await
@@ -423,7 +423,7 @@ async fn platform_host_cannot_write_listings() {
 /// view onto a subsequent agency-scoped request that lands on the same
 /// connection.
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn clear_request_context_resets_global_read() {
     let db = TestDb::new()
         .await
@@ -507,7 +507,7 @@ async fn clear_request_context_resets_global_read() {
 /// is the only path that flips it. This is the binary-first sequencing per
 /// ROADMAP Phase 4.
 #[tokio::test]
-#[ignore] // Requires database with migrations - run with --ignored flag
+#[ignore = "requires database with migrations; run with --ignored"]
 async fn new_listing_defaults_to_not_published() {
     let db = TestDb::new()
         .await

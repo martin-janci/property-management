@@ -251,7 +251,6 @@ async fn thread_participant_state_has_force_rls_and_policy(pool: PgPool) {
 /// non-zero with no thread visible in the inbox to clear it. The other
 /// participant's count must be unaffected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn soft_deleted_thread_excluded_from_unread_count(pool: PgPool) {
     let repo = MessagingRepository::new(pool.clone());
     let org = seed_org(&pool, "tps-unread-del").await;

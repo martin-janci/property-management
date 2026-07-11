@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-08",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "note": "Tier-1d demand-driven run (backlog starved). Segment mobile-native-kmp is oldest by review_cursor (2026-06-06). A 2026-07-07 run already emitted createlisting-stub / no-http-timeout / ssoservice-no-test; these findings are deliberately distinct (new + promoted-deferred) to add fresh backlog signal rather than duplicate ids.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-listing-detail-path-inject",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt:46 — getListingDetail() splices listingId raw into the request path (client.get(\"$baseUrl/api/v1/listings/$listingId\")) with no encodeURLPathPart(), whereas the sibling ApiClient.getListing (ApiClient.kt:84) deliberately routes the id through pathSegment()/encodeURLPathPart() to block path-injection. listingId flows from deep links (reality://listing/<id>) and nav args, so an id containing '/', '?', '#' or '..' can smuggle extra path segments/query params into the request. Inconsistent hardening; apply the same encoding here."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-analytics-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "gap",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:440 and :458 — the MyListings and ListingAnalytics routes are wired into the production nav graph but render hardcoded listings=emptyList() / metrics=emptyList() with isLoading=false and no repository or ApiClient call. ApiClient exposes no my-listings or analytics endpoint at all, so both realtor screens are permanent empty stubs in production (distinct from the already-tracked CreateListing NotImplementedError stub). The realtor listing-management flow (create + list + analytics) is entirely unimplemented behind live navigation."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-notifrepo-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt — fetch / mark-read / DTO-mapping logic has no repository test in shared/commonTest (only NotificationModelsContractTest exists, which covers serialization not repository behavior). The 401->error and mark-read mutation branches are uncovered."
+      ],
+      "expert": "tester"
+    }
+  ],
+  "deferred_findings": [
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "note": "HttpClientProvider.kt:37 installs no HttpTimeout plugin — a stalled connection hangs suspend calls indefinitely. Already emitted in the 2026-07-07 run; re-listed here for continuity, not re-scored."
+    }
+  ]
+}

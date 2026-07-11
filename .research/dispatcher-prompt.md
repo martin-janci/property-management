@@ -124,7 +124,16 @@ Each item in `.research/management/action-list.json` `.items[]` carries:
 
   // -- Dependency wiring --
   "dependency":  "string | null", // LEGACY free-text; informational only
-  "depends_on":  ["task_id", …]   // gap 3 — structured; canonical for Phase 3
+  "depends_on":  ["task_id", …],  // gap 3 — structured; canonical for Phase 3
+
+  // -- Retry re-mint (2026-07-07, failed-task dead-end fix) — OPTIONAL --
+  "retry_of":    "task_id",       // original FAILED task_id this row retries;
+                                  // presence EXEMPTS the row from the Phase 3
+                                  // stem-aware ARCHIVE exclusion (exact-id
+                                  // exclusion still applies). Written only by
+                                  // retry-remint.sh — never hand-add without
+                                  // the cool-down + round-cap checks it does.
+  "retry_round": 1                // 1-based; RETRY_MAX_ROUNDS (default 2) caps it
 }
 ```
 
@@ -163,6 +172,7 @@ visible every cycle.
 - `status_changed_at` — bumped ONLY when the `status` field value changes (hang signal).
 - `merged_at` — set ONCE when row → `merged`; mirrors GH `PR.mergedAt`.
 - Backfill missing `status_changed_at` = `claimed_at` on first read.
+- `first_open_at` (**action-list items only**, NOT an assignments field) — set ONCE when an item is created `open` (backlog-refill promotion, coverage refill, or manual add); backfilled = NOW on first read for any legacy open row missing it (set-once — persist it by including `action-list.json` in the Phase 6 commit, so aging accrues across runs). Never changes while the item stays open. Consumed by the Phase 3 claim-sort **aging** term (anti-starvation); ignored everywhere else.
 - Legacy compat: rows with `status == "done"` are treated equivalent to `merged` (terminal); do not migrate or touch them.
 
 ## State machine
@@ -172,17 +182,21 @@ visible every cycle.
 | in-progress | review   | Phase 2 of a SUBSEQUENT run sees a PR exists on `<branch>` (gap 5 — async-spawn model). Fast-path: Phase 4 of THIS run captures `pr=<n>` from a sync return; either path is valid. |
 | in-progress | failed   | Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch OR (fast-path) Phase 4 returns `pr=none` on a synchronous return |
 | in-progress | in-progress | Phase 2 detects sandbox-timeout (`cloud-ok`: 60m, else 120m) AND `reclaim_attempts < 1` → re-spawn implementer once; bump `reclaim_attempts`, bump `status_changed_at` so the next grace window starts now |
-| review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
-| review      | failed   | Phase 2 sees PR CLOSED without merge                            |
+| review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`) — OR the Phase 5.8 merge-confirm sweep sees it in the SAME run (identical transition, same GH-truth source) |
+| review      | failed   | Phase 2 sees PR CLOSED without merge — OR the Phase 2 stale-review SLA fires (`review` > `DISPATCHER_REVIEW_SLA_DAYS` with red CI and `fix_rounds >= 1` → close PR, open `from-stalled-pr` issue) |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
+| quarantined | failed   | (NEW 2026-07-07) Phase 2 quarantine-exit SLA: `quarantined_at` older than `DISPATCHER_QUARANTINE_SLA_DAYS` (default 7) with no operator action → close PR (branch preserved), open `from-stalled-pr` issue |
 | review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
-`merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
-dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
-returns from quarantined → other), but the operator may manually flip
-the status back to `review` to resume work. Quarantined rows are
-excluded from claim selection (Phase 3 dedup) AND from the WIP count
-(Phase 3 throttle) — they free a slot without confusing the active pool.
+`merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: no
+Phase 5/5.5 trigger returns from quarantined → other, and the operator may
+manually flip the status back to `review` to resume work — but it is no
+longer forever: the Phase 2 quarantine-exit SLA (above) fails the row after
+`DISPATCHER_QUARANTINE_SLA_DAYS` (default 7) of operator inaction and
+recycles it through a `from-stalled-pr` issue, so a quarantined stem can't
+be held hostage indefinitely. Quarantined rows are excluded from claim
+selection (Phase 3 dedup) AND from the WIP count (Phase 3 throttle) — they
+free a slot without confusing the active pool.
 
 ## Hang detection (Phase 7)
 
@@ -592,6 +606,36 @@ fi
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
 
+#### Stale-review / quarantine escalation SLA (NEW 2026-07-07)
+
+The Phase 7 hang alerts (`review >48h` WARN, `review >7d` ALERT) only PRINT —
+observed cost: PR #1812 sat in `review` with red CI for 13 days eating a WIP
+slot, and quarantined rows had no exit at all. Apply this deterministic SLA
+while iterating the same Phase 2 rows (skip if `$DISPATCHER_SKIP_MUTATING == 1`):
+
+- **Stale red review** — `status == "review"` AND
+  `(now - status_changed_at) > DISPATCHER_REVIEW_SLA_DAYS` (default 7) AND the
+  PR's CI rollup has a `FAILURE`/`CANCELLED`/`TIMED_OUT` check AND
+  `fix_rounds >= 1` (at least one repair was already attempted) →
+  `new_status="failed"`, append `' [stale-review SLA: red CI after <d>d in
+  review; escalating to issue]'` to `implementer_summary`, comment on the PR
+  explaining the auto-escalation, close the PR (branch preserved), and open a
+  GitHub issue titled `stale-review: <task_id> (was PR #<n>)` labeled
+  `follow-up,from-stalled-pr` summarizing what was attempted and what CI
+  rejected. The EVERY-CYCLE issue-ingest in Phase 2.6 re-mints it as a fresh
+  `gh-issue-<N>` row — a clean-slate retry replaces an eternally-red zombie.
+  Rows still in `fix_rounds == 0` are left to the normal Phase 5/5.7 loop.
+- **Quarantine exit** — `status == "quarantined"` AND
+  `(now - quarantined_at) > DISPATCHER_QUARANTINE_SLA_DAYS` (default 7) →
+  the operator hasn't picked it up; stop holding the stem hostage.
+  `new_status="failed"`, append `' [quarantine SLA: no operator action in
+  <d>d]'`, comment + close the PR (branch preserved), and open the same
+  `follow-up,from-stalled-pr` issue carrying the `quarantine_reason`.
+
+Both paths surface in Phase 7 under `Stale-review escalations:`. Bounded: max
+2 escalations per run (oldest `status_changed_at` first) so a backlog of
+zombies drains gradually and each run's blast radius stays reviewable.
+
 #### Orphan-PR discovery (stem-aware reconciliation)
 
 A PR can exist on remote with no matching row in `assignments.json` —
@@ -756,6 +800,69 @@ out of band under a NON-id subject (no `<id>:` prefix) are not auto-matched —
 those still need a manual reconcile note (that is how the Airbnb cluster was
 drained in this defect). Smoke-tested by `.research/test-dev-reconcile.sh`.
 
+**Backlog-honesty pass (NEW 2026-07-07 — supply-chain hardening).** Run RIGHT
+AFTER `dev-reconcile.sh`, still before the buffer tiers. `gc1-reconcile` and
+`dev-reconcile` keep the ACTION-LIST honest, but nothing kept `backlog.json`
+(the Tier-1b refill SOURCE) honest against the assignment ledger: rows whose
+assignment terminated weeks ago still read `open`/`ready`, so Tier-1b
+re-evaluated and re-rejected the same ghosts every run and logged `avail=0`
+while the backlog LOOKED full (observed 2026-07-07: all 20 open/ready rows
+were terminal — mostly `failed` — in the archive). This pass flips them:
+assignment merged/done → backlog `done`; failed → backlog `dropped`; each
+flip carries a `reconciled` evidence stamp (never silent). Count-invariant,
+idempotent, retry candidacy preserved (retry-remint reads the ARCHIVE, not
+backlog.json). Smoke-tested by `.research/test-backlog-reconcile.sh`.
+
+```bash
+bash .research/backlog-reconcile.sh --apply
+```
+
+Include `backlog.json` in the Phase 6 commit when it flipped any row; surface
+the count on the Phase 7 `Backlog-reconciled:` line.
+
+**Open-issue ingestion (NEW 2026-07-02 — get things done).** Run RIGHT AFTER
+the reconcilers, before the buffer-guard tiers, so freshly-ingested issues are
+in this run's claim pool. Unlike the buffer refill (a starvation top-up), this
+runs **EVERY cycle** regardless of buffer level — real work filed as GitHub
+issues should always enter the pipeline. Fetch open issues via the **GitHub
+MCP** (the cron can't run `gh` — proxy-403'd, #958), write them to a temp file,
+then run the deterministic merge:
+
+```bash
+# 1. Fetch via MCP (NOT gh): mcp__github__list_issues owner=<owner> repo=<repo>
+#    state=open (paginate). Persist the raw array to a temp file in the same
+#    shape the REST /issues payload has: [{number,title,labels,html_url,
+#    pull_request?}, …]. The MCP call is the ONLY network step; the merge is
+#    deterministic + offline (GH_ISSUES_FILE injection, like dev-reconcile's
+#    DEV_LOG_FILE). If the MCP fetch fails, SKIP (no file → the script no-ops)
+#    — never block the run on issue ingestion.
+GH_ISSUES_FILE=<tmp.json> bash .research/issue-ingest.sh --apply
+```
+
+It promotes untracked open issues into `action-list.json` as `gh-issue-<N>`
+rows (PRs filtered; `EXCLUDE_LABELS` default `epic,discussion,question,wontfix,
+duplicate,blocked,needs-triage` dropped; label→priority `security|critical|bug`
+→high, `enhancement|backend|frontend|mobile|follow-up|from-merged-review`
+→medium, else low). Dedup is thorough: skip any issue already an action-list
+id/stem, an assignment id/stem, or referenced by `#<N>` in an existing row.
+Each row carries `Closes #<N>` in its action, `first_open_at=NOW`, `depends_on:[]`,
+and an `issue_ref:{number,url,labels}` stamp. Bounded: never past `BUFFER_CEIL`
+headroom, ≤ `ISSUE_INGEST_CAP` (default 12) per run, append-only fail-closed.
+Include `action-list.json` in the Phase 6 commit when it ingested any row;
+surface the count on the Phase 7 `Issue-ingest:` line. Smoke-tested by
+`.research/test-issue-ingest.sh`.
+
+**Closing the loop (get things DONE).** A `gh-issue-<N>` PR targets `dev`, and
+a `Closes #<N>` keyword only auto-closes on merge to the **default** branch
+(`main`, not `dev`) — so the issue must be closed EXPLICITLY. When Phase 2 (or
+Phase 5.5) observes a `gh-issue-<N>` assignment go `merged`, close issue `#<N>`
+via `mcp__github__update_issue` (`state=closed`) and post a one-line
+`mcp__github__add_issue_comment` linking the merged PR (`resolved by #<pr> on
+dev`). Surface on the Phase 7 `Issues-closed:` line. If the close MCP call
+fails, log it and continue — the merge already landed; a stale-open issue is
+re-closed idempotently next run (the `gh-issue-<N>` row is terminal, so it is
+not re-ingested).
+
 **Archive lookup pattern (issue #9 — token spending).** With terminal rows
 split into `assignments-archive.json`, the dep_blocked check below MUST
 consult BOTH files when resolving a `depends_on` entry. Compute a set of
@@ -838,6 +945,67 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 
   **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
 - **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
+- **Tier 1b (in-repo backlog self-refill — NEW 2026-07-02, planner-independent):** after the Tier-1 coverage rubric, if the buffer is still starved, promote fresh `open`/`ready` vectors from `.research/backlog.json` (the research routine's continuously-refreshed, SCORED, PLANNED output) into `action-list.json`. This runs **BEFORE** the Tier-2 planner kick so the buffer self-heals even while `DISPATCHER_URL` is the mis-configured no-op (GH #1380 defect 2 — an operator-only secret the dispatcher cannot fix). Deterministic + idempotent. It computes its **OWN honest claimable count** (open rows whose id AND stem are absent from assignments active+archive) rather than trusting `open_claimable_count`, so the metric blind spot that inflates the buffer with ghost rows (findings.json) cannot suppress the refill. Bounded: never lifts honest claimable above `BUFFER_CEIL`, and promotes at most `BACKLOG_REFILL_CAP` (default 24) per run to stay well inside the MCP inline-push size limit (issue #1014 — the same corruption vector `action-list-reconcile.sh` guards). Priority is **score-based** on the routine's own 0–8 scale (`>=6`→high, `3–5`→medium, `<3`→low; `>=3` is the routine's actionable bar, routine-prompt.md:121; `confidence:low` downgrades one tier); each promoted row is stamped `source="dispatcher-backlog-refill <iso>"`, `first_open_at=NOW`, `depends_on:[]`, plus a `backlog_ref` evidence object. Only ever APPENDS rows (never mutates/removes existing ones; the script fails closed if the item count doesn't grow by exactly the promote count). Include `action-list.json` in the Phase 6 commit when it promoted any row; surface the count on the Phase 7 `Backlog-refill:` line.
+  ```bash
+  # Defaults (36/72/120, cap 24) already match goal-check.sh — pass overrides only if the run set them.
+  bash .research/backlog-refill.sh --apply
+  ```
+- **Tier 1c (failed-task retry re-mint — NEW 2026-07-07):** after Tier 1b, if
+  the buffer is still starved (`< BUFFER_FLOOR`), give retryable FAILED tasks a
+  bounded second life. A `failed` archive row permanently blocks its id AND
+  stem (issue #1739 #3 — correct as a dup guard), but that also dead-ends tasks
+  that failed for TRANSIENT reasons: `pr_number=null` means the implementer
+  died before a PR even existed (sandbox timeout, verify-env failure), not that
+  the implementation was rejected. `retry-remint.sh` re-mints those as
+  `<stem>-retry<N>` action-list rows carrying `retry_of` + `retry_round`, under
+  hard guards: cool-down `RETRY_COOLDOWN_DAYS` (default 7) since the newest
+  failure in the stem group, `RETRY_MAX_ROUNDS` (default 2) lifetime rounds per
+  stem, never for stems with landed work or any active/live sibling (T24 +
+  PR 5/5 hold), ≤ `RETRY_REMINT_CAP` (default 6) per run, never past
+  `BUFFER_CEIL` headroom, append-only fail-closed. **Dev-truth guards (issue
+  #2153 — ghost retries):** the archive ledger alone is a blind spot — work
+  can land on dev OUT OF BAND under a different task_id/PR (observed: 2
+  reality-web `code-review-*` retries whose fixes had merged via #1676 etc.,
+  plus `10b-2-feature-flag-management-retry1` for a story coverage already
+  marked done). So before minting, the script also excludes (a) stems whose
+  story id is `status="done"` in `coverage.json` (`COVERAGE_FILE` injectable;
+  missing file degrades to no exclusion), and (b) stems matched by an anchored
+  `<id>:` commit-subject prefix on `origin/dev` — the same squash-merge join
+  convention as `dev-reconcile.sh`, never a loose body grep (`DEV_LOG_FILE`
+  injectable for tests; default `git log origin/dev --format=%s -300`;
+  unreachable remote degrades to no exclusion). The `retry_of` field is what
+  Phase 3 and backlog-refill.sh honor to exempt the row from the STEM-aware
+  archive exclusion (exact-id exclusion still applies — satisfied by the
+  `-retry<N>` suffix). Smoke-tested by `.research/test-retry-remint.sh`.
+
+  ```bash
+  bash .research/retry-remint.sh --apply
+  ```
+
+  Include `action-list.json` in the Phase 6 commit when it minted any row;
+  surface the count on the Phase 7 `Retry-reminted:` line.
+- **Tier 1d (demand-driven vector generation — NEW 2026-07-07):** after Tier
+  1c, if the buffer is STILL `< BUFFER_FLOOR`, don't wait for the daily
+  cadence — starvation should trigger PRODUCTION, not just promotion. Spawn
+  exactly ONE generator subagent this run (cap 1; skip if
+  `$DISPATCHER_SKIP_MUTATING == 1`), alternating deterministically on run
+  parity (`stats.runs % 2`):
+  - **even** → a `ppt-dev-review` static-review slice (its normal segment
+    rotation applies) — findings become `code-review-*` signals;
+  - **odd** → a `ppt-review-merged` pass over the last 14 days — findings
+    become labeled follow-up GitHub issues, which the EVERY-CYCLE issue-ingest
+    above then pulls into the claim pool automatically.
+
+  The generator runs under `DISPATCHER_OWNED_COMMIT=1` like every analysis
+  subagent (single-writer rule) — it writes artifacts into the working tree /
+  GitHub issues and RETURNS; this orchestrator folds any `.research/**` deltas
+  into its own Phase 6 commit. Freshly-generated items enter the pool next run
+  (or this run via issue-ingest ordering) — do NOT re-run the earlier tiers
+  after the generator returns. Log `Tier 1d: spawned <dev-review|review-merged>
+  (claimable=<n> < floor=<floor>)` and surface the outcome on the Phase 7
+  `Generator:` line. If the 24h post-merge gate in Phase 2.5 already ran a
+  review-merged pass THIS run, spawn the dev-review slice instead (never two
+  review-merged passes in one run).
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, the `anthropic-version` header, a `{"text": …}` body, and `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it. The body/header shape is fixed per issue #1151 / #1380 — see the comment below):
 
   ```bash
@@ -896,9 +1064,10 @@ chore(research): dispatcher <date> — C claimed, R reviewed, M merge-attempts,
 X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased, DS dup-skipped
 ```
 
-**Recompute the trailer AFTER Phase 5.5 (finding `metrics-trailer-undercounts-skips`).**
+**Recompute the trailer AFTER Phase 5.8 (finding `metrics-trailer-undercounts-skips`).**
 The subject is written at Phase 6 (post-merge), not at claim time, so `X`/`M`
-reflect this run's actual merges. `DS` is the dup-skip count (sum of the three
+reflect this run's actual merges — including rows the Phase 5.8 merge-confirm
+sweep flipped to `merged` this run. `DS` is the dup-skip count (sum of the three
 Phase 3 cross-PR dedup guards) — it was previously recorded in the Phase 7 body
 but omitted from the subject, so trend reads off the commit log undercounted run
 activity. Every Phase 7 structured counter that has a subject token MUST agree
@@ -1078,11 +1247,40 @@ candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
               and c.id not in ARCHIVED_IDS                  # exact-id archive check (incl. failed — issue #1739 #3)
-              and stem(c.id) not in {stem(t) for t in ARCHIVED_IDS}   # stem-aware archive check (incl. failed)
-              and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5)
+              and (c.get("retry_of")                        # retry re-mint rows (Tier 1c) EXEMPT from the stem-aware
+                   or stem(c.id) not in {stem(t) for t in ARCHIVED_IDS})   # archive check — their stem matches the failed
+                                                            # original BY DESIGN; retry-remint.sh already enforced
+                                                            # cool-down + round cap + landed/active-stem holds.
+              and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5) — NOT exempted:
+                                                            # a live sibling still blocks a retry claim
               and claimable(c, TERMINAL_IDS)]               # dep satisfaction: merged/done only (failed deps unsatisfied)
-candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
+
+# --- Anti-starvation aging (NEW 2026-07-02) --------------------------------
+# Static priority alone STARVES low-priority backlog: it waits forever behind
+# a steady drip of higher-priority claims. Age each open candidate so it
+# eventually competes. This is LOCAL to the claim sort — Tier-0 defer and
+# pick-target-epic.sh keep raw pri_rank, so their determinism invariants are
+# untouched. One priority mapping for the whole file: the canonical pri_rank
+# (critical=4 high=3 medium=2 low=1 else=0), same as pick-target-epic.sh:99.
+AGE_BOOST_HOURS = int(env "DISPATCHER_AGE_BOOST_HOURS" default 48)
+def pri_rank(p):   # canonical — bigger = higher priority
+    return {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(p, 0)
+for c in candidates:
+    if c.get("first_open_at") is None:      # set-once backfill (persist in Phase 6 commit)
+        c["first_open_at"] = NOW
+def eff_rank(c):                            # bounded aging: at most +1 tier, capped at 4
+    aged = (NOW_EPOCH - iso_epoch(c["first_open_at"])) >= AGE_BOOST_HOURS * 3600
+    return min(4, pri_rank(c["priority"]) + (1 if aged else 0))
+# Sort: higher eff_rank first, then source_rank, then OLDEST first_open_at first
+# (deterministic tiebreak — the longest-waiting item wins a tie).
+candidates.sort(key=lambda c: (-eff_rank(c), source_rank(c["source"]), c["first_open_at"]))
 ```
+
+An item's aged boost lifts it by **one tier only** (e.g. a `low` waiting past
+`DISPATCHER_AGE_BOOST_HOURS` competes as `medium`), so priority still dominates
+fresh work but nothing waits forever. Because the boost never exceeds +1 and
+never touches Tier-0/pick-target ranking, no existing priority invariant or
+finish-first behaviour changes — only the claim order among the eligible pool.
 
 The stem-aware terminal check catches the case where a suffix-variant
 slug (e.g. `<id>-impl`, `<id>-v2`) is being claimed while the canonical
@@ -1711,7 +1909,8 @@ regardless of outcome — this is the back-off anchor.
 > Return EXACTLY: `merged=<true|false|queued> pr=<n> note=<short>`
 
 Capture line. `last_updated = now`. DO NOT manually set `status` here —
-Phase 2 of the next cycle catches the GH `MERGED` state authoritatively.
+the Phase 5.8 merge-confirm sweep (same run, GH-truth re-poll) or Phase 2
+of the next cycle catches the GH `MERGED` state authoritatively.
 
 ---
 
@@ -1812,6 +2011,41 @@ Idempotency: the script's `status=in-progress` write makes a second
 Phase 5.7 invocation a no-op until the spawned implementer finishes and
 the next reviewer pass posts a fresh `reviewer_summary`. Hard cap is 3
 fix rounds per row; subsequent calls return `failed`.
+
+---
+
+## Phase 5.8 — Merge-confirm sweep (NEW 2026-07-07)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+Phase 5.5 enables auto-merge and deliberately does not set `merged` — but
+waiting for NEXT run's Phase 2 to confirm costs a full cycle during which
+already-merged PRs still count as `review` in `WIP_NOW` (throttling claims),
+the trailer reads `N merge-attempts, 0 merged-now` (misleading), and
+`Closes #<N>` issue-closing is delayed (observed 2026-07-07: 9 of 11 `review`
+rows were already MERGED on GitHub). This sweep closes that lag inside the
+same run.
+
+For each row whose PR this run touched in Phase 5.5 (a merge subagent was
+spawned OR the pre-flight classified it `ci-in-progress`/`ready`), do ONE
+cheap re-poll at the end of the merge phases:
+
+```bash
+# MCP-primary, one call per row: mcp__github__get_pull_request → .state, .merged_at
+```
+
+- If GH reports `MERGED` → apply the SAME transition Phase 2 would:
+  `status="merged"`, `merged_at=PR.mergedAt`, `status_changed_at=now`,
+  `last_updated=now`; for `gh-issue-<N>` tasks, close issue `#<N>` now (the
+  Phase 2.6 "closing the loop" rule) instead of next cycle.
+- Anything else (`OPEN`, auto-merge still pending checks, `CLOSED`) → leave
+  the row untouched; next run's Phase 2 remains authoritative for every
+  non-MERGED outcome (especially CLOSED-without-merge → failed).
+
+One poll per row, no retry, no wait loop — this is a snapshot, not a monitor.
+Rows confirmed here count toward the trailer's `merged-now` token and free
+their WIP slot for the Phase 6 accounting. Surface under Phase 7
+`Merge-confirmed:`.
 
 ---
 
@@ -1920,6 +2154,26 @@ if [ "$NEW_COMBINED" -lt "$((OLD_COMBINED - 2))" ]; then
   exit 0
 fi
 
+# Action-list archive-move reconcile (issue #1014 / #2102 ROOT-CAUSE fix).
+# Mirror of the assignments split (archive-reconcile.sh keeps assignments.json
+# small): sweep terminal action-list rows (done/dropped) into
+# action-list-archive.json so action-list.json stays well under the 64 KiB MCP
+# inline-push ceiling. An un-swept, bloated action-list.json is exactly what a
+# Phase-6 MCP-push fallback truncates and silently corrupts on dev (#1014). The
+# script is idempotent and combined-count-guarded (see its header) — a no-op on
+# already-clean state, so it is safe to run unconditionally every Phase 6.
+AL_ITEMS_BEFORE=$(jq '.items | length' .research/management/action-list.json 2>/dev/null || echo 0)
+if ! bash .research/action-list-reconcile.sh --apply; then
+  echo "PHASE 6: action-list-reconcile --apply failed (combined-count guard or jq error) — leaving action-list.json untouched and continuing; T26 self-test below will catch any residual terminal bloat." >&2
+fi
+AL_ITEMS_AFTER=$(jq '.items | length' .research/management/action-list.json 2>/dev/null || echo 0)
+# Stage the reconciled pair only when rows actually moved (keeps the commit
+# tight — no churn on a clean no-op run).
+if [ "$AL_ITEMS_AFTER" != "$AL_ITEMS_BEFORE" ]; then
+  git add .research/management/action-list.json \
+          .research/management/action-list-archive.json
+fi
+
 git add .research/management/assignments.json \
         .research/management/assignments-archive.json \
         [.research/management/action-list.json if refilled or GC1 cascade closed rows] \
@@ -1942,6 +2196,26 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
   exit 0
 }
+
+# MCP-push size guard (issue #1014 / #2102 / #2126) — MUST run BEFORE `git commit`,
+# while `git diff --cached` still reflects the staged push payload. FAIL CLOSED:
+# hard-check every STAGED file against the 64 KiB MCP inline-push ceiling. A
+# blocked push is recoverable (the next run retries on a fixed base); a silently-
+# truncated MCP push is not. The structural fix is the action-list reconcile
+# staged above; this guard is the belt-and-suspenders that catches any file still
+# oversize (e.g. the reconcile was skipped or failed).
+#
+# REGRESSION #2126: this guard was previously invoked in the push branch AFTER
+# `git commit`, where the index equals HEAD and `git diff --cached` returns an
+# empty set — so `--staged` inspected nothing, the guard printed "no files to
+# check — OK", exited 0 every run, and never saw the real push payload (dead
+# code). It is now placed here, right after the final `git add`, so the check
+# actually fires. The guard self-skips when PUSH_METHOD != mcp (direct `git push`
+# has no inline-content limit), so it is safe to run unconditionally.
+if ! PUSH_METHOD="${PUSH_METHOD:-mcp}" bash .research/mcp-push-size-guard.sh --staged; then
+  echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
+  exit 0
+fi
 
 # Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
 # T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
@@ -1979,6 +2253,13 @@ INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (reba
 # fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
 # forces the legacy path for environments where direct push works.
 if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
+  # NOTE (issue #2126): the MCP inline-push size guard already ran BEFORE
+  # `git commit` above (right after the final `git add`), where
+  # `git diff --cached` still reflected the staged payload. Do NOT re-run it
+  # here with `--staged` — post-commit the index equals HEAD, so `git diff
+  # --cached` is empty and the guard is a dead no-op (the exact bug #2126
+  # fixed). The staged tree that guard vetted is the same tree this MCP push
+  # emits, so the push payload is already known-safe.
   : # land the Phase 6 file delta via mcp__github__push_files onto dev (one commit).
     # A GITHUB_TOKEN/API push does not re-trigger version-bump on its own, which also
     # caps the rapid-bump churn (finding subagent-race-on-dev-push).
@@ -2070,6 +2351,15 @@ Empty branches deleted:   [<branch>, …]                             (item #1; 
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
 Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
+Backlog-reconciled:       <flipped=<N> [<id>→<done|dropped>, …] | clean>   (backlog-honesty pass; backlog.json vs assignment ledger)
+Backlog-refill:           <promoted=<N> honest-claimable=<A>→<B> capped=<0|1> | clean (healthy) | none-available>   (Tier 1b backlog.json self-refill; planner-independent)
+Retry-reminted:           <minted=<N> [<id> retry_of=<orig> round=<k>, …] | none-eligible | not-fired>   (Tier 1c failed-task retry re-mint)
+Generator:                <spawned=<dev-review|review-merged> outcome=<short> | not-fired>   (Tier 1d demand-driven vector generation; fires only when claimable < floor after 1b/1c)
+Merge-confirmed:          [PR#<n> task=<id>, …]   (Phase 5.8 same-run GH-truth flips to merged; [] if none)
+Stale-review escalations: [<task_id> PR#<n> age=<d>d → issue #<m>, …]   (Phase 2 SLA: stale red reviews + quarantine exits; [] if none)
+Issue-ingest:             <ingested=<N> [#<n>, …] capped=<0|1> | none-untracked | mcp-fetch-failed>   (open GH issues → action-list gh-issue-<N>; every cycle)
+Issues-closed:            [#<n> resolved-by=PR#<m>, …]   (gh-issue-<N> assignments that merged this run and were closed via MCP; [] if none)
+Aged claims (this run):   [<id> waited=<h>h <low→medium|medium→high>, …]   (Phase 3 anti-starvation aging boost; [] if none)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
@@ -2207,7 +2497,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **GitHub I/O is MCP-primary** (see *GitHub I/O contract* at the top): every GitHub network call uses `mcp__github__*` first; `gh` CLI / `git fetch/push` are 403-unreliable in this env and are fallback-only. The sole sanctioned `gh` use is the Phase 0.5 atomic ref-CAS lock (`gh api POST /git/refs`), which has no MCP equivalent.
 - never push to `main`
 - never bypass git hooks (no `--no-verify`)
-- never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
+- never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 and the Phase 5.8 merge-confirm sweep set `merged`, and BOTH only from a fresh GH `MERGED` read (never from `gh pr merge`'s own exit status)
 - Tier 2 upstream kick is fire-and-forget with `--max-time 10`
 - always defer to `ppt-implement`, `ppt-review-merged`, `ppt-pr-merge`, `ppt-pr-followup` skills
 - buffer guard adds items only; never edits/removes existing
@@ -2217,9 +2507,12 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **scope-drift** and **code-reuse-warn** (items #3, #4) are non-blocking on implementer return, but feed the reviewer prompt and are surfaced in Phase 7
 - **reviewer re-runs** (item #10) gate on `PR.headRefOid != row.last_reviewed_oid` — never re-review the same SHA
 - **auto-rebase** (item #6) is bounded at 3 attempts per row; after that a human must intervene
+- **retry re-mint** (Tier 1c) is bounded: `RETRY_MAX_ROUNDS` (default 2) lifetime rounds per stem, cool-down `RETRY_COOLDOWN_DAYS` (default 7), only for failures with `pr_number=null`; the `retry_of` field is written ONLY by `retry-remint.sh`
+- **escalation SLA** (Phase 2) is bounded at 2 escalations per run, oldest first; it never deletes a branch, and every escalation leaves a PR comment + a `from-stalled-pr` issue (nothing disappears silently)
+- **Tier 1d generator** spawns at most 1 subagent per run, only when `claimable < BUFFER_FLOOR` after Tiers 1b/1c, and runs under `DISPATCHER_OWNED_COMMIT=1` (single-writer rule)
 - **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
-- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 25min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
+- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 25min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7, 5.8, and the Phase 2 escalation SLA). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
 - **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.

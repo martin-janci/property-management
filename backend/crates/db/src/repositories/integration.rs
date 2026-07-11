@@ -2209,7 +2209,7 @@ mod esignature_webhook_idempotency_tests {
     /// A re-delivered webhook event for an already-terminal workflow MUST NOT
     /// mutate its status (idempotency guard).
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn redelivered_event_does_not_overwrite_terminal_state() {
         let pool = test_pool().await;
         let external_id = "idem-terminal-001";
@@ -2253,7 +2253,7 @@ mod esignature_webhook_idempotency_tests {
 
     /// A non-terminal workflow is still updated normally (guard is scoped).
     #[tokio::test]
-    #[ignore]
+    #[ignore = "requires Postgres test database (test_pool); run with --ignored"]
     async fn non_terminal_workflow_is_updated() {
         let pool = test_pool().await;
         let external_id = "idem-nonterminal-001";

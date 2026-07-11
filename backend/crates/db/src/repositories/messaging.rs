@@ -39,6 +39,32 @@ pub struct MessagingRepository {
     pool: DbPool,
 }
 
+/// SQL for [`MessagingRepository::count_unread_rls`].
+///
+/// Hoisted into a `const` so a non-DB unit test can pin the #1771 soft-delete
+/// exclusion (`tps.deleted_at IS NULL`) on the normal CI gate without a live
+/// Postgres pool. This is a fast non-DB guard that complements — it does not
+/// replace — the DB-backed regression test
+/// (`soft_deleted_thread_excluded_from_unread_count`), which was un-quarantined
+/// in PR #2097 (formerly `#[ignore]`d under BIT-351) and now runs on the CI
+/// Postgres gate.
+const COUNT_UNREAD_SQL: &str = r#"
+            SELECT COUNT(*)
+            FROM messages m
+            JOIN message_threads t ON t.id = m.thread_id
+            LEFT JOIN thread_participant_state tps
+                ON tps.thread_id = t.id AND tps.user_id = $1
+            WHERE $1 = ANY(t.participant_ids)
+              AND t.organization_id = $2
+              AND m.sender_id != $1
+              AND m.deleted_at IS NULL
+              -- exclude threads this user soft-deleted ("delete for me"); they
+              -- vanish from the inbox list, so their unread messages must not
+              -- keep the global unread badge stuck non-zero (#1771).
+              AND tps.deleted_at IS NULL
+              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
+            "#;
+
 impl MessagingRepository {
     /// Create a new MessagingRepository.
     pub fn new(pool: DbPool) -> Self {
@@ -594,10 +620,14 @@ impl MessagingRepository {
     /// — one member reading no longer clears everyone's badge.
     ///
     /// Note (#1771): this LEFT JOIN to `thread_participant_state` is also where
-    /// the per-participant soft-delete exclusion lives; see PR #1968 which adds
-    /// `tps.deleted_at IS NULL` on the same join. The two changes touch the same
-    /// query and should be reconciled at merge (combine both predicates on the
-    /// one join).
+    /// the per-participant soft-delete exclusion lives — `tps.deleted_at IS NULL`
+    /// is inline in the query below, so threads a user soft-deleted ("delete for
+    /// me") no longer keep their global unread badge stuck non-zero. The query
+    /// SQL is hoisted into [`COUNT_UNREAD_SQL`] so a fast non-DB unit test can pin
+    /// that predicate on the normal CI gate; the DB-backed regression test
+    /// (`soft_deleted_thread_excluded_from_unread_count`) was un-quarantined in
+    /// PR #2097 (formerly `#[ignore]`d under BIT-351) and now runs on the CI
+    /// Postgres gate.
     pub async fn count_unread_rls<'e, E>(
         &self,
         executor: E,
@@ -607,28 +637,11 @@ impl MessagingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let (count,): (i64,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(*)
-            FROM messages m
-            JOIN message_threads t ON t.id = m.thread_id
-            LEFT JOIN thread_participant_state tps
-                ON tps.thread_id = t.id AND tps.user_id = $1
-            WHERE $1 = ANY(t.participant_ids)
-              AND t.organization_id = $2
-              AND m.sender_id != $1
-              AND m.deleted_at IS NULL
-              -- exclude threads this user soft-deleted ("delete for me"); they
-              -- vanish from the inbox list, so their unread messages must not
-              -- keep the global unread badge stuck non-zero (#1771).
-              AND tps.deleted_at IS NULL
-              AND (tps.last_read_at IS NULL OR m.created_at > tps.last_read_at)
-            "#,
-        )
-        .bind(user_id)
-        .bind(organization_id)
-        .fetch_one(executor)
-        .await?;
+        let (count,): (i64,) = sqlx::query_as(COUNT_UNREAD_SQL)
+            .bind(user_id)
+            .bind(organization_id)
+            .fetch_one(executor)
+            .await?;
 
         Ok(count)
     }
@@ -1293,5 +1306,76 @@ impl MessagingRepository {
                 )
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::COUNT_UNREAD_SQL;
+
+    /// Drop `--` line comments from a SQL string, keeping the code that precedes
+    /// them on each line. Used so a *commented-out* predicate
+    /// (`-- AND tps.deleted_at IS NULL`) is no longer mistaken for a live one by
+    /// a naive substring match (#2052). This is a deliberately simple textual
+    /// strip: it does not understand `--` inside string literals, which
+    /// `COUNT_UNREAD_SQL` does not contain.
+    fn strip_sql_line_comments(sql: &str) -> String {
+        sql.lines()
+            .map(|line| match line.find("--") {
+                Some(idx) => &line[..idx],
+                None => line,
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    /// Non-DB guard for the #1771 fix (PR #1993): the unread-count query must
+    /// exclude threads a user soft-deleted ("delete for me") via the
+    /// per-participant `tps.deleted_at IS NULL` predicate on the
+    /// `thread_participant_state` join. This plain `#[test]` — mirroring the
+    /// catalog-metadata guard style — is a fast guard that runs on the normal CI
+    /// gate without a live Postgres pool. It complements the DB-backed regression
+    /// test (`soft_deleted_thread_excluded_from_unread_count`), which was
+    /// un-quarantined in PR #2097 (formerly `#[ignore]`d under BIT-351) and now
+    /// runs on the CI Postgres gate.
+    ///
+    /// Hardened per #2052 beyond a raw substring match so two real regressions
+    /// no longer slip past green:
+    ///   1. **Comment-out.** The predicate is asserted against the SQL *with
+    ///      `--` line comments stripped*, so `-- AND tps.deleted_at IS NULL`
+    ///      (predicate disabled, #1771 bug back) now fails the test.
+    ///   2. **Wrong-join / alias drift.** The `tps` alias is pinned to the
+    ///      `thread_participant_state` join, so moving the predicate onto a
+    ///      different alias (where it no longer excludes soft-deleted threads)
+    ///      while keeping the literal text can't stay green.
+    #[test]
+    fn count_unread_sql_excludes_soft_deleted_threads() {
+        let effective_sql = strip_sql_line_comments(COUNT_UNREAD_SQL);
+
+        // (1) The soft-delete exclusion must be a *live* predicate, not a
+        //     commented-out one. `strip_sql_line_comments` removes `--` lines, so
+        //     a commented-out predicate no longer satisfies this `contains`.
+        assert!(
+            effective_sql.contains("tps.deleted_at IS NULL"),
+            "count_unread_rls SQL must keep the per-participant soft-delete \
+             exclusion `tps.deleted_at IS NULL` as a live (non-commented) \
+             predicate (#1771 / PR #1993 / #2052); without it a thread a user hid \
+             from their inbox leaves its unread messages stuck on the global \
+             unread badge with no thread visible to clear them"
+        );
+
+        // (2) The `tps` alias the predicate references must be the
+        //     `thread_participant_state` join. This anchors the exclusion to the
+        //     correct table, so the predicate can't drift onto a different alias
+        //     (e.g. the messages or threads table) and silently stop excluding
+        //     soft-deleted threads while the literal substring survives.
+        assert!(
+            effective_sql.contains("thread_participant_state tps"),
+            "count_unread_rls SQL must bind the `tps` alias to \
+             `thread_participant_state` so the `tps.deleted_at IS NULL` exclusion \
+             stays on the per-participant soft-delete table (#2052); if the alias \
+             is rebound or the join is removed the predicate no longer excludes \
+             the threads it claims to"
+        );
     }
 }

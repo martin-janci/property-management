@@ -15,9 +15,10 @@ relatedScreens:
     rel: parent
 sharedComponents: []
 diagrams: []
-useCases: []
+useCases:
+  - UC-10
 epics:
-  - "Epic 3 / Story 3.5"
+  - Epic-3-5
 designSources: []
 owner: pm-frontend
 ---
@@ -70,3 +71,4 @@ Reachable from the building detail page via a "Person-months" quick link.
 
 ## Agent Log
 - 2026-06-22 — FrontendEngineer: created on route+api-client wiring (BIT-190).
+- 2026-07-09 — agent: linked UC-10 (Person-Months, docs/use-cases.md) in useCases frontmatter (gap-screens-link-uc-10).

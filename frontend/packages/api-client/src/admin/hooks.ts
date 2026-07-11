@@ -14,16 +14,21 @@ import {
   fetchHealthAlerts,
   fetchHealthDashboard,
   fetchMetricHistory,
+  fetchPlatformStats,
   fetchSupportData,
   getAgency,
   getOAuthClient,
+  getOrganization,
   getSystemAnnouncement,
   listAgencies,
   listOAuthClients,
+  listOrganizations,
   listSystemAnnouncements,
+  reactivateOrganization,
   regenerateOAuthClientSecret,
   registerOAuthClient,
   revokeOAuthClient,
+  suspendOrganization,
   updateHealthThreshold,
   updateOAuthClient,
   updateSystemAnnouncement,
@@ -31,8 +36,11 @@ import {
 import type {
   CreateSystemAnnouncementRequest,
   ListAgenciesParams,
+  ListOrganizationsParams,
   ListSystemAnnouncementsParams,
+  ReactivateOrganizationRequest,
   RegisterOAuthClientRequest,
+  SuspendOrganizationRequest,
   TimeRange,
   UpdateOAuthClientRequest,
   UpdateSystemAnnouncementRequest,
@@ -60,6 +68,11 @@ export const adminKeys = {
     [...adminKeys.systemAnnouncements(), 'list', params] as const,
   systemAnnouncement: (id: string) => [...adminKeys.systemAnnouncements(), id] as const,
   supportData: () => [...adminKeys.all, 'support-data'] as const,
+  organizations: () => [...adminKeys.all, 'organizations'] as const,
+  organizationList: (params?: ListOrganizationsParams) =>
+    [...adminKeys.organizations(), 'list', params] as const,
+  organization: (id: string) => [...adminKeys.organizations(), 'detail', id] as const,
+  platformStats: () => [...adminKeys.all, 'platform-stats'] as const,
 };
 
 // ============================================
@@ -253,6 +266,82 @@ export function useDeleteSystemAnnouncement() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncements() });
     },
+  });
+}
+
+// ============================================================
+// Platform-admin Organization Management hooks (Epic 10B.1)
+// ============================================================
+
+/**
+ * Paginated organization list with metrics from
+ * `GET /api/v1/platform-admin/organizations`.
+ */
+export function useOrganizations(params?: ListOrganizationsParams) {
+  return useQuery({
+    queryKey: adminKeys.organizationList(params),
+    queryFn: ({ signal }) => listOrganizations(params, signal),
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Organization detail drill-in. Disabled until `id` is set.
+ */
+export function useOrganization(id: string) {
+  return useQuery({
+    queryKey: adminKeys.organization(id),
+    queryFn: ({ signal }) => getOrganization(id, signal),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+/**
+ * Suspend an organization (cascade-revokes all org member sessions).
+ */
+export function useSuspendOrganization() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: SuspendOrganizationRequest }) =>
+      suspendOrganization(id, data),
+    onSuccess: (_result, { id }) => {
+      void qc.invalidateQueries({ queryKey: adminKeys.organizations() });
+      void qc.invalidateQueries({ queryKey: adminKeys.organization(id) });
+      void qc.invalidateQueries({ queryKey: adminKeys.platformStats() });
+    },
+  });
+}
+
+/**
+ * Reactivate a suspended organization.
+ */
+export function useReactivateOrganization() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: ReactivateOrganizationRequest }) =>
+      reactivateOrganization(id, data),
+    onSuccess: (_result, { id }) => {
+      void qc.invalidateQueries({ queryKey: adminKeys.organizations() });
+      void qc.invalidateQueries({ queryKey: adminKeys.organization(id) });
+      void qc.invalidateQueries({ queryKey: adminKeys.platformStats() });
+    },
+  });
+}
+
+/**
+ * Platform-wide statistics from `GET /api/v1/platform-admin/stats`.
+ *
+ * The endpoint requires the `audit_read` capability server-side — pass
+ * `{ enabled: canReadStats }` to avoid a guaranteed-403 round-trip when the
+ * operator lacks it (mirrors the `enabled: !!id` pattern in `useOrganization`).
+ */
+export function usePlatformStats(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.platformStats(),
+    queryFn: ({ signal }) => fetchPlatformStats(signal),
+    staleTime: 30_000,
+    enabled: options?.enabled ?? true,
   });
 }
 

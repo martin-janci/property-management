@@ -1,0 +1,37 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-07",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-shares-building-scope",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:729 — BUILDING share-recipient query filters only on `u.building_id = $1` with no organization_id predicate, unlike the sibling ROLE query (shares.rs:714) which pins `organization_id = $1`; a manager-supplied target_id for a foreign-org building would fan out a document-share notification (incl. document title) to that org's residents if RLS on units/unit_residents is not enforced.",
+        "Reachable from create_share handler (shares.rs:221) via user-controlled req.target_id (shares.rs:198), which is never validated to belong to the actor's org."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-portal-webhook-no-sig",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:1066 — public POST /integrations/webhooks/portal/{connection_id} (mounted at webhook.rs:98, handed to external portals as the callback URL at install.rs:1673) reads the X-Webhook-Signature header, logs 'Webhook signature present', and returns 200 without ever verifying an HMAC; its OpenAPI doc advertises '401 Invalid signature' (webhook.rs:1041) that the handler never emits.",
+        "Currently inert (parsed payload is discarded), but a latent trust hole the moment any side effect is wired into this handler — unlike sibling Airbnb/Stripe/portal receivers which HMAC-verify before acting."
+      ],
+      "expert": "security"
+    }
+  ]
+}

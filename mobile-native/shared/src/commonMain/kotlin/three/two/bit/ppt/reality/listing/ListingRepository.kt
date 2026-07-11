@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
+import three.two.bit.ppt.reality.api.asPathSegment
 
 /**
  * Repository for listing operations.
@@ -43,7 +44,10 @@ class ListingRepository(
     /** Get listing details by ID. */
     suspend fun getListingDetail(listingId: String): Result<ListingDetail> {
         return try {
-            val response = client.get("$baseUrl/api/v1/listings/$listingId") { configureRequest() }
+            val response =
+                client.get("$baseUrl/api/v1/listings/${listingId.asPathSegment()}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(response.body())

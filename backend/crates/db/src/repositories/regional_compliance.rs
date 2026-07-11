@@ -1,9 +1,9 @@
 //! Regional Compliance Repository (Epic 72).
 
 use crate::models::regional_compliance::{
-    ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr, ConfigureSlovakVoting,
-    CzechSvjConfig, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig, SlovakDecisionType,
-    SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
+    AccountingMetrics, ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr,
+    ConfigureSlovakVoting, CzechSvjConfig, Jurisdiction, RecordGdprConsent, SlovakAccountingConfig,
+    SlovakDecisionType, SlovakGdprConfig, SlovakGdprConsent, SlovakVotingConfig,
 };
 use crate::DbPool;
 use chrono::NaiveDate;
@@ -477,26 +477,32 @@ impl RegionalComplianceRepository {
         Ok(row)
     }
 
-    /// Returns `(invoice_count, payment_count, total_revenue, total_expenses,
-    /// total_receivables, total_payables)` for the accounting export.
+    /// Returns the accounting-export metrics for the period as a named
+    /// [`AccountingMetrics`] struct.
     ///
-    /// **Not yet computed (#1906 finding-3):** `total_expenses` and
-    /// `total_payables` (the 4th and 6th tuple fields) are returned as
-    /// `Decimal::ZERO` *by design, not as a calculation* — this export only has
-    /// the receivables side (`invoices` / `payments`) wired; there is no
-    /// expense / accounts-payable source in scope here. They are deliberate
-    /// placeholders, NOT an accidental zero. Surfacing this to API clients (e.g.
-    /// `Option<Decimal>` / an `unsupported` flag on `SlovakAccountingExport`) and
-    /// computing real figures from an expense / vendor-payables model is a
-    /// tracked follow-up; until then a caller must treat these two fields as
-    /// "not available", not "zero".
+    /// The result was formerly a positional 6-tuple; it is now a named struct
+    /// (#2122) so the revenue/receivables/expenses/payables identity is
+    /// compiler-enforced from this assembly through to the handler, rather than
+    /// relying on tuple position where two same-typed pairs could be silently
+    /// transposed.
+    ///
+    /// **Not yet computed (#1906 finding-3, tracked by #2030):**
+    /// `total_expenses` and `total_payables` (the 4th and 6th tuple fields) are
+    /// returned as `None` — this export only has the receivables side
+    /// (`invoices` / `payments`) wired; there is no expense / accounts-payable
+    /// source in scope here. `None` is a deliberate "not available" signal, NOT
+    /// an accidental zero, and it is surfaced honestly to API clients via
+    /// `Option<Decimal>` + the `partial` / `unsupported_fields` flags on
+    /// [`SlovakAccountingExport`]. Computing real figures from an expense /
+    /// vendor-payables model is the tracked follow-up; until then a caller must
+    /// treat these two fields as "not available", not "zero".
     pub async fn get_accounting_metrics(
         &self,
         conn: &mut PgConnection,
         organization_id: Uuid,
         from_date: NaiveDate,
         to_date: NaiveDate,
-    ) -> Result<(i32, i32, Decimal, Decimal, Decimal, Decimal), SqlxError> {
+    ) -> Result<AccountingMetrics, SqlxError> {
         let (invoice_count, total_revenue): (i64, Option<Decimal>) = sqlx::query_as(
             r#"
             SELECT COUNT(*), SUM(total)
@@ -539,13 +545,16 @@ impl RegionalComplianceRepository {
         let total_revenue = total_revenue.unwrap_or(Decimal::ZERO);
         let total_receivables = total_receivables.unwrap_or(Decimal::ZERO);
 
-        Ok((
-            invoice_count as i32,
-            payment_count as i32,
+        Ok(AccountingMetrics {
+            invoice_count: invoice_count as i32,
+            payment_count: payment_count as i32,
             total_revenue,
-            Decimal::ZERO,
+            // Not computed — no expense source wired. `None` means "not
+            // available", surfaced to clients as a null field, never 0.
+            total_expenses: None,
             total_receivables,
-            Decimal::ZERO,
-        ))
+            // Not computed — no accounts-payable source wired.
+            total_payables: None,
+        })
     }
 }

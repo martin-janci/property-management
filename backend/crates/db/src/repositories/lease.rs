@@ -39,6 +39,50 @@ use rust_decimal::Decimal;
 use sqlx::{Error as SqlxError, Executor, Postgres};
 use uuid::Uuid;
 
+/// Explicit `leases` column list for `query_as::<_, Lease>` reads.
+///
+/// `leases.status` (`lease_status`) and `leases.termination_reason`
+/// (`termination_reason`) are Postgres ENUM columns, but the `Lease` model
+/// decodes them as `String` — sqlx cannot decode a user-defined enum straight
+/// into `String`, so a bare `SELECT *` fails at fetch with a `ColumnDecode`
+/// ("mismatched types") error. Casting the enum columns to `text` follows the
+/// established `status::text` precedent (#859, delegation `scopes::text[]`
+/// in PR #1972).
+const LEASE_COLUMNS: &str = "id, organization_id, unit_id, application_id, template_id, \
+     landlord_user_id, landlord_name, landlord_address, \
+     tenant_user_id, tenant_name, tenant_email, tenant_phone, occupants, \
+     start_date, end_date, term_months, is_fixed_term, \
+     monthly_rent, security_deposit, deposit_held_by, rent_due_day, \
+     late_fee_amount, late_fee_grace_days, utilities_included, parking_spaces, storage_units, \
+     pets_allowed, pet_deposit, max_occupants, smoking_allowed, \
+     document_url, document_version, status::text AS status, \
+     landlord_signed_at, tenant_signed_at, signature_request_id, \
+     terminated_at, termination_reason::text AS termination_reason, termination_notes, \
+     termination_initiated_by, previous_lease_id, renewed_to_lease_id, \
+     renewal_offered_at, renewal_offer_expires_at, \
+     notes, created_by, created_at, updated_at";
+
+/// Canonical single-lease `SELECT` (`WHERE id = $1`) projecting
+/// [`LEASE_COLUMNS`] so the `status` / `termination_reason` Postgres enums are
+/// cast to `text`. Shared by `find_lease_by_id_rls` and
+/// `get_lease_with_details_rls` so the projection can't drift back to a bare
+/// `SELECT *` (regression #2169, where `get_lease_with_details_rls` still used
+/// `SELECT *` and 500'd on GET /leases/{id}).
+#[inline]
+fn select_lease_by_id_sql() -> String {
+    format!("SELECT {LEASE_COLUMNS} FROM leases WHERE id = $1")
+}
+
+/// Wrap a lease `INSERT`/`UPDATE` body with a `RETURNING` clause that projects
+/// [`LEASE_COLUMNS`] (enum columns cast to `text`), never `RETURNING *`. Every
+/// lease write method routes through this helper so a `RETURNING *` — which
+/// yields native enum types and fails `Lease` decode with `ColumnDecode` — can't
+/// be reintroduced.
+#[inline]
+fn lease_write_sql(body: &str) -> String {
+    format!("{body}\nRETURNING {LEASE_COLUMNS}")
+}
+
 /// Repository for lease operations.
 #[derive(Clone)]
 pub struct LeaseRepository {
@@ -296,8 +340,8 @@ impl LeaseRepository {
         let apps = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, String, String, Option<chrono::DateTime<Utc>>, Option<Decimal>, Option<NaiveDate>, i64, bool)>(
             r#"
             SELECT
-                a.id, a.unit_id, u.name, b.name,
-                a.applicant_name, a.applicant_email, a.status,
+                a.id, a.unit_id, u.designation, b.name,
+                a.applicant_name, a.applicant_email, a.status::text,
                 a.submitted_at, a.monthly_income, a.desired_move_in,
                 (SELECT COUNT(*) FROM tenant_screenings WHERE application_id = a.id) as screening_count,
                 COALESCE((SELECT bool_and(passed) FROM tenant_screenings WHERE application_id = a.id AND status = 'completed'), false) as screening_passed
@@ -753,7 +797,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(lease_write_sql(
             r#"
             INSERT INTO leases (
                 organization_id, unit_id, application_id, template_id,
@@ -767,9 +811,8 @@ impl LeaseRepository {
                 notes, status, created_by
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 'draft', $31)
-            RETURNING *
             "#,
-        )
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(data.application_id)
@@ -816,7 +859,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(r#"SELECT * FROM leases WHERE id = $1"#)
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(select_lease_by_id_sql()))
             .bind(id)
             .fetch_optional(executor)
             .await?;
@@ -834,7 +877,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(lease_write_sql(
             r#"
             UPDATE leases SET
                 landlord_address = COALESCE($2, landlord_address),
@@ -850,9 +893,8 @@ impl LeaseRepository {
                 notes = COALESCE($12, notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
             "#,
-        )
+        )))
         .bind(id)
         .bind(&data.landlord_address)
         .bind(&data.tenant_phone)
@@ -888,16 +930,15 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(lease_write_sql(
             r#"
             UPDATE leases SET
                 signature_request_id = $2,
                 status = CASE WHEN status = 'draft' THEN 'pending_signature' ELSE status END,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
             "#,
-        )
+        )))
         .bind(id)
         .bind(signature_request_id)
         .fetch_one(executor)
@@ -917,7 +958,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let lease = sqlx::query_as::<_, Lease>(
+        let lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(lease_write_sql(
             r#"
             UPDATE leases SET
                 status = 'terminated',
@@ -927,9 +968,8 @@ impl LeaseRepository {
                 termination_initiated_by = $5,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
             "#,
-        )
+        )))
         .bind(id)
         .bind(&data.termination_reason)
         .bind(&data.termination_notes)
@@ -955,8 +995,10 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        // Use a CTE to create new lease and update old one in a single query
-        let new_lease = sqlx::query_as::<_, Lease>(
+        // Use a CTE to create new lease and update old one in a single query.
+        // The inner `RETURNING *` only feeds the CTE; the outer `SELECT` casts
+        // the lease enum columns via LEASE_COLUMNS so the row decodes into `Lease`.
+        let new_lease = sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(format!(
             r#"
             WITH new_lease AS (
                 INSERT INTO leases (
@@ -990,9 +1032,9 @@ impl LeaseRepository {
                     updated_at = NOW()
                 WHERE id = $1
             )
-            SELECT * FROM new_lease
+            SELECT {LEASE_COLUMNS} FROM new_lease
             "#,
-        )
+        )))
         .bind(id)
         .bind(data.new_end_date)
         .bind(data.term_months)
@@ -1039,9 +1081,9 @@ impl LeaseRepository {
         >(
             r#"
             SELECT
-                l.id, l.unit_id, u.name, b.name,
+                l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
-                l.start_date, l.end_date, l.monthly_rent, l.status,
+                l.start_date, l.end_date, l.monthly_rent, l.status::text,
                 (l.end_date - $6::date)::int8 as days_until_expiry
             FROM leases l
             JOIN units u ON u.id = l.unit_id
@@ -1150,8 +1192,10 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        // Get lease first
-        let lease = match sqlx::query_as::<_, Lease>(r#"SELECT * FROM leases WHERE id = $1"#)
+        // Get lease first. Uses the shared LEASE_COLUMNS projection (enum columns
+        // cast to text) — a bare `SELECT *` here returned native enum types and
+        // failed `Lease` decode with ColumnDecode, 500'ing GET /leases/{id} (#2169).
+        let lease = match sqlx::query_as::<_, Lease>(sqlx::AssertSqlSafe(select_lease_by_id_sql()))
             .bind(id)
             .fetch_optional(executor)
             .await?
@@ -1489,9 +1533,9 @@ impl LeaseRepository {
         >(
             r#"
             SELECT
-                l.id, l.unit_id, u.name, b.name,
+                l.id, l.unit_id, u.designation, b.name,
                 l.tenant_name, l.tenant_email,
-                l.start_date, l.end_date, l.monthly_rent, l.status,
+                l.start_date, l.end_date, l.monthly_rent, l.status::text,
                 (l.end_date - $2::date)::int8 as days_until_expiry
             FROM leases l
             JOIN units u ON u.id = l.unit_id
@@ -1998,7 +2042,7 @@ impl LeaseRepository {
 
         // Get unit and building names
         let (unit_name, building_name): (String, String) = sqlx::query_as(
-            r#"SELECT u.name, b.name FROM units u JOIN buildings b ON b.id = u.building_id WHERE u.id = $1"#,
+            r#"SELECT u.designation, b.name FROM units u JOIN buildings b ON b.id = u.building_id WHERE u.id = $1"#,
         )
         .bind(lease.unit_id)
         .fetch_one(&self.pool)

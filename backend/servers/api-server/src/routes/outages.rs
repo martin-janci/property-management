@@ -199,13 +199,18 @@ pub fn router() -> Router<AppState> {
 async fn create_outage(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<CreateOutageRequest>,
 ) -> Result<(StatusCode, Json<CreateOutageResponse>), (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    let role = tenant.role;
-    if !role.is_manager() {
+    // Authorization: require manager-level role.
+    //
+    // Derive the role from validated DB membership — `RlsConnection` is built on
+    // `ValidatedTenantExtractor`, which reads the caller's `organization_members`
+    // role_type — rather than from the JWT `role` claim. The production login flow
+    // (`JwtService::generate_access_token`) emits `org_id`/`roles`, which the
+    // `AuthUser`/`TenantExtractor` path never reads, so trusting the JWT role
+    // resolves a real manager to `Guest` and 403s every mutation (issue #2107).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -217,7 +222,7 @@ async fn create_outage(
     }
 
     let created_by = auth.user_id;
-    let org_id = tenant.tenant_id;
+    let org_id = rls.tenant_id();
 
     // Validate content length
     if req.title.len() > MAX_TITLE_LENGTH {
@@ -497,13 +502,12 @@ async fn get_outage(
 async fn update_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    // Authorization: require manager-level role (DB-validated via RlsConnection).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -597,12 +601,11 @@ async fn update_outage(
 async fn delete_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    // Authorization: require manager-level role (DB-validated via RlsConnection).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -649,13 +652,12 @@ async fn delete_outage(
 async fn start_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<StartOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    // Authorization: require manager-level role (DB-validated via RlsConnection).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -705,13 +707,12 @@ async fn start_outage(
 async fn resolve_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    // Authorization: require manager-level role (DB-validated via RlsConnection).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -761,13 +762,12 @@ async fn resolve_outage(
 async fn cancel_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CancelOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    // Authorization: require manager-level role (DB-validated via RlsConnection).
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,

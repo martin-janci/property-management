@@ -668,17 +668,17 @@ async fn guest_booking_pii_reads_are_manager_gated(pool: PgPool) {
             res.text()
         );
 
-        // Manager → passes the role gate (i.e. NOT 403). We assert "not
-        // forbidden" rather than a strict 2xx because the manager path's job is
-        // to prove the rejection above is the *role* gate and not a
-        // no-context/no-member pass — the underlying repo query is out of scope.
-        // (`list_bookings` currently 500s on a separate latent `u.name`
-        // schema-drift bug; the role gate it now sits behind is still exercised.)
+        // Manager → passes the role gate AND the endpoint's happy path. We now
+        // assert a strict 2xx: the underlying repo query for each of the four
+        // PII read paths must actually succeed for a manager in the org. The
+        // latent `u.name` schema-drift 500 in `list_bookings` (and its sibling
+        // rental queries) is fixed — the `units` identity column is
+        // `designation`, not `name` — so this pins the real happy path rather
+        // than merely "not 403" (issue #2028).
         let mgr = app.execute(get_request(uri, &mgr_token, org)).await;
-        assert_ne!(
-            mgr.status,
-            StatusCode::FORBIDDEN,
-            "manager read of {uri} must pass the role gate (not 403), got {}: {}",
+        assert!(
+            mgr.status.is_success(),
+            "manager read of {uri} must succeed (2xx), got {}: {}",
             mgr.status,
             mgr.text()
         );

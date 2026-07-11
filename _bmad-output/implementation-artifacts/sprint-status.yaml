@@ -25,7 +25,7 @@ epics:
     name: "Basic Document Management"
     status: in-progress
     stories_total: 5
-    stories_completed: 0
+    stories_completed: 2  # 7a-1 (done 2026-06-17) + 7a-4 (verified done 2026-07-04)
   epic-8a:
     name: "Basic Notification Preferences"
     status: done
@@ -33,9 +33,9 @@ epics:
     stories_completed: 3
   epic-10a:
     name: "OAuth Provider Foundation"
-    status: in-progress
+    status: done
     stories_total: 3
-    stories_completed: 0
+    stories_completed: 3  # 10a-1/2/3 reconciled done 2026-07-07 — gates #481/#482/#487 all CLOSED (see test-hardening batch)
   epic-10b:
     name: "Platform Administration"
     status: in-progress
@@ -58,18 +58,18 @@ development_status:
   6-6-neighbor-information: done
   # Epic 7A: Basic Document Management
   7a-1-document-upload-metadata: done  # Verified 2026-06-17 (verify-document-upload-metadata): POST /api/v1/documents/upload present in documents/core.rs (multipart parse of file/title/description/category/folder_id, title/desc length + size + MIME allow-list + category validation, S3 upload, RLS-aware create_rls). Metadata persistence + RLS isolation covered by document_upload_tests.rs (T1-T15): auth guard, missing-file/MIME/category rejects + orphan guards, DB-row persistence (T5/T6/T7), S3 happy (wiremock T14)/failure-no-orphan (T8), 50 MiB boundary (T12/T13), cross-tenant (T9) + non-member (T10) RLS reject, AC-2/AC-3 error bodies, and new end-to-end metadata round-trip through GET /{id} (T15). Stale 'upload route missing' verify report superseded — route + tests are on dev.
-  7a-2-folder-organization: review  # CI test job red (document_folder_tests FK/isolation fix in PR #1316 round 1); reverted from done pending green CI
-  7a-3-permission-based-access: ready-for-dev
-  7a-4-document-download-preview: ready-for-dev
-  7a-5-document-sharing: ready-for-dev
+  7a-2-folder-organization: done  # Verified 2026-07-07 (gap-7a-2-ci-test-job-failing-document-folder): CI test job GREEN on dev — backend.yml run 28866124336 (dev, 2026-07-07) test job success, document_folder_tests: 27 passed / 0 failed. The FK/isolation failure that reverted this from done (PR #1316 round 1) no longer reproduces; seed helpers were UUID-randomised (3cbb28eed) and the suite has been stable since (local :5433 re-run inconclusive — box-level PG I/O starvation, 55006 drop-collisions + DataFileImmediateSync stalls, not a test failure). Backend: routes/documents/folders.rs 6 endpoints; frontend FolderTreePage shipped; screen-map ppt/document-folders buildStatus=shipped, apiStatus=complete.
+  7a-3-permission-based-access: done  # Verified 2026-07-04 (verify-7a-3-permission-based-access): backend authz coverage complete on dev — sprint-status flipped to match story markdown (Status: done). Enforcement: routes/documents/core.rs gates GET /documents (list), GET /{id}/download, GET /{id}/preview. Managers bypass via org-wide RLS; non-managers go through the additive capability gate. All five access scopes resolved: creator/organization/role/users in document_access_allowed (in-memory) + building/unit in scope_membership_allows (caller building/unit membership via DocumentRepository::user_scope_memberships_rls), OR'd at each call site so a building/unit member is listed AND can download/preview (GH #1413 openable-but-not-listed divergence closed; DB error fails closed). Repo layer: list_accessible_rls/count_accessible_rls/check_access_rls resolve all scopes in SQL. Schema: access_scope enum + access_target_ids/access_roles JSONB (migration 00020_create_documents); tenant isolation hardened to get_current_org_id() + FORCE ROW LEVEL SECURITY (00172_force_documents_rls, cross-tenant IDOR #754) with a defense-in-depth explicit org re-check on download/preview (404 not existence-leak on BYPASSRLS pools). Tests: routes/documents/document_access_test.rs (217 lines) — AC-2 role denial (owners-only vs tenant), AC-3 specific-user grant + outsider denial + creator override, AC-1 building/unit membership grant/deny + non-building/unit scope guard; plus db/tests/documents_rls_cross_tenant_tests.rs. The story's older 'Known gaps: building/unit not wired' note is now stale — GH #1413 wired it. NOTE: full frontend permission UI (Task 5/6 AccessScopeSelector/RoleSelector/UserSelector) is NOT shipped in ppt-web (DocumentUpload carries buildingId context only) — backend enforcement (the story's ACs) is complete; frontend authoring UI tracked separately.
+  7a-4-document-download-preview: done  # Verified 2026-07-04 (verify-7a-4-document-download-preview): download + preview slice complete on dev. Backend: GET /api/v1/documents/{id}/download + /{id}/preview (servers/api-server routes/documents/core.rs get_download_url/get_preview_url), router mounted at lib.rs:164 .nest("/api/v1/documents"). Both handlers: RLS find_by_id_rls lookup, defense-in-depth cross-tenant org guard (404 not existence-leak on BYPASSRLS pools), non-manager access gate via document_access_allowed (creator/organization/role/users scopes) OR scope_membership_allows (building/unit via user_scope_memberships_rls, GH #1413), then presigned S3 URL from state.storage_service — download uses generate_download_url (Content-Disposition: attachment, S3_PRESIGNED_URL_TTL_SECS/15-min TTL, gap-84-1), preview uses generate_preview_url (inline disposition, 1-hr) gated on Document::supports_preview() (400 PREVIEW_NOT_SUPPORTED for non-previewable MIME). Storage-not-configured → 503. Regression: document_download_preview_tests.rs (15 #[sqlx::test] cases: auth guard, unknown→404, cross-tenant→404, users/building/unit scope allow+deny, preview unsupported→400, text/plain supported, non-manager creator + accessible-document reach-presigner). Frontend ppt-web SHIPPED: DocumentDetail.tsx + DocumentPreviewModal (lazy) + DocumentsBrowse preview/download row; screen-map ppt/document-detail buildStatus=shipped (ppt-web). Follow-up (separate mobile story, NOT this backend slice): mobile document-detail preview frame (screen-map mobile buildStatus=planned, apiStatus=stub) — the "preview second frame" is a mobile UI gap, not a backend gap.
+  7a-5-document-sharing: done  # Verified 2026-07-07 (gap-7a-5-issue-485-resolved-per-pr-2003): document sharing complete across the stack. Backend: routes/documents/shares.rs + repositories/document/shares.rs with document_share_access_tests.rs / document_access_test.rs / document_shares_enum_decode_tests.rs. Web: DocumentSharePanel.tsx uses accessible ConfirmationDialog (not window.confirm) + UUID validation on user-ID input, locked in by DocumentSharePanel.test.tsx — issue #485 findings resolved (issue closed 2026-05-26). Mobile parity landed via PR #2003 (merged 2026-07-01): DocumentShareSheet UUID-validates user-ID (isValidUserId in documentShare.ts), errorUserIdInvalid in all six locales, DocumentShare.test.ts added. Story gate #485 cleared — see batch item below.
   # Epic 8A: Basic Notification Preferences
   8a-1-channel-level-notification-toggles: done
   8a-2-critical-notification-override: done
   8a-3-notification-preference-sync: done  # WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25 — coverage.json: "WS half cleared by PR #472"). Mobile OS push (FCM/APNs) remains deferred; backend realtime tests tracked in #480/#484.
   # Epic 10A: OAuth Provider Foundation
-  10a-1-oauth-authorization-server: ready-for-dev
-  10a-2-oauth-client-registration: ready-for-dev
-  10a-3-oauth-token-management: ready-for-dev
+  10a-1-oauth-authorization-server: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): both gates CLEARED — #481 closed 2026-05-26 (revoked-token reuse fixed; regression in oauth_integration_tests.rs — revoked-token introspection + "revoked grant must not appear in list") and #487 closed 2026-05-26 (MFA e2e rate-limit coverage; live brute-force/rate-limit e2e via PR #2157, in review at reconcile time). Code shipped: full authorization-server endpoints in servers/api-server routes/oauth.rs (authorize/token/introspect/revoke, PKCE S256 enforcement per oauth_authz_server_edge_tests.rs); story md Status: completed.
+  10a-2-oauth-client-registration: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): gate #482 CLEARED — closed 2026-05-26 (ProtectedRoute tenants[0] role fallback fixed for multi-tenant users; unit tests landed at ppt-web + admin-web src/components/ProtectedRoute.test.tsx). Client registration endpoints in servers/api-server routes/oauth.rs (grant listing covered by oauth_integration_tests.rs); story md Status: completed.
+  10a-3-oauth-token-management: done  # Reconciled 2026-07-07 (gap-10a-reconcile-sprint-status-gates-closed): gate #481 CLEARED — closed 2026-05-26 (refresh-token revocation bypass fixed, revoked_at IS NULL restored; regression coverage in oauth_integration_tests.rs + token_scope_tests.rs). Token issue/introspect/revoke in servers/api-server routes/oauth.rs; story md Status: completed.
   # Epic 10B: Platform Administration
   10b-1-organization-management-dashboard: done
   10b-2-feature-flag-management: done
@@ -118,7 +118,7 @@ test_hardening_batch:
       story_gate:
         - 10a-1-oauth-authorization-server
         - 10a-3-oauth-token-management
-      status: open
+      status: closed   # closed 2026-05-26 — revoked_at IS NULL restored (revoked tokens rejected); regression coverage in oauth_integration_tests.rs + token_scope_tests.rs — 10a-1/10a-3 promoted to done 2026-07-07
 
     - issue: 482
       title: "ProtectedRoute role fallback uses tenants[0] — wrong for multi-tenant users; no tests"
@@ -128,7 +128,7 @@ test_hardening_batch:
       severity: medium        # auth UX + missing ProtectedRoute unit tests
       story_gate:
         - 10a-2-oauth-client-registration
-      status: open
+      status: closed   # closed 2026-05-26 — ProtectedRoute multi-tenant role fallback fixed + unit tests (ppt-web + admin-web ProtectedRoute.test.tsx) — 10a-2 promoted to done 2026-07-07
 
     - issue: 483
       title: "Voice device IDOR fix has no tests; list-commands leaks existence via empty vs 403"
@@ -158,7 +158,7 @@ test_hardening_batch:
       severity: medium        # UX regression + missing input validation
       story_gate:
         - 7a-5-document-sharing
-      status: open
+      status: closed   # closed 2026-05-26 — web DocumentSharePanel moved to ConfirmationDialog + UUID validation (DocumentSharePanel.test.tsx); mobile parity via PR #2003 (merged 2026-07-01)
 
     - issue: 486
       title: "Announcements/Faults wiring uses direct getToken() bypassing axios interceptor"
@@ -179,14 +179,14 @@ test_hardening_batch:
       severity: medium        # missing MFA brute-force/rate-limit test coverage
       story_gate:
         - 10a-1-oauth-authorization-server   # MFA is part of auth foundation
-      status: open
+      status: closed   # closed 2026-05-26 — MFA e2e rate-limit coverage; live brute-force/rate-limit e2e follow-up via PR #2157 (in review at reconcile time) — 10a-1 promoted to done 2026-07-07
 
 # Stories that MUST NOT move to `done` until their batch item is resolved:
 #   8a-3-notification-preference-sync  → #480, #484
-#   10a-1-oauth-authorization-server   → #481, #487
-#   10a-2-oauth-client-registration    → #482
-#   10a-3-oauth-token-management        → #481
-#   7a-5-document-sharing              → #485
+#   10a-1-oauth-authorization-server   → #481, #487 (CLEARED: #481 closed 2026-05-26, #487 closed 2026-05-26 [live e2e via PR #2157] — 10a-1 promoted to done 2026-07-07)
+#   10a-2-oauth-client-registration    → #482 (CLEARED: #482 closed 2026-05-26 — 10a-2 promoted to done 2026-07-07)
+#   10a-3-oauth-token-management        → #481 (CLEARED: #481 closed 2026-05-26 — 10a-3 promoted to done 2026-07-07)
+#   7a-5-document-sharing              → #485 (CLEARED: #485 closed 2026-05-26; mobile parity PR #2003 merged 2026-07-01 — 7a-5 promoted to done 2026-07-07)
 #   6-2-announcement-viewing-acknowledgment → #486 (CLEARED: #486 closed/completed 2026-05-26 — 6-2 promoted to done 2026-06-25)
 #   6-5-direct-messaging               → #486 (CLEARED: #486 closed/completed 2026-05-26)
 
@@ -202,5 +202,6 @@ notes:
   - "Story 8A.3 WebSocket sync DONE - delivered by PR #472 (merged 2026-05-25); coverage.json confirms WS leg cleared"
   - "Story 8A.3 mobile OS integration deferred - requires mobile app implementation"
   - "2026-05-25: test-hardening batch thb-2026-05-25 slotted — issues #480-#487 must be closed or deferred before dependent stories can be promoted to done"
+  - "2026-07-07: Epic 10A reconciled (gap-10a-reconcile-sprint-status-gates-closed) — gates #481 (closed 2026-05-26), #482 (closed 2026-05-26), #487 (closed 2026-05-26; live MFA rate-limit e2e via PR #2157, in review) all verified CLOSED via gh; 10a-1/10a-2/10a-3 promoted ready-for-dev → done. Evidence: routes/oauth.rs endpoints + oauth_integration_tests.rs/oauth_authz_server_edge_tests.rs/token_scope_tests.rs revocation regressions, ProtectedRoute.test.tsx (ppt-web + admin-web), story mds already Status: completed. Batch thb-2026-05-25 stays in-progress (#480/#483/#484 still open)."
 
 blockers: []

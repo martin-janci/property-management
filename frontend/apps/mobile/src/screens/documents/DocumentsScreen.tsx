@@ -10,33 +10,40 @@ import {
   View,
 } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
-import { type ApiFolderTreeNode, useFolderTree } from '../../hooks/useFolderTree';
+import { useFolderTree } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
 import type { AccessScope } from './DocumentPermissionsScreen';
+import {
+  type ApiDocumentListResponse,
+  type Document,
+  type DocumentType,
+  type FolderCrumb,
+  folderNodeToDocument,
+  subfoldersAtPath,
+  toUiDocument,
+} from './documentModel';
 import { MoveDocumentSheet } from './MoveDocumentSheet';
 import { MoveFolderSheet } from './MoveFolderSheet';
 import { NewFolderSheet } from './NewFolderSheet';
 import { RenameFolderSheet } from './RenameFolderSheet';
 
-export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
-export type DocumentStatus = 'published' | 'draft' | 'archived';
-
-export interface Document {
-  id: string;
-  name: string;
-  type: DocumentType;
-  size?: number;
-  createdAt: string;
-  updatedAt: string;
-  parentId: string | null;
-  downloadUrl?: string;
-  children?: Document[];
-  /** Number of documents directly in a folder (folder rows only, gap-7a-2). */
-  documentCount?: number;
-  /** RLS-enforced audience scope returned from the server (gap-7a-3). */
-  accessScope?: AccessScope;
-  status?: DocumentStatus;
-}
+// The document data layer (types + pure mappers) now lives in
+// `./documentModel`. These re-exports keep existing `./DocumentsScreen`
+// importers — the index barrel, sibling sheets, and unit tests — working
+// without a churn-inducing import rewrite across the folder.
+export type {
+  ApiDocument,
+  ApiFolderTreeNode,
+  Document,
+  DocumentStatus,
+  DocumentType,
+} from './documentModel';
+export {
+  folderNodeToDocument,
+  pickDocumentType,
+  subfoldersAtPath,
+  toUiDocument,
+} from './documentModel';
 
 interface DocumentsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
@@ -56,107 +63,6 @@ const AUDIENCE_OPTIONS: ReadonlyArray<{
   { value: 'user', label: 'Specific Users', color: '#b45309', bg: '#fef3c7', icon: '👤' },
   { value: 'public', label: 'Public', color: '#047857', bg: '#d1fae5', icon: '🌍' },
 ] as const;
-
-/**
- * Item shape of `GET /api/v1/documents` (`DocumentSummary` on the server).
- *
- * Fields mirror the backend exactly: `title` (not `name`), `file_name`
- * (not `file_path`), `mime_type` (not `content_type`), and `created_at`
- * (the summary has no separate upload timestamp). The summary carries no
- * `access_scope` or `status` — those live on the document detail/permissions
- * endpoints, not the list.
- */
-export interface ApiDocument {
-  id: string;
-  title: string;
-  category: string;
-  file_name: string;
-  mime_type: string;
-  size_bytes: number;
-  folder_id?: string | null;
-  created_at: string;
-}
-
-interface ApiDocumentListResponse {
-  documents: ApiDocument[];
-  count?: number;
-  total?: number;
-}
-
-// `ApiFolderTreeNode` is owned by the folder-tree hook (the data layer it
-// describes). Re-exported here so existing `./DocumentsScreen` importers
-// (index barrel, sheets, tests) keep working without a screen→hook coupling.
-export type { ApiFolderTreeNode };
-
-/** Lightweight breadcrumb entry: just enough to render + look up children. */
-interface FolderCrumb {
-  id: string;
-  name: string;
-}
-
-/**
- * Walk the nested folder tree to the folder identified by `path` (a list of
- * folder ids from root downward) and return its direct subfolders. An empty
- * path returns the root-level folders.
- *
- * Exported for unit-testing (feat-mobile-document-folder-organization).
- */
-export function subfoldersAtPath(
-  tree: ApiFolderTreeNode[],
-  path: ReadonlyArray<FolderCrumb>
-): ApiFolderTreeNode[] {
-  let level = tree;
-  for (const crumb of path) {
-    const match = level.find((n) => n.id === crumb.id);
-    if (!match) return [];
-    level = match.children ?? [];
-  }
-  return level;
-}
-
-/**
- * Map a folder tree node to the screen's unified `Document` row shape.
- *
- * Exported for unit-testing (feat-mobile-document-folder-organization).
- */
-export function folderNodeToDocument(node: ApiFolderTreeNode): Document {
-  return {
-    id: node.id,
-    name: node.name,
-    type: 'folder',
-    createdAt: '',
-    updatedAt: '',
-    parentId: node.parent_id ?? null,
-    // Carry the live document count so the row meta ("N items") is real
-    // rather than always 0. `children` here is the on-tree subfolder list,
-    // which the row's "items" count intentionally does not use.
-    documentCount: node.document_count,
-  };
-}
-
-export function pickDocumentType(d: ApiDocument): DocumentType {
-  const mime = (d.mime_type ?? '').toLowerCase();
-  const fileName = (d.file_name ?? d.title).toLowerCase();
-  if (mime.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf';
-  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/.test(fileName)) return 'image';
-  if (mime.includes('spreadsheet') || mime.includes('excel') || /\.(xlsx?|csv)$/.test(fileName))
-    return 'spreadsheet';
-  return 'document';
-}
-
-export function toUiDocument(d: ApiDocument): Document {
-  return {
-    id: d.id,
-    name: d.title,
-    type: pickDocumentType(d),
-    size: d.size_bytes ?? undefined,
-    createdAt: d.created_at,
-    updatedAt: d.created_at,
-    parentId: d.folder_id ?? null,
-    downloadUrl: undefined,
-    children: undefined,
-  };
-}
 
 /** Small inline badge showing the access_scope of a document row (gap-7a-3). */
 function AudienceScopeBadge({ scope }: { scope: AccessScope }) {

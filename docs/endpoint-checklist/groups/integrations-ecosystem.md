@@ -154,20 +154,20 @@ _Deleted in [BIT-257](/BIT/issues/BIT-257): 43 unmounted `/api/v1/developer/*` R
 | GET | /api/v1/migration/templates/{template_id}/download | download_template | done | migration_db_tests.rs | db-backed and tested |
 | POST | /api/v1/migration/templates/{template_id}/duplicate | duplicate_template | done | migration_db_tests.rs | db-backed and tested |
 | GET | /api/v1/migration/categories/import | get_import_categories | done | migration_db_tests.rs | static metadata |
-| POST | /api/v1/migration/import/upload | upload_import_file | partial | migration_db_tests.rs | metadata row persisted; multipart bytes NOT uploaded to S3 (synthetic file_path) — #1905 |
+| POST | /api/v1/migration/import/upload | upload_import_file | partial | migration_db_tests.rs | metadata row persisted; multipart bytes NOT uploaded to S3 (synthetic file_path) — #1995 |
 | GET | /api/v1/migration/import/jobs | list_import_jobs | done | migration_db_tests.rs | db-backed and tested |
 | GET | /api/v1/migration/import/jobs/{job_id} | get_import_job_status | done | migration_db_tests.rs | db-backed and tested |
 | POST | /api/v1/migration/import/jobs/{job_id}/cancel | cancel_import_job | done | migration_db_tests.rs | db-backed and tested |
 | POST | /api/v1/migration/import/jobs/{job_id}/retry | retry_import_job | done | migration_db_tests.rs | db-backed and tested |
 | GET | /api/v1/migration/import/jobs/{job_id}/errors | get_import_job_errors | done | migration_db_tests.rs | db-backed and tested |
-| POST | /api/v1/migration/export | request_migration_export | partial | migration_db_tests.rs | persists export request row; no export is ever generated — #1905 |
-| GET | /api/v1/migration/export/{export_id} | get_export_status | partial | migration_db_tests.rs | fabricates Ready status + storage.example.com URL + fixed size/counts; no real export — #1905 |
-| GET | /api/v1/migration/export/{export_id}/download | download_export | partial | migration_db_tests.rs | returns placeholder storage.example.com URL; no real object — #1905 |
+| POST | /api/v1/migration/export | request_migration_export | partial | migration_db_tests.rs | persists export request row; no export is ever generated — #1995 |
+| GET | /api/v1/migration/export/{export_id} | get_export_status | partial | migration_db_tests.rs | fabricates Ready status + storage.example.com URL + fixed size/counts; no real export — #1995 |
+| GET | /api/v1/migration/export/{export_id}/download | download_export | partial | migration_db_tests.rs | returns placeholder storage.example.com URL; no real object — #1995 |
 | GET | /api/v1/migration/export/history | get_export_history | done | migration_db_tests.rs | db-backed and tested |
 | GET | /api/v1/migration/categories/export | get_export_categories | done | migration_db_tests.rs | static metadata |
-| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | partial | migration_db_tests.rs | returns the mock validate output (hardcoded issues); no real parse — #1905 |
-| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | partial | migration_db_tests.rs | flips status to Importing but queues no execution; nothing moves the job past it — #1905 |
-| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | partial | migration_db_tests.rs | inserts hardcoded errors + counts (total=100/ok=98/fail=2); file never read — #1905 |
+| GET | /api/v1/migration/import/jobs/{job_id}/preview | get_import_preview | partial | migration_db_tests.rs | returns the mock validate output (hardcoded issues); no real parse — #1995 |
+| POST | /api/v1/migration/import/jobs/{job_id}/approve | approve_import | partial | migration_db_tests.rs | flips status to Importing but queues no execution; nothing moves the job past it — #1995 |
+| POST | /api/v1/migration/import/jobs/{job_id}/validate | validate_import | partial | migration_db_tests.rs | inserts hardcoded errors + counts (total=100/ok=98/fail=2); file never read — #1995 |
 
 ## feature_packages.rs  (mount: /api/v1/feature-packages; public_router nested at /public)
 | Method | Path | Handler | Status | Tests | Notes |

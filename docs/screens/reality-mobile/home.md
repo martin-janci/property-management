@@ -36,7 +36,7 @@ useCases:
   - UC-31
   - UC-44
 epics:
-  - "82"
+  - Epic-82
 designSources: []
 owner: reality-frontend
 ---

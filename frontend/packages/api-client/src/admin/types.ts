@@ -64,6 +64,103 @@ export interface AdminPaginatedResponse<T> {
 }
 
 // ============================================================
+// Platform-admin Organization Management (Epic 10B.1)
+// ============================================================
+
+export type AdminOrganizationStatus = 'active' | 'suspended' | 'pending' | string;
+
+/**
+ * Summary row returned by `GET /api/v1/platform-admin/organizations`.
+ * Mirrors the backend `AdminOrganizationSummary` DTO
+ * (`db/models/platform_admin.rs`).
+ */
+export interface AdminOrganizationSummary {
+  id: string;
+  name: string;
+  slug: string;
+  status: AdminOrganizationStatus;
+  member_count: number;
+  building_count: number;
+  created_at: string;
+}
+
+/** Metrics subset embedded in the organization detail. */
+export interface OrganizationDetailMetrics {
+  member_count: number;
+  active_member_count: number;
+  building_count: number;
+  unit_count: number;
+}
+
+/**
+ * Detail view returned by `GET /api/v1/platform-admin/organizations/{id}`.
+ * Mirrors the backend `AdminOrganizationDetail` DTO.
+ */
+export interface AdminOrganizationDetail {
+  id: string;
+  name: string;
+  slug: string;
+  contact_email: string;
+  logo_url: string | null;
+  status: AdminOrganizationStatus;
+  created_at: string;
+  updated_at: string;
+  suspended_at: string | null;
+  suspended_by: string | null;
+  suspension_reason: string | null;
+  metrics: OrganizationDetailMetrics;
+}
+
+export interface ListOrganizationsParams {
+  /** Page number (1-based). */
+  page?: number;
+  /** Page size (max 100 server-side). */
+  page_size?: number;
+  /** Filter by status (active | suspended). */
+  status?: string;
+  /** Search by name or slug. */
+  search?: string;
+}
+
+export interface ListOrganizationsResponse {
+  organizations: AdminOrganizationSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface SuspendOrganizationRequest {
+  /** Reason for suspension (required for audit). */
+  reason: string;
+  /** Whether to notify organization members. */
+  notify_members?: boolean;
+}
+
+export interface ReactivateOrganizationRequest {
+  /** Optional note for reactivation. */
+  note?: string | null;
+}
+
+/** Response shape for suspend / reactivate actions. */
+export interface OrganizationActionResponse {
+  message: string;
+  organization: AdminOrganizationDetail;
+}
+
+/** Platform-wide statistics from `GET /api/v1/platform-admin/stats`. */
+export interface PlatformStats {
+  active_orgs: number;
+  suspended_orgs: number;
+  active_users: number;
+  total_buildings: number;
+  total_units: number;
+}
+
+export interface PlatformStatsResponse {
+  stats: PlatformStats;
+}
+
+// ============================================================
 // OAuth Client Management (Epic 10A-2)
 // ============================================================
 

@@ -23,7 +23,10 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user_with_org, TestApp, TestUser};
+use common::{
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, seed_org,
+    TestApp, TestUser,
+};
 
 // ---------------------------------------------------------------------------
 // Seed helpers
@@ -436,4 +439,62 @@ async fn revoke_share_succeeds(pool: PgPool) {
     .await
     .expect("check revoked_at");
     assert!(revoked, "share must have revoked_at set after revocation");
+}
+
+/// Regression (code-review-api-handlers-shares-revoke-doc-mismatch): a share
+/// may only be revoked through the document it actually belongs to.
+///
+/// `revoke_share` authorizes the caller against the *path* document `id`
+/// (creator-or-manager), but previously looked up and revoked the share purely
+/// by `share_id` with no check that the share belonged to that document. RLS on
+/// `document_shares` only scopes to the tenant, so a non-manager who created
+/// document A could revoke a share of a *different* creator's document B in the
+/// same org by passing A's id (to satisfy the creator check) plus B's share_id
+/// — a cross-document IDOR. The handler now guards `share.document_id == id`
+/// and returns 404 otherwise.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn revoke_share_rejects_cross_document_share(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Attacker: a NON-manager (resident) member of the org who owns document A.
+    // A resident is not a manager, so it must rely on the created_by branch of
+    // the authorization check — exactly the branch the IDOR abused.
+    let attacker = TestUser::new();
+    let (token, _refresh) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    let org_id = seed_org(&pool, "doc-share-revoke-idor").await;
+    seed_membership(&pool, org_id, attacker_id, "resident").await;
+    let doc_a = seed_document(&pool, org_id, attacker_id).await;
+
+    // Victim: a different creator's document B in the SAME org, carrying a share.
+    let victim = TestUser::new();
+    let (_vtoken, _vrefresh) = create_authenticated_user(&app, &victim).await;
+    let victim_id = user_id_for(&pool, &victim.email).await;
+    let doc_b = seed_document(&pool, org_id, victim_id).await;
+    let share_b = seed_document_share(&pool, doc_b, victim_id).await;
+
+    // Attacker passes document A's id (passes the creator check) but document
+    // B's share_id — the cross-document revoke must be rejected with 404.
+    let resp = app
+        .execute(
+            app.session(token, org_id)
+                .delete(&format!("/api/v1/documents/{doc_a}/shares/{share_b}"))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "body: {}", resp.text());
+
+    // Document B's share must remain active (revoked_at still NULL).
+    let revoked: bool = sqlx::query_scalar::<_, bool>(
+        "SELECT revoked_at IS NOT NULL FROM document_shares WHERE id = $1",
+    )
+    .bind(share_b)
+    .fetch_one(&pool)
+    .await
+    .expect("check revoked_at");
+    assert!(
+        !revoked,
+        "cross-document revoke must NOT have revoked document B's share"
+    );
 }

@@ -7,7 +7,8 @@
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, ReportExecution, ReportSchedule, ReportScheduleRow,
+    ExecutionHistoryResponse, NewReportSchedule, ReportExecution, ReportSchedule,
+    ReportScheduleRow,
 };
 use crate::DbPool;
 use chrono::{Duration, Utc};
@@ -166,6 +167,65 @@ impl ReportScheduleRepository {
             AppError::Database(e.to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
+
+        Ok(ReportSchedule::from(row))
+    }
+
+    /// Create (persist) a new report schedule (gap-81-1).
+    ///
+    /// Inserts a row into `report_schedules` and returns the persisted record.
+    /// The new schedule starts `is_active = true` / `status = 'active'` and has
+    /// no `cron_expression` (callers use the legacy `time`/`frequency` fields at
+    /// creation time and may later switch to a cron expression via
+    /// `update_schedule`).
+    ///
+    /// # Cross-tenant safety
+    ///
+    /// `organization_id` comes from `input.organization_id`, which the handler
+    /// derives from the authenticated tenant (`RlsConnection::tenant_id()`) —
+    /// never from the request body — so a caller cannot create a schedule inside
+    /// another organisation.
+    pub async fn create(&self, input: NewReportSchedule) -> Result<ReportSchedule, AppError> {
+        // Serialise the recipients Vec<String> into a JSON array for JSONB storage.
+        let recipients_json = serde_json::Value::Array(
+            input
+                .recipients
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        );
+
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "INSERT INTO report_schedules \
+             (report_id, organization_id, name, frequency, day_of_week, day_of_month, \
+              time, timezone, format, recipients, is_active, status, next_run_at) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12) \
+             RETURNING ",
+            report_schedule_columns!()
+        ))
+        .bind(input.report_id)
+        .bind(input.organization_id)
+        .bind(input.name)
+        .bind(input.frequency)
+        .bind(input.day_of_week)
+        .bind(input.day_of_month)
+        .bind(input.time)
+        .bind(input.timezone)
+        .bind(input.format)
+        .bind(recipients_json)
+        .bind(report_schedule_status::ACTIVE)
+        .bind(input.next_run_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                org_id = %input.organization_id,
+                report_id = %input.report_id,
+                "Failed to create report schedule"
+            );
+            AppError::Database(e.to_string())
+        })?;
 
         Ok(ReportSchedule::from(row))
     }

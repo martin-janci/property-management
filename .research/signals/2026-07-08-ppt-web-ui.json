@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-08",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["frontend", "completeness"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-noerr",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56 — confirmDelete/handleToggle/handleRun await mutateAsync (delete/update/run) with no try/catch and no onError; on failure the promise rejects unhandled and the user gets no feedback (destructive delete silently fails, confirm modal stays open)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:34 — handleSubmit fakes filing via `await new Promise((resolve) => setTimeout(resolve, 1000))` then navigates to /disputes, never calling any create-dispute API; all form data (respondentId/title/description/desiredResolution) is silently discarded while showing a success navigation.",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts:6 — CreateDisputePage is exported from the feature's public surface, but the routed create flow (/disputes/new) uses FileDisputePageRoute instead, leaving this a stubbed duplicate page that would file nothing if wired."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-templatelib-mutation-noerr",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx:53 — handleUseTemplate awaits createFromTemplate.mutateAsync with no error handling (same pattern in ExecutionMonitoringPage.tsx:74 handleRetry); on failure navigation never occurs and no error is surfaced to the user."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "deferred_findings": [
+    {
+      "id": "code-review-ppt-web-ui-workflow-pages-i18n-gap",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "note": "workflow-automation pages (AutomationRulesPage.tsx, TemplateLibraryPage.tsx, ExecutionMonitoringPage.tsx) hardcode all user-facing English strings with no useTranslation, while ppt-web uses react-i18next across ~20 files. Below the 3-finding cap this run."
+    }
+  ]
+}

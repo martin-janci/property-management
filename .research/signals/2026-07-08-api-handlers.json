@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-08",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor)",
+  "experts_used": [
+    "security",
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-alexa-webhook-nosig",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:757 — the mounted public /api/v1/webhooks/voice/alexa receiver reads the Signature header into _signature and discards it; verify_alexa_signature only checks the cert-URL string format and a 150s timestamp (both attacker-controllable, no nonce) then returns Ok, so no cryptographic signature verification ever runs despite the docstring/INVALID_SIGNATURE response claiming otherwise, allowing request forgery/replay against the voice-command processor."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-google-webhook-nosig",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:870 — the mounted /api/v1/webhooks/voice/google receiver's verify_google_request never verifies the Google-Assistant signature or the bearer JWT (it only checks that the token splits into three dot-separated parts and logs the signature length), so the webhook accepts unauthenticated/forged requests with no real provider-authenticity check."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-report-dl-deadlink",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "routes/reports.rs:1801 — get_execution_download_url returns a download URL pointing at /api/v1/reports/files/{file_key}, but no route with that path is registered anywhere in api-server/src (only /executions/{id}/download exists), so every completed-report download link 404s and users cannot retrieve generated reports."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

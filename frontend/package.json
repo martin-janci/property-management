@@ -24,7 +24,7 @@
     "test:e2e": "pnpm -r --filter './apps/*' e2e"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.0",
+    "@biomejs/biome": "^2.5.2",
     "typescript": "^5.3.0"
   },
   "engines": {
@@ -35,7 +35,7 @@
     "overrides": {
       "react": "19.2.0",
       "react-dom": "19.2.0",
-      "react-test-renderer": "19.2.6",
+      "react-test-renderer": "19.2.0",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3",
       "@react-native/babel-plugin-codegen": "^0.85.0"

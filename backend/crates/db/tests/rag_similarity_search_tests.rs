@@ -205,7 +205,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
     // The pgvector wrapper falls back to the same path when the SQL function
     // is absent (CI), so it must return the same top hit.
     let via_wrapper = repo
-        .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5))
+        .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5), None)
         .await
         .expect("pgvector wrapper search");
     assert_eq!(
@@ -326,4 +326,81 @@ async fn rag_retrieval_correctness(pool: PgPool) {
         stats.last_updated.is_some(),
         "last_updated should be populated"
     );
+
+    // -------------------------------------------------------------------------
+    // D. Upsert wrapper (Story 84.5): insert-then-update identity on
+    //    (org, document, chunk_index) via the JSONB fallback path (CI has no
+    //    pgvector, so the SQL function from 00081 is absent).
+    // -------------------------------------------------------------------------
+
+    let org_up = seed_org(&pool, "rag-upsert-a").await;
+    let user_up = seed_user(&pool, "upsert-a@rag.test").await;
+    let doc_up = seed_document(&pool, org_up, user_up, "rag-upsert-doc").await;
+
+    let first_id = repo
+        .upsert_embedding(
+            &mut conn,
+            org_up,
+            doc_up,
+            0,
+            "original chunk text",
+            &[1.0, 0.0, 0.0],
+            "test-model-v1",
+            serde_json::json!({"rev": 1}),
+        )
+        .await
+        .expect("upsert (insert path)");
+
+    let second_id = repo
+        .upsert_embedding(
+            &mut conn,
+            org_up,
+            doc_up,
+            0,
+            "revised chunk text",
+            &[0.0, 1.0, 0.0],
+            "test-model-v1",
+            serde_json::json!({"rev": 2}),
+        )
+        .await
+        .expect("upsert (update path)");
+
+    assert_eq!(
+        first_id, second_id,
+        "same (org, document, chunk_index) must update in place, not insert"
+    );
+
+    let chunks = repo
+        .find_document_embeddings(&mut *conn, doc_up)
+        .await
+        .expect("find upserted chunks");
+    assert_eq!(chunks.len(), 1, "upsert must not duplicate the chunk");
+    assert_eq!(chunks[0].chunk_text, "revised chunk text");
+    assert_eq!(
+        chunks[0].embedding.as_deref(),
+        Some(&[0.0_f32, 1.0, 0.0][..])
+    );
+    assert_eq!(chunks[0].metadata["rev"], 2);
+    // Provenance (#2201): the model that produced the vector is folded into
+    // metadata on upsert so retrieval can filter to a single embedding space.
+    assert_eq!(
+        chunks[0].metadata["embedding_model"], "test-model-v1",
+        "upsert must persist embedding provenance into metadata"
+    );
+
+    // A different chunk_index for the same document inserts a new row.
+    let third_id = repo
+        .upsert_embedding(
+            &mut conn,
+            org_up,
+            doc_up,
+            1,
+            "second chunk",
+            &[0.0, 0.0, 1.0],
+            "test-model-v1",
+            serde_json::json!({}),
+        )
+        .await
+        .expect("upsert (new chunk_index)");
+    assert_ne!(third_id, first_id, "new chunk_index must create a new row");
 }

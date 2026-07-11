@@ -1,6 +1,11 @@
 //! Portal webhook routes (Epic 105: Portal Syndication).
 //!
+//! UC-32.9: Handle Portal Webhooks
+//!
 //! Story 105.4: Portal Webhook Receivers
+//! (delivers the portal-webhook scope of Story 83.3: Real Estate Portal
+//! Webhooks — these receivers are the single implementation of both story
+//! ids; the parser/connection helpers live in `integrations::portals`.)
 //! - Receive webhooks from external real estate portals
 //! - Handle view counts, inquiries, and status updates
 //! - HMAC signature verification for webhook security

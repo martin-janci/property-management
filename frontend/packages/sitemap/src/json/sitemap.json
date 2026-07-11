@@ -28,6 +28,21 @@
         "tags": ["auth", "public"]
       },
       {
+        "id": "ppt-auth-callback",
+        "app": "ppt-web",
+        "path": "/auth/callback",
+        "name": "SSO Callback",
+        "description": "OAuth / SSO provider redirect landing page — exchanges code for PPT JWT tokens",
+        "auth": {
+          "required": false
+        },
+        "apiEndpoints": ["auth_sso_callback"],
+        "component": "AuthCallbackPage",
+        "parentId": "ppt-login",
+        "feature": "UC-14",
+        "tags": ["auth", "public", "sso"]
+      },
+      {
         "id": "ppt-documents",
         "app": "ppt-web",
         "path": "/documents",
@@ -177,6 +192,50 @@
         "tags": ["settings", "protected"]
       },
       {
+        "id": "ppt-settings-integrations",
+        "app": "ppt-web",
+        "path": "/settings/integrations",
+        "name": "Integrations",
+        "description": "External channel integrations — Airbnb OAuth connect & sync",
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
+        "component": "IntegrationsPage",
+        "feature": "Epic-83",
+        "tags": ["settings", "integrations", "airbnb", "protected"]
+      },
+      {
+        "id": "ppt-settings-notifications",
+        "app": "ppt-web",
+        "path": "/settings/notifications",
+        "name": "Notification Settings",
+        "description": "Channel-level notification toggles (push / email / in-app)",
+        "auth": {
+          "required": true
+        },
+        "apiEndpoints": ["notification_preferences_list", "notification_preference_update"],
+        "component": "NotificationSettingsPage",
+        "feature": "Epic-8A",
+        "tags": ["settings", "notifications", "protected"]
+      },
+      {
+        "id": "ppt-settings-notifications-advanced",
+        "app": "ppt-web",
+        "path": "/settings/notifications/advanced",
+        "name": "Advanced Notification Settings",
+        "description": "Per-category preferences, digests, quiet hours and grouping",
+        "auth": {
+          "required": true
+        },
+        "component": "AdvancedNotificationSettingsPage",
+        "parentId": "ppt-settings-notifications",
+        "feature": "Epic-40",
+        "tags": ["settings", "notifications", "protected"]
+      },
+      {
         "id": "ppt-disputes",
         "app": "ppt-web",
         "path": "/disputes",
@@ -237,6 +296,40 @@
         "parentId": "ppt-disputes",
         "feature": "Epic-77",
         "tags": ["disputes", "protected", "detail"]
+      },
+      {
+        "id": "ppt-ai-sentiment",
+        "app": "ppt-web",
+        "path": "/ai/sentiment",
+        "name": "Tenant Sentiment",
+        "description": "AI-derived sentiment trends and alerts from tenant communications",
+        "auth": {
+          "required": true,
+          "roles": ["manager", "organization_admin"],
+          "tenantContext": {
+            "required": true
+          }
+        },
+        "component": "SentimentDashboardPage",
+        "feature": "Epic-13",
+        "tags": ["ai", "sentiment", "protected", "dashboard"]
+      },
+      {
+        "id": "ppt-ai-predictive-maintenance",
+        "app": "ppt-web",
+        "path": "/ai/predictive-maintenance",
+        "name": "Predictive Maintenance",
+        "description": "AI-powered equipment health monitoring and failure predictions",
+        "auth": {
+          "required": true,
+          "roles": ["manager", "organization_admin"],
+          "tenantContext": {
+            "required": true
+          }
+        },
+        "component": "PredictiveMaintenancePage",
+        "feature": "Epic-13",
+        "tags": ["ai", "predictive-maintenance", "protected", "dashboard"]
       }
     ],
     "reality-web": [
@@ -623,6 +716,144 @@
           "required": false
         },
         "feature": "UC-14"
+      },
+      {
+        "operationId": "auth_sso_callback",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/auth/sso/callback",
+        "description": "Exchange SSO authorization code for PPT JWT tokens (backend stub — not yet implemented)",
+        "tags": ["Authentication", "SSO"],
+        "requestBody": {
+          "ref": "Auth.SsoCallbackRequest",
+          "contentType": "application/json",
+          "required": true
+        },
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "SSO login successful",
+            "ref": "Auth.LoginResponse"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid code or state"
+          },
+          {
+            "statusCode": 401,
+            "description": "SSO provider rejected the code"
+          }
+        ],
+        "auth": {
+          "required": false
+        },
+        "feature": "UC-14"
+      },
+      {
+        "operationId": "auth_mfa_setup",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/auth/mfa/setup",
+        "description": "Begin TOTP MFA setup — returns secret and QR URI",
+        "tags": ["Authentication", "MFA"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "MFA setup initiated"
+          },
+          {
+            "statusCode": 409,
+            "description": "MFA already enabled"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-9-1"
+      },
+      {
+        "operationId": "auth_mfa_verify",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/auth/mfa/verify",
+        "description": "Verify TOTP code to complete MFA setup",
+        "tags": ["Authentication", "MFA"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "MFA verified and enabled"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid code"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-9-1"
+      },
+      {
+        "operationId": "auth_mfa_disable",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/auth/mfa/disable",
+        "description": "Disable MFA for the authenticated user",
+        "tags": ["Authentication", "MFA"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "MFA disabled"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid confirmation code"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-9-1"
+      },
+      {
+        "operationId": "auth_mfa_status",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/auth/mfa/status",
+        "description": "Get current MFA status for the authenticated user",
+        "tags": ["Authentication", "MFA"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "MFA status"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-9-1"
+      },
+      {
+        "operationId": "auth_mfa_backup_codes_regenerate",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/auth/mfa/backup-codes/regenerate",
+        "description": "Regenerate MFA backup codes",
+        "tags": ["Authentication", "MFA"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "New backup codes"
+          },
+          {
+            "statusCode": 400,
+            "description": "MFA not enabled"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-9-1"
       },
       {
         "operationId": "documents_list",
@@ -1037,9 +1268,25 @@
         "path": "/api/v1/announcements/:id/read",
         "description": "Mark announcement as read by current user",
         "tags": ["Announcements"],
-        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
-        "responses": [{ "statusCode": 200, "description": "Marked as read" }],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Marked as read"
+          }
+        ],
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1049,9 +1296,25 @@
         "path": "/api/v1/announcements/:id/acknowledge",
         "description": "Acknowledge an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
-        "responses": [{ "statusCode": 200, "description": "Acknowledged" }],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Acknowledged"
+          }
+        ],
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1061,9 +1324,25 @@
         "path": "/api/v1/announcements/:id/acknowledgments",
         "description": "Get acknowledgment stats for an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
-        "responses": [{ "statusCode": 200, "description": "Acknowledgment stats" }],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Acknowledgment stats"
+          }
+        ],
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1073,9 +1352,25 @@
         "path": "/api/v1/announcements/:id/comments",
         "description": "List comments for an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
-        "responses": [{ "statusCode": 200, "description": "Comment list" }],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Comment list"
+          }
+        ],
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1085,12 +1380,29 @@
         "path": "/api/v1/announcements/:id/comments",
         "description": "Post a comment on an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
-        "responses": [
-          { "statusCode": 201, "description": "Comment created" },
-          { "statusCode": 400, "description": "Invalid input" }
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
         ],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "responses": [
+          {
+            "statusCode": 201,
+            "description": "Comment created"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid input"
+          }
+        ],
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1101,15 +1413,37 @@
         "description": "Delete a comment on an announcement",
         "tags": ["Announcements"],
         "pathParams": [
-          { "name": "id", "type": "uuid", "required": true },
-          { "name": "commentId", "type": "uuid", "required": true }
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          },
+          {
+            "name": "commentId",
+            "type": "uuid",
+            "required": true
+          }
         ],
         "responses": [
-          { "statusCode": 200, "description": "Comment deleted" },
-          { "statusCode": 403, "description": "Forbidden" },
-          { "statusCode": 404, "description": "Not found" }
+          {
+            "statusCode": 200,
+            "description": "Comment deleted"
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden"
+          },
+          {
+            "statusCode": 404,
+            "description": "Not found"
+          }
         ],
-        "auth": { "required": true, "tenantContext": { "required": true } },
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
         "feature": "Epic-6"
       },
       {
@@ -1321,6 +1655,988 @@
             "required": true
           }
         }
+      },
+      {
+        "operationId": "list_oauth_clients",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/admin/oauth/clients",
+        "description": "List all registered OAuth clients",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of OAuth clients"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "get_oauth_client",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/admin/oauth/clients/:clientId",
+        "description": "Get a single OAuth client by ID",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "OAuth client"
+          },
+          {
+            "statusCode": 404,
+            "description": "Client not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "register_oauth_client",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/admin/oauth/clients",
+        "description": "Register a new OAuth client",
+        "tags": ["OAuth"],
+        "requestBody": {
+          "ref": "OAuth.RegisterClientRequest",
+          "contentType": "application/json",
+          "required": true
+        },
+        "responses": [
+          {
+            "statusCode": 201,
+            "description": "Client registered"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid input"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "update_oauth_client",
+        "server": "api-server",
+        "method": "PATCH",
+        "path": "/api/v1/admin/oauth/clients/:clientId",
+        "description": "Update OAuth client name, description, scopes, or status",
+        "tags": ["OAuth"],
+        "requestBody": {
+          "ref": "OAuth.UpdateClientRequest",
+          "contentType": "application/json",
+          "required": true
+        },
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Client updated"
+          },
+          {
+            "statusCode": 404,
+            "description": "Client not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "revoke_oauth_client",
+        "server": "api-server",
+        "method": "DELETE",
+        "path": "/api/v1/admin/oauth/clients/:clientId",
+        "description": "Revoke (deactivate) an OAuth client",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "Client revoked"
+          },
+          {
+            "statusCode": 404,
+            "description": "Client not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "regenerate_oauth_client_secret",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/admin/oauth/clients/:clientId/secret",
+        "description": "Regenerate the client secret for an OAuth client",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "New client secret"
+          },
+          {
+            "statusCode": 404,
+            "description": "Client not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-2"
+      },
+      {
+        "operationId": "list_organizations",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/organizations",
+        "description": "List all organizations with metrics (platform admin view)",
+        "tags": ["Platform Admin"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Organizations retrieved"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-1"
+      },
+      {
+        "operationId": "get_organization",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/organizations/:id",
+        "description": "Get organization details with members, buildings, usage metrics, billing status",
+        "tags": ["Platform Admin"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Organization retrieved"
+          },
+          {
+            "statusCode": 404,
+            "description": "Organization not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-1"
+      },
+      {
+        "operationId": "suspend_organization",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/organizations/:id/suspend",
+        "description": "Suspend an organization (cascade-invalidates all org sessions)",
+        "tags": ["Platform Admin"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Organization suspended"
+          },
+          {
+            "statusCode": 404,
+            "description": "Organization not found"
+          },
+          {
+            "statusCode": 409,
+            "description": "Organization already suspended"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-1"
+      },
+      {
+        "operationId": "reactivate_organization",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/organizations/:id/reactivate",
+        "description": "Reactivate a suspended organization",
+        "tags": ["Platform Admin"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Organization reactivated"
+          },
+          {
+            "statusCode": 404,
+            "description": "Organization not found"
+          },
+          {
+            "statusCode": 409,
+            "description": "Organization not suspended"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-1"
+      },
+      {
+        "operationId": "get_platform_stats",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/stats",
+        "description": "Get platform-wide statistics (org counts, member counts, usage)",
+        "tags": ["Platform Admin"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Platform stats retrieved"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-1"
+      },
+      {
+        "operationId": "get_health_dashboard",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/health/dashboard",
+        "description": "Get platform health dashboard (current metrics, active alerts, thresholds)",
+        "tags": ["Health"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Health dashboard"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-3"
+      },
+      {
+        "operationId": "get_health_alerts",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/health/alerts",
+        "description": "List metric alerts with optional active-only filter",
+        "tags": ["Health"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of alerts"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-3"
+      },
+      {
+        "operationId": "acknowledge_health_alert",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/health/alerts/:alertId/acknowledge",
+        "description": "Acknowledge an active metric alert",
+        "tags": ["Health"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Alert acknowledged"
+          },
+          {
+            "statusCode": 404,
+            "description": "Alert not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-3"
+      },
+      {
+        "operationId": "get_metric_history",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/health/metrics/:name/history",
+        "description": "Get time-series history for a specific metric",
+        "tags": ["Health"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Metric history with data points and stats"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-3"
+      },
+      {
+        "operationId": "update_health_threshold",
+        "server": "api-server",
+        "method": "PUT",
+        "path": "/api/v1/platform-admin/health/thresholds/:name",
+        "description": "Update warning and critical thresholds for a metric",
+        "tags": ["Health"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Updated threshold"
+          },
+          {
+            "statusCode": 404,
+            "description": "Threshold not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-3"
+      },
+      {
+        "operationId": "list_user_grants",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/oauth/grants",
+        "description": "List all OAuth grants for the authenticated user",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of OAuth grants"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-3"
+      },
+      {
+        "operationId": "revoke_user_grant",
+        "server": "api-server",
+        "method": "DELETE",
+        "path": "/api/v1/oauth/grants/:clientId",
+        "description": "Revoke a specific OAuth grant for the authenticated user",
+        "tags": ["OAuth"],
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "Grant revoked"
+          },
+          {
+            "statusCode": 404,
+            "description": "Grant not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10A-3"
+      },
+      {
+        "operationId": "list_system_announcements",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/announcements",
+        "description": "List all platform-wide system announcements",
+        "tags": ["SystemAnnouncements"],
+        "queryParams": [
+          {
+            "name": "include_deleted",
+            "type": "string",
+            "required": false,
+            "defaultValue": "false"
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of system announcements"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-4"
+      },
+      {
+        "operationId": "get_system_announcement",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/announcements/:id",
+        "description": "Get a single system announcement by ID",
+        "tags": ["SystemAnnouncements"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "System announcement"
+          },
+          {
+            "statusCode": 404,
+            "description": "Not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-4"
+      },
+      {
+        "operationId": "create_system_announcement",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/announcements",
+        "description": "Create a new platform-wide system announcement",
+        "tags": ["SystemAnnouncements"],
+        "requestBody": {
+          "ref": "SystemAnnouncements.CreateRequest",
+          "contentType": "application/json",
+          "required": true
+        },
+        "responses": [
+          {
+            "statusCode": 201,
+            "description": "Announcement created"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid input"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-4"
+      },
+      {
+        "operationId": "update_system_announcement",
+        "server": "api-server",
+        "method": "PUT",
+        "path": "/api/v1/platform-admin/announcements/:id",
+        "description": "Update an existing system announcement",
+        "tags": ["SystemAnnouncements"],
+        "requestBody": {
+          "ref": "SystemAnnouncements.UpdateRequest",
+          "contentType": "application/json",
+          "required": true
+        },
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Announcement updated"
+          },
+          {
+            "statusCode": 404,
+            "description": "Not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-4"
+      },
+      {
+        "operationId": "delete_system_announcement",
+        "server": "api-server",
+        "method": "DELETE",
+        "path": "/api/v1/platform-admin/announcements/:id",
+        "description": "Soft-delete a system announcement",
+        "tags": ["SystemAnnouncements"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "Announcement deleted"
+          },
+          {
+            "statusCode": 404,
+            "description": "Not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-4"
+      },
+      {
+        "operationId": "get_onboarding_status",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/onboarding/status",
+        "description": "Get onboarding status with the list of tours and per-tour progress",
+        "tags": ["Onboarding"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Onboarding status"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "get_onboarding_tours",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/onboarding/tours",
+        "description": "List onboarding tours for the authenticated user",
+        "tags": ["Onboarding"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of tours with progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "start_onboarding_tour",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/onboarding/tours/:tourId/start",
+        "description": "Start an onboarding tour for the authenticated user",
+        "tags": ["Onboarding"],
+        "pathParams": [
+          {
+            "name": "tourId",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Tour progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "complete_onboarding_step",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/onboarding/tours/:tourId/steps/:stepId/complete",
+        "description": "Mark a single onboarding step as complete",
+        "tags": ["Onboarding"],
+        "pathParams": [
+          {
+            "name": "tourId",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "stepId",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Updated tour progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "complete_onboarding_tour",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/onboarding/tours/:tourId/complete",
+        "description": "Mark an onboarding tour as complete",
+        "tags": ["Onboarding"],
+        "pathParams": [
+          {
+            "name": "tourId",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Updated tour progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "skip_onboarding_tour",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/onboarding/tours/:tourId/skip",
+        "description": "Skip an onboarding tour",
+        "tags": ["Onboarding"],
+        "pathParams": [
+          {
+            "name": "tourId",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Updated tour progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "reset_onboarding_tour",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/onboarding/tours/:tourId/reset",
+        "description": "Reset onboarding tour progress to the beginning",
+        "tags": ["Onboarding"],
+        "pathParams": [
+          {
+            "name": "tourId",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Updated tour progress"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-6"
+      },
+      {
+        "operationId": "list_feature_flags",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/feature-flags",
+        "description": "List all feature flags (platform admin)",
+        "tags": ["Feature Flags"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "List of feature flags"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "create_feature_flag",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/feature-flags",
+        "description": "Create a new feature flag (platform admin)",
+        "tags": ["Feature Flags"],
+        "responses": [
+          {
+            "statusCode": 201,
+            "description": "Feature flag created"
+          },
+          {
+            "statusCode": 400,
+            "description": "Invalid input"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "get_feature_flag",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/platform-admin/feature-flags/:id",
+        "description": "Get a single feature flag with its overrides (platform admin)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Feature flag with overrides"
+          },
+          {
+            "statusCode": 404,
+            "description": "Feature flag not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "update_feature_flag",
+        "server": "api-server",
+        "method": "PUT",
+        "path": "/api/v1/platform-admin/feature-flags/:id",
+        "description": "Update a feature flag (platform admin)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Feature flag updated"
+          },
+          {
+            "statusCode": 404,
+            "description": "Feature flag not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "delete_feature_flag",
+        "server": "api-server",
+        "method": "DELETE",
+        "path": "/api/v1/platform-admin/feature-flags/:id",
+        "description": "Delete a feature flag (platform admin)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "Feature flag deleted"
+          },
+          {
+            "statusCode": 404,
+            "description": "Feature flag not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "toggle_feature_flag",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/feature-flags/:id/toggle",
+        "description": "Toggle a feature flag on/off (platform admin, audit-logged)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Feature flag toggled"
+          },
+          {
+            "statusCode": 404,
+            "description": "Feature flag not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "create_feature_flag_override",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/platform-admin/feature-flags/:id/overrides",
+        "description": "Create a per-scope override for a feature flag (platform admin)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 201,
+            "description": "Override created"
+          },
+          {
+            "statusCode": 404,
+            "description": "Feature flag not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "delete_feature_flag_override",
+        "server": "api-server",
+        "method": "DELETE",
+        "path": "/api/v1/platform-admin/feature-flags/:id/overrides/:override_id",
+        "description": "Delete a per-scope override from a feature flag (platform admin)",
+        "tags": ["Feature Flags"],
+        "pathParams": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "override_id",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "Override deleted"
+          },
+          {
+            "statusCode": 404,
+            "description": "Override not found"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "get_resolved_feature_flags",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/feature-flags",
+        "description": "Get resolved feature flags for the current caller (org/user/role overrides applied)",
+        "tags": ["Feature Flags"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Resolved feature flags"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-10B-2"
+      },
+      {
+        "operationId": "notification_preferences_list",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/users/me/notification-preferences",
+        "description": "Get all notification channel preferences for the current user",
+        "tags": ["Notification Preferences"],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Preferences retrieved"
+          },
+          {
+            "statusCode": 401,
+            "description": "Not authenticated"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-8A"
+      },
+      {
+        "operationId": "notification_preference_update",
+        "server": "api-server",
+        "method": "PATCH",
+        "path": "/api/v1/users/me/notification-preferences/:channel",
+        "description": "Enable/disable a single notification channel (push / email / in_app); requires confirmDisableAll to turn off the last active channel",
+        "tags": ["Notification Preferences"],
+        "pathParams": [
+          {
+            "name": "channel",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "Preference updated"
+          },
+          {
+            "statusCode": 401,
+            "description": "Not authenticated"
+          },
+          {
+            "statusCode": 409,
+            "description": "Confirmation required to disable all channels"
+          }
+        ],
+        "auth": {
+          "required": true
+        },
+        "feature": "Epic-8A"
       }
     ],
     "reality-server": [
@@ -2377,13 +3693,13 @@
     }
   ],
   "metadata": {
-    "generated_at": "2026-01-02T12:05:07.763Z",
+    "generated_at": "2026-07-08T22:20:18.727Z",
     "version": "1.0.0",
     "stats": {
-      "ppt_web_routes": 13,
+      "ppt_web_routes": 19,
       "reality_web_routes": 9,
       "mobile_screens": 6,
-      "api_server_endpoints": 24,
+      "api_server_endpoints": 77,
       "reality_server_endpoints": 18,
       "flows": 9
     }

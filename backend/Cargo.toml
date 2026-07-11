@@ -85,11 +85,33 @@ url = "2.5"
 reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 
 # XML parsing/generation (for OTA/Booking.com integration)
-# NOTE: the inbound OTA parsers rely on quick-xml NOT resolving custom DTD
-# entities (XXE / billion-laughs safety). That posture is load-bearing and pinned
-# by the entity guards in integrations `booking.rs` (`ota_xml::tests`) — a bump
-# that changes entity normalization will turn those tests red. See GH #1519/#1591.
-quick-xml = { version = "0.40", features = ["serialize"] }
+# SECURITY PIN — DO NOT bump casually. The inbound OTA parsers rely on quick-xml
+# NOT resolving custom DTD entities (XXE / billion-laughs safety). That posture is
+# load-bearing and pinned by the entity guards in integrations `ota_xml`
+# (`ota_xml::tests` in crates/integrations/src/booking/ota_xml.rs) — a bump that
+# changes entity normalization will turn those tests red. See GH #1519/#1591.
+#
+# Regression note (GH #2033): PR #2011 folded a quick-xml 0.40->0.41 bump into an
+# unrelated ammonia RUSTSEC PR, crossing this pin without focused review. To
+# prevent a recurrence, changes to this manifest are gated by two markers:
+#   1. .github/CODEOWNERS routes every backend/Cargo.toml AND backend/Cargo.lock
+#      edit to an explicit owner review.
+#   2. backend/deny.toml `[bans]` HARD-bans every quick-xml version other than
+#      =0.41.0 (GH #2084). cargo-deny resolves the full graph, so the already-
+#      required `cargo-deny` CI job (.github/workflows/backend.yml) fails on any
+#      deviation in either the manifest or the lockfile — no PR can cross this
+#      pin silently. (This replaced the advisory-only
+#      .github/workflows/pinned-dependency-guard.yml, which only annotated.)
+# The entity-guard tests are live `#[test]`s in the `integrations` crate (they are
+# NOT among the BIT-440-quarantined suites), so `cargo test -p integrations` runs
+# them on every bump.
+# The requirement is an EXACT pin (`=0.41.0`), not a caret range: `"0.41"` would
+# mean `>=0.41.0, <0.42.0`, letting any future `0.41.x` publish (via
+# `cargo update` or an in-range Dependabot bump) cross the pin with only a
+# Cargo.lock edit. `=0.41.0` forces every move off 0.41.0 to be a manifest edit
+# the CODEOWNERS + workflow guards catch. Bump both the `=` requirement here and
+# the Cargo.lock entry together in a focused, reviewed PR.
+quick-xml = { version = "=0.41.0", features = ["serialize"] }
 
 # Observability (Epic 95)
 opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
@@ -114,7 +136,7 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
 genpdf = "0.2.0"
-rust_xlsxwriter = "0.95"
+rust_xlsxwriter = "0.96"
 
 # i18n (Epic 111)
 fluent = "0.16"

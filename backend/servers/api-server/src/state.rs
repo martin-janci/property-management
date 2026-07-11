@@ -150,6 +150,35 @@ impl StripeAppConfig {
     }
 }
 
+/// Portal (real-estate listing-site) inbound-webhook configuration loaded once
+/// at startup. Mirrors [`AirbnbAppConfig`]/[`StripeAppConfig`]: the signing
+/// secret is read from the environment at boot, never accepted from a request
+/// body, and an empty `webhook_secret` fails closed at the handler so an
+/// unverified, attacker-forged payload is never processed.
+///
+/// Backs the connection-scoped receiver
+/// `POST /api/v1/integrations/webhooks/portal/{connection_id}` in
+/// `routes/integrations/webhook.rs`. (The per-portal
+/// `<PORTAL>_WEBHOOK_SECRET` receivers in `routes/portal_webhooks.rs` are a
+/// separate surface keyed by portal name.)
+#[derive(Debug, Clone, Default)]
+pub struct PortalAppConfig {
+    /// `PORTAL_WEBHOOK_SECRET` — HMAC-SHA256 signing secret for inbound portal
+    /// webhook signature verification (`X-Webhook-Signature` header). Required
+    /// to accept a portal webhook; empty ⇒ the receiver fails closed.
+    pub webhook_secret: String,
+}
+
+impl PortalAppConfig {
+    /// Load from the standard env var. An empty string is preserved so the
+    /// handler can fail closed on a missing secret.
+    pub fn from_env() -> Self {
+        Self {
+            webhook_secret: std::env::var("PORTAL_WEBHOOK_SECRET").unwrap_or_default(),
+        }
+    }
+}
+
 /// A single realtime preference-sync event captured by a
 /// [`PreferenceEventRecorder`] (issue #1376).
 ///
@@ -386,6 +415,14 @@ pub struct AppState {
     /// [`AppState::with_pref_event_recorder`] so the `preference.updated`
     /// publish contract can be asserted in CI without a live Redis daemon.
     pub pref_event_recorder: Option<PreferenceEventRecorder>,
+    /// Test-only in-memory OAuth `state` store (issue #2203).
+    ///
+    /// `None` in production, where single-use CSRF-state enforcement runs
+    /// against Redis (`redis_client`). Installed by tests via
+    /// [`AppState::with_oauth_state_store`] so the Airbnb-callback consume path
+    /// (`ConsumeOutcome::Consumed` / `Rejected → 400 INVALID_STATE`) can be
+    /// exercised at the handler level without a live Redis daemon.
+    pub oauth_state_store: Option<crate::routes::integrations::oauth_state::OAuthStateStore>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
     /// Epic 18 / Story 18.2 (#1687): provider-agnostic guest ID-document OCR
@@ -413,6 +450,11 @@ pub struct AppState {
     /// [BIT-181]). Handlers fail closed when `secret_key`/`webhook_secret`
     /// are empty.
     pub stripe_config: StripeAppConfig,
+    /// Portal inbound-webhook configuration loaded once at startup. The
+    /// connection-scoped portal webhook receiver fails closed when
+    /// `webhook_secret` is empty and verifies the `X-Webhook-Signature` HMAC
+    /// over the raw body before acting.
+    pub portal_config: PortalAppConfig,
 }
 
 impl AppState {
@@ -697,6 +739,9 @@ impl AppState {
             pubsub_service: None,
             // Issue #1376: test-only preference-sync recorder (None in prod).
             pref_event_recorder: None,
+            // Issue #2203: test-only OAuth state store (None in prod; Redis is
+            // authoritative). Installed by tests via `with_oauth_state_store`.
+            oauth_state_store: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
             // Story 18.2 (#1687): default guest ID-document OCR = not-configured
@@ -713,6 +758,10 @@ impl AppState {
             booking_config: BookingOAuthAppConfig::from_env(),
             // Story 11.5 (BIT-181): Stripe Checkout env vars cached at startup.
             stripe_config: StripeAppConfig::from_env(),
+            // Portal inbound-webhook signing secret cached at startup so the
+            // connection-scoped receiver can fail closed and verify signatures
+            // without a per-request env read.
+            portal_config: PortalAppConfig::from_env(),
         }
     }
 
@@ -746,6 +795,26 @@ impl AppState {
         let recorder = PreferenceEventRecorder::new();
         self.pref_event_recorder = Some(recorder.clone());
         (self, recorder)
+    }
+
+    /// Install a test-only in-memory OAuth `state` store and return its handle
+    /// (issue #2203).
+    ///
+    /// Test-only: lets a CI integration test seed a freshly-issued single-use
+    /// state and then drive the Airbnb-callback consume path
+    /// (`ConsumeOutcome::Consumed` on first use, `Rejected → 400 INVALID_STATE`
+    /// on replay) without a live Redis. The returned handle shares the same
+    /// backing map as the one stored on the state, so the test can `seed(...)`
+    /// before issuing the callback request. `None` in production.
+    pub fn with_oauth_state_store(
+        mut self,
+    ) -> (
+        Self,
+        crate::routes::integrations::oauth_state::OAuthStateStore,
+    ) {
+        let store = crate::routes::integrations::oauth_state::OAuthStateStore::new();
+        self.oauth_state_store = Some(store.clone());
+        (self, store)
     }
 
     /// Set S3 storage service (Epic 103).
