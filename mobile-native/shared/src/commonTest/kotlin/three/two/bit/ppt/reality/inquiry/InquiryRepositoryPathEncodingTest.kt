@@ -7,9 +7,9 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
@@ -47,13 +47,14 @@ class InquiryRepositoryPathEncodingTest {
                 headers = headersOf(HttpHeaders.ContentType, "application/json"),
             )
         }
-        val client = HttpClient(engine) {
-            install(ContentNegotiation) { json(json) }
-            // Mirror HttpClientProvider: repositories rely on the default JSON content type
-            // when calling setBody (replyToInquiry) — without it the request never leaves
-            // the client and the captured path stays null.
-            defaultRequest { contentType(ContentType.Application.Json) }
-        }
+        val client =
+            HttpClient(engine) {
+                install(ContentNegotiation) { json(json) }
+                // Mirror HttpClientProvider: repositories rely on the default JSON content type
+                // when calling setBody (replyToInquiry) — without it the request never leaves
+                // the client and the captured path stays null.
+                defaultRequest { contentType(ContentType.Application.Json) }
+            }
         return InquiryRepository(
             baseUrl = "https://example.test",
             sessionToken = "test-token",
