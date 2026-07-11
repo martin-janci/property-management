@@ -2691,6 +2691,91 @@ mod tests {
     }
 
     // ----------------------------------------------------------------------
+    // OtaReadRS::from_xml — response-envelope classification.
+    //
+    // parse_single_reservation is covered above; these lock in the four
+    // envelope branches of from_xml (explicit <Success/>, implicit
+    // <ReservationsList>, an <Errors> response, and the indeterminate
+    // no-marker case) plus the multi-reservation fan-out. Behaviour-only
+    // characterisation — no production code changes.
+    // ----------------------------------------------------------------------
+
+    #[test]
+    fn test_from_xml_explicit_success_parses_reservation() {
+        // <Success/> present, no <ReservationsList> wrapper: the explicit
+        // success branch must still parse the embedded reservation.
+        let xml = r#"<OTA_ReadRS><Success/><HotelReservation ResStatus="Commit"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-EXPL-1"/></HotelReservationIDs></ResGlobalInfo></HotelReservation></OTA_ReadRS>"#;
+        let rs = OtaReadRS::from_xml(xml).expect("parse must not error");
+        assert!(rs.success, "explicit <Success/> is a success envelope");
+        assert!(rs.error.is_none());
+        assert_eq!(rs.reservations.len(), 1);
+        assert_eq!(rs.reservations[0].reservation_id, "BK-EXPL-1");
+        assert_eq!(
+            rs.reservations[0].status,
+            BookingReservationStatus::Confirmed
+        );
+    }
+
+    #[test]
+    fn test_from_xml_implicit_success_via_reservations_list() {
+        // No <Success/>, but a <ReservationsList> element implies success
+        // for the Booking.com variants that omit the explicit marker.
+        let xml = r#"<OTA_ReadRS><ReservationsList><HotelReservation ResStatus="Commit"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-IMPL-1"/></HotelReservationIDs></ResGlobalInfo></HotelReservation></ReservationsList></OTA_ReadRS>"#;
+        let rs = OtaReadRS::from_xml(xml).expect("parse must not error");
+        assert!(rs.success, "<ReservationsList> is an implicit success");
+        assert!(rs.error.is_none());
+        assert_eq!(rs.reservations.len(), 1);
+        assert_eq!(rs.reservations[0].reservation_id, "BK-IMPL-1");
+    }
+
+    #[test]
+    fn test_from_xml_error_response_is_unsuccessful() {
+        // An <Errors> envelope must surface success=false with the
+        // ShortText carried through as the error message, and no
+        // reservations parsed.
+        let xml = r#"<OTA_ReadRS><Errors><Error Type="1" ShortText="Authentication failed"/></Errors></OTA_ReadRS>"#;
+        let rs = OtaReadRS::from_xml(xml).expect("parse must not error");
+        assert!(!rs.success, "<Errors> envelope is not a success");
+        assert_eq!(rs.error.as_deref(), Some("Authentication failed"));
+        assert!(rs.reservations.is_empty());
+    }
+
+    #[test]
+    fn test_from_xml_indeterminate_response_is_unsuccessful() {
+        // No <Success>, no <Errors>, no <ReservationsList>: the parser must
+        // NOT silently treat this as success (that would mask a failed
+        // pull). success=false with a non-empty error and no reservations.
+        let xml = r#"<OTA_ReadRS></OTA_ReadRS>"#;
+        let rs = OtaReadRS::from_xml(xml).expect("parse must not error");
+        assert!(!rs.success, "indeterminate envelope must not be success");
+        assert!(
+            rs.error.is_some(),
+            "indeterminate response must carry an error"
+        );
+        assert!(rs.reservations.is_empty());
+    }
+
+    #[test]
+    fn test_from_xml_parses_multiple_reservations() {
+        // The parse_reservations fan-out must return one entry per
+        // <HotelReservation> element, in document order.
+        let xml = r#"<OTA_ReadRS><Success/><ReservationsList><HotelReservation ResStatus="Commit"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-A"/></HotelReservationIDs></ResGlobalInfo></HotelReservation><HotelReservation ResStatus="Cancel"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-B"/></HotelReservationIDs></ResGlobalInfo></HotelReservation></ReservationsList></OTA_ReadRS>"#;
+        let rs = OtaReadRS::from_xml(xml).expect("parse must not error");
+        assert!(rs.success);
+        assert_eq!(rs.reservations.len(), 2);
+        assert_eq!(rs.reservations[0].reservation_id, "BK-A");
+        assert_eq!(
+            rs.reservations[0].status,
+            BookingReservationStatus::Confirmed
+        );
+        assert_eq!(rs.reservations[1].reservation_id, "BK-B");
+        assert_eq!(
+            rs.reservations[1].status,
+            BookingReservationStatus::Cancelled
+        );
+    }
+
+    // ----------------------------------------------------------------------
     // OtaHotelRateAmountNotifRQ / RS typed request/response models (Story 83.2)
     // ----------------------------------------------------------------------
 
