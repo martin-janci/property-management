@@ -85,8 +85,9 @@ impl IntegrationCrypto {
             return Err(CryptoError::InvalidKeyLength(hex_key.len()));
         }
 
-        let key = aes_gcm::Key::<Aes256Gcm>::from_slice(&key_bytes);
-        let cipher = Aes256Gcm::new(key);
+        let key = aes_gcm::Key::<Aes256Gcm>::try_from(key_bytes.as_slice())
+            .map_err(|_| CryptoError::InvalidKeyLength(hex_key.len()))?;
+        let cipher = Aes256Gcm::new(&key);
 
         Ok(Self { cipher })
     }
@@ -131,12 +132,12 @@ impl IntegrationCrypto {
         rand::rngs::SysRng
             .try_fill_bytes(&mut nonce_bytes)
             .map_err(|e| CryptoError::RngFailed(e.to_string()))?;
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
 
         // Encrypt
         let ciphertext = self
             .cipher
-            .encrypt(nonce, plaintext.as_bytes())
+            .encrypt(&nonce, plaintext.as_bytes())
             .map_err(|e| CryptoError::EncryptionFailed(e.to_string()))?;
 
         // Prepend nonce to ciphertext and encode as base64
@@ -162,12 +163,12 @@ impl IntegrationCrypto {
 
         // Split nonce and ciphertext
         let (nonce_bytes, ciphertext) = data.split_at(NONCE_LENGTH);
-        let nonce = Nonce::from_slice(nonce_bytes);
+        let nonce = Nonce::try_from(nonce_bytes).map_err(|_| CryptoError::InvalidFormat)?;
 
         // Decrypt
         let plaintext = self
             .cipher
-            .decrypt(nonce, ciphertext)
+            .decrypt(&nonce, ciphertext)
             .map_err(|_| CryptoError::DecryptionFailed("Authentication failed".to_string()))?;
 
         String::from_utf8(plaintext)

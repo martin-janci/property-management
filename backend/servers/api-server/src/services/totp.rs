@@ -151,11 +151,11 @@ impl TotpService {
         rand::rngs::SysRng
             .try_fill_bytes(&mut nonce_bytes)
             .expect("OS rng failed");
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
 
         // Encrypt the secret
         let ciphertext = cipher
-            .encrypt(nonce, plaintext.as_bytes())
+            .encrypt(&nonce, plaintext.as_bytes())
             .map_err(|e| TotpError::EncryptionError(e.to_string()))?;
 
         // Return as hex: nonce:ciphertext
@@ -198,10 +198,11 @@ impl TotpService {
         let cipher = Aes256Gcm::new_from_slice(&key)
             .map_err(|e| TotpError::DecryptionError(e.to_string()))?;
 
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::try_from(nonce_bytes.as_slice())
+            .map_err(|_| TotpError::DecryptionError("Invalid nonce length".to_string()))?;
 
         let plaintext = cipher
-            .decrypt(nonce, ciphertext.as_ref())
+            .decrypt(&nonce, ciphertext.as_ref())
             .map_err(|e| TotpError::DecryptionError(e.to_string()))?;
 
         String::from_utf8(plaintext).map_err(|e| TotpError::DecryptionError(e.to_string()))
