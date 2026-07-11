@@ -372,6 +372,11 @@ async fn revoke_share(
     // same tenant by passing A's id (to pass the creator check) plus B's
     // share_id (IDOR). Return 404 to avoid leaking the existence of the
     // cross-document share, mirroring the "Share not found" shape above.
+    //
+    // This explicit check is now belt-and-suspenders: `revoke_share_rls` is
+    // itself scoped to `document_id = id` at the data layer (#2197), so even if
+    // a future refactor drops this guard the UPDATE affects 0 rows for a
+    // cross-document share and the `Ok(0) => 404` branch below still holds.
     if share.document_id != id {
         return Err((
             StatusCode::NOT_FOUND,
@@ -381,9 +386,19 @@ async fn revoke_share(
 
     match state
         .document_repo
-        .revoke_share_rls(&mut **rls.conn(), share_id)
+        .revoke_share_rls(&mut **rls.conn(), share_id, id)
         .await
     {
+        // 0 rows affected means no share with this id belongs to this document
+        // (cross-document mismatch or already gone). Map to 404 without leaking
+        // cross-document existence, matching the guard above.
+        Ok(0) => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Share not found")),
+            ))
+        }
         Ok(_) => {
             rls.release().await;
             Ok(StatusCode::NO_CONTENT)
