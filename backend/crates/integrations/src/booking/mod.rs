@@ -999,6 +999,28 @@ impl BookingRetryConfig {
             .saturating_mul(factor as u64)
             .min(self.max_delay_ms)
     }
+
+    /// Effective delay (ms) to wait before the retry that follows the failed
+    /// attempt indexed by `prev_attempt` (0-based, same convention as
+    /// [`Self::delay_for_attempt`]), combining our exponential backoff with an
+    /// optional server-supplied `Retry-After` hint.
+    ///
+    /// `retry_after_ms` is the hint already converted to milliseconds and
+    /// capped by the caller. The larger of the two values wins: we never retry
+    /// sooner than the server explicitly asked for (`Retry-After`), and never
+    /// sooner than our own backoff schedule would allow. When no hint is
+    /// present this is exactly [`Self::delay_for_attempt`].
+    ///
+    /// Extracted from the inline logic in
+    /// [`BookingClient::post_ota_with_retry`] so the delay computation is
+    /// unit-testable without spinning up a mock server and real timers.
+    pub fn effective_delay_ms(&self, prev_attempt: u32, retry_after_ms: Option<u64>) -> u64 {
+        let base = self.delay_for_attempt(prev_attempt);
+        match retry_after_ms {
+            Some(hint) => hint.max(base),
+            None => base,
+        }
+    }
 }
 
 /// Outcome of a combined availability + rate *push* sync to Booking.com
@@ -1134,10 +1156,7 @@ impl BookingClient {
 
         for attempt in 0..attempts {
             if attempt > 0 {
-                let base_delay = self.retry.delay_for_attempt(attempt - 1);
-                let delay = retry_after_ms
-                    .map(|ra| ra.max(base_delay))
-                    .unwrap_or(base_delay);
+                let delay = self.retry.effective_delay_ms(attempt - 1, retry_after_ms);
                 retry_after_ms = None;
                 tracing::warn!(
                     op,
@@ -1883,6 +1902,11 @@ mod tests {
         status: u16,
         body: String,
         extra_headers: Vec<(String, String)>,
+        /// When `true` the server reads the request and then drops the
+        /// connection without writing any response, simulating a
+        /// transport-level failure (connection reset / incomplete message)
+        /// that the retry loop must treat as transient.
+        drop_conn: bool,
     }
 
     impl MockResponse {
@@ -1891,6 +1915,18 @@ mod tests {
                 status,
                 body: body.to_string(),
                 extra_headers: vec![],
+                drop_conn: false,
+            }
+        }
+
+        /// A response that abandons the connection mid-flight (no bytes
+        /// written), forcing a `reqwest` transport error on the client.
+        fn drop_connection() -> Self {
+            Self {
+                status: 0,
+                body: String::new(),
+                extra_headers: vec![],
+                drop_conn: true,
             }
         }
 
@@ -1949,6 +1985,12 @@ mod tests {
                             let mut it = script_inner.lock().unwrap();
                             it.next()
                         };
+                        // Simulate a transport failure: drop the socket without
+                        // writing a response so the client observes a reset /
+                        // incomplete message.
+                        if resp.as_ref().is_some_and(|r| r.drop_conn) {
+                            return;
+                        }
                         let (status, body, extra_headers) = match resp {
                             Some(r) => (r.status, r.body, r.extra_headers),
                             None => (500, "<exhausted/>".to_string(), vec![]),
@@ -2113,6 +2155,48 @@ mod tests {
         assert_eq!(none.delay_for_attempt(0), 0);
     }
 
+    #[test]
+    fn test_effective_delay_uses_backoff_when_no_retry_after() {
+        // Without a Retry-After hint, effective_delay_ms is exactly the
+        // exponential backoff for the given attempt.
+        let cfg = BookingRetryConfig {
+            max_attempts: 5,
+            initial_delay_ms: 100,
+            max_delay_ms: 10_000,
+            backoff_multiplier: 2,
+        };
+        assert_eq!(cfg.effective_delay_ms(0, None), 100);
+        assert_eq!(cfg.effective_delay_ms(1, None), 200);
+        assert_eq!(cfg.effective_delay_ms(2, None), 400);
+        // Matches delay_for_attempt for every attempt when no hint is present.
+        for attempt in 0..6 {
+            assert_eq!(
+                cfg.effective_delay_ms(attempt, None),
+                cfg.delay_for_attempt(attempt)
+            );
+        }
+    }
+
+    #[test]
+    fn test_effective_delay_takes_max_of_hint_and_backoff() {
+        let cfg = BookingRetryConfig {
+            max_attempts: 5,
+            initial_delay_ms: 100,
+            max_delay_ms: 10_000,
+            backoff_multiplier: 2,
+        };
+        // Hint larger than backoff -> hint wins (never retry sooner than the
+        // server asked).
+        assert_eq!(cfg.effective_delay_ms(0, Some(5_000)), 5_000);
+        // Backoff larger than hint -> backoff wins (never retry sooner than our
+        // own schedule).
+        assert_eq!(cfg.effective_delay_ms(3, Some(100)), 800);
+        // Equal -> that value.
+        assert_eq!(cfg.effective_delay_ms(1, Some(200)), 200);
+        // A zero hint never shortens the backoff below its scheduled value.
+        assert_eq!(cfg.effective_delay_ms(2, Some(0)), 400);
+    }
+
     #[tokio::test]
     async fn test_push_availability_retries_then_succeeds_on_transient_5xx() {
         // First call returns 503 (retryable), second returns an OTA success
@@ -2226,6 +2310,68 @@ mod tests {
 
         let result = client.push_rates("H1", &updates).await;
         assert!(result.is_err(), "persistent 5xx must fail");
+        assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
+    }
+
+    #[tokio::test]
+    async fn test_push_availability_retries_after_transport_error() {
+        // First attempt: the server drops the connection without replying,
+        // producing a reqwest transport error. That must be treated as
+        // transient and retried; the second attempt returns an OTA success.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::drop_connection(),
+            MockResponse::status(
+                200,
+                "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+
+        let result = client.push_availability("H1", &[avail_update(4)]).await;
+        assert!(
+            result.is_ok(),
+            "transport error on first attempt must be retried into success: {result:?}"
+        );
+        assert_eq!(
+            server.hits(),
+            2,
+            "expected exactly one retry after the reset"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_push_rates_exhausts_retries_on_persistent_transport_error() {
+        // Every attempt drops the connection: the push must exhaust its
+        // attempts and surface a Network error rather than looping forever.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::drop_connection(),
+            MockResponse::drop_connection(),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(2));
+
+        let result = client.push_rates("H1", &[rate_update("120.00")]).await;
+        assert!(
+            matches!(result, Err(BookingError::Network(_))),
+            "persistent transport failure must surface as Network error: {result:?}"
+        );
         assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
     }
 
