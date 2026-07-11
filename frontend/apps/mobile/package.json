@@ -28,7 +28,7 @@
     "@ppt/api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
     "@react-native-async-storage/async-storage": "3.1.1",
-    "@react-native-community/netinfo": "11.5.2",
+    "@react-native-community/netinfo": "12.0.1",
     "@tanstack/react-query": "^5.101.2",
     "expo": "~56.0.12",
     "expo-clipboard": "^56.0.4",
