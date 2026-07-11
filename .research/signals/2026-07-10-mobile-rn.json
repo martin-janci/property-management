@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-10",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 10 < floor 36); churn hotspots in state.hotspot_history are stale (last_seen 2026-05-23..2026-06-05) api-server routes already reviewed 2026-07-08 and 2026-07-09, so churn priority does not genuinely apply; oldest-unreviewed by practical signal-file evidence = mobile-rn (every other segment carries a 2026-07-07..2026-07-10 signal file; mobile-rn last reviewed 2026-06-16); not backlog-saturated (0 open code-review-finding items for this segment)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-wallet-passtype-scrambled-ns",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:383 — Apple Wallet passTypeIdentifier is 'pass.bit.two.three.ppt.access', but the project's reverse-DNS namespace (root CLAUDE.md) is 'three.two.bit.ppt' and every bundle id is 'three.two.bit.ppt.management' / '.reality'. The components here are scrambled ('bit.two.three' instead of 'three.two.bit'); the correct pass type id should be 'pass.three.two.bit.ppt.access'. A pass type identifier that doesn't match the one registered in the Apple Developer portal / provisioning profile makes NativeWallet.addPass() fail on device, so addToWallet() silently never adds a wallet pass on real iOS builds."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-parse-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:96 (getAllWidgetConfigs) and :353 (getAllCachedData) — both do `return stored ? JSON.parse(stored) : ...` with no try/catch and no shape validation. If the AsyncStorage blob is corrupted (partial write, migration, manual restore) JSON.parse throws and the exception propagates out of the widget data refresh with no recovery. This is inconsistent with the guarded pattern used for the same storage-parse idiom elsewhere in the same segment (onboarding/HelpCenter.ts:191-199 try/catch + structural validation, nfc/NFCCredentialManager.ts:268-276 try/catch + discard-bad-blob), so it is a genuine robustness gap, not a stylistic nit."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-creds-parse-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:269 (and legacy path :282) — `this.credentials = JSON.parse(stored)` assigns parsed JSON straight into the typed NFCCredential[] field with no runtime array/shape check. The surrounding try/catch only guards against invalid JSON; a valid-JSON-but-non-array blob (e.g. '{}') parses fine, then later `this.credentials.find(...)` / `.filter(...)` (e.g. updateCredentialUsage:252, getCredentialById) throws TypeError. Additionally storeCredentials() (:292-294) has no try/catch even though it is awaited from updateCredentialUsage() during the NFC-tap flow, so a SecureStore write failure surfaces as an unhandled rejection mid-tap."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
