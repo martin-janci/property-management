@@ -10,10 +10,84 @@ use axum::{
 use common::errors::{ErrorResponse, ValidationError};
 use db::models::{AuditAction, CreateAuditLog, CreateUser, Locale, UpdateUser};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+use std::time::Duration;
 use utoipa::ToSchema;
 
+use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::services::AuthService;
 use crate::state::AppState;
+
+// ── Email-keyed throttle for unauthenticated email-dispatch surfaces ────────
+//
+// `POST /api/v1/auth/forgot-password` and `POST /api/v1/auth/resend-verification`
+// each send an email and rotate the recipient's outstanding token on every
+// call, with no authentication. Without a limiter an attacker can (a) mailbomb
+// a victim's inbox and (b) repeatedly clobber a pending reset/verification
+// token so a legitimate link the victim is mid-flow on stops working. Both are
+// throttled per (normalised) email using the shared in-process sliding-window
+// limiter (`routes::rate_limit`) — the same algorithm the MFA verify surfaces
+// use, keyed on `String` here instead of `user_id`.
+//
+// Keyed on email (not IP) because the abuse targets a specific mailbox, and it
+// matches the login limiter's email keying (`SessionRepository::check_rate_limit`).
+// Blocking on the email string leaks no account-existence signal: the 429 is a
+// pure function of request volume for that string, independent of whether an
+// account exists — so the anti-enumeration guarantee of these endpoints holds.
+const AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS: u32 = 5;
+const AUTH_EMAIL_DISPATCH_WINDOW: Duration = Duration::from_secs(900);
+/// Only sweep expired limiter entries once the map exceeds this size.
+const AUTH_EMAIL_DISPATCH_SWEEP_THRESHOLD: usize = 1024;
+
+static FORGOT_PASSWORD_RATE_LIMITER: LazyLock<InProcessRateLimiter<String>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+static RESEND_VERIFICATION_RATE_LIMITER: LazyLock<InProcessRateLimiter<String>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Normalise an email to its rate-limit key: trimmed + lowercased, matching the
+/// `LOWER(email)` comparison the login limiter uses so casing/whitespace can't
+/// be used to sidestep the throttle.
+fn email_rate_key(email: &str) -> String {
+    email.trim().to_lowercase()
+}
+
+/// Record a `/forgot-password` attempt for `email`; `false` once more than
+/// `AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS` land in a rolling window.
+fn forgot_password_rate_allowed(email: &str) -> bool {
+    rate_limit_allowed(
+        &FORGOT_PASSWORD_RATE_LIMITER,
+        email_rate_key(email),
+        AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS,
+        AUTH_EMAIL_DISPATCH_WINDOW,
+        AUTH_EMAIL_DISPATCH_SWEEP_THRESHOLD,
+    )
+}
+
+/// Record a `/resend-verification` attempt for `email`; `false` once more than
+/// `AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS` land in a rolling window.
+fn resend_verification_rate_allowed(email: &str) -> bool {
+    rate_limit_allowed(
+        &RESEND_VERIFICATION_RATE_LIMITER,
+        email_rate_key(email),
+        AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS,
+        AUTH_EMAIL_DISPATCH_WINDOW,
+        AUTH_EMAIL_DISPATCH_SWEEP_THRESHOLD,
+    )
+}
+
+/// Shared 429 body for the email-dispatch surfaces. Kept generic (no
+/// account-specific detail) so it does not become an enumeration oracle.
+fn email_dispatch_rate_limited() -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::TOO_MANY_REQUESTS,
+        Json(ErrorResponse::new(
+            "RATE_LIMITED",
+            "Too many requests for this email. Please try again later.",
+        )),
+    )
+}
 
 /// Create auth router.
 pub fn router() -> Router<AppState> {
@@ -377,12 +451,24 @@ pub struct ResendVerificationResponse {
     request_body = ResendVerificationRequest,
     responses(
         (status = 200, description = "Verification email sent (if account exists)", body = ResendVerificationResponse),
+        (status = 429, description = "Too many requests for this email", body = ErrorResponse),
     )
 )]
 pub async fn resend_verification(
     State(state): State<AppState>,
     Json(req): Json<ResendVerificationRequest>,
-) -> Json<ResendVerificationResponse> {
+) -> Result<Json<ResendVerificationResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Throttle per email before doing any work: this endpoint sends an email
+    // and rotates the recipient's verification token on every call, so it is a
+    // mailbomb / token-clobber surface (see limiter docs above).
+    if !resend_verification_rate_allowed(&req.email) {
+        tracing::warn!(
+            email_hash = %common::email_log_hash(&req.email),
+            "resend-verification blocked due to rate limiting"
+        );
+        return Err(email_dispatch_rate_limited());
+    }
+
     // Always return success to prevent email enumeration
     let response = ResendVerificationResponse {
         message:
@@ -407,7 +493,7 @@ pub async fn resend_verification(
                 .await
             {
                 tracing::error!(error = %e, user_id = %user.id, "Failed to create verification token");
-                return Json(response);
+                return Ok(Json(response));
             }
 
             // Send email
@@ -430,7 +516,7 @@ pub async fn resend_verification(
         }
     }
 
-    Json(response)
+    Ok(Json(response))
 }
 
 // ==================== Login (Story 1.2) ====================
@@ -1509,12 +1595,24 @@ pub struct ForgotPasswordResponse {
     request_body = ForgotPasswordRequest,
     responses(
         (status = 200, description = "Password reset email sent (if account exists)", body = ForgotPasswordResponse),
+        (status = 429, description = "Too many requests for this email", body = ErrorResponse),
     )
 )]
 pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
-) -> Json<ForgotPasswordResponse> {
+) -> Result<Json<ForgotPasswordResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Throttle per email before doing any work: this endpoint sends an email
+    // and invalidates the recipient's outstanding reset token on every call, so
+    // it is a mailbomb / token-clobber surface (see limiter docs above).
+    if !forgot_password_rate_allowed(&req.email) {
+        tracing::warn!(
+            email_hash = %common::email_log_hash(&req.email),
+            "forgot-password blocked due to rate limiting"
+        );
+        return Err(email_dispatch_rate_limited());
+    }
+
     // Always return success to prevent email enumeration
     let response = ForgotPasswordResponse {
         message: "If an account exists with this email, a password reset link has been sent."
@@ -1545,7 +1643,7 @@ pub async fn forgot_password(
 
             if let Err(e) = state.password_reset_repo.create(create_token).await {
                 tracing::error!(error = %e, user_id = %user.id, "Failed to create password reset token");
-                return Json(response);
+                return Ok(Json(response));
             }
 
             // Send reset email
@@ -1579,7 +1677,7 @@ pub async fn forgot_password(
         }
     }
 
-    Json(response)
+    Ok(Json(response))
 }
 
 // ==================== Reset Password (Story 1.4) ====================
@@ -2716,6 +2814,67 @@ mod cookie_security_tests {
         assert_eq!(
             resolved, body_token,
             "Valid body token must be used when the cookie is present-but-empty"
+        );
+    }
+}
+
+// ==================== Email-dispatch rate-limit regression tests ============
+//
+// Guards the mailbomb / token-clobber fix: `/forgot-password` and
+// `/resend-verification` throttle per email. These exercise the exact guard
+// helpers the handlers call, so removing the limiter (or bumping the threshold
+// out of range) fails the build. Pure in-process — no DB/state needed.
+#[cfg(test)]
+mod email_dispatch_rate_limit_tests {
+    use super::{
+        forgot_password_rate_allowed, resend_verification_rate_allowed,
+        AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS,
+    };
+
+    #[test]
+    fn forgot_password_limit_trips_after_threshold() {
+        // Unique key so the process-global static is not polluted by other tests.
+        let email = "trip-fp-unique@example.test";
+        for i in 0..AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS {
+            assert!(
+                forgot_password_rate_allowed(email),
+                "attempt {i} (within the limit) must be allowed"
+            );
+        }
+        assert!(
+            !forgot_password_rate_allowed(email),
+            "the request past AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS must be blocked (429)"
+        );
+    }
+
+    #[test]
+    fn resend_verification_limit_trips_after_threshold() {
+        let email = "trip-rv-unique@example.test";
+        for i in 0..AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS {
+            assert!(
+                resend_verification_rate_allowed(email),
+                "attempt {i} (within the limit) must be allowed"
+            );
+        }
+        assert!(
+            !resend_verification_rate_allowed(email),
+            "the request past AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS must be blocked (429)"
+        );
+    }
+
+    /// The key is normalised (trim + lowercase) so casing / whitespace can't be
+    /// used to sidestep the throttle — the login limiter keys the same way.
+    #[test]
+    fn email_key_normalisation_prevents_case_bypass() {
+        let base = "Case-Bypass-Unique@Example.Test";
+        for _ in 0..AUTH_EMAIL_DISPATCH_MAX_ATTEMPTS {
+            assert!(forgot_password_rate_allowed(base));
+        }
+        // A different casing / surrounding whitespace maps to the same key and
+        // must remain blocked rather than resetting the counter.
+        assert!(
+            !forgot_password_rate_allowed("  case-bypass-unique@example.test  "),
+            "case/whitespace variant must hit the same throttle bucket"
         );
     }
 }
