@@ -112,6 +112,49 @@ describe('IntegrationsPage (Gap 83-1)', () => {
     expect(connectMutateAsync).toHaveBeenCalledTimes(1);
   });
 
+  it('does not send a frontend-origin redirect_uri (callback is backend-owned)', async () => {
+    // The Airbnb OAuth callback + single-use CSRF `state` are verified
+    // server-side, so the page must omit `redirect_uri` and let the backend
+    // use its configured callback URL rather than pointing Airbnb back at the
+    // SPA (which would land on an unhandled ?code=&state= page).
+    render(<IntegrationsPage />);
+    await userEvent.click(screen.getByRole('button', { name: /connect airbnb/i }));
+    expect(connectMutateAsync).toHaveBeenCalledWith({});
+    const arg = connectMutateAsync.mock.calls[0]?.[0] ?? {};
+    expect(arg).not.toHaveProperty('redirect_uri');
+  });
+
+  it('redirects the browser to the returned Airbnb authorize URL', async () => {
+    const originalLocation = window.location;
+    // Replace window.location with a writable stub so we can observe the
+    // handoff assignment without jsdom's unimplemented-navigation noise.
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '', origin: 'http://localhost' } as Location,
+    });
+    try {
+      render(<IntegrationsPage />);
+      await userEvent.click(screen.getByRole('button', { name: /connect airbnb/i }));
+      expect(window.location.href).toBe('https://airbnb.test/oauth');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: originalLocation,
+      });
+    }
+  });
+
+  it('shows an error toast when starting the Airbnb connection fails', async () => {
+    connectMutateAsync.mockRejectedValueOnce(new Error('boom'));
+    render(<IntegrationsPage />);
+    await userEvent.click(screen.getByRole('button', { name: /connect airbnb/i }));
+    expect(mockShowToast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: 'boom' })
+    );
+  });
+
   it('exposes sync + disconnect controls once connected', async () => {
     airbnbStatus = {
       data: { connected: true, listings_count: 2, reservations_count: 5 },
