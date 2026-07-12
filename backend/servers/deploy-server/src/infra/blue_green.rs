@@ -282,6 +282,31 @@ pub fn build_service_envs(
     api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
     api_env.push(format!("ESIGN_TOKEN_SECRET={esign_token_secret}"));
     api_env.push(format!("ESIGN_WEBHOOK_SECRET={esign_webhook_secret}"));
+
+    // Inbound webhook signing secrets — optional (receivers fail closed on empty
+    // secret rather than panicking at startup). Inject whatever the deploy-server's
+    // own env carries so operators can set them in /etc/ppt-deploy/secrets.env
+    // without touching this code. Missing vars are passed as empty strings,
+    // which preserves the fail-closed behaviour in each receiver.
+    //
+    // Two distinct receiver families:
+    //   1. Integration-connection receiver (/api/v1/integrations/webhooks/portal/{connection_id})
+    //      backed by PORTAL_WEBHOOK_SECRET, AIRBNB_WEBHOOK_SECRET, STRIPE_WEBHOOK_SECRET
+    //   2. Per-portal direct receiver (/api/v1/webhooks/portals/<portal>/...)
+    //      backed by <PORTAL>_WEBHOOK_SECRET (e.g. REALITY_PORTAL_WEBHOOK_SECRET)
+    for secret_key in &[
+        "PORTAL_WEBHOOK_SECRET",
+        "AIRBNB_WEBHOOK_SECRET",
+        "STRIPE_WEBHOOK_SECRET",
+        "REALITY_PORTAL_WEBHOOK_SECRET",
+        "SREALITY_WEBHOOK_SECRET",
+        "BEZREALITKY_WEBHOOK_SECRET",
+        "NEHNUTELNOSTI_WEBHOOK_SECRET",
+    ] {
+        let val = std::env::var(secret_key).unwrap_or_default();
+        api_env.push(format!("{secret_key}={val}"));
+    }
+
     api_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut reality_env = std::mem::take(&mut backend_env);
