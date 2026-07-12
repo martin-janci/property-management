@@ -1397,6 +1397,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-mobile-native-search-screen-kt-retry1",
+      "branch": "auto-impl/churn-hotspot-mobile-native-search-scree-1472719b",
+      "status": "failed",
+      "claimed_at": "2026-07-12T20:24:52Z",
+      "last_updated": "2026-07-12T20:24:52Z",
+      "status_changed_at": "2026-07-12T20:24:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "not-spawned: mobile-native Android build needs Android SDK (ANDROID_HOME unset in cron env); verify gate cannot pass",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-api-core-osrng-expect",
       "branch": "auto-impl/code-review-api-core-osrng-expect-ad4b72ce",
       "status": "merged",
@@ -1483,6 +1507,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router-retry1",
+      "branch": "auto-impl/code-review-mobile-native-kmp-deeplink-a-16ba7bbc",
+      "status": "failed",
+      "claimed_at": "2026-07-12T20:24:52Z",
+      "last_updated": "2026-07-12T20:24:52Z",
+      "status_changed_at": "2026-07-12T20:24:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "not-spawned: mobile-native Android build needs Android SDK (absent in cron env); verify gate cannot pass",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
@@ -2583,6 +2631,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-1680-retry1",
+      "branch": "auto-impl/gh-issue-1680-retry1-d3a70ad1",
+      "status": "failed",
+      "claimed_at": "2026-07-12T20:24:52Z",
+      "last_updated": "2026-07-12T20:24:52Z",
+      "status_changed_at": "2026-07-12T20:24:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "not-spawned: GitHub issue #1680 closed by operator 2026-07-08 (infra meta-issue, resolved) — retry moot",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "gh-issue-1995",
@@ -4629,6 +4701,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-mobile-announcements-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme-fbff97a1",
+      "status": "failed",
+      "claimed_at": "2026-07-12T20:24:52Z",
+      "last_updated": "2026-07-12T20:24:52Z",
+      "status_changed_at": "2026-07-12T20:24:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "not-spawned: ambiguous refactor target (no frontend/apps/mobile AnnouncementsScreen.tsx); low-value churn",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
       "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme-42323e22",
       "status": "merged",
@@ -5115,5 +5211,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T20:09:44Z"
+  "archived_at": "2026-07-12T20:24:52Z"
 }
