@@ -839,6 +839,27 @@
       "first_open_at": "2026-07-12T12:06:41Z",
       "retry_of": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
       "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2263",
+      "action": "Follow-up (security): per-portal webhook receiver may fail open on empty secret after #2259 env wiring (Closes #2263)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-12T16:16:24Z (#2263)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T16:16:24Z",
+      "issue_ref": {
+        "number": 2263,
+        "url": "https://github.com/martin-janci/property-management/issues/2263",
+        "labels": [
+          "security",
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ]
 }
