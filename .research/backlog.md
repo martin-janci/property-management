@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-09 02:36 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-12 10:24 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | ready | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
+| 3 | security | `code-review-api-handlers-suspended-enum-oracle` | auth.rs login handler returns ACCOUNT_SUSPENDED before password check — account-enumeration oracle for suspended users | ready | 2026-07-12 | [plan](plans/security-suspended-account-enum-oracle.md) |
+| 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | dropped | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -18,7 +19,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | ready | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
+| 2 | bug | `code-review-api-handlers-raw-db-error-leak` | ~437 handler arms return e.to_string() in DB_ERROR/INTERNAL_ERROR JSON responses — internal-detail information disclosure | open | 2026-07-12 |  |
+| 2 | test-gap | `screen-map-drift-pr-2217-ppt` | PR #2217 touched frontend/apps/ppt-web/src/App.tsx + IntegrationsPage without updating docs/screens/ppt/ (integrations settings is a new discoverable route) | open | 2026-07-12 |  |
+| 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results | done | 2026-06-16 |  |
@@ -62,10 +65,15 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
-| 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | open | 2026-07-09 |  |
-| 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | open | 2026-07-09 |  |
-| 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | open | 2026-07-09 |  |
-| 1 | bug | `bug-refresh-empty-cookie-shadows-body-token` | /refresh and /logout — empty refresh_token cookie shadows valid body token | open | 2026-07-09 |  |
+| 1 | bug | `code-review-mobile-native-kmp-no-http-timeout` | KMP HttpClient has no HttpTimeout — stalled connections hang repository suspend calls & spinners; NetworkError.isNetworkError() unreachable branch | open | 2026-07-12 |  |
+| 1 | refactor | `repeated-churn-backend-servers-api-server-src-routes-auth-rs` | Repeated churn: backend/servers/api-server/src/routes/auth.rs — runs_seen incrementing (post-#2250 refactor may still churn on auth flows) | open | 2026-07-12 |  |
+| 1 | refactor | `repeated-churn-backend-crates-integrations-src-booking-mod-rs` | Repeated churn: backend/crates/integrations/src/booking/mod.rs — runs_seen incrementing (OTA retry + XML envelope coverage this window) | open | 2026-07-12 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-rate-limit-rs` | Churn hotspot: backend/servers/api-server/src/routes/rate_limit.rs (+253 lines this run, new middleware added by #2234) | open | 2026-07-12 |  |
+| 1 | dx | `closed-not-merged-pr-2213` | PR #2213 (gh-issue-2195 KMP path-param encoding) closed unmerged — superseded by merged #2226 | open | 2026-07-12 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |
+| 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | dropped | 2026-07-09 |  |
+| 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | done | 2026-07-09 |  |
+| 1 | bug | `bug-refresh-empty-cookie-shadows-body-token` | /refresh and /logout — empty refresh_token cookie shadows valid body token | done | 2026-07-09 |  |
 | 1 | bug | `code-review-mobile-native-kmp-deeplink-token-not-url-decoded` | DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform | dropped | 2026-07-05 |  |
 | 1 | bug | `code-review-mobile-native-kmp-search-stale-response-race` | SearchScreen stale-response race — overlapping searches can clobber newer results | dropped | 2026-07-05 |  |
 | 1 | test-gap | `test-gap-screen-map-drift-pr-1085-reality` | Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update | dropped | 2026-07-05 |  |
@@ -149,7 +157,7 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | done | 2026-05-31 |  |
-| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | open | 2026-07-09 |  |
+| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | dropped | 2026-07-09 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-emergency-rs` | Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-vendors-rs` | Churn hotspot: 929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs` | Churn hotspot: 709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening. | dropped | 2026-07-05 |  |

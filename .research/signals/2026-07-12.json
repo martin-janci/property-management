@@ -1,0 +1,353 @@
+{
+  "generated_at": "2026-07-12",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-suspended-enum-oracle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:699 \u2014 the login handler returns 401 ACCOUNT_SUSPENDED for a suspended account BEFORE verifying the password (password check starts at line 713). Any caller submitting an arbitrary password for a suspended email gets a distinct ACCOUNT_SUSPENDED response, whereas an unknown email gets the generic INVALID_CREDENTIALS \u2014 an account-enumeration oracle for suspended users.",
+        "backend/servers/api-server/src/routes/auth.rs:750-756 \u2014 this is the exact anti-pattern the code deliberately guards against elsewhere: the email-verification gate was moved to AFTER the password check (with a comment citing #956) precisely because returning a status-specific error pre-password turns login into an enumeration oracle. The suspended-account branch was not given the same treatment, so it still leaks account existence pre-authentication."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes \u2014 ~437 handler error arms return the raw error via ErrorResponse::new(\"DB_ERROR\"|\"INTERNAL_ERROR\"|\"DATABASE_ERROR\", e.to_string()) in the client-facing JSON body (\u226521 route files: budgets.rs:260-704 (~15 arms), emergency/broadcasts.rs:158, ai/workflows.rs:46, etc.). e.to_string() on a sqlx/db error exposes internal detail (SQL fragments, column/constraint names, connection info) to unauthenticated or low-privilege API clients \u2014 an information-disclosure smell that also makes error responses non-uniform. Compare auth.rs which correctly returns a static \"Login failed\" and logs %e server-side only.",
+        "backend/servers/api-server/src/routes/emergency/broadcasts.rs:158 \u2014 Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) returned to caller after deactivate_broadcast fails; representative of the systemic pattern."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 \u2014 shared HttpClient installs ContentNegotiation + Logging but no HttpTimeout plugin, so requests have no app-level request/connect/socket timeout and a stalled connection leaves every repository suspend call (and its UI spinner) hanging until the composition scope is cancelled",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt:29 \u2014 isNetworkError() matches on 'HttpRequestTimeoutException', which only the un-installed HttpTimeout plugin can throw, so the intended timeout->friendly-error path is unreachable"
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-07-12",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: 471 lines across 6 events"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "note": "cumulative re-emit; score_delta not re-applied (G4 allowlist)"
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "churn analysis 2026-07-12 (runs_seen=3)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Repeated hotspot: runs_seen incrementing to 3, last_seen 2026-07-09, recent_churn 471 lines this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-07-12",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: 333 lines across 6 events"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "note": "cumulative re-emit; score_delta not re-applied (G4 allowlist)"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "churn analysis 2026-07-12 (runs_seen=2)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Repeated hotspot: runs_seen incrementing to 2, last_seen 2026-07-09, recent_churn 333 lines this run"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-rate-limit-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-07-12",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: 253 lines across 3 events"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/rate_limit.rs"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "routine last ran 2026-07-09T02:37:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine has not run in ~3d 8h (last_run_iso=2026-07-09T02:37:00Z, now 2026-07-12). stale_routine_alert also fired (\u22653 days)."
+      ],
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-2213",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2213",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2213 (gh-issue-2195 KMP path-param encoding) closed unmerged 2026-07-11 \u2014 superseded by merged #2226 which shipped the KMP path-encoding fix directly"
+      ],
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-2217-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2217 (gh-issue-2202: make integrations settings discoverable) touched frontend/apps/ppt-web/src/App.tsx and IntegrationsPage.tsx (features/settings/integrations/) without updating docs/screens/ppt/*.md \u2014 Route change without screen-doc update. Heuristic; low false-positive risk since integrations settings is a new discoverable route."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2209",
+      "type": "dep-update-noise",
+      "source": "PR #2209",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2209) \u2014 log-only, no score"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2210",
+      "type": "dep-update-noise",
+      "source": "PR #2210",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2210) \u2014 log-only, no score"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2211",
+      "type": "dep-update-noise",
+      "source": "PR #2211",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2211) \u2014 log-only, no score"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2212",
+      "type": "dep-update-noise",
+      "source": "PR #2212",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2212) \u2014 log-only, no score"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2228",
+      "type": "dep-update-noise",
+      "source": "PR #2228",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2228) \u2014 log-only, no score"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2232",
+      "type": "dep-update-noise",
+      "source": "PR #2232",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot merged (#2232) \u2014 log-only, no score"
+      ],
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-12.md && head -1 | grep '^# 2026-07-12$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals with score_delta on re-emit",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap<=8 ok; no open items older than 14d needing decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for plans/<slug>.md AND 'adversarial pass:'",
+      "observed": "annotated 'passed'",
+      "expected": "same line"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count + metadata + headings + capability + mode + files",
+      "observed": "1 new plan; 4 metadata; 11 headings; 2 ticks; Mode: cloud-ok; both files exist",
+      "expected": "all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "'Phases that failed: none' in brief",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or plans/_archive/",
+      "observed": "17 prior slugs all resolve",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 == 7",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "auto_fix_actions=[], no auto-fix this run",
+      "expected": "<=3 with caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor advanced?",
+      "observed": "pm_now=5 == pm_head=5 \u2192 Phase 1.6 skipped \u2192 gate no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": null
+}
