@@ -53,13 +53,13 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 // native xcconfig build layer (the plugin) must never disagree about which
 // environment a build is. Previously app.config.ts kept a private byte-for-byte
 // copy (`getAppEnv`) that was untested and could silently diverge — see #2204.
-import withIosBuildConfig, { resolveAppEnv } from './plugins/withIosBuildConfig';
+import withIosBuildConfig, {
+  type AppEnvironment,
+  resolveAppEnv,
+} from './plugins/withIosBuildConfig';
 // Custom Expo config plugin -- re-adds legacy storage perms with
 // maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
 import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
-
-/** Supported environments */
-type AppEnvironment = 'development' | 'staging' | 'production';
 
 function loadEnvFile(env: AppEnvironment): dotenv.DotenvParseOutput {
   const envFile = path.resolve(__dirname, `.env.${env}`);
