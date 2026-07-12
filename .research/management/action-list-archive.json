@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-12T14:08:27Z",
+  "archived_at": "2026-07-12T18:11:32Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4555,6 +4555,113 @@
         "commit": "652e2d9ff6ffa47c85951538ec751840c238e74a",
         "subject": "gh-issue-2237: lock pgvector clamp-panic fix with tests + cover KMP favorites path encoders (#2256)",
         "at": "2026-07-12T14:04:06Z"
+      }
+    },
+    {
+      "id": "gh-issue-2244",
+      "action": "Follow-up: portal analytics write path (track_listing_view) still blocked by FORCE RLS — reads fixed but no data is ever recorded (PR #2218) (Closes #2244)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2244) | gc1-reconcile 2026-07-12T18:04:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2244,
+        "url": "https://github.com/martin-janci/property-management/issues/2244",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2257,
+        "merged_at": "2026-07-12T16:04:30Z",
+        "at": "2026-07-12T18:04:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2245",
+      "action": "Follow-up: webhook-secret env docs are not wired into deployments + second portal-receiver family undocumented (PR #2214) (Closes #2245)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2245) | gc1-reconcile 2026-07-12T18:04:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2245,
+        "url": "https://github.com/martin-janci/property-management/issues/2245",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2259,
+        "merged_at": "2026-07-12T16:04:26Z",
+        "at": "2026-07-12T18:04:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2246",
+      "action": "Follow-up: harden resolve_current_session_id user-scoping + tighten session tests (PR #2190) (Closes #2246)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2246) | gc1-reconcile 2026-07-12T18:04:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2246,
+        "url": "https://github.com/martin-janci/property-management/issues/2246",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2261,
+        "merged_at": "2026-07-12T16:15:46Z",
+        "at": "2026-07-12T18:04:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2248",
+      "action": "Follow-up: CI shard PR bundled an undisclosed real `common --lib` assertion fix + `test-rest` is an unsharded bottleneck (PR #2223) (Closes #2248)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T04:04:23Z (#2248) | dev-reconcile 2026-07-12T18:04:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T04:04:23Z",
+      "issue_ref": {
+        "number": 2248,
+        "url": "https://github.com/martin-janci/property-management/issues/2248",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b5850f83afb878860279bd35f47ec64a69d74a2a",
+        "subject": "gh-issue-2248: rebalance test shards + lock bundled common-lib fix with test (#2260)",
+        "at": "2026-07-12T18:04:54Z"
       }
     },
     {
