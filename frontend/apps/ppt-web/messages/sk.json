@@ -65,7 +65,8 @@
     "privacy": "Súkromie",
     "admin": "Administrácia",
     "aiChat": "AI asistent",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integrácie"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -1098,6 +1099,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integrácie",
+      "subtitle": "Pripojte externé rezervačné kanály na synchronizáciu ponúk a rezervácií.",
+      "noOrganization": "Pre váš účet nie je vybraná žiadna organizácia, preto integrácie nie je možné spravovať.",
+      "status": {
+        "checking": "Kontroluje sa…",
+        "connected": "Pripojené",
+        "notConnected": "Nepripojené"
+      },
+      "common": {
+        "lastSync": "Posledná synchronizácia",
+        "reservations": "Rezervácie",
+        "lastSyncError": "Chyba poslednej synchronizácie: {{error}}",
+        "syncNow": "Synchronizovať teraz",
+        "syncing": "Synchronizuje sa…",
+        "disconnect": "Odpojiť",
+        "disconnecting": "Odpája sa…",
+        "itemsSynced": "Synchronizovaných položiek: {{items}}.",
+        "syncIncomplete": "Synchronizácia sa nedokončila.",
+        "unexpectedError": "Vyskytla sa neočakávaná chyba."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "Kanál pripojený cez OAuth pre ponuky a rezervácie krátkodobého prenájmu.",
+        "loadError": "Nepodarilo sa načítať stav Airbnb.",
+        "account": "Účet",
+        "listings": "Ponuky",
+        "connect": "Pripojiť Airbnb",
+        "redirecting": "Presmerúva sa…",
+        "mappings": {
+          "title": "Priradenia ponúk",
+          "loading": "Načítavajú sa ponuky…",
+          "empty": "Zatiaľ nie sú priradené žiadne ponuky Airbnb.",
+          "active": "Aktívne",
+          "inactive": "Neaktívne"
+        },
+        "toast": {
+          "connectFailedTitle": "Nepodarilo sa spustiť pripojenie k Airbnb",
+          "syncedTitle": "Airbnb synchronizované",
+          "syncFailedTitle": "Synchronizácia Airbnb zlyhala",
+          "disconnectedTitle": "Airbnb odpojené",
+          "disconnectedMessage": "Integrácia Airbnb bola odstránená.",
+          "disconnectFailedTitle": "Nepodarilo sa odpojiť Airbnb"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Kanál Supply-XML pre dostupnosť, ceny a rezervácie krátkodobého prenájmu.",
+        "loadError": "Nepodarilo sa načítať stav Booking.com.",
+        "hotelId": "ID hotela",
+        "properties": "Nehnuteľnosti",
+        "connect": "Pripojiť Booking.com",
+        "conflicts": "Zistené konflikty rezervácií medzi platformami: {{count}}.",
+        "conflictsTruncated": " Výsledky môžu byť neúplné.",
+        "wizard": {
+          "title": "Priraďte svoju nehnuteľnosť k Booking.com",
+          "username": "Používateľské meno Supply-XML",
+          "password": "Heslo Supply-XML",
+          "connect": "Pripojiť",
+          "connecting": "Pripája sa…",
+          "cancel": "Zrušiť"
+        },
+        "toast": {
+          "connectedTitle": "Booking.com pripojené",
+          "connectFailedTitle": "Nepodarilo sa pripojiť Booking.com",
+          "syncedTitle": "Booking.com synchronizované",
+          "syncFailedTitle": "Synchronizácia Booking.com zlyhala",
+          "disconnectedTitle": "Booking.com odpojené",
+          "disconnectFailedTitle": "Nepodarilo sa odpojiť Booking.com"
+        }
+      }
+    },
     "sessions": {
       "title": "Aktívne relácie",
       "subtitle": "Skontrolujte, kde ste prihlásení, a odhláste relácie, ktoré nepoznáte.",
@@ -1355,10 +1428,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Prejsť na Integrácie"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Pripojte kanály Airbnb a Booking.com a spravujte synchronizáciu"
     }
   },
   "documentTemplates": {

@@ -63,7 +63,8 @@
     "privacy": "Prywatność",
     "admin": "Administracja",
     "aiChat": "Asystent AI",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integracje"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -1024,6 +1025,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integracje",
+      "subtitle": "Połącz zewnętrzne kanały rezerwacji, aby synchronizować oferty i rezerwacje.",
+      "noOrganization": "Do Twojego konta nie wybrano żadnej organizacji, więc nie można zarządzać integracjami.",
+      "status": {
+        "checking": "Sprawdzanie…",
+        "connected": "Połączono",
+        "notConnected": "Nie połączono"
+      },
+      "common": {
+        "lastSync": "Ostatnia synchronizacja",
+        "reservations": "Rezerwacje",
+        "lastSyncError": "Błąd ostatniej synchronizacji: {{error}}",
+        "syncNow": "Synchronizuj teraz",
+        "syncing": "Synchronizowanie…",
+        "disconnect": "Rozłącz",
+        "disconnecting": "Rozłączanie…",
+        "itemsSynced": "Zsynchronizowano elementów: {{items}}.",
+        "syncIncomplete": "Synchronizacja nie została ukończona.",
+        "unexpectedError": "Wystąpił nieoczekiwany błąd."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "Kanał połączony przez OAuth dla ofert i rezerwacji najmu krótkoterminowego.",
+        "loadError": "Nie można wczytać stanu Airbnb.",
+        "account": "Konto",
+        "listings": "Oferty",
+        "connect": "Połącz Airbnb",
+        "redirecting": "Przekierowywanie…",
+        "mappings": {
+          "title": "Przypisania ofert",
+          "loading": "Wczytywanie ofert…",
+          "empty": "Nie przypisano jeszcze żadnych ofert Airbnb.",
+          "active": "Aktywne",
+          "inactive": "Nieaktywne"
+        },
+        "toast": {
+          "connectFailedTitle": "Nie można rozpocząć łączenia z Airbnb",
+          "syncedTitle": "Zsynchronizowano Airbnb",
+          "syncFailedTitle": "Synchronizacja Airbnb nie powiodła się",
+          "disconnectedTitle": "Rozłączono Airbnb",
+          "disconnectedMessage": "Integracja Airbnb została usunięta.",
+          "disconnectFailedTitle": "Nie można rozłączyć Airbnb"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Kanał Supply-XML dla dostępności, cen i rezerwacji najmu krótkoterminowego.",
+        "loadError": "Nie można wczytać stanu Booking.com.",
+        "hotelId": "ID hotelu",
+        "properties": "Obiekty",
+        "connect": "Połącz Booking.com",
+        "conflicts": "Wykryto konflikty rezerwacji między platformami: {{count}}.",
+        "conflictsTruncated": " Wyniki mogą być niekompletne.",
+        "wizard": {
+          "title": "Przypisz swój obiekt do Booking.com",
+          "username": "Nazwa użytkownika Supply-XML",
+          "password": "Hasło Supply-XML",
+          "connect": "Połącz",
+          "connecting": "Łączenie…",
+          "cancel": "Anuluj"
+        },
+        "toast": {
+          "connectedTitle": "Połączono Booking.com",
+          "connectFailedTitle": "Nie można połączyć Booking.com",
+          "syncedTitle": "Zsynchronizowano Booking.com",
+          "syncFailedTitle": "Synchronizacja Booking.com nie powiodła się",
+          "disconnectedTitle": "Rozłączono Booking.com",
+          "disconnectFailedTitle": "Nie można rozłączyć Booking.com"
+        }
+      }
+    },
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
@@ -1281,10 +1354,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Przejdź do Integracji"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Połącz kanały Airbnb i Booking.com oraz zarządzaj synchronizacją"
     }
   },
   "sentiment": {

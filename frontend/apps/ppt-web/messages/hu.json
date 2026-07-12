@@ -63,7 +63,8 @@
     "privacy": "Adatvédelem",
     "admin": "Adminisztráció",
     "aiChat": "AI asszisztens",
-    "iotAlerts": "Sensor Alerts"
+    "iotAlerts": "Sensor Alerts",
+    "integrations": "Integrációk"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -1018,6 +1019,78 @@
     }
   },
   "settings": {
+    "integrations": {
+      "title": "Integrációk",
+      "subtitle": "Kapcsoljon össze külső foglalási csatornákat a hirdetések és foglalások szinkronizálásához.",
+      "noOrganization": "A fiókjához nincs kiválasztva szervezet, ezért az integrációk nem kezelhetők.",
+      "status": {
+        "checking": "Ellenőrzés…",
+        "connected": "Csatlakoztatva",
+        "notConnected": "Nincs csatlakoztatva"
+      },
+      "common": {
+        "lastSync": "Utolsó szinkronizálás",
+        "reservations": "Foglalások",
+        "lastSyncError": "Utolsó szinkronizálási hiba: {{error}}",
+        "syncNow": "Szinkronizálás most",
+        "syncing": "Szinkronizálás…",
+        "disconnect": "Leválasztás",
+        "disconnecting": "Leválasztás…",
+        "itemsSynced": "{{items}} elem szinkronizálva.",
+        "syncIncomplete": "A szinkronizálás nem fejeződött be.",
+        "unexpectedError": "Váratlan hiba történt."
+      },
+      "airbnb": {
+        "name": "Airbnb",
+        "description": "OAuth-kapcsolattal összekötött csatorna rövid távú bérleti hirdetésekhez és foglalásokhoz.",
+        "loadError": "Az Airbnb állapota nem tölthető be.",
+        "account": "Fiók",
+        "listings": "Hirdetések",
+        "connect": "Airbnb csatlakoztatása",
+        "redirecting": "Átirányítás…",
+        "mappings": {
+          "title": "Hirdetés-hozzárendelések",
+          "loading": "Hirdetések betöltése…",
+          "empty": "Még nincsenek hozzárendelt Airbnb-hirdetések.",
+          "active": "Aktív",
+          "inactive": "Inaktív"
+        },
+        "toast": {
+          "connectFailedTitle": "Az Airbnb-kapcsolat nem indítható el",
+          "syncedTitle": "Airbnb szinkronizálva",
+          "syncFailedTitle": "Az Airbnb szinkronizálása sikertelen",
+          "disconnectedTitle": "Airbnb leválasztva",
+          "disconnectedMessage": "Az Airbnb-integráció eltávolításra került.",
+          "disconnectFailedTitle": "Az Airbnb nem választható le"
+        }
+      },
+      "booking": {
+        "name": "Booking.com",
+        "description": "Supply-XML csatorna rövid távú bérlemények elérhetőségéhez, áraihoz és foglalásaihoz.",
+        "loadError": "A Booking.com állapota nem tölthető be.",
+        "hotelId": "Szálloda-azonosító",
+        "properties": "Ingatlanok",
+        "connect": "Booking.com csatlakoztatása",
+        "conflicts": "{{count}} platformok közötti foglalási ütközés észlelve.",
+        "conflictsTruncated": " Az eredmények hiányosak lehetnek.",
+        "wizard": {
+          "title": "Rendelje hozzá ingatlanát a Booking.com-hoz",
+          "username": "Supply-XML felhasználónév",
+          "password": "Supply-XML jelszó",
+          "connect": "Csatlakozás",
+          "connecting": "Csatlakozás…",
+          "cancel": "Mégse"
+        },
+        "toast": {
+          "connectedTitle": "Booking.com csatlakoztatva",
+          "connectFailedTitle": "A Booking.com nem csatlakoztatható",
+          "syncedTitle": "Booking.com szinkronizálva",
+          "syncFailedTitle": "A Booking.com szinkronizálása sikertelen",
+          "disconnectedTitle": "Booking.com leválasztva",
+          "disconnectFailedTitle": "A Booking.com nem választható le"
+        }
+      }
+    },
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
@@ -1275,10 +1348,12 @@
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts"
+      "goToIotAlerts": "Go to Sensor Alerts",
+      "goToIntegrations": "Ugrás az Integrációkhoz"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
+      "goToIntegrations": "Airbnb és Booking.com csatornák összekapcsolása és a szinkronizálás kezelése"
     }
   },
   "sentiment": {
