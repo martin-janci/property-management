@@ -603,7 +603,9 @@ async fn direct_connect_happy_path_upserts_connection(pool: PgPool) {
     );
     let stored_refresh: Option<String> = row.get("refresh_token");
     assert!(
-        stored_refresh.as_deref().is_some_and(|t| t.starts_with("enc:")),
+        stored_refresh
+            .as_deref()
+            .is_some_and(|t| t.starts_with("enc:")),
         "refresh token must be stored encrypted: {stored_refresh:?}"
     );
 }
