@@ -1,0 +1,341 @@
+{
+  "generated": "2026-07-12T16:39:18Z",
+  "cursor_range": {
+    "since_iso": "2026-07-09T02:37:00Z",
+    "last_pr_seen_before": 2185,
+    "last_pr_seen_after": 2262,
+    "last_issue_seen_before": 2087,
+    "last_issue_seen_after": 2263,
+    "last_commit_sha_before": "5877ade",
+    "last_commit_sha_after": "705bf9b"
+  },
+  "summary": {
+    "merged_prs": 41,
+    "open_prs_touched": 2,
+    "closed_unmerged_prs": 7,
+    "new_issues": 9,
+    "commits_on_dev": 100,
+    "lag_hours": 85,
+    "lag_days": 3,
+    "stale_routine_alert": true
+  },
+  "phases_failed": [],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..origin/dev -- backend/servers/api-server/src/routes/auth.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 real commits (excl. dispatcher) since 5877ade: PR #2234 (rate-limit /forgot-password + /resend-verification), #2250 (extract shared refresh-token resolve + hash helpers), #2261 (harden resolve_current_session_id user-scoping). 279+30 lines."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history[auth.rs].runs_seen = 2 (before this run)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Third consecutive top-N churn hit (last_seen was 2026-07-09). Stacks on churn-hotspot for auth.rs — combined score = 2."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..origin/dev -- backend/crates/integrations/src/booking/mod.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 real commits since 5877ade: PR #2230 (test envelope branches), #2231 (test OTA retry + transport-error paths). 235+4 lines."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-llm-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..origin/dev -- backend/crates/db/src/repositories/llm_document.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 real commits since 5877ade: PR #2226 (KMP path-param + pgvector clamp-panic fix), #2256 (lock the clamp-panic fix with tests). 63+3 lines."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-suspended-enum-oracle",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-api-handlers.json (Phase 1.5 rotating expert review)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:699 — the login handler returns 401 ACCOUNT_SUSPENDED for a suspended account BEFORE verifying the password (password check starts at line 713, verified at line 716 as `.verify_password(...)`). An account-enumeration oracle for suspended users. Promoted to plan `plans/security-code-review-api-handlers-suspended-enum-oracle.md`."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-api-handlers.json (Phase 1.5 rotating expert review)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "~437 handler error arms in >=21 route files return the raw sqlx e.to_string() as client-facing JSON body via ErrorResponse::new(_, e.to_string()). Info-disclosure smell. Contrast auth.rs which returns static messages + tracing::error!(error = %e) server-side only."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-mobile-native-kmp.json (Phase 1.5 rotating expert review)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 — shared HttpClient installs ContentNegotiation + Logging but no HttpTimeout plugin. Stalled connections hang forever until composition scope cancel."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessionspage-unsafe-cast",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-ppt-web-ui.json (Phase 1.5 rotating expert review)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — unnecessary double `as unknown as SessionRow[]` cast across API boundary; strips type checking."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-ppt-web-ui.json (Phase 1.5 rotating expert review)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:126-192 — window.prompt() free-text coerced to literal union without validation before POST."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-07-12-reality-server.json (Phase 1.5 rotating expert review)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:145-164 — Host::Ipv6 branch doesn't reject ::ffff:a.b.c.d IPv4-mapped forms, so [::ffff:169.254.169.254] bypasses the IPv4 blocklist that catches the plain form. Confirmed by inspecting the file (lines 140-170) — the Ipv6 arm only checks is_loopback / fc00::/7 / fe80::/10. Promoted to plan `plans/security-code-review-reality-server-ssrf-ipv4-mapped-ipv6.md`."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "state.last_run_iso = 2026-07-09T02:37:00Z (85 hours ago)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine has not committed in 3d 13h; cloud cron may be paused or wedged. Verified nothing else advanced state.json — the dispatcher is on the planning branch and does still tick (last dispatcher commit 705bf9b at 2026-07-12T16:20). The routine (this pipeline) is the stalled loop."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2232",
+      "type": "dep-update-noise",
+      "source": "PR #2232",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps): bump the cargo-minor-patch group across 1 directory with 3 updates (sentry, aws-credential-types, regex). Dependabot, merged 2026-07-11."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2228",
+      "type": "dep-update-noise",
+      "source": "PR #2228",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps): bump the npm-minor-patch group across 1 directory with 17 updates. Dependabot, merged 2026-07-11."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2212",
+      "type": "dep-update-noise",
+      "source": "PR #2212",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps): bump @react-native-community/netinfo from 11.5.2 to 12.0.1. Dependabot, merged 2026-07-11."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2211",
+      "type": "dep-update-noise",
+      "source": "PR #2211",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps-dev): bump @expo/metro-config from 55.0.22 to 57.0.3. Dependabot, merged 2026-07-11."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2210",
+      "type": "dep-update-noise",
+      "source": "PR #2210",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps): bump expo-localization from 56.0.6 to 57.0.0. Dependabot, merged 2026-07-11."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2209",
+      "type": "dep-update-noise",
+      "source": "PR #2209",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "chore(deps): bump expo-location from 56.0.18 to 57.0.2. Dependabot, merged 2026-07-11."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-12.md && head -1 | grep -q ...",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique | length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev ... check non-cumulative re-emit score_delta == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] | length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python check: 0 open items older than 14 days without decay",
+      "observed": "0 violations",
+      "expected": "0 violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md .*adversarial pass in brief",
+      "observed": "both plans annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new_plans_count <= 2 && metadata + 11 headings + capability tick + Mode: cloud-ok + files exist",
+      "observed": "2 plans, all checks pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secret patterns in diff excluding baseline docs",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md and diff against staged (deterministic 3-key sort)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder-rot markers in new plans + brief",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "for slug in HEAD plans; assert in tree or _archive",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive files count now >= HEAD",
+      "observed": "now=7 head=7",
+      "expected": ">=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md from triage rows, diff",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps",
+      "observed": "0 actions",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq management artifacts + coverage_cursor + pm_cursor + GC7 liveness",
+      "observed": "epics=13 cc=0 pm=6 (advanced from cc=12 pm=5)",
+      "expected": "valid + GC7 ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token patterns in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

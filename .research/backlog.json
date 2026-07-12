@@ -4353,6 +4353,196 @@
         "assignment_status": "merged",
         "pr_number": 2205
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "title": "Reduce churn instability in api-server routes/auth.rs — 3rd run at top-N churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2234",
+        "PR #2250",
+        "PR #2261"
+      ],
+      "evidence": [
+        "3 real commits (excl. dispatcher) touched backend/servers/api-server/src/routes/auth.rs in the 2026-07-09..2026-07-12 window: PR #2234 (rate-limit /forgot-password + /resend-verification), #2250 (refactor: extract shared refresh-token resolve + hash helpers), #2261 (harden resolve_current_session_id user-scoping). 279+30 lines changed.",
+        "hotspot_history.runs_seen was already 2 before this run (last_seen=2026-07-09) — triggers repeated-churn on top of the base churn-hotspot signal. Score = +1 churn-hotspot + +1 repeated-churn = 2."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "title": "Watch booking OTA client churn — 2 test-coverage passes landed back-to-back",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2230",
+        "PR #2231"
+      ],
+      "evidence": [
+        "2 commits touched backend/crates/integrations/src/booking/mod.rs in-window: PR #2230 (test OtaReadRS::from_xml envelope branches), #2231 (test OTA retry delay + transport-error paths). 235+4 lines.",
+        "First-time top-3 hotspot after PR #2176 module split. Watch for regression; no active refactor need yet."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-llm-document-rs",
+      "title": "Watch llm_document.rs churn — RAG + KMP path-param work",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2226",
+        "PR #2256"
+      ],
+      "evidence": [
+        "2 commits touched backend/crates/db/src/repositories/llm_document.rs in-window: PR #2226 (KMP path-param + pgvector clamp-panic fix), #2256 (lock the clamp-panic fix with tests). 63+3 lines.",
+        "Related work #2221 also touched the file for RAG embedding-write hardening. Watch for further churn as RAG/embedding provenance work continues (see issue #2239 — provenance filter untested)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "security-code-review-api-handlers-suspended-enum-oracle",
+      "title": "Suspended-account enum oracle: 401 ACCOUNT_SUSPENDED returned before password verified",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-07-12 api-handlers segment"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:699 — the login handler returns 401 ACCOUNT_SUSPENDED for a suspended account BEFORE verifying the password (password check starts at line 713). Any caller submitting an arbitrary password for a suspended email gets a distinct ACCOUNT_SUSPENDED response, whereas an unknown email gets the generic INVALID_CREDENTIALS — an account-enumeration oracle for suspended users.",
+        "Fix: move the suspended-check AFTER argon2::verify so all account states return a uniform INVALID_CREDENTIALS to unauthenticated callers; keep the ACCOUNT_SUSPENDED code for logged-in flows that already have session context."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": "plans/security-code-review-api-handlers-suspended-enum-oracle.md"
+    },
+    {
+      "id": "security-code-review-api-handlers-raw-db-error-leak",
+      "title": "437 handler arms return raw sqlx e.to_string() as client-facing error body — info disclosure",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-12 api-handlers segment"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes — ~437 handler error arms return the raw error via ErrorResponse::new('DB_ERROR' or 'INTERNAL_ERROR' or 'DATABASE_ERROR', e.to_string()) in the client-facing JSON body (>=21 route files: budgets.rs:260-704 (~15 arms), emergency/broadcasts.rs:158, ai/workflows.rs:46, and others). e.to_string() on a sqlx/db error exposes internal detail (SQL fragments, column/constraint names, connection info) to unauthenticated or low-privilege API clients — an information-disclosure smell that also makes error responses non-uniform.",
+        "Contrast auth.rs which correctly returns a static 'Login failed' and logs %e server-side only. Fix pattern: sweep the routes tree for ErrorResponse::new(_, e.to_string()) callsites; replace with a static message + tracing::error!(error = %e, ...) for the server log."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "bug-code-review-mobile-native-kmp-no-http-timeout",
+      "title": "KMP HttpClient missing HttpTimeout plugin — hanging spinners on stalled connections",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-12 mobile-native-kmp segment"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 — shared HttpClient installs ContentNegotiation + Logging but no HttpTimeout plugin. Requests have no app-level request/connect/socket timeout, so a stalled connection leaves every repository suspend call (and its UI spinner) hanging until the composition scope is cancelled."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-code-review-ppt-web-ui-sessionspage-unsafe-cast",
+      "title": "SessionsPage.tsx: double 'as unknown as' cast at API boundary — strip cast, use generated type",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-12 ppt-web-ui segment"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` uses a double 'as unknown as' cast across the API boundary. getAuthApi().listSessions() already returns ListSessionsResponse whose 'sessions: SessionInfo[]' (frontend/packages/api-client/src/auth/types.ts:135-155) is structurally identical to the local SessionRow (id, deviceInfo, ipAddress, userAgent, createdAt, lastUsedAt, isCurrent), so the cast is unnecessary AND strips compile-time type-checking."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "bug-code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "title": "ContentModerationPage prompt() values coerced to literal unions without validation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-12 ppt-web-ui segment"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:126-192 — handleTakeAction and handleDecideAppeal collect free-text via window.prompt() and cast it unchecked to a literal union before sending to the moderation API: action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve' (line 143) and decision: decision as 'uphold' | 'overturn' (line 179). Any typed string (e.g. 'delet', 'Approve', '') that passes the truthiness guard is coerced to a valid-looking union member and POSTed with no client-side validation — the compliance/moderation action is only as safe as the backend's own validation."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "security-code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "title": "SSRF: validate_fetch_url accepts ::ffff:169.254.169.254 (cloud metadata bypass)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-07-12 reality-server segment"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:145-164 — validate_fetch_url()'s Host::Ipv6 branch only rejects is_loopback(), fc00::/7 and fe80::/10. It does NOT reject IPv4-mapped IPv6 literals (::ffff:a.b.c.d) nor IPv4-compatible/unspecified forms, so https://[::ffff:169.254.169.254]/ parses as Host::Ipv6 with segments[0]==0 (no rule matches, is_loopback()==false) and passes validation — a direct SSRF bypass to the cloud metadata endpoint.",
+        "Same gap lets ::ffff:127.0.0.1, ::ffff:10.x.x.x and ::ffff:192.168.x.x reach loopback/private targets that the IPv4 branch (lines 93-144) is careful to block. Fix: after parsing the URL, if Host::Ipv6, call .to_ipv4_mapped() and route the result through the IPv4 blocklist logic; otherwise apply the existing IPv6 rules extended to cover ::ffff:0:0/96, ::/128, ::1, 2002:*/16 (6to4 that could carry ipv4 pointing to a private ipv4)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": "plans/security-code-review-reality-server-ssrf-ipv4-mapped-ipv6.md"
     }
   ]
 }

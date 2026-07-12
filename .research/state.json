@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-09T02:37:00Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2185,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "5877ade",
+  "last_run_iso": "2026-07-12T16:39:18Z",
+  "last_run_ms": 4200,
+  "last_pr_seen": 2262,
+  "last_issue_seen": 2263,
+  "last_commit_sha": "705bf9b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -148,9 +148,9 @@
       "recent_churn": 134
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-07-09",
-      "recent_churn": 2648
+      "runs_seen": 3,
+      "last_seen": "2026-07-12",
+      "recent_churn": 309
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -333,9 +333,14 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-07-12",
+      "recent_churn": 239
+    },
+    "backend/crates/db/src/repositories/llm_document.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-07-09",
-      "recent_churn": 2818
+      "last_seen": "2026-07-12",
+      "recent_churn": 66
     }
   },
   "seen_signals": [
@@ -578,23 +583,40 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+    "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-llm-document-rs",
+    "code-review-api-handlers-suspended-enum-oracle",
+    "code-review-api-handlers-raw-db-error-leak",
+    "code-review-mobile-native-kmp-no-http-timeout",
+    "code-review-ppt-web-ui-sessionspage-unsafe-cast",
+    "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+    "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+    "lag-warning-2026-07-12",
+    "dep-update-noise-pr-2232",
+    "dep-update-noise-pr-2228",
+    "dep-update-noise-pr-2212",
+    "dep-update-noise-pr-2211",
+    "dep-update-noise-pr-2210",
+    "dep-update-noise-pr-2209"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-09",
+    "api-handlers": "2026-07-12",
     "api-core": "2026-06-15",
-    "reality-server": "2026-06-11",
-    "ppt-web-ui": "2026-06-11",
+    "reality-server": "2026-07-12",
+    "ppt-web-ui": "2026-07-12",
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 42,
-    "vectors_created": 182,
-    "plans_created": 14,
+    "runs": 43,
+    "vectors_created": 191,
+    "plans_created": 16,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
@@ -609,19 +631,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-07-12",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

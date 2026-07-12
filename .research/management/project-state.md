@@ -1,5 +1,54 @@
 # PPT Project State
 
+_Generated: 2026-07-12 — daily PM rotation (Scrum Master + pm-security; routine upkeep). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a wrap)._
+
+## Executive summary (2026-07-12)
+
+- **Cursor gap closed:** last committed routine run was 2026-07-09 (LAG=85h). Between then and today, 41 PRs merged to `dev` (#2186–#2261); this run reconciles the backlog against that flood.
+- **Security lens (pm-security rotation).** Two live security follow-ups landed this run: (a) reality-server SSO exchange no longer trusts client-supplied `request.roles` (#2254, closes #2249, HIGH sev — was a portal privilege-escalation surface); (b) OAuth CSRF single-use path got handler-level coverage (#2219, closes #2203). Two more security follow-up **issues** are freshly filed on merged code and waiting for pickup — #2263 (per-portal webhook receiver may fail open on empty secret after #2259 env wiring; needs `.filter(|s| !s.is_empty())` guard) and #2241 (OAuth state single-use test models atomic consume, but production Redis is non-atomic GET+DEL — TOCTOU race under concurrent replay).
+- **Fresh code-review findings (Phase 1.5, backlog).** Six new `code-review-finding` signals — most severe: api-server login handler returns `ACCOUNT_SUSPENDED` **before** password check (account-enumeration oracle for suspended users, `auth.rs:699`, high-conf), and reality-server `validate_fetch_url` accepts IPv4-mapped IPv6 literals (`::ffff:169.254.169.254` → cloud metadata SSRF, `url_validator.rs:145`, high-conf). Both promote to plans this run.
+- **Churn hotspots:** `api-server/src/routes/auth.rs` (repeated-churn — 3rd consecutive run in the top-N; auth surface is churning as security work lands), `crates/integrations/src/booking/mod.rs` (first-time hotspot from OTA coverage series #2230/#2231), `crates/db/src/repositories/llm_document.rs` (RAG/pgvector work #2226/#2256).
+- **Delivery cadence healthy.** 41 PRs merged in 3.5 days across api-server, reality-server, ppt-web, mobile-native (KMP), plus 6 dependabot bumps. No reverts, no closed-with-changes-needed on hot code paths. Two open PRs (#2260 shard-rebalance, #2262 sitemap consistency-check) are follow-ups to #2223/#2225 and both look green.
+
+## Sprint progress — coverage.json (upkeep pass)
+
+Latest coverage scan is still 2026-07-07 `deep`; this run advanced only the rotating epic (epic-9 — TOTP MFA setup, still `done`). Full `scan` mode is deferred to the on-demand local `/ppt-project-management scan`.
+
+| Epic | Status snapshot |
+|---|---|
+| epic-6 — Announcements | 5/6 done (unchanged since 2026-07-07) |
+| epic-7a — Document Management | 3/5 partial (2 stories in flight) |
+| epic-8a — Notification Preferences | 3/3 done |
+| epic-9 — TOTP MFA | 1/1 done (re-checked 2026-07-12) |
+| epic-10a — OAuth Provider | 3/3 done |
+| epic-10b — Platform Admin | 7/7 done |
+| epic-79 — Reality Portal (public) | 5/5 done |
+| epic-80 — Reality Portal (portal owner) | 4/4 done |
+| epic-81 — Realtor Management | 3/3 done |
+| epic-82 — Mobile (Reality KMP) | 5/5 done |
+| epic-83 — Rental Platform Integrations | 3/3 done (Airbnb + Booking OAuth handlers now covered) |
+| epic-84 — Admin/Compliance | 3/3 done |
+| epic-85 — Mobile Build Pipeline | 3/3 done |
+
+## Actions and risks
+
+- Action list: 48 items (31 in-progress via dispatcher, 17 open). See `action-list.json`.
+- Risks: 42 items (37 open, 5 resolved). See `risks.json`.
+- **New today (routine):** two backlog rows promoted to plans this run (see the daily brief).
+
+## Role focus today
+
+- **pm-security** — see security lens above; 2 issues, 0 blockers on-hand, watching #2263 / #2241 to ensure they land before webhook rollout.
+- Rotation next run: **pm-data**.
+
+## Historical note
+
+- 2026-06-16 project-state snapshot (`dev` was RED at #1437) is preserved below for continuity — the current tree is green after those hotfixes landed via the July merge batch.
+
+---
+
+# PPT Project State
+
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
 ## Executive summary
