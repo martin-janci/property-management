@@ -919,10 +919,10 @@ pub async fn exchange_pm_token(
             )
         })?;
 
-    // Get PM roles from token scope or fetch from PM API
-    let pm_roles = extract_roles_from_scope(token_info.scope.as_deref())
-        .or_else(|| request.roles.clone())
-        .unwrap_or_default();
+    // Derive PM roles authoritatively from the introspected token scope.
+    // Client-supplied `request.roles` may only narrow this set, never expand
+    // it (security #2249 — portal privilege escalation).
+    let pm_roles = derive_pm_roles(token_info.scope.as_deref(), request.roles.as_deref());
 
     // Map PM roles to portal role (use highest privilege)
     let portal_role = pm_roles
@@ -1308,6 +1308,134 @@ fn extract_roles_from_scope(scope: Option<&str>) -> Option<Vec<String>> {
             .map(|part| part.strip_prefix("role:").unwrap_or(part).to_string())
             .collect()
     })
+}
+
+/// Derive the caller's authoritative PM roles for portal-role mapping.
+///
+/// Security (#2249 — portal privilege escalation): roles are derived **only**
+/// from the introspected PM token's OAuth `scope`. Client-supplied `requested`
+/// roles (`ExchangeTokenRequest.roles`) may only ever *narrow* (intersect) that
+/// authoritative set — they can never expand it, nor act as a fallback source
+/// when the scope carries no roles.
+///
+/// Previously the handler used
+/// `extract_roles_from_scope(scope).or_else(|| requested)`, which turned the
+/// client-supplied filter into a role *source*: a holder of any active but
+/// role-less PM token could self-assign an elevated portal role simply by
+/// sending `roles: ["agent"]`. The intersection below closes that hole while
+/// preserving the intended "client may filter down to a subset" behaviour.
+fn derive_pm_roles(scope: Option<&str>, requested: Option<&[String]>) -> Vec<String> {
+    let scope_roles = extract_roles_from_scope(scope).unwrap_or_default();
+    match requested {
+        // Narrowing filter: keep only authoritative roles the client also asked
+        // for. An empty or non-overlapping filter yields an empty set (→ lowest
+        // privilege), never an expansion.
+        Some(filter) => scope_roles
+            .into_iter()
+            .filter(|r| filter.iter().any(|f| f == r))
+            .collect(),
+        // No filter supplied: use the authoritative scope roles as-is.
+        None => scope_roles,
+    }
+}
+
+// ============ PM-role derivation security tests (#2249) ============
+
+#[cfg(test)]
+mod pm_role_derivation_tests {
+    use super::derive_pm_roles;
+    use super::role_mapping::{self, portal_roles};
+
+    fn scope(roles: &[&str]) -> String {
+        roles
+            .iter()
+            .map(|r| format!("role:{r}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    /// Map the derived PM roles to a portal role the same way the handler does
+    /// (highest privilege wins), so the tests assert on the security-relevant
+    /// outcome — the granted portal role — not just the raw role list.
+    fn portal_role_for(roles: &[String]) -> &'static str {
+        roles
+            .iter()
+            .map(|r| role_mapping::map_pm_role_to_portal(r))
+            .max_by_key(|r| match *r {
+                portal_roles::AGENT => 4,
+                portal_roles::PROPERTY_OWNER => 3,
+                portal_roles::VERIFIED_USER => 2,
+                _ => 1,
+            })
+            .unwrap_or(portal_roles::USER)
+    }
+
+    /// Regression (#2249): an active but role-less PM token (empty scope) must
+    /// NOT let a client self-assign an elevated role via `request.roles`. The
+    /// old `.or_else(|| request.roles)` fallback made this an escalation vector
+    /// — `real_estate_agent` maps to the highest-privilege AGENT portal role.
+    #[test]
+    fn client_roles_cannot_expand_empty_scope() {
+        let requested = vec!["real_estate_agent".to_string()];
+        let derived = derive_pm_roles(None, Some(&requested));
+        assert!(
+            derived.is_empty(),
+            "client-supplied roles must not seed roles from an empty scope: {derived:?}"
+        );
+        assert_eq!(
+            portal_role_for(&derived),
+            portal_roles::USER,
+            "empty scope + client agent request must map to the lowest-privilege USER role"
+        );
+    }
+
+    /// A token whose scope does not carry `real_estate_agent` must not be
+    /// upgradable to the AGENT portal role by the client asking for it — the
+    /// client set can only intersect, never union.
+    #[test]
+    fn client_roles_cannot_add_unheld_role() {
+        let token_scope = scope(&["manager"]);
+        let requested = vec!["real_estate_agent".to_string(), "manager".to_string()];
+        let derived = derive_pm_roles(Some(&token_scope), Some(&requested));
+        assert_eq!(derived, vec!["manager".to_string()]);
+        assert_ne!(
+            portal_role_for(&derived),
+            portal_roles::AGENT,
+            "client must not be able to add the higher-privilege agent role"
+        );
+        assert_eq!(portal_role_for(&derived), portal_roles::PROPERTY_OWNER);
+    }
+
+    /// Intended behaviour is preserved: the client MAY narrow the authoritative
+    /// scope set to a lower-privilege subset.
+    #[test]
+    fn client_roles_may_narrow_scope() {
+        let token_scope = scope(&["real_estate_agent", "manager"]);
+        let requested = vec!["manager".to_string()];
+        let derived = derive_pm_roles(Some(&token_scope), Some(&requested));
+        assert_eq!(derived, vec!["manager".to_string()]);
+        assert_eq!(portal_role_for(&derived), portal_roles::PROPERTY_OWNER);
+    }
+
+    /// With no client filter, the authoritative scope roles pass through intact.
+    #[test]
+    fn no_client_filter_uses_scope_roles() {
+        let token_scope = scope(&["real_estate_agent"]);
+        let derived = derive_pm_roles(Some(&token_scope), None);
+        assert_eq!(derived, vec!["real_estate_agent".to_string()]);
+        assert_eq!(portal_role_for(&derived), portal_roles::AGENT);
+    }
+
+    /// An empty client filter intersects to nothing (defensive: no accidental
+    /// "empty means all" behaviour).
+    #[test]
+    fn empty_client_filter_yields_no_roles() {
+        let token_scope = scope(&["real_estate_agent"]);
+        let requested: Vec<String> = vec![];
+        let derived = derive_pm_roles(Some(&token_scope), Some(&requested));
+        assert!(derived.is_empty(), "empty filter must intersect to nothing");
+        assert_eq!(portal_role_for(&derived), portal_roles::USER);
+    }
 }
 
 // ==================== Cookie security unit tests (P0-12) ====================
