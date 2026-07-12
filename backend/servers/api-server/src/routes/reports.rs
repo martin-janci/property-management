@@ -1935,7 +1935,35 @@ fn compute_first_next_run(
     minute: u32,
     tz: Tz,
 ) -> Option<DateTime<Utc>> {
-    let now = Utc::now().with_timezone(&tz);
+    compute_next_run_after(
+        Utc::now().with_timezone(&tz),
+        frequency,
+        day_of_week,
+        day_of_month,
+        hour,
+        minute,
+    )
+}
+
+/// Compute the first cadence-matching run strictly after `now` (UTC result).
+///
+/// This is the injectable core of [`compute_first_next_run`]: it takes the
+/// reference instant explicitly (in the schedule's timezone) instead of reading
+/// the wall clock, which makes the DST edge cases (spring-forward gap /
+/// fall-back ambiguity) unit-testable and provides the reusable primitive a
+/// post-fire `next_run_at` advance would call with `now = last fire` (issue
+/// #2242, finding 1). The schedule timezone is taken from `now.timezone()`.
+///
+/// Cadence and DST semantics are identical to [`compute_first_next_run`].
+fn compute_next_run_after(
+    now: DateTime<Tz>,
+    frequency: &str,
+    day_of_week: Option<i32>,
+    day_of_month: Option<i32>,
+    hour: u32,
+    minute: u32,
+) -> Option<DateTime<Utc>> {
+    let tz = now.timezone();
     let today = now.date_naive();
     let time = NaiveTime::from_hms_opt(hour, minute, 0)?;
 
@@ -2430,9 +2458,10 @@ pub async fn update_schedule(
 #[cfg(test)]
 mod tests {
     use super::{
-        compute_first_next_run, parse_time_hhmm, validate_cron_expression, validate_time_hhmm,
+        compute_first_next_run, compute_next_run_after, parse_time_hhmm, validate_cron_expression,
+        validate_time_hhmm,
     };
-    use chrono::{Datelike, Timelike};
+    use chrono::{Datelike, LocalResult, TimeZone, Timelike, Utc};
     use chrono_tz::Tz;
 
     // --- parse_time_hhmm (issue #2198) ---
@@ -2496,6 +2525,102 @@ mod tests {
             .expect("day-31 schedule must resolve to a 31-day month");
         assert_eq!(next.with_timezone(&tz).day(), 31);
         assert!(next > chrono::Utc::now());
+    }
+
+    // --- compute_next_run_after: DST edge cases (issue #2242, finding 2) ---
+    //
+    // These exercise the branches in the walker that plain daily/weekly/monthly
+    // tests can't reach, because the real-clock `compute_first_next_run` never
+    // lands its search on a specific DST-transition date. `compute_next_run_after`
+    // injects the reference instant so we can anchor a delivery time inside the
+    // spring-forward gap / fall-back ambiguous hour.
+    //
+    // Europe/Bratislava (CET/CEST) transitions, verified against chrono-tz:
+    //  - Spring forward: 2027-03-28, 02:00 -> 03:00 (02:00..03:00 does not exist).
+    //  - Fall back:      2026-10-25, 03:00 -> 02:00 (02:00..03:00 occurs twice).
+
+    #[test]
+    fn next_run_spring_forward_gap_nudges_into_valid_instant() {
+        let tz: Tz = "Europe/Bratislava".parse().unwrap();
+
+        // Precondition: 02:30 on the transition date is a genuine gap (no local
+        // instant). If chrono-tz ever changes its rules this asserts loudly
+        // rather than silently testing the wrong branch.
+        assert!(
+            matches!(
+                tz.with_ymd_and_hms(2027, 3, 28, 2, 30, 0),
+                LocalResult::None
+            ),
+            "02:30 on 2027-03-28 must be a spring-forward gap"
+        );
+
+        // Reference instant: 00:30 local on the transition day, before the gap.
+        let now = tz.with_ymd_and_hms(2027, 3, 28, 0, 30, 0).unwrap();
+
+        // Daily schedule at 02:30 -> today's candidate falls in the gap.
+        let next = compute_next_run_after(now, "daily", None, None, 2, 30)
+            .expect("gap-anchored schedule must still yield a next run");
+
+        // Must not panic, must be strictly after `now`, and must be a real
+        // instant nudged forward out of the gap (03:30 local == 01:30 UTC).
+        assert!(
+            next > now.with_timezone(&Utc),
+            "next run must be in the future"
+        );
+        let local = next.with_timezone(&tz);
+        assert_eq!(
+            (local.year(), local.month(), local.day()),
+            (2027, 3, 28),
+            "next run stays on the transition date"
+        );
+        assert_eq!(
+            (local.hour(), local.minute()),
+            (3, 30),
+            "gap time 02:30 nudges forward one hour to 03:30 CEST"
+        );
+        assert_eq!(
+            next,
+            Utc.with_ymd_and_hms(2027, 3, 28, 1, 30, 0).unwrap(),
+            "03:30 CEST is 01:30 UTC"
+        );
+    }
+
+    #[test]
+    fn next_run_fall_back_ambiguous_picks_earliest() {
+        let tz: Tz = "Europe/Bratislava".parse().unwrap();
+
+        // Precondition: 02:30 on the fall-back date is ambiguous (two instants).
+        assert!(
+            matches!(
+                tz.with_ymd_and_hms(2026, 10, 25, 2, 30, 0),
+                LocalResult::Ambiguous(_, _)
+            ),
+            "02:30 on 2026-10-25 must be a fall-back ambiguous time"
+        );
+
+        // Reference instant: 00:30 local, before the ambiguous hour.
+        let now = tz.with_ymd_and_hms(2026, 10, 25, 0, 30, 0).unwrap();
+
+        let next = compute_next_run_after(now, "daily", None, None, 2, 30)
+            .expect("ambiguous-anchored schedule must still yield a next run");
+
+        assert!(
+            next > now.with_timezone(&Utc),
+            "next run must be in the future"
+        );
+        let local = next.with_timezone(&tz);
+        assert_eq!(
+            (local.hour(), local.minute()),
+            (2, 30),
+            "fall-back time is kept at 02:30 local"
+        );
+        // The earliest of the two 02:30 instants is the CEST one (UTC+2),
+        // i.e. 00:30 UTC — not the later CET (UTC+1) 01:30 UTC.
+        assert_eq!(
+            next,
+            Utc.with_ymd_and_hms(2026, 10, 25, 0, 30, 0).unwrap(),
+            "the earliest (CEST, +02:00) instant must be chosen"
+        );
     }
 
     // --- validate_time_hhmm (gap-81-1: create schedule) ---
