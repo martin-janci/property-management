@@ -87,9 +87,13 @@ pub enum ConsumeOutcome {
 /// Verify a state on callback and consume it so it cannot be reused.
 ///
 /// Returns [`ConsumeOutcome::Consumed`] only if the stored record exists and
-/// its `org_id` matches the callback's path org. The key is deleted on a match
-/// to guarantee single use. A non-matching `org_id` deletes the key and
-/// rejects (prevents replay across orgs).
+/// its `org_id` matches the callback's path org. The Redis path uses an atomic
+/// `GETDEL`, so the read and the delete happen in a single command: exactly one
+/// concurrent caller receives the record and all others see `None`. This makes
+/// single-use race-safe — two concurrent callbacks carrying the same valid
+/// state cannot both be `Consumed` (#2241). A non-matching `org_id` still
+/// deletes the key (via the same `GETDEL`) and rejects (prevents replay across
+/// orgs).
 pub async fn verify_and_consume(
     state: &AppState,
     oauth_state: &str,
@@ -109,21 +113,23 @@ pub async fn verify_and_consume(
     };
 
     let key = redis_key(oauth_state);
-    let record: Option<OAuthStateRecord> = match redis.get(&key).await {
+    // Atomic get-and-delete (`GETDEL`): under concurrency exactly one caller
+    // receives the stored record and every other concurrent callback sees
+    // `None`. A prior non-atomic `get()` + `delete()` left a TOCTOU window where
+    // two concurrent callbacks carrying the *same* valid state could both read
+    // `Some(record)` before either deleted it, so both would be `Consumed` —
+    // defeating single-use and reopening the CSRF replay window (#2241). Doing
+    // the read+delete in one command closes that race: the loser sees `None`
+    // and is rejected as a replay.
+    let record: Option<OAuthStateRecord> = match redis.get_del(&key).await {
         Ok(r) => r,
         Err(e) => {
-            // A Redis read error must not silently pass the check; treat as
+            // A Redis error must not silently pass the check; treat as
             // unavailable so the stateless fallback decides.
-            tracing::warn!(error = %e, "Failed to read OAuth state from Redis");
+            tracing::warn!(error = %e, "Failed to read+consume OAuth state from Redis");
             return ConsumeOutcome::StoreUnavailable;
         }
     };
-
-    // Always consume the key once seen (match or mismatch) to prevent reuse /
-    // replay, then decide the outcome from the (now consumed) record.
-    if record.is_some() {
-        let _ = redis.delete(&key).await;
-    }
 
     decide_consume(record, org_id)
 }
@@ -165,12 +171,21 @@ fn decide_consume(record: Option<OAuthStateRecord>, path_org_id: Uuid) -> Consum
 /// the handler's replay-rejection branch (`Rejected → 400 INVALID_STATE`) — the
 /// actual heart of the CSRF single-use check — had zero handler-level coverage.
 ///
-/// This store mirrors the Redis consume semantics exactly: a state is bound to
-/// an `org_id` when issued ([`seed`](Self::seed)) and removed on first lookup
-/// ([`consume`](Self::consume)), so a second callback with the same state hits
-/// the `None` (replay) arm of [`decide_consume`]. Installed into `AppState`
-/// only by tests via `AppState::with_oauth_state_store`; it is `None` in
-/// production and never touched by real traffic.
+/// This store mirrors the Redis consume semantics for the *serial* single-use
+/// case: a state is bound to an `org_id` when issued ([`seed`](Self::seed)) and
+/// removed on first lookup ([`consume`](Self::consume)), so a second callback
+/// with the same state hits the `None` (replay) arm of [`decide_consume`].
+/// Installed into `AppState` only by tests via
+/// `AppState::with_oauth_state_store`; it is `None` in production and never
+/// touched by real traffic.
+///
+/// Limitation: this in-memory double models only *serial* single-use. The
+/// production Redis path enforces single-use atomically (`GETDEL`) so it is also
+/// race-safe under concurrent callbacks; this store's per-call `Mutex` makes
+/// each `consume` atomic in isolation but the harness never issues concurrent
+/// consumes, so it does not exercise the concurrent-replay race that the Redis
+/// `GETDEL` closes. Treat handler tests driven through this store as covering
+/// the serial replay contract only.
 #[derive(Clone, Default)]
 pub struct OAuthStateStore {
     inner: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, OAuthStateRecord>>>,

@@ -269,6 +269,34 @@ impl RedisClient {
         }
     }
 
+    /// Atomically get a value and delete the key in a single round-trip
+    /// (`GETDEL`, Redis 6.2+).
+    ///
+    /// Unlike a separate [`get`](Self::get) + [`delete`](Self::delete), this is
+    /// a single atomic command, so under concurrency exactly one caller receives
+    /// the stored value and every other caller sees `None`. This is the correct
+    /// primitive for single-use tokens (e.g. the OAuth `state` CSRF guard) where
+    /// a non-atomic get-then-delete leaves a TOCTOU replay window.
+    pub async fn get_del<T: DeserializeOwned>(&self, key: &str) -> Result<Option<T>, CacheError> {
+        let full_key = self.build_key(key);
+        let mut conn = self.connection_manager.clone();
+
+        let result: Option<String> = conn.get_del(&full_key).await?;
+
+        match result {
+            Some(data) => {
+                let value = serde_json::from_str(&data)
+                    .map_err(|e| CacheError::Deserialization(e.to_string()))?;
+                tracing::trace!(key = %full_key, "Cache GETDEL HIT");
+                Ok(Some(value))
+            }
+            None => {
+                tracing::trace!(key = %full_key, "Cache GETDEL MISS");
+                Ok(None)
+            }
+        }
+    }
+
     /// Delete a key.
     pub async fn delete(&self, key: &str) -> Result<bool, CacheError> {
         let full_key = self.build_key(key);
