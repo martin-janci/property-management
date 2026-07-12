@@ -4431,6 +4431,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "test-gap-repeated-churn-oauth-integration-tests",
+      "branch": "auto-impl/test-gap-repeated-churn-oauth-integratio-5515cdd4",
+      "status": "failed",
+      "claimed_at": "2026-07-11T20:09:57Z",
+      "last_updated": "2026-07-12T04:04:05Z",
+      "status_changed_at": "2026-07-12T04:04:05Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "test-gap-screen-map-drift-pr-1085-reality",
       "branch": "auto-impl/test-gap-screen-map-drift-pr-1085-realit-82c90f5e",
       "status": "failed",
@@ -4587,5 +4609,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T02:16:28Z"
+  "archived_at": "2026-07-12T04:08:00Z"
 }

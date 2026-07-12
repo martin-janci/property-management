@@ -2,12 +2,12 @@
   "generated": "2026-07-12T02:13:39Z",
   "assignments": [
     {
-      "task_id": "test-gap-repeated-churn-oauth-integration-tests",
-      "branch": "auto-impl/test-gap-repeated-churn-oauth-integratio-5515cdd4",
+      "task_id": "gh-issue-2249",
+      "branch": "auto-impl/gh-issue-2249-6b42f774",
       "status": "in-progress",
-      "claimed_at": "2026-07-11T20:09:57Z",
-      "last_updated": "2026-07-12T00:06:34Z",
-      "status_changed_at": "2026-07-12T00:06:34Z",
+      "claimed_at": "2026-07-12T04:06:52Z",
+      "last_updated": "2026-07-12T04:06:52Z",
+      "status_changed_at": "2026-07-12T04:06:52Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -19,7 +19,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 1,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     }
