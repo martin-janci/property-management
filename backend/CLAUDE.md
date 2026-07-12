@@ -74,9 +74,13 @@ Key workspace dependencies:
 | `JWT_SECRET` | Yes | Secret key for JWT signing (min 32 chars) |
 | `RUST_LOG` | No | Log level (default: info) |
 | `CORS_ALLOWED_ORIGINS` | No | Comma-separated list of allowed CORS origins |
-| `PORTAL_WEBHOOK_SECRET` | If receiving portal webhooks | HMAC secret for the inbound portal webhook receiver; receiver fails closed (500 `CONFIG_ERROR`) when unset |
+| `PORTAL_WEBHOOK_SECRET` | If receiving integration-connection portal webhooks | HMAC secret for the inbound portal webhook receiver at `/api/v1/integrations/webhooks/portal/{connection_id}`; fails closed (500 `CONFIG_ERROR`) when unset |
 | `AIRBNB_WEBHOOK_SECRET` | If receiving Airbnb webhooks | HMAC secret for the inbound Airbnb webhook receiver; fails closed (500 `NOT_CONFIGURED`) when unset |
 | `STRIPE_WEBHOOK_SECRET` | If receiving Stripe webhooks | Signing secret for the Stripe payment-confirmation webhook receiver; fails closed (503 `NOT_CONFIGURED`) when unset |
+| `REALITY_PORTAL_WEBHOOK_SECRET` | If receiving reality-portal webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/reality-portal/...`; **distinct from `PORTAL_WEBHOOK_SECRET`** — this family backs the per-portal receiver in `routes/portal_webhooks.rs`, not the integration-connection receiver. Fails closed (500 `CONFIG_ERROR`) when unset. |
+| `SREALITY_WEBHOOK_SECRET` | If receiving Sreality webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/sreality/...`; same family as above |
+| `BEZREALITKY_WEBHOOK_SECRET` | If receiving Bezrealitky webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/bezrealitky/...`; same family as above |
+| `NEHNUTELNOSTI_WEBHOOK_SECRET` | If receiving Nehnutelnosti webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/nehnutelnosti/...`; same family as above |
 
 ```bash
 # Required

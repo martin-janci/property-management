@@ -82,6 +82,18 @@ services:
       S3_BUCKET: ${S3_BUCKET:-ppt-documents}
       S3_REGION: ${S3_REGION:-us-east-1}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      # Inbound webhook signing secrets — receiver fails closed when unset;
+      # set whichever correspond to the webhooks this environment receives.
+      # Integration-connection portal receiver (/api/v1/integrations/webhooks/portal/{connection_id})
+      PORTAL_WEBHOOK_SECRET: ${PORTAL_WEBHOOK_SECRET:-}
+      AIRBNB_WEBHOOK_SECRET: ${AIRBNB_WEBHOOK_SECRET:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Per-portal receiver (/api/v1/webhooks/portals/<portal>/...)
+      # Each var is <PORTAL>_WEBHOOK_SECRET where portal names are uppercased with hyphens→underscores
+      REALITY_PORTAL_WEBHOOK_SECRET: ${REALITY_PORTAL_WEBHOOK_SECRET:-}
+      SREALITY_WEBHOOK_SECRET: ${SREALITY_WEBHOOK_SECRET:-}
+      BEZREALITKY_WEBHOOK_SECRET: ${BEZREALITKY_WEBHOOK_SECRET:-}
+      NEHNUTELNOSTI_WEBHOOK_SECRET: ${NEHNUTELNOSTI_WEBHOOK_SECRET:-}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

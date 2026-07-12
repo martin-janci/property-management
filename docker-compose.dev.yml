@@ -113,6 +113,18 @@ services:
       S3_SECRET_KEY: minioadmin123
       S3_BUCKET: ppt-documents
       S3_REGION: us-east-1
+      # Inbound webhook signing secrets — leave empty in dev unless you are
+      # tunnelling real webhook traffic in (e.g. via ngrok). Receivers fail
+      # closed when unset; setting them here enables local end-to-end testing.
+      # Integration-connection portal receiver (/api/v1/integrations/webhooks/portal/{connection_id})
+      PORTAL_WEBHOOK_SECRET: ${PORTAL_WEBHOOK_SECRET:-}
+      AIRBNB_WEBHOOK_SECRET: ${AIRBNB_WEBHOOK_SECRET:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Per-portal receiver (/api/v1/webhooks/portals/<portal>/...)
+      REALITY_PORTAL_WEBHOOK_SECRET: ${REALITY_PORTAL_WEBHOOK_SECRET:-}
+      SREALITY_WEBHOOK_SECRET: ${SREALITY_WEBHOOK_SECRET:-}
+      BEZREALITKY_WEBHOOK_SECRET: ${BEZREALITKY_WEBHOOK_SECRET:-}
+      NEHNUTELNOSTI_WEBHOOK_SECRET: ${NEHNUTELNOSTI_WEBHOOK_SECRET:-}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
