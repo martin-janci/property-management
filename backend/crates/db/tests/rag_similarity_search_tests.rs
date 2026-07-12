@@ -109,6 +109,10 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 ///   A. Similarity ranking & min_similarity floor (JSONB-fallback path)
 ///   B. Org-scoping: org A query must never surface org B chunks
 ///   C. Stats view: regression guard for migration 00203
+///   D. Upsert identity + provenance persisted into metadata (Story 84.5 / #2201)
+///   E. Provenance retrieval filter: search_documents_pgvector's model_filter
+///      drops mismatched-model rows, keeps legacy-untagged rows, respects limit
+///      (#2239 — the retrieval half of the #2201 provenance finding)
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn rag_retrieval_correctness(pool: PgPool) {
@@ -403,4 +407,138 @@ async fn rag_retrieval_correctness(pool: PgPool) {
         .await
         .expect("upsert (new chunk_index)");
     assert_ne!(third_id, first_id, "new chunk_index must create a new row");
+
+    // -------------------------------------------------------------------------
+    // E. Provenance retrieval filter (#2239): `search_documents_pgvector`'s
+    //    `model_filter` is the retrieval half of the #2201 provenance finding —
+    //    it must avoid comparing vectors produced by different embedding models
+    //    (stub vs OpenAI, both 1536-dim, live in incompatible spaces). Nothing
+    //    exercised the filtering path before: `rag_retrieval_correctness`'s
+    //    section A calls the wrapper with `None`, and the sessions.rs call site
+    //    needs a live provider key. This seeds one row per model plus a legacy
+    //    untagged row and asserts:
+    //      * a row tagged with a DIFFERENT model is dropped,
+    //      * the matching-model row is kept,
+    //      * a legacy row with NO `embedding_model` metadata is kept (documented
+    //        backward-compat behaviour of `filter_by_embedding_model`),
+    //      * `limit` is honoured after over-fetch (×4, cap 200) + post-filter.
+    // -------------------------------------------------------------------------
+
+    let org_prov = seed_org(&pool, "rag-prov-a").await;
+    let user_prov = seed_user(&pool, "prov-a@rag.test").await;
+    let doc_prov = seed_document(&pool, org_prov, user_prov, "rag-prov-doc").await;
+
+    // All three chunks share the query vector, so cosine similarity is ~1.0 for
+    // each and they all clear the min_similarity floor — the ONLY thing that can
+    // remove a row from the result set is the model provenance filter.
+    let prov_vec = [1.0_f32, 0.0, 0.0];
+
+    // chunk 0: matching model — upsert folds `embedding_model` into metadata.
+    repo.upsert_embedding(
+        &mut conn,
+        org_prov,
+        doc_prov,
+        0,
+        "prov match",
+        &prov_vec,
+        "text-embedding-3-small",
+        serde_json::json!({}),
+    )
+    .await
+    .expect("seed matching-model chunk");
+
+    // chunk 1: mismatched model — must be dropped when filtering to the query
+    // model, even though its vector is identical to the query.
+    repo.upsert_embedding(
+        &mut conn,
+        org_prov,
+        doc_prov,
+        1,
+        "prov mismatch stub",
+        &prov_vec,
+        "stub-deterministic-1536",
+        serde_json::json!({}),
+    )
+    .await
+    .expect("seed mismatched-model chunk");
+
+    // chunk 2: legacy row indexed before provenance existed — metadata carries
+    // NO `embedding_model` key, so `create_embedding` (not `upsert_embedding`,
+    // which always stamps the model) writes it directly.
+    repo.create_embedding(
+        &mut *conn,
+        org_prov,
+        doc_prov,
+        2,
+        "prov legacy untagged",
+        Some(prov_vec.to_vec()),
+        serde_json::json!({"note": "no embedding_model"}),
+    )
+    .await
+    .expect("seed legacy untagged chunk");
+
+    let prov_query = prov_vec.to_vec();
+
+    let filtered = repo
+        .search_documents_pgvector(
+            &mut conn,
+            org_prov,
+            &prov_query,
+            10,
+            Some(0.5),
+            Some("text-embedding-3-small"),
+        )
+        .await
+        .expect("provenance-filtered pgvector search");
+
+    let texts: Vec<&str> = filtered
+        .iter()
+        .map(|(emb, _)| emb.chunk_text.as_str())
+        .collect();
+
+    assert_eq!(
+        filtered.len(),
+        2,
+        "model_filter must drop the mismatched-model row and keep the matching \
+         + legacy-untagged rows, got {texts:?}"
+    );
+    assert!(
+        texts.contains(&"prov match"),
+        "the row tagged with the query model must be kept, got {texts:?}"
+    );
+    assert!(
+        texts.contains(&"prov legacy untagged"),
+        "a legacy row with no embedding_model provenance must be kept \
+         (backward compat), got {texts:?}"
+    );
+    assert!(
+        !texts.contains(&"prov mismatch stub"),
+        "a row tagged with a different embedding_model must be dropped, got {texts:?}"
+    );
+
+    // `limit` is applied AFTER over-fetch + provenance filtering: with the filter
+    // active the wrapper over-fetches (×4, cap 200) then truncates to `limit`, so
+    // a limit of 1 yields exactly one surviving row — and it is never the
+    // mismatched-model chunk that the filter already removed.
+    let limited = repo
+        .search_documents_pgvector(
+            &mut conn,
+            org_prov,
+            &prov_query,
+            1,
+            Some(0.5),
+            Some("text-embedding-3-small"),
+        )
+        .await
+        .expect("provenance-filtered pgvector search (limited)");
+
+    assert_eq!(
+        limited.len(),
+        1,
+        "limit=1 must cap the provenance-filtered result set to a single row"
+    );
+    assert_ne!(
+        limited[0].0.chunk_text, "prov mismatch stub",
+        "the retained row must never be the dropped mismatched-model chunk"
+    );
 }
