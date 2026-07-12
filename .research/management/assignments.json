@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-12T14:08:00Z",
+  "generated": "2026-07-12T14:38:04Z",
   "assignments": [
     {
       "task_id": "gh-issue-2238",
@@ -136,18 +136,18 @@
     {
       "task_id": "gh-issue-2244",
       "branch": "auto-impl/gh-issue-2244-17dfa5b9",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-12T14:08:00Z",
-      "last_updated": "2026-07-12T14:08:00Z",
-      "status_changed_at": "2026-07-12T14:08:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-12T14:38:04Z",
+      "status_changed_at": "2026-07-12T14:38:04Z",
+      "pr_number": 2257,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2257",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "db-migration",
+      "implementer_summary": "pr=2257 status=done specialist=db-migration scope_drift=true code_reuse_warn=none note=00214 SECURITY DEFINER portal_track_listing_view + repo/handler wiring + FORCE-RLS test; db tests 2/2 green; reality-server compile deferred to CI (env swagger-ui download fail)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
