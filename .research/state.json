@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-09T02:37:00Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2185,
-  "last_issue_seen": 2087,
-  "last_commit_sha": "5877ade",
+  "last_run_iso": "2026-07-12T18:00:00Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 2261,
+  "last_issue_seen": 2263,
+  "last_commit_sha": "b5850f8",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -318,9 +318,9 @@
       "recent_churn": 484
     },
     "backend/servers/api-server/tests/booking_oauth_routes_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-16",
-      "recent_churn": 381
+      "runs_seen": 2,
+      "last_seen": "2026-07-12",
+      "recent_churn": 217
     },
     "backend/crates/db/src/models/mod.rs": {
       "runs_seen": 1,
@@ -336,6 +336,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-09",
       "recent_churn": 2818
+    },
+    "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-12",
+      "recent_churn": 709
+    },
+    "frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-12",
+      "recent_churn": 214
     }
   },
   "seen_signals": [
@@ -377,6 +387,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/tests/booking_oauth_routes_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
@@ -404,6 +415,8 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/settings/integrations/IntegrationsPage.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
@@ -428,8 +441,10 @@
     "code-review-api-core-vote-partial-cmp-panic",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
     "code-review-api-handlers-forgot-password-no-rate-limit",
+    "code-review-api-handlers-raw-db-error-leak",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
+    "code-review-api-handlers-suspended-enum-oracle",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
@@ -437,6 +452,7 @@
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-no-http-timeout",
     "code-review-mobile-native-kmp-search-stale-response-race",
     "code-review-mobile-rn-deeplink-init-unhandled",
     "code-review-mobile-rn-hardcoded-locale",
@@ -449,10 +465,13 @@
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
+    "code-review-ppt-web-ui-moderation-prompt-unvalidated",
     "code-review-ppt-web-ui-role-gate-fail-open",
+    "code-review-ppt-web-ui-sessionspage-unsafe-cast",
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-reality-server-inquiry-read-idor",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-listing-metadata-shape",
     "code-review-reality-web-listing-page-ssr-crash",
@@ -467,6 +486,12 @@
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
+    "dep-update-noise-pr-2209",
+    "dep-update-noise-pr-2210",
+    "dep-update-noise-pr-2211",
+    "dep-update-noise-pr-2212",
+    "dep-update-noise-pr-2228",
+    "dep-update-noise-pr-2232",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -497,6 +522,7 @@
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
     "lag-warning-2026-07-09",
+    "lag-warning-2026-07-12",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -582,19 +608,19 @@
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-09",
+    "api-handlers": "2026-07-12",
     "api-core": "2026-06-15",
-    "reality-server": "2026-06-11",
-    "ppt-web-ui": "2026-06-11",
+    "reality-server": "2026-07-12",
+    "ppt-web-ui": "2026-07-12",
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 42,
-    "vectors_created": 182,
-    "plans_created": 14,
+    "runs": 43,
+    "vectors_created": 188,
+    "plans_created": 16,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
