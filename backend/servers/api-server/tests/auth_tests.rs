@@ -360,6 +360,55 @@ mod token_refresh {
         response.assert_status(StatusCode::UNPROCESSABLE_ENTITY);
     }
 
+    /// Regression for #2238 / PR #2205: a present-but-empty `refresh_token=;`
+    /// cookie must NOT shadow a valid token supplied in the JSON body.
+    ///
+    /// Before the fix, `parse_refresh_cookie` returned `Some("")` for an empty
+    /// cookie, so `resolve_refresh_token` chose the empty cookie over the body
+    /// token and `/auth/refresh` failed with `MISSING_TOKEN`. This is the
+    /// handler-level counterpart to the `parse_refresh_cookie` unit test — it
+    /// drives the real `refresh_token()` handler so a future refactor at the
+    /// call site (e.g. dropping the empty-cookie guard or reordering
+    /// precedence) can't silently reintroduce the bug.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn empty_cookie_does_not_shadow_body_token_on_refresh(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (_access, refresh_token) = create_authenticated_user(&app, &user).await;
+
+        // Cookie-based clients that have "cleared" the cookie send
+        // `refresh_token=;` (present but empty). The valid token lives in the
+        // body. The handler must fall through to the body token, not stall.
+        let request = app
+            .post("/api/v1/auth/refresh")
+            .header("Cookie", "refresh_token=;")
+            .json(json!({ "refreshToken": refresh_token }))
+            .build();
+        let response = app.execute(request).await;
+
+        response.assert_status(StatusCode::OK);
+
+        // A successful refresh returns a rotated token pair, not MISSING_TOKEN.
+        let body = response.json_value();
+        assert!(
+            body.get("accessToken").and_then(Value::as_str).is_some(),
+            "empty cookie must not shadow the body token: expected a rotated \
+             accessToken, got {body}"
+        );
+        let new_refresh = body
+            .get("refreshToken")
+            .and_then(Value::as_str)
+            .expect("refresh response must carry a rotated refreshToken");
+        assert_ne!(
+            new_refresh, refresh_token,
+            "refresh must rotate the token, not echo the input"
+        );
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
     /// Regression for #676: `/auth/refresh` must return a **fresh** tenant
     /// list from the database — not the membership set frozen at login time.
     ///
@@ -563,6 +612,48 @@ mod logout {
         // revokes the supplied refresh token (if found) and always returns 200,
         // so it can't be used to probe token validity (anti-enumeration).
         response.assert_status(StatusCode::OK);
+    }
+
+    /// Regression for #2238 / PR #2205: `/auth/logout` must revoke the session
+    /// named by the body token even when a present-but-empty `refresh_token=;`
+    /// cookie is also sent.
+    ///
+    /// Before the fix, `resolve_refresh_token` picked the empty cookie over the
+    /// body token, so `logout` hashed the empty string, `find_by_token_hash`
+    /// missed, and the real session was silently left live (logout still
+    /// returned 200 for anti-enumeration, masking the no-op). We assert the
+    /// session is *actually* revoked by proving the token no longer refreshes.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn empty_cookie_does_not_shadow_body_token_on_logout(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (_access, refresh_token) = create_authenticated_user(&app, &user).await;
+
+        // Logout with an empty cookie shadowing a valid body token.
+        let request = app
+            .post("/api/v1/auth/logout")
+            .header("Cookie", "refresh_token=;")
+            .json(json!({ "refreshToken": refresh_token }))
+            .build();
+        app.execute(request).await.assert_status(StatusCode::OK);
+
+        // The session must be genuinely revoked: refreshing that token now
+        // fails. On the pre-fix (empty-string no-op) path logout was a no-op,
+        // so this refresh would still succeed with 200 — this guards the real
+        // revocation. The header carries the token so the empty-cookie path is
+        // not exercised again here.
+        let post = app
+            .post("/api/v1/auth/refresh")
+            .header("X-Refresh-Token", &refresh_token)
+            .json(json!({ "refreshToken": "" }))
+            .build();
+        app.execute(post)
+            .await
+            .assert_status(StatusCode::UNAUTHORIZED);
+
+        cleanup_test_user(&pool, &user.email).await;
     }
 }
 
