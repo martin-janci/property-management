@@ -1040,8 +1040,7 @@ impl LlmDocumentRepository {
         // Over-fetch when a provenance filter is active so post-filtering still
         // returns up to `limit` compatible rows (capped to avoid unbounded scans).
         let fetch_limit = if model_filter.is_some() {
-            // Not `clamp(limit, 200)`: that panics (min > max) when limit > 200.
-            limit.saturating_mul(4).min(200).max(limit)
+            over_fetch_limit(limit, 4, 200)
         } else {
             limit
         };
@@ -2081,6 +2080,22 @@ impl LlmDocumentRepository {
 // Story 97.2: RAG Helper Functions
 // =============================================================================
 
+/// Widen a top-k `limit` into an over-fetch window for provenance-filtered
+/// pgvector search, then cap it to bound the scan.
+///
+/// `search_documents_pgvector` over-fetches when a `model_filter` is active so
+/// that dropping provenance-mismatched rows still leaves up to `limit`
+/// compatible results. The window is `limit * multiplier`, capped at `cap`,
+/// but never smaller than `limit` itself.
+///
+/// Written as `.min(cap).max(limit)` on purpose — NOT `clamp(limit, cap)`:
+/// `i32::clamp(min, max)` panics when `min > max`, which happens whenever
+/// `limit > cap`. This ordering is panic-free for every `i32` input, and
+/// `saturating_mul` guards the multiply against overflow. See #2237.
+fn over_fetch_limit(limit: i32, multiplier: i32, cap: i32) -> i32 {
+    limit.saturating_mul(multiplier).min(cap).max(limit)
+}
+
 /// Calculate cosine similarity between two vectors.
 /// Returns a value between -1.0 (opposite) and 1.0 (identical).
 /// Used for semantic similarity search in RAG.
@@ -2162,5 +2177,49 @@ mod tests {
         let similarity = cosine_similarity(&a, &b);
         // Should be very similar (close to 1.0)
         assert!(similarity > 0.99);
+    }
+
+    // -------------------------------------------------------------------------
+    // #2237: regression guard for the pgvector over-fetch clamp-panic.
+    //
+    // The provenance-filter over-fetch used to be `clamp(limit, 200)`, which
+    // panics (`min > max`) whenever `limit > 200`. `search_documents_pgvector`
+    // is reached from RAG retrieval paths that don't pre-clamp `limit`, so a
+    // caller-supplied `limit > 200` would crash the request. These pin the
+    // boundary that used to panic and stop a refactor reintroducing `clamp`.
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn over_fetch_limit_widens_below_cap() {
+        // Headroom below the cap: limit * multiplier, untouched by min/max.
+        assert_eq!(over_fetch_limit(10, 4, 200), 40);
+    }
+
+    #[test]
+    fn over_fetch_limit_caps_at_ceiling() {
+        // limit * multiplier exceeds the cap → capped, still >= limit.
+        assert_eq!(over_fetch_limit(60, 4, 200), 200);
+    }
+
+    #[test]
+    fn over_fetch_limit_never_panics_when_limit_exceeds_cap() {
+        // The historical panic: limit > cap. `clamp(limit, cap)` would panic
+        // here (min=limit > max=cap); the `.min().max()` ordering returns
+        // `limit` unharmed.
+        assert_eq!(over_fetch_limit(250, 4, 200), 250);
+    }
+
+    #[test]
+    fn over_fetch_limit_handles_multiply_overflow() {
+        // saturating_mul must not panic/wrap on a huge limit; result is still
+        // clamped up to at least `limit`.
+        assert_eq!(over_fetch_limit(i32::MAX, 4, 200), i32::MAX);
+    }
+
+    #[test]
+    fn over_fetch_limit_matches_the_call_site_arguments() {
+        // Guards the exact (multiplier=4, cap=200) contract used by
+        // search_documents_pgvector for a typical top-k of 10.
+        assert_eq!(over_fetch_limit(10, 4, 200), 40);
     }
 }
