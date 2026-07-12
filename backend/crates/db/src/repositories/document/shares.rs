@@ -209,7 +209,7 @@ impl DocumentRepository {
             r#"
             INSERT INTO document_share_access_log (share_id, accessed_by, ip_address)
             VALUES ($1, $2, $3::inet)
-            RETURNING *
+            RETURNING id, share_id, accessed_by, accessed_at, ip_address::TEXT AS ip_address
             "#,
         )
         .bind(data.share_id)
@@ -219,11 +219,26 @@ impl DocumentRepository {
         .await
     }
 
-    /// Get share access log with RLS context.
+    /// Get share access log with RLS context, scoped to its owning document.
+    ///
+    /// The `document_id` predicate is the same defense-in-depth invariant as
+    /// `revoke_share_rls` (#2197, extended in #2243): `document_shares` and the
+    /// access-log table are RLS-tenant-scoped only, so a bare
+    /// `WHERE share_id = $1` read lets a caller authorized for document A read
+    /// the access log of a share belonging to document B in the same tenant (a
+    /// cross-document IDOR of the identical shape #2197 closed for revoke).
+    /// Constraining the read to shares under `document_id = $2` pushes that
+    /// invariant into the data layer before any handler consumes it, so a future
+    /// `GET /{id}/shares/{share_id}/access-log` endpoint cannot reintroduce the
+    /// vulnerability by dropping a handler guard.
+    ///
+    /// A `share_id` that does not belong to `document_id` (non-existent or a
+    /// cross-document mismatch) yields an empty result.
     pub async fn get_share_access_log_rls<'e, E>(
         &self,
         executor: E,
         share_id: Uuid,
+        document_id: Uuid,
         limit: Option<i64>,
     ) -> Result<Vec<ShareAccessLog>, SqlxError>
     where
@@ -233,13 +248,18 @@ impl DocumentRepository {
 
         sqlx::query_as::<_, ShareAccessLog>(
             r#"
-            SELECT * FROM document_share_access_log
+            SELECT id, share_id, accessed_by, accessed_at, ip_address::TEXT AS ip_address
+            FROM document_share_access_log
             WHERE share_id = $1
+              AND share_id IN (
+                  SELECT id FROM document_shares WHERE document_id = $2
+              )
             ORDER BY accessed_at DESC
-            LIMIT $2
+            LIMIT $3
             "#,
         )
         .bind(share_id)
+        .bind(document_id)
         .bind(limit)
         .fetch_all(executor)
         .await
@@ -352,9 +372,13 @@ impl DocumentRepository {
         self.log_share_access_rls(&self.pool, data).await
     }
 
-    /// Get share access log.
+    /// Get share access log, scoped to its owning document.
     ///
     /// **Deprecated**: Use `get_share_access_log_rls` with an RLS-enabled connection instead.
+    ///
+    /// The `document_id` predicate is the cross-document scoping invariant (see
+    /// `get_share_access_log_rls`); a `share_id` outside `document_id` yields an
+    /// empty result.
     #[deprecated(
         since = "0.2.276",
         note = "Use get_share_access_log_rls with RlsConnection instead"
@@ -363,9 +387,10 @@ impl DocumentRepository {
     pub async fn get_share_access_log(
         &self,
         share_id: Uuid,
+        document_id: Uuid,
         limit: Option<i64>,
     ) -> Result<Vec<ShareAccessLog>, SqlxError> {
-        self.get_share_access_log_rls(&self.pool, share_id, limit)
+        self.get_share_access_log_rls(&self.pool, share_id, document_id, limit)
             .await
     }
 }
