@@ -4213,6 +4213,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2239",
+      "branch": "auto-impl/gh-issue-2239-9729b8a7",
+      "status": "merged",
+      "claimed_at": "2026-07-12T12:12:00Z",
+      "last_updated": "2026-07-12T18:16:00Z",
+      "status_changed_at": "2026-07-12T18:16:00Z",
+      "pr_number": 2265,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2265",
+      "merged_at": "2026-07-12T18:13:33Z",
+      "specialist": null,
+      "implementer_summary": "[sandbox-reclaim: no branch after timeout; respawned specialist, reclaim_attempts=1]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2241",
       "branch": "auto-impl/gh-issue-2241-fe051931",
       "status": "failed",
@@ -4224,6 +4248,30 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "[sandbox-reclaim: no branch after timeout; respawned specialist, reclaim_attempts=1] [sandbox-failure-after-reclaim; no branch after 1 reclaim]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "gh-issue-2242",
+      "branch": "auto-impl/gh-issue-2242-09c058d9",
+      "status": "merged",
+      "claimed_at": "2026-07-12T12:12:00Z",
+      "last_updated": "2026-07-12T18:16:00Z",
+      "status_changed_at": "2026-07-12T18:16:00Z",
+      "pr_number": 2264,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2264",
+      "merged_at": "2026-07-12T18:13:37Z",
+      "specialist": null,
+      "implementer_summary": "[sandbox-reclaim: no branch after timeout; respawned specialist, reclaim_attempts=1]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -4975,5 +5023,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T18:11:32Z"
+  "archived_at": "2026-07-12T18:15:21Z"
 }
