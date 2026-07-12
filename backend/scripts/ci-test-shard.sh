@@ -122,8 +122,11 @@ if [ "$#" -eq 1 ] && [ "$1" = "rest" ]; then
   run --workspace "${exclude_args[@]}" || rc=1
   # Each server crate's unit tests (lib + bins) and doctests. Its integration
   # binaries live on the shards; --doc closes the #2248 finding-3 gap.
+  # cargo forbids mixing --doc with other target selectors, so doctests run
+  # as a separate invocation.
   for crate in "${server_crates[@]}"; do
-    run -p "$crate" --lib --bins --doc || rc=1
+    run -p "$crate" --lib --bins || rc=1
+    run -p "$crate" --doc || rc=1
   done
   exit "$rc"
 fi
