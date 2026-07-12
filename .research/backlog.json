@@ -4353,6 +4353,158 @@
         "assignment_status": "merged",
         "pr_number": 2205
       }
+    },
+    {
+      "id": "test-gap-oauth-integration-tests-r2",
+      "title": "oauth_integration_tests.rs still churning — new baseline hotspot after 2026-06-16 dropped v1",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-07-09→2026-07-12"
+      ],
+      "evidence": [
+        "2719 lines churned across #2205/#2234/#2250; previous test-gap-repeated-churn item dropped 2026-07-05 without stabilization plan"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-booking-mod-r2",
+      "title": "booking/mod.rs repeated-churn (runs_seen 1→2) after PRs #2230/#2231 landed",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot history 2026-07-09 & 2026-07-12"
+      ],
+      "evidence": [
+        "3057 lines this run following #2231 booking OTA retry test cover + #2230 OtaReadRS envelopes. Previous refactor-churn-hotspot-backend-integrations-booking-mod done via #2231; file still hot."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-auth-rs-r3",
+      "title": "routes/auth.rs still repeated-churn (runs_seen 2→3) after PR #2250 refresh-token refactor",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot history 2026-05-23 / 2026-07-09 / 2026-07-12"
+      ],
+      "evidence": [
+        "3024 lines this run despite PR #2250 extracting shared refresh-token helpers. File may still be over-large; module-split candidate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1797",
+      "title": "PR #1797 (auth on OCR + manager-gate rental PII) closed unmerged — superseded",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1797",
+        "issue #1772",
+        "issue #1766"
+      ],
+      "evidence": [
+        "Draft PR #1797 closed 2026-07-11. Underlying #1772/#1766 both closed complete. Current code has AuthUser on process_meter_reading (routes/ai/ocr.rs:125), require_manager_in_org on 4 rental reads (routes/rentals.rs:469/561/686/943). Concerns already resolved elsewhere.",
+        "resolved: code patterns no longer present in cited files — AuthUser + require_manager_in_org already applied in current dev."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs",
+        "backend/servers/api-server/src/routes/rentals.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "security-reality-agency-invitation-no-membership",
+      "title": "reality-server create_invitation lacks agency-membership check — any authed user can mint invitation for any agency",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-07-12"
+      ],
+      "evidence": [
+        "routes/agencies.rs:332 create_invitation has RequestPrincipal but never calls check_agency_membership (unlike siblings update_agency:227, update_branding:281).",
+        "repositories/reality_portal/agencies.rs:198 create_invitation blindly INSERTs with no membership/role verification on invited_by vs agency_id.",
+        "Impact: cross-agency privilege escalation (defaults to 'realtor'); invitee accepts and becomes full member."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": "plans/security-reality-agency-invitation-no-membership.md"
+    },
+    {
+      "id": "security-reality-list-members-unauth",
+      "title": "reality-server list_members has no auth extractor — unauthenticated agency roster enumeration",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-12"
+      ],
+      "evidence": [
+        "routes/agencies.rs:304 list_members signature is `State + Path<Uuid>` only — no RequestPrincipal/PortalPrincipal despite utoipa 401 in the doc.",
+        "routes/agencies.rs:33 router mounts /{id}/members with no auth middleware.",
+        "Unauthenticated enumeration of agency member user_ids + roles + is_active + join/leave timestamps."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "bug-reality-imports-pagination-total-lies",
+      "title": "reality-server imports list handlers return `total = jobs.len()` — pagination lie + unbounded limit",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-12"
+      ],
+      "evidence": [
+        "routes/imports.rs:141 list_import_jobs sets `total = jobs.len() as i64` (page length, not COUNT).",
+        "routes/imports.rs:347 list_feeds does the same.",
+        "routes/imports.rs:130 no upper-bound clamp on query.limit. inquiries.rs:479 explicitly documents this same bug pattern and its fix."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
     }
   ]
 }

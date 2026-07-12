@@ -1,0 +1,269 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "routine self-signal",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Last successful commit 2026-07-09T02:37Z; today 2026-07-12 — 3d 11h gap. Routine cadence still recovering from 19d catch-up earlier in the month."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log churn (2026-07-09→2026-07-12)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs — 3057 lines this window (PRs #2230 OtaReadRS envelopes, #2231 booking OTA retry). Cumulative re-emit."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log churn (2026-07-09→2026-07-12)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs — 3024 lines this window (PRs #2205 refresh-cookie fix, #2234 rate-limit, #2250 refactor). Cumulative re-emit."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log churn (2026-07-09→2026-07-12)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs — 2719 lines churned this window across auth-related PRs (#2205, #2234, #2250)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "booking/mod.rs runs_seen 1→2 (previously seen 2026-07-09; now 3057 lines again this run)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "routes/auth.rs runs_seen 2→3 (still churning after PR #2250 refactor)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "oauth_integration_tests.rs runs_seen 3→4. Cumulative re-emit."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1797",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1797",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "PR #1797 (fix(api-server): auth on OCR endpoints + manager-gate rental guest PII reads (#1772, #1766)) — closed 2026-07-11 unmerged, was a draft.",
+        "Both underlying issues #1772 and #1766 are CLOSED as completed. Current code has AuthUser on process_meter_reading (routes/ai/ocr.rs:125) and require_manager_in_org on list_bookings/get_booking/get_booking_with_guests/get_guest (routes/rentals.rs:469/561/686/943). Concerns resolved by other PRs; the draft was superseded."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agency-invitation-no-membership-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:332 — create_invitation extracts RequestPrincipal but never verifies caller is a member of agency_id (siblings update_agency:227 and update_branding:281 both call check_agency_membership).",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:198 — repo just INSERTs into reality_agency_invitations with no invited_by-vs-agency_id membership/role check.",
+        "Impact: any authenticated portal user can mint an invitation token for any agency (defaults to 'realtor' role); invitee accepts and becomes a full member — cross-agency privilege escalation, same trust-surface class as #2249/#2254."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-list-members-unauthenticated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:304 — list_members handler signature is `State + Path<Uuid>` only, no RequestPrincipal / PortalPrincipal extractor. utoipa doc advertises 401 that no path can produce.",
+        "backend/servers/reality-server/src/routes/agencies.rs:33 — router mounts `.route(\"/{id}/members\", get(list_members))` with no auth middleware layer.",
+        "Any unauthenticated caller can enumerate agency member user_ids + roles + is_active + joined_at/left_at timestamps for any known agency UUID."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-imports-pagination-total-lies",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:141 — `let total = jobs.len() as i64;` returns current page length instead of COUNT(*); paginated clients treat page-1 as complete. Same bug pattern inquiries.rs:479 explicitly documented and fixed.",
+        "backend/servers/reality-server/src/routes/imports.rs:347 — list_feeds does the same `total = feeds.len() as i64`.",
+        "backend/servers/reality-server/src/routes/imports.rs:130 — no upper-bound clamp on `query.limit`; unbounded page-size + wrong total = doubly-broken pagination surface."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/... && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged-vs-HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique-ids jq",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative-allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items pre-run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass",
+      "observed": "1",
+      "expected": ">=1 per new plan"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "paths outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "n/a — no phase reported failure",
+      "observed": "no failure",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans present",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now=7 head=7",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix caps",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "skipped",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "pm_skipped_reason": "budget preservation — Phase 1.6 skipped this run; pm_cursor/coverage_cursor unchanged",
+  "auto_fix_skipped_reason": "no candidate — no signal met allowlist × confidence:high × score>=3"
+}
