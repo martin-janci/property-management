@@ -2,19 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable]",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-07T14:21:22Z",
-      "last_updated": "2026-07-07T14:21:22Z"
-    },
-    {
       "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
       "action": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
       "owner_role": "pm-backend",
@@ -413,18 +400,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "code-review-mobile-native-kmp-notifrepo-no-test",
-      "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1d-devreview 2026-07-08",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-08T08:10:10Z"
     },
     {
       "id": "test-gap-screen-map-drift-pr-1100-ppt-retry1",

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-11T20:10:58Z",
+  "archived_at": "2026-07-12T00:16:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -791,6 +791,25 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-22 (backlog.json promote) [dispatcher 2026-07-07: orphaned-promote (in-progress 15d, no assignment) → reopened to claimable] | dev-reconcile 2026-07-12T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-07T14:21:22Z",
+      "last_updated": "2026-07-07T14:21:22Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "19fe20b26f7c3468d6e8682b5cad06e7ab5cafc5",
+        "subject": "churn-hotspot-backend-crates-integrations-src-booking-rs: cover booking OTA retry delay + transport-error paths (#2231)",
+        "at": "2026-07-12T00:07:12Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
       "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
       "owner_role": "pm-backend",
@@ -1254,6 +1273,24 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-08T08:10:10Z"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-notifrepo-no-test",
+      "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-07-08 | dev-reconcile 2026-07-12T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-08T08:10:10Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "7312c6b2cf31d3baca7cb52eb34faa0b5ca5bd9a",
+        "subject": "code-review-mobile-native-kmp-notifrepo-no-test: NotificationRepository repository test (#2229)",
+        "at": "2026-07-12T00:07:12Z"
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-search-stale-response-race",
