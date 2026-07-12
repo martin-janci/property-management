@@ -209,7 +209,7 @@ impl DocumentRepository {
             r#"
             INSERT INTO document_share_access_log (share_id, accessed_by, ip_address)
             VALUES ($1, $2, $3::inet)
-            RETURNING *
+            RETURNING id, share_id, accessed_by, accessed_at, ip_address::TEXT AS ip_address
             "#,
         )
         .bind(data.share_id)
@@ -248,7 +248,8 @@ impl DocumentRepository {
 
         sqlx::query_as::<_, ShareAccessLog>(
             r#"
-            SELECT * FROM document_share_access_log
+            SELECT id, share_id, accessed_by, accessed_at, ip_address::TEXT AS ip_address
+            FROM document_share_access_log
             WHERE share_id = $1
               AND share_id IN (
                   SELECT id FROM document_shares WHERE document_id = $2
