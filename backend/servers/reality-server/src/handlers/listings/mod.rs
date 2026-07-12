@@ -122,14 +122,19 @@ impl ListingHandler {
     }
 
     /// Track a listing view.
-    /// Increments the view count for analytics.
-    pub async fn track_view(&self, _listing_id: Uuid, _source: &str) -> Result<(), String> {
-        // View tracking would typically:
-        // 1. Increment daily analytics counter
-        // 2. Track unique views by session/IP
-        // 3. Record source (website, mobile, search, direct)
-        tracing::debug!(listing_id = %_listing_id, source = %_source, "Tracking listing view");
-        Ok(())
+    ///
+    /// Increments the daily analytics counters for the listing. Previously a
+    /// no-op stub that never recorded anything; it now routes through the real
+    /// write path — `RealityPortalRepository::track_view`, backed by the
+    /// SECURITY DEFINER `portal_track_listing_view` function (migration 00214) —
+    /// so views on portal listings actually land in `listing_analytics` despite
+    /// its FORCE-RLS org-only policy (#2244). Best-effort at the call site.
+    pub async fn track_view(&self, listing_id: Uuid, source: &str) -> Result<(), String> {
+        tracing::debug!(%listing_id, %source, "Tracking listing view");
+        db::repositories::RealityPortalRepository::new(self.repo.pool().clone())
+            .track_view(listing_id, source)
+            .await
+            .map_err(|e| format!("Failed to track listing view: {}", e))
     }
 
     /// Get popular searches for suggestions.
