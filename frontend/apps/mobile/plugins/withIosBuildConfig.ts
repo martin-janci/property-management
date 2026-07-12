@@ -50,7 +50,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { type ConfigPlugin, withDangerousMod, withXcodeProject } from '@expo/config-plugins';
 
-/** Supported environments — mirrors app.config.ts AppEnvironment. */
+/** Supported environments — single source of truth, imported by app.config.ts. */
 export type AppEnvironment = 'development' | 'staging' | 'production';
 
 /** Basename of the xcconfig copied into the generated `ios/` project. */
@@ -64,9 +64,10 @@ export const TEMPLATE_BY_ENV: Record<AppEnvironment, string> = {
 };
 
 /**
- * Resolve the active environment. Kept in lockstep with app.config.ts
- * `getAppEnv()` so the native build layer and the JS runtime layer never
- * disagree about which environment a build is.
+ * Resolve the active environment. Single source of truth for the APP_ENV ->
+ * environment mapping — imported by app.config.ts (the JS runtime layer) so it
+ * and the native xcconfig build layer can never disagree about which
+ * environment a build is.
  */
 export function resolveAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnvironment {
   const raw = env.APP_ENV ?? '';
