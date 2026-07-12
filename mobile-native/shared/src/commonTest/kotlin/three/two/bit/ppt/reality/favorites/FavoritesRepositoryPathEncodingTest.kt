@@ -4,9 +4,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
@@ -50,7 +53,14 @@ class FavoritesRepositoryPathEncodingTest {
                 headers = headersOf(HttpHeaders.ContentType, "application/json"),
             )
         }
-        val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
+        val client =
+            HttpClient(engine) {
+                install(ContentNegotiation) { json(json) }
+                // Mirror HttpClientProvider: updateSavedSearch calls setBody without an explicit
+                // contentType, relying on the default JSON content type — without it the request
+                // never leaves the client and the captured method/path stay null.
+                defaultRequest { contentType(ContentType.Application.Json) }
+            }
         return FavoritesRepository(
             baseUrl = "https://example.test",
             sessionToken = "test-token",
