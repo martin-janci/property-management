@@ -4167,6 +4167,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2237",
+      "branch": "auto-impl/gh-issue-2237-e9f89a04",
+      "status": "merged",
+      "claimed_at": "2026-07-12T10:06:54Z",
+      "last_updated": "2026-07-12T14:08:00Z",
+      "status_changed_at": "2026-07-12T14:08:00Z",
+      "pr_number": 2256,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2256",
+      "merged_at": "2026-07-12T13:36:24Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=changes head_oid=5f0daa6a69025938054e97ee52e7332da8c82325 note=build-android CI red on new test FavoritesRepositoryPathEncodingTest.updateSavedSearch line91 path assertion; Rust helper+tests clean",
+      "last_reviewed_oid": "5f0daa6a69025938054e97ee52e7332da8c82325",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2249",
       "branch": "auto-impl/gh-issue-2249-6b42f774",
       "status": "merged",
@@ -4785,5 +4807,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T12:14:20Z"
+  "archived_at": "2026-07-12T14:08:27Z"
 }

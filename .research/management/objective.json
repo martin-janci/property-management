@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2249",
-  "selected_at": "2026-07-12T04:06:16Z",
+  "epic_prefix": "gh-issue-2244",
+  "selected_at": "2026-07-12T14:06:32Z",
   "last_action": "repick",
-  "reason": "prior target 'code-review-mobile-native-kmp-deeplink-token-not-url-decoded-retry1' exhausted; closest-to-done is 'gh-issue-2249' (open=1 claimable=1)",
+  "reason": "prior target 'gh-issue-2249' exhausted; closest-to-done is 'gh-issue-2244' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

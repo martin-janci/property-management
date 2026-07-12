@@ -543,20 +543,6 @@
       "last_updated": "2026-07-11T20:09:57Z"
     },
     {
-      "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixed in PR #1287 [retry 1/2 of failed test-gap-hotfix-no-test-pr-1292-mfa-rls]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=test-gap-hotfix-no-test-pr-1292-mfa-rls reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T12:16:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T14:11:06Z",
-      "retry_of": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
-      "retry_round": 1
-    },
-    {
       "id": "churn-hotspot-mobile-native-search-screen-kt-retry1",
       "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters) [retry 1/2 of failed churn-hotspot-mobile-native-search-screen-kt]",
       "owner_role": "pm-frontend",
@@ -585,34 +571,6 @@
       "retry_round": 1
     },
     {
-      "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions-retry1",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] AI llm/sessions + integrations sync + subscriptions RLS migration (PR #1287, PAP-169) shipped without a new regression test [retry 1/2 of failed test-gap-hotfix-no-test-pr-1287-rls-llm-sessions]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T20:05:24Z (retry_of=test-gap-hotfix-no-test-pr-1287-rls-llm-sessions reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T18:08:05Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T20:05:24Z",
-      "retry_of": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
-      "retry_round": 1
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem-retry1",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test for the public-connection routing [retry 1/2 of failed test-gap-hotfix-no-test-pr-1289-api-ecosystem]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T20:05:24Z (retry_of=test-gap-hotfix-no-test-pr-1289-api-ecosystem reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T18:08:05Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T20:05:24Z",
-      "retry_of": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
-      "retry_round": 1
-    },
-    {
       "id": "refactor-churn-hotspot-mobile-announcements-retry1",
       "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy [retry 1/2 of failed refactor-churn-hotspot-mobile-announcements]",
       "owner_role": "pm-frontend",
@@ -625,46 +583,6 @@
       "first_open_at": "2026-07-11T20:05:24Z",
       "retry_of": "refactor-churn-hotspot-mobile-announcements",
       "retry_round": 1
-    },
-    {
-      "id": "gh-issue-2236",
-      "action": "Follow-up: finish the env-resolver de-dup — stale getAppEnv() comment + duplicated AppEnvironment type (PR #2227) (Closes #2236)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2236)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-12T02:04:59Z",
-      "issue_ref": {
-        "number": 2236,
-        "url": "https://github.com/martin-janci/property-management/issues/2236",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2237",
-      "action": "Follow-up: lock the pgvector clamp-panic fix with a test + cover refactored KMP path encoders (PR #2226) (Closes #2237)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2237)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-12T02:04:59Z",
-      "issue_ref": {
-        "number": 2237,
-        "url": "https://github.com/martin-janci/property-management/issues/2237",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     },
     {
       "id": "gh-issue-2238",
@@ -883,27 +801,6 @@
         "labels": [
           "follow-up",
           "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2249",
-      "action": "security: reality-server SSO exchange trusts client-supplied roles → portal privilege escalation (Closes #2249)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-12T04:04:23Z (#2249)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-12T04:04:23Z",
-      "issue_ref": {
-        "number": 2249,
-        "url": "https://github.com/martin-janci/property-management/issues/2249",
-        "labels": [
-          "security",
-          "backend",
-          "follow-up"
         ]
       }
     },
