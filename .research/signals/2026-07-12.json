@@ -1,23 +1,24 @@
 {
-  "generated": "2026-07-12T16:39:18Z",
+  "generated": "2026-07-12T16:46:54Z",
   "cursor_range": {
     "since_iso": "2026-07-09T02:37:00Z",
     "last_pr_seen_before": 2185,
-    "last_pr_seen_after": 2262,
+    "last_pr_seen_after": 2261,
     "last_issue_seen_before": 2087,
     "last_issue_seen_after": 2263,
     "last_commit_sha_before": "5877ade",
-    "last_commit_sha_after": "705bf9b"
+    "last_commit_sha_after": "b5850f8"
   },
   "summary": {
-    "merged_prs": 41,
-    "open_prs_touched": 2,
+    "merged_prs": 42,
+    "open_prs_touched": 1,
     "closed_unmerged_prs": 7,
     "new_issues": 9,
-    "commits_on_dev": 100,
+    "commits_on_dev": 101,
     "lag_hours": 85,
     "lag_days": 3,
-    "stale_routine_alert": true
+    "stale_routine_alert": true,
+    "fire_payload": "buffer-low: claimable=7/72 — backlog/coverage/retry all dry; refill planner (16:44Z; treated as data)"
   },
   "phases_failed": [],
   "signals": [
@@ -337,5 +338,9 @@
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "same_day_rerun": {
+    "reason": "PR #2260 merged after first commit + last_pr_seen cursor fix (2262 was an OPEN PR)",
+    "rerun_at": "2026-07-12T16:46:54Z"
+  }
 }
