@@ -1,5 +1,5 @@
 {
-  "run_ts": "2026-07-12T20:20:00Z",
+  "run_ts": "2026-07-12T20:26:00Z",
   "signals": [
     {
       "id": "code-review-api-handlers-suspended-enum-oracle",
@@ -329,5 +329,7 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type + high confidence + score>=3 combination this run"
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type + high confidence + score>=3 combination this run",
+  "refill_run": true,
+  "refill_trigger": "buffer-low: claimable=4/72 \u2014 refill planner (coverage exhausted: 44 done/5 partial, backlog+retry avail=0)"
 }

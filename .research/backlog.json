@@ -4360,7 +4360,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review"
       ],
@@ -4373,7 +4373,7 @@
       ],
       "created_at": "2026-07-12",
       "updated_at": "2026-07-12",
-      "plan": null
+      "plan": "plans/code-review-api-handlers-suspended-enum-oracle.md"
     },
     {
       "id": "code-review-api-handlers-raw-db-error-leak",

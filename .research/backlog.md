@@ -1,10 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-12 20:20 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-12 20:26 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | bug | `code-review-api-handlers-suspended-enum-oracle` | auth.rs:699 login handler returns ACCOUNT_SUSPENDED pre-password — account enumeration oracle for suspended users | open | 2026-07-12 |  |
+| 3 | bug | `code-review-api-handlers-suspended-enum-oracle` | auth.rs:699 login handler returns ACCOUNT_SUSPENDED pre-password — account enumeration oracle for suspended users | ready | 2026-07-12 | [plan](plans/code-review-api-handlers-suspended-enum-oracle.md) |
 | 3 | bug | `code-review-reality-server-ssrf-ipv4-mapped-ipv6` | reality-server validate_fetch_url bypassed by IPv4-mapped IPv6 (::ffff:169.254.169.254) — SSRF to cloud metadata via agency-imports feed | ready | 2026-07-12 | [plan](plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md) |
 | 3 | security | `code-review-reality-web-jsonld-xss` | reality-web JSON-LD `dangerouslySetInnerHTML` unescaped — stored XSS via listing title/description on every SSR public detail page | ready | 2026-07-12 | [plan](plans/code-review-reality-web-jsonld-xss.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
