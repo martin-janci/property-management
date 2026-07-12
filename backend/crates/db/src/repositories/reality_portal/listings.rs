@@ -201,9 +201,19 @@ impl RealityPortalRepository {
     // Listing Analytics (Story 33.4)
     // ========================================================================
 
-    /// Track listing view.
+    /// Track a listing view (increment daily analytics counters).
+    ///
+    /// Routes through the SECURITY DEFINER `portal_track_listing_view` function
+    /// (migration 00214), **not** the plain `track_listing_view` (00063). The
+    /// latter is SECURITY INVOKER and its `INSERT … ON CONFLICT` into
+    /// `listing_analytics` — a `FORCE ROW LEVEL SECURITY` table with an org-only
+    /// policy and no portal-owner branch — fails the `WITH CHECK` for portal
+    /// listings (`organization_id IS NULL`) on the RLS-subject reality-server
+    /// pool, so no view was ever recorded (#2244). The definer function bypasses
+    /// that policy while only ever touching the viewed listing's aggregate
+    /// counters. View tracking is public, so there is no ownership gate.
     pub async fn track_view(&self, listing_id: Uuid, source: &str) -> Result<(), SqlxError> {
-        sqlx::query("SELECT track_listing_view($1, $2)")
+        sqlx::query("SELECT portal_track_listing_view($1, $2)")
             .bind(listing_id)
             .bind(source)
             .execute(&self.pool)
