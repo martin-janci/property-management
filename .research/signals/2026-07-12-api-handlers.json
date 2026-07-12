@@ -1,0 +1,46 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-12",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-suspended-enum-oracle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:699 — the login handler returns 401 ACCOUNT_SUSPENDED for a suspended account BEFORE verifying the password (password check starts at line 713). Any caller submitting an arbitrary password for a suspended email gets a distinct ACCOUNT_SUSPENDED response, whereas an unknown email gets the generic INVALID_CREDENTIALS — an account-enumeration oracle for suspended users.",
+        "backend/servers/api-server/src/routes/auth.rs:750-756 — this is the exact anti-pattern the code deliberately guards against elsewhere: the email-verification gate was moved to AFTER the password check (with a comment citing #956) precisely because returning a status-specific error pre-password turns login into an enumeration oracle. The suspended-account branch was not given the same treatment, so it still leaks account existence pre-authentication."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes — ~437 handler error arms return the raw error via ErrorResponse::new(\"DB_ERROR\"|\"INTERNAL_ERROR\"|\"DATABASE_ERROR\", e.to_string()) in the client-facing JSON body (≥21 route files: budgets.rs:260-704 (~15 arms), emergency/broadcasts.rs:158, ai/workflows.rs:46, etc.). e.to_string() on a sqlx/db error exposes internal detail (SQL fragments, column/constraint names, connection info) to unauthenticated or low-privilege API clients — an information-disclosure smell that also makes error responses non-uniform. Compare auth.rs which correctly returns a static \"Login failed\" and logs %e server-side only.",
+        "backend/servers/api-server/src/routes/emergency/broadcasts.rs:158 — Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) returned to caller after deactivate_broadcast fails; representative of the systemic pattern."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "deferred_findings": [
+    {
+      "id": "code-review-api-handlers-login-attempt-write-ignored",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "note": "backend/servers/api-server/src/routes/auth.rs:700-736 — every session_repo.record_login_attempt(...) on the failure paths is fire-and-forget (`let _ = ...await`). If that write fails, failed logins go unrecorded, silently weakening brute-force/lockout accounting with no telemetry. Below the per-run cap this slice."
+    }
+  ],
+  "notes": "Segment api-handlers selected churn-aligned (routes/auth.rs = top-churned real-code file, 5 recent commits). Rust unwrap/expect sweep on routes was clean: all 109 hits are either in #[cfg(test)] modules, on validated-at-startup env vars, on literal-date constructors, on test-only structures (oauth_state.rs OAuthStateStore is documented None-in-production), or guarded by an is_none() check immediately prior. No todo!()/unimplemented!()/unsafe in production route paths. CORS grep clean. No secret VALUES logged (tracing arms log %e/key-names/ids only)."
+}

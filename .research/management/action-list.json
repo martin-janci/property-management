@@ -907,6 +907,69 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "gh-issue-2248",
+      "action": "Follow-up: CI shard PR bundled an undisclosed real `common --lib` assertion fix + `test-rest` is an unsharded bottleneck (PR #2223) (Closes #2248)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-12T04:04:23Z (#2248)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T04:04:23Z",
+      "issue_ref": {
+        "number": 2248,
+        "url": "https://github.com/martin-janci/property-management/issues/2248",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2249",
+      "action": "security: reality-server SSO exchange trusts client-supplied roles → portal privilege escalation (Closes #2249)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-12T04:04:23Z (#2249)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T04:04:23Z",
+      "issue_ref": {
+        "number": 2249,
+        "url": "https://github.com/martin-janci/property-management/issues/2249",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-1680-retry1",
+      "action": "[DROPPED: not completable in no-build cloud env / needs operator] Research dispatcher: cron environment can't run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) (Closes #1680) [retry 1/2 of failed gh-issue-1680]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-12T04:05:00Z (retry_of=gh-issue-1680 reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:24:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T04:05:00Z",
+      "retry_of": "gh-issue-1680",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 1680,
+        "url": "https://github.com/martin-janci/property-management/issues/1680",
+        "labels": [
+          "dispatcher",
+          "infrastructure"
+        ]
+      }
     }
   ]
 }
