@@ -261,25 +261,34 @@ jobs:
 
   # SHARDED backend tests (issue #2222).
   # ------------------------------------
-  # `servers/api-server` owns ~197 integration test binaries (each statically
-  # links the whole server and provisions its own `#[sqlx::test]` DB), so the
-  # old single `cargo test --workspace` ran ~107-119 min — right at the
-  # `timeout --kill-after=1m 150m` ceiling. When the wrapper SIGKILLed the run,
-  # cargo blamed whichever target was in flight (observed `-p common --lib`,
-  # whose unit tests are all trivial synchronous `#[test]`s), i.e. pure
-  # wall-clock exhaustion, NOT a real failure. That wedged EVERY open backend
-  # PR on the shared `test` gate.
+  # The server crates under `servers/*` own the bulk of the integration test
+  # binaries (each statically links its whole server and provisions its own
+  # `#[sqlx::test]` DB), so the old single `cargo test --workspace` ran
+  # ~107-119 min — right at the `timeout --kill-after=1m 150m` ceiling, wedging
+  # EVERY open backend PR on the shared `test` gate.
   #
-  # This job fans the api-server integration test binaries out over MATRIX_COUNT
-  # parallel runners via scripts/ci-test-shard.sh (hash-partitioned by sorted
-  # position). EVERY shard — shard 0 included — now runs an identically-shaped,
-  # roughly equal-sized ~1/4 slice of those binaries and NOTHING else, so none
-  # approaches the timeout. The "everything else once" workload (all
-  # non-api-server workspace tests + api-server's lib/bins unit tests) used to
-  # ride on TOP of shard 0's partition, making shard 0 by far the heaviest
-  # shard — it tipped over its per-shard timeout (~53 min job wall) while shards
-  # 1-3 passed comfortably. That load now lives in a dedicated parallel job
-  # (`test-rest` below), off the shard hot path, so shard 0 has real headroom.
+  # (Correction, issue #2248 finding 1: the specific `-p common --lib` failure
+  # PR #2223 unwedged was NOT purely wall-clock. A prior dispatcher commit
+  # regenerated the sitemap from 13 -> 19 `ppt-web` routes, so `common`'s
+  # `test_metadata` hit a genuine, fast `assertion failed` on a stale hardcoded
+  # count; #2223 also bumped that literal. The wall-clock timeout was a real,
+  # separate risk that sharding addresses; the one-line count bump was the real
+  # `common --lib` fix. `common`'s lib target now derives that expectation from
+  # the loaded sitemap so it can't silently rot again — see
+  # `backend/crates/common/src/sitemap/mod.rs::test_metadata_stats_match_loaded_collections`.)
+  #
+  # This job fans ALL server (`servers/*`) integration test binaries out over
+  # MATRIX_COUNT parallel runners via scripts/ci-test-shard.sh (hash-partitioned
+  # by sorted `crate:test` position). Issue #2248 finding 2: previously only
+  # api-server's binaries were sharded and reality-server's 32 integration
+  # binaries rode sequentially on `test-rest`, making IT the new bottleneck; the
+  # sharder now partitions every server crate's integration binaries together so
+  # the heavy load is spread evenly. EVERY shard — shard 0 included — runs an
+  # identically-shaped, roughly equal-sized ~1/N slice of those binaries and
+  # NOTHING else, so none approaches the timeout. The "everything else once"
+  # workload (non-server workspace tests + each server crate's lib/bins/doc unit
+  # tests) lives in a dedicated parallel job (`test-rest` below), off the shard
+  # hot path.
   # This is NOT the required status context (branch protection requires exactly
   # `test`, produced by the thin aggregator job below — one producer, per
   # #1672); the matrix legs report `test-shard (0..N)` and skip cleanly on
@@ -397,12 +406,13 @@ jobs:
           RUST_ENV: development
         run: cargo test -p api-server --test ws_integration_tests -- --include-ignored
 
-  # Non-shard test leg (issue #2222 rebalance). Runs everything that is NOT an
-  # api-server integration test binary, exactly once: all non-api-server
-  # workspace tests (`--workspace --exclude api-server`) plus api-server's own
-  # lib/bins unit tests. This is the "everything else once" workload that used
-  # to ride on shard 0 and overload it; hosting it in its own parallel runner
-  # lets every `test-shard` leg carry only its equal-sized integration slice.
+  # Non-shard test leg (issue #2222 rebalance, generalized in #2248). Runs
+  # everything that is NOT a server integration test binary, exactly once: all
+  # non-server workspace tests (`--workspace` minus every sharded server crate)
+  # plus each server crate's own lib/bins/doc unit tests (--doc closes the #2248
+  # finding-3 gap where api-server doctests were silently dropped). This is the
+  # "everything else once" workload; hosting it in its own parallel runner lets
+  # every `test-shard` leg carry only its equal-sized integration slice.
   # Like the shards, this is NOT the required context — the aggregator `test`
   # job below gates on it too (so coverage stays exactly-once, no false green,
   # #1672) and it skips cleanly on pure-frontend PRs.

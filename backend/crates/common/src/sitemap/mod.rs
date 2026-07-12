@@ -309,11 +309,49 @@ mod tests {
         assert!(!f.steps.is_empty());
     }
 
+    // Regression guard for issue #2248 finding 1. The `-p common --lib` failure
+    // that PR #2223 unwedged was NOT purely wall-clock: `test_metadata` had a
+    // hardcoded `ppt_web_routes == 13` that went genuinely red (fast
+    // `assertion failed`) when dispatcher commit b0e619a regenerated the sitemap
+    // to 19 `ppt-web` routes. The one-line count bump in #2223 was the real fix.
+    //
+    // To stop these hardcoded counts silently rotting every time a route/screen
+    // is added, this test now derives the expectation from the loaded data
+    // itself: `metadata.stats` must equal the actual length of the corresponding
+    // collection. A regeneration that updates one but not the other fails here
+    // with a clear message instead of drifting until a stale literal breaks CI.
     #[test]
-    fn test_metadata() {
+    fn test_metadata_stats_match_loaded_collections() {
         let sitemap = Sitemap::load();
-        assert_eq!(sitemap.metadata.stats.ppt_web_routes, 19);
-        assert_eq!(sitemap.metadata.stats.reality_web_routes, 9);
-        assert_eq!(sitemap.metadata.stats.mobile_screens, 6);
+        assert_eq!(
+            sitemap.metadata.stats.ppt_web_routes,
+            sitemap.routes.ppt_web.len(),
+            "metadata.stats.ppt_web_routes drifted from routes[\"ppt-web\"] length"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.reality_web_routes,
+            sitemap.routes.reality_web.len(),
+            "metadata.stats.reality_web_routes drifted from routes[\"reality-web\"] length"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.mobile_screens,
+            sitemap.screens.mobile.len(),
+            "metadata.stats.mobile_screens drifted from screens.mobile length"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.api_server_endpoints,
+            sitemap.endpoints.api_server.len(),
+            "metadata.stats.api_server_endpoints drifted from endpoints[\"api-server\"] length"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.reality_server_endpoints,
+            sitemap.endpoints.reality_server.len(),
+            "metadata.stats.reality_server_endpoints drifted from endpoints[\"reality-server\"] length"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.flows,
+            sitemap.flows.len(),
+            "metadata.stats.flows drifted from flows length"
+        );
     }
 }
