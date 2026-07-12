@@ -312,8 +312,24 @@ mod tests {
     #[test]
     fn test_metadata() {
         let sitemap = Sitemap::load();
-        assert_eq!(sitemap.metadata.stats.ppt_web_routes, 19);
-        assert_eq!(sitemap.metadata.stats.reality_web_routes, 9);
-        assert_eq!(sitemap.metadata.stats.mobile_screens, 6);
+        // Assert internal consistency: stats must match the actual arrays that
+        // generate.ts derives them from.  This never goes stale on route
+        // additions and catches any hand-edit or generator bug where the stats
+        // block diverges from the real arrays.
+        assert_eq!(
+            sitemap.metadata.stats.ppt_web_routes,
+            sitemap.routes.ppt_web.len(),
+            "metadata.stats.ppt_web_routes does not match routes.ppt_web.len()"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.reality_web_routes,
+            sitemap.routes.reality_web.len(),
+            "metadata.stats.reality_web_routes does not match routes.reality_web.len()"
+        );
+        assert_eq!(
+            sitemap.metadata.stats.mobile_screens,
+            sitemap.screens.mobile.len(),
+            "metadata.stats.mobile_screens does not match screens.mobile.len()"
+        );
     }
 }
