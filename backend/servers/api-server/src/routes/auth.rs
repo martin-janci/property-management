@@ -1187,6 +1187,7 @@ fn hash_refresh_token(token: &str) -> String {
 async fn resolve_current_session_id(
     state: &AppState,
     headers: &axum::http::HeaderMap,
+    user_id: uuid::Uuid,
 ) -> Option<uuid::Uuid> {
     let token = parse_refresh_cookie(headers).or_else(|| {
         headers
@@ -1200,12 +1201,19 @@ async fn resolve_current_session_id(
 
     let token_hash = hash_refresh_token(&token);
 
+    // Defense-in-depth: `find_by_token_hash` resolves *any* user's live
+    // session by hash. Only treat it as the caller's current session when it
+    // actually belongs to the authenticated user — a stray/stale cookie
+    // belonging to a different user must not become `except_id` (which would
+    // resurface the "sign out other devices signs YOU out" failure) nor mark a
+    // foreign session `isCurrent`.
     state
         .session_repo
         .find_by_token_hash(&token_hash)
         .await
         .ok()
         .flatten()
+        .filter(|session| session.user_id == user_id)
         .map(|session| session.id)
 }
 
@@ -1985,7 +1993,7 @@ pub async fn list_sessions(
     // fall back to the `X-Refresh-Token` header (see
     // `resolve_current_session_id`). Cookie-based ppt-web clients used to
     // resolve to `None` here, so no row could ever be marked `isCurrent`.
-    let current_session_id = resolve_current_session_id(&state, &headers).await;
+    let current_session_id = resolve_current_session_id(&state, &headers, user_id).await;
 
     // Get all active sessions for user
     let sessions = match state.session_repo.find_user_sessions(user_id).await {
@@ -2174,7 +2182,7 @@ pub async fn revoke_all_sessions(
     // Cookie-based ppt-web clients used to resolve to `None` here, which made
     // `revoke_all_user_tokens(user_id, None)` revoke the caller's OWN live
     // session — "sign out other devices" signed the caller out too.
-    let current_session_id = resolve_current_session_id(&state, &headers).await;
+    let current_session_id = resolve_current_session_id(&state, &headers, user_id).await;
 
     // Revoke all sessions except current
     match state
