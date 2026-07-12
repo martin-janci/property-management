@@ -960,6 +960,20 @@ mod sessions {
         let (access1, refresh1) = create_authenticated_user(&app, &user).await;
         let (_access2, _refresh2) = login_again(&app, &user).await;
 
+        // Session 1 (the caller) is the earliest-created refresh_tokens row for
+        // this user; session 2 came from `login_again`. Bind `isCurrent` to
+        // that specific id so a resolver that flagged the *wrong* session would
+        // fail — a bare count assertion would not catch it.
+        let session1_id: uuid::Uuid = sqlx::query_scalar(
+            "SELECT id FROM refresh_tokens \
+             WHERE user_id = (SELECT id FROM users WHERE email = $1) \
+             ORDER BY created_at ASC LIMIT 1",
+        )
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("session 1 row");
+
         let req = app
             .get("/api/v1/auth/sessions")
             .bearer(&access1)
@@ -980,6 +994,66 @@ mod sessions {
             current.len(),
             1,
             "exactly one session must be marked current for the cookie caller"
+        );
+        assert_eq!(
+            current[0]["id"].as_str().unwrap(),
+            session1_id.to_string(),
+            "the current row must be the caller's own (session 1), not the other device"
+        );
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    /// Header-based caller (mobile RN / legacy ppt-web): list-sessions must mark
+    /// exactly one row `isCurrent = true` and it must be the caller's session,
+    /// resolved via the `X-Refresh-Token` fallback. Mirrors the cookie test to
+    /// guard the header branch symmetrically with the revoke-all tests. On
+    /// `main` the header path already worked; this locks in identity, not just
+    /// count.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn list_sessions_marks_header_caller_current(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+
+        let (access1, refresh1) = create_authenticated_user(&app, &user).await;
+        let (_access2, _refresh2) = login_again(&app, &user).await;
+
+        let session1_id: uuid::Uuid = sqlx::query_scalar(
+            "SELECT id FROM refresh_tokens \
+             WHERE user_id = (SELECT id FROM users WHERE email = $1) \
+             ORDER BY created_at ASC LIMIT 1",
+        )
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("session 1 row");
+
+        let req = app
+            .get("/api/v1/auth/sessions")
+            .bearer(&access1)
+            .header("X-Refresh-Token", &refresh1)
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+
+        let json = resp.json_value();
+        let sessions = json["sessions"].as_array().unwrap();
+        assert_eq!(sessions.len(), 2, "user has two live sessions");
+
+        let current: Vec<&Value> = sessions
+            .iter()
+            .filter(|s| s["isCurrent"].as_bool().unwrap_or(false))
+            .collect();
+        assert_eq!(
+            current.len(),
+            1,
+            "exactly one session must be marked current for the header caller"
+        );
+        assert_eq!(
+            current[0]["id"].as_str().unwrap(),
+            session1_id.to_string(),
+            "the current row must be the caller's own (session 1) via the header fallback"
         );
 
         cleanup_test_user(&pool, &user.email).await;
