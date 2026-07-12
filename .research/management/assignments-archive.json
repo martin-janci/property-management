@@ -4471,6 +4471,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-backend-crates-db-81e7e5bb",
+      "status": "failed",
+      "claimed_at": "2026-07-12T18:03:00Z",
+      "last_updated": "2026-07-12T18:24:00Z",
+      "status_changed_at": "2026-07-12T18:24:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=pure re-export barrel (pub mod/use only, no FromRow/serde); no valuable behaviour-preserving refactor",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
       "branch": "auto-impl/refactor-churn-hotspot-backend-crates-db-88dea6bf",
       "status": "merged",
@@ -5023,5 +5045,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T18:15:21Z"
+  "archived_at": "2026-07-12T18:24:39Z"
 }

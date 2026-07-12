@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-12",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, ~4 < floor 36); oldest-unreviewed by review_cursor. reality-server & ppt-web-ui both tie oldest at 2026-06-11 but each already carries a 2026-07-12 signal file from sibling tier1d runs, so among segments NOT covered today the oldest by review_cursor is reality-web (2026-06-14, last actual review 2026-07-08); not backlog-saturated (0 open code-review-finding items for this segment)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-jsonld-xss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx:104 — RealEstateListing JSON-LD is injected as `dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}` with NO escaping of '<'. jsonLd is built in app/[locale]/listings/[slug]/jsonLd.ts:45,58 as `name: l.title` and `jsonLd.description = l.description` — realtor-supplied strings copied verbatim. JSON.stringify does not escape '<'/'>'/'/', so a listing title or description containing `</script><img src=x onerror=...>` breaks out of the <script type=\"application/ld+json\"> block and executes for every public visitor of the SSR detail page — stored XSS.",
+        "frontend/apps/reality-web/src/app/env.js/route.ts:55 — the sibling env bootstrap route guards the exact same inline-JSON pattern with `JSON.stringify(env).replace(/</g, '\\u003c')`, confirming the intended mitigation was simply omitted at the JSON-LD injection site.",
+        "Suggested fix: apply the same `.replace(/</g, '\\u003c')` (and ideally `>` -> '\\u003e', '/' -> '\\u002f' / '\\u2028'/'\\u2029') to the stringified JSON-LD before passing it to __html, or route it through a shared safe-json-ld helper."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-tenant-bootstrap-xss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:188 — the inline bootstrap script `window.__TENANT_CONFIG__=${tenantBootstrap};` embeds `JSON.stringify({ tenant_id, feature_flags })` (per-host backend tenant data from getTenantConfig) without escaping '<'. Unlike env.js/route.ts:55 which escapes '<' to '\\u003c' as defense-in-depth, this path does not, so any '</script>' sequence inside a feature-flag config value would break out of the <head> script tag. Lower confidence than the JSON-LD finding because the payload is tenant/admin-controlled config rather than free public input, but the escaping gap is the same and cheap to close.",
+        "Suggested fix: reuse the same '<' -> '\\u003c' escape (or a shared helper) for the tenantBootstrap string before interpolating it into __html."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-killswitch-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:138,151,152 — the tenant kill-switch maintenance page hardcodes English user-facing copy (`<title>Service temporarily unavailable`, `<h1>Service temporarily unavailable</h1>`, and `{tenantConfig.name} is offline for maintenance. Please check back shortly.`) instead of using next-intl t(). The app ships sk/cs/de/en and `locale` is already in scope in this layout, so sk/cs/de visitors hitting the kill switch see untranslated English. error.tsx in the same segment deliberately uses useTranslations() for exactly this reason."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

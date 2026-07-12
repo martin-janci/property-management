@@ -706,21 +706,6 @@
           "infrastructure"
         ]
       }
-    },
-    {
-      "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry1",
-      "action": "Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 1/2 of failed refactor-churn-hotspot-backend-crates-db-src-models-mod-rs]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-07-12T12:06:41Z (retry_of=refactor-churn-hotspot-backend-crates-db-src-models-mod-rs reason=failed-no-pr cooldown_ok newest_failure=2026-07-05T10:13:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-12T12:06:41Z",
-      "retry_of": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
-      "retry_round": 1,
-      "last_updated": "2026-07-12T18:03:00Z"
     }
   ]
 }
