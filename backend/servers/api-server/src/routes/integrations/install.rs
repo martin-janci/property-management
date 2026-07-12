@@ -1940,7 +1940,10 @@ pub async fn direct_connect_airbnb(
         client_secret,
         redirect_uri,
     };
-    let client = AirbnbClient::new(oauth_config);
+    // Issue #2240: build via the base-URL seam so this write path is testable
+    // against a stub server. `api_base` defaults to the production endpoint in
+    // production (`AirbnbAppConfig::from_env`).
+    let client = AirbnbClient::with_base_url(oauth_config, state.airbnb_config.api_base.clone());
 
     let listings = client
         .fetch_listings(&request.access_token)

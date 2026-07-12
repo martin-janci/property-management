@@ -58,6 +58,9 @@ use serde_json::json;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
+
 use common::{seed_org, TestApp};
 
 // Must match `TestConfig::default().jwt_secret`.
@@ -453,6 +456,155 @@ async fn direct_connect_authorized_request_reaches_not_configured(pool: PgPool) 
     assert_eq!(
         count, 0,
         "no connection row should be written when Airbnb is not configured"
+    );
+}
+
+/// Happy path (issue #2240): an authorized manager on a configured org, whose
+/// supplied access token validates against a stubbed Airbnb Partner API,
+/// gets `200` + a fully-populated [`AirbnbDirectConnectResponse`] and exactly
+/// one persisted `rental_platform_connections` row with the token encrypted at
+/// rest.
+///
+/// This is the previously-missing success/write-path coverage: unlike the
+/// NOT_CONFIGURED test above, this binary injects non-empty Airbnb credentials
+/// **and** an `api_base` pointing at a `wiremock` server via
+/// `TestApp::with_airbnb_config`, so the handler runs all the way through
+/// `client.fetch_listings(...)` → `encrypt_required(...)` →
+/// `rental_repo.upsert_airbnb_connection(...)` without any live network call.
+/// The per-instance config injection (rather than process-global `AIRBNB_*`
+/// env vars) keeps the sibling NOT_CONFIGURED case — which requires the
+/// credentials to stay empty — passing under concurrent `#[sqlx::test]`
+/// execution.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn direct_connect_happy_path_upserts_connection(pool: PgPool) {
+    // `direct_connect_airbnb` encrypts the token before storage via
+    // `IntegrationCrypto::try_from_env()` and fails closed (500
+    // ENCRYPTION_REQUIRED) when `INTEGRATION_ENCRYPTION_KEY` is unset. Seed a
+    // valid 64-hex-char (32-byte) key for this binary. No sibling test in this
+    // file asserts the key is absent, so a one-time global set is safe here.
+    static ENC_KEY_ONCE: std::sync::Once = std::sync::Once::new();
+    ENC_KEY_ONCE.call_once(|| {
+        if std::env::var("INTEGRATION_ENCRYPTION_KEY").is_err() {
+            std::env::set_var("INTEGRATION_ENCRYPTION_KEY", "0".repeat(64));
+        }
+    });
+
+    // Stub the Airbnb Partner API: GET {base}/listings → two listings. The
+    // handler only counts the listings, so a minimal-but-valid `AirbnbListing`
+    // shape (required non-Option fields + empty photos/amenities) is enough.
+    let mock_server = MockServer::start().await;
+    let listings_body = json!({
+        "listings": [
+            {
+                "id": "L1", "name": "Listing One", "property_type": "apartment",
+                "room_type": "entire_home", "bedrooms": 2, "bathrooms": 1.0,
+                "person_capacity": 4, "status": "active",
+                "photos": [], "amenities": []
+            },
+            {
+                "id": "L2", "name": "Listing Two", "property_type": "house",
+                "room_type": "private_room", "bedrooms": 1, "bathrooms": 1.5,
+                "person_capacity": 2, "status": "active",
+                "photos": [], "amenities": []
+            }
+        ]
+    });
+    Mock::given(method("GET"))
+        .and(path("/listings"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(listings_body))
+        .mount(&mock_server)
+        .await;
+
+    let airbnb_config = api_server::state::AirbnbAppConfig {
+        client_id: "test-client-id".to_string(),
+        client_secret: "test-client-secret".to_string(),
+        redirect_uri: "http://localhost/callback".to_string(),
+        webhook_secret: String::new(),
+        // Point the direct-connect client at the stub; the handler appends
+        // `/listings`.
+        api_base: mock_server.uri(),
+    };
+
+    let app = TestApp::with_airbnb_config(pool.clone(), airbnb_config).await;
+    let org_id = seed_org(&pool, "dc-happy").await;
+    let user_id = Uuid::new_v4();
+    let token = mint_manager_token(user_id, org_id);
+
+    let resp = app
+        .execute(authed_request(
+            Method::POST,
+            &direct_connect_uri(org_id),
+            &token,
+            Some(json!({
+                "access_token": "valid-airbnb-token",
+                "refresh_token": "valid-airbnb-refresh",
+                "airbnb_account_id": "ACCT-1"
+            })),
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "configured direct-connect with a valid token must be 200; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    // Response DTO: success flag, a UUID connection_id, listings_count from the
+    // stub, and a human-readable message referencing the count.
+    let body: serde_json::Value =
+        serde_json::from_str(&resp.text()).expect("direct-connect response must be JSON");
+    assert_eq!(body["success"], true, "body: {body}");
+    assert_eq!(body["listings_count"], 2, "body: {body}");
+    let connection_id = body["connection_id"]
+        .as_str()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .expect("connection_id must be a UUID string");
+    assert!(
+        body["message"]
+            .as_str()
+            .is_some_and(|m| m.contains("2 listing")),
+        "message should reference the listing count: {body}"
+    );
+
+    // Exactly one Airbnb connection row is persisted for the org.
+    let row = sqlx::query(
+        r#"
+        SELECT id, organization_id, platform, access_token, refresh_token, is_active
+        FROM rental_platform_connections
+        WHERE organization_id = $1 AND platform = 'airbnb'
+        "#,
+    )
+    .bind(org_id)
+    .fetch_all(&pool)
+    .await
+    .expect("query connection rows");
+    assert_eq!(
+        row.len(),
+        1,
+        "exactly one airbnb connection row must be persisted"
+    );
+    let row = &row[0];
+    assert_eq!(row.get::<Uuid, _>("id"), connection_id);
+    assert_eq!(row.get::<Uuid, _>("organization_id"), org_id);
+    assert!(row.get::<bool, _>("is_active"));
+
+    // Token is encrypted at rest (Issue #765 mandatory-encryption contract):
+    // the persisted value carries the "enc:" prefix, never the plaintext token.
+    let stored_access: String = row.get("access_token");
+    assert!(
+        stored_access.starts_with("enc:"),
+        "access token must be stored encrypted, got: {stored_access}"
+    );
+    assert!(
+        !stored_access.contains("valid-airbnb-token"),
+        "plaintext token must never be persisted: {stored_access}"
+    );
+    let stored_refresh: Option<String> = row.get("refresh_token");
+    assert!(
+        stored_refresh.as_deref().is_some_and(|t| t.starts_with("enc:")),
+        "refresh token must be stored encrypted: {stored_refresh:?}"
     );
 }
 
