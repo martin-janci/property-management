@@ -528,20 +528,6 @@
       "last_updated": "2026-07-11T20:09:57Z"
     },
     {
-      "id": "code-review-mobile-native-kmp-search-stale-response-race-retry1",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] SearchScreen stale-response race — overlapping searches can clobber newer results [retry 1/2 of failed code-review-mobile-native-kmp-search-stale-response-race]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=code-review-mobile-native-kmp-search-stale-response-race reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T10:32:54Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T14:11:06Z",
-      "retry_of": "code-review-mobile-native-kmp-search-stale-response-race",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-mobile-rn-deeplink-init-unhandled-retry1",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection [retry 1/2 of failed code-review-mobile-rn-deeplink-init-unhandled]",
       "owner_role": "pm-frontend",

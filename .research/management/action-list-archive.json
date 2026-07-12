@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-12T02:16:28Z",
+  "archived_at": "2026-07-12T08:08:44Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1316,6 +1316,27 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-native-kmp-search-stale-response-race-retry1",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] SearchScreen stale-response race — overlapping searches can clobber newer results [retry 1/2 of failed code-review-mobile-native-kmp-search-stale-response-race]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=code-review-mobile-native-kmp-search-stale-response-race reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T10:32:54Z) | gc1-reconcile 2026-07-12T08:04:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T14:11:06Z",
+      "retry_of": "code-review-mobile-native-kmp-search-stale-response-race",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-12T08:04:27Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
