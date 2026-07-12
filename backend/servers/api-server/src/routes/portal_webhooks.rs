@@ -121,9 +121,15 @@ fn verify_webhook_signature(
 }
 
 /// Get webhook secret for a portal from environment.
+///
+/// SECURITY (#2263): a present-but-empty env var must read as "unconfigured",
+/// not as an empty signing key. Deploy tooling forwards these vars as `""`
+/// when unset (compose/blue-green passthrough from #2259), and an HMAC keyed
+/// with the empty string is computable by anyone — treating it as configured
+/// would flip the receiver from fail-closed to forgeable.
 fn get_portal_webhook_secret(portal: &str) -> Option<String> {
     let env_key = format!("{}_WEBHOOK_SECRET", portal.to_uppercase().replace('-', "_"));
-    std::env::var(&env_key).ok()
+    std::env::var(&env_key).ok().filter(|s| !s.is_empty())
 }
 
 /// Verify a portal webhook, failing **closed**.
@@ -768,6 +774,32 @@ mod tests {
 
     fn env_key(portal: &str) -> String {
         format!("{}_WEBHOOK_SECRET", portal.to_uppercase().replace('-', "_"))
+    }
+
+    /// Regression for #2263: a present-but-EMPTY `<PORTAL>_WEBHOOK_SECRET`
+    /// (what compose/blue-green passthrough injects when the operator leaves
+    /// the var unset) must read as "unconfigured" and reject — even a payload
+    /// carrying a signature correctly HMAC'd with the empty key, which any
+    /// attacker can compute.
+    #[test]
+    fn rejects_empty_secret_even_with_empty_key_signature() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "reality_portal";
+        std::env::set_var(env_key(portal), "");
+
+        let body = Bytes::from_static(b"{\"external_id\":\"forged\"}");
+        let mut headers = HeaderMap::new();
+        headers.insert(SIG_HEADER, sign("", &body).parse().unwrap());
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+        std::env::remove_var(env_key(portal));
+
+        let (status, _) = res.expect_err("empty secret must read as unconfigured and REJECT");
+        assert_eq!(
+            status,
+            StatusCode::UNAUTHORIZED,
+            "empty secret must fail closed with 401, not verify against the empty key"
+        );
     }
 
     #[test]
