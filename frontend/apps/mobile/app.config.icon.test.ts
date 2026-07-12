@@ -137,6 +137,33 @@ describe('fallback when badged variant is missing', () => {
 });
 
 /**
+ * `app.config.ts` resolves the launcher icon and the Android adaptive
+ * foreground independently (two separate on-disk existence checks), so a
+ * half-present variant must degrade one slot without dragging the other back
+ * to the base asset. This pins that per-slot fallback, which the all-present /
+ * all-absent suites above cannot exercise.
+ */
+describe('per-slot fallback when only one badged asset is missing', () => {
+  it('keeps the badged launcher but falls back for the missing adaptive foreground', () => {
+    // dev launcher icon present; dev adaptive foreground absent.
+    mockIconExistsPredicate = (s) => !s.includes('adaptive-icon-dev');
+    const { launcher, adaptive } = iconSlots(loadConfig('development'));
+    expect(launcher).toContain('icon-dev.png');
+    expect(adaptive).toContain('adaptive-icon.png');
+    expect(adaptive).not.toContain('-dev');
+  });
+
+  it('keeps the badged adaptive foreground but falls back for the missing launcher', () => {
+    // dev adaptive foreground present; dev launcher icon absent.
+    mockIconExistsPredicate = (s) => s.includes('adaptive-icon-dev') || !s.includes('icon-dev');
+    const { launcher, adaptive } = iconSlots(loadConfig('development'));
+    expect(adaptive).toContain('adaptive-icon-dev.png');
+    expect(launcher).toContain('icon.png');
+    expect(launcher).not.toContain('-dev');
+  });
+});
+
+/**
  * Guard for issue #1670 (PR #1554 follow-up): the icon PNG assets referenced by
  * app.config.ts must actually exist on disk. The other suites mock
  * `fs.existsSync` (so they cannot catch a tracked-but-missing PNG); this suite
