@@ -70,18 +70,33 @@ pub struct AirbnbAppConfig {
     /// `AIRBNB_WEBHOOK_SECRET` — required for inbound webhook signature
     /// verification.
     pub webhook_secret: String,
+    /// `AIRBNB_API_BASE` — base URL of the Airbnb Partner API used for
+    /// listing/reservation calls. Defaults to the production endpoint
+    /// ([`integrations::AIRBNB_API_BASE`]) when unset; overridable so
+    /// integration tests can point the direct-connect success path at a stub
+    /// server (issue #2240) and so a non-production Airbnb sandbox can be
+    /// targeted without a code change. Unlike the credential fields, this is
+    /// never empty — an unset env resolves to the production default.
+    pub api_base: String,
 }
 
 impl AirbnbAppConfig {
-    /// Load from the standard env vars. Empty strings are preserved so the
-    /// handlers can still emit `NOT_CONFIGURED` for missing values — this
-    /// matches the previous per-request behaviour exactly.
+    /// Load from the standard env vars. Empty strings are preserved for the
+    /// credential fields so the handlers can still emit `NOT_CONFIGURED` for
+    /// missing values — this matches the previous per-request behaviour
+    /// exactly. `api_base` is the exception: an unset/empty `AIRBNB_API_BASE`
+    /// resolves to the production default so the client URL is always valid.
     pub fn from_env() -> Self {
+        let api_base = std::env::var("AIRBNB_API_BASE")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| integrations::AIRBNB_API_BASE.to_string());
         Self {
             client_id: std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default(),
             client_secret: std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default(),
             redirect_uri: std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default(),
             webhook_secret: std::env::var("AIRBNB_WEBHOOK_SECRET").unwrap_or_default(),
+            api_base,
         }
     }
 }
@@ -831,6 +846,19 @@ impl AppState {
     /// real Vision-capable provider here, and tests can inject a fake.
     pub fn with_id_document_ocr(mut self, ocr: SharedIdDocumentOcr) -> Self {
         self.id_document_ocr = ocr;
+        self
+    }
+
+    /// Override the Airbnb integration configuration (test seam, issue #2240).
+    ///
+    /// Production loads `airbnb_config` from the environment in
+    /// [`AppState::new`]. Integration tests use this to inject non-empty
+    /// credentials plus an `api_base` pointing at a `wiremock` stub, so the
+    /// `direct_connect_airbnb` success/write path can be exercised network-free
+    /// without setting process-global `AIRBNB_*` env vars (which would race the
+    /// other `#[sqlx::test]` cases sharing the same test binary).
+    pub fn with_airbnb_config(mut self, config: AirbnbAppConfig) -> Self {
+        self.airbnb_config = config;
         self
     }
 }

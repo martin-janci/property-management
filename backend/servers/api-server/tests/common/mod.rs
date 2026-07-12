@@ -127,6 +127,66 @@ impl TestApp {
         }
     }
 
+    /// Create a test application whose `AppState` carries a custom Airbnb
+    /// integration configuration (issue #2240).
+    ///
+    /// Production loads `airbnb_config` from the environment. This lets a test
+    /// inject non-empty credentials plus an `api_base` pointing at a `wiremock`
+    /// stub so the `direct_connect_airbnb` success/write path can be driven
+    /// network-free — without setting process-global `AIRBNB_*` env vars, which
+    /// would race the sibling `#[sqlx::test]` cases in the same binary (notably
+    /// the NOT_CONFIGURED test, which requires the credentials to stay empty).
+    pub async fn with_airbnb_config(
+        pool: PgPool,
+        airbnb_config: api_server::state::AirbnbAppConfig,
+    ) -> Self {
+        use api_server::services::{EmailService, JwtService};
+        use api_server::state::AppState;
+
+        let config = TestConfig::default();
+
+        // Seed JWT_SECRET / RUST_ENV exactly like `with_config` so bearer
+        // tokens validate and `TotpService::new` doesn't panic.
+        static TEST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        TEST_ENV_ONCE.call_once(|| {
+            if std::env::var("JWT_SECRET").is_err() {
+                std::env::set_var("JWT_SECRET", &config.jwt_secret);
+            }
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
+        });
+
+        let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
+        let jwt_service =
+            JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");
+        let tenant_cache = std::sync::Arc::new(api_core::middleware::TenantResolutionCache::new(
+            300, 30, 10_000,
+        ));
+        let tenant_rate_limiters =
+            std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+
+        let state = AppState::new(
+            pool.clone(),
+            email_service,
+            jwt_service,
+            tenant_cache,
+            tenant_rate_limiters,
+        )
+        .with_airbnb_config(airbnb_config);
+
+        let router =
+            api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+                std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+            ));
+
+        Self {
+            router,
+            pool,
+            config,
+        }
+    }
+
     /// Create a test application whose `AppState` has a
     /// [`PreferenceEventRecorder`](api_server::state::PreferenceEventRecorder)
     /// installed, returning the app plus the recorder handle (issue #1376).

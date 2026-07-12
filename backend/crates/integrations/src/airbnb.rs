@@ -341,7 +341,12 @@ pub enum AirbnbWebhookEventType {
 
 const AIRBNB_AUTH_URL: &str = "https://www.airbnb.com/oauth2/auth";
 const AIRBNB_TOKEN_URL: &str = "https://api.airbnb.com/v1/oauth2/token";
-const AIRBNB_API_BASE: &str = "https://api.airbnb.com/v2";
+/// Default base URL for the Airbnb Partner API (v2 listing/reservation surface).
+///
+/// [`AirbnbClient::new`] uses this; [`AirbnbClient::with_base_url`] lets a caller
+/// override it — used by tests to point the client at a stub server, and usable
+/// by ops to target a non-production Airbnb sandbox without a code change.
+pub const AIRBNB_API_BASE: &str = "https://api.airbnb.com/v2";
 
 // ============================================
 // Client Implementation
@@ -351,15 +356,46 @@ const AIRBNB_API_BASE: &str = "https://api.airbnb.com/v2";
 pub struct AirbnbClient {
     client: reqwest::Client,
     config: AirbnbOAuthConfig,
+    /// Base URL for the v2 listing/reservation API. Defaults to
+    /// [`AIRBNB_API_BASE`]; overridable via [`AirbnbClient::with_base_url`].
+    base_url: String,
 }
 
 impl AirbnbClient {
     /// Create a new Airbnb client with OAuth configuration.
+    ///
+    /// Uses the production [`AIRBNB_API_BASE`] endpoint. Use
+    /// [`AirbnbClient::with_base_url`] to target a different host (e.g. a test
+    /// stub or a sandbox).
     pub fn new(config: AirbnbOAuthConfig) -> Self {
+        Self::with_base_url(config, AIRBNB_API_BASE)
+    }
+
+    /// Create a new Airbnb client with an explicit API base URL.
+    ///
+    /// The seam exists so the direct-connect / sync success paths can be
+    /// exercised deterministically against a `wiremock`-style stub instead of
+    /// the live Airbnb Partner API (issue #2240). Any trailing slash is
+    /// trimmed, and an empty base falls back to [`AIRBNB_API_BASE`] so a
+    /// misconfigured override can never yield a malformed request URL.
+    pub fn with_base_url(config: AirbnbOAuthConfig, base_url: impl Into<String>) -> Self {
+        let raw = base_url.into();
+        let trimmed = raw.trim_end_matches('/');
+        let base_url = if trimmed.is_empty() {
+            AIRBNB_API_BASE.to_string()
+        } else {
+            trimmed.to_string()
+        };
         Self {
             client: reqwest::Client::new(),
             config,
+            base_url,
         }
+    }
+
+    /// The API base URL this client issues listing/reservation requests against.
+    pub fn base_url(&self) -> &str {
+        &self.base_url
     }
 
     /// Create a new Airbnb client from individual parameters.
@@ -546,7 +582,7 @@ impl AirbnbClient {
     ) -> Result<Vec<AirbnbListing>, AirbnbError> {
         let response = self
             .client
-            .get(format!("{}/listings", AIRBNB_API_BASE))
+            .get(format!("{}/listings", self.base_url))
             .bearer_auth(access_token)
             .send()
             .await?;
@@ -592,7 +628,7 @@ impl AirbnbClient {
     ) -> Result<AirbnbListing, AirbnbError> {
         let response = self
             .client
-            .get(format!("{}/listings/{}", AIRBNB_API_BASE, listing_id))
+            .get(format!("{}/listings/{}", self.base_url, listing_id))
             .bearer_auth(access_token)
             .send()
             .await?;
@@ -641,7 +677,7 @@ impl AirbnbClient {
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
     ) -> Result<Vec<AirbnbReservation>, AirbnbError> {
-        let mut url = format!("{}/reservations?listing_id={}", AIRBNB_API_BASE, listing_id);
+        let mut url = format!("{}/reservations?listing_id={}", self.base_url, listing_id);
 
         if let Some(start) = start_date {
             url.push_str(&format!("&start_date={}", start));
@@ -699,7 +735,7 @@ impl AirbnbClient {
     ) -> Result<Vec<AirbnbReservation>, AirbnbError> {
         let response = self
             .client
-            .get(format!("{}/reservations", AIRBNB_API_BASE))
+            .get(format!("{}/reservations", self.base_url))
             .bearer_auth(access_token)
             .send()
             .await?;
@@ -1076,6 +1112,32 @@ mod tests {
         assert!(auth_url.contains("test_client_id"));
         assert!(auth_url.contains("test_state"));
         assert!(auth_url.contains("response_type=code"));
+    }
+
+    #[test]
+    fn test_new_uses_default_api_base() {
+        let client = AirbnbClient::new(AirbnbOAuthConfig {
+            client_id: "id".to_string(),
+            client_secret: "secret".to_string(),
+            redirect_uri: "http://localhost/cb".to_string(),
+        });
+        assert_eq!(client.base_url(), AIRBNB_API_BASE);
+    }
+
+    #[test]
+    fn test_with_base_url_overrides_and_trims_trailing_slash() {
+        let cfg = AirbnbOAuthConfig {
+            client_id: "id".to_string(),
+            client_secret: "secret".to_string(),
+            redirect_uri: "http://localhost/cb".to_string(),
+        };
+        // Trailing slash is trimmed so callers can pass either form.
+        let client = AirbnbClient::with_base_url(cfg.clone(), "http://127.0.0.1:9999/v2/");
+        assert_eq!(client.base_url(), "http://127.0.0.1:9999/v2");
+        // An empty override falls back to the production default rather than
+        // producing a malformed request URL.
+        let fallback = AirbnbClient::with_base_url(cfg, "");
+        assert_eq!(fallback.base_url(), AIRBNB_API_BASE);
     }
 
     #[test]

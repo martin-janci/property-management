@@ -52,7 +52,7 @@ pub use airbnb::{
     map_reservation_status as map_airbnb_status, map_to_internal_reservation, AirbnbClient,
     AirbnbError, AirbnbGuest, AirbnbListing, AirbnbOAuthConfig, AirbnbOAuthTokens, AirbnbPhoto,
     AirbnbReservation, AirbnbReservationStatus, AirbnbWebhookEvent, AirbnbWebhookEventType,
-    ListingSyncResult, Reservation, ReservationSyncResult,
+    ListingSyncResult, Reservation, ReservationSyncResult, AIRBNB_API_BASE,
 };
 
 // Story 83.2: Booking.com Integration
