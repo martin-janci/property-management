@@ -159,12 +159,16 @@ async fn acquire_public_clears_stale_context_from_prior_request(pool: PgPool) {
 
         // Sanity: the poison actually took, so the assertions below are not vacuous.
         assert_eq!(
-            read_guc(&mut *poison, "app.current_org_id").await.as_deref(),
+            read_guc(&mut *poison, "app.current_org_id")
+                .await
+                .as_deref(),
             Some(foreign_org.to_string().as_str()),
             "precondition: stale org context must be set on the connection"
         );
         assert_eq!(
-            read_guc(&mut *poison, "app.is_super_admin").await.as_deref(),
+            read_guc(&mut *poison, "app.is_super_admin")
+                .await
+                .as_deref(),
             Some("true"),
             "precondition: stale super-admin flag must be set on the connection"
         );
