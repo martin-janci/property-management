@@ -194,7 +194,8 @@ async fn test_regenerate_backup_codes_rewrites_only_callers_row(pool: PgPool) {
     // handler verifies the code against A's decrypted secret, generates 10 fresh
     // hashed codes, and writes them via `regenerate_backup_codes_rls` on the
     // per-user RLS connection (#1292).
-    let (status, body) = post_regenerate(&app, &token_a, org_a, &current_totp_code(&secret_a)).await;
+    let (status, body) =
+        post_regenerate(&app, &token_a, org_a, &current_totp_code(&secret_a)).await;
     assert_eq!(
         status,
         StatusCode::OK,
