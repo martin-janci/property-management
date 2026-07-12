@@ -54,8 +54,22 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid) {
     .await
     .expect("seed user");
 
-    let doc_a = seed_doc(pool, org_id, user_id, "Access Log Scope A", "s3/access-log-a.pdf").await;
-    let doc_b = seed_doc(pool, org_id, user_id, "Access Log Scope B", "s3/access-log-b.pdf").await;
+    let doc_a = seed_doc(
+        pool,
+        org_id,
+        user_id,
+        "Access Log Scope A",
+        "s3/access-log-a.pdf",
+    )
+    .await;
+    let doc_b = seed_doc(
+        pool,
+        org_id,
+        user_id,
+        "Access Log Scope B",
+        "s3/access-log-b.pdf",
+    )
+    .await;
     let share_a = seed_share(pool, doc_a, user_id).await;
     let share_b = seed_share(pool, doc_b, user_id).await;
 
