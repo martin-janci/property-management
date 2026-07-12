@@ -1,0 +1,234 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-07-09T02:37:00Z is 2d21h old (LAG_HOURS=69); expected daily",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "commits 5877ade..9baf193",
+      "score_delta": 0,
+      "evidence": "backend/servers/api-server/src/routes/auth.rs \u2014 3080 lines add+del in 3-day window (previous run 2648); hotspot_history runs_seen 2\u21923; re-emit, no score bump",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "commits 5877ade..9baf193",
+      "score_delta": 0,
+      "evidence": "backend/crates/integrations/src/booking/mod.rs \u2014 3057 lines add+del in 3-day window (previous run 2818); hotspot_history runs_seen 1\u21922; re-emit, no score bump",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-rs",
+      "type": "churn-hotspot",
+      "source": "commits 5877ade..9baf193",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/reports.rs \u2014 2735 lines add+del in 3-day window (previous run 134); hotspot_history runs_seen 1\u21922 (previous last_seen 2026-05-30). PRs #2220 (harden create-schedule) contributed.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2217-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2217",
+      "score_delta": 2,
+      "evidence": "PR #2217 touched frontend/apps/ppt-web/src/App.tsx (nav link) without touching docs/screens/ppt/. Existing docs/screens/ppt/settings-integrations.md was landed by dispatcher after PR #2217 merged. Best-effort heuristic: review before promoting.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-2232",
+      "type": "dep-update-noise",
+      "source": "PR #2232",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2232 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2209",
+      "type": "dep-update-noise",
+      "source": "PR #2209",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2209 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2210",
+      "type": "dep-update-noise",
+      "source": "PR #2210",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2210 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2211",
+      "type": "dep-update-noise",
+      "source": "PR #2211",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2211 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2212",
+      "type": "dep-update-noise",
+      "source": "PR #2212",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2212 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2228",
+      "type": "dep-update-noise",
+      "source": "PR #2228",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2228 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2018",
+      "type": "dep-update-noise",
+      "source": "PR #2018",
+      "score_delta": 0,
+      "evidence": "dependabot/chore(deps) PR #2018 merged into dev \u2014 not scored",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 grep '# 2026-07-12'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen_signals dedup with cum carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 cap; decay N/A (no items older than 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plan files this run \u2014 vacuously pass",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count <=2; readiness gates",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerable byte-identical",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failures reported",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs preserved",
+      "observed": "all present",
+      "expected": "all"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count never shrinks",
+      "observed": "now=8 head=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regenerable byte-identical",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch, cap, idempotency)",
+      "observed": "no auto-fix actions this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor invariants",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token literal",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
