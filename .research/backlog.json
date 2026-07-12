@@ -4353,6 +4353,38 @@
         "assignment_status": "merged",
         "pr_number": 2205
       }
+    },
+    {
+      "id": "refactor-churn-hotspots-api-server-auth-2026-07-12",
+      "title": "Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2205",
+        "PR #2250",
+        "PR #2261",
+        "PR #2270",
+        "PR #2271",
+        "PR #2254",
+        "commit 5877ade..ac3afb3"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs churned 4x in window (PRs #2205 refresh-cookie, #2250 helper-extract, #2261 session-scope, #2270 empty-cookie regression, #2271 OAuth-state Redis atomic)",
+        "runs_seen=3 (hotspot last run 2026-07-09, this run 2026-07-12)",
+        "backend/servers/api-server/tests/auth_tests.rs churned 3x — every auth.rs commit dragged the test file with it (positive: tests are being kept in lockstep)",
+        "backend/servers/reality-server/src/routes/sso.rs churned 2x — related security follow-ups (#2249 role-trust, PR #2254)",
+        "post #2250 helper-extract refactor did not stabilise the module; iteration is on real correctness/security branches, not stylistic churn"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs",
+        "backend/servers/api-server/tests/auth_tests.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
     }
   ]
 }

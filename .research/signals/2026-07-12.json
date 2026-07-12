@@ -1,0 +1,179 @@
+{
+  "generated_at": "2026-07-12T22:22:37Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-09T02:37:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 3d 19h (last: 2026-07-09T02:37Z, now: 2026-07-12T22:22Z)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..ac3afb3 -- backend/servers/api-server/src/routes/auth.rs",
+      "score_delta": 0,
+      "evidence": "4 modifications in window (PRs #2205 empty-cookie fix, #2250 helper-extract refactor, #2261 session-scope, #2270 empty-cookie regression test, #2271 OAuth-state Redis atomic); cumulative re-emit (already in seen_signals), no score add",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_item": "refactor-churn-hotspots-api-server-auth-2026-07-12"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history[auth.rs].runs_seen=2 -> 3",
+      "score_delta": 1,
+      "evidence": "runs_seen=3 (last_seen 2026-07-09 -> 2026-07-12, recent_churn 4 modifications). The post-#2250 helper-extract refactor did not calm the file; iteration is on real security/correctness branches.",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "backlog_item": "refactor-churn-hotspots-api-server-auth-2026-07-12"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..ac3afb3 -- backend/servers/api-server/tests/auth_tests.rs",
+      "score_delta": 1,
+      "evidence": "3 modifications in window \u2014 every auth.rs source PR dragged this test file along (positive coverage signal, negative stability signal). Bundled with repeated-churn item.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_item": "refactor-churn-hotspots-api-server-auth-2026-07-12"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "git log 5877ade..ac3afb3 -- backend/servers/reality-server/src/routes/sso.rs",
+      "score_delta": 1,
+      "evidence": "2 modifications \u2014 PR #2254 (reality-server SSO exchange must not trust client-supplied roles, closes security issue #2249)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_item": "refactor-churn-hotspots-api-server-auth-2026-07-12"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met the certainty bar (no signal in the allowlist: screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review)",
+  "phase_1_5_skipped": "dispatcher's Tier-1d rotating static review covered 5 segments today (api-handlers, mobile-native-kmp, ppt-web-ui, reality-server, reality-web) \u2014 findings persisted to .research/signals/2026-07-12-<segment>.json; routine's slice this run would be redundant. review_cursor unchanged.",
+  "phase_1_6_skipped": "management artifacts still current (coverage.json generated 2026-07-07 deep; action-list.json items:0 unchanged; project-state.md present). pm_cursor/coverage_cursor unchanged.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && H1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8; decay for open>14d",
+      "observed": "true (no open items with updated_at >14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "n/a (0 new plans)",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no application code touched",
+      "observed": "0 files outside .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen byte-for-byte",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phase honesty",
+      "observed": "no phase failures reported",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no plans deleted",
+      "expected": "no orphan deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 == 7",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped -> no-op",
+      "observed": "pm_cursor unchanged; coverage_cursor unchanged",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}
