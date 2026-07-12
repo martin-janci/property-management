@@ -4348,6 +4348,116 @@
         "assignment_status": "merged",
         "pr_number": 2205
       }
+    },
+    {
+      "id": "security-sso-client-role-escalation",
+      "title": "reality-server SSO exchange trusts client-supplied roles — portal privilege escalation",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "issue #2249",
+        "dispatcher Tier-1d review 2026-07-11 (segment: reality-server)"
+      ],
+      "evidence": [
+        "Issue #2249 filed by dispatcher's Tier-1d review 2026-07-11 (segment reality-server, focus routes/sso.rs). Severity: high, confidence: medium (dispatcher-emitted).",
+        "backend/servers/reality-server/src/routes/sso.rs:923-924 — `extract_roles_from_scope(...).or_else(|| request.roles.clone())`. request.roles is a client-supplied field of ExchangeTokenRequest (sso.rs:849-855). When introspected PM token scope carries no recognizable roles, the code trusts client-provided roles verbatim and maps the highest-privilege value.",
+        "Impact: a holder of any active-but-role-less PM token can self-assign AGENT / PROPERTY_OWNER / VERIFIED_USER by sending `roles: [\"agent\"]` in the exchange body → portal privilege escalation.",
+        "Fix: use scope-derived roles as authoritative; intersect with client-supplied (narrow-only), never fall back."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": "plans/security-sso-client-role-escalation.md"
+    },
+    {
+      "id": "bug-mobile-native-kmp-no-http-timeout",
+      "title": "KMP shared HttpClient has no HttpTimeout plugin — stalled connections hang UI spinners",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review (kotlin) 2026-07-12"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 — HttpClient installs ContentNegotiation + Logging but no HttpTimeout plugin; requests have no app-level request/connect/socket timeout.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt:29 — isNetworkError() matches on 'HttpRequestTimeoutException', which only the un-installed HttpTimeout plugin can throw → the intended timeout→friendly-error path is unreachable."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-api-server-routes-auth-rs",
+      "title": "routes/auth.rs repeated-churn (runs_seen 2→3) — third window with meaningful churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history bump 2026-07-12",
+        "PR #2250 refactor"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs — 432 lines add+del this window from PR #2250 (extract shared refresh-token resolve + hash helpers). Third routine window running hotter than the crate median; refactor already extracted helpers, so further passes should re-baseline the file, not add more parallel handlers."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-integrations-booking-mod-rs",
+      "title": "integrations/booking/mod.rs repeated-churn (runs_seen 1→2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history bump 2026-07-12",
+        "PR #2230 branch-coverage tests"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs — 239 lines add+del this window (PR #2230 OtaReadRS::from_xml envelope branch coverage). runs_seen now 2, watch for a third window."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2217-ppt-integrations",
+      "title": "PR #2217 wired /settings/integrations without updating docs/screens/ppt/settings-integrations.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2217",
+        "screen-map drift heuristic"
+      ],
+      "evidence": [
+        "PR #2217 (gh-issue-2202: integrations settings discoverability + i18n) modified frontend/apps/ppt-web/src/App.tsx (route nav) and IntegrationsPage.tsx / useNavigationCommands.tsx but did NOT touch docs/screens/ppt/settings-integrations.md. Heuristic caveat: screen slug/route basename match is fragile — treat as a review candidate."
+      ],
+      "files": [
+        "docs/screens/ppt/settings-integrations.md",
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-07-12",
+      "updated_at": "2026-07-12",
+      "plan": null
     }
   ]
 }

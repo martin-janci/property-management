@@ -1,0 +1,249 @@
+{
+  "generated_at": "2026-07-12",
+  "generated_at_iso": "2026-07-12T04:00:00Z",
+  "lag_days": 3,
+  "lag_hours": 73,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-client-role-escalation",
+      "type": "code-review-finding",
+      "source": "github issue #2249 (dispatcher Tier-1d review, segment reality-server, 2026-07-11)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:923-924 — `extract_roles_from_scope(...).or_else(|| request.roles.clone())`. request.roles is a client-supplied field of ExchangeTokenRequest (sso.rs:849-855) documented as 'Optional: specific PM roles to include (for role filtering)' — but the .or_else clause turns it into a role source when scope carries no recognizable roles. A holder of any active-but-role-less PM token can self-elevate to AGENT / PROPERTY_OWNER / VERIFIED_USER by sending roles: ['agent'] in the exchange body → portal privilege escalation.",
+        "Fix: intersect scope-derived + client-supplied roles (narrow-only), never fall back."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review (kotlin, segment mobile-native-kmp) 2026-07-12",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37 — shared HttpClient installs ContentNegotiation + Logging but no HttpTimeout plugin, so requests have no app-level request/connect/socket timeout and a stalled connection leaves every repository suspend call (and its UI spinner) hanging until the composition scope is cancelled.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt:29 — isNetworkError() matches on 'HttpRequestTimeoutException', which only the un-installed HttpTimeout plugin can throw, so the intended timeout->friendly-error path is unreachable."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history bump 2→3 2026-07-12",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs — 432 lines add+del this window (PR #2250 extracted shared refresh-token resolve + hash helpers). runs_seen now 3, third consecutive routine window with meaningful churn."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history bump 1→2 2026-07-12",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs — 239 lines add+del this window (PR #2230 branch coverage for OtaReadRS::from_xml). runs_seen now 2, watch for a third window."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn this run (cumulative re-emit)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "auth.rs — 432 lines add+del (cumulative allowlist re-emit; signal id already in seen_signals, no score_delta re-applied)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn this run (cumulative re-emit)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "booking/mod.rs — 239 lines add+del (cumulative allowlist re-emit; signal id already in seen_signals, no score_delta re-applied)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2217-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2217 (gh-issue-2202) modified frontend/apps/ppt-web/src/App.tsx (route nav for /settings/integrations) + IntegrationsPage.tsx + useNavigationCommands.tsx but did NOT touch docs/screens/ppt/settings-integrations.md. Heuristic caveat: screen slug/route basename match is fragile — treat as a review candidate."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-12",
+      "type": "lag_warning",
+      "source": "cadence",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine last ran 2026-07-09T02:37Z; now 2026-07-12T04:00Z → 3d 1h since last run — over the 36h threshold. Third consecutive over-cadence gap; the cloud scheduler seems to be running ~every 3-4 days, not daily. If the operator wants daily cadence back, check the scheduler config."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only ready item is a security code fix (not on Phase-5 allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev …",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | unique length'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative-allowlist check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[]|select(.score>8)]|length==0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "per-item python check vs HEAD",
+      "observed": "no violators (only 1 open item, updated 2026-07-09, under 14d)",
+      "expected": "no violators"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for adversarial pass annotation",
+      "observed": "present for security-sso-client-role-escalation",
+      "expected": "present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new-plan count",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-meta",
+      "passed": true,
+      "command": "grep 4 metadata fields",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "grep 11 headings",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G7-capability-mode-files",
+      "passed": true,
+      "command": "tick + Mode + files exist",
+      "observed": "all present, both file references resolve",
+      "expected": "all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret / private-hostname scan on staged diff (excl. baseline docs)",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regeneration",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder-rot grep in brief + new plan",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans in plans/ or _archive/",
+      "observed": "no silent deletions",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regeneration",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "0/0/0 (no candidate this run)",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — pm_cursor bounds still valid",
+      "observed": "pm_cursor.next_index=5 in [0,7]",
+      "expected": "valid + no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token scan on staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}
