@@ -528,20 +528,6 @@
       "last_updated": "2026-07-11T20:09:57Z"
     },
     {
-      "id": "code-review-mobile-rn-deeplink-init-unhandled-retry1",
-      "action": "[archive-terminal-reconcile: terminal in archive (merged)] useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection [retry 1/2 of failed code-review-mobile-rn-deeplink-init-unhandled]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=code-review-mobile-rn-deeplink-init-unhandled reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T10:32:54Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T14:11:06Z",
-      "retry_of": "code-review-mobile-rn-deeplink-init-unhandled",
-      "retry_round": 1
-    },
-    {
       "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry1",
       "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods [retry 1/2 of failed test-gap-hotfix-no-test-pr-1288-webhook-rls]",
       "owner_role": "pm-backend",
@@ -568,20 +554,6 @@
       "depends_on": [],
       "first_open_at": "2026-07-11T14:11:06Z",
       "retry_of": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
-      "retry_round": 1
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1085-reality-retry1",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1085-reality]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-11T18:06:00Z (retry_of=test-gap-screen-map-drift-pr-1085-reality reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:24:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-11T18:06:00Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1085-reality",
       "retry_round": 1
     },
     {

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-12T08:08:44Z",
+  "archived_at": "2026-07-12T08:39:01Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1348,6 +1348,21 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-init-unhandled-retry1",
+      "action": "[GHOST-DROP: fix already on origin/dev via 5dc7575; retry premise stale] [archive-terminal-reconcile: terminal in archive (merged)] useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection [retry 1/2 of failed code-review-mobile-rn-deeplink-init-unhandled]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-11T14:11:06Z (retry_of=code-review-mobile-rn-deeplink-init-unhandled reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T10:32:54Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T14:11:06Z",
+      "retry_of": "code-review-mobile-rn-deeplink-init-unhandled",
+      "retry_round": 1,
+      "gc1_closed": "ghost-noop 2026-07-12T08:38:52Z"
     },
     {
       "id": "code-review-mobile-rn-report-fault-fake-submit",
@@ -5323,6 +5338,21 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality-retry1",
+      "action": "[GHOST-DROP: fix already on origin/dev via 5dc7575; retry premise stale] [RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update [retry 1/2 of failed test-gap-screen-map-drift-pr-1085-reality]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-11T18:06:00Z (retry_of=test-gap-screen-map-drift-pr-1085-reality reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T14:24:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-11T18:06:00Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1085-reality",
+      "retry_round": 1,
+      "gc1_closed": "ghost-noop 2026-07-12T08:38:52Z"
     },
     {
       "id": "test-gap-screen-map-drift-pr-1100-ppt",
