@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-12T18:24:39Z",
+  "archived_at": "2026-07-12T20:09:44Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4558,6 +4558,33 @@
       }
     },
     {
+      "id": "gh-issue-2238",
+      "action": "Follow-up: add handler-level regression test for empty-cookie-shadows-body-token (PR #2205) (Closes #2238)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2238) | gc1-reconcile 2026-07-12T20:05:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2238,
+        "url": "https://github.com/martin-janci/property-management/issues/2238",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-12T20:05:02Z"
+      }
+    },
+    {
       "id": "gh-issue-2239",
       "action": "Follow-up: RAG provenance filter is untested + legacy rows still mix embedding spaces (PR #2221) (Closes #2239)",
       "owner_role": "pm-tech-lead",
@@ -4579,6 +4606,59 @@
       "last_updated": "2026-07-12T18:16:00Z"
     },
     {
+      "id": "gh-issue-2240",
+      "action": "Follow-up: direct_connect_airbnb success/write path is untested — add an AirbnbClient base-URL seam (PR #2189) (Closes #2240)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2240) | dev-reconcile 2026-07-12T20:05:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2240,
+        "url": "https://github.com/martin-janci/property-management/issues/2240",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d3fe9869658a3e6327d0fe7663b3b8dbf7e2ed69",
+        "subject": "gh-issue-2240: cover Airbnb direct-connect success path via AirbnbClient base-URL seam (#2268)",
+        "at": "2026-07-12T20:05:02Z"
+      }
+    },
+    {
+      "id": "gh-issue-2241",
+      "action": "Follow-up: OAuth state single-use test models atomic consume but prod Redis path is non-atomic GET+DELETE (PR #2219) (Closes #2241)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2241) | gc1-reconcile 2026-07-12T20:05:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2241,
+        "url": "https://github.com/martin-janci/property-management/issues/2241",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-12T20:05:02Z"
+      }
+    },
+    {
       "id": "gh-issue-2242",
       "action": "Follow-up: report_schedules.next_run_at has no consumer + untested DST branch (PR #2220) (Closes #2242)",
       "owner_role": "pm-tech-lead",
@@ -4598,6 +4678,32 @@
         ]
       },
       "last_updated": "2026-07-12T18:16:00Z"
+    },
+    {
+      "id": "gh-issue-2243",
+      "action": "Follow-up: extend #2197 document-scope invariant to the other share-by-id repo methods (PR #2215) (Closes #2243)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2243) | dev-reconcile 2026-07-12T20:05:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2243,
+        "url": "https://github.com/martin-janci/property-management/issues/2243",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "c84b20f92e89446fd34db67302a10ad53f13d5a9",
+        "subject": "gh-issue-2243: scope get_share_access_log_rls to owning document (#2266)",
+        "at": "2026-07-12T20:05:02Z"
+      }
     },
     {
       "id": "gh-issue-2244",
@@ -4678,6 +4784,33 @@
         "merged_pr": 2261,
         "merged_at": "2026-07-12T16:15:46Z",
         "at": "2026-07-12T18:04:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2247",
+      "action": "Follow-up: make sitemap test_metadata a consistency check instead of hard-coded route counts (PR #2225) (Closes #2247)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-12T02:04:59Z (#2247) | gc1-reconcile 2026-07-12T20:05:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-12T02:04:59Z",
+      "issue_ref": {
+        "number": 2247,
+        "url": "https://github.com/martin-janci/property-management/issues/2247",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 2262,
+        "merged_at": null,
+        "at": "2026-07-12T20:05:02Z"
       }
     },
     {

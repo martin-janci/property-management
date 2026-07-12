@@ -1287,6 +1287,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-app-c-8015df70",
+      "status": "merged",
+      "claimed_at": "2026-07-12T18:03:00Z",
+      "last_updated": "2026-07-12T20:03:32Z",
+      "status_changed_at": "2026-07-12T20:03:32Z",
+      "pr_number": 2269,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2269",
+      "merged_at": "2026-07-12T19:04:24Z",
+      "specialist": "frontend",
+      "implementer_summary": "pr=2269 status=done specialist=frontend scope_drift=false code_reuse_warn=none note=added two per-slot icon-fallback tests; 495 pass, biome+tsc clean",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-mobile-app-config-ts",
       "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-app-c-a4562367",
       "status": "failed",
@@ -4237,6 +4259,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2240",
+      "branch": "auto-impl/gh-issue-2240-6d82dd80",
+      "status": "merged",
+      "claimed_at": "2026-07-12T12:12:00Z",
+      "last_updated": "2026-07-12T20:03:32Z",
+      "status_changed_at": "2026-07-12T20:03:32Z",
+      "pr_number": 2268,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2268",
+      "merged_at": "2026-07-12T19:04:28Z",
+      "specialist": null,
+      "implementer_summary": "[sandbox-reclaim: no branch after timeout; respawned specialist, reclaim_attempts=1]",
+      "reviewer_summary": "verdict=approve note=seam defaults to prod endpoint; behaviour unchanged, auth+encryption untouched, json keys match, CI green (build in-progress); self-approve blocked so posted as comment",
+      "last_reviewed_oid": "27c2ba0047d8e557c3a4652f833a4a9ddaaafdb6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2241",
       "branch": "auto-impl/gh-issue-2241-fe051931",
       "status": "failed",
@@ -4280,6 +4326,30 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "gh-issue-2243",
+      "branch": "auto-impl/gh-issue-2243-06c7cee6",
+      "status": "merged",
+      "claimed_at": "2026-07-12T12:12:00Z",
+      "last_updated": "2026-07-12T20:03:32Z",
+      "status_changed_at": "2026-07-12T20:03:32Z",
+      "pr_number": 2266,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2266",
+      "merged_at": "2026-07-12T19:51:28Z",
+      "specialist": null,
+      "implementer_summary": "[sandbox-reclaim: no branch after timeout; respawned specialist, reclaim_attempts=1]",
+      "reviewer_summary": "verdict=changes note=new regression test fails CI: sqlx ColumnDecode on document_share_access_log.ip_address (Postgres INET vs Option<String>); scoping SQL correct but IDOR invariant unverified until test decodes",
+      "last_reviewed_oid": "38866220004c0a41e7195a658c2bced60463e95b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 1,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
@@ -5045,5 +5115,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T18:24:39Z"
+  "archived_at": "2026-07-12T20:09:44Z"
 }
