@@ -23,7 +23,7 @@
       "action": "Follow-up: #2239 RAG provenance regression guard is inert in CI (added inside an #[ignore]d test) (PR #2265) (Closes #2272)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-13T02:04:30Z (#2272)",
       "deadline": null,
       "dependency": null,
@@ -37,7 +37,23 @@
           "from-merged-review"
         ]
       },
-      "last_updated": "2026-07-13T02:08:45Z"
+      "last_updated": "2026-07-13T02:08:45Z",
+      "gc1_closed": "merged PR #2273 (0757393) 2026-07-13"
+    },
+    {
+      "id": "bug-ios-deeplink-info-plist-missing-retry1",
+      "action": "[CASCADED no-op] iOS deep-link Info.plist CFBundleURLTypes+applinks — fix already on dev (d4b509b); retry re-mint was a false-positive [retry 1/2 of failed bug-ios-deeplink-info-plist-missing]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "retry-remint 2026-07-13 (round1); dropped no-op same run",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "retry_of": "bug-ios-deeplink-info-plist-missing",
+      "retry_round": 1,
+      "first_open_at": "2026-07-13T04:04:29Z",
+      "gc1_closed": "archive=failed → dropped (no-op already-fixed-on-dev)"
     }
   ]
 }

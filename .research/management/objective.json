@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2272",
-  "selected_at": "2026-07-13T02:08:26Z",
+  "epic_prefix": "bug-ios-deeplink-info-plist-missing-retry1",
+  "selected_at": "2026-07-13T04:05:26Z",
   "last_action": "repick",
-  "reason": "prior target 'test-gap-hotfix-no-test-pr-1288-webhook-rls-retry1' exhausted; closest-to-done is 'gh-issue-2272' (open=1 claimable=1)",
+  "reason": "prior target 'gh-issue-2272' exhausted; closest-to-done is 'bug-ios-deeplink-info-plist-missing-retry1' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
