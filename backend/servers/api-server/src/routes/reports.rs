@@ -2030,7 +2030,7 @@ fn cron_field_matches(field: &str, value: u32, field_min: u32, field_max: u32) -
                 _ => continue,
             }
         };
-        if value >= lo && value <= hi && (value - lo) % step == 0 {
+        if value >= lo && value <= hi && (value - lo).is_multiple_of(step) {
             return true;
         }
     }
