@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-13 02:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-13 06:11 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -63,6 +63,7 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-rag-similarity-tests-2026-07-13` | Churn hotspot: backend/crates/db/tests/rag_similarity_search_tests.rs (PR #2273 test-file restructure) | open | 2026-07-13 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | dropped | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | done | 2026-07-09 |  |

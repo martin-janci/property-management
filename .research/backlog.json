@@ -4385,6 +4385,26 @@
       "created_at": "2026-07-12",
       "updated_at": "2026-07-12",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-rag-similarity-tests-2026-07-13",
+      "title": "Churn hotspot: backend/crates/db/tests/rag_similarity_search_tests.rs (PR #2273 test-file restructure)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2273"
+      ],
+      "evidence": [
+        "PR #2273 (merged 2026-07-13T04:06:59Z, closes #2272) restructured backend/crates/db/tests/rag_similarity_search_tests.rs: +40/-24 lines extracting the RAG provenance model_filter guard into its own #[sqlx::test]; both the new and parent test remain BIT-351 #[ignore]'d. Sole application-file diff in the 3h56m routine window; first hotspot appearance for this file (runs_seen=1)."
+      ],
+      "files": [
+        "backend/crates/db/tests/rag_similarity_search_tests.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
     }
   ]
 }

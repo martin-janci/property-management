@@ -1,24 +1,47 @@
 {
-  "generated_at": "2026-07-13T02:11:42Z",
-  "since": "2026-07-12T22:22:37Z",
-  "window_hours": 3,
+  "generated_at": "2026-07-13T06:10:58Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_hours": 4,
   "trigger_text": "",
+  "run_kind": "same-day-rerun",
   "summary": {
-    "merged_prs": 0,
+    "merged_prs": 1,
     "open_prs_touched": 0,
     "new_or_updated_issues": 1,
-    "commits_on_dev": 4,
-    "app_code_commits": 0,
-    "churn_hotspots_new": 0
+    "commits_on_dev": 5,
+    "app_code_commits": 1,
+    "churn_hotspots_new": 1
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/rag_similarity_search_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2273",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2273 (merged 2026-07-13T04:06:59Z, closes #2272) restructured backend/crates/db/tests/rag_similarity_search_tests.rs: +40/-24 lines extracting the RAG provenance model_filter guard into its own #[sqlx::test] — both the new and parent test remain BIT-351 #[ignore]'d.",
+        "Sole application-file diff in the 3h56m routine window; trivially top-3 churn by construction. First hotspot appearance for this file (not in prior hotspot_history)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/crates/db/tests/rag_similarity_search_tests.rs"]
+    }
+  ],
+  "notes": [
+    "PR #2273 body has no `- [ ]` unchecked TODO markers; not a revert; title is `test-gap(...)` (not fix/hotfix) — no unchecked-todo / revert / hotfix-no-test signals apply.",
+    "Issue #2272 (opened 2026-07-13T00:13Z by `ppt-review-merged`) was labelled `follow-up`+`from-merged-review` and dispatcher-claimed before this run — no `untriaged-issue` signal (already triaged).",
+    "No route files (`frontend/apps/{ppt-web,reality-web}/**`) touched — no `screen-map-drift` / `screen-map-orphan` signals.",
+    "Phase 1.5 (rotating dev-review) SKIPPED — dispatcher already ran Tier-1d dev-review earlier today on segments `reality-server` (2026-07-13, 0 defects) and `api-core` (2026-07-13, 1 HIGH SSRF re-confirmed). No fresh churn in the 3h56m window to justify a third pass. review_cursor left as-is; oldest-unreviewed is `reality-web` (2026-06-14).",
+    "Phase 1.6 (PM rotation) SKIPPED — the prior routine run 3h56m ago already skipped it (same rationale, no fresh delivery activity), and this run's activity (a single test-file restructure) does not warrant re-running the delivery synthesis. pm_cursor and coverage_cursor unchanged."
+  ],
   "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — sole signal is a churn-hotspot (not on Phase 5 allowlist)",
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)", "observed": "true", "expected": "true" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271->2273, last_commit_sha 1691c9d->0db98243, seen_signals 244->245, hotspot_history 67->68, stats.runs 44->45)", "observed": "true", "expected": "true" },
     { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "signals[] is empty this run — nothing to double-score", "observed": "true", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "no items with score>8; sole open item is 1d old, not eligible for decay", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "sole new signal id `churn-hotspot-backend/crates/db/tests/rag_similarity_search_tests.rs` NOT in prior seen_signals (first hotspot for that file) — no double-score", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "no scores >8; sole prior open row 1d old (no decay); new churn row scored 1", "observed": "true", "expected": "true" },
     { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
     { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
     { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
@@ -28,15 +51,8 @@
     { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
     { "goal": "G13", "passed": true, "command": "archive tracked-file count new(7) >= old(7)", "observed": "7 >= 7", "expected": "new >= old" },
     { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "byte-identical" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1", "observed": "0 actions", "expected": "within caps" },
-    { "goal": "G16", "passed": true, "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op", "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5, coverage_cursor.next_index=12 in [0,13)", "expected": "valid" },
-    { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
-  ],
-  "notes": [
-    "Very quiet 3-hour window. No merged PRs (cursor #2271 unchanged). One new issue #2272 (post-merge review follow-up on PR #2265) — already labelled and dispatcher-claimed as gh-issue-2272; not an untriaged-issue signal.",
-    "All 4 dev commits are chore(research):* infrastructure — 0 application-file churn, so no new churn-hotspot / repeated-churn signals fired.",
-    "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
-    "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
-    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
+    { "goal": "G15", "passed": true, "command": "auto_fix caps + idempotency — 0 actions this run, trivially compliant", "observed": "0/0/0", "expected": "≤1/≤1/≤1" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid (no-op — Phase 1.6 skipped)", "observed": "no-op — pm_cursor/coverage_cursor unchanged this run", "expected": "no-op OK" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram bot-token value in added lines", "observed": "0 hits", "expected": "0 hits" }
   ]
 }
