@@ -437,6 +437,9 @@
     "closed-not-merged-pr-644",
     "closed-not-merged-pr-671",
     "closed-not-merged-pr-908",
+    "code-review-api-core-apicall-ssrf-dns-bypass",
+    "code-review-api-core-apicall-ssrf-redirect",
+    "code-review-api-core-apicall-unbounded-body",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-equipment-idor",
     "code-review-api-core-llm-doc-idor",
@@ -613,8 +616,8 @@
   },
   "stats": {
     "runs": 45,
-    "vectors_created": 183,
-    "plans_created": 14,
+    "vectors_created": 186,
+    "plans_created": 16,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

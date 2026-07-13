@@ -4387,6 +4387,81 @@
       "created_at": "2026-07-12",
       "updated_at": "2026-07-13",
       "plan": null
+    },
+    {
+      "id": "security-api-call-ssrf-redirect-hop",
+      "title": "SSRF (redirect-hop): api_call.rs reqwest::Client follows 10 hops with no per-hop validation — 30x redirect to 169.254.169.254 bypasses guard",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "signals/2026-07-10-api-core.json (id code-review-api-core-apicall-ssrf-redirect)",
+        "signals/2026-07-13-api-core.json (re-confirmed HIGH, still present)",
+        "dispatcher-fire 2026-07-13 buffer-low"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-110 — reqwest::Client::builder() sets .timeout(60s) + .user_agent('PPT-Workflow/1.0') only; NO .redirect(Policy::none()) → default of up to 10 hops followed transparently",
+        "backend/servers/api-server/src/services/actions/api_call.rs:250-253 — validate_external_url() runs ONCE on the initial user-templated URL only; no per-hop revalidation exists anywhere in the call chain",
+        "backend/servers/api-server/src/services/actions/api_call.rs:307 — request.send().await returns after the client transparently followed any 3xx hops; response is then read (line 322) and stored on the workflow execution row — enables SSRF-driven exfiltration",
+        "Reachability: services/actions/mod.rs:206 registers ApiCallExecutor in the default ActionRegistry; workflow_executor::run drives the registry against tenant/admin-configured api_call workflow actions — authenticated workflow authors reach this in production.",
+        "Dispatcher Tier-1d dev-review re-confirmed the finding on 2026-07-10 AND 2026-07-13 (3 days unfixed); dispatcher action queue is 0/72 (buffer-low fire) so the finding never became claimable via the dispatcher path"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": "plans/security-api-call-ssrf-redirect-hop.md"
+    },
+    {
+      "id": "security-api-call-ssrf-dns-rebinding",
+      "title": "SSRF (DNS-based): api_call.rs validate_external_url only blocks IP literals — hostname resolving to 169.254.169.254 / 10.x bypasses guard",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "signals/2026-07-10-api-core.json (id code-review-api-core-apicall-ssrf-dns-bypass)",
+        "signals/2026-07-13-api-core.json (re-confirmed HIGH, still present)",
+        "dispatcher-fire 2026-07-13 buffer-low"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 — the is_blocked_v4/v6 check is gated by `if let Ok(ip) = host.parse::<std::net::IpAddr>()` — the guard body only runs when the host is a LITERAL IP address",
+        "backend/servers/api-server/src/services/actions/api_call.rs:150-207 — no DNS resolution + no post-resolve IP validation; a DNS hostname (e.g. attacker.example.com resolving to 169.254.169.254 or 10.0.0.1) skips the entire is_blocked_v4/v6 branch, so validate_external_url returns Ok(())",
+        "reqwest then resolves the host and dials the internal target — classic DNS-based SSRF, and open to DNS-rebinding (TTL≈0, TOCTOU between validation and connection)",
+        "Same reachability as the redirect-hop finding: services/actions/mod.rs:206 registers ApiCallExecutor; authenticated workflow authors reach the sink through configured api_call workflow actions",
+        "Dispatcher Tier-1d dev-review re-confirmed on 2026-07-10 AND 2026-07-13 (3 days unfixed); buffer-low fire means dispatcher never claimed it"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": "plans/security-api-call-ssrf-dns-rebinding.md"
+    },
+    {
+      "id": "bug-api-call-response-body-unbounded",
+      "title": "api_call.rs response.text() has no size cap — remote server can drive memory-DoS + persisted-row bloat",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-07-10-api-core.json (id code-review-api-core-apicall-unbounded-body)",
+        "dispatcher-fire 2026-07-13 buffer-low"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:322-328 — response.text().await.unwrap_or_default() reads the entire remote response body into memory with no size cap, then persists it into the ActionResult output JSON (workflow execution record)",
+        "A malicious or compromised endpoint returning a very large / chunked body can drive memory exhaustion (DoS) and bloat the persisted execution row on disk — no per-worker upper bound protects the api-server",
+        "Fix direction: read the body via response.bytes_stream() with a running-total limit (e.g. 1 MiB default, configurable per action); reject and log when the cap is exceeded before persistence"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
     }
   ]
 }

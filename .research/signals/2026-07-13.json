@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-13T10:15:00Z",
+  "generated_at": "2026-07-13T10:35:00Z",
   "since": "2026-07-13T02:11:42Z",
   "window_hours": 8,
-  "trigger_text": "",
+  "trigger_text": "buffer-low: claimable=0/72 — refill planner (dispatcher 2026-07-13)",
   "summary": {
     "merged_prs": 2,
     "open_prs_touched": 0,
@@ -10,7 +10,8 @@
     "new_or_updated_issues": 0,
     "commits_on_dev": 12,
     "app_code_commits": 2,
-    "churn_hotspots_new": 1
+    "churn_hotspots_new": 1,
+    "dispatcher_signals_ingested": 3
   },
   "signals": [
     {
@@ -24,7 +25,7 @@
       "evidence": [
         "backend/servers/api-server/src/routes/auth.rs — +28/-48 (76 lines) in PR #2274 (refactor: extract authenticated_user_id() helper)",
         "runs_seen advanced 3→4; last_seen 2026-07-12→2026-07-13; recent_churn 4→76 (single-touch, planned mitigation on the tracked churn cluster)",
-        "PR #2274 is the mitigation promoted for backlog id `refactor-churn-hotspots-api-server-auth-2026-07-12` — this run's touch is the resolution, not fresh instability",
+        "PR #2274 is the mitigation promoted for backlog id refactor-churn-hotspots-api-server-auth-2026-07-12 — this run's touch is the resolution, not fresh instability",
         "score_delta=0 (cumulative-type re-emit per G4; already in seen_signals)"
       ]
     },
@@ -53,35 +54,79 @@
         "First-touch as a hotspot (runs_seen=1); the change is a planned test-extraction follow-up on issue #2272, not organic instability",
         "score_delta=0 (audit-only; single-touch planned refactor; not treated as instability — no backlog row created)"
       ]
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "type": "code-review-finding",
+      "source": "dispatcher signals/2026-07-10-api-core.json; re-confirmed signals/2026-07-13-api-core.json; ingested by routine due to dispatcher buffer-low (0/72)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-110 — reqwest::Client::builder() sets .timeout()+.user_agent() only; NO .redirect(Policy::…) → default of up to 10 hops followed transparently. Confirmed by direct file read this run.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:250-253 — validate_external_url() runs ONCE on the initial user-templated URL; no per-hop revalidation exists.",
+        "Reachability: services/actions/mod.rs:206 registers ApiCallExecutor in the default ActionRegistry — authenticated workflow authors reach this sink.",
+        "3 days unfixed since initial detection 2026-07-10; dispatcher Tier-1c/1d never converted this signal into an assignment (buffer=0/72). Routine ingested to enable Phase 3 promotion under the security fast-track."
+      ]
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-dns-bypass",
+      "type": "code-review-finding",
+      "source": "dispatcher signals/2026-07-10-api-core.json; re-confirmed signals/2026-07-13-api-core.json; ingested by routine due to dispatcher buffer-low (0/72)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 — the is_blocked_v4/v6 guard body only runs on host.parse::<IpAddr>() success; DNS names fall straight through to Ok(()) at line 208. Confirmed by direct file read this run.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:150-207 — no DNS resolution step, no post-resolve IP validation, no custom dns_resolver on the reqwest client.",
+        "Reachability identical to redirect-hop finding above.",
+        "3 days unfixed; dispatcher buffer 0/72; routine ingested for Phase 3 promotion (security fast-track: score>=2, confidence=high, vector=security)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-apicall-unbounded-body",
+      "type": "code-review-finding",
+      "source": "dispatcher signals/2026-07-10-api-core.json; ingested by routine due to dispatcher buffer-low (0/72)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:322-328 — response.text().await.unwrap_or_default() reads the entire remote response body into memory with no size cap; persists into ActionResult output JSON (workflow execution row). Confirmed by direct file read this run.",
+        "score=2, confidence=medium — sits in backlog for future signal to escalate; NOT promoted this run (below the security fast-track bar; on the fast-track only when vector=security AND confidence=high AND score>=2)."
+      ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — the only backlog item resolved this run (refactor-churn-hotspots-api-server-auth-2026-07-12) is a refactor vector, not on the allowlist; no signals with confidence=high + score>=3 in an allowlisted shape",
+  "auto_fix_skipped_reason": "no candidate — the 3 dispatcher-ingested signals are code fixes (SSRF handler rework + response-body streaming) which are not on the Phase 5 allowlist (that only covers screen-map-drift, screen-map-orphan, fixme-in-merged-code issue-only, dep-update-noise lockfile-bump, stalled-review comment-only). Correct path: manual implementer via the promoted plans.",
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271->2274, last_commit_sha 1691c9d->a415a8f, last_run_iso, stats.runs 44->45; seen_signals 244->245; hotspot_history bumped for auth.rs, rag_similarity_search_tests.rs added)", "observed": "true", "expected": "true" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271->2274, last_commit_sha 1691c9d->a415a8f, seen_signals 244->248, stats.runs 44->45, stats.plans_created 14->16, stats.vectors_created 183->186)", "observed": "true", "expected": "true" },
     { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "3 signals emitted: 2 cumulative re-emits (churn-hotspot / repeated-churn on auth.rs) with score_delta=0; 1 new (churn-hotspot on rag_similarity_search_tests.rs) with score_delta=0", "observed": "no non-cumulative re-emit with delta>0", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "no items with score>8; no open items with updated_at>14d (0 open after this run)", "observed": "true (0 open items after resolution)", "expected": "true" },
-    { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
-    { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
+    { "goal": "G4",  "passed": true, "command": "6 signals total: 2 cumulative re-emits (score_delta=0), 1 new churn-hotspot (score_delta=0), 3 dispatcher-ingested first-time in routine's seen_signals (score_delta=3/3/2 — first ingestion, not re-emit)", "observed": "no non-cumulative re-emit with delta>0 — all 3 new-to-routine dispatcher signals are first-ingestion, not double-counted", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "no items with score>8; no open items with updated_at>14d", "observed": "3 new open items created today (updated_at=2026-07-13), well under decay window", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "each new plan has an adversarial-pass annotation in the brief", "observed": "2 new plans, both annotated `adversarial pass: passed`", "expected": "annotated" },
+    { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2; each has 4 metadata fields + 11 required headings; ≥1 capability ticked; Mode declared; ≥1 file resolves on disk", "observed": "2 new plans; both structurally complete; both files resolve", "expected": "<=2, complete" },
     { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
     { "goal": "G9",  "passed": true, "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)", "observed": "0 hits", "expected": "0 hits" },
     { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical", "expected": "byte-identical" },
-    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phases failed, cursors advanced correctly", "observed": "no phases failed", "expected": "consistent" },
-    { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phases failed", "observed": "no phases failed", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted", "observed": "vacuous (no prior-run plans this state)", "expected": "vacuous" },
     { "goal": "G13", "passed": true, "command": "archive tracked-file count new(>=7) >= old(7)", "observed": "unchanged", "expected": "new >= old" },
     { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "byte-identical" },
     { "goal": "G15", "passed": true, "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1", "observed": "0 actions", "expected": "within caps" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run (pm_cursor + coverage_cursor unchanged); management artifacts remain valid from previous run", "observed": "no-op — Phase 1.6 not run", "expected": "no-op when Phase 1.6 skipped" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped; management artifacts remain valid from previous run", "observed": "no-op — Phase 1.6 not run this dispatcher-fire", "expected": "no-op when Phase 1.6 skipped" },
     { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
   ],
   "notes": [
-    "8-hour window since previous same-day routine run (02:11 → 10:15 UTC). 2 PRs merged: #2273 (test-gap: extract RAG provenance guard into own #[sqlx::test], closes issue #2272) and #2274 (refactor: extract authenticated_user_id() helper in api-server auth routes).",
-    "Backlog resolution: sole open item `refactor-churn-hotspots-api-server-auth-2026-07-12` marked done via PR #2274 verbatim-ID match (title matches item id) and direct diff verification — the 5 identical bearer-auth preambles collapsed into one helper on the hot file. Backlog is now fully-terminal (0 open, 0 ready, 0 deferred).",
-    "Phase 1.5 skipped: the dispatcher already ran 3 dev-review slices today (api-core with 1 HIGH signal re-confirmed — api_call.rs SSRF unfixed since 2026-07-10; ppt-web-ui with 3 Low; reality-server 0 defects). No fresh churn on the routine's next-oldest segment (reality-web, 2026-06-14) that would justify piling on.",
-    "Phase 1.6 skipped: only 2 planned merges since Phase 1.6 last ran; both terminal-in-planning tasks, no fresh sprint churn / role rebalance signal. pm_cursor and coverage_cursor deliberately unchanged.",
-    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar.",
-    "Surfaced but NOT ingested as routine signals: dispatcher's HIGH api_call.rs SSRF finding (redirect-hop + DNS-rebind + unbounded body) is now 3 days unfixed — dispatcher owns via Tier-1c/1d and its next tick should convert to a claimable task. Escalated to brief for visibility."
+    "This run was triggered by a dispatcher buffer-low fire: 'claimable=0/72 — refill planner (dispatcher 2026-07-13)'. Priority became: convert genuinely-actionable dispatcher-side signals into routine backlog + plans so Tier-1b refill can promote them.",
+    "Cross-check: 3 dispatcher-generated SSRF/DoS signals on backend/servers/api-server/src/services/actions/api_call.rs from 2026-07-10 have been re-confirmed HIGH at least twice and never entered the routine's seen_signals. They were ingested this run: code-review-api-core-apicall-ssrf-redirect (+3, high, security), code-review-api-core-apicall-ssrf-dns-bypass (+3, high, security), code-review-api-core-apicall-unbounded-body (+2, medium, bug).",
+    "All three findings were re-verified by direct file read (api_call.rs:106-110 no redirect policy; :179 IP-literal-only guard; :322 unbounded response.text()); reachability confirmed via services/actions/mod.rs:206 registering ApiCallExecutor.",
+    "Phase 3 promotion: two HIGH SSRF items promoted under the security fast-track (score>=2 + confidence=high + vector=security): plans/security-api-call-ssrf-redirect-hop.md and plans/security-api-call-ssrf-dns-rebinding.md. Unbounded-body row (score=2, medium confidence, bug vector) sits in backlog — not on fast-track.",
+    "Phase 1.5 skipped: dispatcher already ran 3 dev-review slices today (api-core, ppt-web-ui, reality-server). The api-core slice IS the source we just ingested.",
+    "Phase 1.6 skipped: only 2 planned merges since Phase 1.6 last ran; no fresh sprint churn / role-rebalance signal beyond the buffer-low itself.",
+    "Backlog resolution earlier this run: sole prior open item refactor-churn-hotspots-api-server-auth-2026-07-12 marked done via PR #2274 verbatim-ID match. Net state after this run: 3 open (unbounded-body only) + 2 ready (both SSRF plans) — dispatcher buffer refilled with 3 fresh rows."
   ]
 }
