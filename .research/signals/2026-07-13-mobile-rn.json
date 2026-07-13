@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-13",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-dashboard-no-query-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72-89 — announcementsQuery/faultsStatsQuery/votesQuery/unreadMessagesQuery consume only .data and never inspect .isError/.error; on any network or auth failure the stats derivations at :102-129 fall back to `?? 0` / `?? []`, so the dashboard silently renders 0 open faults / 0 active votes / 0 unread messages instead of surfacing an error. Residents can miss urgent actions because a failed request is indistinguishable from a genuinely-empty state. No ErrorBoundary wraps the screen and no onError is supplied.",
+        "Tracked as GitHub issue https://github.com/martin-janci/property-management/issues/2282 (labels: frontend, follow-up) — backlog.json exceeds the MCP inline-push ceiling this cycle."
+      ],
+      "expert": "frontend",
+      "issue": 2282
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts (178 lines) — the app's core fetch/auth module has NO test file. Untested logic: decodeJwtPayload base64url JWT decode + padding (:48-61), getTenantId tenant_id-claim extraction (:64-70), and apiRequest header composition incl. the `X-Tenant-ID` injection (:78-122). Every consumer test (e.g. ReportFaultScreen.test.tsx, usePushNotifications.test.ts, useFolderTree.test.ts) jest.mock()s this module, so a regression in tenant extraction or header building would silently break ALL tenant-scoped requests with zero test coverage catching it.",
+        "Tracked as GitHub issue https://github.com/martin-janci/property-management/issues/2283 (labels: frontend, follow-up) — backlog.json exceeds the MCP inline-push ceiling this cycle."
+      ],
+      "expert": "tester",
+      "issue": 2283
+    },
+    {
+      "id": "code-review-mobile-rn-docupload-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentUploadScreen.tsx — churn-recent documents screen with untested non-trivial logic: extractTenantId JWT/base64url decode (:85-98), uploadDocumentMultipart error-message extraction + multipart header handling (:110-160), validate() branching (:232-239), getFileIcon MIME mapping (:406-412). The documents/ dir ships 6 sibling test files (download, preview, share, folders, folder-organization, screens) but NONE for upload — the highest-risk mutation path in the folder is uncovered.",
+        "Tracked as GitHub issue https://github.com/martin-janci/property-management/issues/2284 (labels: frontend, follow-up) — backlog.json exceeds the MCP inline-push ceiling this cycle."
+      ],
+      "expert": "tester",
+      "issue": 2284
+    }
+  ],
+  "notes": "Segment mobile-rn selected oldest-unreviewed: this is a demand-driven Tier-1d run (no Phase-1 CHURN_FILES passed), so churn-alignment did not apply and selection defaulted to the oldest segment. api-handlers/api-core/ppt-web-ui/reality-server were all already reviewed today (07-13); mobile-rn/ppt-web-core last reviewed 07-10, and mobile-rn is older by review_cursor tiebreak (06-16 vs 07-07). No segment was backlog-saturated (all prior code-review findings are done/dropped). Frontend expert also surfaced two lower-severity dashboard i18n bugs (DashboardScreen.tsx:148 hardcodes toLocaleDateString('en-US') for sk/cs/de users — VotingScreen.tsx:82-95 already fixed this exact regression; and :261/:99 renders the raw hardcoded 'general' category code unwrapped by t()) — kept out of the top-3 as score_delta 1. All findings static-analysis only; each file:line was re-read and confirmed. Combined findings = 3 (at per-run cap). Filed as GitHub follow-up issues this cycle because backlog.json (202 KB) exceeds the MCP inline-push ceiling — see issue links in each signal's issue field."
+}
