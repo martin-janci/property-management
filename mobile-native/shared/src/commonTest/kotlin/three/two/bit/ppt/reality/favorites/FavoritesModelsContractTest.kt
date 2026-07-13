@@ -239,4 +239,76 @@ class FavoritesModelsContractTest {
         val decoded: SavedSearchesResponse = json.decodeFromString(json.encodeToString(resp))
         assertEquals(resp, decoded)
     }
+
+    /**
+     * Pin the `FavoriteAlertsResponse` / `FavoriteAlert` snake_case wire shape returned by
+     * `GET /api/v1/favorites/alerts` (gap-84-3). Monetary fields are whole-currency numbers and
+     * `change_percentage` is a signed fraction — matching the rest of the portal price models.
+     */
+    @Test
+    fun favoriteAlertsResponse_decodes_snake_case_price_change_shape() {
+        val raw =
+            """
+            {
+              "alerts": [
+                {
+                  "id": "al-1",
+                  "favorite_id": "fav-1",
+                  "listing_id": "lst-1",
+                  "title": "Bright 2br in Old Town",
+                  "alert_type": "price_change",
+                  "old_price": 200000,
+                  "new_price": 185000,
+                  "currency": "EUR",
+                  "change_percentage": -7.5,
+                  "status": "pending",
+                  "created_at": "2026-07-10T10:00:00Z"
+                }
+              ],
+              "unread_count": 1,
+              "limit": 100,
+              "offset": 0
+            }
+            """
+                .trimIndent()
+        val resp: FavoriteAlertsResponse = json.decodeFromString(raw)
+        assertEquals(1L, resp.unreadCount)
+        assertEquals(1, resp.alerts.size)
+        val alert = resp.alerts.first()
+        assertEquals("fav-1", alert.favoriteId)
+        assertEquals("lst-1", alert.listingId)
+        assertEquals(200000L, alert.oldPrice)
+        assertEquals(185000L, alert.newPrice)
+        assertEquals(-7.5, alert.changePercentage)
+        assertTrue(alert.isPriceChange)
+        assertTrue(alert.isUnread)
+        assertTrue(alert.isPriceDrop)
+    }
+
+    /** Status-only alerts omit the price fields entirely; they must still decode. */
+    @Test
+    fun favoriteAlert_decodes_status_change_without_price_fields() {
+        val raw =
+            """
+            {
+              "id": "al-2",
+              "favorite_id": "fav-2",
+              "listing_id": "lst-2",
+              "title": "Studio near the river",
+              "alert_type": "status_change",
+              "previous_status": "active",
+              "new_status": "sold",
+              "status": "sent",
+              "created_at": "2026-07-09T09:00:00Z"
+            }
+            """
+                .trimIndent()
+        val alert: FavoriteAlert = json.decodeFromString(raw)
+        assertNull(alert.oldPrice)
+        assertNull(alert.newPrice)
+        assertNull(alert.changePercentage)
+        assertEquals("sold", alert.newStatus)
+        assertTrue(!alert.isPriceChange)
+        assertTrue(!alert.isUnread)
+    }
 }
