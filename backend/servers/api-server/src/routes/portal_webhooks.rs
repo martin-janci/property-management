@@ -693,8 +693,18 @@ async fn process_inquiry_webhook(
         }
     };
 
-    // Record the inquiry event
-    let _ = state
+    // Record the inquiry event.
+    //
+    // UNLIKE the view / generic paths (analytics, genuinely best-effort), an
+    // inquiry carries a *lead* — sender name / email / phone / message. If the
+    // write fails and we still ack the portal with `success: true` / HTTP 200,
+    // the lead is silently lost: the portal treats the delivery as accepted and
+    // never retries, and there is no record anywhere (#2275). So on this path we
+    // must propagate a genuine persistence failure to the caller as 500 so the
+    // portal retries. A duplicate delivery (unique-constraint violation) is
+    // instead an idempotent success — we ack 200 so retries of an
+    // already-recorded lead don't 500 forever.
+    let record_result = state
         .listing_repo
         .record_webhook_event(
             syndication.listing_id,
@@ -710,15 +720,44 @@ async fn process_inquiry_webhook(
                 "timestamp": webhook.timestamp,
             }),
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    match classify_inquiry_persist(record_result.as_ref().map(|_| ())) {
+        InquiryPersistOutcome::Recorded => {}
+        InquiryPersistOutcome::Duplicate => {
+            // Already recorded on an earlier delivery — ack idempotently so the
+            // portal stops retrying, but do not double-count stats.
+            tracing::info!(
+                portal = %portal,
+                external_id = %webhook.external_id,
+                listing_id = %syndication.listing_id,
+                "Inquiry webhook already recorded (duplicate delivery) — acking idempotently"
+            );
+            return Ok(Json(WebhookAckResponse {
+                success: true,
+                message: Some("Inquiry already recorded".to_string()),
+                acknowledged_at: Utc::now(),
+            }));
+        }
+        InquiryPersistOutcome::Retry => {
+            // Genuine write failure — the lead is NOT persisted. Return 5xx so
+            // the portal retries instead of silently dropping the lead (#2275).
+            let err = record_result.expect_err("Retry outcome implies an Err result");
             tracing::error!(
                 portal = %portal,
                 external_id = %webhook.external_id,
-                error = %e,
-                "Failed to record inquiry event"
+                error = %err,
+                "Failed to persist inbound inquiry lead — returning 500 so the portal retries"
             );
-        });
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "LEAD_PERSISTENCE_FAILED",
+                    "Failed to persist inquiry lead; please retry",
+                )),
+            ));
+        }
+    }
 
     // Update stats
     let _ = state
@@ -739,6 +778,46 @@ async fn process_inquiry_webhook(
         message: None,
         acknowledged_at: Utc::now(),
     }))
+}
+
+/// Classification of a `record_webhook_event` result on the inquiry-lead path.
+///
+/// The inquiry path carries a lead that must not be silently dropped (#2275),
+/// so unlike the analytics paths it distinguishes three outcomes rather than
+/// swallowing every error.
+#[derive(Debug, PartialEq, Eq)]
+enum InquiryPersistOutcome {
+    /// The lead was written — ack the portal with 200.
+    Recorded,
+    /// A duplicate delivery of an already-recorded lead (unique violation).
+    /// Idempotent success — ack 200 so the portal stops retrying.
+    Duplicate,
+    /// A genuine write failure — the lead is NOT persisted. Return 5xx so the
+    /// portal retries instead of dropping the lead.
+    Retry,
+}
+
+/// Whether a SQLx error is a Postgres unique-constraint violation
+/// (SQLSTATE `23505`). Used to treat a duplicate inquiry delivery as an
+/// idempotent success rather than a retriable write failure.
+fn is_unique_violation(err: &sqlx::Error) -> bool {
+    matches!(
+        err,
+        sqlx::Error::Database(db) if db.code().as_deref() == Some("23505")
+    )
+}
+
+/// Classify the result of persisting an inbound inquiry lead.
+///
+/// - `Ok(())` -> [`InquiryPersistOutcome::Recorded`] (ack 200)
+/// - unique violation -> [`InquiryPersistOutcome::Duplicate`] (idempotent ack 200)
+/// - any other error -> [`InquiryPersistOutcome::Retry`] (return 500, portal retries)
+fn classify_inquiry_persist(result: Result<(), &sqlx::Error>) -> InquiryPersistOutcome {
+    match result {
+        Ok(()) => InquiryPersistOutcome::Recorded,
+        Err(e) if is_unique_violation(e) => InquiryPersistOutcome::Duplicate,
+        Err(_) => InquiryPersistOutcome::Retry,
+    }
 }
 
 // ============================================================================
@@ -869,5 +948,43 @@ mod tests {
         std::env::remove_var(env_key(portal));
 
         assert!(res.is_ok(), "a correctly-signed webhook must be accepted");
+    }
+
+    // ------------------------------------------------------------------
+    // Regression for #2275: the inbound INQUIRY path must not silently drop
+    // a lead when the DB write fails. A genuine persistence failure must map
+    // to a retry (-> 500), NOT an idempotent ack (-> 200).
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn inquiry_persist_success_is_recorded() {
+        assert_eq!(
+            classify_inquiry_persist(Ok(())),
+            InquiryPersistOutcome::Recorded,
+            "a successful write must ack the portal"
+        );
+    }
+
+    #[test]
+    fn inquiry_persist_db_failure_triggers_retry_not_silent_ack() {
+        // `PoolClosed` stands in for any genuine infrastructure/write failure:
+        // the lead did NOT reach the DB. On `main`/`dev` this error was swallowed
+        // (`let _ = ...`) and the handler still returned `success: true` / 200,
+        // silently losing the lead. It must now classify as `Retry` so the
+        // handler returns 5xx and the portal re-delivers.
+        let err = sqlx::Error::PoolClosed;
+        assert_eq!(
+            classify_inquiry_persist(Err(&err)),
+            InquiryPersistOutcome::Retry,
+            "a genuine write failure must trigger a retry (5xx), never a silent 200 ack"
+        );
+    }
+
+    #[test]
+    fn non_database_error_is_not_a_unique_violation() {
+        // Only a real unique-constraint violation may be treated as an
+        // idempotent duplicate; any other error must fall through to `Retry`.
+        assert!(!is_unique_violation(&sqlx::Error::PoolClosed));
+        assert!(!is_unique_violation(&sqlx::Error::RowNotFound));
     }
 }
