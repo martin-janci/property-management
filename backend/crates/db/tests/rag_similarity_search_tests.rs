@@ -27,14 +27,21 @@
 //! `llm_document_rls_repo_tests.rs`); the focus here is retrieval correctness
 //! and the stats-view contract.
 //!
-//! # Performance note — single test function
+//! # Performance note — migration cost per test function
 //!
 //! `#[sqlx::test(migrator = "db::MIGRATOR")]` applies all ~194 migrations to a
-//! fresh database for EACH annotated test function. With three separate
-//! functions that overhead was 3× the full migration set, which caused the CI
-//! job to time out at 60 minutes. All three logical concerns (similarity
-//! ranking/filtering, org-scoping IDOR, stats-view contract) are now expressed
-//! as sequential sub-assertions in a single test so migrations run only once.
+//! fresh database for EACH annotated test function. The three original concerns
+//! (similarity ranking/filtering, org-scoping IDOR, stats-view contract) each had
+//! their own function, so the overhead was 3× the full migration set, which caused
+//! the CI job to time out at 60 minutes. They are now expressed as sequential
+//! sub-assertions in `rag_retrieval_correctness` so migrations run once for that
+//! group. The provenance retrieval-filter contract (#2239) lives in its own
+//! function `search_documents_pgvector_model_filter_provenance` so the regression
+//! guard is an independently-named case with a small blast radius (#2272) rather
+//! than section E buried inside the combined test. Both functions are `#[ignore]`d
+//! under the BIT-351 quarantine and only run once the DB lane is repaired
+//! (BIT-352); prefer consolidating new assertions into an existing function over
+//! adding a fresh migrator run unless a guard genuinely warrants its own case.
 
 use db::repositories::LlmDocumentRepository;
 use sqlx::PgPool;
@@ -105,14 +112,15 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 /// guard, and v_rag_statistics view contract — all in one DB so migrations
 /// apply only once instead of three times.
 ///
+/// The provenance retrieval-filter contract (formerly section E, #2239) now lives
+/// in its own focused function `search_documents_pgvector_model_filter_provenance`
+/// so the regression guard is an independently-named case (#2272).
+///
 /// Sub-sections:
 ///   A. Similarity ranking & min_similarity floor (JSONB-fallback path)
 ///   B. Org-scoping: org A query must never surface org B chunks
 ///   C. Stats view: regression guard for migration 00203
 ///   D. Upsert identity + provenance persisted into metadata (Story 84.5 / #2201)
-///   E. Provenance retrieval filter: search_documents_pgvector's model_filter
-///      drops mismatched-model rows, keeps legacy-untagged rows, respects limit
-///      (#2239 — the retrieval half of the #2201 provenance finding)
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn rag_retrieval_correctness(pool: PgPool) {
@@ -407,22 +415,30 @@ async fn rag_retrieval_correctness(pool: PgPool) {
         .await
         .expect("upsert (new chunk_index)");
     assert_ne!(third_id, first_id, "new chunk_index must create a new row");
+}
 
-    // -------------------------------------------------------------------------
-    // E. Provenance retrieval filter (#2239): `search_documents_pgvector`'s
-    //    `model_filter` is the retrieval half of the #2201 provenance finding —
-    //    it must avoid comparing vectors produced by different embedding models
-    //    (stub vs OpenAI, both 1536-dim, live in incompatible spaces). Nothing
-    //    exercised the filtering path before: `rag_retrieval_correctness`'s
-    //    section A calls the wrapper with `None`, and the sessions.rs call site
-    //    needs a live provider key. This seeds one row per model plus a legacy
-    //    untagged row and asserts:
-    //      * a row tagged with a DIFFERENT model is dropped,
-    //      * the matching-model row is kept,
-    //      * a legacy row with NO `embedding_model` metadata is kept (documented
-    //        backward-compat behaviour of `filter_by_embedding_model`),
-    //      * `limit` is honoured after over-fetch (×4, cap 200) + post-filter.
-    // -------------------------------------------------------------------------
+/// Provenance retrieval filter (#2239 / #2272): `search_documents_pgvector`'s
+/// `model_filter` is the retrieval half of the #2201 provenance finding — it must
+/// avoid comparing vectors produced by different embedding models (stub vs OpenAI,
+/// both 1536-dim, live in incompatible spaces). Nothing else exercises the
+/// filtering path: `rag_retrieval_correctness`'s section A calls the wrapper with
+/// `None`, and the sessions.rs call site needs a live provider key.
+///
+/// Extracted from `rag_retrieval_correctness`'s former section E into its own
+/// focused case so the provenance contract runs as an independent, clearly-named
+/// test with a small blast radius once the BIT-351 DB lane is repaired (BIT-352).
+/// It seeds one row per model plus a legacy untagged row and asserts:
+///   * a row tagged with a DIFFERENT model is dropped,
+///   * the matching-model row is kept,
+///   * a legacy row with NO `embedding_model` metadata is kept (documented
+///     backward-compat behaviour of `filter_by_embedding_model`),
+///   * `limit` is honoured after over-fetch (×4, cap 200) + post-filter.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
+async fn search_documents_pgvector_model_filter_provenance(pool: PgPool) {
+    set_super_ctx(&pool).await;
+    let repo = LlmDocumentRepository::new(pool.clone());
+    let mut conn = pool.acquire().await.expect("acquire");
 
     let org_prov = seed_org(&pool, "rag-prov-a").await;
     let user_prov = seed_user(&pool, "prov-a@rag.test").await;
