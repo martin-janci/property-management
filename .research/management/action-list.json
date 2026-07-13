@@ -26,18 +26,6 @@
       "source": "gap-scan 2026-07-13"
     },
     {
-      "id": "gap-84-3-reality-favorites-screen-map-not-shipped",
-      "action": "reality/favorites screen-map not shipped (84-3-price-tracking Price Tracking for Favorites)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
       "id": "gap-84-5-migrate-embeddings-to-pgvector-not-wired",
       "action": "migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
       "owner_role": "pm-backend",
@@ -192,46 +180,6 @@
       "deadline": null,
       "first_open_at": "2026-07-13T18:40:00Z",
       "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gh-issue-2276",
-      "action": "reality-web listing detail crashes SSR (500) on a partial 200 body — unguarded address/features deref (Closes #2276)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-13T16:16:46Z (#2276)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T16:16:46Z",
-      "issue_ref": {
-        "number": 2276,
-        "url": "https://github.com/martin-janci/property-management/issues/2276",
-        "labels": [
-          "frontend",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2277",
-      "action": "reality-web AgencyDashboard shows misleading \"No Agency Found\" screen to owners on any API error (no isError branch) (Closes #2277)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-13T16:16:46Z (#2277)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T16:16:46Z",
-      "issue_ref": {
-        "number": 2277,
-        "url": "https://github.com/martin-janci/property-management/issues/2277",
-        "labels": [
-          "frontend",
-          "follow-up"
-        ]
-      }
     },
     {
       "id": "gh-issue-2279",

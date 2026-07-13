@@ -2477,6 +2477,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-84-3-reality-favorites-screen-map-not-shipped",
+      "branch": "auto-impl/gap-84-3-reality-favorites-screen-map-no-c9a3e372",
+      "status": "merged",
+      "claimed_at": "2026-07-13T18:09:41Z",
+      "last_updated": "2026-07-13T18:30:54Z",
+      "status_changed_at": "2026-07-13T18:21:10Z",
+      "pr_number": 2285,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2285",
+      "merged_at": "2026-07-13T18:21:10Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2285 status=done specialist=generic scope_drift=true code_reuse_warn=none note=reconciled reality/favorites screen-map to shipped baseline; added favorites_remove endpoint + price-tracking(84.3) gap note; validator 0 errors",
+      "reviewer_summary": "verdict=approve head_oid=c035b2541df040ab6d34181b2ce6d9b4189c70dc note=docs-only screen-map reconcile; favorites_remove+favorites_list valid sitemap ids, checklist matches live route, price-alert gap honestly documented, validator-clean; approve posted as COMMENT",
+      "last_reviewed_oid": "c035b2541df040ab6d34181b2ce6d9b4189c70dc",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-84-5-no-application-handler-calling-search-similar",
       "branch": "auto-impl/gap-84-5-no-application-handler-calling-68a6e390",
       "status": "merged",
@@ -4705,6 +4727,50 @@
       "merge_attempted_at": "2026-07-13T16:11:03Z"
     },
     {
+      "task_id": "gh-issue-2276",
+      "branch": "auto-impl/gh-issue-2276-fa2a6901",
+      "status": "merged",
+      "claimed_at": "2026-07-13T16:06:27Z",
+      "last_updated": "2026-07-13T18:30:54Z",
+      "status_changed_at": "2026-07-13T18:21:15Z",
+      "pr_number": 2281,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2281",
+      "merged_at": "2026-07-13T18:21:15Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=4ba593da1be00ee43d19a93261b4b2d08fdcf6ed note=clean-ssr-guard-fix-tests-ci-green-posted-as-comment-cannot-self-approve",
+      "last_reviewed_oid": "4ba593da1be00ee43d19a93261b4b2d08fdcf6ed",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2277",
+      "branch": "auto-impl/gh-issue-2277-086d651e",
+      "status": "merged",
+      "claimed_at": "2026-07-13T16:06:27Z",
+      "last_updated": "2026-07-13T18:30:54Z",
+      "status_changed_at": "2026-07-13T18:21:21Z",
+      "pr_number": 2280,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2280",
+      "merged_at": "2026-07-13T18:21:21Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2280 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=added isError/retry state before empty-state check + sibling SectionErrors; 4 i18n keys x6 locales; vitest+typecheck+biome+build green; next-lint broken repo-wide (Next16), used biome",
+      "reviewer_summary": "verdict=approve head_oid=1ead288a77b77d611f83a380a3aaaf4ca604f067 note=correct-isError-branch-before-empty-state-i18n-6-locales-tdd-test-approve-posted-as-comment",
+      "last_reviewed_oid": "1ead288a77b77d611f83a380a3aaaf4ca604f067",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5393,5 +5459,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-13T18:17:56Z"
+  "archived_at": "2026-07-13T18:30:54Z"
 }

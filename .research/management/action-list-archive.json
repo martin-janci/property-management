@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-13T18:17:56Z",
+  "archived_at": "2026-07-13T18:30:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3094,6 +3094,25 @@
       "depends_on": []
     },
     {
+      "id": "gap-84-3-reality-favorites-screen-map-not-shipped",
+      "action": "reality/favorites screen-map not shipped (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-13T18:30:54Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2285,
+        "merged_at": "2026-07-13T18:21:10Z",
+        "at": "2026-07-13T18:30:54Z"
+      }
+    },
+    {
       "id": "gap-84-5-no-application-handler-calling-search-similar",
       "action": "No application handler calling search_similar_documents or embedding-write flow (84-5-pgvector-rag pgvector RAG Migration)",
       "owner_role": "pm-backend",
@@ -5617,6 +5636,60 @@
         "merged_pr": 2278,
         "merged_at": "2026-07-13T16:12:29Z",
         "at": "2026-07-13T16:15:22Z"
+      }
+    },
+    {
+      "id": "gh-issue-2276",
+      "action": "reality-web listing detail crashes SSR (500) on a partial 200 body — unguarded address/features deref (Closes #2276)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T16:16:46Z (#2276) | gc1-reconcile 2026-07-13T18:30:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T16:16:46Z",
+      "issue_ref": {
+        "number": 2276,
+        "url": "https://github.com/martin-janci/property-management/issues/2276",
+        "labels": [
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2281,
+        "merged_at": "2026-07-13T18:21:15Z",
+        "at": "2026-07-13T18:30:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2277",
+      "action": "reality-web AgencyDashboard shows misleading \"No Agency Found\" screen to owners on any API error (no isError branch) (Closes #2277)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T16:16:46Z (#2277) | gc1-reconcile 2026-07-13T18:30:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T16:16:46Z",
+      "issue_ref": {
+        "number": 2277,
+        "url": "https://github.com/martin-janci/property-management/issues/2277",
+        "labels": [
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2280,
+        "merged_at": "2026-07-13T18:21:21Z",
+        "at": "2026-07-13T18:30:54Z"
       }
     },
     {
