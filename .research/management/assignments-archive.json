@@ -4661,6 +4661,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2275",
+      "branch": "auto-impl/gh-issue-2275-b8f1acd3",
+      "status": "merged",
+      "claimed_at": "2026-07-13T14:07:12Z",
+      "last_updated": "2026-07-13T16:13:29Z",
+      "status_changed_at": "2026-07-13T16:13:29Z",
+      "pr_number": 2278,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2278",
+      "merged_at": "2026-07-13T16:12:29Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2278 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=inquiry webhook returns 500 on lead persist failure, dup->200 idempotent; 8 tests green, clippy/fmt clean; swagger-ui asset fetched via npm mirror (egress workaround)",
+      "reviewer_summary": "verdict=approve head_oid=d862c3a93a2e7825892cb6ac788999ca5959a129 note=self-authored-PR-posted-as-COMMENT; clean fix for 2275 retry-on-persist-failure",
+      "last_reviewed_oid": "d862c3a93a2e7825892cb6ac788999ca5959a129",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-13T16:11:03Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5349,5 +5371,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-13T07:43:37Z"
+  "archived_at": "2026-07-13T16:15:22Z"
 }

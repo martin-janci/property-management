@@ -1,0 +1,27 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-13",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-ai-session-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs:120 — get_session calls find_session_by_id(session_id, org_id) with no user_id filter; sessions are per-user private (list_sessions:89 uses list_user_sessions(user_id)), so any authenticated org member can read another member's private AI chat session by supplying its UUID.",
+        "backend/servers/api-server/src/routes/ai/sessions.rs:180 — list_messages calls list_session_messages(session_id, org_id) with no user_id filter → cross-user read of the full AI chat transcript within the same org.",
+        "backend/servers/api-server/src/routes/ai/sessions.rs:150 — delete_session calls delete_session(session_id, org_id) with no user_id filter → any org member can delete another member's session (destructive IDOR). send_message (:231) has the same org-only ownership check at :255. RLS scopes to org, not user; per-user isolation implied by create_session (:48)/list_sessions (:89) is not enforced on the by-id handlers.",
+        "Tracked as GitHub issue https://github.com/martin-janci/property-management/issues/2279 (labels: backend, security, follow-up) — backlog.json exceeds the MCP inline-push ceiling this cycle."
+      ],
+      "expert": "rust",
+      "issue": 2279
+    }
+  ],
+  "notes": "Segment api-handlers selected churn-aligned (top hotspots = routes/integrations, routes/organizations, routes/documents, routes/ai subdirs; the May-era flat-file churn paths are now directories). Reviewers steered onto churned subdirs and away from already-logged files (auth.rs enumeration/fire-and-forget, voice_webhooks.rs sig, reports.rs deadlink, systemic e.to_string() DB_ERROR leak). Rust expert found one solid within-tenant IDOR in ai/sessions.rs (score_delta 3). Security expert swept webhooks/OAuth/authz/path-traversal/IDOR in the segment and returned a clean array (0 findings). Combined findings = 1 (under the per-run cap of 3). Static analysis only; not runtime-verified."
+}
