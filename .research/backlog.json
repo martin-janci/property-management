@@ -4390,6 +4390,53 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "code-review-api-core-sync-calevent-create-idor",
+      "title": "IDOR: create_calendar_event handler in api-server ignores path id + skips verify_org_access — cross-org calendar-event write via body connection_id",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review api-core 2026-07-13",
+        "signal: code-review-api-core-sync-calevent-create-idor"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:991 — create_calendar_event handler takes Path(_path): Path<ResourceIdPath> (id ignored) and calls no verify_org_access, unlike sibling handlers (get/update/delete connection at :507/:570/:643, sync at :734) which load-then-verify organization_id",
+        "backend/crates/db/src/repositories/integration.rs:374 — INSERT binds request-body data.connection_id directly with no org/tenant ownership check; an authed user in org A can POST /api/v1/integrations/calendars/{id}/events with a body connection_id belonging to org B (cross-org write / IDOR)",
+        "No RLS policy for calendar_events found in backend/crates/db/migrations/*.sql (table appears only in INSERTs) — the missing verify_org_access is not backstopped at the DB level"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs",
+        "backend/crates/db/src/repositories/integration.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": "plans/security-calevent-create-idor.md"
+    },
+    {
+      "id": "code-review-api-core-sync-calevent-list-idor",
+      "title": "IDOR (read): list_calendar_events in api-server passes path id to repo without verify_org_access — inconsistent authz, potential cross-org read",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review api-core 2026-07-13",
+        "signal: code-review-api-core-sync-calevent-list-idor"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:951 — list_calendar_events passes path.id (connection id) to the repo but performs no verify_org_access, relying solely on the RlsConnection, whereas all sibling read handlers (get_calendar_connection :489/:507, accounting exports :1139/:1157) load-then-verify the resource organization_id",
+        "No RLS policy for calendar_events found in backend/crates/db/migrations/*.sql; a cross-org read of another org calendar events is not confirmably blocked (defence-in-depth gap; may be an actual read IDOR)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs",
+        "backend/crates/db/src/repositories/integration.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
     }
   ]
 }

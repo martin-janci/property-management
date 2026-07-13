@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-07-13T02:11:42Z",
-  "since": "2026-07-12T22:22:37Z",
-  "window_hours": 3,
+  "generated_at": "2026-07-13T14:19:30Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_hours": 12,
   "trigger_text": "",
   "summary": {
-    "merged_prs": 0,
+    "merged_prs": 2,
     "open_prs_touched": 0,
     "new_or_updated_issues": 1,
-    "commits_on_dev": 4,
-    "app_code_commits": 0,
+    "commits_on_dev": 16,
+    "app_code_commits": 2,
     "churn_hotspots_new": 0
   },
   "signals": [
@@ -45,28 +45,32 @@
   "auto_fix_actions": [],
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)", "observed": "true", "expected": "true" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271->2274, last_issue_seen 2272->2275, last_commit_sha 1691c9d->dd1f8c1, last_run_iso, stats.runs 44->45, seen_signals 244->246, hotspot_history unchanged)", "observed": "true", "expected": "true" },
     { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "signals[] is empty this run — nothing to double-score", "observed": "true", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "no items with score>8; sole open item is 1d old, not eligible for decay", "observed": "true", "expected": "true" },
-    { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
-    { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
+    { "goal": "G4",  "passed": true, "command": "signals in this run absent from prior-run seen_signals (both new)", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "no items with score>8; no open items >=14 days old to decay this run", "observed": "true", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "each new plan under plans/ has an 'adversarial pass:' annotation in the brief on the same line", "observed": "1 plan with 'passed' annotation", "expected": "annotation per new plan" },
+    { "goal": "G7",  "passed": true, "command": "new plans under plans/ (excluding _archive) <=2; each plan has 4 metadata fields + 11 headings + capability box + Mode line + all Files paths exist on disk", "observed": "1 new plan, 4 metadata + 11 headings + Mode=cloud-ok + 3 ticked caps + both Files paths verified on disk", "expected": "<=2, all gates" },
     { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
     { "goal": "G9",  "passed": true, "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)", "observed": "0 hits", "expected": "0 hits" },
     { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical", "expected": "byte-identical" },
     { "goal": "G11", "passed": true, "command": "phase-failure honesty — none failed, cursors advanced correctly", "observed": "no phases failed", "expected": "consistent" },
-    { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
-    { "goal": "G13", "passed": true, "command": "archive tracked-file count new(7) >= old(7)", "observed": "7 >= 7", "expected": "new >= old" },
+    { "goal": "G12", "passed": true, "command": "no prior-run plan silently deleted", "observed": "no prior-run plan changed", "expected": "monotone" },
+    { "goal": "G13", "passed": true, "command": "archive tracked-file count new >= old", "observed": "unchanged", "expected": "new >= old" },
     { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "byte-identical" },
     { "goal": "G15", "passed": true, "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1", "observed": "0 actions", "expected": "within caps" },
-    { "goal": "G16", "passed": true, "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op", "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5, coverage_cursor.next_index=12 in [0,13)", "expected": "valid" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op", "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5 (unchanged), coverage_cursor.next_index=12 (unchanged) in [0,13)", "expected": "valid" },
     { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
   ],
   "notes": [
-    "Very quiet 3-hour window. No merged PRs (cursor #2271 unchanged). One new issue #2272 (post-merge review follow-up on PR #2265) — already labelled and dispatcher-claimed as gh-issue-2272; not an untriaged-issue signal.",
-    "All 4 dev commits are chore(research):* infrastructure — 0 application-file churn, so no new churn-hotspot / repeated-churn signals fired.",
-    "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
-    "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
-    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
+    "12-hour window since last routine (dee8f56, 02:11 UTC). Two application PRs merged on dev — #2273 (RAG provenance test extraction, closes issue #2272; +40/-24) and #2274 (auth-refactor helper extraction on backend/servers/api-server/src/routes/auth.rs; +28/-48).",
+    "PR #2274 directly resolves the backlog item refactor-churn-hotspots-api-server-auth-2026-07-12 — dispatcher had already flipped it open->done at commit 3bcef308 before this run; resolution-check confirms.",
+    "New issue #2275 was filed by the dispatcher's Tier-1d dev-review (portal_webhooks.rs inquiry-lead swallow-and-ack). Labels backend/follow-up present, so not an untriaged-issue signal. Left in dispatcher's claim pipeline.",
+    "Phase 1.5 skipped: dispatcher already ran three ppt-dev-review passes today (api-core=SSRF re-confirm, ppt-web-ui=3 findings, reality-server=0), so review_cursor entries for api-core/reality-server/ppt-web-ui already stamp 2026-07-13. Oldest-unreviewed is reality-web (2026-06-14) — held for next routine.",
+    "Phase 1.6 skipped: pm_cursor.next_index=5 (pm-security) preserved; management artifacts still valid; next routine to resume rotation.",
+    "Phase 5 skipped: sole new signal at score>=3 is confidence=medium (vector=bug), below the (confidence=high AND score>=3 AND allowlisted-type) bar.",
+    "Signals kept: the two dispatcher-emitted api-core calevent-idor findings from earlier today. Both now registered in backlog and seen_signals; create-IDOR (score 3) promoted to plan.",
+    "Dispatcher's additional findings today (code-review-api-core-apicall-ssrf-redirect re-emit; code-review-ppt-web-ui-{protectedroute-hardcoded-strings,offlineindicator-no-i18n,access-denied-dead-end}) are noted in the brief but NOT merged into the routine's signal set this run — the SSRF finding overlaps the terminal 'security-ssrf-outbound-url-validation' backlog row and needs a separate reopen decision; the three ppt-web-ui findings are score-1 UI polish items that will re-emit if they still hold on the next routine's own Phase 1.5 pass.",
+    "Churn hotspot analysis: only 2 application-code files touched (routes/auth.rs +76/-, rag_similarity_search_tests.rs +64/-); both small diffs, neither warrants a new hotspot signal. hotspot_history unchanged."
   ]
 }

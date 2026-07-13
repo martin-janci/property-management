@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_run_iso": "2026-07-13T14:19:30Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 2274,
+  "last_issue_seen": 2275,
+  "last_commit_sha": "dd1f8c1",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -592,7 +592,9 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "code-review-api-core-sync-calevent-create-idor",
+    "code-review-api-core-sync-calevent-list-idor"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -606,9 +608,9 @@
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
-    "vectors_created": 183,
-    "plans_created": 14,
+    "runs": 45,
+    "vectors_created": 185,
+    "plans_created": 15,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
