@@ -15,7 +15,8 @@ implementations:
     apiStatus: n/a
 endpoints: []
 relatedScreens:
-  - ppt/notification-analytics
+  - id: ppt/notification-analytics
+    rel: sibling
 useCases:
   - UC-01
 sharedComponents:
