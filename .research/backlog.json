@@ -4390,6 +4390,184 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "title": "SSRF: api_call.rs reqwest client follows redirects w/o re-validation — 3xx bypass to internal 169.254/10.x hosts",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-10",
+        "rotating-expert-review api-core 2026-07-13 (reconfirmation)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-110 — reqwest::Client built with only .timeout()/.user_agent(); no .redirect(Policy::none()). Default: follows up to 10 redirects.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:251 — validate_external_url() runs ONCE on initial URL only; request.send().await at 307 transparently follows 3xx redirects with no re-validation.",
+        "Reachability: services/actions/mod.rs registers ApiCallExecutor in default ActionRegistry; workflow_executor.rs:275 spawns WorkflowExecutorTask against tenant/admin-configured 'api_call' URL — reachable by authenticated workflow author.",
+        "RECONFIRMATION 2026-07-13: still present 3 days after 07-10 emission. Companion findings (dns-bypass, unbounded-body) also unresolved."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": "plans/code-review-api-core-apicall-ssrf-redirect.md"
+    },
+    {
+      "id": "code-review-api-core-sync-calevent-create-idor",
+      "title": "IDOR: create_calendar_event handler skips verify_org_access — cross-org write via body connection_id",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-13"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:991 — create_calendar_event ignores its {id} path segment (Path(_path)) and calls no verify_org_access, unlike siblings (connection get/update/delete :507/:570/:643, sync :734) which load-then-verify.",
+        "backend/crates/db/src/repositories/integration.rs:374 — INSERT binds request-body data.connection_id directly with no ownership check; org-A user can POST /api/v1/integrations/calendars/{id}/events with a body connection_id belonging to org-B.",
+        "No RLS policy for calendar_events found in backend/crates/db/migrations/*.sql; missing verify_org_access not backstopped at DB level."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs",
+        "backend/crates/db/src/repositories/integration.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": "plans/code-review-api-core-sync-calevent-create-idor.md"
+    },
+    {
+      "id": "code-review-api-core-sync-calevent-list-idor",
+      "title": "IDOR: list_calendar_events skips verify_org_access, relies solely on RlsConnection — inconsistent authz",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-13"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:951 — list_calendar_events passes path.id (connection id) to the repo but performs no verify_org_access, whereas sibling read handlers (get_calendar_connection :489/:507, accounting exports :1139/:1157) load-then-verify.",
+        "No RLS policy for calendar_events in migrations/*.sql — cross-org read not confirmably blocked; defence-in-depth gap that may be an actual read IDOR."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-hardcoded-strings",
+      "title": "ppt-web ProtectedRoute.tsx hardcoded English strings (loading + access-denied) — no i18n for sk/cs/de",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-13"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105-106,125-126 — 'Checking authentication', 'Loading...', 'Access Denied', 'You do not have permission to access this page.' hardcoded with no react-i18next.",
+        "Sibling AuthRequiredGate.tsx already renders t('errors.authenticationRequired') / t('auth.signIn'); LoginPage/AuthCallbackPage fully i18n'd. Reuse existing errors.* / auth.* keys."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-offlineindicator-no-i18n",
+      "title": "ppt-web OfflineIndicator.tsx hardcoded English banner strings — screen readers announce untranslated to sk/cs/de",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-13"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:58-60,89 — 'You are offline. Some features may be unavailable.' and 'Connection restored' hardcoded; no useTranslation import. Surfaced via role='alert' / role='status' live regions."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-access-denied-dead-end",
+      "title": "ppt-web ProtectedRoute access-denied branch has no navigation affordance — user dead-ended",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-13"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:122-129 — role-denied branch renders bare <div> with only <h1>/<p>: no link back to dashboard, no 'switch account' or 'request access'. Users reaching a role-gated route via stale bookmark / shared deep link are dead-ended.",
+        "Sibling AuthRequiredGate.tsx provides <Link to='/login'> recovery — mirror that pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-detail-content-crash",
+      "title": "reality-web ListingDetailContent unguarded address/features deref — partial 200 crashes public SSR",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "issue #2276",
+        "rotating-expert-review reality-web 2026-07-13"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx:93 — Object.entries(listing.features) throws 'Cannot convert undefined or null to object' when features is absent from a partial 200 body.",
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx:116,147-149 — listing.address.city/.street/.district read without null-guards; throws when address is absent.",
+        "frontend/apps/reality-web/src/app/listings/[slug]/page.tsx:100-105 — sibling code documents the partial-200 hazard and defends buildListingJsonLd, but ListingDetailContent bypasses that guard: crash happens in content render, not JSON-LD path.",
+        "gh-issue-2276 open; dispatcher assignment in-progress (assignments.json)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx",
+        "frontend/apps/reality-web/src/app/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-dashboard-no-error-branch",
+      "title": "reality-web AgencyDashboard ignores isError — API failures render misleading 'No Agency Found' to owners",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "issue #2277",
+        "rotating-expert-review reality-web 2026-07-13"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx:25 — destructures useMyAgency() as { data: agency, isLoading } only; isError ignored. On 500/network failure the query settles with isLoading=false and agency=undefined.",
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx:39 — !agency check then shows 'No Agency Found / Create Agency' CTA to an actual owner during any backend hiccup. No ErrorBoundary wraps this client component.",
+        "gh-issue-2277 open; dispatcher assignment in-progress. Related low-severity note in issue: hardcoded English strings in same file bypass next-intl."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
     }
   ]
 }
