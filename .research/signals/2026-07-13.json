@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-13T02:11:42Z",
+  "generated_at": "2026-07-13",
   "since": "2026-07-12T22:22:37Z",
   "window_hours": 3,
   "trigger_text": "",
@@ -79,6 +79,108 @@
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:54 and FeedImport.tsx:57 \u2014 components render hardcoded English UI strings ('CRM Connections','Add Connection','No CRM connections','Feed Sources') with no useTranslations, breaking the app's sk/cs/de/en i18n contract."
       ],
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-07-13T02:11Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2286 fix(83-3-portal-webhooks) \u2014 +325/-65 = 390 add+del",
+        "cumulative re-emit \u2014 hotspot last seen 2026-05-30 (runs_seen 1\u21922)",
+        "score_delta=0 per cumulative rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2294 gap-83-3 portal webhook status manager surface",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2294 +303/-0 new file; first appearance in hotspot_history (runs_seen=1)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2287 price-alert subscription surface",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2287 +283/-0 new file; first appearance (runs_seen=1)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2281 fix(reality-web) guard listing detail SSR",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Touched app/[locale]/listings/[slug]/page.tsx without doc update; docs/screens/reality/listing-detail.md exists \u2014 SSR-hardening plausibly does not warrant doc update."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287 feat(reality-web) price-alert subscription",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Touched favorites/alerts/{page.tsx,layout.tsx} + favorites/page.tsx; companion PR #2285 shipped docs/screens/reality/favorites.md same-day \u2014 batch-level drift is transient."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292 feat(reports) create-schedule",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Touched routes/groups/reports.tsx without touching docs/screens/ppt/reports.md."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294 gap-83-3 portal webhook status manager surface",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Added App.tsx + routes/groups/core.tsx PortalWebhooksPage route without docs/screens/ppt/portal-webhooks.md \u2014 real new-screen drift."
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2286",
+      "type": "hotfix-no-test",
+      "source": "PR #2286 fix(83-3-portal-webhooks)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2286 title starts with 'fix(' and diff contains no *test* filename.",
+        "SUPPRESSED false positive: 6 inline #[test] cases added inside webhook.rs's #[cfg(test)] mod tests block (stale/future/missing/non-numeric timestamp + timestamp-swap rejection). score_delta suppressed to 0."
+      ]
+    },
+    {
+      "id": "risky-churn-pr-2286-webhook-rs",
+      "type": "risky-churn",
+      "source": "PR #2286 (webhook.rs is top-1 churn this run)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "SUPPRESSED (same reason as hotfix-no-test-pr-2286): inline #[test] cases present. score_delta suppressed to 0."
+      ]
     }
   ],
   "auto_fix_actions": [],
@@ -86,51 +188,51 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'",
-      "observed": "PASS",
-      "expected": "PASS"
+      "command": "test -f briefs/2026-07-13.md && head -1 | grep -q '^# 2026-07-13$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)",
+      "command": "jq compare staged state.json vs HEAD",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "command": "jq unique-id check",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signals[] is empty this run \u2014 nothing to double-score",
+      "command": "jq re-scored-signal check",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no items with score>8; sole open item is 1d old, not eligible for decay",
+      "command": "jq score-cap check",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous adversarial-pass check",
-      "observed": "0 new plans",
-      "expected": "0-2 new plans"
+      "command": "new plan annotated in brief adversarial pass line",
+      "observed": "1 plan, annotated",
+      "expected": "annotated"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "count of new files under plans/ (excluding _archive) <=2",
-      "observed": "0",
-      "expected": "<=2"
+      "command": "grep -c '\\.md$' on new plans",
+      "observed": "1 (<=2)",
+      "expected": "<=2, all headings+metadata+files-exist"
     },
     {
       "goal": "G8",
@@ -142,65 +244,65 @@
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)",
-      "observed": "0 hits",
-      "expected": "0 hits"
+      "command": "secrets/private hostname grep",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md <(regen from backlog.json)",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase-failure honesty \u2014 none failed, cursors advanced correctly",
-      "observed": "no phases failed",
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
       "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)",
-      "observed": "vacuous",
-      "expected": "vacuous"
+      "command": "prior plan slugs still present",
+      "observed": "0 missing",
+      "expected": "0"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive tracked-file count new(7) >= old(7)",
+      "command": "archive count only grows",
       "observed": "7 >= 7",
-      "expected": "new >= old"
+      "expected": ">= prev"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1",
+      "command": "auto_fix_actions cap",
       "observed": "0 actions",
-      "expected": "within caps"
+      "expected": "within cap"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op",
-      "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5, coverage_cursor.next_index=12 in [0,13)",
-      "expected": "valid"
+      "command": "management artifacts valid",
+      "observed": "OK; Phase 1.6 skipped so GC7 no-op",
+      "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep telegram bot-token URL/bare token in staged diff",
-      "observed": "0 hits",
-      "expected": "0 hits"
+      "command": "Telegram bot token grep",
+      "observed": "0",
+      "expected": "0"
     }
   ],
   "notes": [
@@ -209,5 +311,13 @@
     "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
     "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
     "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
-  ]
+  ],
+  "generator": "routine",
+  "run_iso": "2026-07-13T22:29:00Z",
+  "since_cursor": {
+    "last_pr_seen": 2271,
+    "last_issue_seen": 2272,
+    "last_commit_sha": "1691c9d",
+    "last_run_iso": "2026-07-13T02:11:42Z"
+  }
 }

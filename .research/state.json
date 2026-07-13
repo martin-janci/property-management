@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_run_iso": "2026-07-13T22:34:00Z",
+  "last_run_ms": 1200000,
+  "last_pr_seen": 2297,
+  "last_issue_seen": 2284,
+  "last_commit_sha": "5813e8b3e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,9 +153,9 @@
       "recent_churn": 4
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 75
+      "runs_seen": 2,
+      "last_seen": "2026-07-13",
+      "recent_churn": 390
     },
     "backend/servers/api-server/src/services/oauth.rs": {
       "runs_seen": 1,
@@ -346,6 +346,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-12",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-13",
+      "recent_churn": 303
+    },
+    "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-13",
+      "recent_churn": 283
     }
   },
   "seen_signals": [
@@ -592,7 +602,20 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "code-review-api-core-sync-calevent-create-idor",
+    "code-review-api-core-sync-calevent-list-idor",
+    "code-review-reality-web-crm-create-no-catch",
+    "code-review-reality-web-feed-create-no-catch",
+    "code-review-reality-web-import-i18n",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+    "screen-map-drift-pr-2281-reality",
+    "screen-map-drift-pr-2287-reality",
+    "screen-map-drift-pr-2292-ppt",
+    "screen-map-drift-pr-2294-ppt",
+    "hotfix-no-test-pr-2286",
+    "risky-churn-pr-2286-webhook-rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -606,9 +629,9 @@
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
-    "vectors_created": 183,
-    "plans_created": 14,
+    "runs": 45,
+    "vectors_created": 191,
+    "plans_created": 15,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

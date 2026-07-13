@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-07-13 02:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-13 22:34 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -49,14 +49,14 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | #848, PR #913 | 2026-06-01 | done |
 | 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | #850, PR #883 | 2026-06-01 | done |
 | 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | #851, PR #904 | 2026-06-01 | done |
-| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | #859, PR #871 | 2026-06-01 | done |
+| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * read... | #859, PR #871 | 2026-06-01 | done |
 | 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | #867, PR #870 | 2026-06-01 | done |
 | 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | #836, PR #866 | 2026-05-31 | done |
 | 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | #845, PR #862 | 2026-05-31 | done |
 | 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | #849, PR #869 | 2026-05-31 | done |
-| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53 | #1151 | 2026-07-05 | dropped |
+| 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metri... | #1151 | 2026-07-05 | dropped |
 | 0 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-07-05 | dropped |
-| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | #951 | 2026-07-05 | dropped |
+| 0 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injec... | #951 | 2026-07-05 | dropped |
 | 0 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline | #1331 | 2026-07-05 | dropped |
 | 0 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured | issue #1380 | 2026-07-05 | dropped |
 | 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
