@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-07-13T02:11:42Z",
+  "since": "2026-07-12T22:22:37Z",
+  "window_hours": 3,
+  "trigger_text": "",
+  "summary": {
+    "merged_prs": 0,
+    "open_prs_touched": 0,
+    "new_or_updated_issues": 1,
+    "commits_on_dev": 4,
+    "app_code_commits": 0,
+    "churn_hotspots_new": 0
+  },
+  "signals": [],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "signals[] is empty this run — nothing to double-score", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "no items with score>8; sole open item is 1d old, not eligible for decay", "observed": "true", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
+    { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true, "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)", "observed": "0 hits", "expected": "0 hits" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — none failed, cursors advanced correctly", "observed": "no phases failed", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
+    { "goal": "G13", "passed": true, "command": "archive tracked-file count new(7) >= old(7)", "observed": "7 >= 7", "expected": "new >= old" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1", "observed": "0 actions", "expected": "within caps" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op", "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5, coverage_cursor.next_index=12 in [0,13)", "expected": "valid" },
+    { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
+  ],
+  "notes": [
+    "Very quiet 3-hour window. No merged PRs (cursor #2271 unchanged). One new issue #2272 (post-merge review follow-up on PR #2265) — already labelled and dispatcher-claimed as gh-issue-2272; not an untriaged-issue signal.",
+    "All 4 dev commits are chore(research):* infrastructure — 0 application-file churn, so no new churn-hotspot / repeated-churn signals fired.",
+    "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
+    "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
+    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
+  ]
+}
