@@ -5,14 +5,18 @@
  * Extracted from App.tsx to isolate reports work.
  */
 import type {
+  CreateReportSchedule,
   CronScheduleUpdateRequest,
   PeriodComparison,
   ReportSchedule,
   TrendAnalysis,
 } from '@ppt/api-client';
 import {
+  useCreateSchedule,
   useDownloadReport,
   useReportExecutionHistory,
+  useReportSchedules,
+  useReports,
   useRetryReportExecution,
   useUpdateScheduleCron,
 } from '@ppt/api-client';
@@ -35,6 +39,31 @@ function ReportsPageRoute() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? '';
+
+  // gap-81-1: report definitions + schedules feed the Schedules tab. Without
+  // the report list the "New Schedule" form's report selector is empty and a
+  // schedule can never be created.
+  const { data: reportsData, isLoading: reportsLoading } = useReports(organizationId);
+  const { data: schedulesData, isLoading: schedulesLoading } = useReportSchedules(organizationId);
+  const createScheduleMutation = useCreateSchedule(organizationId);
+
+  const handleCreateSchedule = async (data: CreateReportSchedule) => {
+    try {
+      await createScheduleMutation.mutateAsync(data);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.created', 'Schedule created successfully.'),
+      });
+    } catch (e) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.createFailed', 'Failed to create schedule.'),
+      });
+      throw e;
+    }
+  };
 
   // gap-81-1: cron-based update (cron_expression, recipients, enabled)
   const updateScheduleCronMutation = useUpdateScheduleCron();
@@ -121,8 +150,9 @@ function ReportsPageRoute() {
     <ReportsPage
       organizationId={organizationId}
       dataSources={[]}
-      reports={[]}
-      schedules={[]}
+      reports={reportsData?.reports ?? []}
+      schedules={schedulesData?.schedules ?? []}
+      isLoading={reportsLoading || schedulesLoading}
       kpis={[]}
       buildings={[]}
       trendAnalysis={
@@ -146,6 +176,7 @@ function ReportsPageRoute() {
           difference_percentage: 0,
         } as PeriodComparison
       }
+      onCreateSchedule={handleCreateSchedule}
       onUpdateSchedule={handleUpdateSchedule}
       executions={executions}
       executionsLoading={executionsLoading}
