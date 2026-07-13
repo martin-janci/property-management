@@ -6,8 +6,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  createSchedule,
   getReportExecutionDownloadUrl,
   getReportExecutionHistory,
+  listReports,
+  listSchedules,
   pauseSchedule,
   resumeSchedule,
   retryReportExecution,
@@ -17,6 +20,8 @@ import {
 import type {
   CreateReportSchedule,
   CronScheduleUpdateRequest,
+  ListReportsParams,
+  ListSchedulesParams,
   ReportExecutionHistoryParams,
   ReportExecutionStatus,
 } from './types';
@@ -24,7 +29,12 @@ import type {
 // Query keys factory for cache management
 export const reportKeys = {
   all: ['reports'] as const,
+  definitions: () => [...reportKeys.all, 'definitions'] as const,
+  definitionList: (organizationId: string, filters?: Omit<ListReportsParams, 'organization_id'>) =>
+    [...reportKeys.definitions(), organizationId, filters] as const,
   schedules: () => [...reportKeys.all, 'schedules'] as const,
+  scheduleList: (organizationId: string, filters?: Omit<ListSchedulesParams, 'organization_id'>) =>
+    [...reportKeys.schedules(), 'list', organizationId, filters] as const,
   schedule: (id: string) => [...reportKeys.schedules(), id] as const,
   executions: (scheduleId: string) => [...reportKeys.schedule(scheduleId), 'executions'] as const,
   executionList: (
@@ -34,6 +44,60 @@ export const reportKeys = {
   ) => [...reportKeys.executions(scheduleId), filters, pagination] as const,
   execution: (id: string) => [...reportKeys.all, 'execution', id] as const,
 };
+
+/**
+ * Hook to list report definitions for an organization (Epic 53 / gap-81-1).
+ *
+ * Populates the report selector in the "New Schedule" form — without this the
+ * ScheduleForm dropdown is empty and a schedule can never be created.
+ */
+export function useReports(
+  organizationId: string,
+  filters?: Omit<ListReportsParams, 'organization_id'>,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: reportKeys.definitionList(organizationId, filters),
+    queryFn: () => listReports({ organization_id: organizationId, ...filters }),
+    enabled: options?.enabled !== false && !!organizationId,
+  });
+}
+
+/**
+ * Hook to list report schedules for an organization (Epic 53 / gap-81-1).
+ *
+ * Backs the Schedules tab list and lets a freshly-created schedule appear once
+ * `useCreateSchedule` invalidates the `schedules` key.
+ */
+export function useReportSchedules(
+  organizationId: string,
+  filters?: Omit<ListSchedulesParams, 'organization_id'>,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: reportKeys.scheduleList(organizationId, filters),
+    queryFn: () => listSchedules({ organization_id: organizationId, ...filters }),
+    enabled: options?.enabled !== false && !!organizationId,
+  });
+}
+
+/**
+ * Hook to create a report schedule (gap-81-1).
+ *
+ * Wires the "New Schedule" form's submit to POST /api/v1/reports/schedules.
+ * On success the `schedules` query key is invalidated so the new row shows up
+ * in the Schedules list without a manual refetch.
+ */
+export function useCreateSchedule(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateReportSchedule) => createSchedule(organizationId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reportKeys.schedules() });
+    },
+  });
+}
 
 /**
  * Hook to update a report schedule (Story 81.1).
