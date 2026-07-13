@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
+  "last_run_iso": "2026-07-13T10:15:00Z",
+  "last_run_ms": 5200,
+  "last_pr_seen": 2274,
   "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_commit_sha": "a415a8f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -148,9 +148,9 @@
       "recent_churn": 134
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-12",
-      "recent_churn": 4
+      "runs_seen": 4,
+      "last_seen": "2026-07-13",
+      "recent_churn": 76
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -346,6 +346,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-12",
       "recent_churn": 2
+    },
+    "backend/crates/db/tests/rag_similarity_search_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-13",
+      "recent_churn": 64
     }
   },
   "seen_signals": [
@@ -372,6 +377,7 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/db/tests/rag_similarity_search_tests.rs",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
@@ -387,12 +393,14 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
     "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
     "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
@@ -507,9 +515,11 @@
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
     "lag-warning-2026-07-09",
+    "lag-warning-2026-07-12",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
     "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
@@ -588,11 +598,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-07-12",
-    "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
-    "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -606,7 +612,7 @@
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
+    "runs": 45,
     "vectors_created": 183,
     "plans_created": 14,
     "quiet_days": 2,

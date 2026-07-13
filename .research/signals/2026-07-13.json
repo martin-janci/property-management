@@ -1,42 +1,87 @@
 {
-  "generated_at": "2026-07-13T02:11:42Z",
-  "since": "2026-07-12T22:22:37Z",
-  "window_hours": 3,
+  "generated_at": "2026-07-13T10:15:00Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_hours": 8,
   "trigger_text": "",
   "summary": {
-    "merged_prs": 0,
+    "merged_prs": 2,
     "open_prs_touched": 0,
-    "new_or_updated_issues": 1,
-    "commits_on_dev": 4,
-    "app_code_commits": 0,
-    "churn_hotspots_new": 0
+    "closed_not_merged": 0,
+    "new_or_updated_issues": 0,
+    "commits_on_dev": 12,
+    "app_code_commits": 2,
+    "churn_hotspots_new": 1
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2274",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative_reemit": true,
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs — +28/-48 (76 lines) in PR #2274 (refactor: extract authenticated_user_id() helper)",
+        "runs_seen advanced 3→4; last_seen 2026-07-12→2026-07-13; recent_churn 4→76 (single-touch, planned mitigation on the tracked churn cluster)",
+        "PR #2274 is the mitigation promoted for backlog id `refactor-churn-hotspots-api-server-auth-2026-07-12` — this run's touch is the resolution, not fresh instability",
+        "score_delta=0 (cumulative-type re-emit per G4; already in seen_signals)"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "PR #2274",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative_reemit": true,
+      "evidence": [
+        "runs_seen=4 on backend/servers/api-server/src/routes/auth.rs after PR #2274 — technically still repeated-churn territory, but the churn cluster's own remediation PR just landed",
+        "score_delta=0 (cumulative-type re-emit per G4; already in seen_signals; backlog item already resolved this run)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/rag_similarity_search_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2273",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/crates/db/tests/rag_similarity_search_tests.rs — +40/-24 (64 lines) in PR #2273 (test: extract RAG provenance model_filter guard into own #[sqlx::test])",
+        "First-touch as a hotspot (runs_seen=1); the change is a planned test-extraction follow-up on issue #2272, not organic instability",
+        "score_delta=0 (audit-only; single-touch planned refactor; not treated as instability — no backlog row created)"
+      ]
+    }
+  ],
   "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the only backlog item resolved this run (refactor-churn-hotspots-api-server-auth-2026-07-12) is a refactor vector, not on the allowlist; no signals with confidence=high + score>=3 in an allowlisted shape",
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)", "observed": "true", "expected": "true" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271->2274, last_commit_sha 1691c9d->a415a8f, last_run_iso, stats.runs 44->45; seen_signals 244->245; hotspot_history bumped for auth.rs, rag_similarity_search_tests.rs added)", "observed": "true", "expected": "true" },
     { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "signals[] is empty this run — nothing to double-score", "observed": "true", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "no items with score>8; sole open item is 1d old, not eligible for decay", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "3 signals emitted: 2 cumulative re-emits (churn-hotspot / repeated-churn on auth.rs) with score_delta=0; 1 new (churn-hotspot on rag_similarity_search_tests.rs) with score_delta=0", "observed": "no non-cumulative re-emit with delta>0", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "no items with score>8; no open items with updated_at>14d (0 open after this run)", "observed": "true (0 open items after resolution)", "expected": "true" },
     { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
     { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
-    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
     { "goal": "G9",  "passed": true, "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)", "observed": "0 hits", "expected": "0 hits" },
     { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical", "expected": "byte-identical" },
-    { "goal": "G11", "passed": true, "command": "phase-failure honesty — none failed, cursors advanced correctly", "observed": "no phases failed", "expected": "consistent" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phases failed, cursors advanced correctly", "observed": "no phases failed", "expected": "consistent" },
     { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
-    { "goal": "G13", "passed": true, "command": "archive tracked-file count new(7) >= old(7)", "observed": "7 >= 7", "expected": "new >= old" },
+    { "goal": "G13", "passed": true, "command": "archive tracked-file count new(>=7) >= old(7)", "observed": "unchanged", "expected": "new >= old" },
     { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "byte-identical" },
     { "goal": "G15", "passed": true, "command": "auto_fix_actions caps: total<=3, pr<=1, issue<=1, comment<=1", "observed": "0 actions", "expected": "within caps" },
-    { "goal": "G16", "passed": true, "command": "management artifacts valid; phase 1.6 skipped so monotonicity is a no-op", "observed": "action-list OK, risks OK, project-state.md non-empty, pm_cursor.next_index=5, coverage_cursor.next_index=12 in [0,13)", "expected": "valid" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run (pm_cursor + coverage_cursor unchanged); management artifacts remain valid from previous run", "observed": "no-op — Phase 1.6 not run", "expected": "no-op when Phase 1.6 skipped" },
     { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
   ],
   "notes": [
-    "Very quiet 3-hour window. No merged PRs (cursor #2271 unchanged). One new issue #2272 (post-merge review follow-up on PR #2265) — already labelled and dispatcher-claimed as gh-issue-2272; not an untriaged-issue signal.",
-    "All 4 dev commits are chore(research):* infrastructure — 0 application-file churn, so no new churn-hotspot / repeated-churn signals fired.",
-    "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
-    "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
-    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
+    "8-hour window since previous same-day routine run (02:11 → 10:15 UTC). 2 PRs merged: #2273 (test-gap: extract RAG provenance guard into own #[sqlx::test], closes issue #2272) and #2274 (refactor: extract authenticated_user_id() helper in api-server auth routes).",
+    "Backlog resolution: sole open item `refactor-churn-hotspots-api-server-auth-2026-07-12` marked done via PR #2274 verbatim-ID match (title matches item id) and direct diff verification — the 5 identical bearer-auth preambles collapsed into one helper on the hot file. Backlog is now fully-terminal (0 open, 0 ready, 0 deferred).",
+    "Phase 1.5 skipped: the dispatcher already ran 3 dev-review slices today (api-core with 1 HIGH signal re-confirmed — api_call.rs SSRF unfixed since 2026-07-10; ppt-web-ui with 3 Low; reality-server 0 defects). No fresh churn on the routine's next-oldest segment (reality-web, 2026-06-14) that would justify piling on.",
+    "Phase 1.6 skipped: only 2 planned merges since Phase 1.6 last ran; both terminal-in-planning tasks, no fresh sprint churn / role rebalance signal. pm_cursor and coverage_cursor deliberately unchanged.",
+    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar.",
+    "Surfaced but NOT ingested as routine signals: dispatcher's HIGH api_call.rs SSRF finding (redirect-hop + DNS-rebind + unbounded body) is now 3 days unfixed — dispatcher owns via Tier-1c/1d and its next tick should convert to a claimable task. Escalated to brief for visibility."
   ]
 }

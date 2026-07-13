@@ -4360,14 +4360,15 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2205",
         "PR #2250",
+        "PR #2254",
         "PR #2261",
         "PR #2270",
         "PR #2271",
-        "PR #2254",
+        "PR #2274",
         "commit 5877ade..ac3afb3"
       ],
       "evidence": [
@@ -4375,7 +4376,8 @@
         "runs_seen=3 (hotspot last run 2026-07-09, this run 2026-07-12)",
         "backend/servers/api-server/tests/auth_tests.rs churned 3x — every auth.rs commit dragged the test file with it (positive: tests are being kept in lockstep)",
         "backend/servers/reality-server/src/routes/sso.rs churned 2x — related security follow-ups (#2249 role-trust, PR #2254)",
-        "post #2250 helper-extract refactor did not stabilise the module; iteration is on real correctness/security branches, not stylistic churn"
+        "post #2250 helper-extract refactor did not stabilise the module; iteration is on real correctness/security branches, not stylistic churn",
+        "resolved: PR #2274 merged 2026-07-13 — authenticated_user_id() helper collapses the 5 byte-for-byte identical bearer-auth preambles in auth.rs (list_sessions/revoke_session/revoke_all_sessions/get_me/update_me); auth_tests.rs + sso.rs untouched but churn cluster mitigation on the hot file landed"
       ],
       "files": [
         "backend/servers/api-server/src/routes/auth.rs",
@@ -4383,7 +4385,7 @@
         "backend/servers/reality-server/src/routes/sso.rs"
       ],
       "created_at": "2026-07-12",
-      "updated_at": "2026-07-12",
+      "updated_at": "2026-07-13",
       "plan": null
     }
   ]
