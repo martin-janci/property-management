@@ -4360,7 +4360,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2205",
         "PR #2250",
@@ -4384,7 +4384,12 @@
       ],
       "created_at": "2026-07-12",
       "updated_at": "2026-07-12",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-13T10:04:12Z",
+        "assignment_status": "merged",
+        "pr_number": 2274
+      }
     }
   ]
 }
