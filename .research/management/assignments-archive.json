@@ -2609,6 +2609,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-84-4-no-frontend-notification-trigger-management-ui",
+      "branch": "auto-impl/gap-84-4-no-frontend-notification-trigge-fa38ee6a",
+      "status": "merged",
+      "claimed_at": "2026-07-13T20:09:53Z",
+      "last_updated": "2026-07-13T22:13:57Z",
+      "status_changed_at": "2026-07-13T22:13:57Z",
+      "pr_number": 2293,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2293",
+      "merged_at": "2026-07-13T22:12:36Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2293 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=ppt-web /notifications/triggers UI over granular events API (direct-REST); typecheck+vitest10+biome+build green; drift is pm-backend-hint vs frontend files only",
+      "reviewer_summary": "verdict=approve head_oid=2f30f79aa695f79a85eadb043933535da4e2c39a note=frontend-only; scope-drift benign (owner-hint mismatch); CI green; well-tested",
+      "last_reviewed_oid": "2f30f79aa695f79a85eadb043933535da4e2c39a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-13T22:09:29Z"
+    },
+    {
       "task_id": "gap-84-5-no-application-handler-calling-search-similar",
       "branch": "auto-impl/gap-84-5-no-application-handler-calling-68a6e390",
       "status": "merged",
@@ -5591,5 +5613,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-13T22:08:49Z"
+  "archived_at": "2026-07-13T22:14:40Z"
 }
