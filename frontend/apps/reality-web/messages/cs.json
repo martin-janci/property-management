@@ -16,6 +16,8 @@
     "formPlaceholderTitle": "Senior realitní makléř",
     "inviteError": "Chyba při odesílání pozvánky. Zkuste to znovu.",
     "inviteRealtor": "Pozvat makléře",
+    "loadErrorMessage": "Při načítání panelu agentury došlo k chybě. Zkuste to prosím znovu.",
+    "loadErrorTitle": "Nepodařilo se načíst vaši agenturu",
     "manageRealtors": "Spravovat makléře",
     "performanceOverview": "Přehled výkonnosti",
     "period1y": "1 rok",
@@ -23,6 +25,8 @@
     "period7d": "7 dní",
     "period90d": "90 dní",
     "quickActions": "Rychlé akce",
+    "retry": "Zkusit znovu",
+    "sectionLoadError": "Tuto sekci se nepodařilo načíst.",
     "topRealtors": "Nejlepší makléři",
     "viewAll": "Zobrazit vše"
   },

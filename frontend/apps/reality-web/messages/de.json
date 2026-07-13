@@ -16,6 +16,8 @@
     "formPlaceholderTitle": "Senior Immobilienmakler",
     "inviteError": "Fehler beim Senden der Einladung. Bitte versuchen Sie es erneut.",
     "inviteRealtor": "Makler einladen",
+    "loadErrorMessage": "Beim Laden des Agentur-Dashboards ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "loadErrorTitle": "Ihre Agentur konnte nicht geladen werden",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",
     "period1y": "1 Jahr",
@@ -23,6 +25,8 @@
     "period7d": "7 Tage",
     "period90d": "90 Tage",
     "quickActions": "Schnellaktionen",
+    "retry": "Erneut versuchen",
+    "sectionLoadError": "Dieser Abschnitt konnte nicht geladen werden.",
     "topRealtors": "Top-Makler",
     "viewAll": "Alle anzeigen"
   },

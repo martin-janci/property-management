@@ -22,18 +22,35 @@ type PeriodType = '7d' | '30d' | '90d' | '12m';
 export function AgencyDashboard() {
   const t = useTranslations('agency');
   const [period, setPeriod] = useState<PeriodType>('30d');
-  const { data: agency, isLoading: agencyLoading } = useMyAgency();
-  const { data: stats, isLoading: statsLoading } = useAgencyStats(agency?.id || '', period);
-  const { data: performance } = useAgencyPerformance(
+  const {
+    data: agency,
+    isLoading: agencyLoading,
+    isError: agencyError,
+    refetch: refetchAgency,
+  } = useMyAgency();
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+  } = useAgencyStats(agency?.id || '', period);
+  const { data: performance, isError: performanceError } = useAgencyPerformance(
     agency?.id || '',
     undefined,
     undefined,
     'week'
   );
-  const { data: realtors } = useRealtors(agency?.id || '');
+  const { data: realtors, isError: realtorsError } = useRealtors(agency?.id || '');
 
   if (agencyLoading) {
     return <DashboardSkeleton />;
+  }
+
+  // Distinguish a failed fetch from a genuine "no agency" state. Without this
+  // branch, a 500/network error settles as `agency === undefined` and falls
+  // through to <NoAgencyMessage />, showing an actual agency owner the
+  // misleading "No Agency Found / Create Agency" screen (Issue #2277).
+  if (agencyError) {
+    return <AgencyLoadError onRetry={() => refetchAgency()} />;
   }
 
   if (!agency) {
@@ -69,14 +86,24 @@ export function AgencyDashboard() {
       </div>
 
       {/* Stats Cards */}
-      {statsLoading ? <StatsCardsSkeleton /> : stats ? <StatsCards stats={stats} /> : null}
+      {statsError ? (
+        <SectionError message={t('sectionLoadError')} />
+      ) : statsLoading ? (
+        <StatsCardsSkeleton />
+      ) : stats ? (
+        <StatsCards stats={stats} />
+      ) : null}
 
       {/* Main Content Grid */}
       <div className="content-grid">
         {/* Performance Chart */}
         <div className="section chart-section">
           <h2 className="section-title">{t('performanceOverview')}</h2>
-          {performance && <PerformanceChart data={performance} />}
+          {performanceError ? (
+            <SectionError message={t('sectionLoadError')} />
+          ) : (
+            performance && <PerformanceChart data={performance} />
+          )}
         </div>
 
         {/* Realtor Leaderboard */}
@@ -87,14 +114,18 @@ export function AgencyDashboard() {
               {t('viewAll')}
             </Link>
           </div>
-          <RealtorLeaderboard
-            realtors={
-              realtors
-                ?.filter((r) => r.status === 'active')
-                .sort((a, b) => b.totalSales - a.totalSales)
-                .slice(0, 5) || []
-            }
-          />
+          {realtorsError ? (
+            <SectionError message={t('sectionLoadError')} />
+          ) : (
+            <RealtorLeaderboard
+              realtors={
+                realtors
+                  ?.filter((r) => r.status === 'active')
+                  .sort((a, b) => b.totalSales - a.totalSales)
+                  .slice(0, 5) || []
+              }
+            />
+          )}
         </div>
       </div>
 
@@ -888,6 +919,80 @@ function NoAgencyMessage() {
         }
         .create-button:hover {
           background: var(--ppt-color-primary-hover);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function AgencyLoadError({ onRetry }: { onRetry: () => void }) {
+  const t = useTranslations('agency');
+  return (
+    <div className="agency-error" role="alert">
+      <svg
+        width="64"
+        height="64"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--ppt-color-danger, #ef4444)"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <h2>{t('loadErrorTitle')}</h2>
+      <p>{t('loadErrorMessage')}</p>
+      <button type="button" className="retry-button" onClick={onRetry}>
+        {t('retry')}
+      </button>
+      <style jsx>{`
+        .agency-error {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 64px 24px;
+          text-align: center;
+          min-height: 50vh;
+        }
+        h2 {
+          font-size: 1.5rem;
+          color: var(--ppt-fg-primary);
+          margin: 24px 0 8px;
+        }
+        p {
+          color: var(--ppt-fg-muted);
+          margin: 0 0 24px;
+        }
+        .retry-button {
+          padding: 12px 24px;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
+          border: none;
+          border-radius: 8px;
+          font-weight: 500;
+          cursor: pointer;
+        }
+        .retry-button:hover {
+          background: var(--ppt-color-primary-hover);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function SectionError({ message }: { message: string }) {
+  return (
+    <div className="section-error" role="alert">
+      <span>{message}</span>
+      <style jsx>{`
+        .section-error {
+          padding: 24px;
+          text-align: center;
+          color: var(--ppt-fg-muted);
+          font-size: 14px;
         }
       `}</style>
     </div>
