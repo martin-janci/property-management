@@ -20,6 +20,211 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "gap-84-3-no-dedicated-price-alert-subscription-ui",
+      "action": "No dedicated price-alert subscription UI in reality-web (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-3-no-mobile-native-price-tracking-surface",
+      "action": "No mobile-native price tracking surface (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-3-reality-favorites-screen-map-not-shipped",
+      "action": "reality/favorites screen-map not shipped (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-5-migrate-embeddings-to-pgvector-not-wired",
+      "action": "migrate_embeddings_to_pgvector not wired to any HTTP route \u2014 no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-4-mobile-os-push-fcm-apns-transport",
+      "action": "Mobile OS push (FCM/APNs) transport deferred \u2014 Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-4-no-frontend-notification-trigger-management-ui",
+      "action": "No frontend notification-trigger management UI (84-4-notification-triggers Notification Trigger System)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
+      "action": "AC-4: useDraftStorage is NOT imported or called from FileDisputePageRoute.tsx \u2014 draft auto-save not wired into the filing flow (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-83-3-replay-protection-freshness-timestamp-window-explicitly",
+      "action": "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs \u2014 HMAC proves authenticity but not freshness (83-3-portal-webhooks Real Estate Portal Webhooks)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-1-no-presigned-put-endpoint-for-client",
+      "action": "No presigned PUT endpoint for client-to-S3 direct upload \u2014 uploads still proxy through the server (84-1-s3-presigned-urls S3 Presigned URL Implementation)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-2-no-frontend-ui-component-consuming-the",
+      "action": "No frontend UI component consuming the signature request flow (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-84-2-no-screen-map-entry-for-a",
+      "action": "No screen-map entry for a signature/e-sign screen in shipped state (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-tracking-reconcile-story-md-statuses-2026-07-13",
+      "action": "Reconcile tracking drift: flip story-md Status pending/in-progress -> done for verified-shipped 79-2/79-3/79-4/82-1..82-5/85-1/9-1 (code+tests verified 2026-07-07 and 2026-07-13) and add 84-x + 79-x/82-x/85-x/9-x ids to sprint-status.yaml development_status",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-81-1-frontend-create-new-schedule-ui-missing",
+      "action": "Frontend Create new schedule UI missing \u2014 no CreateScheduleModal/hook found (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-81-1-update-schedule-does-not-recompute-next",
+      "action": "update_schedule does NOT recompute next_run_at when cron_expression changes \u2014 stale fire time (issue #2242 finding still present) (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-screens-normalize-frontmatter-2026-07-13",
+      "action": "Normalize screen-map frontmatter: fix 9 validation errors (story-id-style epics like Epic-10B-7/6-5/Epic-9-1, empty epics fields, '7B') and re-point Epic-77/Epic-39 legacy refs to current epic ids; then link missing UCs (UC-33 disputes, UC-29 reports, UC-44 integrations, UC-10, UC-40)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-83-3-no-frontend-screen-for-portal-webhook",
+      "action": "No frontend screen for portal webhook management/status (inbound-only, no manager visibility surface) (83-3-portal-webhooks Real Estate Portal Webhooks)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
+    },
+    {
+      "id": "gap-83-2-booking-com-connect-happy-path-fetch",
+      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests \u2014 documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13"
     }
-  ]
+  ],
+  "generated": "2026-07-13T18:40:00Z"
 }

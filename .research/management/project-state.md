@@ -45,13 +45,13 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 
 ## What's next (top 5 actions)
 
-(top of roadmap.md, deep scan 2026-07-07 evening)
+(top of roadmap.md, deep scan 2026-07-13)
 
-1. **[high] Reconcile sprint-status ready-for-dev -> done for 10a-1/10a-2/10a-3 — gates #481 (closed 2026-05-26), #482, #487 all verified closed; code+screens+tests shipped** — pm-backend
-2. **[high] No application handler calling search_similar_documents or embedding-write flow (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
-3. **[high] RAG retrieval/query service (embedding generation + similarity search) not implemented in routes/repositories (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
-4. **[medium] Frontend UI not built (OrganizationsPage.tsx not found; buildStatus=planned not shipped) (10b-1-organization-management-dashboard Organization Management Dashboard)** — pm-frontend
-5. **[medium] Create new schedule endpoint still stubbed out (81-1-report-schedule-editing Report Schedule Editing)** — pm-backend
+1. **[high] No dedicated price-alert subscription UI in reality-web (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
+2. **[high] No mobile-native price tracking surface (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
+3. **[high] reality/favorites screen-map not shipped (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
+4. **[high] migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
+5. **[high] Mobile OS push (FCM/APNs) transport deferred — Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)** — pm-backend
 
 ## Blockers
 
