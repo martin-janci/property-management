@@ -519,7 +519,8 @@
     "favorites": {
       "title": "Meine Favoriten",
       "description": "Immobilien, die Sie gespeichert haben.",
-      "h1": "Meine Favoriten"
+      "h1": "Meine Favoriten",
+      "priceAlertsLink": "Preisbenachrichtigungen"
     },
     "login": {
       "title": "Anmelden",
@@ -594,6 +595,10 @@
       "description": "Vergleichen Sie Immobilien nebeneinander und finden Sie Ihr perfektes Zuhause.",
       "h1": "Immobilien vergleichen",
       "subtitle": "Sehen Sie, wie sich Ihre ausgewählten Immobilien im Vergleich schlagen."
+    },
+    "priceAlerts": {
+      "title": "Preisbenachrichtigungen",
+      "description": "Benachrichtigungen zu Preissenkungen und Rückkehr auf den Markt für Ihre Favoriten."
     }
   },
   "search": {
@@ -641,5 +646,21 @@
     "accept": "Accept all",
     "reject": "Reject optional",
     "manage": "Cookie settings"
+  },
+  "priceAlerts": {
+    "h1": "Preisbenachrichtigungen",
+    "subtitle": "Preisänderungen und Rückkehr auf den Markt für Ihre favorisierten Angebote.",
+    "backToFavorites": "← Zurück zu Favoriten",
+    "unread": "{count, plural, =0 {Keine ungelesenen Benachrichtigungen} one {# ungelesene Benachrichtigung} other {# ungelesene Benachrichtigungen}}",
+    "markAllRead": "Alle als gelesen markieren",
+    "markRead": "Als gelesen markieren",
+    "backOnMarket": "Wieder auf dem Markt",
+    "priceChanged": "Preis geändert",
+    "drop": "{pct} Preissenkung",
+    "increase": "{pct} Erhöhung",
+    "loadError": "Preisbenachrichtigungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "emptyTitle": "Noch keine Preisbenachrichtigungen",
+    "emptyText": "Wir benachrichtigen Sie hier, wenn sich die Preise Ihrer Favoriten ändern.",
+    "goToFavorites": "Favoriten ansehen"
   }
 }

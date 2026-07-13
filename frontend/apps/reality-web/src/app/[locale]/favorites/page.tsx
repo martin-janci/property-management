@@ -202,7 +202,12 @@ export default function FavoritesPage() {
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">{t('h1')}</h1>
+          <div className="page-head">
+            <h1 className="page-title">{t('h1')}</h1>
+            <Link href="/favorites/alerts" className="alerts-link">
+              {t('priceAlertsLink')}
+            </Link>
+          </div>
           <ProtectedRoute>
             <FavoritesContent />
           </ProtectedRoute>
@@ -226,12 +231,31 @@ export default function FavoritesPage() {
           margin: 0 auto;
           padding: 0 16px;
         }
+        .page-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+          margin: 0 0 32px;
+        }
         .page-title {
           font-size: 2rem;
           font-weight: bold;
           color: var(--ppt-fg-primary);
-          margin: 0 0 32px;
+          margin: 0;
         }
+        .alerts-link {
+          padding: 8px 16px;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ppt-fg-primary);
+          text-decoration: none;
+        }
+        .alerts-link:hover { background: var(--ppt-bg-app); }
       `}</style>
     </div>
   );

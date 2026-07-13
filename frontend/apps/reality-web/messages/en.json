@@ -519,7 +519,8 @@
     "favorites": {
       "title": "My Favorites",
       "description": "Properties you have saved for later.",
-      "h1": "My Favorites"
+      "h1": "My Favorites",
+      "priceAlertsLink": "Price alerts"
     },
     "login": {
       "title": "Sign in",
@@ -594,6 +595,10 @@
       "description": "Compare properties side by side to find your perfect home.",
       "h1": "Compare properties",
       "subtitle": "See how your selected properties stack up against each other."
+    },
+    "priceAlerts": {
+      "title": "Price Alerts",
+      "description": "Price-drop and back-on-market alerts for your favorite listings."
     }
   },
   "search": {
@@ -641,5 +646,21 @@
     "accept": "Accept all",
     "reject": "Reject optional",
     "manage": "Cookie settings"
+  },
+  "priceAlerts": {
+    "h1": "Price Alerts",
+    "subtitle": "Price changes and back-on-market alerts for the listings you've favorited.",
+    "backToFavorites": "← Back to favorites",
+    "unread": "{count, plural, =0 {No unread alerts} one {# unread alert} other {# unread alerts}}",
+    "markAllRead": "Mark all read",
+    "markRead": "Mark read",
+    "backOnMarket": "Back on the market",
+    "priceChanged": "Price changed",
+    "drop": "{pct} price drop",
+    "increase": "{pct} increase",
+    "loadError": "Failed to load price alerts. Please try again.",
+    "emptyTitle": "No price alerts yet",
+    "emptyText": "We'll notify you here when prices change on your favorite listings.",
+    "goToFavorites": "Browse favorites"
   }
 }

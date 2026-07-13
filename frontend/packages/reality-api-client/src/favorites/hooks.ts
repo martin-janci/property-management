@@ -11,6 +11,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiBase } from '../config';
 import type {
   CreateSavedSearchRequest,
+  FavoriteAlertsResponse,
+  MarkAllFavoriteAlertsReadResponse,
   PaginatedFavorites,
   SavedSearch,
   UpdateSavedSearchRequest,
@@ -91,6 +93,72 @@ export function useRemoveFavorite() {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
       queryClient.invalidateQueries({ queryKey: ['favorite-ids'] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+}
+
+// Favorite Price-Alert Hooks (Story 84.3)
+
+const FAVORITE_ALERTS_KEY = ['favorite-alerts'] as const;
+
+/**
+ * Fetch the authenticated user's favorite price / status alerts (newest first).
+ *
+ * Consumes `GET /api/v1/favorites/alerts` — the price-tracking feed populated
+ * by reality-server's `FavoriteAlertWorker`. `unread_count` reflects alerts
+ * still in `pending` status.
+ */
+export function useFavoriteAlerts(limit = 100, offset = 0) {
+  return useQuery({
+    queryKey: [...FAVORITE_ALERTS_KEY, limit, offset],
+    queryFn: async (): Promise<FavoriteAlertsResponse> => {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      params.set('offset', String(offset));
+
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts?${params}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch favorite alerts');
+      return response.json();
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+/** Mark a single favorite alert as read (idempotent server-side). */
+export function useMarkFavoriteAlertRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (alertId: string): Promise<void> => {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts/${alertId}/read`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to mark favorite alert read');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FAVORITE_ALERTS_KEY });
+    },
+  });
+}
+
+/** Mark every pending favorite alert as read. */
+export function useMarkAllFavoriteAlertsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (): Promise<MarkAllFavoriteAlertsReadResponse> => {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts/read-all`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to mark all favorite alerts read');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FAVORITE_ALERTS_KEY });
     },
   });
 }
