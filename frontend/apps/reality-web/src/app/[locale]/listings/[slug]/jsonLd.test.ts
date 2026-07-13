@@ -9,7 +9,7 @@
 
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { describe, expect, it } from 'vitest';
-import { buildListingJsonLd } from './jsonLd';
+import { buildListingJsonLd, isRenderableListing } from './jsonLd';
 
 const validListing: ListingDetail = {
   id: 'listing-1',
@@ -117,5 +117,53 @@ describe('buildListingJsonLd', () => {
     expect('offers' in jsonLd).toBe(false);
     expect('numberOfRooms' in jsonLd).toBe(false);
     expect('floorSize' in jsonLd).toBe(false);
+  });
+});
+
+describe('isRenderableListing', () => {
+  it('accepts a valid listing', () => {
+    expect(isRenderableListing(validListing)).toBe(true);
+  });
+
+  it('accepts a minimal body with title, slug and a well-formed address', () => {
+    expect(
+      isRenderableListing({
+        title: 'Minimal',
+        slug: 'minimal',
+        address: { city: 'Bratislava', country: 'SK' },
+      })
+    ).toBe(true);
+  });
+
+  // These are exactly the partial 200 bodies getListing must reject so the
+  // request falls back to ListingNotFound instead of crashing SSR (#2276).
+  it('rejects null / undefined', () => {
+    expect(isRenderableListing(null)).toBe(false);
+    expect(isRenderableListing(undefined)).toBe(false);
+  });
+
+  it('rejects an empty object', () => {
+    expect(isRenderableListing({})).toBe(false);
+  });
+
+  it('rejects a body missing address', () => {
+    expect(isRenderableListing({ title: 't', slug: 's' })).toBe(false);
+  });
+
+  it('rejects a body whose address is missing city or country', () => {
+    expect(isRenderableListing({ title: 't', slug: 's', address: { city: 'X' } })).toBe(false);
+    expect(isRenderableListing({ title: 't', slug: 's', address: { country: 'SK' } })).toBe(false);
+  });
+
+  it('rejects a body missing title or slug', () => {
+    const addr = { city: 'X', country: 'SK' };
+    expect(isRenderableListing({ slug: 's', address: addr })).toBe(false);
+    expect(isRenderableListing({ title: 't', address: addr })).toBe(false);
+  });
+
+  it('rejects non-object bodies', () => {
+    expect(isRenderableListing('oops')).toBe(false);
+    expect(isRenderableListing(42)).toBe(false);
+    expect(isRenderableListing([])).toBe(false);
   });
 });

@@ -18,11 +18,18 @@ interface ListingDetailContentProps {
 }
 
 function formatPrice(price: number, currency: string) {
+  const value = Number.isFinite(price) ? price : 0;
+  // A partial 200 body can omit `currency`; `Intl.NumberFormat` with
+  // `style: 'currency'` throws ("Currency code is required…") on a missing
+  // code, which would crash SSR. Fall back to a plain decimal format.
+  if (typeof currency !== 'string' || currency.length === 0) {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(value);
 }
 
 export function ListingNotFound() {
@@ -90,7 +97,12 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
     return tFeatures(key);
   };
 
-  const activeFeatures = Object.entries(listing.features)
+  // `listing.features` / `listing.photos` are validated as present for bodies
+  // that reach here via `getListing`, but this component is exported and may
+  // receive a partial body from other callers. Guard the unguarded derefs so a
+  // missing `features` (Object.entries) or `photos` (PhotoGallery) can never
+  // crash SSR with a 500.
+  const activeFeatures = Object.entries(listing.features ?? {})
     .filter(([, value]) => value === true)
     .map(([key]) => key as keyof ListingFeatures);
 
@@ -113,14 +125,14 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
             <span className="separator">/</span>
             <a href="/listings">{tNav('allListings')}</a>
             <span className="separator">/</span>
-            <span className="current">{listing.address.city}</span>
+            <span className="current">{listing.address?.city}</span>
           </nav>
 
           <div className="content-grid">
             {/* Main Content */}
             <div className="main-content">
               {/* Photo Gallery */}
-              <PhotoGallery photos={listing.photos} title={listing.title} />
+              <PhotoGallery photos={listing.photos ?? []} title={listing.title} />
 
               {/* Header */}
               <div className="listing-header">
@@ -144,9 +156,9 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  {listing.address.street && `${listing.address.street}, `}
-                  {listing.address.city}
-                  {listing.address.district && `, ${listing.address.district}`}
+                  {listing.address?.street && `${listing.address.street}, `}
+                  {listing.address?.city}
+                  {listing.address?.district && `, ${listing.address.district}`}
                 </p>
                 <div className="price-row">
                   <span className="price">{formatPrice(listing.price, listing.currency)}</span>
@@ -325,7 +337,10 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
 
             {/* Sidebar */}
             <div className="sidebar">
-              <ContactForm listingId={listing.id} agent={listing.agent} />
+              {/* `agent` is not guaranteed on a partial 200 body; ContactForm
+                  dereferences `agent.name` / `agent.avatarUrl`, so only render
+                  it when the agent is present to avoid crashing SSR. */}
+              {listing.agent && <ContactForm listingId={listing.id} agent={listing.agent} />}
             </div>
           </div>
         </div>
