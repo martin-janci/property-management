@@ -1797,4 +1797,47 @@ mod tests {
         assert!(!receipt.success);
         assert!(receipt.token_expired);
     }
+
+    // ------------------------------------------------------------------
+    // gap-84-4: pipeline push transport is multi-platform (FCM + APNs)
+    // ------------------------------------------------------------------
+
+    /// Regression guard for gap-84-4: the notification pipeline's push channel
+    /// now dispatches through `CombinedPushAdapter`, which must treat BOTH
+    /// Android (FCM) and iOS (APNs) tokens as first-class delivery targets.
+    ///
+    /// Before this fix the pipeline wired the FCM-only `FcmHttpAdapter`, which
+    /// logged APNs tokens as "not yet implemented" and dropped them — so an
+    /// iOS-only user's push notifications were silently discarded on the
+    /// synchronous dispatch path. This test pins that a mixed and an APNs-only
+    /// token set both yield real dispatch targets so the combined adapter can
+    /// route them to their respective gateways.
+    #[test]
+    fn combined_push_adapter_treats_apns_as_first_class_target() {
+        // APNs-only user: on the old FCM-only path this produced zero real
+        // delivery targets (dropped as "unsupported"); it must now select the
+        // APNs token so `ApnsHttpAdapter` can deliver it.
+        let apns_only = vec![stored_token("apns-device", "apns", None)];
+        let targets = select_dispatch_targets(&apns_only, &PushTargetFilter::default());
+        assert_eq!(
+            targets.len(),
+            1,
+            "an APNs-only user must have a real push dispatch target"
+        );
+        assert_eq!(targets[0].platform, PushPlatform::Apns);
+
+        // Mixed user: both platforms are selected (order preserved), so the
+        // combined adapter fans out to FCM and APNs concurrently.
+        let mixed = vec![
+            stored_token("fcm-device", "fcm", None),
+            stored_token("apns-device", "apns", None),
+        ];
+        let mixed_targets = select_dispatch_targets(&mixed, &PushTargetFilter::default());
+        let platforms: Vec<PushPlatform> =
+            mixed_targets.iter().map(|t| t.platform.clone()).collect();
+        assert!(
+            platforms.contains(&PushPlatform::Fcm) && platforms.contains(&PushPlatform::Apns),
+            "a mixed FCM+APNs user must produce targets for both platforms; got {platforms:?}"
+        );
+    }
 }
