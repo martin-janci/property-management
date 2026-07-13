@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-07-13T02:11:42Z",
-  "since": "2026-07-12T22:22:37Z",
-  "window_hours": 3,
+  "generated_at": "2026-07-13T03:07:43Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_minutes": 56,
   "trigger_text": "",
   "summary": {
     "merged_prs": 0,
-    "open_prs_touched": 0,
-    "new_or_updated_issues": 1,
-    "commits_on_dev": 4,
+    "open_prs_touched": 1,
+    "new_or_updated_issues": 0,
+    "commits_on_dev": 2,
     "app_code_commits": 0,
     "churn_hotspots_new": 0
   },
@@ -15,7 +15,7 @@
   "auto_fix_actions": [],
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_issue_seen 2263->2272, last_commit_sha ac3afb3->1691c9d, last_run_iso, stats.runs 43->44, stats.quiet_days 1->2)", "observed": "true", "expected": "true" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_commit_sha 1691c9d->4a36b85, last_run_iso, stats.runs 44->45, stats.quiet_days 2->3)", "observed": "true", "expected": "true" },
     { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
     { "goal": "G4",  "passed": true, "command": "signals[] is empty this run — nothing to double-score", "observed": "true", "expected": "true" },
     { "goal": "G5",  "passed": true, "command": "no items with score>8; sole open item is 1d old, not eligible for decay", "observed": "true", "expected": "true" },
@@ -33,10 +33,11 @@
     { "goal": "G17", "passed": true, "command": "grep telegram bot-token URL/bare token in staged diff", "observed": "0 hits", "expected": "0 hits" }
   ],
   "notes": [
-    "Very quiet 3-hour window. No merged PRs (cursor #2271 unchanged). One new issue #2272 (post-merge review follow-up on PR #2265) — already labelled and dispatcher-claimed as gh-issue-2272; not an untriaged-issue signal.",
-    "All 4 dev commits are chore(research):* infrastructure — 0 application-file churn, so no new churn-hotspot / repeated-churn signals fired.",
-    "Phase 1.5 skipped: dispatcher already ran a Tier-1d dev-review on reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies a second slice.",
-    "Phase 1.6 skipped: ran 3h ago with no fresh delivery activity to re-synthesize; pm_cursor and coverage_cursor deliberately not advanced this run.",
-    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar."
+    "Very quiet 56-minute window. No merged PRs (cursor #2271 unchanged). Zero new issues; the last recorded issue #2272 was already ingested on the prior run.",
+    "One open PR touched: #2273 (draft, dispatcher's implementer for gh-issue-2272, created 02:41Z / updated 02:45Z) — too fresh for a stalled-review signal (<7 days) and CI is in-flight.",
+    "Both commits on dev this window are chore(research):* — dee8f56 (this-day prior routine commit at 02:19Z) and 4a36b85 (dispatcher chore at 02:46Z). Zero application-file churn, so no new churn-hotspot / repeated-churn / risky-churn signals fired.",
+    "Phase 1.5 skipped: dispatcher already covered reality-server today (signals/2026-07-13-reality-server.json, 0 defects); no fresh churn justifies another slice in the 56m gap.",
+    "Phase 1.6 skipped: previous routine ran the daily rotating PM (pm-security) less than an hour ago with no delivery activity since — no reason to re-synthesize. pm_cursor and coverage_cursor deliberately not advanced this run.",
+    "Phase 5 skipped: no signal reached the (confidence=high AND score>=3 AND allowlisted-type) bar — none were emitted."
   ]
 }
