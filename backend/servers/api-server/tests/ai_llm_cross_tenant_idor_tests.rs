@@ -24,6 +24,13 @@
 //! photo-enhancement read — the full LLM-document IDOR cluster from the
 //! `security-llm-doc-idor` plan.
 //!
+//! Issue #2279 extends this with WITHIN-tenant per-user isolation for the
+//! by-session-id AI-chat handlers (`get_session`, `list_messages`,
+//! `delete_session`, `send_message`): AI chat sessions are per-user private,
+//! so the by-id repo path must scope by `user_id` as well as `organization_id`
+//! — otherwise any colleague in the same org can read/delete/post into another
+//! member's private session. Tests (1b)–(1d) pin that owner predicate.
+//!
 //! Why repo-layer and not HTTP-layer: `TestApp` mounts the router WITHOUT
 //! `host_tenant_middleware`, so `RequestPrincipal` can never resolve an
 //! `effective_org` in tests (see `equipment_cross_tenant_idor_tests.rs`'s
@@ -117,9 +124,9 @@ async fn find_session_by_id_blocks_cross_tenant_read(pool: PgPool) {
     let user_a = seed_user(&pool, "sess-a@ai-idor.test").await;
     let session_in_a = seed_session(&pool, org_a, user_a).await;
 
-    // Same-org read succeeds.
+    // Same-org read succeeds (correct org + owner).
     let same_org = repo
-        .find_session_by_id(&pool, session_in_a, org_a)
+        .find_session_by_id(&pool, session_in_a, org_a, user_a)
         .await
         .expect("query ok");
     assert!(
@@ -129,7 +136,7 @@ async fn find_session_by_id_blocks_cross_tenant_read(pool: PgPool) {
 
     // Cross-org read returns None (the IDOR is blocked).
     let cross_org = repo
-        .find_session_by_id(&pool, session_in_a, org_b)
+        .find_session_by_id(&pool, session_in_a, org_b, user_a)
         .await
         .expect("query ok");
     assert!(
@@ -149,6 +156,169 @@ async fn find_session_by_id_blocks_cross_tenant_read(pool: PgPool) {
         unscoped,
         Some(session_in_a),
         "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (1b) Chat session read is OWNER-scoped WITHIN a tenant (issue #2279) — a
+//      colleague in the same org cannot read another member's private session
+//      by supplying its UUID. AI chat sessions are per-user private
+//      (`create_session` stamps the owner; `list_user_sessions` only returns
+//      the caller's own sessions), but the by-id path used to filter by
+//      `organization_id` alone. This pins the added `user_id` predicate.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn find_session_by_id_blocks_within_tenant_cross_user_read(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "wt-sess").await;
+    let owner = seed_user(&pool, "wt-owner@ai-idor.test").await;
+    let attacker = seed_user(&pool, "wt-attacker@ai-idor.test").await;
+    let session = seed_session(&pool, org, owner).await;
+
+    // Owner read (correct org + owner) succeeds.
+    let as_owner = repo
+        .find_session_by_id(&pool, session, org, owner)
+        .await
+        .expect("query ok");
+    assert!(
+        as_owner.is_some(),
+        "the owning user must be able to read their own chat session"
+    );
+
+    // Same-org, different-user read returns None (the within-tenant IDOR is blocked).
+    let as_attacker = repo
+        .find_session_by_id(&pool, session, org, attacker)
+        .await
+        .expect("query ok");
+    assert!(
+        as_attacker.is_none(),
+        "issue #2279: a colleague in the same org must NOT read another \
+         member's private chat session"
+    );
+
+    // Demonstrate the leak the owner predicate closes: the org-only lookup the
+    // pre-fix handler performed returns the row regardless of the caller.
+    let org_only: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2",
+    )
+    .bind(session)
+    .bind(org)
+    .fetch_optional(&pool)
+    .await
+    .expect("query ok");
+    assert_eq!(
+        org_only,
+        Some(session),
+        "sanity: the org-only query (the vulnerable pre-fix path) does leak \
+         the row to any member of the same org"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (1c) Message-transcript read is OWNER-scoped within a tenant (issue #2279) —
+//      a colleague in the same org cannot read another member's conversation.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_session_messages_blocks_within_tenant_cross_user_read(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "wt-msg").await;
+    let owner = seed_user(&pool, "wt-msg-owner@ai-idor.test").await;
+    let attacker = seed_user(&pool, "wt-msg-attacker@ai-idor.test").await;
+    let session = seed_session(&pool, org, owner).await;
+    let _msg = seed_message(&pool, session).await;
+
+    // Owner sees the transcript.
+    let as_owner = repo
+        .list_session_messages(&pool, session, org, owner, 100, 0)
+        .await
+        .expect("query ok");
+    assert_eq!(
+        as_owner.len(),
+        1,
+        "the owning user must be able to read their own session transcript"
+    );
+
+    // Same-org, different-user read returns nothing (the IDOR is blocked).
+    let as_attacker = repo
+        .list_session_messages(&pool, session, org, attacker, 100, 0)
+        .await
+        .expect("query ok");
+    assert!(
+        as_attacker.is_empty(),
+        "issue #2279: a colleague in the same org must NOT read another \
+         member's conversation transcript"
+    );
+
+    // Sanity: the org-only join (the pre-fix path) leaks the transcript to any
+    // member of the same org.
+    let org_only: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*) FROM ai_chat_messages m
+        JOIN ai_chat_sessions s ON s.id = m.session_id
+        WHERE m.session_id = $1 AND s.organization_id = $2
+        "#,
+    )
+    .bind(session)
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("query ok");
+    assert_eq!(
+        org_only, 1,
+        "sanity: the org-only join (the vulnerable pre-fix path) does leak the \
+         transcript to any member of the same org"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (1d) Session DELETE is OWNER-scoped within a tenant (issue #2279) — a
+//      colleague in the same org cannot destroy another member's session.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_session_blocks_within_tenant_cross_user_delete(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "wt-del").await;
+    let owner = seed_user(&pool, "wt-del-owner@ai-idor.test").await;
+    let attacker = seed_user(&pool, "wt-del-attacker@ai-idor.test").await;
+    let session = seed_session(&pool, org, owner).await;
+
+    // Same-org, different-user delete affects no rows (the IDOR is blocked).
+    let attacker_deleted = repo
+        .delete_session(&pool, session, org, attacker)
+        .await
+        .expect("query ok");
+    assert!(
+        !attacker_deleted,
+        "issue #2279: a colleague in the same org must NOT delete another \
+         member's session"
+    );
+
+    let still_present: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM ai_chat_sessions WHERE id = $1")
+            .bind(session)
+            .fetch_optional(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        still_present,
+        Some(session),
+        "the session must survive a cross-user delete attempt"
+    );
+
+    // The owner can delete their own session.
+    let owner_deleted = repo
+        .delete_session(&pool, session, org, owner)
+        .await
+        .expect("query ok");
+    assert!(
+        owner_deleted,
+        "the owning user must be able to delete their own session"
     );
 }
 

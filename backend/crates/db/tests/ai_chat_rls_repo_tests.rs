@@ -149,7 +149,7 @@ async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .expect("set role");
 
         let found = repo
-            .find_session_by_id(&mut *conn, session_a, org_a)
+            .find_session_by_id(&mut *conn, session_a, org_a, user_a)
             .await
             .expect("find_session_by_id (no ctx)");
         assert!(
@@ -183,7 +183,7 @@ async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (2) Own-org row IS now visible through the repo — the fix.
         let found = repo
-            .find_session_by_id(&mut *conn, session_a, org_a)
+            .find_session_by_id(&mut *conn, session_a, org_a, user_a)
             .await
             .expect("find_session_by_id (ctx)");
         assert_eq!(
@@ -195,7 +195,7 @@ async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         // (3) Org B's session stays invisible to an org-A caller — even though
         //     the SQL filter is passed org_a, RLS independently denies the row.
         let cross = repo
-            .find_session_by_id(&mut *conn, session_b, org_a)
+            .find_session_by_id(&mut *conn, session_b, org_a, user_a)
             .await
             .expect("find_session_by_id cross");
         assert!(
@@ -260,4 +260,118 @@ async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .await
             .ok();
     }
+}
+
+/// Seed a chat message on a session (as superuser, RLS-exempt).
+async fn seed_message(pool: &PgPool, session_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO ai_chat_messages (session_id, role, content)
+        VALUES ($1, 'user', 'sensitive question')
+        RETURNING id
+        "#,
+    )
+    .bind(session_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed message")
+}
+
+/// Within-tenant per-user isolation for the by-session-id AI-chat repo paths
+/// (issue #2279).
+///
+/// AI chat sessions are per-user private within an org, but the by-id repo
+/// methods used to filter by `organization_id` alone, so any colleague in the
+/// same org could read/delete/read-transcript of another member's private
+/// session by supplying its UUID. This test pins the added `user_id` predicate
+/// on `find_session_by_id`, `list_session_messages`, and `delete_session`.
+///
+/// It runs as the Postgres superuser (RLS is bypassed), so the assertions
+/// exercise the repository's SQL `WHERE` clause directly — exactly the layer
+/// the fix lives in. On the pre-fix code the org-only query returned the row to
+/// `attacker`; the `AND user_id = $n` predicate is what closes that.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn ai_chat_by_id_paths_are_owner_scoped_within_tenant(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "owner-scope").await;
+    let owner = seed_user(&pool, "owner@aichat.test").await;
+    // `attacker` is a DIFFERENT user in the SAME org.
+    let attacker = seed_user(&pool, "attacker@aichat.test").await;
+    let session = seed_session(&pool, org, owner, "owner's private session").await;
+    let _msg = seed_message(&pool, session).await;
+
+    // --- find_session_by_id: owner reads, same-org attacker is blocked. ---
+    assert!(
+        repo.find_session_by_id(&pool, session, org, owner)
+            .await
+            .expect("query ok")
+            .is_some(),
+        "the owning user must read their own session"
+    );
+    assert!(
+        repo.find_session_by_id(&pool, session, org, attacker)
+            .await
+            .expect("query ok")
+            .is_none(),
+        "#2279: a colleague in the same org must NOT read another member's session"
+    );
+    // Sanity: the org-only query (the vulnerable pre-fix path) leaks the row to
+    // any member of the same org.
+    let org_only: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2",
+    )
+    .bind(session)
+    .bind(org)
+    .fetch_optional(&pool)
+    .await
+    .expect("query ok");
+    assert_eq!(
+        org_only,
+        Some(session),
+        "sanity: the org-only lookup (pre-fix path) does leak the session"
+    );
+
+    // --- list_session_messages: owner sees transcript, attacker sees nothing. ---
+    assert_eq!(
+        repo.list_session_messages(&pool, session, org, owner, 100, 0)
+            .await
+            .expect("query ok")
+            .len(),
+        1,
+        "the owning user must read their own transcript"
+    );
+    assert!(
+        repo.list_session_messages(&pool, session, org, attacker, 100, 0)
+            .await
+            .expect("query ok")
+            .is_empty(),
+        "#2279: a colleague must NOT read another member's transcript"
+    );
+
+    // --- delete_session: attacker cannot delete, owner can. ---
+    assert!(
+        !repo
+            .delete_session(&pool, session, org, attacker)
+            .await
+            .expect("query ok"),
+        "#2279: a colleague must NOT delete another member's session"
+    );
+    let survived: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM ai_chat_sessions WHERE id = $1")
+            .bind(session)
+            .fetch_optional(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        survived,
+        Some(session),
+        "the session must survive a cross-user delete attempt"
+    );
+    assert!(
+        repo.delete_session(&pool, session, org, owner)
+            .await
+            .expect("query ok"),
+        "the owning user must be able to delete their own session"
+    );
 }
