@@ -134,6 +134,11 @@ function AppNavigation() {
       <Link to="/settings/integrations">
         {t('nav.integrations', { defaultValue: 'Integrations' })}
       </Link>
+      {isOperator && (
+        <Link to="/settings/portal-webhooks">
+          {t('nav.portalWebhooks', { defaultValue: 'Portal Webhooks' })}
+        </Link>
+      )}
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
       <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>

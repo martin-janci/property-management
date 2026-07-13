@@ -83,7 +83,8 @@
     "aiChat": "AI Assistant",
     "admin": "Admin",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "portalWebhooks": "Portal Webhooks"
   },
   "auth": {
     "signIn": "Sign In",
@@ -3388,6 +3389,40 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Portal Webhooks",
+      "subtitle": "Delivery status and activity from real-estate portal webhooks — views, inquiries and sync health per portal.",
+      "noOrganization": "No organization is selected for your account, so portal webhook activity cannot be shown.",
+      "loading": "Loading portal activity…",
+      "loadError": "Failed to load portal webhook activity.",
+      "summary": {
+        "title": "Summary",
+        "active": "Active",
+        "pending": "Pending",
+        "failed": "Failed",
+        "views": "Views",
+        "inquiries": "Inquiries"
+      },
+      "byPortal": {
+        "caption": "Syndication activity by portal",
+        "portal": "Portal",
+        "empty": "No portal activity recorded yet."
+      },
+      "listings": {
+        "title": "Listings",
+        "empty": "No syndicated listings yet.",
+        "activity": "{{views}} views · {{inquiries}} inquiries",
+        "portalActivity": "{{views}} views · {{inquiries}} inquiries",
+        "lastActivity": "Last activity: {{when}}",
+        "lastError": "Last error: {{error}}"
+      },
+      "health": {
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "unhealthy": "Unhealthy",
+        "notConfigured": "Not configured"
+      }
+    },
     "integrations": {
       "title": "Integrations",
       "subtitle": "Connect external booking channels to sync listings and reservations.",
