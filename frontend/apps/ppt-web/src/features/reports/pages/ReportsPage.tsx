@@ -6,6 +6,7 @@
 
 import type {
   BuildingAnalytics,
+  CreateReportSchedule,
   CronScheduleUpdateRequest,
   DataSource,
   KPIMetric,
@@ -43,7 +44,7 @@ interface ReportsPageProps {
   isLoading?: boolean;
   onCreateReport?: (data: unknown) => Promise<void>;
   onPreviewReport?: (data: unknown) => Promise<unknown>;
-  onCreateSchedule?: (data: unknown) => Promise<void>;
+  onCreateSchedule?: (data: CreateReportSchedule) => Promise<void>;
   /** gap-81-1: cron-based update (cron_expression, recipients, enabled) */
   onUpdateSchedule?: (id: string, data: CronScheduleUpdateRequest) => Promise<void>;
   onDeleteSchedule?: (id: string) => Promise<void>;
