@@ -29,7 +29,7 @@ sharedComponents:
 diagrams: []
 useCases: []
 epics:
-  - Epic-10B-6
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---
@@ -79,6 +79,7 @@ Admin view for the user onboarding tour system (Epic 10B, Story 10B.6). Platform
 - 2026-06-08 — agent: created screen doc; component (OnboardingToursPage + TourOverlay + api-client hooks) already shipped on dev in PR #840. Route `platform/onboarding` registered in App.tsx with `site_settings_write` cap gate. Nav link in AdminLayout PLATFORM group.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-6 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-06-08 — agent: initial screen doc added for feat-admin-web-onboarding-tour-component; implementation was already merged (PR #840 fix + PR #730-era feat commits). Backend routes confirmed at `backend/servers/api-server/src/routes/onboarding.rs` (Epic 10B, Story 10B.6).

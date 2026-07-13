@@ -25,7 +25,7 @@ sharedComponents:
 diagrams: []
 useCases: []
 epics:
-  - Epic-10B-7
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---
@@ -64,6 +64,7 @@ so child routes (e.g. `/identity/memberships/123`) inherit their parent's articl
   13 static articles covering all admin sections; i18n EN/SK/CS; no backend dep.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-7 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-06-25 — agent: 10b-7-reconcile — verified feature shipped across backend

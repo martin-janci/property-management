@@ -24,7 +24,7 @@ diagrams: []
 useCases:
   - UC-17
 epics:
-  - Epic-10B-3
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---
@@ -68,6 +68,7 @@ go through `@ppt/api-client`'s shared `authenticatedFetchJson` factory
   removed `token` prop threading; biome + typecheck green.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-3 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-05-28 — agent: gap-10b-3-health-ui-mfa-bypass-fix — added unit tests

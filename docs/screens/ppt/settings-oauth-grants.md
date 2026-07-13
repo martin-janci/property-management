@@ -23,7 +23,7 @@ diagrams: []
 useCases:
   - UC-14
 epics:
-  - Epic-10A-3
+  - Epic-10A
 designSources: []
 owner: pm-frontend
 ---
@@ -44,4 +44,5 @@ Wired to live backend endpoints in Epic 10A, Story 10A-3:
 - 2026-05-24 — agent: OAuthGrantsPage created; full list + revoke with confirmation dialog wired to @ppt/api-client oauth-grants hooks; apiStatus complete.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10A-3 → Epic-10A (strip story suffix); /screens validate clean.
 - 2026-05-24 — agent: gap-10a-3-user-grants-ui — built OAuthGrantsPage under features/oauth-grants/; added lazy route at /settings/oauth-grants; wired useUserGrants + useRevokeUserGrant; toast feedback on success/error; confirmation dialog before revoke.

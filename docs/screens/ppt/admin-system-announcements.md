@@ -23,7 +23,7 @@ sharedComponents: []
 diagrams: []
 useCases: []
 epics:
-  - Epic-10B-4
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---

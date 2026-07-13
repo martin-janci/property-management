@@ -20,7 +20,7 @@ useCases:
   - UC-07
   - UC-05.9
 epics:
-  - Epic-6-5
+  - Epic-6
 designSources: []
 owner: pm-frontend
 ---
@@ -41,6 +41,7 @@ the API's `ThreadDetailResponse` to the feature-layer `ThreadWithMessages` type 
 - 2026-06-25 — group conversations (BIT-244): detail header renders all other participants (`ThreadDetailResponse.otherParticipant` → `participants: ParticipantInfo[]`, backend PR #1848). `formatParticipantNames` already collapses N>2 to "X and N others".
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadDetailToUi` maps every other participant from `participants[]`; the N-party header rendering was already in place. No route/status change.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-05-24 — agent: promoted apiStatus stub→integrated; wired ThreadDetailPageRoute to useThread/useSendMessage/useMarkThreadRead hooks.

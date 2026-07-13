@@ -21,7 +21,7 @@ diagrams: []
 useCases:
   - UC-17
 epics:
-  - Epic-10B-5
+  - Epic-10B
 designSources: []
 owner: pm-security
 ---
@@ -73,6 +73,7 @@ RLS-hardened in 00165) so support-tooling access is itself audited.
   `#[sqlx::test]` regression and reconciled sprint-status 10B.5 to done.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-5 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-06-25 — agent: dispatcher followup — fixed PR #1829 red CI gates:
