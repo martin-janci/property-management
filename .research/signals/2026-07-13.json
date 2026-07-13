@@ -11,7 +11,37 @@
     "app_code_commits": 0,
     "churn_hotspots_new": 0
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "code-review-api-core-sync-calevent-create-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:991 — create_calendar_event handler ignores its {id} path segment (Path(_path): Path<ResourceIdPath>) and calls no verify_org_access, unlike every sibling handler (get/update/delete connection at :507/:570/:643, sync at :734, accounting/esignature) which load the resource then verify_org_access on its organization_id",
+        "backend/crates/db/src/repositories/integration.rs:374 — create_calendar_event INSERT binds request-body data.connection_id directly with no org/tenant ownership check; an authenticated user in org A can POST /api/v1/integrations/calendars/{id}/events with a body connection_id belonging to org B (cross-org write / IDOR)",
+        "No RLS policy for calendar_events found in backend/crates/db/migrations/*.sql (table appears only in INSERTs), so the missing verify_org_access is not backstopped at the DB level"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-sync-calevent-list-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:951 — list_calendar_events passes path.id (connection id) to the repo but performs no verify_org_access, relying solely on the RlsConnection, whereas all sibling read handlers (get_calendar_connection :489/:507, accounting exports :1139/:1157) load-then-verify the resource's organization_id",
+        "No RLS policy for calendar_events found in backend/crates/db/migrations/*.sql, so a cross-org read of another org's connection events is not confirmably blocked; inconsistent authz with the rest of the module (defence-in-depth gap that may be an actual read IDOR)"
+      ],
+      "expert": "rust"
+    }
+  ],
   "auto_fix_actions": [],
   "goal_checks": [
     { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
