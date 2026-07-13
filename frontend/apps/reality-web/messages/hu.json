@@ -514,7 +514,8 @@
     "favorites": {
       "title": "Kedvenceim",
       "description": "Az Ön által mentett ingatlanok.",
-      "h1": "Kedvenceim"
+      "h1": "Kedvenceim",
+      "priceAlertsLink": "Árriasztások"
     },
     "login": {
       "title": "Sign in",
@@ -583,6 +584,10 @@
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
+    },
+    "priceAlerts": {
+      "title": "Árriasztások",
+      "description": "Árcsökkenési és piacra visszatérési riasztások a kedvenc hirdetéseihez."
     }
   },
   "search": {
@@ -630,5 +635,21 @@
     "accept": "Accept all",
     "reject": "Reject optional",
     "manage": "Cookie settings"
+  },
+  "priceAlerts": {
+    "h1": "Árriasztások",
+    "subtitle": "Árváltozások és piacra visszatérés a kedvencnek jelölt hirdetéseihez.",
+    "backToFavorites": "← Vissza a kedvencekhez",
+    "unread": "{count, plural, =0 {Nincs olvasatlan riasztás} other {# olvasatlan riasztás}}",
+    "markAllRead": "Összes megjelölése olvasottként",
+    "markRead": "Megjelölés olvasottként",
+    "backOnMarket": "Ismét piacon",
+    "priceChanged": "Az ár megváltozott",
+    "drop": "{pct} árcsökkenés",
+    "increase": "{pct} növekedés",
+    "loadError": "Nem sikerült betölteni az árriasztásokat. Próbálja újra.",
+    "emptyTitle": "Még nincsenek árriasztások",
+    "emptyText": "Értesítjük, ha megváltozik a kedvenc hirdetései ára.",
+    "goToFavorites": "Ugrás a kedvencekhez"
   }
 }

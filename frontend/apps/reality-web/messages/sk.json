@@ -515,7 +515,8 @@
     "favorites": {
       "title": "Moje obľúbené",
       "description": "Nehnuteľnosti, ktoré ste si uložili.",
-      "h1": "Moje obľúbené"
+      "h1": "Moje obľúbené",
+      "priceAlertsLink": "Cenové upozornenia"
     },
     "login": {
       "title": "Prihlásenie",
@@ -590,6 +591,10 @@
       "description": "Porovnajte nehnuteľnosti vedľa seba a nájdite ten správny domov.",
       "h1": "Porovnať nehnuteľnosti",
       "subtitle": "Pozrite sa, ako si vaše vybrané nehnuteľnosti stoja vedľa seba."
+    },
+    "priceAlerts": {
+      "title": "Cenové upozornenia",
+      "description": "Upozornenia na zníženie ceny a návrat na trh pre vaše obľúbené ponuky."
     }
   },
   "search": {
@@ -637,5 +642,21 @@
     "accept": "Prijať všetky",
     "reject": "Odmietnuť voliteľné",
     "manage": "Nastavenia cookies"
+  },
+  "priceAlerts": {
+    "h1": "Cenové upozornenia",
+    "subtitle": "Zmeny cien a návrat na trh pre ponuky, ktoré ste si označili ako obľúbené.",
+    "backToFavorites": "← Späť na obľúbené",
+    "unread": "{count, plural, =0 {Žiadne neprečítané upozornenia} one {# neprečítané upozornenie} few {# neprečítané upozornenia} other {# neprečítaných upozornení}}",
+    "markAllRead": "Označiť všetky ako prečítané",
+    "markRead": "Označiť ako prečítané",
+    "backOnMarket": "Opäť na trhu",
+    "priceChanged": "Cena sa zmenila",
+    "drop": "zníženie o {pct}",
+    "increase": "zvýšenie o {pct}",
+    "loadError": "Nepodarilo sa načítať cenové upozornenia. Skúste to znova.",
+    "emptyTitle": "Zatiaľ žiadne cenové upozornenia",
+    "emptyText": "Upozorníme vás tu, keď sa zmenia ceny vašich obľúbených ponúk.",
+    "goToFavorites": "Prejsť na obľúbené"
   }
 }

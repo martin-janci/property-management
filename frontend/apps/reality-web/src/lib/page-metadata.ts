@@ -80,6 +80,7 @@ function pagePathForKey(key: string): string {
     resetPassword: '/auth/reset-password',
     login: '/auth/login',
     register: '/auth/register',
+    priceAlerts: '/favorites/alerts',
   };
   return overrides[key] ?? `/${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
 }
@@ -91,6 +92,7 @@ const PRIVATE_KEYS = new Set([
   'forgotPassword',
   'resetPassword',
   'favorites',
+  'priceAlerts',
   'inquiries',
   'profile',
 ]);
