@@ -11,7 +11,7 @@ use crate::models::report_schedule::{
     ReportScheduleRow,
 };
 use crate::DbPool;
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use common::errors::AppError;
 use uuid::Uuid;
 
@@ -532,6 +532,16 @@ impl ReportScheduleRepository {
     /// added by migration `00166_report_schedules_add_cron_expression.sql`
     /// (NOT the legacy `time` HH:MM column).
     ///
+    /// # Recomputing `next_run_at`
+    ///
+    /// When the cron expression changes, the caller recomputes the next fire
+    /// time from the *new* expression and passes it as `next_run_at`; the UPDATE
+    /// stores it so the due-work query (`WHERE next_run_at <= NOW()`) fires at
+    /// the new cadence instead of the stale one carried over from the previous
+    /// expression (issue #2242 — the recompute was previously missing, leaving a
+    /// schedule firing at its old time after an edit). A `None` here leaves the
+    /// column unchanged (used when only recipients / enabled change).
+    ///
     /// # Cross-tenant safety (closes #624)
     ///
     /// The WHERE clause includes `AND organization_id = $caller_org_id` so a
@@ -546,6 +556,7 @@ impl ReportScheduleRepository {
         cron_expression: Option<String>,
         recipients: Option<Vec<String>>,
         enabled: Option<bool>,
+        next_run_at: Option<DateTime<Utc>>,
     ) -> Result<ReportSchedule, AppError> {
         // Build the status string when `enabled` is being changed.
         let new_status: Option<String> = enabled.map(|is_active| {
@@ -567,6 +578,7 @@ impl ReportScheduleRepository {
                  recipients      = COALESCE($4, recipients), \
                  is_active       = COALESCE($5, is_active), \
                  status          = COALESCE($6, status), \
+                 next_run_at     = COALESCE($7, next_run_at), \
                  updated_at      = NOW() \
              WHERE id = $1 AND organization_id = $2 \
              RETURNING ",
@@ -578,6 +590,7 @@ impl ReportScheduleRepository {
         .bind(recipients_json.as_ref())
         .bind(enabled)
         .bind(new_status.as_deref())
+        .bind(next_run_at)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| {
