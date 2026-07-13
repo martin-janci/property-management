@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-07-13T12:10:19Z",
+  "generated_at": "2026-07-13T12:14:00Z",
   "since": "2026-07-13T02:11:42Z",
   "window_hours": 10,
-  "trigger_text": "",
+  "trigger_text": "buffer-low: claimable=0/72 — refill planner",
   "summary": {
     "merged_prs": 2,
     "open_prs_touched": 0,
-    "new_or_updated_issues": 0,
-    "commits_on_dev": 10,
+    "new_or_updated_issues": 1,
+    "commits_on_dev": 11,
     "app_code_commits": 2,
     "churn_hotspots_new": 0,
     "churn_hotspots_re_emitted": 1
@@ -25,27 +25,145 @@
         "runs_seen 3→4; cumulative re-emit per routine dedup rule (score_delta not re-applied)",
         "The touch itself IS the maintainability fix teed up by the previous churn signal (dispatcher task refactor-churn-hotspots-api-server-auth-2026-07-12 closed as done in commit 3bcef30). No fresh chaos — the cluster was consciously refactored, not accreting."
       ]
+    },
+    {
+      "id": "code-review-api-handlers-portal-webhook-inquiry-lead-loss",
+      "type": "code-review-finding",
+      "source": "Issue #2275, dispatcher Tier-1d ppt-dev-review api-handlers 2026-07-13 12:10 UTC",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs:697-721 — record_webhook_event error is swallowed with `let _ = ...map_err(...)`; handler returns 200/success:true at line ~737",
+        "Portals treat 2xx as delivered and do NOT retry, so a lead payload (name/email/phone/message) is permanently lost on DB failure — evidence only in the log",
+        "Signal originally emitted by ppt-dev-review's api-handlers pass but could not persist to backlog.json (202KB > MCP inline-push ceiling); dispatcher filed as GH #2275 to enter the pipeline via issue-ingest",
+        "Same swallow-then-ack pattern noted for view event (~628) + generic receiver (~547), but those are analytics-counter loss (lower impact) not business-data loss"
+      ],
+      "expert": "rust"
     }
   ],
   "auto_fix_actions": [],
   "auto_fix_skipped_reason": "no candidate — sole signal is a cumulative-type re-emit (repeated-churn) which is analytical, not actionable per the Phase 5 allowlist",
   "goal_checks": [
-    { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'", "observed": "PASS", "expected": "PASS" },
-    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD (last_pr_seen 2271→2274, last_commit_sha 1691c9d→3bcef30, last_run_iso, stats.runs 44→45, hotspot_history[auth.rs].runs_seen 3→4)", "observed": "true", "expected": "true" },
-    { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "sole signal type is 'repeated-churn' (cumulative allowlist); score_delta=0 on re-emit", "observed": "true", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "no items with score>8; zero open items on entry so decay vacuous", "observed": "true", "expected": "true" },
-    { "goal": "G6",  "passed": true, "command": "no new plans this run — vacuous adversarial-pass check", "observed": "0 new plans", "expected": "0-2 new plans" },
-    { "goal": "G7",  "passed": true, "command": "count of new files under plans/ (excluding _archive) <=2", "observed": "0", "expected": "<=2" },
-    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
-    { "goal": "G9",  "passed": true, "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)", "observed": "0 hits", "expected": "0 hits" },
-    { "goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical after timestamp bump", "expected": "byte-identical" },
-    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phases failed, all advanced cursors correct", "observed": "no phases failed", "expected": "consistent" },
-    { "goal": "G12", "passed": true, "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)", "observed": "vacuous", "expected": "vacuous" },
-    { "goal": "G13", "passed": true, "command": "archive tracked-file count new >= old (unchanged this run)", "observed": "6 >= 6", "expected": "new >= old" },
-    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical after timestamp bump", "expected": "byte-identical" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty and no auto_fix_history entries added this run", "observed": "0 actions", "expected": "<=3, per-type <=1" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — gate is a no-op", "observed": "skipped", "expected": "no-op when skipped" },
-    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "0 hits", "expected": "0 hits" }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-13.md && head -1 == '# 2026-07-13'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (last_pr_seen 2271→2274, last_issue_seen 2272→2275, last_commit_sha 1691c9d→c413875, last_run_iso, stats.runs 44→45, stats.vectors_created 183→184, hotspot_history[auth.rs].runs_seen 3→4)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id from this run's signals[] was in prev seen_signals with score_delta>0 and non-cumulative type (repeated-churn re-emit has score_delta=0; new code-review-finding signal is brand-new)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no items with score>8; zero open items on entry so decay vacuous",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous adversarial-pass check",
+      "observed": "0 new plans",
+      "expected": "0-2 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count of new files under plans/ (excluding _archive) <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames in staged .research/ diff (excl 4 baseline docs)",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md <(regen from backlog.json)",
+      "observed": "byte-identical after timestamp bump",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — no phases failed, all advanced cursors correct",
+      "observed": "no phases failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan promoted N-1 was silently deleted (nothing promoted in either N-1 or N)",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive tracked-file count new >= old (unchanged this run)",
+      "observed": "6 >= 6",
+      "expected": "new >= old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)",
+      "observed": "byte-identical after timestamp bump",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty and no auto_fix_history entries added this run",
+      "observed": "0 actions",
+      "expected": "<=3, per-type <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is a no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
   ]
 }

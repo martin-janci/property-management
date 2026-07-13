@@ -4390,6 +4390,30 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "bug-portal-webhook-inquiry-lead-loss",
+      "title": "Inbound portal inquiry webhook silently drops leads on DB failure (returns 200)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2275",
+        "Tier-1d dev-review api-handlers 2026-07-13"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs:697-721 — record_webhook_event error is swallowed with `let _ = ...map_err(|e| tracing::error!(...))`; the handler still returns 200/success:true at line ~737",
+        "Portals treat 2xx as delivered and do NOT retry, so an inquiry payload (sender name/email/phone/message) is permanently lost on any DB failure — evidence only in the log line",
+        "Signal filed as GH Issue #2275 by the routine's Tier-1d generator (ppt-dev-review, api-handlers segment) after backlog.json exceeded the MCP inline-push ceiling (~202KB) blocked the direct backlog insert",
+        "Same swallow-then-ack pattern noted for the view event (~628) and the generic receiver (~547) but lower impact (analytics counters, not business data)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs"
+      ],
+      "created_at": "2026-07-13",
+      "updated_at": "2026-07-13",
+      "plan": null
     }
   ]
 }
