@@ -1,4 +1,25 @@
 {
   "version": 1,
-  "items": []
+  "items": [
+    {
+      "id": "gh-issue-2275",
+      "action": "Inbound portal inquiry webhook silently drops leads on DB failure (returns 200) (Closes #2275)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-13T14:04:34Z (#2275)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T14:04:34Z",
+      "issue_ref": {
+        "number": 2275,
+        "url": "https://github.com/martin-janci/property-management/issues/2275",
+        "labels": [
+          "backend",
+          "follow-up"
+        ]
+      }
+    }
+  ]
 }
