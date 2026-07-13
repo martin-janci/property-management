@@ -16,6 +16,8 @@
     "formPlaceholderTitle": "Senior Real Estate Agent",
     "inviteError": "Failed to send the invitation. Please try again.",
     "inviteRealtor": "Invite Realtor",
+    "loadErrorMessage": "Something went wrong while loading your agency dashboard. Please try again.",
+    "loadErrorTitle": "Couldn't load your agency",
     "manageRealtors": "Manage Realtors",
     "performanceOverview": "Performance Overview",
     "period1y": "1 Year",
@@ -23,6 +25,8 @@
     "period7d": "7 Days",
     "period90d": "90 Days",
     "quickActions": "Quick Actions",
+    "retry": "Retry",
+    "sectionLoadError": "Couldn't load this section.",
     "topRealtors": "Top Realtors",
     "viewAll": "View All"
   },

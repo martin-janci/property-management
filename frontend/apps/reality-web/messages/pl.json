@@ -16,6 +16,8 @@
     "formPlaceholderTitle": "Starszy agent nieruchomości",
     "inviteError": "Błąd podczas wysyłania zaproszenia. Spróbuj ponownie.",
     "inviteRealtor": "Zaproś agenta",
+    "loadErrorMessage": "Podczas ładowania panelu agencji wystąpił błąd. Spróbuj ponownie.",
+    "loadErrorTitle": "Nie udało się załadować Twojej agencji",
     "manageRealtors": "Zarządzaj agentami",
     "performanceOverview": "Przegląd wydajności",
     "period1y": "1 rok",
@@ -23,6 +25,8 @@
     "period7d": "7 dni",
     "period90d": "90 dni",
     "quickActions": "Szybkie akcje",
+    "retry": "Spróbuj ponownie",
+    "sectionLoadError": "Nie udało się załadować tej sekcji.",
     "topRealtors": "Najlepsi agenci",
     "viewAll": "Zobacz wszystkie"
   },

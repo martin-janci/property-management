@@ -16,6 +16,8 @@
     "formPlaceholderTitle": "Senior ingatlanügynök",
     "inviteError": "Hiba a meghívó küldésekor. Kérjük, próbálja újra.",
     "inviteRealtor": "Ügynök meghívása",
+    "loadErrorMessage": "Hiba történt az ügynökségi irányítópult betöltésekor. Kérjük, próbálja újra.",
+    "loadErrorTitle": "Nem sikerült betölteni az ügynökségét",
     "manageRealtors": "Ügynökök kezelése",
     "performanceOverview": "Teljesítmény áttekintés",
     "period1y": "1 év",
@@ -23,6 +25,8 @@
     "period7d": "7 nap",
     "period90d": "90 nap",
     "quickActions": "Gyors műveletek",
+    "retry": "Újrapróbálkozás",
+    "sectionLoadError": "Ezt a szakaszt nem sikerült betölteni.",
     "topRealtors": "Legjobb ügynökök",
     "viewAll": "Összes megtekintése"
   },
