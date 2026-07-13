@@ -49,6 +49,11 @@ const IntegrationsPage = lazy(() =>
   import('../../features/settings').then((m) => ({ default: m.IntegrationsPage }))
 );
 
+// Portal Webhooks status page (Gap 83-3 — Real Estate Portal Webhooks) — lazy-loaded.
+const PortalWebhooksPage = lazy(() =>
+  import('../../features/settings').then((m) => ({ default: m.PortalWebhooksPage }))
+);
+
 export function Home() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
@@ -198,6 +203,15 @@ export function settingsRoutes() {
         element={
           <ProtectedRoute>
             <IntegrationsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Portal webhook delivery status — Real Estate Portal Webhooks (Gap 83-3) */}
+      <Route
+        path="/settings/portal-webhooks"
+        element={
+          <ProtectedRoute>
+            <PortalWebhooksPage />
           </ProtectedRoute>
         }
       />
