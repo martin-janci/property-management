@@ -17,6 +17,27 @@
         "score": 2,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "gh-issue-2272",
+      "action": "Follow-up: #2239 RAG provenance regression guard is inert in CI (added inside an #[ignore]d test) (PR #2265) (Closes #2272)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-13T02:04:30Z (#2272)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T02:04:30Z",
+      "issue_ref": {
+        "number": 2272,
+        "url": "https://github.com/martin-janci/property-management/issues/2272",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-13T02:08:45Z"
     }
   ]
 }
