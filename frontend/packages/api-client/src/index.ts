@@ -61,6 +61,7 @@ export {
   exportReport as exportAnalyticsReport,
   type ReportType as AnalyticsReportType,
 } from './reports';
+export * from './syndication';
 export * from './templates';
 export * from './voting';
 export * from './workflow-automation';
