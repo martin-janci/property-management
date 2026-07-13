@@ -26,7 +26,7 @@ diagrams: []
 useCases:
   - UC-27
 epics:
-  - Epic-10B-1
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---
@@ -76,6 +76,7 @@ pattern with the shared MFA-aware `authenticatedFetchJson`.
   (`api-server` data) so this screen-map's `endpoints` validate.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-1 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-07-07 — agent: gap-10b-1 — built admin-web `OrganizationsPage`

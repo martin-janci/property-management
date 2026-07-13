@@ -35,7 +35,7 @@ diagrams: []
 useCases:
   - UC-42.1
 epics:
-  - Epic-10B-6
+  - Epic-10B
 designSources: []
 owner: pm-frontend
 ---
@@ -95,6 +95,7 @@ The shared web client lives in `@ppt/api-client` `onboarding/` (api + TanStack Q
   into a route + container (and register the mobile help/feedback screens in the navigator).
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-6 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-06-28 — agent: initial screen doc added for the end-user onboarding tour (Epic 10B, Story 10B.6 / UC-42.1) to resolve the orphan-epic / no-screen-map coverage gap. Endpoints, hooks, and components confirmed present on dev; route wiring confirmed absent (no `features/onboarding` reference in `ppt-web/src/routes/`). Backend routes at `backend/servers/api-server/src/routes/onboarding.rs`.

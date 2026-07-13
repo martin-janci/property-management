@@ -18,7 +18,7 @@ sharedComponents: []
 diagrams: []
 useCases: []
 epics:
-  - Epic-11-7
+  - Epic-11
 designSources: []
 owner: pm-frontend
 ---
@@ -39,5 +39,6 @@ to a browser download.
   via TanStack Query (one query per active tab) against the Story 11.7 endpoints.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-11-7 → Epic-11 (strip story suffix); /screens validate clean.
 - 2026-06-22 — FrontendEngineer: created screen + screen-map for Story 11.7 FE
   follow-up (BIT-222). Backend endpoints live on dev (PRs #1717 + #1723).

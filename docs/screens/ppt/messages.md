@@ -17,7 +17,7 @@ diagrams: []
 useCases:
   - UC-07
 epics:
-  - Epic-6-5
+  - Epic-6
 designSources: []
 owner: pm-frontend
 ---
@@ -37,6 +37,7 @@ the UI's page/pageSize params to the API's limit/offset params.
 - 2026-06-25 — group conversations (BIT-244): thread list renders the full participant set, not one arbitrary "other". `ThreadWithPreview.otherParticipant` → `participants: ParticipantInfo[]` (backend PR #1848); list preview attributed to the actual last-message sender.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadToUi` maps every other participant from `participants[]`; preview sender resolved from the participant list. No route/status change.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-05-24 — agent: promoted apiStatus stub→integrated; wired MessagesPageRoute to useThreads/useUnreadCount hooks.

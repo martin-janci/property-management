@@ -26,7 +26,7 @@ diagrams: []
 useCases:
   - UC-14
 epics:
-  - Epic-10A-2
+  - Epic-10A
 designSources: []
 owner: pm-frontend
 ---
@@ -66,6 +66,7 @@ admin UI to manage those clients.
   typecheck + biome + vite build all green.
 
 ## Agent Log
+- 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10A-2 → Epic-10A (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->
 - 2026-05-24 — agent: gap-10a-2-oauth-admin-ui — initial implementation; full
