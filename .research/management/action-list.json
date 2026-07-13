@@ -1,22 +1,4 @@
 {
   "version": 1,
-  "items": [
-    {
-      "id": "refactor-churn-hotspots-api-server-auth-2026-07-12",
-      "action": "Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-13T00:04:15Z (score=2 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T00:04:15Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "refactor"
-      }
-    }
-  ]
+  "items": []
 }
