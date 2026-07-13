@@ -1030,42 +1030,107 @@ pub async fn booking_push_notification(
 
 // ==================== Inbound: Portal Webhook ====================
 
-/// Verify the `X-Webhook-Signature` HMAC-SHA256 over a portal webhook's raw
-/// body.
+/// Maximum accepted skew (seconds) between an inbound portal webhook's signed
+/// timestamp and the receiver's clock. Mirrors the Stripe receiver's 5-minute
+/// replay-protection window ([`crate::services::stripe::DEFAULT_SIGNATURE_TOLERANCE_SECS`]).
+const PORTAL_WEBHOOK_TOLERANCE_SECS: i64 = 300;
+
+/// Why an inbound portal webhook was rejected. Every variant fails closed; the
+/// handler maps all of them to `401 INVALID_SIGNATURE` (a single opaque status
+/// so the reason is not leaked to the caller) while logging the discriminant.
+#[derive(Debug, PartialEq, Eq)]
+enum PortalWebhookError {
+    /// `X-Webhook-Timestamp` was absent or not an integer unix-seconds value.
+    MalformedTimestamp,
+    /// The signed timestamp is outside the tolerance window — a stale capture
+    /// or an absurd future-dated delivery (replay defense, gap 83-3).
+    StaleTimestamp,
+    /// `X-Webhook-Signature` was absent or did not match the HMAC over the
+    /// `"{timestamp}.{body}"` signed payload.
+    BadSignature,
+}
+
+/// Verify an inbound portal webhook's authenticity **and** freshness.
 ///
-/// The header value is the hex-encoded HMAC of the raw body under the shared
-/// `PORTAL_WEBHOOK_SECRET`, optionally `sha256=`-prefixed (matching the format
-/// this service emits for its own outbound webhook test deliveries — see
-/// [`test_webhook`]). A missing header, an empty secret, or a mismatching
-/// digest all yield `false`. The comparison is constant-time (delegated to
-/// [`integrations::verify_webhook_signature`]) so it cannot leak the expected
-/// signature through timing.
-fn verify_portal_webhook_signature(
+/// *Authenticity*: `X-Webhook-Signature` is the hex-encoded HMAC-SHA256
+/// (optionally `sha256=`-prefixed, matching the format this service emits for
+/// its own outbound test deliveries — see [`test_webhook`]) over the signed
+/// payload `"{timestamp}.{body}"` keyed by the shared `PORTAL_WEBHOOK_SECRET`.
+/// The timestamp is bound *into* the signed material rather than trusted as a
+/// bare header — this is what makes the freshness check meaningful: an attacker
+/// replaying a captured delivery cannot swap in a fresh timestamp without
+/// invalidating the signature.
+///
+/// *Freshness* (gap 83-3): the `X-Webhook-Timestamp` header (unix seconds) must
+/// be within `tolerance_secs` of `now_unix` in either direction, rejecting both
+/// stale replays and future-dated deliveries. HMAC alone proves authenticity
+/// but not freshness.
+///
+/// `now_unix`/`tolerance_secs` are injected so the window is unit-testable
+/// without wall-clock dependence, matching
+/// [`crate::services::stripe::verify_signature`]. The HMAC comparison is
+/// constant-time (delegated to [`integrations::verify_webhook_signature`]) so
+/// it cannot leak the expected signature through timing.
+fn verify_portal_webhook(
     secret: &str,
     body: &str,
+    timestamp_header: Option<&str>,
     signature_header: Option<&str>,
-) -> bool {
+    now_unix: i64,
+    tolerance_secs: i64,
+) -> Result<(), PortalWebhookError> {
+    // Defense-in-depth: `integrations::verify_webhook_signature` computes a valid
+    // HMAC even for an empty key, so an unset secret must be rejected here too and
+    // not only in the handler's up-front `500 CONFIG_ERROR` guard — otherwise a
+    // caller signing with the empty key would verify.
     if secret.is_empty() {
-        return false;
+        return Err(PortalWebhookError::BadSignature);
     }
-    let Some(signature) = signature_header else {
-        return false;
-    };
-    let signature = signature.trim_start_matches("sha256=");
-    integrations::verify_webhook_signature(secret, body, signature)
+
+    let timestamp: i64 = timestamp_header
+        .and_then(|t| t.trim().parse::<i64>().ok())
+        .ok_or(PortalWebhookError::MalformedTimestamp)?;
+
+    // Replay defense: reject deliveries whose signed timestamp is too far from
+    // now — a stale capture being replayed, or an absurd future-dated delivery.
+    if (now_unix - timestamp).abs() > tolerance_secs {
+        return Err(PortalWebhookError::StaleTimestamp);
+    }
+
+    let signature = signature_header
+        .map(|s| s.trim_start_matches("sha256="))
+        .ok_or(PortalWebhookError::BadSignature)?;
+
+    // signed_payload = "{timestamp}.{raw_body}" — same construction as the
+    // Stripe receiver, so the timestamp cannot be tampered with independently.
+    let signed_payload = format!("{timestamp}.{body}");
+    if integrations::verify_webhook_signature(secret, &signed_payload, signature) {
+        Ok(())
+    } else {
+        Err(PortalWebhookError::BadSignature)
+    }
 }
 
 /// Handle incoming portal webhook (public endpoint, no session auth).
 ///
 /// The endpoint has no request principal — external portals POST here using the
 /// URL handed to them at connection time. Authenticity is instead established by
-/// verifying the `X-Webhook-Signature` HMAC-SHA256 over the raw body against the
-/// shared `PORTAL_WEBHOOK_SECRET` **before** the payload is parsed or acted on,
-/// exactly like the sibling Airbnb ([`handle_airbnb_webhook`]) and Stripe
-/// ([`handle_payment_webhook`]) receivers. The receiver fails closed: an unset
-/// secret is a `500 CONFIG_ERROR` and an invalid/absent signature is a
-/// `401 INVALID_SIGNATURE` — an unverified, attacker-forged payload is never
-/// processed.
+/// verifying the `X-Webhook-Signature` HMAC-SHA256 over the signed payload
+/// `"{X-Webhook-Timestamp}.{raw_body}"` against the shared `PORTAL_WEBHOOK_SECRET`
+/// **before** the payload is parsed or acted on, exactly like the sibling Airbnb
+/// ([`handle_airbnb_webhook`]) and Stripe ([`handle_payment_webhook`]) receivers.
+///
+/// Replay/freshness (gap 83-3): HMAC alone proves authenticity but not freshness
+/// — a captured valid delivery could otherwise be replayed indefinitely. The
+/// signed `X-Webhook-Timestamp` is checked against a
+/// [`PORTAL_WEBHOOK_TOLERANCE_SECS`] window (rejecting stale/future deliveries),
+/// and because the timestamp is folded into the HMAC input it cannot be forged
+/// independently of the signature.
+///
+/// The receiver fails closed: an unset secret is a `500 CONFIG_ERROR`, and a
+/// missing/malformed timestamp, a stale/future timestamp, or an invalid/absent
+/// signature are all `401 INVALID_SIGNATURE` — an unverified or replayed payload
+/// is never processed.
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/webhooks/portal/{connection_id}",
@@ -1104,21 +1169,37 @@ pub async fn handle_portal_webhook(
         ));
     }
 
-    // Verify the HMAC signature over the raw body BEFORE parsing or acting.
+    // Verify the HMAC signature AND timestamp freshness over the raw body BEFORE
+    // parsing or acting. HMAC proves authenticity; the signed `X-Webhook-Timestamp`
+    // closes the replay window (gap 83-3) — a captured delivery can no longer be
+    // replayed once its timestamp falls outside the tolerance window, and the
+    // timestamp cannot be refreshed without invalidating the signature.
+    let timestamp = headers
+        .get("X-Webhook-Timestamp")
+        .and_then(|v| v.to_str().ok());
     let signature = headers
         .get("X-Webhook-Signature")
         .and_then(|v| v.to_str().ok());
 
-    if !verify_portal_webhook_signature(secret, &body, signature) {
+    let now_unix = chrono::Utc::now().timestamp();
+    if let Err(reason) = verify_portal_webhook(
+        secret,
+        &body,
+        timestamp,
+        signature,
+        now_unix,
+        PORTAL_WEBHOOK_TOLERANCE_SECS,
+    ) {
         tracing::warn!(
             connection_id = %path.connection_id,
-            "Portal webhook signature verification failed"
+            ?reason,
+            "Portal webhook rejected (signature/freshness)"
         );
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse::new(
                 "INVALID_SIGNATURE",
-                "Webhook signature verification failed",
+                "Webhook signature or freshness verification failed",
             )),
         ));
     }
@@ -1131,13 +1212,6 @@ pub async fn handle_portal_webhook(
         )
     })?;
 
-    // FOLLOW-UP (issue #2196, replay-protection): HMAC verification above proves
-    // authenticity but not freshness — a captured valid request can be replayed.
-    // Harmless while this handler only parses and returns 200 (no state mutation).
-    // Before wiring this receiver to act on the payload, add a signed-timestamp
-    // tolerance window (e.g. an `X-Webhook-Timestamp` folded into the HMAC input
-    // with a max-skew check) and/or idempotency-key dedup, consistent with the
-    // Airbnb/Stripe receivers.
     Ok(StatusCode::OK)
 }
 
@@ -1831,16 +1905,21 @@ mod airbnb_webhook_tests {
     }
 }
 
-// ==================== Portal webhook signature verification tests ====================
+// ==================== Portal webhook auth + freshness tests ====================
 //
-// Regression cover for the latent auth bypass: the connection-scoped portal
-// webhook receiver read `X-Webhook-Signature` but never verified it, so any
-// unauthenticated caller was accepted (200). These tests pin the fixed
-// contract of `verify_portal_webhook_signature` — the guard the handler now
-// runs before parsing/acting on the payload.
+// Regression cover for two properties of the connection-scoped portal webhook
+// receiver:
+//   1. authenticity — the `X-Webhook-Signature` HMAC must be verified (the
+//      latent auth-bypass where any unsigned caller was accepted with 200);
+//   2. freshness (gap 83-3) — a signed `X-Webhook-Timestamp` must fall inside a
+//      tolerance window so a captured valid delivery cannot be replayed, and the
+//      timestamp is folded into the HMAC so it cannot be refreshed independently.
+//
+// These pin the contract of `verify_portal_webhook`, the guard the handler runs
+// before parsing/acting on the payload.
 #[cfg(test)]
 mod portal_webhook_signature_tests {
-    use super::verify_portal_webhook_signature;
+    use super::{verify_portal_webhook, PortalWebhookError, PORTAL_WEBHOOK_TOLERANCE_SECS};
     use hmac::{Hmac, KeyInit, Mac};
     use sha2::Sha256;
 
@@ -1848,63 +1927,244 @@ mod portal_webhook_signature_tests {
 
     const SECRET: &str = "portal_webhook_secret";
     const BODY: &str = r#"{"event":"listing.viewed","external_id":"abc123"}"#;
+    // Fixed reference "now" so the window is deterministic and wall-clock-free.
+    const NOW: i64 = 1_700_000_000;
 
-    fn sign(secret: &str, body: &str) -> String {
+    /// Sign `"{timestamp}.{body}"` — the same signed-payload construction the
+    /// handler verifies (mirrors the Stripe receiver).
+    fn sign_at(secret: &str, ts: i64, body: &str) -> String {
         let mut mac =
             HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
-        mac.update(body.as_bytes());
+        mac.update(format!("{ts}.{body}").as_bytes());
         hex::encode(mac.finalize().into_bytes())
     }
 
+    // ---- authenticity ----
+
     #[test]
     fn accepts_valid_hex_signature() {
-        let sig = sign(SECRET, BODY);
-        assert!(verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+        let sig = sign_at(SECRET, NOW, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Ok(())
+        );
     }
 
     #[test]
     fn accepts_valid_signature_with_sha256_prefix() {
-        let sig = format!("sha256={}", sign(SECRET, BODY));
-        assert!(verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+        let sig = format!("sha256={}", sign_at(SECRET, NOW, BODY));
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Ok(())
+        );
     }
 
     #[test]
     fn rejects_missing_signature_header() {
-        // The pre-fix bug: no signature header was still accepted. Now rejected.
-        assert!(!verify_portal_webhook_signature(SECRET, BODY, None));
+        // The original auth-bypass bug: no signature header was still accepted.
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()),
+                None,
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
     }
 
     #[test]
     fn rejects_wrong_signature() {
-        assert!(!verify_portal_webhook_signature(
-            SECRET,
-            BODY,
-            Some("deadbeef")
-        ));
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()),
+                Some("deadbeef"),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
     }
 
     #[test]
     fn rejects_signature_for_tampered_body() {
-        let sig = sign(SECRET, BODY);
+        let sig = sign_at(SECRET, NOW, BODY);
         let tampered = r#"{"event":"listing.viewed","external_id":"evil999"}"#;
-        assert!(!verify_portal_webhook_signature(
-            SECRET,
-            tampered,
-            Some(&sig)
-        ));
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                tampered,
+                Some(&NOW.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
     }
 
     #[test]
     fn rejects_signature_under_wrong_secret() {
-        let sig = sign("attacker_secret", BODY);
-        assert!(!verify_portal_webhook_signature(SECRET, BODY, Some(&sig)));
+        let sig = sign_at("attacker_secret", NOW, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
     }
 
     #[test]
     fn rejects_when_secret_empty() {
         // Defense-in-depth: even a syntactically valid signature cannot pass
         // when the server secret is unset (the handler also fails closed).
-        let sig = sign("", BODY);
-        assert!(!verify_portal_webhook_signature("", BODY, Some(&sig)));
+        let sig = sign_at("", NOW, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                "",
+                BODY,
+                Some(&NOW.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
+    }
+
+    // ---- freshness / replay protection (gap 83-3) ----
+
+    #[test]
+    fn rejects_stale_timestamp() {
+        // A correctly-signed delivery captured and replayed once its signed
+        // timestamp is older than the tolerance window must be rejected — HMAC
+        // is still valid but the request is no longer fresh.
+        let stale = NOW - PORTAL_WEBHOOK_TOLERANCE_SECS - 1;
+        let sig = sign_at(SECRET, stale, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&stale.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::StaleTimestamp)
+        );
+    }
+
+    #[test]
+    fn accepts_fresh_timestamp_within_window() {
+        // A delivery whose signed timestamp is inside the window is accepted.
+        let fresh = NOW - (PORTAL_WEBHOOK_TOLERANCE_SECS - 1);
+        let sig = sign_at(SECRET, fresh, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&fresh.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn rejects_future_timestamp_beyond_tolerance() {
+        // An absurd future-dated delivery is rejected in the same way.
+        let future = NOW + PORTAL_WEBHOOK_TOLERANCE_SECS + 1;
+        let sig = sign_at(SECRET, future, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&future.to_string()),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::StaleTimestamp)
+        );
+    }
+
+    #[test]
+    fn rejects_missing_timestamp_header() {
+        // Without a timestamp there is no freshness to check — fail closed so an
+        // attacker cannot strip the header to defeat replay protection.
+        let sig = sign_at(SECRET, NOW, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                None,
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::MalformedTimestamp)
+        );
+    }
+
+    #[test]
+    fn rejects_non_numeric_timestamp() {
+        let sig = sign_at(SECRET, NOW, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some("not-a-number"),
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::MalformedTimestamp)
+        );
+    }
+
+    #[test]
+    fn rejects_timestamp_swap_on_captured_signature() {
+        // The core replay defense: an attacker captures a valid (timestamp, sig)
+        // pair, then presents a *fresh* timestamp header to beat the window while
+        // reusing the old signature. Because the timestamp is folded into the
+        // HMAC, the signature no longer matches and the swap is rejected.
+        let old_ts = NOW - 10_000; // well outside the window
+        let sig = sign_at(SECRET, old_ts, BODY);
+        assert_eq!(
+            verify_portal_webhook(
+                SECRET,
+                BODY,
+                Some(&NOW.to_string()), // fresh header, but not what was signed
+                Some(&sig),
+                NOW,
+                PORTAL_WEBHOOK_TOLERANCE_SECS,
+            ),
+            Err(PortalWebhookError::BadSignature)
+        );
     }
 }
