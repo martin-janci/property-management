@@ -128,6 +128,94 @@ class FavoritesRepository(
         }
     }
 
+    // --- Price-tracking alerts (gap-84-3) ---
+
+    /**
+     * Fetch the authenticated user's favorite price-tracking alerts (newest first).
+     *
+     * Endpoint: `GET /api/v1/favorites/alerts?limit&offset`. The server clamps `limit` to `[1,
+     * 200]` and floors `offset` at 0, and returns the page plus the total `unread_count`
+     * (independent of the page window). Requires auth — unauthenticated callers get a 401 which is
+     * surfaced as a [FavoritesException] so the UI can prompt sign-in.
+     */
+    suspend fun getFavoriteAlerts(
+        limit: Int = 100,
+        offset: Int = 0,
+    ): Result<FavoriteAlertsResponse> {
+        return try {
+            val response =
+                client.get("$baseUrl/api/v1/favorites/alerts") {
+                    configureRequest()
+                    parameter("limit", limit)
+                    parameter("offset", offset)
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else if (response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(FavoritesException("Please sign in to view price alerts"))
+            } else {
+                Result.failure(
+                    FavoritesException("Failed to load price alerts: ${response.status}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mark a single favorite alert as read.
+     *
+     * Endpoint: `POST /api/v1/favorites/alerts/{alert_id}/read`. Idempotent on the server — an
+     * already-read alert still returns 204 — so a 2xx is the only success signal. A 404 means the
+     * alert doesn't exist or isn't owned by the caller.
+     */
+    suspend fun markFavoriteAlertRead(alertId: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/favorites/alerts/${alertId.asPathSegment()}/read") {
+                    configureRequest()
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else if (response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(FavoritesException("Please sign in to manage price alerts"))
+            } else if (response.status == HttpStatusCode.NotFound) {
+                Result.failure(FavoritesException("Alert not found"))
+            } else {
+                Result.failure(FavoritesException("Failed to mark alert read: ${response.status}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mark all of the authenticated user's pending favorite alerts as read.
+     *
+     * Endpoint: `POST /api/v1/favorites/alerts/read-all`. Returns the count that were flipped.
+     */
+    suspend fun markAllFavoriteAlertsRead(): Result<MarkAllFavoriteAlertsReadResponse> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/favorites/alerts/read-all") { configureRequest() }
+
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else if (response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(FavoritesException("Please sign in to manage price alerts"))
+            } else {
+                Result.failure(
+                    FavoritesException("Failed to mark all alerts read: ${response.status}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // --- Saved Searches ---
 
     /** Get user's saved searches. */

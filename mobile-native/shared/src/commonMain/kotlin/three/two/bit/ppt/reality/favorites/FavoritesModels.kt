@@ -85,6 +85,80 @@ data class AddFavoriteResponse(
     @SerialName("created_at") val createdAt: String,
 )
 
+// ============================================
+// Price-tracking alerts (favorites) — gap-84-3
+// ============================================
+
+/**
+ * A single favorite alert as returned by `GET /api/v1/favorites/alerts`.
+ *
+ * Mirrors the reality-server `FavoriteAlert` DTO (see
+ * `backend/crates/db/src/models/reality_portal.rs`). These are the in-app delivery view of the
+ * price-tracking pipeline: the `FavoriteAlertWorker` enqueues a row whenever a favorited listing's
+ * price (or status) changes, and this feed is how the mobile Price-Tracking surface retrieves them.
+ *
+ * Wire notes:
+ * - `alert_type` is `"price_change"` or `"status_change"`. Use [isPriceChange].
+ * - Monetary fields (`old_price` / `new_price`) are whole-currency numbers on the wire — mapped to
+ *   `Long?` to match the rest of the portal models ([FavoriteEntry.currentPrice],
+ *   `ListingSummary.price`). They are `null` for status-only alerts.
+ * - `change_percentage` is a signed fractional number (negative = price drop), mapped to `Double?`
+ *   to match [FavoriteEntry.priceChangePercentage].
+ * - `status` is the delivery state: `"pending"` (unread) | `"sent"` (read) | `"failed"`. Use
+ *   [isUnread].
+ */
+@Serializable
+data class FavoriteAlert(
+    val id: String,
+    @SerialName("favorite_id") val favoriteId: String,
+    @SerialName("listing_id") val listingId: String,
+    val title: String,
+    @SerialName("alert_type") val alertType: String,
+    @SerialName("old_price") val oldPrice: Long? = null,
+    @SerialName("new_price") val newPrice: Long? = null,
+    val currency: String? = null,
+    @SerialName("change_percentage") val changePercentage: Double? = null,
+    @SerialName("previous_status") val previousStatus: String? = null,
+    @SerialName("new_status") val newStatus: String? = null,
+    val status: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("processed_at") val processedAt: String? = null,
+) {
+    /** True when this alert reports a price movement (vs a listing-status change). */
+    val isPriceChange: Boolean
+        get() = alertType == "price_change"
+
+    /** True while the alert is still pending in-app delivery (i.e. unread). */
+    val isUnread: Boolean
+        get() = status == "pending"
+
+    /** True when the price moved down (a drop) — only meaningful for price alerts. */
+    val isPriceDrop: Boolean
+        get() = isPriceChange && (changePercentage ?: 0.0) < 0.0
+}
+
+/**
+ * Response body for `GET /api/v1/favorites/alerts`.
+ *
+ * Mirrors the reality-server `FavoriteAlertsResponse`: the newest-first page of alerts plus the
+ * total unread count (independent of the page window) and the echoed `limit` / `offset`.
+ */
+@Serializable
+data class FavoriteAlertsResponse(
+    val alerts: List<FavoriteAlert> = emptyList(),
+    @SerialName("unread_count") val unreadCount: Long = 0,
+    val limit: Long = 0,
+    val offset: Long = 0,
+)
+
+/**
+ * Response body for `POST /api/v1/favorites/alerts/read-all`.
+ *
+ * Mirrors the reality-server `MarkAllFavoriteAlertsReadResponse`.
+ */
+@Serializable
+data class MarkAllFavoriteAlertsReadResponse(@SerialName("marked_read") val markedRead: Long = 0)
+
 /** Saved search. */
 @Serializable
 data class SavedSearch(
