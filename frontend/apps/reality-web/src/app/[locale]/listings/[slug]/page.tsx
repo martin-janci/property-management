@@ -12,7 +12,7 @@ import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { ListingDetailContent, ListingNotFound } from '@/components/listings';
-import { buildListingJsonLd } from './jsonLd';
+import { buildListingJsonLd, isRenderableListing } from './jsonLd';
 import { buildListingMetadata } from './metadata';
 
 function inferApiBaseFromHost(host: string): string | null {
@@ -74,7 +74,14 @@ async function getListing(slug: string, host: string): Promise<ListingDetail | n
       next: { revalidate: 60, tags },
     });
     if (!response.ok) return null;
-    return response.json();
+    // A 200 does not guarantee a well-formed body: an upstream/proxy partial
+    // response or a malformed listing is truthy but may be missing required
+    // nested fields (`address.city`, …). Rendering such a body crashes SSR
+    // with a 500. Validate the shape here — reusing the same required-field
+    // predicate as `buildListingJsonLd` — so a bad body falls back to
+    // `ListingNotFound` (404-style) instead of taking the request down.
+    const body: unknown = await response.json();
+    return isRenderableListing(body) ? body : null;
   } catch {
     return null;
   }
