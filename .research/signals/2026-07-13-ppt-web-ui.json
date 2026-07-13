@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-13",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (research backlog starved, 0 claimable). No CHURN_FILES this run, so oldest-unreviewed by review_cursor. ppt-web-ui (2026-06-11) is the oldest cursor and is NOT backlog-saturated (0 open code-review-finding items with id prefix code-review-ppt-web-ui-* in backlog.json), so it wins over the next-oldest reality-web (2026-06-14) / api-core (2026-06-15) / mobile-rn (2026-06-16). Wrote per-segment signals file (2026-07-13-ppt-web-ui.json) rather than the bare 2026-07-13.json to avoid clobbering the routine main-run file and to honor single-writer/no-collision (concurrent Tier-1d runs today already produced 2026-07-13-reality-server.json and 2026-07-13-api-core.json).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105-106,125-126 — the auth-gating component hardcodes four user-facing English strings with no react-i18next: aria-label=\"Checking authentication\" and <span>Loading...</span> in the loading branch, and <h1>Access Denied</h1> + <p>You do not have permission to access this page.</p> in the role-denied branch. The app ships sk/cs/de/en, so a non-English user who is authenticated-but-underprivileged sees an English-only Access Denied page.",
+        "This is the only fully-hardcoded auth surface in the pages/+components/ segment: the sibling AuthRequiredGate.tsx (same directory, same purpose) already renders t('errors.authenticationRequired') / t('errors.missingOrgContext') / t('auth.signIn'), and LoginPage.tsx / AuthCallbackPage.tsx are fully i18n'd. Fix: import useTranslation and wrap the four strings (reuse the existing errors.* / auth.* keys where they exist)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-offlineindicator-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx — the component never imports useTranslation and hardcodes two user-facing banner strings: line 58-60 \"You are offline. Some features may be unavailable.\" and line 89 \"Connection restored\". Both are surfaced via role=\"alert\"/role=\"status\" live regions, so screen readers announce untranslated English to sk/cs/de users.",
+        "Consistent i18n gap with the ProtectedRoute finding — every other rendered component under components/ that shows copy (Toast, ConnectionStatus, PageLoading, LanguageSwitcher, ErrorBoundary) already calls useTranslation. Fix: add useTranslation and move the two strings into the offline/* or common/* i18n namespace."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-access-denied-dead-end",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:122-129 — the role-denied branch renders a bare <div class=\"protected-route-unauthorized\"> with only an <h1>/<p> and no recovery affordance: no link back to the dashboard/home, no 'switch account' or 'request access' action, and (because ProtectedRoute wraps route element content) no app chrome/nav. A user who reaches a role-gated route via a stale bookmark or a shared deep link is dead-ended with only the browser back button.",
+        "Contrast the sibling AuthRequiredGate.tsx, which provides a <Link to=\"/login\"> recovery path in its equivalent error-page block. Completeness gap: give the Access Denied state at least one navigation affordance (e.g. <Link to=\"/\">back to dashboard</Link>) so authenticated-but-underprivileged users are not stranded."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
