@@ -423,7 +423,7 @@ async fn migrate_embeddings(
 
     let result = state
         .llm_document_repo
-        .migrate_embeddings_to_pgvector(&mut **rls.conn())
+        .migrate_embeddings_to_pgvector(rls.conn())
         .await;
     rls.release().await;
 
