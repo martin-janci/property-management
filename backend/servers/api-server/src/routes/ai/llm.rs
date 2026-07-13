@@ -60,6 +60,8 @@ pub fn llm_router() -> Router<AppState> {
         .route("/voice/commands/{device_id}", get(list_voice_commands))
         // RAG indexing / embedding-write flow (Story 84.5 / 103.5)
         .route("/rag/index", post(index_document))
+        // RAG legacy JSONB → pgvector back-fill (Story 84.5 / 103.5)
+        .route("/rag/migrate", post(migrate_embeddings))
         // Statistics
         .route("/statistics", get(get_ai_statistics))
         .route("/requests", get(list_generation_requests))
@@ -354,6 +356,93 @@ async fn index_document(
             provider: provider_name.to_string(),
         }),
     ))
+}
+
+/// Result of a pgvector back-fill migration run.
+#[derive(Debug, Serialize)]
+struct MigrateEmbeddingsResponse {
+    /// Number of legacy JSONB embeddings converted into the pgvector
+    /// `embedding_vector` column by this run.
+    migrated: i64,
+}
+
+/// Back-fill legacy JSONB embeddings into the pgvector column (Story 84.5 / 103.5).
+///
+/// Wires `LlmDocumentRepository::migrate_embeddings_to_pgvector` — previously
+/// reachable only from tests — to an operator-triggerable HTTP route. Legacy
+/// `document_embeddings` rows written before the pgvector column existed store
+/// their vector as JSONB and carry no `embedding_model` provenance. The
+/// retrieval path (`search_documents_pgvector`) keeps such provenance-less rows
+/// for backward compatibility, so until they are migrated they can mix
+/// embedding spaces in a provenance-filtered similarity search. This endpoint
+/// runs the idempotent `migrate_jsonb_to_vector()` back-fill — only rows with
+/// `embedding_vector IS NULL` and a 1536-dim JSONB array are converted — and
+/// reports how many rows moved.
+///
+/// Platform-admin only: the run needs the super-admin RLS bypass so it can
+/// convert legacy rows across every organization in one pass rather than only
+/// the caller's tenant. Non-admins get 403; when pgvector is not installed the
+/// migration function is absent and the call is a no-op returning 0.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/rag/migrate",
+    responses(
+        (status = 200, description = "Migration run complete; body reports rows migrated"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Caller is not a platform administrator", body = ErrorResponse),
+        (status = 500, description = "Migration failed", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn migrate_embeddings(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+) -> Result<(StatusCode, Json<MigrateEmbeddingsResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Global maintenance op: converting legacy rows across ALL organizations
+    // requires the super-admin RLS bypass, so gate strictly to platform/super
+    // admins. A normal org_admin's RLS-scoped connection would only see (and
+    // migrate) its own tenant's rows — and must not be allowed to trigger a
+    // cross-tenant back-fill anyway.
+    if !rls.is_super_admin() {
+        let tenant_id = rls.tenant_id();
+        let user_id = rls.user_id();
+        rls.release().await;
+        tracing::warn!(
+            organization_id = %tenant_id,
+            user_id = %user_id,
+            "Rejected non-admin attempt to trigger pgvector embedding migration"
+        );
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only platform administrators can migrate embeddings",
+            )),
+        ));
+    }
+
+    let result = state
+        .llm_document_repo
+        .migrate_embeddings_to_pgvector(&mut **rls.conn())
+        .await;
+    rls.release().await;
+
+    match result {
+        Ok(migrated) => {
+            tracing::info!(migrated, "pgvector embedding migration complete");
+            Ok((StatusCode::OK, Json(MigrateEmbeddingsResponse { migrated })))
+        }
+        Err(e) => {
+            tracing::error!("pgvector embedding migration failed: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to migrate embeddings",
+                )),
+            ))
+        }
+    }
 }
 
 // ============================================================================
