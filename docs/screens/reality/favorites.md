@@ -17,6 +17,7 @@ implementations:
     apiStatus: partial
 endpoints:
   - favorites_list
+  - favorites_remove
 relatedScreens:
   - id: reality/listings
     rel: sibling
@@ -39,6 +40,7 @@ designSources:
     frame: KmpFavoritesScreen
 useCases:
   - UC-44
+  - UC-45
 epics: []
 diagrams: []
 owner: reality-frontend
@@ -47,6 +49,24 @@ owner: reality-frontend
 ## Functionality Checklist
 
 <!-- tag with [w] / [m] / [w,m] / [-] -->
+
+### Currently shipped (reality-web baseline)
+
+<!-- Reflects the live `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx`
+     as of 2026-07-13. This is the pre-redesign baseline that ships today; the
+     redesign sections below are the target and stay unchecked until
+     `redesignStatus: applied`. -->
+
+- [x] [w] Route is auth-gated via `ProtectedRoute` (unauth users bounced to login)
+- [x] [w] Portal `Header` + `Footer` chrome; `h1` from `pages.favorites.h1` (i18n)
+- [x] [w] Load favorites via `useFavorites(page, 12)` → `favorites_list`
+- [x] [w] Responsive `ListingCard` grid (`auto-fill minmax(280px, 1fr)`)
+- [x] [w] Each card renders `isFavorite: true` with a filled heart; tap toggles off via `useRemoveFavorite` → `favorites_remove`
+- [x] [w] Loading state: 6 pulse skeleton cards
+- [x] [w] Error state: "Failed to load favorites. Please try again." (danger colour)
+- [x] [w] Empty state: heart icon + "No favorites yet" + "Browse listings" CTA → `/listings`
+- [x] [w] Server-side pagination (Previous / Next + "Page X of Y") when `totalPages > 1`
+- [ ] [w] Price tracking / price-drop alerts on favorited listings (UC-45.8, story 84.3) — NOT implemented (no price-history or alert wiring in the route)
 
 ### Header
 - [ ] [w] Portal header with brand-600 logo + nav (matches profile.html pattern)
@@ -101,11 +121,14 @@ UC-44 favorites management — the personal shortlist surface. Public anonymous 
 - Share-list copies a public token URL (UC-44.X — likely a future UC); export-PDF triggers a per-list PDF render. Both should pass the user's locale to the server for correctly-translated output.
 - Sort/type filter state should persist across visits (localStorage or user preference) — not depicted in the design but implied by the segmented controls' "selected" defaults.
 - DE strings run ~35% longer ("Favoriten teilen" vs "Zdieľať zoznam"); the actions row must wrap, never truncate.
+- **Shipped-vs-redesign split (2026-07-13):** the live reality-web route (`app/[locale]/favorites/page.tsx`, Epic 44 / story 44.5) ships the baseline captured under "Currently shipped" — grid + optimistic remove + loading/error/empty/pagination. It hits only `favorites_list` and `favorites_remove`; the header count chip, share/export, breadcrumbs, and type/sort segmented controls are redesign-only and not wired yet (`redesignStatus: in-progress`, hence `apiStatus: partial`).
+- **Price tracking (story 84.3 / UC-45.8 "Receive Price Drop Alert") is out of scope of the shipped screen** — there is no price-history capture or alert opt-in on favorited listings today. Tracked here so the screen-map stays honest; when it lands it needs a favorites-side "watch price" affordance plus the alert-delivery backend (see UC-45.8 and `docs/functional-requirements.md` "Get Price Alerts").
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-07-13 — agent: gap-84-3 reconciled the reality-web screen-map with the live route (`app/[locale]/favorites/page.tsx`). Confirmed `buildStatus: shipped` is correct; added a "Currently shipped (reality-web baseline)" checklist section (grid + optimistic remove + loading/error/empty/pagination), added `favorites_remove` to `endpoints:` (route calls `useRemoveFavorite`), added `UC-45` (price alerts). Documented that price tracking / price-drop alerts (story 84.3 / UC-45.8) are NOT implemented on the shipped screen. No code change — docs/screen-map only.
 - 2026-05-13 — agent: implemented KMP FavoritesScreen redesign per ui_kits/mobile-native/screens.jsx KmpFavoritesScreen. New layout: large-title header + share/export actions, M3 TabRow (Properties · Searches), transaction-filter chip strip (All / Sale / Rent), pill segmented sort control (Newest / Price ↑ / Price ↓), 2-col grid of cards with 4:3 photo + white heart pill + price + 1-line title + meta. FAB "Create list" (primaryContainer). Saved-searches tab preserved. Added 10 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/favorites.html, 4 states: loaded + loading + empty + error); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), all 4 states, design-specific notes; linked UC-44; declared 5 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)
