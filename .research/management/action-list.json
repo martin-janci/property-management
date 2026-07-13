@@ -17,20 +17,6 @@
         "score": 2,
         "vector": "refactor"
       }
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry1",
-      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods [retry 1/2 of failed test-gap-hotfix-no-test-pr-1288-webhook-rls]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-13T00:04:15Z (retry_of=test-gap-hotfix-no-test-pr-1288-webhook-rls reason=failed-no-pr cooldown_ok newest_failure=2026-07-04T12:16:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T00:04:15Z",
-      "retry_of": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
-      "retry_round": 1
     }
   ]
 }

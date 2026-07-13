@@ -1,0 +1,12 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-13",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 2 < floor 36); no fresh Phase-1 CHURN_FILES supplied and hotspot_history is stale (May-Jun); fell through to oldest-unreviewed by review_cursor. reality-server and ppt-web-ui tie at 2026-06-11; reality-server wins on segment-map priority order. Not backlog-saturated (0 open code-review-finding items for this segment).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 0,
+  "signals": [],
+  "note": "Rust static pass found 0 defects on reviewed dimensions. All grep candidates verified as non-defects: extractors/auth.rs:63 strip_prefix().unwrap() is guarded by the preceding find(starts_with('portal_session=')) on the same trimmed slice; handlers/inquiries/mod.rs:179 chars().next().unwrap() is guarded by an is_empty() early-return three lines above; routes/sso.rs:665 and handlers/users/mod.rs:551 .expect('OS rng failed') are acceptable CSPRNG fail-fast; state.rs:80/99/105 are startup config panics (fail-fast). SSO OAuth callback validates state against a server-side pending-session store (CSRF) with 10-min expiry + PKCE + redirect_uri allowlist re-check; session cookie is HttpOnly+Secure+SameSite=Strict, path-scoped. No untrusted-JWT decode in segment (only encode/mint). SQL scoping correct (favorites thread principal.user_id; inquiries derive realtor_id server-side; public reads filter status='active' and clear RLS via acquire_public_conn). Note: a prior 2026-07-12 rust+security pass on this same segment already emitted a HIGH SSRF finding (url_validator IPv4-mapped-IPv6 bypass) which lives in util/url_validator.rs; that remains the open item of record for reality-server."
+}

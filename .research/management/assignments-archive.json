@@ -4949,6 +4949,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry1",
+      "branch": "auto-impl/test-gap-hotfix-no-test-pr-1288-webhook-798edd3b",
+      "status": "failed",
+      "claimed_at": "2026-07-13T00:08:14Z",
+      "last_updated": "2026-07-13T00:13:01Z",
+      "status_changed_at": "2026-07-13T00:13:01Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=gap already closed on dev; both #1288 repo methods (record_airbnb_webhook_event, find_esignature_workflow_by_external_id) have dedicated tests; both #[ignore] BIT-351/BIT-352 batch; un-ignore unverifiable (no live DB) and out of scope; new test would duplicate",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-1289-api-ecos-2c3333ae",
       "status": "failed",
@@ -5259,5 +5283,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-12T22:13:41Z"
+  "archived_at": "2026-07-13T00:13:01Z"
 }
