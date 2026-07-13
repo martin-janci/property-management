@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-13T18:30:54Z",
+  "archived_at": "2026-07-13T20:10:27Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3082,6 +3082,25 @@
       }
     },
     {
+      "id": "gap-83-3-replay-protection-freshness-timestamp-window-explicitly",
+      "action": "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs — HMAC proves authenticity but not freshness (83-3-portal-webhooks Real Estate Portal Webhooks)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-13T20:10:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2286,
+        "merged_at": "2026-07-13T20:01:40Z",
+        "at": "2026-07-13T20:10:27Z"
+      }
+    },
+    {
       "id": "gap-84-2-esignature-email-backend",
       "action": "Integrate e-signature provider (DocuSign/HelloSign) for lease agreements: POST /api/v1/leases/{id}/sign-request, webhook status callback",
       "owner_role": "pm-backend",
@@ -3092,6 +3111,43 @@
       "source": "gap-scan 2026-05-25",
       "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
       "depends_on": []
+    },
+    {
+      "id": "gap-84-3-no-dedicated-price-alert-subscription-ui",
+      "action": "No dedicated price-alert subscription UI in reality-web (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-13T20:10:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2287,
+        "merged_at": "2026-07-13T19:12:31Z",
+        "at": "2026-07-13T20:10:27Z"
+      }
+    },
+    {
+      "id": "gap-84-3-no-mobile-native-price-tracking-surface",
+      "action": "No mobile-native price tracking surface (84-3-price-tracking Price Tracking for Favorites)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | dev-reconcile 2026-07-13T20:04:47Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "50ca5f8923c06bd270a3d9173471c4c40004657d",
+        "subject": "gap-84-3-no-mobile-native-price-tracking-surface: mobile-native price-tracking surface for favorites (#2288)",
+        "at": "2026-07-13T20:04:47Z"
+      }
     },
     {
       "id": "gap-84-3-reality-favorites-screen-map-not-shipped",
@@ -5690,6 +5746,34 @@
         "merged_pr": 2280,
         "merged_at": "2026-07-13T18:21:21Z",
         "at": "2026-07-13T18:30:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2279",
+      "action": "AI chat sessions: within-tenant IDOR — get/list-messages/delete/send-message scope by org only, not user (Closes #2279)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T18:04:13Z (#2279) | gc1-reconcile 2026-07-13T20:10:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T18:04:13Z",
+      "issue_ref": {
+        "number": 2279,
+        "url": "https://github.com/martin-janci/property-management/issues/2279",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2289,
+        "merged_at": "2026-07-13T20:01:29Z",
+        "at": "2026-07-13T20:10:27Z"
       }
     },
     {
