@@ -2205,6 +2205,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
+      "branch": "auto-impl/gap-80-2-ac-4-usedraftstorage-is-not-imp-d490e888",
+      "status": "failed",
+      "claimed_at": "2026-07-13T18:09:41Z",
+      "last_updated": "2026-07-13T18:17:56Z",
+      "status_changed_at": "2026-07-13T18:17:56Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=false-positive gap: AC-4 draft auto-save already wired in FileDisputePage.tsx (correct component) w/ 37 passing tests on dev; route wrapper intentionally holds no form state; no red-on-dev test possible",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
       "branch": "auto-impl/gap-80-3-disputedetailroute-in-app-tsx-is-stub-2b6c131b",
       "status": "merged",
@@ -5371,5 +5393,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-13T16:15:22Z"
+  "archived_at": "2026-07-13T18:17:56Z"
 }

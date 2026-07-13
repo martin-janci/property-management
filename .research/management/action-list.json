@@ -74,18 +74,6 @@
       "source": "gap-scan 2026-07-13"
     },
     {
-      "id": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
-      "action": "AC-4: useDraftStorage is NOT imported or called from FileDisputePageRoute.tsx — draft auto-save not wired into the filing flow (80-2-dispute-filing-flow Dispute Filing Flow)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
       "id": "gap-83-3-replay-protection-freshness-timestamp-window-explicitly",
       "action": "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs — HMAC proves authenticity but not freshness (83-3-portal-webhooks Real Estate Portal Webhooks)",
       "owner_role": "pm-backend",

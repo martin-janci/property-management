@@ -134,28 +134,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
-      "branch": "auto-impl/gap-80-2-ac-4-usedraftstorage-is-not-imp-d490e888",
-      "status": "in-progress",
-      "claimed_at": "2026-07-13T18:09:41Z",
-      "last_updated": "2026-07-13T18:09:41Z",
-      "status_changed_at": "2026-07-13T18:09:41Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "gap-83-3-replay-protection-freshness-timestamp-window-explicitly",
       "branch": "auto-impl/gap-83-3-replay-protection-freshness-tim-a6f58ec8",
       "status": "in-progress",
