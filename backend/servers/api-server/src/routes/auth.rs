@@ -1978,16 +1978,7 @@ pub async fn list_sessions(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<ListSessionsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Extract and validate access token
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = authenticated_user_id(&state, &headers)?;
 
     // Identify the caller's current session. Prefer the HttpOnly cookie,
     // fall back to the `X-Refresh-Token` header (see
@@ -2068,16 +2059,7 @@ pub async fn revoke_session(
     headers: axum::http::HeaderMap,
     Json(req): Json<RevokeSessionRequest>,
 ) -> Result<Json<RevokeSessionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Extract and validate access token
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = authenticated_user_id(&state, &headers)?;
 
     // Parse session ID
     let session_id: uuid::Uuid = req.session_id.parse().map_err(|_| {
@@ -2166,16 +2148,7 @@ pub async fn revoke_all_sessions(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<RevokeAllSessionsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Extract and validate access token
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = authenticated_user_id(&state, &headers)?;
 
     // Get current session to exclude. Prefer the HttpOnly cookie, fall back
     // to the `X-Refresh-Token` header (see `resolve_current_session_id`).
@@ -2313,15 +2286,7 @@ pub async fn get_me(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = authenticated_user_id(&state, &headers)?;
 
     let user = match state.user_repo.find_by_id(user_id).await {
         Ok(Some(user)) => user,
@@ -2379,15 +2344,7 @@ pub async fn update_me(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateMeRequest>,
 ) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = authenticated_user_id(&state, &headers)?;
 
     // Validate displayName (if provided) — must be non-blank, <= 120 chars.
     if let Some(name) = req.display_name.as_ref() {
@@ -2504,6 +2461,29 @@ fn validate_access_token(
                 "INVALID_TOKEN",
                 "Invalid or expired token",
             )),
+        )
+    })
+}
+
+/// Authenticate a bearer-token request and return the caller's user id.
+///
+/// Runs the identical three-step preamble every bearer-authenticated handler in
+/// this module (`/sessions`, `/sessions/revoke`, `/sessions/revoke-all`,
+/// `GET /me`, `PATCH /me`) previously hand-rolled: extract the
+/// `Authorization: Bearer` token, validate it, and parse the `sub` claim into a
+/// `Uuid`. Centralizing it keeps the error responses (401 `MISSING_TOKEN` /
+/// `INVALID_TOKEN`) byte-for-byte identical across those handlers and removes
+/// five verbatim copies of the `claims.sub.parse()` block.
+fn authenticated_user_id(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Result<uuid::Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let token = extract_bearer_token(headers)?;
+    let claims = validate_access_token(state, &token)?;
+    claims.sub.parse().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
         )
     })
 }
