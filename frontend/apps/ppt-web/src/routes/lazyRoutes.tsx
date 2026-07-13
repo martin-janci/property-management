@@ -321,6 +321,13 @@ export const NotificationAnalyticsPage = lazy(() =>
   }))
 );
 
+// Notification trigger management (Story 84.4 — Notification Trigger System, PM gap 84-4)
+export const NotificationTriggersPage = lazy(() =>
+  import('../features/notification-triggers').then((m) => ({
+    default: m.NotificationTriggersPage,
+  }))
+);
+
 // Predictive Maintenance Dashboard (Epic 13, Story 13.3) — gap-sweep
 export const PredictiveMaintenancePage = lazy(() =>
   import('../features/predictive-maintenance').then((m) => ({
