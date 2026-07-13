@@ -122,10 +122,14 @@ async fn get_session(
     mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#2279): AI chat sessions are per-user private within an org.
+    // Scope the by-id lookup by BOTH org and owner so a colleague in the same
+    // org cannot read another member's private session by supplying its UUID.
     let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let result = state
         .ai_chat_repo
-        .find_session_by_id(&mut **rls.conn(), session_id, org_id)
+        .find_session_by_id(&mut **rls.conn(), session_id, org_id, user_id)
         .await;
     rls.release().await;
     match result {
@@ -152,10 +156,13 @@ async fn delete_session(
     mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#2279): scope the destructive delete by BOTH org and owner so
+    // a colleague in the same org cannot delete another member's session.
     let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let result = state
         .ai_chat_repo
-        .delete_session(&mut **rls.conn(), session_id, org_id)
+        .delete_session(&mut **rls.conn(), session_id, org_id, user_id)
         .await;
     rls.release().await;
     match result {
@@ -183,13 +190,17 @@ async fn list_messages(
     Path(session_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#2279): scope the transcript read by BOTH org and owner so a
+    // colleague in the same org cannot read another member's conversation.
     let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let result = state
         .ai_chat_repo
         .list_session_messages(
             &mut **rls.conn(),
             session_id,
             org_id,
+            user_id,
             query.limit.unwrap_or(100),
             query.offset.unwrap_or(0),
         )
@@ -249,10 +260,12 @@ async fn send_message(
     let tenant_id = rls.tenant_id();
     let user_id = rls.user_id();
 
-    // Verify session exists and belongs to this tenant.
+    // Verify session exists and belongs to this tenant AND this user.
+    // SECURITY (#2279): AI chat sessions are per-user private; scoping by org
+    // alone let any colleague post into another member's private session.
     let _session = state
         .ai_chat_repo
-        .find_session_by_id(&mut **rls.conn(), session_id, tenant_id)
+        .find_session_by_id(&mut **rls.conn(), session_id, tenant_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find session: {}", e);
@@ -279,6 +292,7 @@ async fn send_message(
             &mut **rls.conn(),
             session_id,
             tenant_id,
+            user_id,
             DEFAULT_HISTORY_LIMIT,
             0,
         )

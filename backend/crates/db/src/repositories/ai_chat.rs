@@ -80,25 +80,35 @@ impl AiChatRepository {
         .await
     }
 
-    /// Get session by ID — tenant-scoped.
+    /// Get session by ID — tenant- AND owner-scoped.
     ///
-    /// `org_id` must originate from the verified request principal.
-    /// Returns `None` for both "not found" and "belongs to another tenant"
-    /// to prevent cross-tenant ID enumeration.
+    /// `org_id` and `user_id` must originate from the verified request
+    /// principal. AI chat sessions are per-user private within an org
+    /// (`create_session` stamps the owning `user_id`, `list_user_sessions`
+    /// only returns the caller's own sessions); the `user_id` predicate keeps
+    /// the by-id path consistent so a colleague in the same org cannot read
+    /// another member's private session (within-tenant IDOR, issue #2279).
+    /// Returns `None` for "not found", "belongs to another tenant", and
+    /// "belongs to another user" alike to avoid an existence oracle.
     pub async fn find_session_by_id<'e, E>(
         &self,
         executor: E,
         id: Uuid,
         org_id: Uuid,
+        user_id: Uuid,
     ) -> Result<Option<AiChatSession>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
-            .bind(id)
-            .bind(org_id)
-            .fetch_optional(executor)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM ai_chat_sessions \
+             WHERE id = $1 AND organization_id = $2 AND user_id = $3",
+        )
+        .bind(id)
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_optional(executor)
+        .await
     }
 
     /// List user's chat sessions.
@@ -186,16 +196,18 @@ impl AiChatRepository {
         Ok(message)
     }
 
-    /// Get messages for a session — tenant-scoped.
+    /// Get messages for a session — tenant- AND owner-scoped.
     ///
-    /// `org_id` must originate from the verified request principal.
-    /// The JOIN ensures a caller in org B cannot enumerate messages from a
-    /// session owned by org A.
+    /// `org_id` and `user_id` must originate from the verified request
+    /// principal. The JOIN predicate ensures a caller cannot enumerate
+    /// messages from a session owned by another org OR by another user in the
+    /// same org (within-tenant IDOR, issue #2279).
     pub async fn list_session_messages<'e, E>(
         &self,
         executor: E,
         session_id: Uuid,
         org_id: Uuid,
+        user_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<AiChatMessage>, sqlx::Error>
@@ -206,39 +218,46 @@ impl AiChatRepository {
             r#"
             SELECT m.* FROM ai_chat_messages m
             JOIN ai_chat_sessions s ON s.id = m.session_id
-            WHERE m.session_id = $1 AND s.organization_id = $2
+            WHERE m.session_id = $1 AND s.organization_id = $2 AND s.user_id = $3
             ORDER BY m.created_at ASC
-            LIMIT $3 OFFSET $4
+            LIMIT $4 OFFSET $5
             "#,
         )
         .bind(session_id)
         .bind(org_id)
+        .bind(user_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(executor)
         .await
     }
 
-    /// Delete a session and all its messages — tenant-scoped.
+    /// Delete a session and all its messages — tenant- AND owner-scoped.
     ///
-    /// `org_id` must originate from the verified request principal.
-    /// Returns `false` for both "not found" and "belongs to another tenant"
-    /// to prevent cross-tenant ID enumeration.
+    /// `org_id` and `user_id` must originate from the verified request
+    /// principal. Returns `false` for "not found", "belongs to another
+    /// tenant", and "belongs to another user" alike, so a colleague in the
+    /// same org cannot destroy another member's private session by supplying
+    /// its UUID (within-tenant IDOR, issue #2279).
     pub async fn delete_session<'e, E>(
         &self,
         executor: E,
         id: Uuid,
         org_id: Uuid,
+        user_id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result =
-            sqlx::query("DELETE FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
-                .bind(id)
-                .bind(org_id)
-                .execute(executor)
-                .await?;
+        let result = sqlx::query(
+            "DELETE FROM ai_chat_sessions \
+             WHERE id = $1 AND organization_id = $2 AND user_id = $3",
+        )
+        .bind(id)
+        .bind(org_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
