@@ -93,21 +93,19 @@ data class AddFavoriteResponse(
  * A single favorite alert as returned by `GET /api/v1/favorites/alerts`.
  *
  * Mirrors the reality-server `FavoriteAlert` DTO (see
- * `backend/crates/db/src/models/reality_portal.rs`). These are the in-app
- * delivery view of the price-tracking pipeline: the `FavoriteAlertWorker`
- * enqueues a row whenever a favorited listing's price (or status) changes, and
- * this feed is how the mobile Price-Tracking surface retrieves them.
+ * `backend/crates/db/src/models/reality_portal.rs`). These are the in-app delivery view of the
+ * price-tracking pipeline: the `FavoriteAlertWorker` enqueues a row whenever a favorited listing's
+ * price (or status) changes, and this feed is how the mobile Price-Tracking surface retrieves them.
  *
  * Wire notes:
  * - `alert_type` is `"price_change"` or `"status_change"`. Use [isPriceChange].
- * - Monetary fields (`old_price` / `new_price`) are whole-currency numbers on
- *   the wire — mapped to `Long?` to match the rest of the portal models
- *   ([FavoriteEntry.currentPrice], `ListingSummary.price`). They are `null` for
- *   status-only alerts.
- * - `change_percentage` is a signed fractional number (negative = price drop),
- *   mapped to `Double?` to match [FavoriteEntry.priceChangePercentage].
- * - `status` is the delivery state: `"pending"` (unread) | `"sent"` (read) |
- *   `"failed"`. Use [isUnread].
+ * - Monetary fields (`old_price` / `new_price`) are whole-currency numbers on the wire — mapped to
+ *   `Long?` to match the rest of the portal models ([FavoriteEntry.currentPrice],
+ *   `ListingSummary.price`). They are `null` for status-only alerts.
+ * - `change_percentage` is a signed fractional number (negative = price drop), mapped to `Double?`
+ *   to match [FavoriteEntry.priceChangePercentage].
+ * - `status` is the delivery state: `"pending"` (unread) | `"sent"` (read) | `"failed"`. Use
+ *   [isUnread].
  */
 @Serializable
 data class FavoriteAlert(
@@ -142,9 +140,8 @@ data class FavoriteAlert(
 /**
  * Response body for `GET /api/v1/favorites/alerts`.
  *
- * Mirrors the reality-server `FavoriteAlertsResponse`: the newest-first page of
- * alerts plus the total unread count (independent of the page window) and the
- * echoed `limit` / `offset`.
+ * Mirrors the reality-server `FavoriteAlertsResponse`: the newest-first page of alerts plus the
+ * total unread count (independent of the page window) and the echoed `limit` / `offset`.
  */
 @Serializable
 data class FavoriteAlertsResponse(

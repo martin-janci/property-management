@@ -10,11 +10,10 @@ import kotlinx.coroutines.launch
 /**
  * Immutable UI state for the Price-Tracking surface.
  *
- * The screen renders two things off this single value: the user's favorited
- * listings annotated with their price movement (so a card can show a "was
- * €X → now €Y" badge), and the reverse-chronological feed of price-change
- * alerts the server has queued for the user. Everything the Compose (Android)
- * or SwiftUI (iOS) surface needs is derived here so the screen stays a pure
+ * The screen renders two things off this single value: the user's favorited listings annotated with
+ * their price movement (so a card can show a "was €X → now €Y" badge), and the
+ * reverse-chronological feed of price-change alerts the server has queued for the user. Everything
+ * the Compose (Android) or SwiftUI (iOS) surface needs is derived here so the screen stays a pure
  * `collectAsState()` render + intent wiring — mirroring [ListingDetailUiState].
  */
 data class PriceTrackingUiState(
@@ -53,9 +52,9 @@ data class PriceTrackingUiState(
  * price tracking on favorited listings (gap-84-3).
  *
  * It loads the user's favorites (each embeds `price_changed` / `price_change_percentage` /
- * `price_alert_enabled`) together with the queued favorite-alert feed
- * (`GET /api/v1/favorites/alerts`), and owns the optimistic mark-read / mark-all-read writes
- * (`POST /api/v1/favorites/alerts/{id}/read`, `.../read-all`).
+ * `price_alert_enabled`) together with the queued favorite-alert feed (`GET
+ * /api/v1/favorites/alerts`), and owns the optimistic mark-read / mark-all-read writes (`POST
+ * /api/v1/favorites/alerts/{id}/read`, `.../read-all`).
  *
  * Like [ListingDetailViewModel] it is a plain, framework-agnostic state-holder (no
  * `androidx.lifecycle` / Android types) so it lives in `commonMain`, is unit-testable off a
@@ -64,8 +63,8 @@ data class PriceTrackingUiState(
  * token, so it is rebuilt (not the whole view-model) on a session change — see [updateAuth].
  *
  * @param favoritesRepositoryFactory builds a [FavoritesRepository] carrying the given session
- *   token. Held as a factory so [updateAuth] can rebuild the auth-scoped repository on
- *   login/logout without re-creating the view-model.
+ *   token. Held as a factory so [updateAuth] can rebuild the auth-scoped repository on login/logout
+ *   without re-creating the view-model.
  * @param scope the coroutine scope loads/writes launch into (a `rememberCoroutineScope()` on
  *   Android; the `TestScope` from `runTest` in tests).
  * @param initialSessionToken the session token at construction time (`null` == unauthenticated).
@@ -170,7 +169,8 @@ class PriceTrackingViewModel(
     /**
      * Optimistically mark a single alert read: flip it to `sent` and decrement the unread count
      * immediately, then reconcile with the server. On failure the change rolls back so the badge
-     * never lies. No-op when unauthenticated, when the alert is unknown, or when it is already read.
+     * never lies. No-op when unauthenticated, when the alert is unknown, or when it is already
+     * read.
      */
     fun onMarkAlertRead(alertId: String) {
         if (currentSessionToken == null) return
@@ -195,7 +195,11 @@ class PriceTrackingViewModel(
             if (currentSessionToken != tokenAtLaunch) return@launch
             _state.update {
                 if (result.isFailure) {
-                    it.copy(alerts = previousAlerts, unreadCount = previousUnread, isMutating = false)
+                    it.copy(
+                        alerts = previousAlerts,
+                        unreadCount = previousUnread,
+                        isMutating = false,
+                    )
                 } else {
                     it.copy(isMutating = false)
                 }

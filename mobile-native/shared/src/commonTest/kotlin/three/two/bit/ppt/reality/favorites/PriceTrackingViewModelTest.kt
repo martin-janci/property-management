@@ -7,7 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.utils.io.ByteReadChannel
+import io.ktor.serialization.kotlinx.json.json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -120,12 +120,17 @@ class PriceTrackingViewModelTest {
                 path.endsWith("/read") -> respond("", readStatus, jsonHeaders)
                 path.endsWith("/favorites/alerts") ->
                     respond(alertsBody, HttpStatusCode.OK, jsonHeaders)
-                path.endsWith("/favorites") -> respond(favoritesBody, HttpStatusCode.OK, jsonHeaders)
+                path.endsWith("/favorites") ->
+                    respond(favoritesBody, HttpStatusCode.OK, jsonHeaders)
                 else -> respond("{}", HttpStatusCode.OK, jsonHeaders)
             }
         }
         val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
-        return FavoritesRepository(baseUrl = "https://example.test", sessionToken = token, client = client)
+        return FavoritesRepository(
+            baseUrl = "https://example.test",
+            sessionToken = token,
+            client = client,
+        )
     }
 
     private fun viewModel(
@@ -196,7 +201,11 @@ class PriceTrackingViewModelTest {
 
             vm.state.first { !it.isMutating }
             // …then rollback to the pre-write state on the 500.
-            assertEquals(1L, vm.state.value.unreadCount, "failed mark-read must roll back the badge")
+            assertEquals(
+                1L,
+                vm.state.value.unreadCount,
+                "failed mark-read must roll back the badge",
+            )
             assertTrue(vm.state.value.alerts.first { it.id == "al-1" }.isUnread)
         }
 

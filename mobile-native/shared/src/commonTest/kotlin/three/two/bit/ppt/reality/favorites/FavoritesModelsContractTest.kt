@@ -241,8 +241,8 @@ class FavoritesModelsContractTest {
     }
 
     /**
-     * Pin the `FavoriteAlertsResponse` / `FavoriteAlert` snake_case wire shape returned by
-     * `GET /api/v1/favorites/alerts` (gap-84-3). Monetary fields are whole-currency numbers and
+     * Pin the `FavoriteAlertsResponse` / `FavoriteAlert` snake_case wire shape returned by `GET
+     * /api/v1/favorites/alerts` (gap-84-3). Monetary fields are whole-currency numbers and
      * `change_percentage` is a signed fraction — matching the rest of the portal price models.
      */
     @Test

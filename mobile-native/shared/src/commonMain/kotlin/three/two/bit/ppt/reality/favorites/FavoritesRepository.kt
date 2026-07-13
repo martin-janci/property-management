@@ -133,12 +133,15 @@ class FavoritesRepository(
     /**
      * Fetch the authenticated user's favorite price-tracking alerts (newest first).
      *
-     * Endpoint: `GET /api/v1/favorites/alerts?limit&offset`. The server clamps `limit` to
-     * `[1, 200]` and floors `offset` at 0, and returns the page plus the total `unread_count`
+     * Endpoint: `GET /api/v1/favorites/alerts?limit&offset`. The server clamps `limit` to `[1,
+     * 200]` and floors `offset` at 0, and returns the page plus the total `unread_count`
      * (independent of the page window). Requires auth — unauthenticated callers get a 401 which is
      * surfaced as a [FavoritesException] so the UI can prompt sign-in.
      */
-    suspend fun getFavoriteAlerts(limit: Int = 100, offset: Int = 0): Result<FavoriteAlertsResponse> {
+    suspend fun getFavoriteAlerts(
+        limit: Int = 100,
+        offset: Int = 0,
+    ): Result<FavoriteAlertsResponse> {
         return try {
             val response =
                 client.get("$baseUrl/api/v1/favorites/alerts") {
@@ -152,7 +155,9 @@ class FavoritesRepository(
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(FavoritesException("Please sign in to view price alerts"))
             } else {
-                Result.failure(FavoritesException("Failed to load price alerts: ${response.status}"))
+                Result.failure(
+                    FavoritesException("Failed to load price alerts: ${response.status}")
+                )
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -169,9 +174,7 @@ class FavoritesRepository(
     suspend fun markFavoriteAlertRead(alertId: String): Result<Unit> {
         return try {
             val response =
-                client.post(
-                    "$baseUrl/api/v1/favorites/alerts/${alertId.asPathSegment()}/read"
-                ) {
+                client.post("$baseUrl/api/v1/favorites/alerts/${alertId.asPathSegment()}/read") {
                     configureRequest()
                 }
 
