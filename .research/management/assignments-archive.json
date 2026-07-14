@@ -5057,6 +5057,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2283",
+      "branch": "auto-impl/gh-issue-2283-ac83c6b3",
+      "status": "merged",
+      "claimed_at": "2026-07-14T04:01:42Z",
+      "last_updated": "2026-07-14T06:03:53Z",
+      "status_changed_at": "2026-07-14T06:03:53Z",
+      "pr_number": 2305,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2305",
+      "merged_at": "2026-07-14T05:19:29Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2305 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=test-only useApi.test.ts (20 tests, all verify green); drift is pm-frontend->pm-mobile label mismatch, file stays in frontend/apps/mobile",
+      "reviewer_summary": "verdict=approve head_oid=7a4ebe83c455b641a6a927b167233e983014f074 note=test-only-mobile-useApi-coverage-verified-against-source; scope_drift-benign-role-label; posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "7a4ebe83c455b641a6a927b167233e983014f074",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5745,5 +5767,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-14T04:07:42Z"
+  "archived_at": "2026-07-14T06:07:08Z"
 }
