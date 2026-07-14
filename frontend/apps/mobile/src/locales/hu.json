@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Iranyitopult",
+    "loadError": "Nem sikerult betolteni az iranyitopultot. Huzza le a frissiteshez, vagy koppintson az Ujra gombra.",
     "welcome": "Udvozoljuk",
     "welcomeBack": "Udvozoljuk ujra,",
     "recentActivity": "Legutobbi tevekenyseg",

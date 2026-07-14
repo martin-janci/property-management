@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Prehlad",
+    "loadError": "Nepodarilo sa nacitat prehlad. Potiahnutim obnovte alebo klepnite na Skusit znova.",
     "welcome": "Vitajte",
     "welcomeBack": "Vitajte spat,",
     "recentActivity": "Posledna aktivita",
