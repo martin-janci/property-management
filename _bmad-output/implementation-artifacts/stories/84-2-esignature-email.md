@@ -44,46 +44,46 @@ So that **signers receive notifications and can access documents to sign**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Signature Email Templates (AC: 1, 2, 3, 4)
-  - [ ] 1.1 Create signature request template
-  - [ ] 1.2 Create reminder template (levels 1, 2, 3)
-  - [ ] 1.3 Create completion template
-  - [ ] 1.4 Create decline notification template
-  - [ ] 1.5 Add branding and styling
+- [x] Task 1: Create Signature Email Templates (AC: 1, 2, 3, 4)
+  - [x] 1.1 Create signature request template
+  - [x] 1.2 Create reminder template (levels 1, 2, 3)
+  - [x] 1.3 Create completion template
+  - [x] 1.4 Create decline notification template
+  - [x] 1.5 Add branding and styling
 
-- [ ] Task 2: Implement Signature Request Sending (AC: 1)
-  - [ ] 2.1 Update `/backend/servers/api-server/src/routes/signatures.rs:120`
-  - [ ] 2.2 Generate secure signing token
-  - [ ] 2.3 Create signing URL
-  - [ ] 2.4 Send email via email service
-  - [ ] 2.5 Record email sent status
+- [x] Task 2: Implement Signature Request Sending (AC: 1)
+  - [x] 2.1 Update `/backend/servers/api-server/src/routes/signatures.rs:120`
+  - [x] 2.2 Generate secure signing token
+  - [x] 2.3 Create signing URL
+  - [x] 2.4 Send email via email service
+  - [x] 2.5 Record email sent status
 
-- [ ] Task 3: Implement Reminder System (AC: 2)
-  - [ ] 3.1 Update `/backend/servers/api-server/src/routes/signatures.rs:267`
-  - [ ] 3.2 Create reminder scheduling job
-  - [ ] 3.3 Track reminder count per signer
-  - [ ] 3.4 Escalate reminder urgency
-  - [ ] 3.5 Respect business hours
+- [x] Task 3: Implement Reminder System (AC: 2)
+  - [x] 3.1 Update `/backend/servers/api-server/src/routes/signatures.rs:267`
+  - [x] 3.2 Create reminder scheduling job
+  - [x] 3.3 Track reminder count per signer
+  - [x] 3.4 Escalate reminder urgency
+  - [x] 3.5 Respect business hours
 
-- [ ] Task 4: Implement Completion Emails (AC: 3)
-  - [ ] 4.1 Update `/backend/servers/api-server/src/routes/signatures.rs:316`
-  - [ ] 4.2 Detect document completion
-  - [ ] 4.3 Generate signed document PDF
-  - [ ] 4.4 Send to all parties
-  - [ ] 4.5 Include audit trail
+- [x] Task 4: Implement Completion Emails (AC: 3)
+  - [x] 4.1 Update `/backend/servers/api-server/src/routes/signatures.rs:316`
+  - [x] 4.2 Detect document completion
+  - [x] 4.3 Generate signed document PDF
+  - [x] 4.4 Send to all parties
+  - [x] 4.5 Include audit trail
 
-- [ ] Task 5: Implement Decline Handling (AC: 4)
-  - [ ] 5.1 Add decline reason capture
-  - [ ] 5.2 Send decline notification
-  - [ ] 5.3 Mark document as declined
-  - [ ] 5.4 Allow resubmission
+- [x] Task 5: Implement Decline Handling (AC: 4)
+  - [x] 5.1 Add decline reason capture
+  - [x] 5.2 Send decline notification
+  - [x] 5.3 Mark document as declined
+  - [x] 5.4 Allow resubmission
 
-- [ ] Task 6: Add Email Tracking (AC: 5)
-  - [ ] 6.1 Configure webhook for email events
-  - [ ] 6.2 Track email opens
-  - [ ] 6.3 Track link clicks
-  - [ ] 6.4 Handle bounces
-  - [ ] 6.5 Store events for audit
+- [x] Task 6: Add Email Tracking (AC: 5)
+  - [x] 6.1 Configure webhook for email events
+  - [x] 6.2 Track email opens
+  - [x] 6.3 Track link clicks
+  - [x] 6.4 Handle bounces
+  - [x] 6.5 Store events for audit
 
 ## Dev Notes
 

@@ -42,41 +42,41 @@ So that **I stay informed about important announcements and updates**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Notification Event System (AC: 1, 2, 3)
-  - [ ] 1.1 Create notification event types enum
-  - [ ] 1.2 Create event publisher trait
-  - [ ] 1.3 Implement event dispatcher
-  - [ ] 1.4 Add event handlers registry
+- [x] Task 1: Create Notification Event System (AC: 1, 2, 3)
+  - [x] 1.1 Create notification event types enum
+  - [x] 1.2 Create event publisher trait
+  - [x] 1.3 Implement event dispatcher
+  - [x] 1.4 Add event handlers registry
 
-- [ ] Task 2: Implement Announcement Triggers (AC: 1)
-  - [ ] 2.1 Update `/backend/servers/api-server/src/routes/announcements.rs:827`
-  - [ ] 2.2 Trigger on announcement publish
-  - [ ] 2.3 Resolve target audience
-  - [ ] 2.4 Send to all targeted users
+- [x] Task 2: Implement Announcement Triggers (AC: 1)
+  - [x] 2.1 Update `/backend/servers/api-server/src/routes/announcements.rs:827`
+  - [x] 2.2 Trigger on announcement publish
+  - [x] 2.3 Resolve target audience
+  - [x] 2.4 Send to all targeted users
 
-- [ ] Task 3: Implement Fault Triggers (AC: 2)
-  - [ ] 3.1 Trigger on fault status change
-  - [ ] 3.2 Notify fault reporter
-  - [ ] 3.3 Notify assigned technician
-  - [ ] 3.4 Include status in notification
+- [x] Task 3: Implement Fault Triggers (AC: 2)
+  - [x] 3.1 Trigger on fault status change
+  - [x] 3.2 Notify fault reporter
+  - [x] 3.3 Notify assigned technician
+  - [x] 3.4 Include status in notification
 
-- [ ] Task 4: Implement Vote Triggers (AC: 3)
-  - [ ] 4.1 Trigger on vote creation
-  - [ ] 4.2 Resolve eligible voters
-  - [ ] 4.3 Send voting notification
-  - [ ] 4.4 Send reminder before deadline
+- [x] Task 4: Implement Vote Triggers (AC: 3)
+  - [x] 4.1 Trigger on vote creation
+  - [x] 4.2 Resolve eligible voters
+  - [x] 4.3 Send voting notification
+  - [x] 4.4 Send reminder before deadline
 
-- [ ] Task 5: Create Notification Preferences System (AC: 4)
-  - [ ] 5.1 Create preferences table
-  - [ ] 5.2 Default preferences per user
-  - [ ] 5.3 Preferences API endpoints
-  - [ ] 5.4 Preference checking in dispatch
+- [x] Task 5: Create Notification Preferences System (AC: 4)
+  - [x] 5.1 Create preferences table
+  - [x] 5.2 Default preferences per user
+  - [x] 5.3 Preferences API endpoints
+  - [x] 5.4 Preference checking in dispatch
 
-- [ ] Task 6: Implement Multi-channel Delivery (AC: 5)
-  - [ ] 6.1 Push notification delivery
-  - [ ] 6.2 Email notification delivery
-  - [ ] 6.3 In-app notification storage
-  - [ ] 6.4 Notification history API
+- [x] Task 6: Implement Multi-channel Delivery (AC: 5)
+  - [x] 6.1 Push notification delivery
+  - [x] 6.2 Email notification delivery
+  - [x] 6.3 In-app notification storage
+  - [x] 6.4 Notification history API
 
 ## Dev Notes
 

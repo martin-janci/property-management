@@ -47,49 +47,49 @@ So that **I can contact property owners and control my profile settings**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Inquiry Form (AC: 1)
-  - [ ] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/NewInquirySheet.swift`
-  - [ ] 1.2 Show listing preview at top
-  - [ ] 1.3 Add message text field
-  - [ ] 1.4 Add contact preference options
-  - [ ] 1.5 Implement send mutation via KMP
-  - [ ] 1.6 Show success confirmation
+- [x] Task 1: Create Inquiry Form (AC: 1)
+  - [x] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/NewInquirySheet.swift` — shipped as `SendInquiryView.swift`; wired to `newInquiry(listingId:)` in `MainTabView.swift`
+  - [x] 1.2 Show listing preview at top
+  - [x] 1.3 Add message text field
+  - [x] 1.4 Add contact preference options
+  - [x] 1.5 Implement send mutation via KMP
+  - [x] 1.6 Show success confirmation
 
-- [ ] Task 2: Create Inquiries List (AC: 2)
-  - [ ] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/InquiriesView.swift`
-  - [ ] 2.2 Create InquiriesViewModel with KMP integration
-  - [ ] 2.3 Display inquiry cards with listing info
-  - [ ] 2.4 Show status badge (pending, replied, closed)
-  - [ ] 2.5 Add pull-to-refresh
+- [x] Task 2: Create Inquiries List (AC: 2)
+  - [x] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/InquiriesView.swift`
+  - [x] 2.2 Create InquiriesViewModel with KMP integration
+  - [x] 2.3 Display inquiry cards with listing info
+  - [x] 2.4 Show status badge (pending, replied, closed)
+  - [x] 2.5 Add pull-to-refresh
 
-- [ ] Task 3: Create Conversation View (AC: 3)
-  - [ ] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/ConversationView.swift`
-  - [ ] 3.2 Display message bubbles
-  - [ ] 3.3 Add message input field
-  - [ ] 3.4 Implement send message mutation
-  - [ ] 3.5 Auto-scroll to new messages
+- [x] Task 3: Create Conversation View (AC: 3)
+  - [x] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Inquiries/ConversationView.swift` — shipped as `InquiryDetailView.swift`; wired to `inquiryDetail(id:)` in `MainTabView.swift`
+  - [x] 3.2 Display message bubbles
+  - [x] 3.3 Add message input field
+  - [x] 3.4 Implement send message mutation
+  - [x] 3.5 Auto-scroll to new messages
 
-- [ ] Task 4: Create Account Screen (AC: 4, 5)
-  - [ ] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Account/AccountView.swift`
-  - [ ] 4.2 Create AccountViewModel with auth state
-  - [ ] 4.3 Display user profile info
-  - [ ] 4.4 Add edit profile button
-  - [ ] 4.5 Add settings navigation
+- [x] Task 4: Create Account Screen (AC: 4, 5)
+  - [x] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Account/AccountView.swift`
+  - [x] 4.2 Create AccountViewModel with auth state
+  - [x] 4.3 Display user profile info
+  - [x] 4.4 Add edit profile button
+  - [x] 4.5 Add settings navigation
 
-- [ ] Task 5: Create Profile Edit Screen (AC: 4)
+- [ ] Task 5: Create Profile Edit Screen (AC: 4) — NOT delivered: `EditProfileView.swift` absent; `profile` route is still a stub `Text` in `MainTabView.swift` (see `docs/superpowers/plans/gap-82-1-swiftui-audit.md`)
   - [ ] 5.1 Create `/mobile-native/iosApp/iosApp/Features/Account/EditProfileView.swift`
   - [ ] 5.2 Add editable fields (name, email, phone)
   - [ ] 5.3 Add profile photo picker
   - [ ] 5.4 Implement save mutation
 
-- [ ] Task 6: Create Login/Register Screens (AC: 5)
-  - [ ] 6.1 Create `/mobile-native/iosApp/iosApp/Features/Auth/LoginView.swift`
-  - [ ] 6.2 Create `/mobile-native/iosApp/iosApp/Features/Auth/RegisterView.swift`
-  - [ ] 6.3 Integrate with KMP auth use cases
-  - [ ] 6.4 Store auth tokens in Keychain
-  - [ ] 6.5 Handle token refresh
+- [~] Task 6: Create Login/Register Screens (AC: 5) — LoginView shipped; Register not delivered
+  - [x] 6.1 Create `/mobile-native/iosApp/iosApp/Features/Auth/LoginView.swift`
+  - [ ] 6.2 Create `/mobile-native/iosApp/iosApp/Features/Auth/RegisterView.swift` — NOT delivered: `register` route is still a stub `Text` in `MainTabView.swift` (SSO-only login currently; see audit)
+  - [x] 6.3 Integrate with KMP auth use cases
+  - [x] 6.4 Store auth tokens in Keychain
+  - [x] 6.5 Handle token refresh
 
-- [ ] Task 7: Configure Push Notifications (AC: 3)
+- [ ] Task 7: Configure Push Notifications (AC: 3) — NOT delivered: no `Core/Push/PushNotificationManager.swift`; push capability not wired
   - [ ] 7.1 Add push notification capability
   - [ ] 7.2 Request notification permission
   - [ ] 7.3 Register device token with backend

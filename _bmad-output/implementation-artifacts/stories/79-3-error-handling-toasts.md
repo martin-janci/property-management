@@ -47,48 +47,48 @@ So that **I understand the result of my interactions and can take appropriate ac
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Toast Notification System (AC: 1, 2)
-  - [ ] 1.1 Create `/frontend/apps/ppt-web/src/components/Toast/ToastProvider.tsx`
-  - [ ] 1.2 Create ToastContext with `addToast`, `removeToast` methods
-  - [ ] 1.3 Create Toast component with success, error, warning, info variants
-  - [ ] 1.4 Implement auto-dismiss with configurable duration
-  - [ ] 1.5 Add dismiss on click and close button
-  - [ ] 1.6 Support stacking up to 3 toasts
+- [x] Task 1: Create Toast Notification System (AC: 1, 2)
+  - [x] 1.1 Create `/frontend/apps/ppt-web/src/components/Toast/ToastProvider.tsx`
+  - [x] 1.2 Create ToastContext with `addToast`, `removeToast` methods
+  - [x] 1.3 Create Toast component with success, error, warning, info variants
+  - [x] 1.4 Implement auto-dismiss with configurable duration
+  - [x] 1.5 Add dismiss on click and close button
+  - [x] 1.6 Support stacking up to 3 toasts
 
-- [ ] Task 2: Create Toast Component Styles (AC: 1, 2)
-  - [ ] 2.1 Create `/frontend/apps/ppt-web/src/components/Toast/Toast.tsx`
-  - [ ] 2.2 Add icons for each toast type (check, x, warning, info)
-  - [ ] 2.3 Add slide-in/slide-out animations
-  - [ ] 2.4 Add copy button for error messages
-  - [ ] 2.5 Ensure accessible (role="alert", aria-live)
+- [x] Task 2: Create Toast Component Styles (AC: 1, 2)
+  - [x] 2.1 Create `/frontend/apps/ppt-web/src/components/Toast/Toast.tsx`
+  - [x] 2.2 Add icons for each toast type (check, x, warning, info)
+  - [x] 2.3 Add slide-in/slide-out animations
+  - [x] 2.4 Add copy button for error messages
+  - [x] 2.5 Ensure accessible (role="alert", aria-live)
 
-- [ ] Task 3: Create API Error Handler (AC: 2, 4)
-  - [ ] 3.1 Create `/frontend/apps/ppt-web/src/lib/errorHandler.ts`
-  - [ ] 3.2 Parse backend ErrorResponse format
-  - [ ] 3.3 Map error codes to user-friendly messages
-  - [ ] 3.4 Handle validation error arrays with field paths
-  - [ ] 3.5 Extract requestId for error reporting
+- [x] Task 3: Create API Error Handler (AC: 2, 4)
+  - [x] 3.1 Create `/frontend/apps/ppt-web/src/lib/errorHandler.ts`
+  - [x] 3.2 Parse backend ErrorResponse format
+  - [x] 3.3 Map error codes to user-friendly messages
+  - [x] 3.4 Handle validation error arrays with field paths
+  - [x] 3.5 Extract requestId for error reporting
 
-- [ ] Task 4: Implement Network Status Detection (AC: 3)
-  - [ ] 4.1 Create `/frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts`
-  - [ ] 4.2 Add online/offline event listeners
-  - [ ] 4.3 Create NetworkStatusProvider context
-  - [ ] 4.4 Create offline indicator component for header
-  - [ ] 4.5 Queue mutations when offline
+- [x] Task 4: Implement Network Status Detection (AC: 3)
+  - [x] 4.1 Create `/frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts`
+  - [x] 4.2 Add online/offline event listeners
+  - [x] 4.3 Create NetworkStatusProvider context
+  - [x] 4.4 Create offline indicator component for header
+  - [x] 4.5 Queue mutations when offline
 
-- [ ] Task 5: Implement Rate Limit Handling (AC: 5)
-  - [ ] 5.1 Add 429 handler to axios response interceptor
-  - [ ] 5.2 Parse Retry-After header
-  - [ ] 5.3 Show countdown toast
-  - [ ] 5.4 Automatically retry after delay
-  - [ ] 5.5 Disable action buttons during rate limit
+- [x] Task 5: Implement Rate Limit Handling (AC: 5)
+  - [x] 5.1 Add 429 handler to axios response interceptor
+  - [x] 5.2 Parse Retry-After header
+  - [x] 5.3 Show countdown toast
+  - [x] 5.4 Automatically retry after delay
+  - [x] 5.5 Disable action buttons during rate limit
 
-- [ ] Task 6: Wire Toast System Throughout App (AC: 1, 2, 3, 4, 5)
-  - [ ] 6.1 Add ToastProvider to App.tsx root
-  - [ ] 6.2 Create `useToast` hook for easy access
-  - [ ] 6.3 Add success toasts to all mutation onSuccess callbacks
-  - [ ] 6.4 Add error handler to global axios interceptor
-  - [ ] 6.5 Update all forms to show inline validation errors
+- [x] Task 6: Wire Toast System Throughout App (AC: 1, 2, 3, 4, 5)
+  - [x] 6.1 Add ToastProvider to App.tsx root
+  - [x] 6.2 Create `useToast` hook for easy access
+  - [x] 6.3 Add success toasts to all mutation onSuccess callbacks
+  - [x] 6.4 Add error handler to global axios interceptor
+  - [x] 6.5 Update all forms to show inline validation errors
 
 ## Dev Notes
 

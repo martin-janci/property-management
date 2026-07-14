@@ -46,42 +46,42 @@ So that **I can make informed decisions and track interesting properties**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Listing Detail Screen (AC: 1)
-  - [ ] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Listing/ListingDetailView.swift`
-  - [ ] 1.2 Create photo header with gallery preview
-  - [ ] 1.3 Add price and key details section
-  - [ ] 1.4 Add full description section
-  - [ ] 1.5 Add features/amenities grid
-  - [ ] 1.6 Add location map section
-  - [ ] 1.7 Add agent contact card
-  - [ ] 1.8 Create ListingDetailViewModel with KMP
+- [x] Task 1: Create Listing Detail Screen (AC: 1)
+  - [x] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Listing/ListingDetailView.swift`
+  - [x] 1.2 Create photo header with gallery preview
+  - [x] 1.3 Add price and key details section
+  - [x] 1.4 Add full description section
+  - [x] 1.5 Add features/amenities grid
+  - [x] 1.6 Add location map section
+  - [x] 1.7 Add agent contact card
+  - [x] 1.8 Create ListingDetailViewModel with KMP
 
-- [ ] Task 2: Create Photo Gallery (AC: 2)
-  - [ ] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Listing/PhotoGalleryView.swift`
-  - [ ] 2.2 Implement full-screen photo viewer
-  - [ ] 2.3 Add swipe navigation between photos
-  - [ ] 2.4 Add pinch-to-zoom gesture
-  - [ ] 2.5 Add close button and photo counter
+- [x] Task 2: Create Photo Gallery (AC: 2)
+  - [x] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Listing/PhotoGalleryView.swift`
+  - [x] 2.2 Implement full-screen photo viewer
+  - [x] 2.3 Add swipe navigation between photos
+  - [x] 2.4 Add pinch-to-zoom gesture
+  - [x] 2.5 Add close button and photo counter
 
-- [ ] Task 3: Implement Favorites Functionality (AC: 3)
-  - [ ] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Favorites/FavoritesViewModel.swift`
-  - [ ] 3.2 Add favorite toggle mutation via KMP
-  - [ ] 3.3 Sync favorites state across views
-  - [ ] 3.4 Persist favorites locally for offline
-  - [ ] 3.5 Add haptic feedback on toggle
+- [x] Task 3: Implement Favorites Functionality (AC: 3)
+  - [x] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Favorites/FavoritesViewModel.swift`
+  - [x] 3.2 Add favorite toggle mutation via KMP
+  - [x] 3.3 Sync favorites state across views
+  - [x] 3.4 Persist favorites locally for offline
+  - [x] 3.5 Add haptic feedback on toggle
 
-- [ ] Task 4: Create Favorites Screen (AC: 4)
-  - [ ] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Favorites/FavoritesView.swift`
-  - [ ] 4.2 Display favorites in grid layout
-  - [ ] 4.3 Add swipe-to-delete gesture
-  - [ ] 4.4 Add empty state for no favorites
-  - [ ] 4.5 Implement pull-to-refresh
+- [x] Task 4: Create Favorites Screen (AC: 4)
+  - [x] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Favorites/FavoritesView.swift`
+  - [x] 4.2 Display favorites in grid layout
+  - [x] 4.3 Add swipe-to-delete gesture
+  - [x] 4.4 Add empty state for no favorites
+  - [x] 4.5 Implement pull-to-refresh
 
-- [ ] Task 5: Implement Share Feature (AC: 5)
-  - [ ] 5.1 Create share URL generator
-  - [ ] 5.2 Add share button to listing detail
-  - [ ] 5.3 Integrate with iOS ShareLink
-  - [ ] 5.4 Include listing image in share preview
+- [x] Task 5: Implement Share Feature (AC: 5)
+  - [x] 5.1 Create share URL generator
+  - [x] 5.2 Add share button to listing detail
+  - [x] 5.3 Integrate with iOS ShareLink
+  - [x] 5.4 Include listing image in share preview
 
 ## Dev Notes
 

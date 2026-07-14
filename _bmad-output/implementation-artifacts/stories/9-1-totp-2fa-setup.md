@@ -30,53 +30,53 @@ So that **my account is protected even if password is compromised**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Database Schema & Migrations (AC: 1, 2, 3)
-  - [ ] 1.1 Create `user_2fa` table: id (UUID), user_id (FK), secret (encrypted), enabled (boolean), enabled_at, backup_codes (JSONB)
-  - [ ] 1.2 Add unique constraint on user_id
-  - [ ] 1.3 Add RLS policy - users can only access their own 2FA settings
-  - [ ] 1.4 Create index on user_id for fast lookup
+- [x] Task 1: Database Schema & Migrations (AC: 1, 2, 3)
+  - [x] 1.1 Create `user_2fa` table: id (UUID), user_id (FK), secret (encrypted), enabled (boolean), enabled_at, backup_codes (JSONB)
+  - [x] 1.2 Add unique constraint on user_id
+  - [x] 1.3 Add RLS policy - users can only access their own 2FA settings
+  - [x] 1.4 Create index on user_id for fast lookup
 
-- [ ] Task 2: Backend Domain Models & Repository (AC: 1, 2, 3)
-  - [ ] 2.1 Create TwoFactorAuth model with user_id, secret, enabled, enabled_at, backup_codes
-  - [ ] 2.2 Create DTOs: SetupTwoFactorRequest, VerifyTwoFactorRequest, BackupCode, TwoFactorStatus
-  - [ ] 2.3 Implement TwoFactorRepository: create, get_by_user_id, enable, disable, use_backup_code
+- [x] Task 2: Backend Domain Models & Repository (AC: 1, 2, 3)
+  - [x] 2.1 Create TwoFactorAuth model with user_id, secret, enabled, enabled_at, backup_codes
+  - [x] 2.2 Create DTOs: SetupTwoFactorRequest, VerifyTwoFactorRequest, BackupCode, TwoFactorStatus
+  - [x] 2.3 Implement TwoFactorRepository: create, get_by_user_id, enable, disable, use_backup_code
 
-- [ ] Task 3: TOTP Service Implementation (AC: 1, 2)
-  - [ ] 3.1 Add totp-rs crate to dependencies
-  - [ ] 3.2 Create TotpService for secret generation and code verification
-  - [ ] 3.3 Implement generate_secret() returning base32 secret
-  - [ ] 3.4 Implement verify_code(secret, code) with 30-second window
-  - [ ] 3.5 Implement generate_qr_data(email, secret) for QR code URI
+- [x] Task 3: TOTP Service Implementation (AC: 1, 2)
+  - [x] 3.1 Add totp-rs crate to dependencies
+  - [x] 3.2 Create TotpService for secret generation and code verification
+  - [x] 3.3 Implement generate_secret() returning base32 secret
+  - [x] 3.4 Implement verify_code(secret, code) with 30-second window
+  - [x] 3.5 Implement generate_qr_data(email, secret) for QR code URI
 
-- [ ] Task 4: Backup Codes Service (AC: 3)
-  - [ ] 4.1 Implement generate_backup_codes() returning 10 codes
-  - [ ] 4.2 Hash backup codes before storage (like password hashing pattern)
-  - [ ] 4.3 Implement verify_and_consume_backup_code()
+- [x] Task 4: Backup Codes Service (AC: 3)
+  - [x] 4.1 Implement generate_backup_codes() returning 10 codes
+  - [x] 4.2 Hash backup codes before storage (like password hashing pattern)
+  - [x] 4.3 Implement verify_and_consume_backup_code()
 
-- [ ] Task 5: Backend API Handlers (AC: 1, 2, 3)
-  - [ ] 5.1 POST /api/v1/auth/mfa/setup - initiate 2FA setup (returns QR code URI + backup codes)
-  - [ ] 5.2 POST /api/v1/auth/mfa/verify - verify TOTP code to complete setup
-  - [ ] 5.3 POST /api/v1/auth/mfa/disable - disable 2FA (requires current code)
-  - [ ] 5.4 GET /api/v1/auth/mfa/status - check if 2FA is enabled
-  - [ ] 5.5 Update login endpoint to check for 2FA and require code
-  - [ ] 5.6 POST /api/v1/auth/login/verify-mfa - verify MFA code during login
+- [x] Task 5: Backend API Handlers (AC: 1, 2, 3)
+  - [x] 5.1 POST /api/v1/auth/mfa/setup - initiate 2FA setup (returns QR code URI + backup codes)
+  - [x] 5.2 POST /api/v1/auth/mfa/verify - verify TOTP code to complete setup
+  - [x] 5.3 POST /api/v1/auth/mfa/disable - disable 2FA (requires current code)
+  - [x] 5.4 GET /api/v1/auth/mfa/status - check if 2FA is enabled
+  - [x] 5.5 Update login endpoint to check for 2FA and require code
+  - [x] 5.6 POST /api/v1/auth/login/verify-mfa - verify MFA code during login
 
-- [ ] Task 6: Frontend API Client (AC: 1, 2, 3)
-  - [ ] 6.1 Create security/types.ts with TwoFactorSetupResponse, VerifyMfaRequest, etc.
-  - [ ] 6.2 Create security/api.ts with fetch functions
-  - [ ] 6.3 Create security/hooks.ts with useSetupMfa, useVerifyMfa, useMfaStatus
+- [x] Task 6: Frontend API Client (AC: 1, 2, 3)
+  - [x] 6.1 Create security/types.ts with TwoFactorSetupResponse, VerifyMfaRequest, etc.
+  - [x] 6.2 Create security/api.ts with fetch functions
+  - [x] 6.3 Create security/hooks.ts with useSetupMfa, useVerifyMfa, useMfaStatus
 
-- [ ] Task 7: Frontend Components (AC: 1, 3)
-  - [ ] 7.1 Create TwoFactorSetupPage component
-  - [ ] 7.2 Create QRCodeDisplay component (using qrcode library)
-  - [ ] 7.3 Create BackupCodesDisplay component
-  - [ ] 7.4 Create TOTPCodeInput component (6-digit input)
-  - [ ] 7.5 Create TwoFactorStatusCard for settings display
+- [x] Task 7: Frontend Components (AC: 1, 3)
+  - [x] 7.1 Create TwoFactorSetupPage component
+  - [x] 7.2 Create QRCodeDisplay component (using qrcode library)
+  - [x] 7.3 Create BackupCodesDisplay component
+  - [x] 7.4 Create TOTPCodeInput component (6-digit input)
+  - [x] 7.5 Create TwoFactorStatusCard for settings display
 
-- [ ] Task 8: Frontend Login Flow Updates (AC: 2)
-  - [ ] 8.1 Update login flow to handle MFA_REQUIRED response
-  - [ ] 8.2 Create MfaVerificationStep component
-  - [ ] 8.3 Handle backup code option in MFA step
+- [x] Task 8: Frontend Login Flow Updates (AC: 2)
+  - [x] 8.1 Update login flow to handle MFA_REQUIRED response
+  - [x] 8.2 Create MfaVerificationStep component
+  - [x] 8.3 Handle backup code option in MFA step
 
 ## Dev Notes
 

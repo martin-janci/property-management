@@ -45,36 +45,36 @@ So that **I can access files without exposing storage credentials**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement S3 Presigned URL Service (AC: 1, 2, 5)
-  - [ ] 1.1 Create `/backend/crates/integrations/storage/src/presigned.rs`
-  - [ ] 1.2 Implement generate_download_url function
-  - [ ] 1.3 Configure URL expiration (default: 15 minutes)
-  - [ ] 1.4 Set Content-Type based on file extension
-  - [ ] 1.5 Set Content-Disposition for downloads
+- [x] Task 1: Implement S3 Presigned URL Service (AC: 1, 2, 5)
+  - [x] 1.1 Create `/backend/crates/integrations/storage/src/presigned.rs`
+  - [x] 1.2 Implement generate_download_url function
+  - [x] 1.3 Configure URL expiration (default: 15 minutes)
+  - [x] 1.4 Set Content-Type based on file extension
+  - [x] 1.5 Set Content-Disposition for downloads
 
-- [ ] Task 2: Update Documents Route (AC: 1, 3)
-  - [ ] 2.1 Update `/backend/servers/api-server/src/routes/documents.rs:1058`
-  - [ ] 2.2 Verify document access permissions
-  - [ ] 2.3 Generate presigned URL via storage service
-  - [ ] 2.4 Return URL and expiration to client
+- [x] Task 2: Update Documents Route (AC: 1, 3)
+  - [x] 2.1 Update `/backend/servers/api-server/src/routes/documents.rs:1058`
+  - [x] 2.2 Verify document access permissions
+  - [x] 2.3 Generate presigned URL via storage service
+  - [x] 2.4 Return URL and expiration to client
 
-- [ ] Task 3: Implement Upload Presigned URLs (AC: 4)
-  - [ ] 3.1 Update `/backend/servers/api-server/src/routes/documents.rs:1116`
-  - [ ] 3.2 Create upload request endpoint
-  - [ ] 3.3 Generate presigned PUT URL
-  - [ ] 3.4 Create pending upload record
-  - [ ] 3.5 Implement upload completion callback
+- [x] Task 3: Implement Upload Presigned URLs (AC: 4)
+  - [x] 3.1 Update `/backend/servers/api-server/src/routes/documents.rs:1116`
+  - [x] 3.2 Create upload request endpoint
+  - [x] 3.3 Generate presigned PUT URL
+  - [x] 3.4 Create pending upload record
+  - [x] 3.5 Implement upload completion callback
 
-- [ ] Task 4: Configure S3 CORS (AC: 4)
-  - [ ] 4.1 Add CORS configuration for direct upload
-  - [ ] 4.2 Allow PUT from frontend origins
-  - [ ] 4.3 Configure allowed headers
+- [x] Task 4: Configure S3 CORS (AC: 4)
+  - [x] 4.1 Add CORS configuration for direct upload
+  - [x] 4.2 Allow PUT from frontend origins
+  - [x] 4.3 Configure allowed headers
 
-- [ ] Task 5: Update Frontend Download Logic (AC: 1, 5)
-  - [ ] 5.1 Update document download to use presigned URLs
-  - [ ] 5.2 Handle URL expiration and retry
-  - [ ] 5.3 Show download progress
-  - [ ] 5.4 Handle download errors
+- [x] Task 5: Update Frontend Download Logic (AC: 1, 5)
+  - [x] 5.1 Update document download to use presigned URLs
+  - [x] 5.2 Handle URL expiration and retry
+  - [x] 5.3 Show download progress
+  - [x] 5.4 Handle download errors
 
 ## Dev Notes
 

@@ -46,42 +46,42 @@ So that **I can find relevant information even with different wording**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Set Up pgvector Extension (AC: 1)
-  - [ ] 1.1 Enable pgvector extension in PostgreSQL
-  - [ ] 1.2 Create vector column migration
-  - [ ] 1.3 Configure vector index (IVFFlat or HNSW)
-  - [ ] 1.4 Set up similarity search functions
+- [x] Task 1: Set Up pgvector Extension (AC: 1)
+  - [x] 1.1 Enable pgvector extension in PostgreSQL
+  - [x] 1.2 Create vector column migration
+  - [x] 1.3 Configure vector index (IVFFlat or HNSW)
+  - [x] 1.4 Set up similarity search functions
 
-- [ ] Task 2: Update Document Repository (AC: 1, 2)
-  - [ ] 2.1 Update `/backend/crates/db/src/repositories/llm_document.rs:434`
-  - [ ] 2.2 Add vector storage methods
-  - [ ] 2.3 Implement chunk storage with embeddings
-  - [ ] 2.4 Add batch upsert for efficiency
+- [x] Task 2: Update Document Repository (AC: 1, 2)
+  - [x] 2.1 Update `/backend/crates/db/src/repositories/llm_document.rs:434`
+  - [x] 2.2 Add vector storage methods
+  - [x] 2.3 Implement chunk storage with embeddings
+  - [x] 2.4 Add batch upsert for efficiency
 
-- [ ] Task 3: Implement Embedding Pipeline (AC: 2)
-  - [ ] 3.1 Create text extraction service
-  - [ ] 3.2 Implement chunking strategy
-  - [ ] 3.3 Integrate embedding model (OpenAI/local)
-  - [ ] 3.4 Create async processing queue
+- [x] Task 3: Implement Embedding Pipeline (AC: 2)
+  - [x] 3.1 Create text extraction service
+  - [x] 3.2 Implement chunking strategy
+  - [x] 3.3 Integrate embedding model (OpenAI/local)
+  - [x] 3.4 Create async processing queue
 
-- [ ] Task 4: Implement Semantic Search (AC: 3)
-  - [ ] 4.1 Update `/backend/crates/db/src/repositories/llm_document.rs:471`
-  - [ ] 4.2 Create semantic search query
-  - [ ] 4.3 Implement k-NN search with pgvector
-  - [ ] 4.4 Add relevance scoring
+- [x] Task 4: Implement Semantic Search (AC: 3)
+  - [x] 4.1 Update `/backend/crates/db/src/repositories/llm_document.rs:471`
+  - [x] 4.2 Create semantic search query
+  - [x] 4.3 Implement k-NN search with pgvector
+  - [x] 4.4 Add relevance scoring
 
-- [ ] Task 5: Implement Hybrid Search (AC: 4)
-  - [ ] 5.1 Create keyword search component
-  - [ ] 5.2 Combine with semantic results
-  - [ ] 5.3 Implement RRF (Reciprocal Rank Fusion)
-  - [ ] 5.4 Expose hybrid mode option
+- [x] Task 5: Implement Hybrid Search (AC: 4)
+  - [x] 5.1 Create keyword search component
+  - [x] 5.2 Combine with semantic results
+  - [x] 5.3 Implement RRF (Reciprocal Rank Fusion)
+  - [x] 5.4 Expose hybrid mode option
 
-- [ ] Task 6: Implement RAG API (AC: 5)
-  - [ ] 6.1 Create RAG query endpoint
-  - [ ] 6.2 Retrieve relevant context
-  - [ ] 6.3 Send context to LLM
-  - [ ] 6.4 Format response with citations
-  - [ ] 6.5 Handle long context windows
+- [x] Task 6: Implement RAG API (AC: 5)
+  - [x] 6.1 Create RAG query endpoint
+  - [x] 6.2 Retrieve relevant context
+  - [x] 6.3 Send context to LLM
+  - [x] 6.4 Format response with citations
+  - [x] 6.5 Handle long context windows
 
 ## Dev Notes
 

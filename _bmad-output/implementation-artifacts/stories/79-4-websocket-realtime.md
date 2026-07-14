@@ -45,43 +45,43 @@ So that **I always see the latest information without manually refreshing the pa
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create WebSocket Service (AC: 1, 5)
-  - [ ] 1.1 Create `/frontend/apps/ppt-web/src/lib/websocket.ts`
-  - [ ] 1.2 Implement WebSocket connection with auth token
-  - [ ] 1.3 Add automatic reconnection with exponential backoff
-  - [ ] 1.4 Create connection state machine (connecting, connected, disconnected, error)
-  - [ ] 1.5 Implement heartbeat/ping-pong mechanism
+- [x] Task 1: Create WebSocket Service (AC: 1, 5)
+  - [x] 1.1 Create `/frontend/apps/ppt-web/src/lib/websocket.ts`
+  - [x] 1.2 Implement WebSocket connection with auth token
+  - [x] 1.3 Add automatic reconnection with exponential backoff
+  - [x] 1.4 Create connection state machine (connecting, connected, disconnected, error)
+  - [x] 1.5 Implement heartbeat/ping-pong mechanism
 
-- [ ] Task 2: Create WebSocket Context and Provider (AC: 1, 2, 3, 4)
-  - [ ] 2.1 Create `/frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx`
-  - [ ] 2.2 Expose connection state and methods via context
-  - [ ] 2.3 Create `useWebSocket` hook for subscribing to events
-  - [ ] 2.4 Integrate with AuthContext for auth token
+- [x] Task 2: Create WebSocket Context and Provider (AC: 1, 2, 3, 4)
+  - [x] 2.1 Create `/frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx`
+  - [x] 2.2 Expose connection state and methods via context
+  - [x] 2.3 Create `useWebSocket` hook for subscribing to events
+  - [x] 2.4 Integrate with AuthContext for auth token
 
-- [ ] Task 3: Implement Message Event Handling (AC: 2)
-  - [ ] 3.1 Subscribe to `message:new` WebSocket events
-  - [ ] 3.2 Update messages query cache on new message
-  - [ ] 3.3 Update unread count in header
-  - [ ] 3.4 Play notification sound (with user preference check)
-  - [ ] 3.5 Show browser notification (if permitted)
+- [x] Task 3: Implement Message Event Handling (AC: 2)
+  - [x] 3.1 Subscribe to `message:new` WebSocket events
+  - [x] 3.2 Update messages query cache on new message
+  - [x] 3.3 Update unread count in header
+  - [x] 3.4 Play notification sound (with user preference check)
+  - [x] 3.5 Show browser notification (if permitted)
 
-- [ ] Task 4: Implement Notification Sync (AC: 3)
-  - [ ] 4.1 Update `/frontend/packages/api-client/src/notification-preferences/sync.ts`
-  - [ ] 4.2 Subscribe to `notification:*` WebSocket events
-  - [ ] 4.3 Filter events based on user preferences
-  - [ ] 4.4 Display real-time notification toasts
+- [x] Task 4: Implement Notification Sync (AC: 3)
+  - [x] 4.1 Update `/frontend/packages/api-client/src/notification-preferences/sync.ts`
+  - [x] 4.2 Subscribe to `notification:*` WebSocket events
+  - [x] 4.3 Filter events based on user preferences
+  - [x] 4.4 Display real-time notification toasts
 
-- [ ] Task 5: Implement Query Invalidation System (AC: 4)
-  - [ ] 5.1 Create event-to-query-key mapping configuration
-  - [ ] 5.2 Subscribe to entity change events (`entity:updated`, `entity:created`, `entity:deleted`)
-  - [ ] 5.3 Invalidate relevant TanStack Query caches
-  - [ ] 5.4 Add subtle "Data updated" indicator component
+- [x] Task 5: Implement Query Invalidation System (AC: 4)
+  - [x] 5.1 Create event-to-query-key mapping configuration
+  - [x] 5.2 Subscribe to entity change events (`entity:updated`, `entity:created`, `entity:deleted`)
+  - [x] 5.3 Invalidate relevant TanStack Query caches
+  - [x] 5.4 Add subtle "Data updated" indicator component
 
-- [ ] Task 6: Implement Reconnection and Sync (AC: 5)
-  - [ ] 6.1 Track last event timestamp for gap detection
-  - [ ] 6.2 Fetch missed events on reconnection via REST endpoint
-  - [ ] 6.3 Apply missed events to update local state
-  - [ ] 6.4 Show reconnection status in toast
+- [x] Task 6: Implement Reconnection and Sync (AC: 5)
+  - [x] 6.1 Track last event timestamp for gap detection
+  - [x] 6.2 Fetch missed events on reconnection via REST endpoint
+  - [x] 6.3 Apply missed events to update local state
+  - [x] 6.4 Show reconnection status in toast
 
 ## Dev Notes
 
