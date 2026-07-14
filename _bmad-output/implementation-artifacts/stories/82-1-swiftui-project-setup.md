@@ -1,6 +1,6 @@
 # Story 82.1: SwiftUI Project Setup
 
-Status: pending
+Status: done
 
 > **Note (2026-06-17):** This is a *legacy build* story. It is **implemented in
 > code** — see `mobile-native/iosApp/` and `docs/superpowers/plans/gap-82-1-swiftui-audit.md`.

@@ -1,6 +1,6 @@
 # Story 82.2: Navigation and Routing
 
-Status: pending
+Status: done
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 84.5: pgvector RAG Migration
 
-Status: pending
+Status: done
 
 ## Story
 

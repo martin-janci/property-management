@@ -1,6 +1,6 @@
 # Story 84.2: E-Signature Email Integration
 
-Status: pending
+Status: done
 
 ## Story
 

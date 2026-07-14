@@ -1,6 +1,6 @@
 # Story 82.4: Listing Detail and Favorites
 
-Status: pending
+Status: done
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 9.1: TOTP Two-Factor Authentication Setup
 
-Status: in-progress
+Status: done
 
 ## Story
 

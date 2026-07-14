@@ -1,6 +1,6 @@
 # Story 84.4: Notification Trigger System
 
-Status: pending
+Status: done
 
 ## Story
 

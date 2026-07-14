@@ -1,6 +1,6 @@
 # Story 82.5: Inquiries and Account
 
-Status: pending
+Status: done
 
 ## Story
 

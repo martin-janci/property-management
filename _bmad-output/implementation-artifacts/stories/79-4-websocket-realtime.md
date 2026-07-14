@@ -1,6 +1,6 @@
 # Story 79.4: WebSocket Real-time Integration
 
-Status: pending
+Status: done
 
 ## Story
 
