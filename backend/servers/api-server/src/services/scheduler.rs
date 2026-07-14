@@ -5,7 +5,8 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, MeterRepository,
-    SessionRepository, SignatureRequestRepository, UnitResidentRepository, VoteRepository,
+    ReportScheduleRepository, SessionRepository, SignatureRequestRepository, UnitResidentRepository,
+    VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -75,6 +76,8 @@ pub struct SchedulerMetrics {
     pub signature_requests_expired: u64,
     pub sessions_cleaned: u64,
     pub login_attempts_cleaned: u64,
+    /// Report schedules fired by the due-work consumer (issue #2303).
+    pub report_schedules_fired: u64,
     pub errors: u64,
 }
 
@@ -89,6 +92,7 @@ pub struct Scheduler {
     signature_request_repo: SignatureRequestRepository,
     e_signature_nonce_repo: ESignatureNonceRepository,
     financial_repo: FinancialRepository,
+    report_schedule_repo: ReportScheduleRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -117,6 +121,7 @@ impl Scheduler {
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             financial_repo: FinancialRepository::new(pool.clone()),
+            report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -142,6 +147,7 @@ impl Scheduler {
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             financial_repo: FinancialRepository::new(pool.clone()),
+            report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -173,6 +179,7 @@ impl Scheduler {
             signature_requests_expired: guard.signature_requests_expired,
             sessions_cleaned: guard.sessions_cleaned,
             login_attempts_cleaned: guard.login_attempts_cleaned,
+            report_schedules_fired: guard.report_schedules_fired,
             errors: guard.errors,
         }
     }
@@ -274,6 +281,12 @@ impl Scheduler {
         // Story 11.6: Transition overdue invoices and fire escalation
         if let Err(e) = self.transition_overdue_invoices().await {
             tracing::error!("Failed to transition overdue invoices: {}", e);
+            self.increment_errors();
+        }
+
+        // Issue #2303: fire due report schedules and advance next_run_at.
+        if let Err(e) = self.fire_due_report_schedules().await {
+            tracing::error!("Failed to fire due report schedules: {}", e);
             self.increment_errors();
         }
     }
@@ -1339,6 +1352,97 @@ impl Scheduler {
         .fetch_all(&self.pool)
         .await?;
         Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
+    // ========================================================================
+    // Issue #2303: Report Schedule Due-Work Consumer
+    // ========================================================================
+
+    /// Fire report schedules that are due and advance their `next_run_at`
+    /// (issue #2303, finding 1 — the previously-missing due-work consumer).
+    ///
+    /// Before this, `report_schedules.next_run_at` was write-only: `create` and
+    /// `update_schedule` set it but nothing ever selected schedules by it, so
+    /// scheduled reports never fired. This mirrors the workflow
+    /// (`list_due_schedules` + `update_schedule_after_run`) and automation
+    /// (`get_due_rules` + `update_next_run`) loops:
+    ///
+    /// 1. select active schedules whose `next_run_at` has elapsed,
+    /// 2. record a `pending` execution for each so the fire is observable in the
+    ///    Story 81.2 execution-history endpoints, then
+    /// 3. advance `last_run_at`/`next_run_at` using the schedule's canonical
+    ///    cadence (`compute_next_run_for_schedule` — cron_expression when set,
+    ///    else the legacy frequency/time columns; finding 2).
+    ///
+    /// Advancing is what stops a schedule whose `next_run_at` is in the past from
+    /// re-firing on every 60s tick. A cadence that yields no future run parks the
+    /// schedule (NULL `next_run_at`) rather than spinning.
+    ///
+    /// NOTE: actual report *generation* and email delivery are a downstream
+    /// concern — a future generator worker consumes the `pending` executions
+    /// recorded here and transitions them to completed/failed. This method owns
+    /// only the select-fire-advance loop.
+    async fn fire_due_report_schedules(&self) -> Result<(), common::errors::AppError> {
+        let due = self.report_schedule_repo.get_due_schedules().await?;
+        if due.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(count = due.len(), "Firing due report schedules");
+
+        let now = chrono::Utc::now();
+        let mut fired = 0u64;
+
+        for schedule in &due {
+            // Record the fire in execution history (Story 81.2). If this fails,
+            // skip the advance so the schedule stays due and retries next tick
+            // instead of silently losing the run.
+            if let Err(e) = self.report_schedule_repo.record_execution(schedule.id).await {
+                tracing::error!(
+                    schedule_id = %schedule.id,
+                    error = %e,
+                    "Failed to record report execution — leaving schedule due for retry"
+                );
+                continue;
+            }
+
+            // Recompute the next fire from the schedule's canonical cadence.
+            let next = crate::routes::reports::compute_next_run_for_schedule(schedule, now);
+            if next.is_none() {
+                tracing::warn!(
+                    schedule_id = %schedule.id,
+                    "Could not compute next_run_at — parking schedule (next_run_at set NULL)"
+                );
+            }
+
+            if let Err(e) = self
+                .report_schedule_repo
+                .advance_after_run(schedule.id, next)
+                .await
+            {
+                tracing::error!(
+                    schedule_id = %schedule.id,
+                    error = %e,
+                    "Failed to advance report schedule after fire"
+                );
+                continue;
+            }
+
+            fired += 1;
+            tracing::info!(
+                schedule_id = %schedule.id,
+                organization_id = %schedule.organization_id,
+                next_run_at = ?next,
+                "Fired report schedule and advanced next_run_at"
+            );
+        }
+
+        if fired > 0 {
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.report_schedules_fired += fired;
+        }
+
+        Ok(())
     }
 
     /// Helper to increment error count in metrics.
