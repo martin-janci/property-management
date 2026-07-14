@@ -1,0 +1,38 @@
+{
+ "generator": "dispatcher-tier1d-dev-review",
+ "generated_at": "2026-07-15",
+ "segment_reviewed": "reality-web",
+ "selection_reason": "Tier-1d demand-driven run (research backlog starved). CHURN_FILES empty. By state.review_cursor the nominal oldest is ppt-web-core (2026-07-07), but ppt-web-core was already covered twice on 2026-07-14 by tier1d runs (signal files 2026-07-14-ppt-web-core*.json), so re-reviewing would duplicate. Among segments with NO coverage in the 2026-07-13/14 tier1d flurry, reality-web has the oldest actual signal date (2026-07-12) and is not backlog-saturated (0 open code-review-finding items). Prioritized recently-churned files (favorites/price-alert PR #2287, AgencyDashboard #2280, SSO callback). Deliberately avoided the three 2026-07-14 reality-web findings (JSON-LD XSS, bootstrap-script XSS, kill-switch i18n in layout.tsx) — zero overlap.",
+ "experts_used": [
+  "frontend"
+ ],
+ "findings_count": 2,
+ "signals": [
+  {
+   "id": "code-review-reality-web-pricealert-mut-noerr",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "reality-web",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "evidence": [
+    "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — markAllRead.mutate() and markRead.mutate(alert.id) are fired with no onError handler and no isError/error branch consumed for either mutation (useMarkFavoriteAlertRead / useMarkAllFavoriteAlertsRead). If the mark-read POST fails (network/500), the error is silently swallowed: the row stays visually 'unread', the button re-enables, and the user gets no feedback or retry cue. The query error IS handled (line ~105) but the mutation errors are not — a persistently failing mark-read looks like a broken/ignored click. Verified: onError absent; only isPending is consumed for disabling."
+   ],
+   "expert": "frontend"
+  },
+  {
+   "id": "code-review-reality-web-sso-callback-i18n",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "reality-web",
+   "score_delta": 1,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "evidence": [
+    "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:67,91,94,105 — SSO callback ('use client') page renders hardcoded English user-facing strings ('Invalid state token. Please try logging in again.', 'Login Failed', 'Return Home', 'Completing login...') with NO next-intl import (no useTranslations; verified the file imports only next/navigation + react). This page lives under [locale] and is hit by every SSO login redirect, so cs/de/sk users see untranslated English at a critical auth step. Sibling components (AgencyDashboard, PriceAlerts) all use useTranslations, making this the outlier i18n gap."
+   ],
+   "expert": "frontend"
+  }
+ ]
+}
