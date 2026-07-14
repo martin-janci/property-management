@@ -4390,6 +4390,137 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "title": "NFCCredentialManager + NFCAccessController: zero tests on building-access security path",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review:mobile-rn:2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/index.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "title": "DashboardScreen silently shows zeros on API failure — no isError branch or ErrorBoundary",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review:mobile-rn:2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication — a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage.",
+        "resolved: PR #2304 (fix(mobile): surface dashboard load errors instead of silent zeros) merged 2026-07-14 — dashboard now surfaces load errors."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "title": "DeepLinkManager auth-gated routing (pending-link queue, dispatch-after-auth) has no test",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review:mobile-rn:2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "title": "reality-web favorites/alerts new subroute shipped without a screen-map doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2287"
+      ],
+      "evidence": [
+        "PR #2287 introduced frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx (price-alert subscription surface for story 84.3) but no docs/screens/reality/*.md was added or updated; the `favorites.md` doc doesn't mention the new /favorites/alerts sub-route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/layout.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/page.tsx",
+        "docs/screens/reality/favorites.md"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "title": "ppt-web portal-webhook-status manager surface shipped without a screen-map doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 (gap-83-3 portal webhook status manager surface) touched App.tsx + routes/groups/core.tsx but no matching docs/screens/ppt/*.md was added; no `portal-webhook*.md` doc exists in docs/screens/ppt/ for the new manager surface."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "title": "ppt-web reports create-new-schedule flow shipped without a screen-map doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2292"
+      ],
+      "evidence": [
+        "PR #2292 (feat(reports) wire Create-new-schedule flow to backend, gap-81-1) touched routes/groups/reports.tsx (adding reports.create-schedule.route.test.tsx) but no docs/screens/ppt/*.md was updated; existing reports.md doesn't cover the new create-schedule flow."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/reports.create-schedule.route.test.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }

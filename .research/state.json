@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_run_iso": "2026-07-14T04:20:49Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 2304,
+  "last_issue_seen": 2303,
+  "last_commit_sha": "5323170",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -592,7 +592,14 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "code-review-mobile-rn-nfc-no-tests",
+    "code-review-mobile-rn-dashboard-no-err-ui",
+    "code-review-mobile-rn-deeplink-mgr-untested",
+    "screen-map-drift-pr-2287-reality",
+    "screen-map-drift-pr-2294-ppt",
+    "screen-map-drift-pr-2292-ppt",
+    "dep-update-noise-pr-2296"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -602,12 +609,12 @@
     "ppt-web-ui": "2026-07-13",
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-07-13",
-    "mobile-rn": "2026-06-16",
+    "mobile-rn": "2026-07-14",
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
-    "vectors_created": 183,
+    "runs": 45,
+    "vectors_created": 189,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0

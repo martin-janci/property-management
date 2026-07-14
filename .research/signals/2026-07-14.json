@@ -1,0 +1,216 @@
+{
+  "generated_at": "2026-07-14",
+  "generated_by": "routine",
+  "run_kind": "normal",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "expert": "tester",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard, emergencyRevokeAll, refresh/expiry logic; grep repo-wide returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, midnight-crossing time-restriction windows) plus handleTap() transmit/log flow; no test exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes exported publicly with no *.test.* or __tests__ coverage."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls and never reads .isError/.error; render has no error branch and no ErrorBoundary above. Silent-failure landing screen on API errors.",
+        "auto-resolved same run: PR #2304 (Closes #2282) surfaces dashboard load errors + adds DashboardScreen.test.tsx."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "expert": "tester",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager pending-link queue + dispatch-after-auth has no test; the sole test (universalLinks.test.ts) only covers parseDeepLink.",
+        "consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts — auth-boundary logic is uncovered."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2287 (feat(reality-web): price-alert subscription surface for favorites, story 84.3) added frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx — a new subroute — but no docs/screens/reality/*.md was added or updated; favorites.md doesn't cover the alerts subroute."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2294 (gap-83-3 portal webhook status manager surface, ppt-web) touched App.tsx + routes/groups/core.tsx (added a portal-webhook manager surface) but no matching docs/screens/ppt/*.md exists or was added for it."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2292 (feat(reports) wire Create-new-schedule flow to backend, gap-81-1) added routes/groups/reports.create-schedule.route.test.tsx and modified reports.tsx (new create-schedule flow), but no docs/screens/ppt/reports.md update to cover it."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2296",
+      "type": "dep-update-noise",
+      "source": "PR #2296",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(backend): bump yanked spin 0.9.8/0.10.0 -> 0.9.9/0.10.1 to unblock cargo-deny gate on all PRs — pure lockfile/version bump, no code semantics change."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 matches '# 2026-07-14'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (cursors + seen_signals)",
+      "observed": "last_pr_seen 2271 -> 2304; last_issue_seen 2272 -> 2303; last_commit_sha updated; seen_signals grew by 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in prior seen_signals with non-zero score_delta",
+      "observed": "true — all 7 signals fresh IDs",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap and decay applied",
+      "observed": "no score > 8; no open items >14d old at run start (backlog was 0 open)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no plans created this run",
+      "observed": "0 new plans (Phase 3 skipped)",
+      "expected": "n/a — vacuously satisfied"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans, each meets readiness gates",
+      "observed": "0 new plans this run",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no application code touched on routine commit",
+      "observed": "staged diff only in .research/",
+      "expected": "0 non-.research/ paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regenerated view",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "11 active plans unchanged; 6 archived unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "6 == 6 (unchanged)",
+      "expected": "≥ HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regenerated view",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped this run so no-op)",
+      "observed": "pm_cursor.next_index unchanged from HEAD; Phase 1.6 skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
