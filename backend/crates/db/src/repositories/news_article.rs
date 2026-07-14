@@ -39,7 +39,7 @@ impl NewsArticleRepository {
                 cover_image_url, building_ids, status, published_at,
                 comments_enabled, reactions_enabled
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::article_status, $9, $10, $11)
             RETURNING *
             "#,
         )
@@ -134,7 +134,7 @@ impl NewsArticleRepository {
                    published_at, pinned, view_count, reaction_count, comment_count, created_at
             FROM news_articles
             WHERE organization_id = $1
-              AND ($2::text IS NULL OR status = $2)
+              AND ($2::text IS NULL OR status = $2::article_status)
               AND ($3::uuid IS NULL OR building_ids @> to_jsonb($3::uuid))
               AND ($4::bool IS NULL OR $4 = FALSE OR pinned = TRUE)
             ORDER BY pinned DESC, published_at DESC NULLS LAST, created_at DESC
@@ -167,7 +167,7 @@ impl NewsArticleRepository {
             SELECT COUNT(*)
             FROM news_articles
             WHERE organization_id = $1
-              AND ($2::text IS NULL OR status = $2)
+              AND ($2::text IS NULL OR status = $2::article_status)
               AND ($3::uuid IS NULL OR building_ids @> to_jsonb($3::uuid))
               AND ($4::bool IS NULL OR $4 = FALSE OR pinned = TRUE)
             "#,
@@ -208,7 +208,7 @@ impl NewsArticleRepository {
                 excerpt = COALESCE($5, excerpt),
                 cover_image_url = COALESCE($6, cover_image_url),
                 building_ids = COALESCE($7, building_ids),
-                status = COALESCE($8, status),
+                status = COALESCE($8::article_status, status),
                 comments_enabled = COALESCE($9, comments_enabled),
                 reactions_enabled = COALESCE($10, reactions_enabled),
                 updated_at = NOW()
@@ -238,7 +238,7 @@ impl NewsArticleRepository {
         published_at: Option<DateTime<Utc>>,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3, published_at = COALESCE($4, NOW()) WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, published_at = COALESCE($4, NOW()) WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
         .bind(organization_id)
@@ -255,7 +255,7 @@ impl NewsArticleRepository {
         organization_id: Uuid,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3, archived_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, archived_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
         .bind(organization_id)
@@ -271,7 +271,7 @@ impl NewsArticleRepository {
         organization_id: Uuid,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3, archived_at = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, archived_at = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
         .bind(organization_id)
