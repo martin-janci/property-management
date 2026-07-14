@@ -132,8 +132,11 @@ async function scanEpics(dir: string, product: Product): Promise<CandidateScreen
   } catch {
     return [];
   }
+  // Capture an optional upper-cased letter suffix (10A/10B/7B convention, see
+  // docs/EPIC_STORY_STATUS.md) and strip leading zeros so the synthesized
+  // candidate matches the unpadded `Epic-10A` frontmatter refs.
   const epics = entries
-    .map((entry) => entry.match(/^EPIC-(\d+)/i)?.[1])
+    .map((entry) => entry.match(/^EPIC-0*(\d+[A-Z]*)/i)?.[1]?.toUpperCase())
     .filter((id): id is string => Boolean(id));
   return [...new Set(epics)].map((num) => ({
     id: `${product}/epic-${num}`,

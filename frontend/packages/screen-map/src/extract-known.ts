@@ -11,7 +11,11 @@ export interface KnownContexts {
  * Extract the "known IDs" sets that drive the drift-context optional checks
  * in `scanDrift`. Sources:
  * - `docs/use-cases.md` — regex `\bUC-(\d+(?:\.\d+)?)\b`.
- * - `docs/epics/EPIC-NNN-*.md` — regex `^EPIC-(\d+)` on filenames.
+ * - `docs/epics/EPIC-NNN-*.md` — regex `^EPIC-0*(\d+[A-Z]*)` on filenames. The
+ *   optional letter suffix preserves the established `10A`/`10B`/`7B` epic
+ *   convention (see `docs/EPIC_STORY_STATUS.md`); leading zeros are stripped and
+ *   the suffix is upper-cased so the extracted id matches the unpadded frontmatter
+ *   refs (`Epic-10A`, not `Epic-010A`).
  * - `frontend/packages/ui-kit/src/index.ts` — `export { Foo, Bar }` and `export const Baz`
  *   (excludes `export type` lines so type-only exports aren't treated as components).
  *
@@ -44,8 +48,8 @@ async function extractEpics(repoRoot: string): Promise<Set<string>> {
     const entries = await readdir(path.join(repoRoot, 'docs/epics'));
     const out = new Set<string>();
     for (const entry of entries) {
-      const m = entry.match(/^EPIC-(\d+)/i);
-      if (m) out.add(`Epic-${m[1]}`);
+      const m = entry.match(/^EPIC-0*(\d+[A-Z]*)/i);
+      if (m) out.add(`Epic-${m[1].toUpperCase()}`);
     }
     return out;
   } catch (err) {

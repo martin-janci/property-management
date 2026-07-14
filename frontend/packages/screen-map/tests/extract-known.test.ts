@@ -25,13 +25,31 @@ describe('extractKnownContexts', () => {
     expect(ctx.knownUseCases.has('UC-13')).toBe(true);
   });
 
-  it('extracts Epic IDs from docs/epics/*.md filenames', async () => {
+  it('extracts Epic IDs from docs/epics/*.md filenames (leading zeros stripped)', async () => {
     await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
     await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-001-foo.md'), '');
     await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-002-bar.md'), '');
     const ctx = await extractKnownContexts(tmpRoot);
-    expect(ctx.knownEpics.has('Epic-001')).toBe(true);
-    expect(ctx.knownEpics.has('Epic-002')).toBe(true);
+    // Numeric prefixes normalize to the unpadded frontmatter form (`Epic-1`),
+    // matching how `epics:` refs are written in screen-map frontmatter.
+    expect(ctx.knownEpics.has('Epic-1')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-2')).toBe(true);
+  });
+
+  it('preserves and upper-cases letter-suffixed epics (10A/10B/7B convention)', async () => {
+    await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
+    // Letter-suffixed epic — must round-trip to the canonical `Epic-10A`.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-010A-oauth.md'), '');
+    // Plain numeric epic — must still collapse to `Epic-10`, not `Epic-010`.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-010-platform.md'), '');
+    // Lowercase suffix normalizes so `Epic-7b` and `Epic-7B` don't diverge.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-007b-docs.md'), '');
+    const ctx = await extractKnownContexts(tmpRoot);
+    expect(ctx.knownEpics.has('Epic-10A')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-10')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-7B')).toBe(true);
+    // The letter-suffixed epic must NOT collapse to the bare numeric prefix.
+    expect(ctx.knownEpics.has('Epic-010A')).toBe(false);
   });
 
   it('extracts component names from frontend/packages/ui-kit exports', async () => {
