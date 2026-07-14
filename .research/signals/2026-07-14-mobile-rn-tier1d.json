@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-14T12:10:00Z",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 2 < floor 36). No fresh CHURN_FILES from Phase 1; hotspot_history stale (May/Jun). Oldest-unreviewed by state.review_cursor: mobile-rn = 2026-06-16 (oldest of 8). Not backlog-saturated (0 open code-review-finding items for mobile-rn). Note: a separate 2026-07-14-mobile-rn.json run already filed NFC-untested / deeplink-untested / dashboard-error-UI; these 3 findings are de-duplicated against it (NFC overlap dropped) and written to a distinct file to avoid clobbering.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-fault-category-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:340 — getCategoryLabel() returns hardcoded English strings ('Plumbing','Electrical','HVAC',...) rendered as category-button labels at line 437, so the fault-category picker never localizes; the adjacent priority buttons correctly use t(`faults.${p.labelKey}`) at line 464. An in-code comment admits 'these would ideally come from translations'."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-console-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:149 — console.error('Failed to submit meter reading:', error) left unconditional in the committed submit handler; unlike the push-token logs guarded by __DEV__ in usePushNotifications.ts:240/267, this one ships to production."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/ (FeedbackManager.ts, HelpCenter.ts, TourManager.ts) — singleton managers consumed by 4 live screens/components (FeedbackScreen, HelpCenterScreen, TourOverlay, ContextualHelp) have no test file anywhere in the repo",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:20 — imports feedbackManager; the manager's state/logic is exercised in production but never covered by a unit test"
+      ],
+      "expert": "tester"
+    }
+  ]
+}

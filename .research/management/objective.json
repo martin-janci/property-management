@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "gh-issue-2303",
   "selected_at": "2026-07-14T10:13:15Z",
-  "last_action": "repick",
-  "reason": "prior target 'gh-issue-2301' exhausted; closest-to-done is 'gh-issue-2303' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
