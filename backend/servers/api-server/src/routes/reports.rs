@@ -2674,8 +2674,8 @@ pub async fn update_schedule(
 #[cfg(test)]
 mod tests {
     use super::{
-        compute_first_next_run, compute_next_run_after, compute_next_run_from_cron,
-        compute_next_run_for_schedule, cron_field_matches, parse_time_hhmm, validate_cron_expression,
+        compute_first_next_run, compute_next_run_after, compute_next_run_for_schedule,
+        compute_next_run_from_cron, cron_field_matches, parse_time_hhmm, validate_cron_expression,
         validate_time_hhmm, ReportSchedule,
     };
     use chrono::{Datelike, LocalResult, TimeZone, Timelike, Utc};

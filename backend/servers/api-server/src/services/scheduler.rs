@@ -5,8 +5,8 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, MeterRepository,
-    ReportScheduleRepository, SessionRepository, SignatureRequestRepository, UnitResidentRepository,
-    VoteRepository,
+    ReportScheduleRepository, SessionRepository, SignatureRequestRepository,
+    UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -1397,7 +1397,11 @@ impl Scheduler {
             // Record the fire in execution history (Story 81.2). If this fails,
             // skip the advance so the schedule stays due and retries next tick
             // instead of silently losing the run.
-            if let Err(e) = self.report_schedule_repo.record_execution(schedule.id).await {
+            if let Err(e) = self
+                .report_schedule_repo
+                .record_execution(schedule.id)
+                .await
+            {
                 tracing::error!(
                     schedule_id = %schedule.id,
                     error = %e,
