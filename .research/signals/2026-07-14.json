@@ -16,7 +16,8 @@
         "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard, emergencyRevokeAll, refresh/expiry logic; grep repo-wide returns zero test files referencing NFCCredentialManager.",
         "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, midnight-crossing time-restriction windows) plus handleTap() transmit/log flow; no test exercises this security-critical decision path.",
         "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes exported publicly with no *.test.* or __tests__ coverage."
-      ]
+      ],
+      "plan_promoted": "plans/code-review-mobile-rn-nfc-no-tests.md"
     },
     {
       "id": "code-review-mobile-rn-dashboard-no-err-ui",
@@ -131,15 +132,15 @@
     {
       "goal": "G6",
       "passed": true,
-      "command": "no plans created this run",
-      "observed": "0 new plans (Phase 3 skipped)",
-      "expected": "n/a — vacuously satisfied"
+      "command": "adversarial pass on each new plan",
+      "observed": "1 new plan (code-review-mobile-rn-nfc-no-tests) — adversarial pass: passed (source→hypothesis→approach→test-plan chain verified; test plan will fail today and pass after change; midnight-crossing negative-mutation check locks the security-relevant branch)",
+      "expected": "matching annotation in brief"
     },
     {
       "goal": "G7",
       "passed": true,
       "command": "at most 2 new plans, each meets readiness gates",
-      "observed": "0 new plans this run",
+      "observed": "1 new plan: 4 metadata fields present, 11 required headings present, 1 capability checkbox ticked (C6), Mode declared (cloud-ok), Files bullets all resolve on disk",
       "expected": "≤2"
     },
     {

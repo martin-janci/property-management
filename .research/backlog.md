@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-14 04:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-14 04:24 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -18,7 +18,7 @@
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
-| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | NFCCredentialManager + NFCAccessController: zero tests on building-access security path | open | 2026-07-14 |  |
+| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | NFCCredentialManager + NFCAccessController: zero tests on building-access security path | ready | 2026-07-14 | [plan](plans/code-review-mobile-rn-nfc-no-tests.md) |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | refactor | `refactor-documents-rs-hot` | documents.rs churn-hot — 10,659 lines over 14d | done | 2026-05-25 |  |
