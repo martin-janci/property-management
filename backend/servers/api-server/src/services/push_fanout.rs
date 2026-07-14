@@ -2057,7 +2057,10 @@ mod tests {
             // Android-only symmetric.
             (ProviderOutcome::NotConfigured, ProviderOutcome::NoTargets),
             // Neither provider configured.
-            (ProviderOutcome::NotConfigured, ProviderOutcome::NotConfigured),
+            (
+                ProviderOutcome::NotConfigured,
+                ProviderOutcome::NotConfigured,
+            ),
             // Both configured, user has zero registered devices.
             (ProviderOutcome::NoTargets, ProviderOutcome::NoTargets),
         ] {
