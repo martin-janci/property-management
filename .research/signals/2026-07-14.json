@@ -1,0 +1,353 @@
+{
+  "generated_at": "2026-07-14T20:15:00Z",
+  "routine": "daily-research-routine",
+  "since": {
+    "last_pr_seen": 2271,
+    "last_issue_seen": 2272,
+    "last_commit_sha": "1691c9d",
+    "last_run_iso": "2026-07-13T02:11:42Z"
+  },
+  "observation_summary": {
+    "merged_prs": 30,
+    "pr_range": "#2273-#2315",
+    "open_prs_touched": 1,
+    "closed_not_merged": 0,
+    "new_issues": 1,
+    "closed_issues": 12,
+    "commits_on_dev": 30
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-14",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "meta",
+      "evidence": [
+        "last_run_iso=2026-07-13T02:11:42Z → 41h ago (>36h threshold); note yesterday was a 3.6h quick run"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "routes/news_articles.rs:685 — delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(state.db.clone()).delete(id) on the raw pool",
+        "crates/db/src/repositories/news_article.rs:247 — delete() runs `DELETE FROM news_articles WHERE id = $1` with no organization_id filter",
+        "crates/db/src/repositories/news_article.rs:237 — restore() `UPDATE news_articles ... WHERE id = $1` also filters by id only, no org scope",
+        "crates/db/src/repositories/news_article.rs:16-22 — NewsArticleRepository holds a raw DbPool (not RlsConnection); contrast signatures.rs which takes `mut rls: RlsConnection`",
+        "crates/db/migrations/00069_create_news_media.sql — news_articles only ENABLEs RLS (never FORCE); migration 00165 documents api-server runs with BYPASSRLS/owner, so the tenant-isolation policy is inert for these raw-pool queries",
+        "routes/news_articles.rs:651,769,802 — restore_article/add_media/delete_media share the same unscoped raw-pool pattern (cross-tenant read+write+delete). Contrast repo delete_comment() which scopes `WHERE id=$1 AND user_id=$2`."
+      ],
+      "expert": "rust",
+      "issue": 2314,
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-announcements-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:1-12 — no react-i18next import / no useTranslation() anywhere in the file (confirmed via grep for t( and useTranslation).",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:241 — placeholder=\"Search announcements...\" hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:256,261-268 — \"Loading…\", \"Couldn't load announcements\", raw error.message shown to user, \"No announcements\", \"Check back later for updates\" all hardcoded English, unlike sibling screens (ReportFaultScreen.tsx, DocumentUploadScreen.tsx, DashboardScreen.tsx) which wrap all copy in t(...). Screen is untranslated for sk/cs/de locales."
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-queue-swallow-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:327-334 — network failure in handleSubmit is caught, the fault is queued for later, and the original error is discarded via `void error;` with no logging, so a genuine 4xx validation/auth failure (not a transient network drop) is silently retried offline with no diagnostic trail.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:446-448 — the outer processQueue catch only does console.error('Failed to process queue:', error) with no user-facing surface or telemetry hook, so queue-level failures (e.g. AsyncStorage write failure) are invisible in production."
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts — 311-line class (Epic 49 Story 49.2) with async native-module bridging (startListening/stopListening/Siri shortcuts/App Actions), a state machine, and error swallowing (try/catch returning false silently); no VoiceAssistant.test.ts exists anywhere in the repo (repo-wide grep for VoiceAssistant in *.test.* returned zero matches).",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts — 319-line command parsing/execution logic (parseVoiceCommand/executeVoiceCommand) that drives app navigation from speech input; also has zero test coverage repo-wide."
+      ],
+      "expert": "tester",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-fault-category-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:340 — getCategoryLabel() returns hardcoded English strings ('Plumbing','Electrical','HVAC',...) rendered as category-button labels at line 437, so the fault-category picker never localizes; the adjacent priority buttons correctly use t(`faults.${p.labelKey}`) at line 464. An in-code comment admits 'these would ideally come from translations'."
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-console-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:149 — console.error('Failed to submit meter reading:', error) left unconditional in the committed submit handler; unlike the push-token logs guarded by __DEV__ in usePushNotifications.ts:240/267, this one ships to production."
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/ (FeedbackManager.ts, HelpCenter.ts, TourManager.ts) — singleton managers consumed by 4 live screens/components (FeedbackScreen, HelpCenterScreen, TourOverlay, ContextualHelp) have no test file anywhere in the repo",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:20 — imports feedbackManager; the manager's state/logic is exercised in production but never covered by a unit test"
+      ],
+      "expert": "tester",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "expert": "tester",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication — a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage."
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "expert": "tester",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 — useBuildingUnits calls raw fetch('/api/v1/units?...') with only a Content-Type header and no auth Bearer token (all other calls go through @ppt/api-client's token provider), so the protected endpoint 401s in production",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:83,90 — the resulting error is swallowed (query isError discarded, units: data ?? []), so every person-months building/bulk/unit view silently shows zero units"
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:159-160 — /dashboard/manager and /dashboard/resident are wired without <ProtectedRoute>; the comment claims 'the target page handles auth + role-based fan-out'",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx & ResidentDashboardPage.tsx — neither page uses useAuth/isAuthenticated/Navigate, so the guard fails open: an unauthenticated visitor (incl. the /dashboard redirect at core.tsx:158) renders the dashboard shell instead of being sent to /login"
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API session payload across the client boundary, defeating type-checking; if the wire shape diverges from SessionRow (e.g. is_current vs isCurrent), s.isCurrent at line 85 reads undefined and hasOtherSessions/revoke-all logic silently misbehaves"
+      ],
+      "expert": "frontend",
+      "routine_note": "consolidated from dispatcher Tier-1d dev-review file"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 grep # 2026-07-14",
+      "observed": "will pass after brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursor comparison vs HEAD",
+      "observed": "last_pr_seen 2271→2316, last_issue_seen 2272→2314, +14 signals, +13 vectors, runs 44→45",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] uniqueness",
+      "observed": "199 items, 199 unique ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal ids not in prior seen_signals",
+      "observed": "all 14 signal ids are new (none in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "max score in backlog = 6, no scores >8; no open items >14 days old to decay this run",
+      "expected": "cap<=8, decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans this run × adversarial pass annotation",
+      "observed": "0 new plans this run — trivially passes",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans + gate checks",
+      "observed": "0 new plans this run — trivially passes",
+      "expected": "≤2 new plans, all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "will confirm at stage — all writes under .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "will confirm at stage — no secrets in artefacts",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen from backlog.json",
+      "observed": "verified byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phase failures — Phase 1.5/1.6 skipped by policy, not by failure",
+      "expected": "cursors match failed phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present or archived",
+      "observed": "no plans moved this run",
+      "expected": "each prior plan resolvable"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive/ file count vs HEAD",
+      "observed": "no archive change this run",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "verified byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions=[] — kill switch not set, no candidate met certainty bar",
+      "expected": "≤1/type, no repeats"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor validity",
+      "observed": "Phase 1.6 skipped this run (dispatcher covers PM state via daily commits) — gate is no-op",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token grep on staged diff",
+      "observed": "no telegram-related content in artefacts",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met certainty bar this run — 13 code-review-finding signals are dispatcher-owned (planner picks them up next cycle); no screen-map-drift/orphan/fixme/stalled/lockfile signals emitted"
+}

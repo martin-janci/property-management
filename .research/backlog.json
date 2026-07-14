@@ -4390,6 +4390,285 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "title": "Cross-tenant IDOR + data-loss in news_articles handlers (raw pool, no org scope)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "deferred",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14",
+        "issue #2314",
+        "PR #2316"
+      ],
+      "evidence": [
+        "routes/news_articles.rs:685 — delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(state.db.clone()).delete(id) on the raw pool",
+        "crates/db/src/repositories/news_article.rs:247 — delete() runs `DELETE FROM news_articles WHERE id = $1` with no organization_id filter",
+        "crates/db/src/repositories/news_article.rs:237 — restore() `UPDATE news_articles ... WHERE id = $1` also filters by id only, no org scope",
+        "crates/db/src/repositories/news_article.rs:16-22 — NewsArticleRepository holds a raw DbPool (not RlsConnection); contrast signatures.rs which takes `mut rls: RlsConnection`",
+        "crates/db/migrations/00069_create_news_media.sql — news_articles only ENABLEs RLS (never FORCE); migration 00165 documents api-server runs with BYPASSRLS/owner, so the tenant-isolation policy is inert for these raw-pool queries",
+        "routes/news_articles.rs:651,769,802 — restore_article/add_media/delete_media share the same unscoped raw-pool pattern (cross-tenant read+write+delete). Contrast repo delete_comment() which scopes `WHERE id=$1 AND user_id=$2`.",
+        "[deferred] fix in flight via PR #2316 (dispatcher gh-issue-2314) — awaiting human review + merge; next routine run will detect merge and flip to done"
+      ],
+      "files": [
+        "rs",
+        "sql"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-announcements-i18n",
+      "title": "Mobile RN AnnouncementsScreen hardcodes English strings — no i18n on user-facing copy",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:1-12 — no react-i18next import / no useTranslation() anywhere in the file (confirmed via grep for t( and useTranslation).",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:241 — placeholder=\"Search announcements...\" hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:256,261-268 — \"Loading…\", \"Couldn't load announcements\", raw error.message shown to user, \"No announcements\", \"Check back later for updates\" all hardcoded English, unlike sibling screens (ReportFaultScreen.tsx, DocumentUploadScreen.tsx, DashboardScreen.tsx) which wrap all copy in t(...). Screen is untranslated for sk/cs/de locales."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-queue-swallow-error",
+      "title": "Mobile RN offline queue swallows errors, silently drops actions on transient failures",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:327-334 — network failure in handleSubmit is caught, the fault is queued for later, and the original error is discarded via `void error;` with no logging, so a genuine 4xx validation/auth failure (not a transient network drop) is silently retried offline with no diagnostic trail.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:446-448 — the outer processQueue catch only does console.error('Failed to process queue:', error) with no user-facing surface or telemetry hook, so queue-level failures (e.g. AsyncStorage write failure) are invisible in production."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-no-tests",
+      "title": "Mobile RN voice module has zero tests despite being a mutating user-input surface",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts — 311-line class (Epic 49 Story 49.2) with async native-module bridging (startListening/stopListening/Siri shortcuts/App Actions), a state machine, and error swallowing (try/catch returning false silently); no VoiceAssistant.test.ts exists anywhere in the repo (repo-wide grep for VoiceAssistant in *.test.* returned zero matches).",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts — 319-line command parsing/execution logic (parseVoiceCommand/executeVoiceCommand) that drives app navigation from speech input; also has zero test coverage repo-wide."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-fault-category-i18n",
+      "title": "Mobile RN fault category labels hardcoded English — misses i18n contract",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:340 — getCategoryLabel() returns hardcoded English strings ('Plumbing','Electrical','HVAC',...) rendered as category-button labels at line 437, so the fault-category picker never localizes; the adjacent priority buttons correctly use t(`faults.${p.labelKey}`) at line 464. An in-code comment admits 'these would ideally come from translations'."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meter-console-error",
+      "title": "Mobile RN meter screen throws unhandled console.error on invalid reading input",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:149 — console.error('Failed to submit meter reading:', error) left unconditional in the committed submit handler; unlike the push-token logs guarded by __DEV__ in usePushNotifications.ts:240/267, this one ships to production."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "title": "Mobile RN onboarding flow untested — first-run experience has zero coverage",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/ (FeedbackManager.ts, HelpCenter.ts, TourManager.ts) — singleton managers consumed by 4 live screens/components (FeedbackScreen, HelpCenterScreen, TourOverlay, ContextualHelp) have no test file anywhere in the repo",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:20 — imports feedbackManager; the manager's state/logic is exercised in production but never covered by a unit test"
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "title": "Mobile RN NFC credential/access modules (security-critical) have zero test coverage",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "title": "Mobile RN dashboard silently renders zero data on API errors (no error UI)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication — a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "title": "Mobile RN DeeplinkManager (auth-token bridging) untested — critical bridge with zero coverage",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "title": "ppt-web person-months units fetch missing Bearer token — silent 401 on auth-gated endpoint",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 — useBuildingUnits calls raw fetch('/api/v1/units?...') with only a Content-Type header and no auth Bearer token (all other calls go through @ppt/api-client's token provider), so the protected endpoint 401s in production",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:83,90 — the resulting error is swallowed (query isError discarded, units: data ?? []), so every person-months building/bulk/unit view silently shows zero units"
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "title": "ppt-web manager/resident dashboards routed without ProtectedRoute — role-gate hole",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:159-160 — /dashboard/manager and /dashboard/resident are wired without <ProtectedRoute>; the comment claims 'the target page handles auth + role-based fan-out'",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx & ResidentDashboardPage.tsx — neither page uses useAuth/isAuthenticated/Navigate, so the guard fails open: an unauthenticated visitor (incl. the /dashboard redirect at core.tsx:158) renders the dashboard shell instead of being sent to /login"
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "title": "ppt-web SessionsPage performs redundant double-cast, obscuring type-safety",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d dev-review 2026-07-14"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API session payload across the client boundary, defeating type-checking; if the wire shape diverges from SessionRow (e.g. is_current vs isCurrent), s.isCurrent at line 85 reads undefined and hasOtherSessions/revoke-all logic silently misbehaves"
+      ],
+      "files": [
+        "ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }
