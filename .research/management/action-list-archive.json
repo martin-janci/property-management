@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-14T08:22:10Z",
+  "archived_at": "2026-07-14T12:16:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5879,6 +5879,32 @@
         "merged_pr": 2307,
         "merged_at": "2026-07-14T08:17:10Z",
         "at": "2026-07-14T08:21:53Z"
+      }
+    },
+    {
+      "id": "gh-issue-2302",
+      "action": "Follow-up: screen-map epic extractor can't represent letter-suffixed epics (10A/10B/7B) that PR #2297 canonicalized (PR #2297) (Closes #2302)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2302)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2302,
+        "url": "https://github.com/martin-janci/property-management/issues/2302",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-14T12:16:32Z",
+      "dev_reconciled": {
+        "pr": 2311,
+        "merge_sha": "1b4f6d13",
+        "at": "2026-07-14T12:16:32Z"
       }
     },
     {

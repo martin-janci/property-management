@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-14T12:10:48Z",
+  "generated": "2026-07-14T12:16:32Z",
   "assignments": [
     {
       "task_id": "gh-issue-2300",
@@ -44,28 +44,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2302",
-      "branch": "auto-impl/gh-issue-2302-da3e0e02",
-      "status": "review",
-      "claimed_at": "2026-07-14T10:08:48Z",
-      "last_updated": "2026-07-14T12:10:48Z",
-      "status_changed_at": "2026-07-14T10:23:04Z",
-      "pr_number": 2311,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2311",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=2311 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=widened epic regex to match unpadded letter-suffixed refs (Epic-10A); vitest/typecheck/biome green",
-      "reviewer_summary": "verdict=approve head_oid=84163ae7ebe00c49fa1a4ec557f153eb50f36f8f note=letter-suffix-epic-regex-correct-tests-green-scopedrift-is-owner-map-artifact-self-approve-blocked-posted-as-comment",
-      "last_reviewed_oid": "84163ae7ebe00c49fa1a4ec557f153eb50f36f8f",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-07-14T12:10:48Z"
     },
     {
       "task_id": "gh-issue-2303",

@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "gap-84-5-migrate-embeddings-to-pgvector-not-wired",
-      "action": "migrate_embeddings_to_pgvector not wired to any HTTP route \u2014 no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
+      "action": "migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,
@@ -15,7 +15,7 @@
     },
     {
       "id": "gap-84-4-mobile-os-push-fcm-apns-transport",
-      "action": "Mobile OS push (FCM/APNs) transport deferred \u2014 Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)",
+      "action": "Mobile OS push (FCM/APNs) transport deferred — Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,
@@ -51,7 +51,7 @@
     },
     {
       "id": "gap-81-1-frontend-create-new-schedule-ui-missing",
-      "action": "Frontend Create new schedule UI missing \u2014 no CreateScheduleModal/hook found (81-1-report-schedule-editing Report Schedule Editing)",
+      "action": "Frontend Create new schedule UI missing — no CreateScheduleModal/hook found (81-1-report-schedule-editing Report Schedule Editing)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": null,
@@ -63,7 +63,7 @@
     },
     {
       "id": "gap-81-1-update-schedule-does-not-recompute-next",
-      "action": "update_schedule does NOT recompute next_run_at when cron_expression changes \u2014 stale fire time (issue #2242 finding still present) (81-1-report-schedule-editing Report Schedule Editing)",
+      "action": "update_schedule does NOT recompute next_run_at when cron_expression changes — stale fire time (issue #2242 finding still present) (81-1-report-schedule-editing Report Schedule Editing)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": null,
@@ -99,7 +99,7 @@
     },
     {
       "id": "gap-83-2-booking-com-connect-happy-path-fetch",
-      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests \u2014 documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
+      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests — documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
       "owner_role": "pm-integration",
       "priority": "low",
       "dependency": null,
@@ -151,7 +151,7 @@
     },
     {
       "id": "gh-issue-2300",
-      "action": "Follow-up: pgvector back-fill copies vectors without provenance \u2014 doesn't fix (and can worsen) embedding-space mixing (PR #2291) (Closes #2300)",
+      "action": "Follow-up: pgvector back-fill copies vectors without provenance — doesn't fix (and can worsen) embedding-space mixing (PR #2291) (Closes #2300)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -171,7 +171,7 @@
     },
     {
       "id": "gh-issue-2301",
-      "action": "Follow-up: harden gap-84-4 push wiring \u2014 regression guard doesn't pin the fix, iOS-only honest-metrics edge, double token fetch (PR #2290) (Closes #2301)",
+      "action": "Follow-up: harden gap-84-4 push wiring — regression guard doesn't pin the fix, iOS-only honest-metrics edge, double token fetch (PR #2290) (Closes #2301)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -183,26 +183,6 @@
       "issue_ref": {
         "number": 2301,
         "url": "https://github.com/martin-janci/property-management/issues/2301",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2302",
-      "action": "Follow-up: screen-map epic extractor can't represent letter-suffixed epics (10A/10B/7B) that PR #2297 canonicalized (PR #2297) (Closes #2302)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2302)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-14T04:04:36Z",
-      "issue_ref": {
-        "number": 2302,
-        "url": "https://github.com/martin-janci/property-management/issues/2302",
         "labels": [
           "follow-up",
           "from-merged-review"
