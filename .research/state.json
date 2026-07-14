@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_run_iso": "2026-07-14T18:12:00Z",
+  "last_run_ms": 45000,
+  "last_pr_seen": 2315,
+  "last_issue_seen": 2314,
+  "last_commit_sha": "9353278",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -143,14 +143,14 @@
       "recent_churn": 75
     },
     "backend/servers/api-server/src/routes/reports.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 134
+      "runs_seen": 2,
+      "last_seen": "2026-07-14",
+      "recent_churn": 3275
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-12",
-      "recent_churn": 4
+      "runs_seen": 4,
+      "last_seen": "2026-07-14",
+      "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-09",
-      "recent_churn": 2818
+      "runs_seen": 2,
+      "last_seen": "2026-07-14",
+      "recent_churn": 3185
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -592,7 +592,9 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "lag-warning-2026-07-14",
+    "dep-update-noise-pr-2296"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -602,11 +604,11 @@
     "ppt-web-ui": "2026-07-13",
     "ppt-web-core": "2026-07-07",
     "reality-web": "2026-07-13",
-    "mobile-rn": "2026-06-16",
+    "mobile-rn": "2026-07-14",
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
+    "runs": 45,
     "vectors_created": 183,
     "plans_created": 14,
     "quiet_days": 2,
@@ -623,19 +625,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-07-14",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

@@ -1,6 +1,16 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Regenerated header: 2026-07-14 — daily PM rotation upkeep. Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data), coverage_cursor idx 12 → 0 (13 epics, wrap). Body content below dates to the last full deep scan; the on-demand `/ppt-project-management scan` is the authoritative rebuild._
+
+## 2026-07-14 pm-security snapshot (rotating role, short)
+
+- Open security PR #2316 (draft, `needs-human-review`) addresses cross-tenant IDOR in `news_articles` handlers (issue #2314) — same class as #2279. Reviewer verdict=approve captured, waiting on human sign-off for the hot-path merge; blocker is the security-hot-path human-gate, not code.
+- Recent security merges since last run (day-window): #2286 (portal-webhook replay/freshness), #2289 (AI chat by-session IDOR fix, issue #2279).
+- No new security follow-ups filed this run beyond what the dispatcher already tracks.
+
+---
+
+_Original body follows (deep scan 2026-06-16)._
 
 ## Executive summary
 

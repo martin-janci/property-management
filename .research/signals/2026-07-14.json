@@ -1,0 +1,196 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-14",
+      "type": "lag_warning",
+      "source": "routine-last-run 2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-07-13T02:11:42Z; now 2026-07-14T18:12Z \u2192 39h lag (36h threshold)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..HEAD",
+      "score_delta": 0,
+      "evidence": [
+        "Top-3 churn (code) this run: backend/servers/api-server/src/routes/reports.rs = 3275 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "cumulative re-emit \u2014 no score delta"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..HEAD",
+      "score_delta": 0,
+      "evidence": [
+        "Top-3 churn (code) this run: backend/crates/integrations/src/booking/mod.rs = 3185 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "cumulative re-emit \u2014 no score delta"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..HEAD",
+      "score_delta": 0,
+      "evidence": [
+        "Top-3 churn (code) this run: backend/servers/api-server/src/routes/auth.rs = 2950 lines"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "cumulative re-emit \u2014 no score delta"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 0,
+      "evidence": [
+        "auth.rs prev_runs_seen=3, this-run churn=2950 \u2014 cumulative re-emit"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "cumulative re-emit \u2014 no score delta"
+    },
+    {
+      "id": "dep-update-noise-pr-2296",
+      "type": "dep-update-noise",
+      "source": "PR #2296",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2296: chore(backend): bump yanked spin 0.9.8/0.10.0 \u2192 0.9.9/0.10.1 (unblocks cargo-deny)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq dedup w/ cumulative allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay checks",
+      "observed": "cap: no score>8; decay: 0 open items \u2014 nothing to decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans adversarial pass",
+      "observed": "0 new plans this run \u2014 vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count + shape",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no plan changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "now=7 prev=7",
+      "expected": "now>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[]; kill switch not set; no eligible signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + cursor advance",
+      "observed": "action-list/risks parse; project-state.md non-empty; pm_cursor 5\u21926; coverage_cursor 12\u21920 (13 epics)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-13T18:40:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-14T18:10:00Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
     "orphan_screens": [
@@ -1102,14 +1102,16 @@
         "POST /schedules implemented via PR #2179/#2220 with validation, RBAC, next_run_at via compute_first_next_run",
         "PUT /schedules/{id} implemented with cron/recipient validation",
         "Screen-map buildStatus: shipped; EditScheduleModal + ScheduleList + CronPicker shipped",
-        "DST-transition tests merged (PR #2264)"
+        "DST-transition tests merged (PR #2264)",
+        "[2026-07-14] PR #2295: gap-81-1: recompute report schedule next_run_at on cron edit",
+        "[2026-07-14] PR #2292: gap-81-1-frontend-create-new-schedule-ui-missing: wire Create-new-schedule flow "
       ],
       "gaps": [
         "update_schedule does NOT recompute next_run_at when cron_expression changes \u2014 stale fire time (issue #2242 finding still present)",
         "Frontend Create new schedule UI missing \u2014 no CreateScheduleModal/hook found"
       ],
       "epic": "epic-81",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -1192,13 +1194,14 @@
         "booking_channel.rs (42.9KB) + install.rs + oauth.rs; OTA XML fully parsed",
         "booking_handler_routes_tests.rs (898 lines) + oauth tests (719 lines) + CSRF + OTA envelope tests (#2230)",
         "Booking.com card + property-mapping wizard wired in IntegrationsPage.tsx with tests",
-        "screen-map settings-integrations.md shipped/complete"
+        "screen-map settings-integrations.md shipped/complete",
+        "[2026-07-14] PR #2315: gap-83-2-booking-com-connect-happy-path-fetch: exercise Booking.com fetch_proper"
       ],
       "gaps": [
         "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests \u2014 documented limitation, needs base-URL seam like Airbnb's (#2240 pattern)"
       ],
       "epic": "epic-83",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1221,7 +1224,9 @@
       "evidence": [
         "handle_portal_webhook with HMAC-SHA256 verification implemented (webhook.rs)",
         "portal_webhook_signature_tests.rs + empty-secret fail-closed regression (#2267)",
-        "HMAC + env provisioning + docker wiring merged (#2214/#2259/#2267)"
+        "HMAC + env provisioning + docker wiring merged (#2214/#2259/#2267)",
+        "[2026-07-14] PR #2294: gap-83-3: portal webhook status manager surface (ppt-web)",
+        "[2026-07-14] PR #2286: gap-83-3-replay-protection: add freshness/timestamp window to portal webhook"
       ],
       "gaps": [
         "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs \u2014 HMAC proves authenticity but not freshness",
@@ -1229,7 +1234,7 @@
         "no screen-map match (backend-only or unmapped)"
       ],
       "epic": "epic-83",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": []
     },
     {
@@ -1245,13 +1250,14 @@
       "evidence": [
         "storage.rs tagged Story 84.1 with presigned URL support",
         "documents/core.rs implements presigned download + preview endpoints (15min/1hr TTL)",
-        "No presigned PUT/upload endpoint \u2014 uploads remain server-proxied multipart"
+        "No presigned PUT/upload endpoint \u2014 uploads remain server-proxied multipart",
+        "[2026-07-14] PR #2309: gap-84-1: add presigned PUT endpoint for direct client-to-S3 upload"
       ],
       "gaps": [
         "No presigned PUT endpoint for client-to-S3 direct upload \u2014 uploads still proxy through the server"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1273,14 +1279,15 @@
       "owner_role": "pm-integration",
       "evidence": [
         "signatures.rs implements HMAC-signed signing URL generation and signer invitation emails",
-        "LightweightProvider is the wired path; DocuSign optional stub"
+        "LightweightProvider is the wired path; DocuSign optional stub",
+        "[2026-07-14] PR #2306: gap-84-2-no-screen-map-entry-for-a: add screen-map for signer-facing e-sign page"
       ],
       "gaps": [
         "No frontend UI component consuming the signature request flow",
         "No screen-map entry for a signature/e-sign screen in shipped state"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": [
         {
           "screen_id": "ppt/document-detail",
@@ -1305,7 +1312,10 @@
       "evidence": [
         "portal.rs implements price_changed detection via original_price vs current price",
         "reality-server favorites handlers expose price_alert_enabled and get_price_alerts",
-        "docs/screens/reality/favorites.md buildStatus=in-progress (not shipped)"
+        "docs/screens/reality/favorites.md buildStatus=in-progress (not shipped)",
+        "[2026-07-14] PR #2288: gap-84-3-no-mobile-native-price-tracking-surface: mobile-native price-tracking s",
+        "[2026-07-14] PR #2287: gap-84-3-no-dedicated-price-alert-subscription-ui: price-alert subscription surf",
+        "[2026-07-14] PR #2285: gap-84-3-reality-favorites-screen-map-not-shipped: ship reality/favorites screen"
       ],
       "gaps": [
         "No dedicated price-alert subscription UI in reality-web",
@@ -1314,7 +1324,7 @@
         "no screen-map match (backend-only or unmapped)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": []
     },
     {
@@ -1329,14 +1339,17 @@
       "owner_role": "pm-backend",
       "evidence": [
         "common/notifications/mod.rs: full multi-channel pipeline (Push/Email/InApp) with TransportAdapter traits",
-        "critical_notifications.rs wires the pipeline; dispatch_to_users used across voting/agencies/signatures"
+        "critical_notifications.rs wires the pipeline; dispatch_to_users used across voting/agencies/signatures",
+        "[2026-07-14] PR #2310: gh-issue-2301: harden gap-84-4 push wiring (honest metrics, single token fetch, ",
+        "[2026-07-14] PR #2290: gap-84-4: route pipeline push through FCM+APNs combined adapter (real iOS transp",
+        "[2026-07-14] PR #2293: gap-84-4: add notification-trigger management UI (ppt-web)"
       ],
       "gaps": [
         "Mobile OS push (FCM/APNs) transport deferred \u2014 Push channel has no real device transport",
         "No frontend notification-trigger management UI"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": [
         {
           "screen_id": "ppt/privacy-settings",
@@ -1359,14 +1372,15 @@
       "evidence": [
         "RAG search/embedding-write handlers wired (#2165/#2173) + hardening (#2221) + clamp fix (#2256) + provenance tests (#2265/#2273)",
         "llm_document.rs implements search_documents_by_embedding + migrate_embeddings_to_pgvector",
-        "ai.rs wires RAG_SEMANTIC_SEARCH_ENABLED flag to chat handler"
+        "ai.rs wires RAG_SEMANTIC_SEARCH_ENABLED flag to chat handler",
+        "[2026-07-14] PR #2291: gap-84-5-migrate-embeddings-to-pgvector-not-wired: wire migrate_embeddings_to_pg"
       ],
       "gaps": [
         "migrate_embeddings_to_pgvector not wired to any HTTP route \u2014 no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search)",
         "no screen-map match (backend-only or unmapped)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-14",
       "screen_refs": []
     }
   ]
