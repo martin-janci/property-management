@@ -40,7 +40,7 @@ impl NewsArticleRepository {
                 comments_enabled, reactions_enabled
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::article_status, $9, $10, $11)
-            RETURNING *
+            RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at
             "#,
         )
         .bind(organization_id)
@@ -73,7 +73,7 @@ impl NewsArticleRepository {
         organization_id: Uuid,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "SELECT * FROM news_articles WHERE id = $1 AND organization_id = $2",
+            "SELECT id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at FROM news_articles WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(organization_id)
@@ -130,7 +130,7 @@ impl NewsArticleRepository {
 
         let articles = sqlx::query_as::<_, ArticleSummary>(
             r#"
-            SELECT id, title, excerpt, cover_image_url, author_id, status,
+            SELECT id, title, excerpt, cover_image_url, author_id, status::TEXT AS status,
                    published_at, pinned, view_count, reaction_count, comment_count, created_at
             FROM news_articles
             WHERE organization_id = $1
@@ -213,7 +213,7 @@ impl NewsArticleRepository {
                 reactions_enabled = COALESCE($10, reactions_enabled),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $2
-            RETURNING *
+            RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -238,7 +238,7 @@ impl NewsArticleRepository {
         published_at: Option<DateTime<Utc>>,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3::article_status, published_at = COALESCE($4, NOW()) WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, published_at = COALESCE($4, NOW()) WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at",
         )
         .bind(id)
         .bind(organization_id)
@@ -255,7 +255,7 @@ impl NewsArticleRepository {
         organization_id: Uuid,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3::article_status, archived_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, archived_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at",
         )
         .bind(id)
         .bind(organization_id)
@@ -271,7 +271,7 @@ impl NewsArticleRepository {
         organization_id: Uuid,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $3::article_status, archived_at = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
+            "UPDATE news_articles SET status = $3::article_status, archived_at = NULL WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at",
         )
         .bind(id)
         .bind(organization_id)
@@ -305,7 +305,7 @@ impl NewsArticleRepository {
     ) -> Result<Option<NewsArticle>, SqlxError> {
         if pinned {
             sqlx::query_as::<_, NewsArticle>(
-                "UPDATE news_articles SET pinned = TRUE, pinned_at = NOW(), pinned_by = $3 WHERE id = $1 AND organization_id = $2 RETURNING *",
+                "UPDATE news_articles SET pinned = TRUE, pinned_at = NOW(), pinned_by = $3 WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at",
             )
             .bind(id)
             .bind(organization_id)
@@ -314,7 +314,7 @@ impl NewsArticleRepository {
             .await
         } else {
             sqlx::query_as::<_, NewsArticle>(
-                "UPDATE news_articles SET pinned = FALSE, pinned_at = NULL, pinned_by = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
+                "UPDATE news_articles SET pinned = FALSE, pinned_at = NULL, pinned_by = NULL WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id, author_id, title, content, excerpt, cover_image_url, building_ids, status::TEXT AS status, published_at, archived_at, pinned, pinned_at, pinned_by, comments_enabled, reactions_enabled, view_count, reaction_count, comment_count, share_count, created_at, updated_at",
             )
             .bind(id)
             .bind(organization_id)
