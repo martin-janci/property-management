@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-14",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer fully drained, 0 claimable; in-repo backlog 100% terminal). state.review_cursor listed mobile-rn last-reviewed 2026-06-16 (oldest of 8 segments) and it is churn-aligned (announcements/AnnouncementsScreen.tsx + disputes/documents hotspots). NOTE: the cursor was stale — mobile-rn had in fact already been reviewed twice earlier today (2026-07-14-mobile-rn.json, 2026-07-14-mobile-rn-tier1d.json). A pivot pass on the next-oldest untouched-today segment (mobile-native-kmp, 2026-07-12) was run but yielded almost entirely id-level duplicates of the 2026-07-07/07-09 kmp runs (createlisting-stub, ssoservice-no-test, realtorrepo-no-test), so its output is discarded. The mobile-rn experts examined a disjoint file set (announcements/, voice/, faults offline-queue) from the prior mobile-rn runs (which hit nfc/, dashboard/, deeplink, meter, onboarding), producing genuinely fresh, non-duplicate findings — verified against both of today's mobile-rn signal files. Not backlog-saturated (0 open code-review-finding items for mobile-rn in backlog.json).",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-announcements-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:1-12 — no react-i18next import / no useTranslation() anywhere in the file (confirmed via grep for t( and useTranslation).",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:241 — placeholder=\"Search announcements...\" hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:256,261-268 — \"Loading…\", \"Couldn't load announcements\", raw error.message shown to user, \"No announcements\", \"Check back later for updates\" all hardcoded English, unlike sibling screens (ReportFaultScreen.tsx, DocumentUploadScreen.tsx, DashboardScreen.tsx) which wrap all copy in t(...). Screen is untranslated for sk/cs/de locales."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-queue-swallow-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:327-334 — network failure in handleSubmit is caught, the fault is queued for later, and the original error is discarded via `void error;` with no logging, so a genuine 4xx validation/auth failure (not a transient network drop) is silently retried offline with no diagnostic trail.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:446-448 — the outer processQueue catch only does console.error('Failed to process queue:', error) with no user-facing surface or telemetry hook, so queue-level failures (e.g. AsyncStorage write failure) are invisible in production."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts — 311-line class (Epic 49 Story 49.2) with async native-module bridging (startListening/stopListening/Siri shortcuts/App Actions), a state machine, and error swallowing (try/catch returning false silently); no VoiceAssistant.test.ts exists anywhere in the repo (repo-wide grep for VoiceAssistant in *.test.* returned zero matches).",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts — 319-line command parsing/execution logic (parseVoiceCommand/executeVoiceCommand) that drives app navigation from speech input; also has zero test coverage repo-wide."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
