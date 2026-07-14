@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2301",
-  "selected_at": "2026-07-14T08:06:11Z",
+  "epic_prefix": "gh-issue-2303",
+  "selected_at": "2026-07-14T10:13:15Z",
   "last_action": "repick",
-  "reason": "prior target 'gh-issue-2283' exhausted; closest-to-done is 'gh-issue-2301' (open=1 claimable=1)",
+  "reason": "prior target 'gh-issue-2301' exhausted; closest-to-done is 'gh-issue-2303' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
