@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-14T13:17:19Z",
+  "generated": "2026-07-14T13:20:40Z",
   "assignments": [
     {
       "task_id": "gh-issue-2300",
@@ -48,23 +48,23 @@
     {
       "task_id": "gh-issue-2303",
       "branch": "auto-impl/gh-issue-2303-06bb7803",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-07-14T12:10:48Z",
-      "last_updated": "2026-07-14T13:17:19Z",
-      "status_changed_at": "2026-07-14T13:17:19Z",
+      "last_updated": "2026-07-14T13:20:40Z",
+      "status_changed_at": "2026-07-14T13:20:40Z",
       "pr_number": 2313,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2313",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2313 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=get_due_schedules+advance_after_run+record_execution & Scheduler::fire_due_report_schedules tick; compute_next_run_for_schedule canonical resolver + create accepts cron_expression; check clean both crates, 47 reports tests pass incl 3 new",
       "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "last_reviewed_oid": "4531e70307f8827d6305bbcec1cf0b768b1b5070",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]
