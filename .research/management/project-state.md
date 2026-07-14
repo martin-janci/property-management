@@ -45,13 +45,12 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 
 ## What's next (top 5 actions)
 
-(top of roadmap.md, deep scan 2026-07-13)
+(top of roadmap.md, deep scan 2026-07-15)
 
-1. **[high] No dedicated price-alert subscription UI in reality-web (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
-2. **[high] No mobile-native price tracking surface (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
-3. **[high] reality/favorites screen-map not shipped (84-3-price-tracking Price Tracking for Favorites)** — pm-backend
-4. **[high] migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)** — pm-backend
-5. **[high] Mobile OS push (FCM/APNs) transport deferred — Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)** — pm-backend
+1. **[medium] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (b** — pm-frontend
+2. **[medium] Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned** — pm-frontend
+3. **[medium] Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter** — pm-frontend
+4. **[medium] Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus par** — pm-backend
 
 ## Blockers
 
