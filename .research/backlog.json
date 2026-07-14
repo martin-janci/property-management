@@ -4390,6 +4390,69 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "title": "Screen-map drift: PR #2292 wired Create-new-schedule flow (routes/groups/reports.tsx) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2292"
+      ],
+      "evidence": [
+        "PR #2292 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + reports.create-schedule.route.test.tsx + features/reports/pages/ReportsPage.tsx without touching docs/screens/ppt/*; matching product doc not updated (best-effort heuristic — basename-match caveat applies)"
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "title": "Screen-map drift: PR #2294 added PortalWebhooksPage (App.tsx + routes/groups/core.tsx) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 touched frontend/apps/ppt-web/src/App.tsx + routes/groups/core.tsx + features/settings/webhooks/PortalWebhooksPage.{tsx,test.tsx} without touching docs/screens/ppt/*; best-effort heuristic — basename-match caveat applies"
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-api-server-reports-2026-07-14",
+      "title": "reports.rs repeated-churn (runs_seen 1→2) after gap-81-1 landed — schedule/cron wiring still moving; follow-up PR #2313 in-flight",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2295",
+        "PR #2313"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs — 3095 additions+deletions this run (hotspots.json), previously ran-seen once (2026-05-30). PR #2295 (gap-81-1 cron recompute) merged; PR #2313 (gh-issue-2303 due-work consumer + unify cadence) draft — cadence model still stabilising."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }

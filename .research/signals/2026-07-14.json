@@ -1,0 +1,106 @@
+{
+  "date": "2026-07-14",
+  "cursor_from": {
+    "last_pr_seen": 2271,
+    "last_issue_seen": 2272,
+    "last_commit_sha": "1691c9d",
+    "last_run_iso": "2026-07-13T02:11:42Z"
+  },
+  "observed": {
+    "merged_prs_since_cursor": 26,
+    "open_prs_touched": 3,
+    "closed_not_merged": 0,
+    "new_or_updated_issues": 13,
+    "routine_lag_hours": 35
+  },
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": "PR #2292 (gap-81-1-frontend-create-new-schedule-ui-missing) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + reports.create-schedule.route.test.tsx + features/reports/pages/ReportsPage.tsx with no docs/screens/ppt update. Best-effort heuristic (basename-match caveat)."
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": "PR #2294 (gap-83-3 portal-webhook status manager UI) touched frontend/apps/ppt-web/src/App.tsx + routes/groups/core.tsx + features/settings/webhooks/PortalWebhooksPage.{tsx,test.tsx} with no docs/screens/ppt update."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-13..2026-07-14 on dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "3864 additions+deletions this run — top-1 raw churn after exclusions. Aggregation file (i18n source-of-truth); log-only, no backlog item created (noise for a growing product)."
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-13..2026-07-14 on dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "3707 additions+deletions this run — top-2 raw churn. Aggregation file (sitemap source-of-truth); log-only, no backlog item created."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-13..2026-07-14 on dev",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "3095 additions+deletions this run — top-3 raw churn. Signal ID already in state.seen_signals (previously emitted 2026-05-30); re-emit with score_delta=0 per G4 cumulative rule. Rolled into repeated-churn item below."
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-07-13..2026-07-14 on dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "reports.rs runs_seen 1→2 (previously seen 2026-05-30, now again this run). PR #2295 (cron recompute) merged; PR #2313 (due-work consumer + unify cadence) draft in-flight — cadence model still stabilising. Backlog item refactor-repeated-churn-api-server-reports-2026-07-14 (score 1)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no eligible signal met confidence=high + score>=3 + allowlist. All 6 signals this run are confidence=medium (screen-map-drift x2 and churn-hotspot/repeated-churn x4).",
+  "phases_ran": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped",
+    "phase_1_5_reason": "token budget — routine-in-cloud instance had limited headroom after ingesting 26 merged PRs; last routine-driven segment review was 2026-07-13 (reality-server, 0 defects). Cursor unchanged.",
+    "phase_1_6_pm": "skipped",
+    "phase_1_6_reason": "token budget — skipping the pm-security role rotation this run. pm_cursor unchanged.",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "ok — 0 promotions (top open score=2, below the >=3 gate; security fast-track not applicable — test-gap/refactor vectors)",
+    "phase_3_5_adversarial": "n/a (no promotions)",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "no candidate",
+    "phase_6_commit": "pending"
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-07-14.md && head -1 …", "observed": "brief for 2026-07-14 with matching H1", "expected": "brief exists with H1 = # 2026-07-14" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state vs HEAD", "observed": "last_pr_seen 2271→2297 (max merged number), last_issue_seen 2272→2303, last_commit_sha bumps, seen_signals grows by 6, hotspot_history keys grow", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true (189 unique ids)", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq: no non-cumulative re-emit with score_delta>0", "observed": "only re-emit is churn-hotspot (cumulative allowlist) with score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap≤8 and decay of stale opens", "observed": "no scores >8; decay pass: 0 open items older than 14d (only new/refreshed opens today)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "for new plans/, brief has adversarial pass", "observed": "0 new plans this run", "expected": "true (vacuously)" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans + readiness gates", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (all staged paths under .research/)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep for secrets/private hostnames in staged diff (excluding baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty: cursors not advanced for skipped phases", "observed": "review_cursor unchanged (Phase 1.5 skipped); pm_cursor unchanged (Phase 1.6 skipped); brief lists both under 'Phases that failed'", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still resolvable", "observed": "no plans mutated this run; archive count unchanged", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD", "observed": "6 == 6 (unchanged)", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (cap+idempotency+cert-bar)", "observed": "auto_fix_actions empty; no candidate met bar", "expected": "true (vacuously)" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + cursor bounds (only if Phase 1.6 ran)", "observed": "Phase 1.6 skipped — gate is a no-op", "expected": "true (skipped)" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram bot token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}
