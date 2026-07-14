@@ -1,9 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-13 02:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-14 12:24 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | NFCCredentialManager + NFCAccessController + NFC index have no tests — building-access credentials & tap-validation are security-critical and uncovered | ready | 2026-07-14 | [plan](plans/code-review-mobile-rn-nfc-no-tests.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
@@ -18,7 +19,14 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs | open | 2026-07-12 |  |
+| 2 | test-gap | `screen-map-drift-pr-2292-ppt` | Screen-map drift: PR #2292 wired Create-Schedule UI into ppt-web routes without a docs/screens/ppt update | open | 2026-07-14 |  |
+| 2 | test-gap | `screen-map-drift-pr-2294-ppt` | Screen-map drift: PR #2294 added portal-webhook-status route via App.tsx without a docs/screens/ppt update | open | 2026-07-14 |  |
+| 2 | test-gap | `screen-map-drift-pr-2287-reality` | Screen-map drift: PR #2287 wired reality-web /favorites/alerts route without a docs/screens/reality update | open | 2026-07-14 |  |
+| 2 | bug | `code-review-mobile-rn-dashboard-no-err-ui` | Mobile DashboardScreen fires four useApiQuery calls and never reads .isError — silent all-zero render on any API failure | done | 2026-07-14 |  |
+| 2 | test-gap | `code-review-mobile-rn-deeplink-mgr-untested` | DeepLinkManager auth-gated routing (pending-link queue, dispatch-after-auth, handler subscription) has no test | open | 2026-07-14 |  |
+| 2 | bug | `code-review-ppt-web-core-units-fetch-noauth` | person-months useBuildingUnits calls raw fetch('/api/v1/units?...') with no Authorization header — protected endpoint 401s + error is swallowed → zero units rendered | open | 2026-07-14 |  |
+| 2 | bug | `code-review-ppt-web-core-dashboard-unguarded` | ppt-web /dashboard/manager + /dashboard/resident wired without <ProtectedRoute> — guard fails open, unauthenticated user sees dashboard shell | open | 2026-07-14 |  |
+| 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs | done | 2026-07-12 |  |
 | 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
@@ -63,6 +71,10 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/reality-web/messages/cs.json` | Churn hotspot: frontend/apps/reality-web/messages/cs.json — 3 PRs this run (i18n additions for price alerts + notif triggers) | open | 2026-07-14 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/reality-web/messages/de.json` | Churn hotspot: frontend/apps/reality-web/messages/de.json — 3 PRs this run (i18n additions for price alerts + notif triggers) | open | 2026-07-14 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/reality-web/messages/en.json` | Churn hotspot: frontend/apps/reality-web/messages/en.json — 3 PRs this run (i18n additions for price alerts + notif triggers) | open | 2026-07-14 |  |
+| 1 | bug | `code-review-ppt-web-core-sessions-cast` | SessionsPage double-casts API session payload (as unknown as SessionRow[]) — defeats type checking; is_current vs isCurrent divergence would silently break revoke-all | open | 2026-07-14 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | dropped | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | done | 2026-07-09 |  |

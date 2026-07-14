@@ -1,0 +1,152 @@
+{
+  "generated_at": "2026-07-14T12:20:00Z",
+  "generator": "routine",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13T02:11:42Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 PRs this run touched frontend/apps/reality-web/messages/cs.json (i18n additions across #2287, #2293, #2294)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13T02:11:42Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 PRs this run touched frontend/apps/reality-web/messages/de.json (i18n additions across #2287, #2293, #2294)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13T02:11:42Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 PRs this run touched frontend/apps/reality-web/messages/en.json (i18n additions across #2287, #2293, #2294)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2292 (gap-81-1 Create-new-schedule flow) touched routes/groups/reports.tsx + routes/groups/reports.create-schedule.route.test.tsx without a docs/screens/ppt/*.md update"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2294 (gap-83-3 portal webhook status manager surface) touched App.tsx + routes/groups/core.tsx without a docs/screens/ppt/*.md update"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2287 (gap-84-3 price-alert subscription UI) added reality-web /favorites/alerts layout+page and modified favorites/page.tsx without a docs/screens/reality/*.md update"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2296",
+      "type": "dep-update-noise",
+      "source": "PR #2296",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2296 (chore(backend): bump yanked spin 0.9.8/0.10.0 \u2192 0.9.9/0.10.1) \u2014 Cargo.lock-only, cargo-deny gate unblock"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "NFCCredentialManager+NFCAccessController+NFC index publicly exported with zero tests referencing either class (repo-wide grep)"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "DashboardScreen fires four useApiQuery calls and never reads .isError \u2014 silent all-zero render on any API failure"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "DeepLinkManager auth-gated routing (pending-link queue, dispatch-after-auth) uncovered by tests"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "person-months.tsx:80 raw fetch('/api/v1/units') without Bearer + silent error swallowing"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "/dashboard/{manager,resident} wired without <ProtectedRoute>, target pages don't guard either \u2014 guard fails open"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "SessionsPage.tsx:84 double-cast (as unknown as SessionRow[]) defeats type-checking; wire-shape divergence would silently break revoke-all"
+      ]
+    }
+  ],
+  "goal_checks": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 the three screen-map-drift signals sit at score 2 (below the score>=3 auto-fix bar); the sole score>=3 open item is a test-gap off the auto-fix allowlist"
+}
