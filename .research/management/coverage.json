@@ -1,34 +1,16 @@
 {
-  "generated": "2026-07-13T18:40:00Z",
+  "generated": "2026-07-15T01:55:00Z",
   "scan_kind": "deep",
   "screen_gaps": {
     "orphan_epics": [],
-    "orphan_screens": [
-      "ppt/disputes (Epic-77 ref)",
-      "ppt/dispute-detail (Epic-77)",
-      "ppt/file-dispute (Epic-77)",
-      "ppt/document-detail (Epic-39)",
-      "ppt/document-folders (Epic-39)",
-      "ppt/document-templates (7B)",
-      "ppt/upload-document (Epic-39)",
-      "ppt/documents (Epic-39, Epic-7)",
-      "ppt/reports (UC-16 vs UC-29 drift)",
-      "ppt/buildings-detail (Epic-81, Epic-3)"
-    ],
+    "orphan_screens": [],
     "missing_use_cases": [
-      "UC-33 (disputes 80-x)",
-      "UC-29 (reports 81-x)",
-      "UC-44 (integrations 83-x)",
-      "UC-10 (84-1/84-5)",
-      "UC-40 (84-3)"
+      "UC-33.1",
+      "UC-33.2",
+      "UC-33.3"
     ],
-    "screen_validation_errors": [
-      "ppt/admin-contextual-help: epics uses Epic-10B-7 story-id style",
-      "ppt/announcement-new + announcement-edit + neighbors: epics field empty",
-      "ppt/message-thread + messages + messages-new: epics lists '6-5' story id",
-      "ppt/settings-two-factor: epics lists Epic-9-1/Epic-9-2 story ids",
-      "ppt/document-templates: epics '7B' non-standard"
-    ]
+    "screen_validation_errors": [],
+    "note": "checker's orphan_epics [79,7a,80] contradicted by known shipped screens \u2014 matcher artifact, not queued"
   },
   "stories": [
     {
@@ -51,7 +33,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-organizations",
@@ -79,7 +61,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-feature-flags",
@@ -107,7 +89,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-platform-health",
@@ -135,7 +117,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-system-announcements",
@@ -164,7 +146,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-support-data",
@@ -193,7 +175,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/onboarding-tour",
@@ -229,7 +211,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-contextual-help",
@@ -260,7 +242,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -284,7 +266,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -308,7 +290,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -332,7 +314,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -356,7 +338,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -380,7 +362,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -402,7 +384,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -420,11 +402,9 @@
         "LoginPage + AuthCallbackPage test; screen login buildStatus=shipped",
         "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage"
       ],
-      "gaps": [
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
-      ],
+      "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -461,11 +441,9 @@
         "Toast.tsx + ToastProvider + ErrorBoundary shipped in App.tsx",
         "PR #2002 error-handler coverage; screen-map buildStatus=shipped"
       ],
-      "gaps": [
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
-      ],
+      "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/accessibility-settings",
@@ -490,11 +468,9 @@
         "useIotWebSocket + messaging realtime wired",
         "PR #1685 IoT WS; backend WS PR #1644; mobile getWsBaseUrl()"
       ],
-      "gaps": [
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
-      ],
+      "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/privacy-settings",
@@ -521,11 +497,10 @@
         "Merged PRs: #1123, #501, #1514/#1515"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -545,11 +520,10 @@
         "Merged PRs: #1516, #1256, #1298"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -569,11 +543,10 @@
         "Merged PRs: #533, #1391, #1401, #1357; coverage verified 2026-06-23"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -593,11 +566,10 @@
         "Merged PRs: #641, #540, #1221, #1541"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -619,11 +591,10 @@
       "gaps": [
         "screen-map buildStatus not synced: inquiries.md and account.md still in-progress despite code shipped",
         "iOS builds unverifiable in CI (no macOS runner)",
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -643,11 +614,10 @@
         "RN Expo app.config.ts with .env.{development,staging,production,example}"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)",
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-85",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -671,7 +641,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-85",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -695,7 +665,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -719,7 +689,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -744,7 +714,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -764,11 +734,9 @@
         "MfaChallengeModal + MfaEnrollmentScreen + TwoFactorAuthPage wired to all hooks",
         "Screen-map ppt/settings-two-factor buildStatus=shipped + apiStatus=complete; recovery codes SHA-256-hashed"
       ],
-      "gaps": [
-        "story-md status drift (pending/in-progress despite verified-shipped code) \u2014 see reconcile task"
-      ],
+      "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
@@ -799,7 +767,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -823,7 +791,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -848,7 +816,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -872,7 +840,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -897,7 +865,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -922,7 +890,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -946,7 +914,7 @@
         "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -977,7 +945,7 @@
         "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -999,14 +967,13 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "sprint-status: done (verified 2026-05-25)",
-        "backend/servers/api-server/src/routes/disputes.rs exists with full dispute route set",
-        "frontend/packages/api-client/src/disputes/{api,hooks,types}.ts generated and present",
-        "screen-map ppt/disputes.md buildStatus=shipped"
+        "sprint-status: done",
+        "screen-map ppt/disputes.md shipped",
+        "feat(epic-80) commits merged"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1032,23 +999,20 @@
       "id": "80-2-dispute-filing-flow",
       "title": "Dispute Filing Flow",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "sprint-status: partial (re-verified 2026-06-08) \u2014 AC-1/2/3/5 met, AC-4 blocked",
-        "FileDisputePage.tsx + EvidenceUploader.tsx + FileDisputePageRoute.tsx present with 22 passing tests",
-        "useDraftStorage.ts implemented and unit-tested in isolation",
-        "5-step wizard redesign annotation from prior scan not found in current code \u2014 stale"
+        "screen-map ppt/file-dispute.md shipped/complete, AC-4 noted SHIPPED",
+        "useDraftStorage imported+called in FileDisputePage.tsx (lines 20,124) \u2014 07-13 'unwired' finding was a false positive (route wrapper delegates)",
+        "gap-80-2 task archived already-satisfied 2026-07-13, 37 tests pass"
       ],
-      "gaps": [
-        "AC-4: useDraftStorage is NOT imported or called from FileDisputePageRoute.tsx \u2014 draft auto-save not wired into the filing flow"
-      ],
+      "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1068,16 +1032,15 @@
         "backend",
         "frontend"
       ],
-      "owner_role": "pm-frontend",
+      "owner_role": "pm-backend",
       "evidence": [
         "sprint-status: done (promoted 2026-06-25)",
-        "DisputeDetailPage.tsx + MediationWorkspacePage + MediationSubmissionsPanel implemented",
-        "Party submissions endpoints wired",
-        "screen-map ppt/dispute-detail.md buildStatus=shipped, apiStatus=complete"
+        "party-submission endpoints wired both sides",
+        "152 dispute tests green"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",
@@ -1091,7 +1054,7 @@
       "id": "81-1-report-schedule-editing",
       "title": "Report Schedule Editing",
       "phase": "phase2",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1099,17 +1062,14 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "POST /schedules implemented via PR #2179/#2220 with validation, RBAC, next_run_at via compute_first_next_run",
-        "PUT /schedules/{id} implemented with cron/recipient validation",
-        "Screen-map buildStatus: shipped; EditScheduleModal + ScheduleList + CronPicker shipped",
-        "DST-transition tests merged (PR #2264)"
+        "PR #2292: Create-new-schedule flow wired",
+        "PR #2295: next_run_at recomputed on cron edit",
+        "PR #2313: report_schedules due-work scheduler consumer wired",
+        "screen-map ppt/reports.md apiStatus=partial is stale (queued reconcile)"
       ],
-      "gaps": [
-        "update_schedule does NOT recompute next_run_at when cron_expression changes \u2014 stale fire time (issue #2242 finding still present)",
-        "Frontend Create new schedule UI missing \u2014 no CreateScheduleModal/hook found"
-      ],
+      "gaps": [],
       "epic": "epic-81",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -1131,14 +1091,13 @@
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "All three backend routes registered: list_schedule_executions, get_execution_download_url, retry_execution",
-        "Frontend ExecutionHistory.tsx + filters + pagination + download/retry wired",
-        "Screen-map buildStatus: shipped; checklist all checked",
-        "Commit b8e226da8 verify-to-done: 70 tests pass"
+        "all three execution routes registered",
+        "ExecutionHistory UI wired, 70 tests",
+        "screen-map shipped"
       ],
       "gaps": [],
       "epic": "epic-81",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -1160,14 +1119,12 @@
       ],
       "owner_role": "pm-integration",
       "evidence": [
-        "Backend routes fully implemented: oauth.rs, airbnb_connections.rs, sync.rs, install.rs \u2014 no stubs",
-        "airbnb_oauth_routes_tests.rs (767 lines) + direct-connect/availability-sync success-path tests (PR #2240) + OAuth CSRF tests (PR #2203)",
-        "IntegrationsPage.tsx routed at /settings/integrations with all hooks wired",
-        "screen-map ppt/settings-integrations.md buildStatus=shipped apiStatus=complete"
+        "confirmed done 2026-07-13 (tests #2240/#2203, IntegrationsPage routed)",
+        "no regressions since"
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1181,7 +1138,7 @@
       "id": "83-2-booking-integration",
       "title": "Booking.com OAuth and Sync",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1189,16 +1146,13 @@
       ],
       "owner_role": "pm-integration",
       "evidence": [
-        "booking_channel.rs (42.9KB) + install.rs + oauth.rs; OTA XML fully parsed",
-        "booking_handler_routes_tests.rs (898 lines) + oauth tests (719 lines) + CSRF + OTA envelope tests (#2230)",
-        "Booking.com card + property-mapping wizard wired in IntegrationsPage.tsx with tests",
-        "screen-map settings-integrations.md shipped/complete"
+        "PR #2315: fetch_property happy-path tests via BookingCredentials::with_url base-URL seam (MockOtaServer)",
+        "PR #2194: property-mapping wizard wired in ppt-web",
+        "booking/mod.rs + ota_xml.rs fully tested"
       ],
-      "gaps": [
-        "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests \u2014 documented limitation, needs base-URL seam like Airbnb's (#2240 pattern)"
-      ],
+      "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1212,24 +1166,21 @@
       "id": "83-3-portal-webhooks",
       "title": "Real Estate Portal Webhooks",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
-        "backend"
+        "backend",
+        "frontend"
       ],
-      "owner_role": "pm-backend",
+      "owner_role": "pm-integration",
       "evidence": [
-        "handle_portal_webhook with HMAC-SHA256 verification implemented (webhook.rs)",
-        "portal_webhook_signature_tests.rs + empty-secret fail-closed regression (#2267)",
-        "HMAC + env provisioning + docker wiring merged (#2214/#2259/#2267)"
+        "PR #2286: signed-timestamp replay/freshness window (5 min) + stale/future/tampered regression tests",
+        "PR #2294: PortalWebhooksPage manager surface + useSyndicationDashboard",
+        "HMAC verification + empty-secret fail-closed (#2267)"
       ],
-      "gaps": [
-        "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs \u2014 HMAC proves authenticity but not freshness",
-        "No frontend screen for portal webhook management/status (inbound-only, no manager visibility surface)",
-        "no screen-map match (backend-only or unmapped)"
-      ],
+      "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     },
     {
@@ -1239,19 +1190,20 @@
       "status": "partial",
       "confidence": "high",
       "platform": [
-        "backend"
+        "backend",
+        "frontend"
       ],
-      "owner_role": "pm-backend",
+      "owner_role": "pm-frontend",
       "evidence": [
-        "storage.rs tagged Story 84.1 with presigned URL support",
-        "documents/core.rs implements presigned download + preview endpoints (15min/1hr TTL)",
-        "No presigned PUT/upload endpoint \u2014 uploads remain server-proxied multipart"
+        "PR #2309: POST /api/v1/documents/upload-url (SigV4 PUT presigner) wired backend",
+        "StorageService::generate_upload_url confirmed",
+        "no frontend consumer of the endpoint found in frontend/apps"
       ],
       "gaps": [
-        "No presigned PUT endpoint for client-to-S3 direct upload \u2014 uploads still proxy through the server"
+        "ppt-web upload flow still server-proxied \u2014 wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1268,25 +1220,26 @@
       "status": "partial",
       "confidence": "high",
       "platform": [
-        "backend"
+        "backend",
+        "frontend"
       ],
-      "owner_role": "pm-integration",
+      "owner_role": "pm-frontend",
       "evidence": [
-        "signatures.rs implements HMAC-signed signing URL generation and signer invitation emails",
-        "LightweightProvider is the wired path; DocuSign optional stub"
+        "backend signing URL + invitation emails implemented (signatures.rs)",
+        "PR #2306: docs/screens/ppt/document-sign.md added \u2014 buildStatus: planned, apiStatus: complete",
+        "no sign-page component in ppt-web"
       ],
       "gaps": [
-        "No frontend UI component consuming the signature request flow",
-        "No screen-map entry for a signature/e-sign screen in shipped state"
+        "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned\u2192shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR \u2014 fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
-          "screen_id": "ppt/document-detail",
-          "buildStatus": "shipped",
+          "screen_id": "ppt/document-sign",
+          "buildStatus": "planned",
           "apiStatus": "complete",
-          "redesignStatus": "in-progress"
+          "redesignStatus": "not-started"
         }
       ]
     },
@@ -1294,8 +1247,8 @@
       "id": "84-3-price-tracking",
       "title": "Price Tracking for Favorites",
       "phase": "mvp",
-      "status": "partial",
-      "confidence": "medium",
+      "status": "done",
+      "confidence": "high",
       "platform": [
         "backend",
         "frontend",
@@ -1303,46 +1256,47 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "portal.rs implements price_changed detection via original_price vs current price",
-        "reality-server favorites handlers expose price_alert_enabled and get_price_alerts",
-        "docs/screens/reality/favorites.md buildStatus=in-progress (not shipped)"
+        "PR #2287: reality-web /favorites/alerts page, 6 locales",
+        "PR #2288: KMP FavoritesRepository + PriceTrackingViewModel + tests",
+        "PR #2285: reality/favorites screen-map shipped"
       ],
-      "gaps": [
-        "No dedicated price-alert subscription UI in reality-web",
-        "No mobile-native price tracking surface",
-        "reality/favorites screen-map not shipped",
-        "no screen-map match (backend-only or unmapped)"
-      ],
+      "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
-      "screen_refs": []
+      "last_checked": "2026-07-15",
+      "screen_refs": [
+        {
+          "screen_id": "reality/favorites",
+          "buildStatus": "shipped",
+          "apiStatus": "complete",
+          "redesignStatus": "not-started"
+        }
+      ]
     },
     {
       "id": "84-4-notification-triggers",
       "title": "Notification Trigger System",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
-        "backend"
+        "backend",
+        "frontend"
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "common/notifications/mod.rs: full multi-channel pipeline (Push/Email/InApp) with TransportAdapter traits",
-        "critical_notifications.rs wires the pipeline; dispatch_to_users used across voting/agencies/signatures"
+        "PR #2290: FCM+APNs CombinedPushAdapter",
+        "PR #2293: /notifications/triggers page + screen-map shipped",
+        "PR #2310: push metrics hardening"
       ],
-      "gaps": [
-        "Mobile OS push (FCM/APNs) transport deferred \u2014 Push channel has no real device transport",
-        "No frontend notification-trigger management UI"
-      ],
+      "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": [
         {
-          "screen_id": "ppt/privacy-settings",
+          "screen_id": "ppt/notification-triggers",
           "buildStatus": "shipped",
-          "apiStatus": "partial",
-          "redesignStatus": "in-progress"
+          "apiStatus": "complete",
+          "redesignStatus": "not-started"
         }
       ]
     },
@@ -1350,23 +1304,20 @@
       "id": "84-5-pgvector-rag",
       "title": "pgvector RAG Migration",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend"
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "RAG search/embedding-write handlers wired (#2165/#2173) + hardening (#2221) + clamp fix (#2256) + provenance tests (#2265/#2273)",
-        "llm_document.rs implements search_documents_by_embedding + migrate_embeddings_to_pgvector",
-        "ai.rs wires RAG_SEMANTIC_SEARCH_ENABLED flag to chat handler"
+        "PR #2291: POST /api/v1/ai/llm/rag/migrate wired",
+        "PR #2312: migration 00215 provenance stamp + set-based UPDATE fixes embedding-space mixing",
+        "rag_migrate_pgvector_tests.rs coverage"
       ],
-      "gaps": [
-        "migrate_embeddings_to_pgvector not wired to any HTTP route \u2014 no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search)",
-        "no screen-map match (backend-only or unmapped)"
-      ],
+      "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-13",
+      "last_checked": "2026-07-15",
       "screen_refs": []
     }
   ]

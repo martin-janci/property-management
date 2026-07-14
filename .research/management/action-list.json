@@ -2,175 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "gap-84-5-migrate-embeddings-to-pgvector-not-wired",
-      "action": "migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-84-4-mobile-os-push-fcm-apns-transport",
-      "action": "Mobile OS push (FCM/APNs) transport deferred — Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-84-4-no-frontend-notification-trigger-management-ui",
-      "action": "No frontend notification-trigger management UI (84-4-notification-triggers Notification Trigger System)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-tracking-reconcile-story-md-statuses-2026-07-13",
-      "action": "Reconcile tracking drift: flip story-md Status pending/in-progress -> done for verified-shipped 79-2/79-3/79-4/82-1..82-5/85-1/9-1 (code+tests verified 2026-07-07 and 2026-07-13) and add 84-x + 79-x/82-x/85-x/9-x ids to sprint-status.yaml development_status",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-81-1-frontend-create-new-schedule-ui-missing",
-      "action": "Frontend Create new schedule UI missing — no CreateScheduleModal/hook found (81-1-report-schedule-editing Report Schedule Editing)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-81-1-update-schedule-does-not-recompute-next",
-      "action": "update_schedule does NOT recompute next_run_at when cron_expression changes — stale fire time (issue #2242 finding still present) (81-1-report-schedule-editing Report Schedule Editing)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-screens-normalize-frontmatter-2026-07-13",
-      "action": "Normalize screen-map frontmatter: fix 9 validation errors (story-id-style epics like Epic-10B-7/6-5/Epic-9-1, empty epics fields, '7B') and re-point Epic-77/Epic-39 legacy refs to current epic ids; then link missing UCs (UC-33 disputes, UC-29 reports, UC-44 integrations, UC-10, UC-40)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-83-3-no-frontend-screen-for-portal-webhook",
-      "action": "No frontend screen for portal webhook management/status (inbound-only, no manager visibility surface) (83-3-portal-webhooks Real Estate Portal Webhooks)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "in-progress",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-83-2-booking-com-connect-happy-path-fetch",
-      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests — documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-integration",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gh-issue-2282",
-      "action": "mobile dashboard silently renders zero stats on any API error (four useApiQuery calls with no isError branch) (Closes #2282)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2282)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T20:05:55Z",
-      "issue_ref": {
-        "number": 2282,
-        "url": "https://github.com/martin-janci/property-management/issues/2282",
-        "labels": [
-          "frontend",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2283",
-      "action": "mobile useApi.ts (JWT decode + X-Tenant-ID injection) has no tests; every consumer mocks it (Closes #2283)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2283)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T20:05:55Z",
-      "issue_ref": {
-        "number": 2283,
-        "url": "https://github.com/martin-janci/property-management/issues/2283",
-        "labels": [
-          "frontend",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2303",
-      "action": "Follow-up: report_schedules next_run_at is still write-only (no consumer/advance) + dual cadence model (PR #2295) (Closes #2303)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2303)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-14T04:04:36Z",
-      "issue_ref": {
-        "number": 2303,
-        "url": "https://github.com/martin-janci/property-management/issues/2303",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-07-14T12:10:48Z"
-    },
-    {
       "id": "gh-issue-2314",
       "action": "Cross-tenant IDOR + data-loss in news_articles handlers (raw pool, no org scope, RLS not FORCEd) (Closes #2314)",
       "owner_role": "pm-security",
@@ -190,7 +21,55 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "gap-84-1-wire-frontend-direct-s3-upload",
+      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (backend endpoint landed in #2309) (84-1 S3 Presigned URL Implementation)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15"
+    },
+    {
+      "id": "gap-84-2-build-document-sign-page",
+      "action": "Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR \u2014 fresh scoped attempt (84-2 E-Signature Email Integration)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15"
+    },
+    {
+      "id": "gap-screens-link-uc-33-sub-ucs",
+      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15"
+    },
+    {
+      "id": "gap-tracking-stale-status-flips-2026-07-15",
+      "action": "Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus partial->complete (#2292/#2295/#2313 filled the last gaps)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15"
     }
   ],
-  "generated": "2026-07-13T18:40:00Z"
+  "generated": "2026-07-15T01:55:00Z"
 }
