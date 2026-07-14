@@ -14,7 +14,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Timelike, Utc};
 use chrono_tz::Tz;
 use common::errors::ErrorResponse;
 use db::models::{
@@ -1999,6 +1999,111 @@ fn compute_next_run_after(
     None
 }
 
+/// Test whether a single already-validated cron field matches `value`.
+///
+/// Handles the four forms accepted by [`validate_cron_expression`]: `*`,
+/// comma-separated lists, `lo-hi` ranges, and `base/step` (where `base` is
+/// `*`, a single number, or a range). Each comma part is reduced to an
+/// inclusive `(lo, hi, step)` window and matched with `lo <= value <= hi`
+/// and `(value - lo) % step == 0` — the same semantics Vixie cron uses.
+/// `field_min` / `field_max` supply the range bounds for `*` and open-ended
+/// `base/step` forms (e.g. `5/10` on the minute field means 5,15,25,…,55).
+fn cron_field_matches(field: &str, value: u32, field_min: u32, field_max: u32) -> bool {
+    for part in field.split(',') {
+        let (base, step) = match part.split_once('/') {
+            Some((b, s)) => (b, s.parse::<u32>().unwrap_or(1).max(1)),
+            None => (part, 1),
+        };
+        let (lo, hi) = if base == "*" {
+            (field_min, field_max)
+        } else if let Some((l, h)) = base.split_once('-') {
+            match (l.parse::<u32>(), h.parse::<u32>()) {
+                (Ok(l), Ok(h)) => (l, h),
+                _ => continue,
+            }
+        } else {
+            match base.parse::<u32>() {
+                // A bare `base/step` (single number + step) runs from that
+                // number up to the field maximum, matching Vixie semantics.
+                Ok(v) if step > 1 => (v, field_max),
+                Ok(v) => (v, v),
+                _ => continue,
+            }
+        };
+        if value >= lo && value <= hi && (value - lo).is_multiple_of(step) {
+            return true;
+        }
+    }
+    false
+}
+
+/// Compute the next fire time (UTC) strictly after `now` for a 5-field UNIX
+/// cron expression, evaluated in `now`'s timezone (issue #2242).
+///
+/// This is the cron analogue of [`compute_next_run_after`]: when a schedule's
+/// `cron_expression` is edited, the handler calls this to recompute
+/// `next_run_at` so the schedule fires at the *new* cadence instead of the
+/// stale time carried over from the previous expression. It walks forward one
+/// minute at a time over real UTC instants (up to a ~366-day horizon that
+/// bounds sparse expressions like `0 0 29 2 *`), converting each instant into
+/// the schedule timezone before matching the five fields — so DST transitions
+/// are handled naturally without constructing ambiguous local times.
+///
+/// The day-of-month / day-of-week combination follows Vixie cron: when both
+/// fields are restricted (neither is `*`) a day matches if *either* matches;
+/// otherwise the restricted field is ANDed with the other. Cron day-of-week 7
+/// is treated as Sunday (0), matching `validate_cron_expression`.
+///
+/// Returns `None` only for a malformed expression or one with no match inside
+/// the horizon — callers leave `next_run_at` unchanged in that case.
+fn compute_next_run_from_cron(now: DateTime<Tz>, cron: &str) -> Option<DateTime<Utc>> {
+    let fields: Vec<&str> = cron.split_whitespace().collect();
+    if fields.len() != 5 {
+        return None;
+    }
+    let (minute_f, hour_f, dom_f, month_f, dow_f) =
+        (fields[0], fields[1], fields[2], fields[3], fields[4]);
+    let dom_restricted = dom_f != "*";
+    let dow_restricted = dow_f != "*";
+
+    let tz = now.timezone();
+    // Start from the top of the next minute so we never return `now` itself.
+    let start =
+        now.with_timezone(&Utc).with_second(0)?.with_nanosecond(0)? + chrono::Duration::minutes(1);
+
+    // 366 days of minute steps bounds the sparsest valid expression.
+    for step in 0..(366 * 24 * 60) {
+        let instant = start + chrono::Duration::minutes(step);
+        let local = instant.with_timezone(&tz);
+
+        if !cron_field_matches(minute_f, local.minute(), 0, 59) {
+            continue;
+        }
+        if !cron_field_matches(hour_f, local.hour(), 0, 23) {
+            continue;
+        }
+        if !cron_field_matches(month_f, local.month(), 1, 12) {
+            continue;
+        }
+
+        let dom = local.day();
+        let dow = local.weekday().num_days_from_sunday();
+        let dom_match = cron_field_matches(dom_f, dom, 1, 31);
+        // Sunday is 0 in chrono; cron also accepts 7 for Sunday.
+        let dow_match = cron_field_matches(dow_f, dow, 0, 7)
+            || (dow == 0 && cron_field_matches(dow_f, 7, 0, 7));
+        let day_match = if dom_restricted && dow_restricted {
+            dom_match || dow_match
+        } else {
+            dom_match && dow_match
+        };
+        if day_match {
+            return Some(instant);
+        }
+    }
+    None
+}
+
 /// Request body for `POST /api/v1/reports/schedules`.
 ///
 /// `organization_id` is intentionally absent — it is derived from the
@@ -2418,6 +2523,46 @@ pub async fn update_schedule(
             }
         }
     }
+    // When the cron expression changes, recompute the next fire time from the
+    // NEW expression so the schedule fires at the edited cadence instead of the
+    // stale time carried over from the previous expression (issue #2242). The
+    // cron is evaluated in the schedule's stored timezone, so load the existing
+    // row to read it; an unknown/missing row surfaces as the same 404 the
+    // UPDATE would return.
+    let next_run_at = if let Some(ref cron) = req.cron_expression {
+        let existing = state
+            .report_schedule_repo
+            .get_by_id_scoped(id, caller_org_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    schedule_id = %id,
+                    org_id = %caller_org_id,
+                    "Failed to load schedule for next_run_at recompute"
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to update schedule")),
+                )
+            })?
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new(
+                        "SCHEDULE_NOT_FOUND",
+                        "Report schedule not found",
+                    )),
+                )
+            })?;
+        // A stored timezone always validates (create-time rejects bad ones),
+        // but fall back to UTC rather than fail an edit if it somehow doesn't.
+        let tz: Tz = existing.timezone.parse().unwrap_or(chrono_tz::UTC);
+        compute_next_run_from_cron(Utc::now().with_timezone(&tz), cron)
+    } else {
+        None
+    };
+
     // Apply updates and persist.
     // The repository enforces `AND organization_id = caller_org_id` in the
     // UPDATE WHERE clause so a cross-tenant attempt silently returns 404.
@@ -2429,6 +2574,7 @@ pub async fn update_schedule(
             req.cron_expression,
             req.recipients,
             req.enabled,
+            next_run_at,
         )
         .await
         .map_err(|e| {
@@ -2458,8 +2604,8 @@ pub async fn update_schedule(
 #[cfg(test)]
 mod tests {
     use super::{
-        compute_first_next_run, compute_next_run_after, parse_time_hhmm, validate_cron_expression,
-        validate_time_hhmm,
+        compute_first_next_run, compute_next_run_after, compute_next_run_from_cron,
+        cron_field_matches, parse_time_hhmm, validate_cron_expression, validate_time_hhmm,
     };
     use chrono::{Datelike, LocalResult, TimeZone, Timelike, Utc};
     use chrono_tz::Tz;
@@ -2525,6 +2671,111 @@ mod tests {
             .expect("day-31 schedule must resolve to a 31-day month");
         assert_eq!(next.with_timezone(&tz).day(), 31);
         assert!(next > chrono::Utc::now());
+    }
+
+    // --- compute_next_run_from_cron: recompute on cron edit (issue #2242) ---
+    //
+    // Regression guard: `update_schedule` must recompute `next_run_at` from the
+    // NEW cron expression, otherwise an edited schedule keeps firing at the
+    // stale time. These no-DB unit tests pin the pure computation the handler
+    // feeds into the repository UPDATE.
+
+    #[test]
+    fn cron_next_run_is_in_the_future_and_matches_time() {
+        let tz: Tz = "UTC".parse().unwrap();
+        // Every Monday at 08:00.
+        let now = Utc.with_ymd_and_hms(2026, 7, 13, 12, 0, 0).unwrap();
+        let next = compute_next_run_from_cron(now.with_timezone(&tz), "0 8 * * 1")
+            .expect("weekly cron must yield a next run");
+        assert!(next > now, "recomputed next_run_at must be in the future");
+        let local = next.with_timezone(&tz);
+        assert_eq!((local.hour(), local.minute()), (8, 0));
+        assert_eq!(
+            local.weekday().num_days_from_sunday(),
+            1,
+            "cron `0 8 * * 1` must land on a Monday"
+        );
+    }
+
+    #[test]
+    fn cron_edit_moves_next_run_to_the_new_cadence() {
+        // Simulate the edit: schedule was "every Monday 08:00", user changes it
+        // to "every Friday 17:00". The recomputed next_run_at must reflect the
+        // NEW expression (a Friday at 17:00), never the old Monday time.
+        let tz: Tz = "Europe/Bratislava".parse().unwrap();
+        let now = Utc.with_ymd_and_hms(2026, 7, 13, 6, 0, 0).unwrap(); // a Monday
+        let old = compute_next_run_from_cron(now.with_timezone(&tz), "0 8 * * 1").unwrap();
+        let new = compute_next_run_from_cron(now.with_timezone(&tz), "0 17 * * 5").unwrap();
+        assert_ne!(old, new, "cron change must recompute next_run_at");
+        let local = new.with_timezone(&tz);
+        assert_eq!((local.hour(), local.minute()), (17, 0));
+        assert_eq!(
+            local.weekday().num_days_from_sunday(),
+            5,
+            "cron `0 17 * * 5` must land on a Friday"
+        );
+        assert!(new > now);
+    }
+
+    #[test]
+    fn cron_next_run_handles_step_and_list_and_sunday_seven() {
+        let tz: Tz = "UTC".parse().unwrap();
+        let now = Utc.with_ymd_and_hms(2026, 7, 13, 10, 7, 0).unwrap();
+        // `*/15` minutes → next quarter-hour boundary after 10:07 is 10:15.
+        let next = compute_next_run_from_cron(now.with_timezone(&tz), "*/15 * * * *").unwrap();
+        assert_eq!(next.with_timezone(&tz).minute() % 15, 0);
+        assert!(next > now);
+        // dow 7 must be accepted as Sunday.
+        let sun = compute_next_run_from_cron(now.with_timezone(&tz), "0 9 * * 7").unwrap();
+        assert_eq!(sun.with_timezone(&tz).weekday().num_days_from_sunday(), 0);
+    }
+
+    #[test]
+    fn cron_next_run_dom_dow_union_when_both_restricted() {
+        // Vixie semantics: when BOTH day-of-month and day-of-week are set, a day
+        // matches if EITHER matches. `0 0 13 * 5` → the 13th OR any Friday.
+        let tz: Tz = "UTC".parse().unwrap();
+        let now = Utc.with_ymd_and_hms(2026, 7, 1, 0, 0, 0).unwrap();
+        let next = compute_next_run_from_cron(now.with_timezone(&tz), "0 0 13 * 5").unwrap();
+        let local = next.with_timezone(&tz);
+        let is_13th = local.day() == 13;
+        let is_friday = local.weekday().num_days_from_sunday() == 5;
+        assert!(
+            is_13th || is_friday,
+            "union match: day must be the 13th or a Friday, got {local}"
+        );
+    }
+
+    #[test]
+    fn cron_next_run_rejects_malformed_expression() {
+        let tz: Tz = "UTC".parse().unwrap();
+        let now = Utc::now().with_timezone(&tz);
+        assert_eq!(compute_next_run_from_cron(now, "* * * *"), None);
+        assert_eq!(compute_next_run_from_cron(now, ""), None);
+    }
+
+    #[test]
+    fn cron_field_matches_covers_forms() {
+        // wildcard
+        assert!(cron_field_matches("*", 5, 0, 59));
+        // single
+        assert!(cron_field_matches("8", 8, 0, 23));
+        assert!(!cron_field_matches("8", 9, 0, 23));
+        // range
+        assert!(cron_field_matches("9-17", 12, 0, 23));
+        assert!(!cron_field_matches("9-17", 8, 0, 23));
+        // list
+        assert!(cron_field_matches("0,30", 30, 0, 59));
+        assert!(!cron_field_matches("0,30", 15, 0, 59));
+        // step over wildcard
+        assert!(cron_field_matches("*/15", 45, 0, 59));
+        assert!(!cron_field_matches("*/15", 20, 0, 59));
+        // bare base with step (5/10 → 5,15,25,…)
+        assert!(cron_field_matches("5/10", 25, 0, 59));
+        assert!(!cron_field_matches("5/10", 20, 0, 59));
+        // range with step
+        assert!(cron_field_matches("5-15/5", 15, 0, 59));
+        assert!(!cron_field_matches("5-15/5", 12, 0, 59));
     }
 
     // --- compute_next_run_after: DST edge cases (issue #2242, finding 2) ---
