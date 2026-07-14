@@ -2565,6 +2565,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-84-1-no-presigned-put-endpoint-for-client",
+      "branch": "auto-impl/gap-84-1-no-presigned-put-endpoint-for-c-f0ed0449",
+      "status": "merged",
+      "claimed_at": "2026-07-14T06:07:22Z",
+      "last_updated": "2026-07-14T08:21:53Z",
+      "status_changed_at": "2026-07-14T08:21:53Z",
+      "pr_number": 2309,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2309",
+      "merged_at": "2026-07-14T08:20:28Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2309 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=new POST /api/v1/documents/upload-url SigV4 presigned PUT via StorageService; check+16tests+clippy green",
+      "reviewer_summary": "verdict=approve head_oid=d86c72ecef056dc90b9439eb6fe72ae797187a28 note=presigned-put-clean-parity-validated-ci-green (self-pr, approve posted as comment)",
+      "last_reviewed_oid": "d86c72ecef056dc90b9439eb6fe72ae797187a28",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-14T08:15:09Z"
+    },
+    {
       "task_id": "gap-84-2-no-frontend-ui-component-consuming-the",
       "branch": "auto-impl/gap-84-2-no-frontend-ui-component-consum-1030da47",
       "status": "failed",
@@ -2585,6 +2607,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-84-2-no-screen-map-entry-for-a",
+      "branch": "auto-impl/gap-84-2-no-screen-map-entry-for-a-fe76bf30",
+      "status": "merged",
+      "claimed_at": "2026-07-14T06:07:22Z",
+      "last_updated": "2026-07-14T08:21:53Z",
+      "status_changed_at": "2026-07-14T08:21:53Z",
+      "pr_number": 2306,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2306",
+      "merged_at": "2026-07-14T08:16:53Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2306 status=done specialist=generic scope_drift=true code_reuse_warn=none note=new docs/screens/ppt/document-sign.md for signer /sign page (Epic 84.2); validate --strict 0 errors; drift=docs/screens not in owner-areas (expected)",
+      "reviewer_summary": "verdict=approve head_oid=8f55860f556db797fb7a528f67ac8ddf60d05d8c note=docs-only screen-map; claims verified; scope-drift expected-fp (self-pr, approve posted as comment)",
+      "last_reviewed_oid": "8f55860f556db797fb7a528f67ac8ddf60d05d8c",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-14T08:15:09Z"
     },
     {
       "task_id": "gap-84-3-no-dedicated-price-alert-subscription-ui",
@@ -5101,6 +5145,50 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2284",
+      "branch": "auto-impl/gh-issue-2284-462beb35",
+      "status": "merged",
+      "claimed_at": "2026-07-14T06:07:22Z",
+      "last_updated": "2026-07-14T08:21:53Z",
+      "status_changed_at": "2026-07-14T08:21:53Z",
+      "pr_number": 2308,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2308",
+      "merged_at": "2026-07-14T08:20:30Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2308 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=22 tests (validate/upload/icon/tenant) green; typecheck+biome clean; Closes #2284; drift=owner-map omits frontend/apps/mobile",
+      "reviewer_summary": "verdict=approve head_oid=a08facadb3f38aa5e71e1d7d417d5e6ddd1eb78f note=test-only PR, CI green, scope_drift owner-map false-positive (self-pr, approve posted as comment)",
+      "last_reviewed_oid": "a08facadb3f38aa5e71e1d7d417d5e6ddd1eb78f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-14T08:15:09Z"
+    },
+    {
+      "task_id": "gh-issue-2299",
+      "branch": "auto-impl/gh-issue-2299-dc9771a7",
+      "status": "merged",
+      "claimed_at": "2026-07-14T06:07:22Z",
+      "last_updated": "2026-07-14T08:21:53Z",
+      "status_changed_at": "2026-07-14T08:21:53Z",
+      "pr_number": 2307,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2307",
+      "merged_at": "2026-07-14T08:17:10Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2307 status=done specialist=generic scope_drift=false code_reuse_warn=none note=ticked 14 story-md fully + 82-5 selectively (stub subtasks unchecked w/ notes); docs-only; Closes #2299",
+      "reviewer_summary": "verdict=approve head_oid=cfda2b8ddad0383e5f66faf46606aff657fefb91 note=docs-only checkbox flips verified; 82-5 honest (self-pr, approve posted as comment)",
+      "last_reviewed_oid": "cfda2b8ddad0383e5f66faf46606aff657fefb91",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-14T08:15:09Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5789,5 +5877,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-14T06:40:45Z"
+  "archived_at": "2026-07-14T08:21:53Z"
 }

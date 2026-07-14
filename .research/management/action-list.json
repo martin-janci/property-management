@@ -38,30 +38,6 @@
       "source": "gap-scan 2026-07-13"
     },
     {
-      "id": "gap-84-1-no-presigned-put-endpoint-for-client",
-      "action": "No presigned PUT endpoint for client-to-S3 direct upload — uploads still proxy through the server (84-1-s3-presigned-urls S3 Presigned URL Implementation)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
-      "id": "gap-84-2-no-screen-map-entry-for-a",
-      "action": "No screen-map entry for a signature/e-sign screen in shipped state (84-2-esignature-email E-Signature Email Integration)",
-      "owner_role": "pm-integration",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
       "id": "gap-tracking-reconcile-story-md-statuses-2026-07-13",
       "action": "Reconcile tracking drift: flip story-md Status pending/in-progress -> done for verified-shipped 79-2/79-3/79-4/82-1..82-5/85-1/9-1 (code+tests verified 2026-07-07 and 2026-07-13) and add 84-x + 79-x/82-x/85-x/9-x ids to sprint-status.yaml development_status",
       "owner_role": "pm-backend",
@@ -170,46 +146,6 @@
         "labels": [
           "frontend",
           "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2284",
-      "action": "mobile DocumentUploadScreen has no test — highest-risk mutation path in documents/ is uncovered (Closes #2284)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2284)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-13T20:05:55Z",
-      "issue_ref": {
-        "number": 2284,
-        "url": "https://github.com/martin-janci/property-management/issues/2284",
-        "labels": [
-          "frontend",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2299",
-      "action": "Follow-up: reconciled story-md files marked done still show all Tasks/Subtasks unchecked (PR #2298) (Closes #2299)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2299)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-14T04:04:36Z",
-      "issue_ref": {
-        "number": 2299,
-        "url": "https://github.com/martin-janci/property-management/issues/2299",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
         ]
       }
     },

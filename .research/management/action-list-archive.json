@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-14T06:40:45Z",
+  "archived_at": "2026-07-14T08:22:10Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3101,6 +3101,25 @@
       }
     },
     {
+      "id": "gap-84-1-no-presigned-put-endpoint-for-client",
+      "action": "No presigned PUT endpoint for client-to-S3 direct upload — uploads still proxy through the server (84-1-s3-presigned-urls S3 Presigned URL Implementation)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-14T08:21:53Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2309,
+        "merged_at": "2026-07-14T08:20:28Z",
+        "at": "2026-07-14T08:21:53Z"
+      }
+    },
+    {
       "id": "gap-84-2-esignature-email-backend",
       "action": "Integrate e-signature provider (DocuSign/HelloSign) for lease agreements: POST /api/v1/leases/{id}/sign-request, webhook status callback",
       "owner_role": "pm-backend",
@@ -3124,6 +3143,25 @@
       "first_open_at": "2026-07-13T18:40:00Z",
       "source": "gap-scan 2026-07-13",
       "last_updated": "2026-07-14T06:40:45Z"
+    },
+    {
+      "id": "gap-84-2-no-screen-map-entry-for-a",
+      "action": "No screen-map entry for a signature/e-sign screen in shipped state (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-14T08:21:53Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2306,
+        "merged_at": "2026-07-14T08:16:53Z",
+        "at": "2026-07-14T08:21:53Z"
+      }
     },
     {
       "id": "gap-84-3-no-dedicated-price-alert-subscription-ui",
@@ -5787,6 +5825,60 @@
         "merged_pr": 2289,
         "merged_at": "2026-07-13T20:01:29Z",
         "at": "2026-07-13T20:10:27Z"
+      }
+    },
+    {
+      "id": "gh-issue-2284",
+      "action": "mobile DocumentUploadScreen has no test — highest-risk mutation path in documents/ is uncovered (Closes #2284)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2284) | gc1-reconcile 2026-07-14T08:21:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T20:05:55Z",
+      "issue_ref": {
+        "number": 2284,
+        "url": "https://github.com/martin-janci/property-management/issues/2284",
+        "labels": [
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2308,
+        "merged_at": "2026-07-14T08:20:30Z",
+        "at": "2026-07-14T08:21:53Z"
+      }
+    },
+    {
+      "id": "gh-issue-2299",
+      "action": "Follow-up: reconciled story-md files marked done still show all Tasks/Subtasks unchecked (PR #2298) (Closes #2299)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2299) | gc1-reconcile 2026-07-14T08:21:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2299,
+        "url": "https://github.com/martin-janci/property-management/issues/2299",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2307,
+        "merged_at": "2026-07-14T08:17:10Z",
+        "at": "2026-07-14T08:21:53Z"
       }
     },
     {
