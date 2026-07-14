@@ -1,6 +1,6 @@
 # Story 85.1: Environment Variable Setup
 
-Status: in-progress
+Status: done
 
 ## Story
 

@@ -86,6 +86,36 @@ development_status:
   80-2-dispute-filing-flow: partial
   80-3-mediation-resolution: done  # promoted 2026-06-25 (80-3-mediation-resolution): final gap closed — party submissions endpoints (GET/POST /api/v1/disputes/{id}/submissions, already on backend) wired into the frontend. Added @ppt/api-client listSubmissions/submitResponse + useDisputeSubmissions/useSubmitResponse (snake_case wire types PartySubmission/SubmitResponseRequest matching backend serde). Surfaced as a "Submissions" tab in MediationWorkspacePage via new MediationSubmissionsPanel (list + party composer with type/visibility). i18n added for all 6 locales; MediationSubmissionsPanel.test.tsx (5 tests). Prior wiring (DisputeDetailRoute/MediationWorkspacePage, mediation hooks, sessions) already shipped. Band A typecheck+biome clean; Band B ppt-web build clean; full dispute suite 152 tests green.
 
+  # ───────────────────────────────────────────────────
+  # Tracking reconciliation 2026-07-14 (gap-tracking-reconcile-story-md-statuses-2026-07-13):
+  # Epics 79 (ppt-web integration), 82 (Reality iOS SwiftUI), 84 (backend integrations),
+  # 85 (mobile env config) and 9 (MFA) were missing from development_status. Added below
+  # with verdicts substantiated against code + tests in the dev checkout (verify 2026-07-14,
+  # corroborating the 2026-07-07 / 2026-07-13 code+test checks). Story-md Status flipped to
+  # done to match.
+  # Epic 79: ppt-web API-client / app integration
+  79-1-api-client-integration: done      # story-md already done; @ppt/api-client generated + wired
+  79-2-authentication-flow: done         # Verified 2026-07-14: ppt-web AuthContext.tsx (exports useAuth) + LoginPage.tsx + ProtectedRoute.tsx + AuthCallbackPage.tsx; tests AuthContext.test.tsx / AuthContext.login-refresh.test.tsx / ProtectedRoute.test.tsx / ProtectedRoute.routing.test.tsx / AuthCallbackPage.test.tsx.
+  79-3-error-handling-toasts: done       # Verified 2026-07-14: ppt-web components/Toast.tsx (ToastProvider + useToast) + hooks/useNetworkStatus.ts + lib/errorHandler.ts + components/OfflineIndicator.tsx; tests Toast.test.tsx / Toast.a11y.test.tsx / errorHandler.test.ts.
+  79-4-websocket-realtime: done          # Verified 2026-07-14: ppt-web lib/websocket.ts + contexts/WebSocketContext.tsx + hooks/useWebSocket.ts + components/ConnectionStatus.tsx; tests websocket.test.ts / websocket.delivery.test.ts.
+  # Epic 82: Reality Portal iOS (SwiftUI) — mobile-native/iosApp
+  82-1-swiftui-project-setup: done       # Verified 2026-07-14: iosApp App/RealityPortalApp.swift + AppDelegate.swift + MainTabView.swift + Core/DI/DependencyContainer.swift + project.yml + Configurations/ xcconfigs; test iosAppTests/RealityPortalTests.swift. (audit: docs/superpowers/plans/gap-82-1-swiftui-audit.md)
+  82-2-navigation-routing: done          # Verified 2026-07-14: iosApp Core/Navigation/NavigationCoordinator.swift + Route.swift + DeepLinkHandler.swift + NavigationStateRestorationService.swift (covered by RealityPortalTests.swift).
+  82-3-home-search-screens: done         # Verified 2026-07-14: iosApp Features/Home/HomeView.swift + Features/Search/SearchView.swift; test iosAppTests/SearchViewTests.swift.
+  82-4-listing-detail-favorites: done    # Verified 2026-07-14: iosApp Features/Listing/ListingDetailView.swift + ListingMapView.swift + Features/Favorites/FavoritesView.swift + Core/Services/FavoritesService.swift; test iosAppTests/FavoritesServiceTests.swift.
+  82-5-inquiries-account: done           # Verified 2026-07-14: iosApp Features/Inquiries/InquiriesView.swift + InquiryDetailView.swift + SendInquiryView.swift + Features/Account/AccountView.swift (covered by RealityPortalTests.swift; no dedicated inquiries/account test). 9 route destinations remain stub Text placeholders in MainTabView.destinationView() per gap-82-1-swiftui-audit.md — story ACs met, follow-up tracked in audit.
+  # Epic 84: Backend integrations (S3 / e-signature / price-tracking / notifications / RAG)
+  84-1-s3-presigned-urls: done           # Verified 2026-07-14: crates/integrations/src/storage.rs generate_download_url/generate_preview_url/generate_presigned_upload_url (SigV4, S3_PRESIGNED_URL_TTL_SECS, header "Story 84.1"); in-file unit tests + api-server tests/document_download_preview_tests.rs.
+  84-2-esignature-email: done            # Verified 2026-07-14: api-server services/email.rs send_signature_request_email (+ reminder, "Story 84.2") + crates/integrations/src/esignature.rs + routes/signatures.rs + repositories/signature_request.rs; tests esignature_email_status_tracking_tests.rs / esignature_sign_consumer_tests.rs / esignature_webhook_idempotency_tests.rs / esignature_nonce_replay_tests.rs / db esignature_workflow_repo_tests.rs.
+  84-3-price-tracking: done              # Verified 2026-07-14: reality-server services/favorite_alerts.rs (price-change alert worker over listing_price_history); migrations 00063_reality_portal_professional.sql (+ change-% trigger) + 00194_favorite_alert_queue.sql; test favorite_alert_worker_tests.rs.
+  84-4-notification-triggers: done       # Verified 2026-07-14: crates/common/src/notifications/mod.rs (header "Story 84.4: Notification Trigger System") + api-server services/email.rs + scheduler.rs; test crates/common/tests/notification_trigger_tests.rs.
+  84-5-pgvector-rag: done                # Verified 2026-07-14: migration 00081_create_pgvector.sql (document_embeddings vector(1536) + JSONB fallback) + 00203_fix_rag_statistics_view.sql; crates/integrations/src/embedding.rs (EmbeddingProvider trait, "Story 84.5"); tests rag_migrate_pgvector_tests.rs / rag_index_embedding_write_tests.rs.
+  # Epic 85: Mobile environment configuration
+  85-1-environment-variables: done       # Verified 2026-07-14: frontend/apps/mobile/.env.{development,staging,production} + .env.example + src/config/api.ts + app.config.ts (Expo iOS build config) + mobile-native shared ApiConfig.kt; tests app.config.env.test.ts / app.config.iosBuildConfig.test.ts / config/constants.test.ts. (Expo app.config.ts model, not react-native-config/xcconfig/gradle-flavors as the story draft assumed.)
+  85-2-build-configuration: done         # story-md already done.
+  # Epic 9: Multi-factor authentication
+  9-1-totp-2fa-setup: done               # Verified 2026-07-14: backend routes/mfa.rs (setup/verify/disable/status/backup-codes) + services/totp.rs + crates/admin-core/src/mfa.rs + crates/db/repositories/two_factor_auth.rs; frontend ppt-web features/auth/pages/TwoFactorAuthPage.tsx; tests mfa_e2e_tests.rs / mfa_recovery_codes_tests.rs / mfa_brute_force_rate_limit_tests.rs / admin_mfa_step_up_tests.rs / admin-core mfa_enrollment_tests.rs / TwoFactorAuthPage.test.tsx.
+
 # ───────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
 # Slotted: 2026-05-26 | Priority: medium

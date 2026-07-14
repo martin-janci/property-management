@@ -1,6 +1,6 @@
 # Story 84.3: Price Tracking for Favorites
 
-Status: pending
+Status: done
 
 ## Story
 

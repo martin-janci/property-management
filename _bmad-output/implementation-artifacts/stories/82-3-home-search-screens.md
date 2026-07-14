@@ -1,6 +1,6 @@
 # Story 82.3: Home and Search Screens
 
-Status: pending
+Status: done
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 79.2: Authentication Flow Implementation
 
-Status: pending
+Status: done
 
 ## Story
 

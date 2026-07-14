@@ -1,6 +1,6 @@
 # Story 79.3: Error Handling and Toast Notifications
 
-Status: pending
+Status: done
 
 ## Story
 

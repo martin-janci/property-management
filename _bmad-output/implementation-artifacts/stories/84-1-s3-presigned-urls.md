@@ -1,6 +1,6 @@
 # Story 84.1: S3 Presigned URL Implementation
 
-Status: pending
+Status: done
 
 ## Story
 
