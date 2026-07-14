@@ -1,12 +1,12 @@
 {
-  "generated": "2026-07-14T16:42:26Z",
+  "generated": "2026-07-14T18:11:03Z",
   "assignments": [
     {
       "task_id": "gh-issue-2314",
       "branch": "auto-impl/gh-issue-2314-2bfd7efe",
       "status": "review",
       "claimed_at": "2026-07-14T16:06:35Z",
-      "last_updated": "2026-07-14T16:42:26Z",
+      "last_updated": "2026-07-14T18:11:03Z",
       "status_changed_at": "2026-07-14T16:38:30Z",
       "pr_number": 2316,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2316",

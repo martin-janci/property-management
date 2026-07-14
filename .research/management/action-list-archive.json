@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-14T14:19:46Z",
+  "archived_at": "2026-07-14T18:11:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2999,6 +2999,25 @@
       "first_open_at": "2026-07-07T19:45:00Z",
       "source": "gap-scan 2026-07-07 evening",
       "gc1_closed": "merged 2026-07-08T02:32:14Z PR #2166 (dispatcher merge-confirm)"
+    },
+    {
+      "id": "gap-83-2-booking-com-connect-happy-path-fetch",
+      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests — documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13 | gc1-reconcile 2026-07-14T18:04:18Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2315,
+        "merged_at": "2026-07-14T16:15:00Z",
+        "at": "2026-07-14T18:04:18Z"
+      }
     },
     {
       "id": "gap-83-2-frontend-property-mapping-wizard-not-wired",

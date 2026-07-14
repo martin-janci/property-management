@@ -98,18 +98,6 @@
       "source": "gap-scan 2026-07-13"
     },
     {
-      "id": "gap-83-2-booking-com-connect-happy-path-fetch",
-      "action": "Booking.com connect happy path (fetch_property outbound call) NOT exercised in tests — documented limitation, needs base-URL seam like Airbnb's (#2240 pattern) (83-2-booking-integration Booking.com OAuth and Sync)",
-      "owner_role": "pm-integration",
-      "priority": "low",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
       "id": "gh-issue-2282",
       "action": "mobile dashboard silently renders zero stats on any API error (four useApiQuery calls with no isError branch) (Closes #2282)",
       "owner_role": "pm-frontend",
