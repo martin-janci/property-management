@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Panel",
+    "loadError": "Nie udalo sie zaladowac panelu. Pociagnij, aby odswiezyc, lub dotknij Ponow.",
     "welcome": "Witaj",
     "welcomeBack": "Witaj ponownie,",
     "recentActivity": "Ostatnia aktywnosc",

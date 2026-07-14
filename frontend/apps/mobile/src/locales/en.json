@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "loadError": "Couldn't load your dashboard. Pull down to refresh or tap retry.",
     "welcome": "Welcome",
     "welcomeBack": "Welcome back,",
     "recentActivity": "Recent Activity",

@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Prehled",
+    "loadError": "Nepodarilo se nacist prehled. Pretazenim obnovte nebo klepnete na Opakovat.",
     "welcome": "Vitejte",
     "welcomeBack": "Vitejte zpet,",
     "recentActivity": "Posledni aktivita",

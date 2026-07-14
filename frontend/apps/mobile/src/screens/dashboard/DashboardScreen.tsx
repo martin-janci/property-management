@@ -134,6 +134,18 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     votesQuery.isFetching ||
     unreadMessagesQuery.isFetching;
 
+  // If ANY of the four cards' queries failed, the stat derivations above
+  // silently coalesce to `?? 0` / `?? []`, so an error would render an
+  // all-zero dashboard indistinguishable from a genuinely empty building
+  // (#2282). Surface a distinct, retryable banner so the zeros aren't
+  // mistaken for real data. Partial data (from the queries that DID succeed)
+  // still renders beneath the banner.
+  const hasError =
+    announcementsQuery.isError ||
+    faultsStatsQuery.isError ||
+    votesQuery.isError ||
+    unreadMessagesQuery.isError;
+
   const onRefresh = useCallback(async () => {
     await Promise.all([
       announcementsQuery.refetch(),
@@ -197,6 +209,22 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
           <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
+        {/* Error banner — shown when any card's query failed so the zeroed
+            stats below aren't mistaken for a genuinely empty building (#2282). */}
+        {hasError && (
+          <View style={styles.errorBanner} accessibilityRole="alert">
+            <Text style={styles.errorBannerIcon}>⚠️</Text>
+            <Text style={styles.errorBannerText}>{t('dashboard.loadError')}</Text>
+            <Pressable
+              style={styles.errorBannerButton}
+              onPress={onRefresh}
+              accessibilityRole="button"
+            >
+              <Text style={styles.errorBannerButtonText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <Pressable style={styles.statCard} onPress={() => onNavigate?.('Faults')}>
@@ -313,6 +341,27 @@ const styles = StyleSheet.create({
   logoutButton: { padding: 8 },
   logoutText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
   scrollView: { flex: 1 },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.dangerBg,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  errorBannerIcon: { fontSize: 20 },
+  errorBannerText: { flex: 1, fontSize: 13, color: colors.dangerDark },
+  errorBannerButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.danger,
+  },
+  errorBannerButtonText: { color: colors.white, fontSize: 13, fontWeight: '600' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12 },
   statCard: {
     flex: 1,

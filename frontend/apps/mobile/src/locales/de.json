@@ -57,6 +57,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "loadError": "Dashboard konnte nicht geladen werden. Zum Aktualisieren nach unten ziehen oder auf Wiederholen tippen.",
     "welcome": "Willkommen",
     "welcomeBack": "Willkommen zuruck,",
     "recentActivity": "Letzte Aktivitat",
