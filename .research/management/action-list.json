@@ -80,7 +80,7 @@
       "priority": "medium",
       "dependency": null,
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "first_open_at": "2026-07-13T18:40:00Z",
       "source": "gap-scan 2026-07-13"
