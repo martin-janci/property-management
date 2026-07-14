@@ -1,0 +1,235 @@
+{
+  "generated_at": "2026-07-14T03:15:00Z",
+  "trigger_text": "",
+  "since": "2026-07-14T03:15:00Z",
+  "window_hours": 25,
+  "summary": {
+    "merged_prs": 19,
+    "pr_range": "#2273-#2298",
+    "open_prs_touched": 1,
+    "new_or_updated_issues": 12,
+    "commits_on_dev": 50,
+    "app_code_commits": 19,
+    "churn_hotspots_new": 3,
+    "screen_map_drift_signals": 4
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-07-13-to-14",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "cumulative_reemit": true,
+      "evidence": [
+        "cumulative re-emit: 390 lines added/deleted in PR #2286 (fix(83-3-portal-webhooks): replay/freshness protection); prior emit still in seen_signals"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2294 (gap-83-3 portal webhook status manager surface)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "303 lines added/deleted in PR #2294 (new ppt-web manager surface for portal webhooks)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/notification-triggers/pages/NotificationTriggersPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2293 (gap-84-4 notification-trigger management UI)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "283 lines added/deleted in PR #2293 (new ppt-web notification-triggers management page)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287 (feat(reality-web): price-alert subscription surface)",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2287 added reality-web routes app/[locale]/favorites/alerts/{layout,page}.tsx and modified app/[locale]/favorites/page.tsx without any docs/screens/reality/* update (favorites.md was shipped in PR #2285 but doesn't cover the /alerts subroute)",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2281 (fix reality-web listing detail SSR crash)",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2281 modified app/[locale]/listings/[slug]/{jsonLd.ts,page.tsx} without any docs/screens/reality/* update — bugfix touched routes, doc not refreshed",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292 (feat(reports): wire Create-new-schedule flow)",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2292 modified routes/groups/reports.tsx (and added reports.create-schedule.route.test.tsx) without any docs/screens/ppt/* update for the reports/schedules screen",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294 (gap-83-3 portal-webhook manager surface)",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2294 added /settings/portal-webhooks (App.tsx + routes/groups/core.tsx) without any docs/screens/ppt/* update for the new manager surface",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 == '# 2026-07-14'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq …seen_signals length differs vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq .items[].id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items with updated_at <= today-14 (all 6 open items created today)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — no adversarial pass needed",
+      "observed": "0 new plans",
+      "expected": "0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "diff -Ecw no secrets in cached diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures reported",
+      "observed": "no failures",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plan slugs deleted",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 7 >= HEAD 7",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps (0 actions)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — G16 no-op",
+      "observed": "pm_cursor unchanged vs HEAD",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "Phase 1.5 skipped: dispatcher already ran Tier-1d dev-review on mobile-rn today (signals/2026-07-14-mobile-rn.json, 3 findings). Oldest-unreviewed for next routine run = ppt-web-core (cursor 2026-07-07).",
+    "Phase 1.6 skipped: dispatcher's Phase 2.5 regenerated .research/management/{coverage.json,project-state.md,post-merge-review.json,assignments*.json,objective.json} today; pm_cursor and coverage_cursor left untouched (G16 becomes a no-op).",
+    "Reachability gate: no score_delta>=2 signal cites backend/*/handlers/*.rs, gate not exercised.",
+    "Dev-review signals from dispatcher's 2026-07-14-mobile-rn.json remain the dispatcher's audit trail; routine does not fold them into today's `signals[]` (separate loop, separate seen-set)."
+  ]
+}

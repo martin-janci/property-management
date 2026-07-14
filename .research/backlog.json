@@ -4390,6 +4390,141 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "refactor-churn-portal-webhooks-page-2026-07-14",
+      "title": "Churn hotspot: ppt-web PortalWebhooksPage.tsx (303 lines in PR #2294) — new manager surface, watch for follow-up churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 introduced ppt-web/features/settings/webhooks/PortalWebhooksPage.tsx (303 line-diff, new manager surface for portal webhooks)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-notification-triggers-page-2026-07-14",
+      "title": "Churn hotspot: ppt-web NotificationTriggersPage.tsx (283 lines in PR #2293) — new management UI, watch for follow-up churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2293"
+      ],
+      "evidence": [
+        "PR #2293 introduced ppt-web/features/notification-triggers/pages/NotificationTriggersPage.tsx (283 line-diff, new page for notification-trigger management)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/notification-triggers/pages/NotificationTriggersPage.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "title": "Screen-map drift: PR #2287 shipped reality-web /favorites/alerts sub-route with no docs/screens/reality/ doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2287"
+      ],
+      "evidence": [
+        "PR #2287 added app/[locale]/favorites/alerts/{layout,page}.tsx and modified app/[locale]/favorites/page.tsx",
+        "docs/screens/reality/favorites.md still describes alerts as OOS (line 69, line 125) and no favorites-alerts.md exists",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/layout.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "docs/screens/reality/favorites.md"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "title": "Screen-map drift: PR #2281 hardened reality-web listing-detail SSR without a docs/screens/reality/ refresh",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2281"
+      ],
+      "evidence": [
+        "PR #2281 modified app/[locale]/listings/[slug]/{jsonLd.ts,page.tsx} to guard SSR partial-body deref (issue #2276)",
+        "no docs/screens/reality/listing-detail.md update — the SSR-safety fix isn't captured in the screen doc",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "title": "Screen-map drift: PR #2292 wired create-schedule flow in ppt-web reports route without a docs/screens/ppt/ refresh",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2292"
+      ],
+      "evidence": [
+        "PR #2292 modified routes/groups/reports.tsx (create-schedule wiring) and features/reports/pages/ReportsPage.tsx",
+        "no docs/screens/ppt/reports*.md update — new user flow not documented",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "frontend/apps/ppt-web/src/features/reports/pages/ReportsPage.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "title": "Screen-map drift: PR #2294 added /settings/portal-webhooks route without a docs/screens/ppt/ doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 modified App.tsx + routes/groups/core.tsx to add a new /settings/portal-webhooks manager surface",
+        "no docs/screens/ppt/portal-webhooks.md (or similar) created for the new screen",
+        "heuristic — see routine-prompt §Best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }
