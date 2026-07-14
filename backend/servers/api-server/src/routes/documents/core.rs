@@ -344,6 +344,44 @@ pub struct UploadDocumentResponse {
     pub message: String,
 }
 
+/// Request for a presigned direct-to-S3 upload URL (gap-84-1).
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateUploadUrlRequest {
+    /// Original filename — used to derive the storage key and, when
+    /// `mime_type` is blank, to detect the content type from the extension.
+    pub file_name: String,
+    /// MIME type the client will upload with. It MUST be sent as the
+    /// `Content-Type` header on the subsequent PUT, because the presigned URL
+    /// is signed for exactly this content type.
+    pub mime_type: String,
+    /// Optional declared size in bytes. When present it is validated against the
+    /// 50 MiB cap up-front so an oversize upload is rejected before the client
+    /// wastes a round-trip to S3. S3 still enforces the real byte count.
+    #[serde(default)]
+    pub size_bytes: Option<i64>,
+}
+
+/// Response carrying a presigned PUT URL for direct client-to-S3 upload
+/// (gap-84-1). The client uploads bytes straight to `url`, then registers the
+/// document via `POST /api/v1/documents` with the returned `file_key`.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateUploadUrlResponse {
+    /// Presigned S3 PUT URL. The client uploads bytes directly here, bypassing
+    /// the api-server byte proxy.
+    pub url: String,
+    /// Storage key the object will live at. Echo this back to
+    /// `POST /api/v1/documents` to register the document record once the PUT
+    /// completes.
+    pub file_key: String,
+    /// MIME type the client MUST set as the `Content-Type` header on the PUT so
+    /// the request matches the presigned signature.
+    pub content_type: String,
+    /// HTTP method to use for the upload (always `PUT`).
+    pub method: String,
+    /// When the presigned URL expires.
+    pub expires_at: DateTime<Utc>,
+}
+
 /// Query for listing documents.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Default, utoipa::IntoParams)]
 pub struct ListDocumentsQuery {
@@ -416,6 +454,10 @@ pub fn router() -> Router<AppState> {
         // Download/Preview (Story 7A.4)
         .route("/{id}/download", get(get_download_url))
         .route("/{id}/preview", get(get_preview_url))
+        // Presigned direct-to-S3 upload URL (gap-84-1). No body-limit override
+        // needed — only a small JSON request/response crosses the api-server;
+        // the file bytes go straight to S3.
+        .route("/upload-url", post(create_upload_url))
         // Multipart upload (Story 7A.1)
         .merge(upload_router)
 }
@@ -1449,6 +1491,167 @@ async fn get_preview_url(
     rls.release().await;
     Ok(Json(UrlResponse {
         url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
+}
+
+// ============================================================================
+// Presigned Upload-URL Handler (gap-84-1)
+// ============================================================================
+
+/// Validate a presigned-upload request before minting a URL (gap-84-1).
+///
+/// Mirrors the eager checks the multipart [`upload_document`] handler runs on
+/// received bytes, but applied up-front to the client's *declared* `mime_type`
+/// / `size_bytes` so an invalid request is rejected before a presigned URL is
+/// handed out. Kept as a pure function so it can be unit-tested without a live
+/// S3 client or DB. Returns the client error tuple on failure.
+fn validate_upload_url_request(
+    mime_type: &str,
+    size_bytes: Option<i64>,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if !ALLOWED_MIME_TYPES.contains(&mime_type) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "UNSUPPORTED_FILE_TYPE",
+                format!(
+                    "File type '{mime_type}' is not supported. \
+                    Allowed: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, GIF, WEBP, TXT, CSV"
+                ),
+            )),
+        ));
+    }
+
+    if let Some(size) = size_bytes {
+        if size < 0 {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "BAD_REQUEST",
+                    "size_bytes must be non-negative",
+                )),
+            ));
+        }
+        if size > MAX_FILE_SIZE {
+            return Err((
+                StatusCode::PAYLOAD_TOO_LARGE,
+                Json(ErrorResponse::new(
+                    "FILE_TOO_LARGE",
+                    format!("File exceeds maximum size of {MAX_FILE_SIZE} bytes (50 MiB)"),
+                )),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Mint a presigned PUT URL for direct client-to-S3 upload (gap-84-1).
+///
+/// Lets clients upload file bytes straight to S3-compatible storage instead of
+/// proxying them through the api-server multipart `/upload` route. Flow:
+///   1. `POST /api/v1/documents/upload-url` → this handler returns a short-lived
+///      presigned PUT URL plus the storage `file_key`.
+///   2. Client `PUT`s the bytes directly to that URL, setting
+///      `Content-Type: <content_type>` so the request matches the signature.
+///   3. Client `POST`s `/api/v1/documents` with the `file_key` to register the
+///      document record.
+///
+/// Any authenticated org member may request an upload URL — same authorization
+/// posture as the existing multipart upload handler (`AuthUser` + tenant
+/// context, no extra capability gate). The URL is scoped to a tenant-specific
+/// key and expires in 5 minutes.
+#[utoipa::path(
+    post,
+    path = "/api/v1/documents/upload-url",
+    request_body = CreateUploadUrlRequest,
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Presigned upload URL", body = CreateUploadUrlResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 413, description = "File too large", body = ErrorResponse),
+        (status = 503, description = "Storage unavailable", body = ErrorResponse),
+    ),
+    tag = "Documents"
+)]
+async fn create_upload_url(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    tenant: TenantExtractor,
+    Json(req): Json<CreateUploadUrlRequest>,
+) -> Result<Json<CreateUploadUrlResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = tenant.tenant_id;
+
+    // Resolve MIME type: prefer the client's declared type, fall back to
+    // extension-based detection when it's blank (parity with upload_document).
+    let content_type = if req.mime_type.trim().is_empty() {
+        integrations::get_content_type(&req.file_name).to_string()
+    } else {
+        req.mime_type.clone()
+    };
+
+    validate_upload_url_request(&content_type, req.size_bytes)?;
+
+    // Presigning needs a real S3 client. StorageService::from_env() (sync) does
+    // not create one, so gate on has_s3_client() — same 503 contract the
+    // download handler uses.
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — presigned uploads unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+    if !storage.has_s3_client() {
+        tracing::error!("Storage service present but S3 client not initialised");
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        ));
+    }
+
+    // Tenant-scoped storage key ({org_id}/{year}/{month}/{uuid}_{filename}).
+    let file_key = integrations::generate_storage_key(org_id, &req.file_name);
+
+    // Default TTL (5 min) is applied by generate_upload_url when None is passed.
+    let presigned = storage
+        .generate_upload_url(&file_key, &content_type, None)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                file_key = %file_key,
+                "Failed to generate presigned upload URL"
+            );
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "STORAGE_ERROR",
+                    "Unable to generate upload URL. Please try again later.",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        file_key = %file_key,
+        org_id = %org_id,
+        content_type = %content_type,
+        "Issued presigned direct-to-S3 upload URL"
+    );
+
+    Ok(Json(CreateUploadUrlResponse {
+        url: presigned.url,
+        file_key,
+        content_type,
+        method: "PUT".to_string(),
         expires_at: presigned.expires_at,
     }))
 }

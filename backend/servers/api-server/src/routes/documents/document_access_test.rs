@@ -1,4 +1,5 @@
-use super::{document_access_allowed, scope_membership_allows};
+use super::{document_access_allowed, scope_membership_allows, validate_upload_url_request};
+use axum::http::StatusCode;
 use chrono::Utc;
 use db::models::Document;
 use serde_json::json;
@@ -214,4 +215,44 @@ fn membership_never_grants_non_building_unit_scopes() {
             &[Uuid::new_v4()]
         ));
     }
+}
+
+// ----------------------------------------------------------------------------
+// gap-84-1 — presigned direct-to-S3 upload URL request validation.
+//
+// `validate_upload_url_request` is the pure up-front guard `create_upload_url`
+// applies to the client's declared MIME type / size before minting a presigned
+// PUT URL. These pin the accept/reject contract without needing an S3 client.
+// ----------------------------------------------------------------------------
+
+#[test]
+fn upload_url_request_accepts_allowed_type_and_size() {
+    // Allowed MIME with a within-limit size hint.
+    assert!(validate_upload_url_request("application/pdf", Some(1024)).is_ok());
+    // Size hint omitted is fine — S3 still enforces the real byte count.
+    assert!(validate_upload_url_request("image/png", None).is_ok());
+    // Exactly at the cap is allowed.
+    assert!(validate_upload_url_request("image/jpeg", Some(db::models::MAX_FILE_SIZE)).is_ok());
+}
+
+#[test]
+fn upload_url_request_rejects_disallowed_mime_type() {
+    let err = validate_upload_url_request("application/x-msdownload", Some(10))
+        .expect_err("executable MIME must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
+}
+
+#[test]
+fn upload_url_request_rejects_oversize_hint() {
+    let too_big = db::models::MAX_FILE_SIZE + 1;
+    let err = validate_upload_url_request("application/pdf", Some(too_big))
+        .expect_err("oversize hint must be rejected before minting a URL");
+    assert_eq!(err.0, StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[test]
+fn upload_url_request_rejects_negative_size() {
+    let err = validate_upload_url_request("application/pdf", Some(-1))
+        .expect_err("negative size must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
 }
