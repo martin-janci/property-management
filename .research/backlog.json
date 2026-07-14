@@ -4425,9 +4425,10 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
-        "rotating-expert-review"
+        "rotating-expert-review",
+        "commit a166bcab (dispatcher Tier-1d mobile-rn review 2026-07-14)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 \u2014 NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
@@ -4439,7 +4440,7 @@
       ],
       "created_at": "2026-07-14",
       "updated_at": "2026-07-14",
-      "plan": null
+      "plan": "plans/test-gap-mobile-nfc-untested.md"
     },
     {
       "id": "code-review-mobile-rn-dashboard-no-err-ui",

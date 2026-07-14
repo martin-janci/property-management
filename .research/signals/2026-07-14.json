@@ -409,5 +409,7 @@
       "expected": "0"
     }
   ],
-  "auto_fix_skipped_reason": "no allowlist candidate met certainty bar"
+  "auto_fix_skipped_reason": "no allowlist candidate met certainty bar",
+  "second_fire_payload": "buffer-low: claimable=0/72 \u2014 backlog+coverage exhausted; refill planner",
+  "second_fire_action": "promoted 1 plan: plans/test-gap-mobile-nfc-untested.md (score=3, test-gap, medium confidence)"
 }

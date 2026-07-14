@@ -1,11 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-14 22:20 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-14 22:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 3 | security | `code-review-api-handlers-news-articles-idor` | routes/news_articles.rs:685 — delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(stat | needs-human-judgement | 2026-07-14 |  |
-| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in ex | open | 2026-07-14 |  |
+| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in ex | ready | 2026-07-14 | [plan](plans/test-gap-mobile-nfc-untested.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
