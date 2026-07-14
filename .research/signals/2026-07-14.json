@@ -1,0 +1,226 @@
+{
+  "run_iso": "2026-07-14T02:15:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-07-13T02:11Z..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "390 lines this run (single PR #2286 replay-protection rewrite of handle_portal_webhook + verify_portal_webhook)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-07-13T02:11Z..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "303 lines (new file created in PR #2294 gap-83-3 portal-webhook manager surface)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-07-13T02:11Z..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "283 lines (new file created in PR #2287 story-84.3 price-alert surface)"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "webhook.rs runs_seen advanced 1 (2026-05-30) → 2 (2026-07-14); instability proxy"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2292 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + reports.create-schedule.route.test.tsx without a docs/screens/ppt/*.md update; docs/screens/ppt/reports.md exists but was not touched"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2294 touched frontend/apps/ppt-web/src/App.tsx + routes/groups/core.tsx (new /settings/portal-webhooks route) without a docs/screens/ppt/*.md update"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2287 added frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx and edited favorites/page.tsx without a matching docs/screens/reality/*.md update; companion PR #2285 covers favorites.md only, not the new /favorites/alerts surface"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2281",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2281 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{page.tsx,jsonLd.ts,jsonLd.test.ts} without a docs/screens/reality/listing-detail.md update; likely false positive (internal SSR-safety fix, no visible surface change)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2296",
+      "type": "dep-update-noise",
+      "source": "PR #2296",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(backend): bump yanked spin 0.9.8/0.10.0 → 0.9.9/0.10.1 to unblock cargo-deny on all PRs; Cargo.lock only, log in brief"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief + head match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup (non-cumulative)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "cap=true / decay vacuous (no ≥14d open items)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "vacuous (0 new plans)",
+      "expected": "≤2 with adversarial line"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "brief: 'Phases that failed: none'",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows (or holds)",
+      "observed": "new=7 old=7",
+      "expected": "new ≥ old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps (0/0/0)",
+      "observed": "0 actions",
+      "expected": "≤1 pr / ≤1 issue / ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor=5 (0..7); coverage_cursor=12 (0..13); Phase 1.6 skipped so movement clause vacuous",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

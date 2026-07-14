@@ -4390,6 +4390,127 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2292-ppt",
+      "title": "Screen-map drift: PR #2292 wired reports create-schedule route in ppt-web without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2292"
+      ],
+      "evidence": [
+        "PR #2292 (feat(reports): wire Create-new-schedule flow to backend, gap-81-1) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + reports.create-schedule.route.test.tsx with no matching docs/screens/ppt/ update",
+        "docs/screens/ppt/reports.md exists on dev but wasn't touched; the create-schedule wiring changes user-observable behaviour (schedule tab now creates instead of being inert)",
+        "heuristic caveat: routine drift check compares route-file basenames to screen-doc slugs; false-positive rate is high, treat as review candidate not promotable plan"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "docs/screens/ppt/reports.md"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2294-ppt",
+      "title": "Screen-map drift: PR #2294 added portal-webhooks manager route in ppt-web without a docs/screens/ppt entry",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 (gap-83-3 portal webhook status manager surface) touched frontend/apps/ppt-web/src/App.tsx + routes/groups/core.tsx to mount a new /settings/portal-webhooks route",
+        "no docs/screens/ppt/portal-webhooks.md (or settings-portal-webhooks.md) was created in the PR — new manager surface with no screen-map coverage",
+        "heuristic caveat: per-PR check may fire on route-plumbing changes that don't warrant a full screen doc; review candidate only"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2287-reality",
+      "title": "Screen-map drift: PR #2287 added reality-web favorites/alerts route without a matching docs/screens/reality entry",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2287"
+      ],
+      "evidence": [
+        "PR #2287 (feat(reality-web): price-alert subscription surface for favorites, story 84.3) added frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx + edited favorites/page.tsx",
+        "companion PR #2285 updated docs/screens/reality/favorites.md but no docs/screens/reality/favorites-alerts.md (or similar) was authored — new /favorites/alerts route has no dedicated screen doc",
+        "heuristic caveat: per-PR drift check doesn't credit companion doc PRs from the same session; treat as review candidate"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/page.tsx",
+        "docs/screens/reality/favorites.md"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2281-reality",
+      "title": "Screen-map drift: PR #2281 modified reality-web listing detail SSR without a screen-doc touch",
+      "vector": "test-gap",
+      "confidence": "low",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2281"
+      ],
+      "evidence": [
+        "PR #2281 (fix(reality-web): guard listing detail SSR against partial 200 bodies) modified frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx + jsonLd.ts",
+        "docs/screens/reality/listing-detail.md exists but wasn't touched — internal SSR-safety fix (renders ListingNotFound instead of crashing on partial 200)",
+        "heuristic caveat: this is a bugfix on internal derefs, not a visible-surface change — likely false-positive; low confidence"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "docs/screens/reality/listing-detail.md"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspots-2026-07-14",
+      "title": "Churn hotspot cluster (2026-07-14): integrations/webhook.rs (repeated) + two new epic-83/84 feature files",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 4,
+      "status": "open",
+      "sources": [
+        "churn analysis 2026-07-14",
+        "PR #2286",
+        "PR #2294",
+        "PR #2287"
+      ],
+      "evidence": [
+        "top-3 raw churn this run (18 app commits, excluding chore(research)/lockfiles):",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs — 390 lines this run (PR #2286 replay-protection rewrite); runs_seen advanced 1→2 (repeated-churn)",
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx — 303 lines (new file, gap-83-3 PR #2294)",
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx — 283 lines (new file, gap-84-3 PR #2287)",
+        "the two new-file entries are first-emission noise (new code always churns big); only webhook.rs is a genuine instability signal — flagged for the next run to watch for a runs_seen=3 escalation"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "frontend/apps/ppt-web/src/features/settings/webhooks/PortalWebhooksPage.tsx",
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }
