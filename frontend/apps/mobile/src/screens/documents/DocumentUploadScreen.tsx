@@ -82,7 +82,7 @@ function formatBytes(bytes: number): string {
 }
 
 /** Decode the JWT payload to extract the tenant_id claim (no verification). */
-function extractTenantId(token: string): string | null {
+export function extractTenantId(token: string): string | null {
   try {
     const parts = token.split('.');
     if (parts.length < 2) return null;
@@ -107,7 +107,7 @@ function extractTenantId(token: string): string | null {
  * Content-Type header (React Native's FormData sets that automatically when
  * you omit it).
  */
-async function uploadDocumentMultipart(params: {
+export async function uploadDocumentMultipart(params: {
   file: PickedFile;
   title: string;
   description: string;
@@ -403,7 +403,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
 
 // ─── Helper: file icon by MIME ─────────────────────────────────────────────────
 
-function getFileIcon(mimeType: string): string {
+export function getFileIcon(mimeType: string): string {
   if (mimeType.includes('pdf')) return '📄';
   if (mimeType.startsWith('image/')) return '🖼️';
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return '📊';
