@@ -5189,6 +5189,50 @@
       "merge_attempted_at": "2026-07-14T08:15:09Z"
     },
     {
+      "task_id": "gh-issue-2300",
+      "branch": "auto-impl/gh-issue-2300-bc7f2a0a",
+      "status": "merged",
+      "claimed_at": "2026-07-14T06:07:22Z",
+      "last_updated": "2026-07-14T14:19:46Z",
+      "status_changed_at": "2026-07-14T14:19:46Z",
+      "pr_number": 2312,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2312",
+      "merged_at": "2026-07-14T14:11:10Z",
+      "specialist": "db-migration",
+      "implementer_summary": "pr=2312 status=done specialist=db-migration scope_drift=true code_reuse_warn=none note=migration 00215 set-based backfill + provenance stamp; validated full chain on real pgvector; api-server test compile blocked by egress swagger-ui (CI will run)",
+      "reviewer_summary": "verdict=approve head_oid=ba576a24b625fcbeb0d99f822a6d248f42e89976 note=blocking-fmt-fixed-ci-green-migration-safe-scope-drift-justified",
+      "last_reviewed_oid": "ba576a24b625fcbeb0d99f822a6d248f42e89976",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-14T14:09:19Z"
+    },
+    {
+      "task_id": "gh-issue-2301",
+      "branch": "auto-impl/gh-issue-2301-af2b9ab5",
+      "status": "merged",
+      "claimed_at": "2026-07-14T08:07:24Z",
+      "last_updated": "2026-07-14T14:19:46Z",
+      "status_changed_at": "2026-07-14T14:19:46Z",
+      "pr_number": 2310,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2310",
+      "merged_at": "2026-07-14T14:11:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2310 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=honest-metrics ProviderOutcome+single token fetch; 39 push_fanout tests pass, clippy -D clean; pushed via API (git push 403) file byte-verified",
+      "reviewer_summary": "verdict=approve head_oid=4eba8a358d926db5ace1ac7477b933b2cb0971fd note=honest-metrics-table-correct-single-fetch-routing-preserved-CI-green",
+      "last_reviewed_oid": "4eba8a358d926db5ace1ac7477b933b2cb0971fd",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-14T14:09:19Z"
+    },
+    {
       "task_id": "gh-issue-2302",
       "branch": "auto-impl/gh-issue-2302-da3e0e02",
       "status": "merged",
@@ -5899,5 +5943,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-14T12:16:33Z"
+  "archived_at": "2026-07-14T14:19:46Z"
 }

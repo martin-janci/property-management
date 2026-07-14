@@ -1,0 +1,31 @@
+{
+  "experts_used": [
+    "rust"
+  ],
+  "generated_at": "2026-07-14",
+  "generator": "dev-review",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned (dispatcher Tier-1d demand-driven generation; buffer starved claimable=1<floor=36)",
+  "notes": "Tier-1d generator (dispatcher) ran a rotating-expert static review of api-handlers. Churn-hot files (auth.rs, reports.rs, portal_webhooks.rs) and webhook/signature paths reviewed clean (documented rationale, test-only unwraps, intentional webhook acks). Rust expert found one confirmed high-severity cross-tenant IDOR in routes/news_articles.rs (whole-module pattern). Dispatcher independently corroborated the code pattern before persisting (repo holds raw DbPool; delete/restore/delete_media WHERE id=$1 with no org filter; handlers discard TenantExtractor(_tenant); contrast delete_comment which scopes by user_id). Static analysis only; not runtime-verified. Filed as a GitHub issue for the claim pipeline.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "routes/news_articles.rs:685 — delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(state.db.clone()).delete(id) on the raw pool",
+        "crates/db/src/repositories/news_article.rs:247 — delete() runs `DELETE FROM news_articles WHERE id = $1` with no organization_id filter",
+        "crates/db/src/repositories/news_article.rs:237 — restore() `UPDATE news_articles ... WHERE id = $1` also filters by id only, no org scope",
+        "crates/db/src/repositories/news_article.rs:16-22 — NewsArticleRepository holds a raw DbPool (not RlsConnection); contrast signatures.rs which takes `mut rls: RlsConnection`",
+        "crates/db/migrations/00069_create_news_media.sql — news_articles only ENABLEs RLS (never FORCE); migration 00165 documents api-server runs with BYPASSRLS/owner, so the tenant-isolation policy is inert for these raw-pool queries",
+        "routes/news_articles.rs:651,769,802 — restore_article/add_media/delete_media share the same unscoped raw-pool pattern (cross-tenant read+write+delete). Contrast repo delete_comment() which scopes `WHERE id=$1 AND user_id=$2`."
+      ],
+      "expert": "rust",
+      "issue": 2314
+    }
+  ]
+}

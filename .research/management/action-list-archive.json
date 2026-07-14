@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-14T12:16:33Z",
+  "archived_at": "2026-07-14T14:19:46Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5879,6 +5879,60 @@
         "merged_pr": 2307,
         "merged_at": "2026-07-14T08:17:10Z",
         "at": "2026-07-14T08:21:53Z"
+      }
+    },
+    {
+      "id": "gh-issue-2300",
+      "action": "Follow-up: pgvector back-fill copies vectors without provenance — doesn't fix (and can worsen) embedding-space mixing (PR #2291) (Closes #2300)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2300) | gc1-reconcile 2026-07-14T14:19:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2300,
+        "url": "https://github.com/martin-janci/property-management/issues/2300",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2312,
+        "merged_at": "2026-07-14T14:11:10Z",
+        "at": "2026-07-14T14:19:46Z"
+      }
+    },
+    {
+      "id": "gh-issue-2301",
+      "action": "Follow-up: harden gap-84-4 push wiring — regression guard doesn't pin the fix, iOS-only honest-metrics edge, double token fetch (PR #2290) (Closes #2301)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2301) | gc1-reconcile 2026-07-14T14:19:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2301,
+        "url": "https://github.com/martin-janci/property-management/issues/2301",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2310,
+        "merged_at": "2026-07-14T14:11:42Z",
+        "at": "2026-07-14T14:19:46Z"
       }
     },
     {

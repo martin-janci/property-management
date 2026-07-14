@@ -150,46 +150,6 @@
       }
     },
     {
-      "id": "gh-issue-2300",
-      "action": "Follow-up: pgvector back-fill copies vectors without provenance — doesn't fix (and can worsen) embedding-space mixing (PR #2291) (Closes #2300)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2300)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-14T04:04:36Z",
-      "issue_ref": {
-        "number": 2300,
-        "url": "https://github.com/martin-janci/property-management/issues/2300",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2301",
-      "action": "Follow-up: harden gap-84-4 push wiring — regression guard doesn't pin the fix, iOS-only honest-metrics edge, double token fetch (PR #2290) (Closes #2301)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2301)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-14T04:04:36Z",
-      "issue_ref": {
-        "number": 2301,
-        "url": "https://github.com/martin-janci/property-management/issues/2301",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2303",
       "action": "Follow-up: report_schedules next_run_at is still write-only (no consumer/advance) + dual cadence model (PR #2295) (Closes #2303)",
       "owner_role": "pm-tech-lead",
