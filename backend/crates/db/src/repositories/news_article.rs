@@ -60,20 +60,37 @@ impl NewsArticleRepository {
         Ok(article)
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<NewsArticle>, SqlxError> {
-        sqlx::query_as::<_, NewsArticle>("SELECT * FROM news_articles WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Find an article by ID, scoped to the caller's organization.
+    ///
+    /// SECURITY (issue #2314): the `organization_id` predicate is mandatory —
+    /// `news_articles` only ENABLEs (not FORCEs) RLS and api-server connects with
+    /// a BYPASSRLS role, so the tenant-isolation policy is inert on this path.
+    /// The explicit predicate is therefore the only thing preventing a
+    /// cross-tenant IDOR. Do not drop it.
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<NewsArticle>, SqlxError> {
+        sqlx::query_as::<_, NewsArticle>(
+            "SELECT * FROM news_articles WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Find an article by ID with full details including author information.
     ///
     /// This uses a JOIN query to fetch the article along with author name and avatar
     /// from the users table.
+    ///
+    /// SECURITY (issue #2314): scoped to `organization_id`; see [`Self::find_by_id`].
     pub async fn find_by_id_with_details(
         &self,
         id: Uuid,
+        organization_id: Uuid,
     ) -> Result<Option<ArticleWithDetails>, SqlxError> {
         let row = sqlx::query_as::<_, ArticleWithDetailsRow>(
             r#"
@@ -88,10 +105,11 @@ impl NewsArticleRepository {
                 u.avatar_url as author_avatar_url
             FROM news_articles a
             LEFT JOIN users u ON a.author_id = u.id
-            WHERE a.id = $1
+            WHERE a.id = $1 AND a.organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -168,9 +186,11 @@ impl NewsArticleRepository {
     /// Uses COALESCE pattern for safe partial updates - only non-null parameters
     /// update their corresponding fields while keeping existing values for nulls.
     /// This approach is SQL-injection safe as all field names are static.
+    /// Update an article, scoped to the caller's organization (issue #2314).
     pub async fn update(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         data: UpdateArticle,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         // Convert building_ids to JSON if present
@@ -183,20 +203,21 @@ impl NewsArticleRepository {
         sqlx::query_as::<_, NewsArticle>(
             r#"
             UPDATE news_articles SET
-                title = COALESCE($2, title),
-                content = COALESCE($3, content),
-                excerpt = COALESCE($4, excerpt),
-                cover_image_url = COALESCE($5, cover_image_url),
-                building_ids = COALESCE($6, building_ids),
-                status = COALESCE($7, status),
-                comments_enabled = COALESCE($8, comments_enabled),
-                reactions_enabled = COALESCE($9, reactions_enabled),
+                title = COALESCE($3, title),
+                content = COALESCE($4, content),
+                excerpt = COALESCE($5, excerpt),
+                cover_image_url = COALESCE($6, cover_image_url),
+                building_ids = COALESCE($7, building_ids),
+                status = COALESCE($8, status),
+                comments_enabled = COALESCE($9, comments_enabled),
+                reactions_enabled = COALESCE($10, reactions_enabled),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .bind(data.title)
         .bind(data.content)
         .bind(data.excerpt)
@@ -209,78 +230,112 @@ impl NewsArticleRepository {
         .await
     }
 
+    /// Publish an article, scoped to the caller's organization (issue #2314).
     pub async fn publish(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         published_at: Option<DateTime<Utc>>,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $2, published_at = COALESCE($3, NOW()) WHERE id = $1 RETURNING *",
+            "UPDATE news_articles SET status = $3, published_at = COALESCE($4, NOW()) WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
+        .bind(organization_id)
         .bind(article_status::PUBLISHED)
         .bind(published_at)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn archive(&self, id: Uuid) -> Result<Option<NewsArticle>, SqlxError> {
+    /// Archive an article, scoped to the caller's organization (issue #2314).
+    pub async fn archive(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $2, archived_at = NOW() WHERE id = $1 RETURNING *",
+            "UPDATE news_articles SET status = $3, archived_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
+        .bind(organization_id)
         .bind(article_status::ARCHIVED)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn restore(&self, id: Uuid) -> Result<Option<NewsArticle>, SqlxError> {
+    /// Restore an archived article, scoped to the caller's organization (issue #2314).
+    pub async fn restore(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<NewsArticle>, SqlxError> {
         sqlx::query_as::<_, NewsArticle>(
-            "UPDATE news_articles SET status = $2, archived_at = NULL WHERE id = $1 RETURNING *",
+            "UPDATE news_articles SET status = $3, archived_at = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
         )
         .bind(id)
+        .bind(organization_id)
         .bind(article_status::DRAFT)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM news_articles WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Permanently delete an article, scoped to the caller's organization.
+    ///
+    /// SECURITY (issue #2314): the `organization_id` predicate prevents a
+    /// cross-tenant caller from destroying another org's article by UUID — the
+    /// original unscoped `WHERE id = $1` was a cross-tenant data-loss IDOR.
+    pub async fn delete(&self, id: Uuid, organization_id: Uuid) -> Result<bool, SqlxError> {
+        let result =
+            sqlx::query("DELETE FROM news_articles WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(organization_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
+    /// Pin/unpin an article, scoped to the caller's organization (issue #2314).
     pub async fn set_pinned(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         pinned: bool,
         pinned_by: Option<Uuid>,
     ) -> Result<Option<NewsArticle>, SqlxError> {
         if pinned {
             sqlx::query_as::<_, NewsArticle>(
-                "UPDATE news_articles SET pinned = TRUE, pinned_at = NOW(), pinned_by = $2 WHERE id = $1 RETURNING *",
+                "UPDATE news_articles SET pinned = TRUE, pinned_at = NOW(), pinned_by = $3 WHERE id = $1 AND organization_id = $2 RETURNING *",
             )
             .bind(id)
+            .bind(organization_id)
             .bind(pinned_by)
             .fetch_optional(&self.pool)
             .await
         } else {
             sqlx::query_as::<_, NewsArticle>(
-                "UPDATE news_articles SET pinned = FALSE, pinned_at = NULL, pinned_by = NULL WHERE id = $1 RETURNING *",
+                "UPDATE news_articles SET pinned = FALSE, pinned_at = NULL, pinned_by = NULL WHERE id = $1 AND organization_id = $2 RETURNING *",
             )
             .bind(id)
+            .bind(organization_id)
             .fetch_optional(&self.pool)
             .await
         }
     }
 
+    /// Add media to an article, scoped to the caller's organization.
+    ///
+    /// SECURITY (issue #2314): `article_media` carries no `organization_id`
+    /// column, so the insert is guarded by an `INSERT ... SELECT ... WHERE
+    /// EXISTS` on the parent `news_articles` row for the caller's org. Returns
+    /// `Ok(None)` when the article does not belong to the caller's org, so the
+    /// handler can answer 404 rather than attaching media to a foreign article.
     pub async fn add_media(
         &self,
         article_id: Uuid,
+        organization_id: Uuid,
         data: CreateArticleMedia,
-    ) -> Result<ArticleMedia, SqlxError> {
+    ) -> Result<Option<ArticleMedia>, SqlxError> {
         let display_order = data.display_order.unwrap_or(0);
         sqlx::query_as::<_, ArticleMedia>(
             r#"
@@ -289,11 +344,16 @@ impl NewsArticleRepository {
                 mime_type, embed_url, embed_html, width, height,
                 alt_text, caption, display_order
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            SELECT $1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+            WHERE EXISTS (
+                SELECT 1 FROM news_articles a
+                WHERE a.id = $1 AND a.organization_id = $2
+            )
             RETURNING *
             "#,
         )
         .bind(article_id)
+        .bind(organization_id)
         .bind(&data.media_type)
         .bind(&data.file_key)
         .bind(&data.file_name)
@@ -306,24 +366,57 @@ impl NewsArticleRepository {
         .bind(&data.alt_text)
         .bind(&data.caption)
         .bind(display_order)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn list_media(&self, article_id: Uuid) -> Result<Vec<ArticleMedia>, SqlxError> {
+    /// List media for an article, scoped to the caller's organization (issue #2314).
+    pub async fn list_media(
+        &self,
+        article_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Vec<ArticleMedia>, SqlxError> {
         sqlx::query_as::<_, ArticleMedia>(
-            "SELECT * FROM article_media WHERE article_id = $1 ORDER BY display_order",
+            r#"
+            SELECT m.* FROM article_media m
+            WHERE m.article_id = $1
+              AND EXISTS (
+                SELECT 1 FROM news_articles a
+                WHERE a.id = m.article_id AND a.organization_id = $2
+              )
+            ORDER BY m.display_order
+            "#,
         )
         .bind(article_id)
+        .bind(organization_id)
         .fetch_all(&self.pool)
         .await
     }
 
-    pub async fn delete_media(&self, media_id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM article_media WHERE id = $1")
-            .bind(media_id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a media item, scoped to the caller's organization (issue #2314).
+    ///
+    /// The `EXISTS` guard on the parent article prevents a caller from deleting
+    /// another org's media by its UUID even though `article_media` has no
+    /// `organization_id` column of its own.
+    pub async fn delete_media(
+        &self,
+        media_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM article_media m
+            WHERE m.id = $1
+              AND EXISTS (
+                SELECT 1 FROM news_articles a
+                WHERE a.id = m.article_id AND a.organization_id = $2
+              )
+            "#,
+        )
+        .bind(media_id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -524,29 +617,55 @@ impl NewsArticleRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Moderate a comment, scoped to the caller's organization (issue #2314).
+    ///
+    /// A manager may only moderate comments on articles belonging to their own
+    /// org. The `EXISTS` guard on the parent article closes the cross-tenant
+    /// vector (a manager in org A moderating/deleting an org-B comment by UUID).
     pub async fn moderate_comment(
         &self,
         comment_id: Uuid,
         moderator_id: Uuid,
+        organization_id: Uuid,
         delete: bool,
         reason: Option<String>,
     ) -> Result<Option<ArticleComment>, SqlxError> {
         if delete {
             sqlx::query_as::<_, ArticleComment>(
-                "UPDATE article_comments SET is_moderated = TRUE, moderated_by = $2, moderation_reason = $3, deleted_at = NOW() WHERE id = $1 RETURNING *",
+                r#"
+                UPDATE article_comments c
+                SET is_moderated = TRUE, moderated_by = $2, moderation_reason = $3, deleted_at = NOW()
+                WHERE c.id = $1
+                  AND EXISTS (
+                    SELECT 1 FROM news_articles a
+                    WHERE a.id = c.article_id AND a.organization_id = $4
+                  )
+                RETURNING c.*
+                "#,
             )
             .bind(comment_id)
             .bind(moderator_id)
             .bind(&reason)
+            .bind(organization_id)
             .fetch_optional(&self.pool)
             .await
         } else {
             sqlx::query_as::<_, ArticleComment>(
-                "UPDATE article_comments SET is_moderated = TRUE, moderated_by = $2, moderation_reason = $3 WHERE id = $1 RETURNING *",
+                r#"
+                UPDATE article_comments c
+                SET is_moderated = TRUE, moderated_by = $2, moderation_reason = $3
+                WHERE c.id = $1
+                  AND EXISTS (
+                    SELECT 1 FROM news_articles a
+                    WHERE a.id = c.article_id AND a.organization_id = $4
+                  )
+                RETURNING c.*
+                "#,
             )
             .bind(comment_id)
             .bind(moderator_id)
             .bind(&reason)
+            .bind(organization_id)
             .fetch_optional(&self.pool)
             .await
         }
@@ -568,7 +687,15 @@ impl NewsArticleRepository {
         .await
     }
 
-    pub async fn get_statistics(&self) -> Result<ArticleStatistics, SqlxError> {
+    /// Aggregate article statistics, scoped to the caller's organization.
+    ///
+    /// SECURITY (issue #2314): the previous query aggregated across ALL orgs
+    /// (no `WHERE`), leaking cross-tenant counts to any caller. The
+    /// `organization_id` predicate restricts the aggregate to the caller's org.
+    pub async fn get_statistics(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<ArticleStatistics, SqlxError> {
         sqlx::query_as::<_, ArticleStatistics>(
             r#"
             SELECT
@@ -580,8 +707,10 @@ impl NewsArticleRepository {
                 COALESCE(SUM(reaction_count), 0) as total_reactions,
                 COALESCE(SUM(comment_count), 0) as total_comments
             FROM news_articles
+            WHERE organization_id = $1
             "#,
         )
+        .bind(organization_id)
         .fetch_one(&self.pool)
         .await
     }
