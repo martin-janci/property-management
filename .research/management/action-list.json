@@ -50,18 +50,6 @@
       "source": "gap-scan 2026-07-13"
     },
     {
-      "id": "gap-84-2-no-frontend-ui-component-consuming-the",
-      "action": "No frontend UI component consuming the signature request flow (84-2-esignature-email E-Signature Email Integration)",
-      "owner_role": "pm-integration",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-13T18:40:00Z",
-      "source": "gap-scan 2026-07-13"
-    },
-    {
       "id": "gap-84-2-no-screen-map-entry-for-a",
       "action": "No screen-map entry for a signature/e-sign screen in shipped state (84-2-esignature-email E-Signature Email Integration)",
       "owner_role": "pm-integration",

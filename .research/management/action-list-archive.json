@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-13T20:10:27Z",
+  "archived_at": "2026-07-14T06:40:45Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3111,6 +3111,19 @@
       "source": "gap-scan 2026-05-25",
       "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
       "depends_on": []
+    },
+    {
+      "id": "gap-84-2-no-frontend-ui-component-consuming-the",
+      "action": "[RECONCILED-DONE: manager-facing e-sign UI already on dev; signer /sign page tracked via screen-map document-sign PR #2306] No frontend UI component consuming the signature request flow (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "last_updated": "2026-07-14T06:40:45Z"
     },
     {
       "id": "gap-84-3-no-dedicated-price-alert-subscription-ui",
