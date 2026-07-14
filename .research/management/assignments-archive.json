@@ -2429,6 +2429,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gap-83-2-booking-com-connect-happy-path-fetch",
+      "branch": "auto-impl/gap-83-2-booking-com-connect-happy-path-4d15029f",
+      "status": "merged",
+      "claimed_at": "2026-07-14T14:11:01Z",
+      "last_updated": "2026-07-14T16:15:52Z",
+      "status_changed_at": "2026-07-14T16:15:52Z",
+      "pr_number": 2315,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2315",
+      "merged_at": "2026-07-14T16:15:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2315 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=test-only; seam+MockOtaServer already existed; added fetch_property happy-path coverage; Band A green",
+      "reviewer_summary": "verdict=approve head_oid=1cb11367bb4befc6ab8e9040d494011447a1b046 note=test-only-happy-path-coverage-verified-ci-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "1cb11367bb4befc6ab8e9040d494011447a1b046",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-14T16:13:31Z"
+    },
+    {
       "task_id": "gap-83-2-frontend-property-mapping-wizard-not-wired",
       "branch": "auto-impl/gap-83-2-frontend-property-mapping-wizar-5cd66043",
       "status": "merged",
@@ -5255,6 +5277,28 @@
       "merge_attempted_at": "2026-07-14T12:10:48Z"
     },
     {
+      "task_id": "gh-issue-2303",
+      "branch": "auto-impl/gh-issue-2303-06bb7803",
+      "status": "merged",
+      "claimed_at": "2026-07-14T12:10:48Z",
+      "last_updated": "2026-07-14T16:14:12Z",
+      "status_changed_at": "2026-07-14T16:14:12Z",
+      "pr_number": 2313,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2313",
+      "merged_at": "2026-07-14T16:12:29Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2313 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=get_due_schedules+advance_after_run+record_execution & Scheduler::fire_due_report_schedules tick; compute_next_run_for_schedule canonical resolver + create accepts cron_expression; check clean both crates, 47 reports tests pass incl 3 new",
+      "reviewer_summary": "verdict=approve head_oid=fb240b48b04d6ae9d42d6fa2728d46dbba45e37d note=fmt-fixed-ci-green-advance-parks-no-stale-refire-cadence-resolver-unified",
+      "last_reviewed_oid": "fb240b48b04d6ae9d42d6fa2728d46dbba45e37d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-14T16:09:16Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5943,5 +5987,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-14T14:19:46Z"
+  "archived_at": "2026-07-14T16:16:17Z"
 }
