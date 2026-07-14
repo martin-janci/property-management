@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-07-14T10:20:00Z",
+  "generator": "dispatcher-tier1d-dev-review",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed segment (review_cursor.ppt-web-core=2026-07-07); buffer-starvation Tier-1d trigger",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 — useBuildingUnits calls raw fetch('/api/v1/units?...') with only a Content-Type header and no Authorization: Bearer token (all other calls go through @ppt/api-client's token provider), so the protected endpoint 401s in production",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:83,90 — the resulting error is swallowed (query isError discarded, units: data ?? []), so every person-months building/bulk/unit view silently shows zero units"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:159-160 — /dashboard/manager and /dashboard/resident are wired without <ProtectedRoute>; the comment claims 'the target page handles auth + role-based fan-out'",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx & ResidentDashboardPage.tsx — neither page uses useAuth/isAuthenticated/Navigate, so the guard fails open: an unauthenticated visitor (incl. the /dashboard redirect at core.tsx:158) renders the dashboard shell instead of being sent to /login"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API session payload across the client boundary, defeating type-checking; if the wire shape diverges from SessionRow (e.g. is_current vs isCurrent), s.isCurrent at line 85 reads undefined and hasOtherSessions/revoke-all logic silently misbehaves"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
