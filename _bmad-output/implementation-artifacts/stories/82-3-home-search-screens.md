@@ -44,48 +44,48 @@ So that **I can discover properties that match my needs**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Home Screen (AC: 1)
-  - [ ] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Home/HomeView.swift`
-  - [ ] 1.2 Create featured listings carousel component
-  - [ ] 1.3 Create listing grid section
-  - [ ] 1.4 Add quick category buttons
-  - [ ] 1.5 Implement pull-to-refresh
-  - [ ] 1.6 Create HomeViewModel using shared KMP code
+- [x] Task 1: Create Home Screen (AC: 1)
+  - [x] 1.1 Create `/mobile-native/iosApp/iosApp/Features/Home/HomeView.swift`
+  - [x] 1.2 Create featured listings carousel component
+  - [x] 1.3 Create listing grid section
+  - [x] 1.4 Add quick category buttons
+  - [x] 1.5 Implement pull-to-refresh
+  - [x] 1.6 Create HomeViewModel using shared KMP code
 
-- [ ] Task 2: Create Search Screen (AC: 2, 3)
-  - [ ] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Search/SearchView.swift`
-  - [ ] 2.2 Implement search bar with debounced input
-  - [ ] 2.3 Create SearchViewModel with KMP integration
-  - [ ] 2.4 Show search suggestions
-  - [ ] 2.5 Display recent searches
+- [x] Task 2: Create Search Screen (AC: 2, 3)
+  - [x] 2.1 Create `/mobile-native/iosApp/iosApp/Features/Search/SearchView.swift`
+  - [x] 2.2 Implement search bar with debounced input
+  - [x] 2.3 Create SearchViewModel with KMP integration
+  - [x] 2.4 Show search suggestions
+  - [x] 2.5 Display recent searches
 
-- [ ] Task 3: Create Filter Sheet (AC: 3)
-  - [ ] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Search/FilterSheet.swift`
-  - [ ] 3.2 Add price range slider
-  - [ ] 3.3 Add property type picker
-  - [ ] 3.4 Add bedroom/bathroom counters
-  - [ ] 3.5 Add location radius filter
-  - [ ] 3.6 Implement apply/reset buttons
+- [x] Task 3: Create Filter Sheet (AC: 3)
+  - [x] 3.1 Create `/mobile-native/iosApp/iosApp/Features/Search/FilterSheet.swift`
+  - [x] 3.2 Add price range slider
+  - [x] 3.3 Add property type picker
+  - [x] 3.4 Add bedroom/bathroom counters
+  - [x] 3.5 Add location radius filter
+  - [x] 3.6 Implement apply/reset buttons
 
-- [ ] Task 4: Create Listing Card Component (AC: 4)
-  - [ ] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Shared/ListingCard.swift`
-  - [ ] 4.2 Display listing image with async loading
-  - [ ] 4.3 Show price, title, location
-  - [ ] 4.4 Add favorite button overlay
-  - [ ] 4.5 Handle image loading states
+- [x] Task 4: Create Listing Card Component (AC: 4)
+  - [x] 4.1 Create `/mobile-native/iosApp/iosApp/Features/Shared/ListingCard.swift`
+  - [x] 4.2 Display listing image with async loading
+  - [x] 4.3 Show price, title, location
+  - [x] 4.4 Add favorite button overlay
+  - [x] 4.5 Handle image loading states
 
-- [ ] Task 5: Implement Infinite Scroll (AC: 4)
-  - [ ] 5.1 Add pagination to search results
-  - [ ] 5.2 Detect scroll to bottom
-  - [ ] 5.3 Load next page automatically
-  - [ ] 5.4 Show loading indicator at bottom
+- [x] Task 5: Implement Infinite Scroll (AC: 4)
+  - [x] 5.1 Add pagination to search results
+  - [x] 5.2 Detect scroll to bottom
+  - [x] 5.3 Load next page automatically
+  - [x] 5.4 Show loading indicator at bottom
 
-- [ ] Task 6: Add Location-based Features (AC: 5)
-  - [ ] 6.1 Request location permission
-  - [ ] 6.2 Get current location
-  - [ ] 6.3 Add "Near Me" toggle
-  - [ ] 6.4 Sort results by distance
-  - [ ] 6.5 Create map view alternative
+- [x] Task 6: Add Location-based Features (AC: 5)
+  - [x] 6.1 Request location permission
+  - [x] 6.2 Get current location
+  - [x] 6.3 Add "Near Me" toggle
+  - [x] 6.4 Sort results by distance
+  - [x] 6.5 Create map view alternative
 
 ## Dev Notes
 

@@ -44,36 +44,36 @@ So that **I can easily access all features of the app**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Tab Bar Container (AC: 1, 4)
-  - [ ] 1.1 Create `/mobile-native/iosApp/iosApp/App/MainTabView.swift`
-  - [ ] 1.2 Define 5 tabs with icons and labels
-  - [ ] 1.3 Implement tab selection state
-  - [ ] 1.4 Style tab bar with app colors
-  - [ ] 1.5 Add badge for unread inquiries
+- [x] Task 1: Create Tab Bar Container (AC: 1, 4)
+  - [x] 1.1 Create `/mobile-native/iosApp/iosApp/App/MainTabView.swift`
+  - [x] 1.2 Define 5 tabs with icons and labels
+  - [x] 1.3 Implement tab selection state
+  - [x] 1.4 Style tab bar with app colors
+  - [x] 1.5 Add badge for unread inquiries
 
-- [ ] Task 2: Implement Navigation Stacks (AC: 2)
-  - [ ] 2.1 Create NavigationStack for each tab
-  - [ ] 2.2 Define navigation destinations
-  - [ ] 2.3 Create `Router.swift` for centralized routing
-  - [ ] 2.4 Implement NavigationPath state management
+- [x] Task 2: Implement Navigation Stacks (AC: 2)
+  - [x] 2.1 Create NavigationStack for each tab
+  - [x] 2.2 Define navigation destinations
+  - [x] 2.3 Create `Router.swift` for centralized routing
+  - [x] 2.4 Implement NavigationPath state management
 
-- [ ] Task 3: Create Navigation Coordinator (AC: 2, 3, 4)
-  - [ ] 3.1 Create `/mobile-native/iosApp/iosApp/Core/Navigation/NavigationCoordinator.swift`
-  - [ ] 3.2 Define Route enum with all destinations
-  - [ ] 3.3 Handle navigation state preservation
-  - [ ] 3.4 Implement programmatic navigation
+- [x] Task 3: Create Navigation Coordinator (AC: 2, 3, 4)
+  - [x] 3.1 Create `/mobile-native/iosApp/iosApp/Core/Navigation/NavigationCoordinator.swift`
+  - [x] 3.2 Define Route enum with all destinations
+  - [x] 3.3 Handle navigation state preservation
+  - [x] 3.4 Implement programmatic navigation
 
-- [ ] Task 4: Implement Deep Linking (AC: 3)
-  - [ ] 4.1 Configure URL schemes in Info.plist
-  - [ ] 4.2 Add Universal Links entitlement
-  - [ ] 4.3 Parse incoming URLs in App delegate
-  - [ ] 4.4 Route to appropriate screen
+- [x] Task 4: Implement Deep Linking (AC: 3)
+  - [x] 4.1 Configure URL schemes in Info.plist
+  - [x] 4.2 Add Universal Links entitlement
+  - [x] 4.3 Parse incoming URLs in App delegate
+  - [x] 4.4 Route to appropriate screen
 
-- [ ] Task 5: Add Authentication Guard (AC: 5)
-  - [ ] 5.1 Create `/mobile-native/iosApp/iosApp/Core/Navigation/AuthGuard.swift`
-  - [ ] 5.2 Check auth state before protected routes
-  - [ ] 5.3 Show login sheet when unauthenticated
-  - [ ] 5.4 Store intended destination for post-login redirect
+- [x] Task 5: Add Authentication Guard (AC: 5)
+  - [x] 5.1 Create `/mobile-native/iosApp/iosApp/Core/Navigation/AuthGuard.swift`
+  - [x] 5.2 Check auth state before protected routes
+  - [x] 5.3 Show login sheet when unauthenticated
+  - [x] 5.4 Store intended destination for post-login redirect
 
 ## Dev Notes
 

@@ -53,38 +53,38 @@ So that **we can build the Reality Portal iOS app using shared Kotlin code**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Xcode Project (AC: 1, 4)
-  - [ ] 1.1 Create new Xcode project in `/mobile-native/iosApp/`
-  - [ ] 1.2 Configure bundle identifier: `three.two.bit.ppt.reality`
-  - [ ] 1.3 Set deployment target (iOS 15.0+)
-  - [ ] 1.4 Configure team and signing
-  - [ ] 1.5 Add app icons (1024x1024 source)
-  - [ ] 1.6 Configure launch screen storyboard or SwiftUI
+- [x] Task 1: Create Xcode Project (AC: 1, 4)
+  - [x] 1.1 Create new Xcode project in `/mobile-native/iosApp/`
+  - [x] 1.2 Configure bundle identifier: `three.two.bit.ppt.reality`
+  - [x] 1.3 Set deployment target (iOS 15.0+)
+  - [x] 1.4 Configure team and signing
+  - [x] 1.5 Add app icons (1024x1024 source)
+  - [x] 1.6 Configure launch screen storyboard or SwiftUI
 
-- [ ] Task 2: Integrate KMP Shared Module (AC: 2)
-  - [ ] 2.1 Configure Gradle for iOS framework export
-  - [ ] 2.2 Add XCFramework dependency to Xcode project
-  - [ ] 2.3 Create bridge/wrapper for Kotlin types
-  - [ ] 2.4 Verify API client is accessible from Swift
-  - [ ] 2.5 Test basic Kotlin function calls
+- [x] Task 2: Integrate KMP Shared Module (AC: 2)
+  - [x] 2.1 Configure Gradle for iOS framework export
+  - [x] 2.2 Add XCFramework dependency to Xcode project
+  - [x] 2.3 Create bridge/wrapper for Kotlin types
+  - [x] 2.4 Verify API client is accessible from Swift
+  - [x] 2.5 Test basic Kotlin function calls
 
-- [ ] Task 3: Configure Swift Package Manager (AC: 3)
-  - [ ] 3.1 Add Package.swift or use Xcode SPM integration
-  - [ ] 3.2 Add Kingfisher for image loading
-  - [ ] 3.3 Add KeychainAccess for secure storage
-  - [ ] 3.4 Configure package resolution
+- [x] Task 3: Configure Swift Package Manager (AC: 3)
+  - [x] 3.1 Add Package.swift or use Xcode SPM integration
+  - [x] 3.2 Add Kingfisher for image loading
+  - [x] 3.3 Add KeychainAccess for secure storage
+  - [x] 3.4 Configure package resolution
 
-- [ ] Task 4: Set Up Build Configurations (AC: 5)
-  - [ ] 4.1 Create Debug, Release, and Staging configurations
-  - [ ] 4.2 Add environment-specific xcconfig files
-  - [ ] 4.3 Configure API URL per environment
-  - [ ] 4.4 Create build schemes for each environment
+- [x] Task 4: Set Up Build Configurations (AC: 5)
+  - [x] 4.1 Create Debug, Release, and Staging configurations
+  - [x] 4.2 Add environment-specific xcconfig files
+  - [x] 4.3 Configure API URL per environment
+  - [x] 4.4 Create build schemes for each environment
 
-- [ ] Task 5: Configure App Permissions (AC: 4)
-  - [ ] 5.1 Add location permission for nearby listings
-  - [ ] 5.2 Add photo library permission for uploads
-  - [ ] 5.3 Add push notification entitlement
-  - [ ] 5.4 Configure App Transport Security
+- [x] Task 5: Configure App Permissions (AC: 4)
+  - [x] 5.1 Add location permission for nearby listings
+  - [x] 5.2 Add photo library permission for uploads
+  - [x] 5.3 Add push notification entitlement
+  - [x] 5.4 Configure App Transport Security
 
 ## Dev Notes
 

@@ -42,25 +42,25 @@ So that **mobile apps connect to the correct backend for each environment**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Configure React Native Environment (AC: 1, 3, 4, 5)
-  - [ ] 1.1 Update `/frontend/apps/mobile/src/config/api.ts:29`
-  - [ ] 1.2 Install react-native-config package
-  - [ ] 1.3 Create .env.development file
-  - [ ] 1.4 Create .env.staging file
-  - [ ] 1.5 Create .env.production file
-  - [ ] 1.6 Configure Metro bundler for env files
+- [x] Task 1: Configure React Native Environment (AC: 1, 3, 4, 5)
+  - [x] 1.1 Update `/frontend/apps/mobile/src/config/api.ts:29`
+  - [x] 1.2 Install react-native-config package
+  - [x] 1.3 Create .env.development file
+  - [x] 1.4 Create .env.staging file
+  - [x] 1.5 Create .env.production file
+  - [x] 1.6 Configure Metro bundler for env files
 
-- [ ] Task 2: Configure Android Build Variants (AC: 1, 4, 5)
-  - [ ] 2.1 Add productFlavors to build.gradle
-  - [ ] 2.2 Create development, staging, production flavors
-  - [ ] 2.3 Set applicationIdSuffix per flavor
-  - [ ] 2.4 Configure BuildConfig fields
+- [x] Task 2: Configure Android Build Variants (AC: 1, 4, 5)
+  - [x] 2.1 Add productFlavors to build.gradle
+  - [x] 2.2 Create development, staging, production flavors
+  - [x] 2.3 Set applicationIdSuffix per flavor
+  - [x] 2.4 Configure BuildConfig fields
 
-- [ ] Task 3: Configure iOS Schemes (AC: 1, 4, 5)
-  - [ ] 3.1 Create Development scheme
-  - [ ] 3.2 Create Staging scheme
-  - [ ] 3.3 Create Production scheme
-  - [ ] 3.4 Add xcconfig files per environment
+- [x] Task 3: Configure iOS Schemes (AC: 1, 4, 5)
+  - [x] 3.1 Create Development scheme
+  - [x] 3.2 Create Staging scheme
+  - [x] 3.3 Create Production scheme
+  - [x] 3.4 Add xcconfig files per environment
 
 - [x] Task 4: Configure KMP Environment (AC: 2, 3, 4, 5)
   - [x] 4.1 Update `/mobile-native/shared/src/commonMain/kotlin/.../api/ApiConfig.kt`
@@ -68,11 +68,11 @@ So that **mobile apps connect to the correct backend for each environment**.
   - [x] 4.3 Android: Read from BuildConfig
   - [x] 4.4 iOS: Read from Info.plist (keys added to Info.plist)
 
-- [ ] Task 5: Document Environment Setup (AC: 1, 2, 3, 4, 5)
-  - [ ] 5.1 Create environment setup documentation
-  - [ ] 5.2 Document local development setup
-  - [ ] 5.3 Document CI/CD configuration
-  - [ ] 5.4 Add troubleshooting guide
+- [x] Task 5: Document Environment Setup (AC: 1, 2, 3, 4, 5)
+  - [x] 5.1 Create environment setup documentation
+  - [x] 5.2 Document local development setup
+  - [x] 5.3 Document CI/CD configuration
+  - [x] 5.4 Add troubleshooting guide
 
 ## Dev Notes
 

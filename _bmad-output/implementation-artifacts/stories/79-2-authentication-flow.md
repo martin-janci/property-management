@@ -44,46 +44,46 @@ So that **I can securely access the application and my data is protected**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create AuthContext and Provider (AC: 1, 2, 3, 4, 5)
-  - [ ] 1.1 Create `/frontend/apps/ppt-web/src/contexts/AuthContext.tsx`
-  - [ ] 1.2 Define AuthState type with `user`, `isAuthenticated`, `isLoading`
-  - [ ] 1.3 Implement `login`, `logout`, `refreshToken` methods
-  - [ ] 1.4 Add token storage using httpOnly cookies or secure localStorage
-  - [ ] 1.5 Create `useAuth` hook for consuming context
+- [x] Task 1: Create AuthContext and Provider (AC: 1, 2, 3, 4, 5)
+  - [x] 1.1 Create `/frontend/apps/ppt-web/src/contexts/AuthContext.tsx`
+  - [x] 1.2 Define AuthState type with `user`, `isAuthenticated`, `isLoading`
+  - [x] 1.3 Implement `login`, `logout`, `refreshToken` methods
+  - [x] 1.4 Add token storage using httpOnly cookies or secure localStorage
+  - [x] 1.5 Create `useAuth` hook for consuming context
 
-- [ ] Task 2: Implement Login Page (AC: 1)
-  - [ ] 2.1 Create `/frontend/apps/ppt-web/src/pages/LoginPage.tsx`
-  - [ ] 2.2 Create login form with email/password fields
-  - [ ] 2.3 Add form validation (email format, password required)
-  - [ ] 2.4 Handle login errors (invalid credentials, account locked)
-  - [ ] 2.5 Show loading state during authentication
+- [x] Task 2: Implement Login Page (AC: 1)
+  - [x] 2.1 Create `/frontend/apps/ppt-web/src/pages/LoginPage.tsx`
+  - [x] 2.2 Create login form with email/password fields
+  - [x] 2.3 Add form validation (email format, password required)
+  - [x] 2.4 Handle login errors (invalid credentials, account locked)
+  - [x] 2.5 Show loading state during authentication
 
-- [ ] Task 3: Implement Token Refresh Mechanism (AC: 2)
-  - [ ] 3.1 Add axios response interceptor in `/frontend/apps/ppt-web/src/lib/api.ts`
-  - [ ] 3.2 Detect 401 responses and attempt token refresh
-  - [ ] 3.3 Queue requests during refresh to prevent race conditions
-  - [ ] 3.4 Retry failed requests after successful refresh
-  - [ ] 3.5 Clear auth state if refresh fails
+- [x] Task 3: Implement Token Refresh Mechanism (AC: 2)
+  - [x] 3.1 Add axios response interceptor in `/frontend/apps/ppt-web/src/lib/api.ts`
+  - [x] 3.2 Detect 401 responses and attempt token refresh
+  - [x] 3.3 Queue requests during refresh to prevent race conditions
+  - [x] 3.4 Retry failed requests after successful refresh
+  - [x] 3.5 Clear auth state if refresh fails
 
-- [ ] Task 4: Implement Protected Route Wrapper (AC: 3, 5)
-  - [ ] 4.1 Create `/frontend/apps/ppt-web/src/components/ProtectedRoute.tsx`
-  - [ ] 4.2 Check `isAuthenticated` from AuthContext
-  - [ ] 4.3 Store current location in sessionStorage as returnUrl
-  - [ ] 4.4 Redirect to login if not authenticated
-  - [ ] 4.5 Show loading spinner while checking auth state
+- [x] Task 4: Implement Protected Route Wrapper (AC: 3, 5)
+  - [x] 4.1 Create `/frontend/apps/ppt-web/src/components/ProtectedRoute.tsx`
+  - [x] 4.2 Check `isAuthenticated` from AuthContext
+  - [x] 4.3 Store current location in sessionStorage as returnUrl
+  - [x] 4.4 Redirect to login if not authenticated
+  - [x] 4.5 Show loading spinner while checking auth state
 
-- [ ] Task 5: Implement Logout Flow (AC: 4)
-  - [ ] 5.1 Create logout button in header/navigation
-  - [ ] 5.2 Call `/api/v1/auth/logout` on click
-  - [ ] 5.3 Clear all tokens from storage
-  - [ ] 5.4 Invalidate all React Query caches
-  - [ ] 5.5 Navigate to login page
+- [x] Task 5: Implement Logout Flow (AC: 4)
+  - [x] 5.1 Create logout button in header/navigation
+  - [x] 5.2 Call `/api/v1/auth/logout` on click
+  - [x] 5.3 Clear all tokens from storage
+  - [x] 5.4 Invalidate all React Query caches
+  - [x] 5.5 Navigate to login page
 
-- [ ] Task 6: Implement Return URL Handling (AC: 1, 3, 5)
-  - [ ] 6.1 Capture intended URL before redirect to login
-  - [ ] 6.2 Store in sessionStorage as `returnUrl`
-  - [ ] 6.3 After successful login, redirect to returnUrl or dashboard
-  - [ ] 6.4 Clear returnUrl after use
+- [x] Task 6: Implement Return URL Handling (AC: 1, 3, 5)
+  - [x] 6.1 Capture intended URL before redirect to login
+  - [x] 6.2 Store in sessionStorage as `returnUrl`
+  - [x] 6.3 After successful login, redirect to returnUrl or dashboard
+  - [x] 6.4 Clear returnUrl after use
 
 ## Dev Notes
 

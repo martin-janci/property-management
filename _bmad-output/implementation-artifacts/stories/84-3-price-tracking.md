@@ -45,43 +45,43 @@ So that **I can act quickly on price drops or be aware of increases**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Price History Table (AC: 1)
-  - [ ] 1.1 Create `listing_price_history` migration
-  - [ ] 1.2 Store price, timestamp, change percentage
-  - [ ] 1.3 Link to listing via foreign key
-  - [ ] 1.4 Add indexes for efficient queries
+- [x] Task 1: Create Price History Table (AC: 1)
+  - [x] 1.1 Create `listing_price_history` migration
+  - [x] 1.2 Store price, timestamp, change percentage
+  - [x] 1.3 Link to listing via foreign key
+  - [x] 1.4 Add indexes for efficient queries
 
-- [ ] Task 2: Implement Price Change Detection (AC: 1)
-  - [ ] 2.1 Update `/backend/crates/db/src/repositories/portal.rs:324-358`
-  - [ ] 2.2 Compare new price with current price on update
-  - [ ] 2.3 Calculate change percentage
-  - [ ] 2.4 Insert history record
-  - [ ] 2.5 Emit price change event
+- [x] Task 2: Implement Price Change Detection (AC: 1)
+  - [x] 2.1 Update `/backend/crates/db/src/repositories/portal.rs:324-358`
+  - [x] 2.2 Compare new price with current price on update
+  - [x] 2.3 Calculate change percentage
+  - [x] 2.4 Insert history record
+  - [x] 2.5 Emit price change event
 
-- [ ] Task 3: Implement Notification Service (AC: 2, 3)
-  - [ ] 3.1 Create price notification service
-  - [ ] 3.2 Find users who favorited listing
-  - [ ] 3.3 Filter by notification preferences
-  - [ ] 3.4 Send push and/or email notification
-  - [ ] 3.5 Throttle notifications per user
+- [x] Task 3: Implement Notification Service (AC: 2, 3)
+  - [x] 3.1 Create price notification service
+  - [x] 3.2 Find users who favorited listing
+  - [x] 3.3 Filter by notification preferences
+  - [x] 3.4 Send push and/or email notification
+  - [x] 3.5 Throttle notifications per user
 
-- [ ] Task 4: Create Price History API (AC: 4)
-  - [ ] 4.1 Create GET `/api/v1/listings/{id}/price-history`
-  - [ ] 4.2 Return price changes over time
-  - [ ] 4.3 Include change percentages
-  - [ ] 4.4 Support date range filtering
+- [x] Task 4: Create Price History API (AC: 4)
+  - [x] 4.1 Create GET `/api/v1/listings/{id}/price-history`
+  - [x] 4.2 Return price changes over time
+  - [x] 4.3 Include change percentages
+  - [x] 4.4 Support date range filtering
 
-- [ ] Task 5: Create Notification Preferences API (AC: 5)
-  - [ ] 5.1 Add price alert fields to notification preferences
-  - [ ] 5.2 Create update endpoint for preferences
-  - [ ] 5.3 Support threshold configuration
-  - [ ] 5.4 Default to enabled for price drops
+- [x] Task 5: Create Notification Preferences API (AC: 5)
+  - [x] 5.1 Add price alert fields to notification preferences
+  - [x] 5.2 Create update endpoint for preferences
+  - [x] 5.3 Support threshold configuration
+  - [x] 5.4 Default to enabled for price drops
 
-- [ ] Task 6: Frontend Price History Display (AC: 4)
-  - [ ] 6.1 Create price history chart component
-  - [ ] 6.2 Add to listing detail page
-  - [ ] 6.3 Show price change indicators
-  - [ ] 6.4 Mobile-friendly display
+- [x] Task 6: Frontend Price History Display (AC: 4)
+  - [x] 6.1 Create price history chart component
+  - [x] 6.2 Add to listing detail page
+  - [x] 6.3 Show price change indicators
+  - [x] 6.4 Mobile-friendly display
 
 ## Dev Notes
 
