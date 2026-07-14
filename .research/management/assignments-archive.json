@@ -2897,6 +2897,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-tracking-reconcile-story-md-statuses-2026-07-13",
+      "branch": "auto-impl/gap-tracking-reconcile-story-md-statuses-af3acf62",
+      "status": "merged",
+      "claimed_at": "2026-07-14T00:22:50Z",
+      "last_updated": "2026-07-14T04:01:42Z",
+      "status_changed_at": "2026-07-14T04:01:42Z",
+      "pr_number": 2298,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2298",
+      "merged_at": "2026-07-14T01:20:31Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -5013,6 +5035,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2282",
+      "branch": "auto-impl/gh-issue-2282-cfcefd2b",
+      "status": "merged",
+      "claimed_at": "2026-07-14T02:09:08Z",
+      "last_updated": "2026-07-14T04:01:42Z",
+      "status_changed_at": "2026-07-14T04:01:42Z",
+      "pr_number": 2304,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2304",
+      "merged_at": "2026-07-14T03:17:27Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -5701,5 +5745,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-14T02:10:11Z"
+  "archived_at": "2026-07-14T04:07:42Z"
 }

@@ -170,7 +170,7 @@
       "action": "mobile useApi.ts (JWT decode + X-Tenant-ID injection) has no tests; every consumer mocks it (Closes #2283)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2283)",
       "deadline": null,
       "dependency": null,
@@ -202,6 +202,106 @@
         "labels": [
           "frontend",
           "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2299",
+      "action": "Follow-up: reconciled story-md files marked done still show all Tasks/Subtasks unchecked (PR #2298) (Closes #2299)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2299)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2299,
+        "url": "https://github.com/martin-janci/property-management/issues/2299",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2300",
+      "action": "Follow-up: pgvector back-fill copies vectors without provenance — doesn't fix (and can worsen) embedding-space mixing (PR #2291) (Closes #2300)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2300)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2300,
+        "url": "https://github.com/martin-janci/property-management/issues/2300",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2301",
+      "action": "Follow-up: harden gap-84-4 push wiring — regression guard doesn't pin the fix, iOS-only honest-metrics edge, double token fetch (PR #2290) (Closes #2301)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2301)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2301,
+        "url": "https://github.com/martin-janci/property-management/issues/2301",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2302",
+      "action": "Follow-up: screen-map epic extractor can't represent letter-suffixed epics (10A/10B/7B) that PR #2297 canonicalized (PR #2297) (Closes #2302)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2302)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2302,
+        "url": "https://github.com/martin-janci/property-management/issues/2302",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2303",
+      "action": "Follow-up: report_schedules next_run_at is still write-only (no consumer/advance) + dual cadence model (PR #2295) (Closes #2303)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2303)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2303,
+        "url": "https://github.com/martin-janci/property-management/issues/2303",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
         ]
       }
     }
