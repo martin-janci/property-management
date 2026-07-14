@@ -4390,6 +4390,134 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "title": "mobile NFC (NFCCredentialManager + NFCAccessController) has zero test coverage",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-07-14 (mobile-rn segment)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes exported publicly with no *.test.* or __tests__ coverage in the segment or repo."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/index.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": "plans/code-review-mobile-rn-nfc-no-tests.md"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "title": "mobile DeepLinkManager auth-gated routing (queue/dispatch-after-auth) has no test",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-14 (mobile-rn segment)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "title": "screen-map drift: PR #2292 wired Create-new-schedule flow without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2292"
+      ],
+      "evidence": [
+        "PR #2292 (gap-81-1: wire Create-new-schedule flow to backend) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx and reports.create-schedule.route.test.tsx without adding a matching docs/screens/ppt/ entry. Best-effort heuristic — treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "title": "screen-map drift: PR #2294 added portal webhook status manager surface without ppt screen doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2294"
+      ],
+      "evidence": [
+        "PR #2294 (gap-83-3: portal webhook status manager surface (ppt-web)) touched frontend/apps/ppt-web/src/App.tsx and routes/groups/core.tsx without a matching docs/screens/ppt/ entry. Best-effort heuristic — treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "title": "screen-map drift: PR #2287 added favorites/alerts subscription surface without reality screen doc",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2287"
+      ],
+      "evidence": [
+        "PR #2287 (gap-84-3: price-alert subscription surface for favorites) added frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx and modified favorites/page.tsx without a matching docs/screens/reality/ entry. New route — likely a real drift."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/alerts/layout.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "title": "screen-map drift: PR #2281 modified listings/[slug]/page.tsx without touching reality screen doc",
+      "vector": "test-gap",
+      "confidence": "low",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2281"
+      ],
+      "evidence": [
+        "PR #2281 (fix reality-web listing detail SSR crash) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx and jsonLd.ts/test.ts without a matching docs/screens/reality/ entry. Likely false positive — SSR bugfix on existing route; screen doc may already exist. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }

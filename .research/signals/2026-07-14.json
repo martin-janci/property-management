@@ -1,0 +1,271 @@
+{
+  "generated_at": "2026-07-14T10:26:00Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_hours": 32,
+  "trigger_text": "",
+  "summary": {
+    "merged_prs": 25,
+    "open_prs_touched": 1,
+    "new_or_updated_issues": 13,
+    "commits_on_dev": 51,
+    "app_code_commits": 25,
+    "churn_hotspots_new": 2,
+    "screen_map_drift_signals": 4,
+    "code_review_findings": 3
+  },
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls and never reads .isError/.error; on a failed/offline API the primary landing screen silently shows all-zero stat cards.",
+        "resolved: verified `grep -n isError frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx` now returns L144-147; PR #2304 (fix mobile dashboard) landed 2026-07-14T03:17 and wired isError branching. Score suppressed — signal logged for audit, no backlog item."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3095 lines churned (add+del) across merged PRs #2292/#2295 (gap-81-1 report-schedule work); already in seen_signals — cumulative re-emit, no score bump."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3049 lines churned this run; already in seen_signals — cumulative re-emit, no score bump. hotspot_history.runs_seen will advance to 2."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-13",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2950 lines churned this run (booking-OAuth + password/rate-limit work); already in seen_signals — cumulative re-emit, no score bump. runs_seen was 3, will advance to 4."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "auth.rs runs_seen=3 in hotspot_history (last_seen 2026-07-12); already in seen_signals — cumulative re-emit, no score bump. Existing refactor-churn-hotspots-api-server-auth-2026-07-12 (score 2, open) already tracks this cluster."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2292-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2292",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2292 (gap-81-1: wire Create-new-schedule flow to backend) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx and reports.create-schedule.route.test.tsx without adding a matching docs/screens/ppt/ entry. Best-effort heuristic — treat as review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2294-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2294",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2294 (gap-83-3: portal webhook status manager surface (ppt-web)) touched frontend/apps/ppt-web/src/App.tsx and routes/groups/core.tsx without a matching docs/screens/ppt/ entry."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2287-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2287",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2287 (gap-84-3: price-alert subscription surface for favorites) added frontend/apps/reality-web/src/app/[locale]/favorites/alerts/{layout,page}.tsx and modified favorites/page.tsx without a matching docs/screens/reality/ entry. New route — likely a real drift."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2281-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2281",
+      "score_delta": 2,
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2281 (fix reality-web listing detail SSR crash) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx and jsonLd.ts/test.ts without a matching docs/screens/reality/ entry. Likely false positive — SSR bugfix on existing route; screen doc may already exist."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 == '# 2026-07-14'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (last_pr_seen 2271->2309, last_issue_seen 2272->2303, last_commit_sha 1691c9d->84d5813, seen_signals grows by new signal ids)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0; cumulative churn-hotspot/repeated-churn re-emits all have score_delta == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no item score > 8 (max = 6); no open items older than 14d (all open items are new this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "1 new plan file; brief lists 'adversarial pass: passed' on its line",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan (<=2); 4 metadata + 11 headings all present; capability box ticked; Mode declared; Files paths resolve on disk",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secret prefixes / private hostnames / private IPs in cached diff (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures reported this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= archive count at HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no auto-fix branches pushed this run",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (pm_cursor unchanged) — gate is a no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token URL or bare token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
