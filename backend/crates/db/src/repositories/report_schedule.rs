@@ -174,10 +174,10 @@ impl ReportScheduleRepository {
     /// Create (persist) a new report schedule (gap-81-1).
     ///
     /// Inserts a row into `report_schedules` and returns the persisted record.
-    /// The new schedule starts `is_active = true` / `status = 'active'` and has
-    /// no `cron_expression` (callers use the legacy `time`/`frequency` fields at
-    /// creation time and may later switch to a cron expression via
-    /// `update_schedule`).
+    /// The new schedule starts `is_active = true` / `status = 'active'`. When
+    /// `input.cron_expression` is set it becomes the canonical cadence (issue
+    /// #2303); otherwise the row uses the legacy `time`/`frequency` fields and
+    /// may switch to a cron expression later via `update_schedule`.
     ///
     /// # Cross-tenant safety
     ///
@@ -198,8 +198,9 @@ impl ReportScheduleRepository {
         let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
             "INSERT INTO report_schedules \
              (report_id, organization_id, name, frequency, day_of_week, day_of_month, \
-              time, timezone, format, recipients, is_active, status, next_run_at) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12) \
+              time, timezone, format, recipients, is_active, status, next_run_at, \
+              cron_expression) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12, $13) \
              RETURNING ",
             report_schedule_columns!()
         ))
@@ -215,6 +216,7 @@ impl ReportScheduleRepository {
         .bind(recipients_json)
         .bind(report_schedule_status::ACTIVE)
         .bind(input.next_run_at)
+        .bind(input.cron_expression)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| {
@@ -610,6 +612,107 @@ impl ReportScheduleRepository {
         })?;
 
         Ok(ReportSchedule::from(row))
+    }
+
+    // ============================================================================
+    // Scheduler due-work consumer (issue #2303, finding 1)
+    // ============================================================================
+
+    /// Get schedules that are due to fire (issue #2303).
+    ///
+    /// Returns every active schedule whose `next_run_at` has elapsed. This is
+    /// the previously-missing due-work query for `report_schedules`: before it,
+    /// `next_run_at` was write-only (set by `create`/`update_schedule`) and no
+    /// consumer ever selected schedules by it. Mirrors
+    /// `WorkflowRepository::list_due_schedules`
+    /// (`WHERE enabled AND next_run_at <= NOW()`) and
+    /// `AutomationRepository::get_due_rules`.
+    ///
+    /// A NULL `next_run_at` (parked schedule — see [`Self::advance_after_run`])
+    /// is excluded, so a schedule whose next fire could not be computed does not
+    /// re-fire. Runs unscoped on the pool because the background scheduler has no
+    /// request tenant; each returned row still carries its own `organization_id`
+    /// for downstream per-tenant handling.
+    pub async fn get_due_schedules(&self) -> Result<Vec<ReportSchedule>, AppError> {
+        let rows = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "SELECT ",
+            report_schedule_columns!(),
+            " FROM report_schedules \
+             WHERE is_active = true \
+               AND next_run_at IS NOT NULL \
+               AND next_run_at <= NOW() \
+             ORDER BY next_run_at ASC"
+        ))
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to fetch due report schedules");
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(rows.into_iter().map(ReportSchedule::from).collect())
+    }
+
+    /// Advance a schedule after it has fired (issue #2303).
+    ///
+    /// Stamps `last_run_at = NOW()` and stores the recomputed `next_run_at`.
+    /// Mirrors `WorkflowRepository::update_schedule_after_run`
+    /// (`SET last_run_at = NOW(), next_run_at = $2`). Unlike
+    /// [`Self::update_schedule`] this sets `next_run_at` **unconditionally**
+    /// (no `COALESCE`): a `None` deliberately parks the schedule with a NULL
+    /// `next_run_at` so a fire whose next occurrence could not be computed stops
+    /// re-firing on every tick instead of spinning on a stale past timestamp.
+    pub async fn advance_after_run(
+        &self,
+        id: Uuid,
+        next_run_at: Option<DateTime<Utc>>,
+    ) -> Result<ReportSchedule, AppError> {
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "UPDATE report_schedules \
+             SET last_run_at = NOW(), next_run_at = $2, updated_at = NOW() \
+             WHERE id = $1 \
+             RETURNING ",
+            report_schedule_columns!()
+        ))
+        .bind(id)
+        .bind(next_run_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to advance report schedule after run");
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(ReportSchedule::from(row))
+    }
+
+    /// Record a new execution row for a schedule fire (issue #2303).
+    ///
+    /// The background scheduler calls this when a schedule becomes due so the
+    /// fire is durably logged in `report_executions` and surfaced by the
+    /// Story 81.2 execution-history endpoints. The row starts in `pending`; a
+    /// downstream report generator transitions it to
+    /// `running`/`completed`/`failed`.
+    pub async fn record_execution(&self, schedule_id: Uuid) -> Result<ReportExecution, AppError> {
+        sqlx::query_as::<_, ReportExecution>(
+            r#"
+            INSERT INTO report_executions (schedule_id, status)
+            VALUES ($1, $2)
+            RETURNING id, schedule_id, status,
+                      started_at, completed_at, duration_ms,
+                      file_key, file_name, file_size,
+                      error_code, error_message, error_details,
+                      created_at
+            "#,
+        )
+        .bind(schedule_id)
+        .bind(report_execution_status::PENDING)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %schedule_id, "Failed to record report execution");
+            AppError::Database(e.to_string())
+        })
     }
 }
 

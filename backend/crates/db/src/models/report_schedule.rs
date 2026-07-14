@@ -93,6 +93,11 @@ pub struct NewReportSchedule {
     /// First scheduled fire time (UTC), computed at creation. `None` leaves the
     /// column NULL for a later backfill tick.
     pub next_run_at: Option<DateTime<Utc>>,
+    /// Optional 5-field UNIX cron expression (issue #2303). When set it is the
+    /// schedule's canonical cadence: `next_run_at` is computed from it and it
+    /// supersedes the legacy `frequency`/`time` columns for all scheduling math.
+    /// `None` keeps the legacy cadence.
+    pub cron_expression: Option<String>,
 }
 
 /// Raw DB row for `report_schedules`.

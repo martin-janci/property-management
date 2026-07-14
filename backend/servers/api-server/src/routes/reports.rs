@@ -2104,6 +2104,42 @@ fn compute_next_run_from_cron(now: DateTime<Tz>, cron: &str) -> Option<DateTime<
     None
 }
 
+/// Resolve a schedule's next fire time from its canonical cadence (issue #2303).
+///
+/// `cron_expression` is the single source of truth when present; otherwise the
+/// legacy `frequency`/`day_of_week`/`day_of_month`/`time` columns are used. This
+/// one resolver is shared by the background scheduler's post-fire advance (see
+/// `services::scheduler::Scheduler::fire_due_report_schedules`) so the
+/// recomputed `next_run_at` can never disagree with the cadence model a schedule
+/// was created or edited with — the dual-cadence reconciliation for finding 2.
+/// Evaluated in the schedule's stored timezone; falls back to UTC if that
+/// somehow fails to parse (create/edit reject invalid zones at the edge).
+///
+/// Returns `None` when the cadence yields no future run inside the walker's
+/// horizon (or the cron expression is malformed) — the caller parks the
+/// schedule by storing a NULL `next_run_at`.
+pub(crate) fn compute_next_run_for_schedule(
+    schedule: &ReportSchedule,
+    after: DateTime<Utc>,
+) -> Option<DateTime<Utc>> {
+    let tz: Tz = schedule.timezone.parse().unwrap_or(chrono_tz::UTC);
+    let now = after.with_timezone(&tz);
+    match schedule.cron_expression.as_deref() {
+        Some(cron) => compute_next_run_from_cron(now, cron),
+        None => {
+            let (hour, minute) = parse_time_hhmm(&schedule.time).unwrap_or((8, 0));
+            compute_next_run_after(
+                now,
+                &schedule.frequency,
+                schedule.day_of_week,
+                schedule.day_of_month,
+                hour,
+                minute,
+            )
+        }
+    }
+}
+
 /// Request body for `POST /api/v1/reports/schedules`.
 ///
 /// `organization_id` is intentionally absent — it is derived from the
@@ -2138,6 +2174,14 @@ pub struct CreateScheduleRequest {
     /// Recipient email addresses (max 50).
     #[serde(default)]
     pub recipients: Vec<String>,
+    /// Optional 5-field UNIX cron expression (issue #2303, finding 2).
+    ///
+    /// When provided it is the schedule's cadence source of truth: `next_run_at`
+    /// is computed from it via the same cron walker `update_schedule` uses (not
+    /// from `frequency`/`time`), and it is persisted so a row is never created
+    /// with a cron/legacy split-brain. Omit it to use the legacy
+    /// `frequency`/`day_of_week`/`day_of_month`/`time` cadence.
+    pub cron_expression: Option<String>,
 }
 
 /// Create a new report schedule (gap-81-1).
@@ -2307,17 +2351,42 @@ pub async fn create_schedule(
         ));
     };
 
+    // issue #2303 (finding 2): a caller may supply a `cron_expression` at create
+    // time. When present it is the cadence source of truth — validate it and
+    // compute the first fire from the cron walker (the SAME path edits use) so a
+    // row is never created with a cron/legacy split-brain. The legacy
+    // frequency/time columns are still stored (they are NOT NULL in the schema)
+    // but `compute_next_run_for_schedule` treats cron_expression as authoritative
+    // for all later scheduling math.
+    let cron_expression = match req.cron_expression.as_deref().map(str::trim) {
+        Some(cron) if !cron.is_empty() => {
+            if !validate_cron_expression(cron) {
+                return Err(bad_request(
+                    "INVALID_CRON_EXPRESSION",
+                    "cron_expression must be a valid 5-field UNIX cron expression \
+                     (e.g. \"0 8 * * 1\")",
+                ));
+            }
+            Some(cron.to_string())
+        }
+        _ => None,
+    };
+
     // Compute the first fire time now so the row is schedulable immediately;
     // otherwise a due-work query (`WHERE next_run_at <= NOW()`) would never
-    // pick up a freshly created schedule (issue #2198).
-    let next_run_at = compute_first_next_run(
-        &frequency,
-        req.day_of_week,
-        req.day_of_month,
-        time_hour,
-        time_minute,
-        tz,
-    );
+    // pick up a freshly created schedule (issue #2198). Route through the cron
+    // walker when a cron_expression was supplied, else the legacy walker.
+    let next_run_at = match cron_expression.as_deref() {
+        Some(cron) => compute_next_run_from_cron(Utc::now().with_timezone(&tz), cron),
+        None => compute_first_next_run(
+            &frequency,
+            req.day_of_week,
+            req.day_of_month,
+            time_hour,
+            time_minute,
+            tz,
+        ),
+    };
 
     // --- Persist -----------------------------------------------------------
     let schedule = state
@@ -2334,6 +2403,7 @@ pub async fn create_schedule(
             format,
             recipients: req.recipients,
             next_run_at,
+            cron_expression,
         })
         .await
         .map_err(|e| {
@@ -2604,11 +2674,99 @@ pub async fn update_schedule(
 #[cfg(test)]
 mod tests {
     use super::{
-        compute_first_next_run, compute_next_run_after, compute_next_run_from_cron,
-        cron_field_matches, parse_time_hhmm, validate_cron_expression, validate_time_hhmm,
+        compute_first_next_run, compute_next_run_after, compute_next_run_for_schedule,
+        compute_next_run_from_cron, cron_field_matches, parse_time_hhmm, validate_cron_expression,
+        validate_time_hhmm, ReportSchedule,
     };
     use chrono::{Datelike, LocalResult, TimeZone, Timelike, Utc};
     use chrono_tz::Tz;
+
+    // --- compute_next_run_for_schedule: canonical cadence resolver (issue #2303) ---
+    //
+    // This resolver is the single source of truth the background scheduler's
+    // post-fire advance uses. `cron_expression` wins when set; otherwise the
+    // legacy frequency/day/time columns are used. These no-DB tests pin that
+    // reconciliation so a schedule's re-computed next_run_at can never disagree
+    // with the cadence model it was created/edited with (finding 2).
+
+    fn schedule_fixture(
+        frequency: &str,
+        day_of_week: Option<i32>,
+        day_of_month: Option<i32>,
+        time: &str,
+        timezone: &str,
+        cron_expression: Option<&str>,
+    ) -> ReportSchedule {
+        let now = Utc::now();
+        ReportSchedule {
+            id: uuid::Uuid::new_v4(),
+            report_id: uuid::Uuid::new_v4(),
+            organization_id: uuid::Uuid::new_v4(),
+            name: "fixture".to_string(),
+            frequency: frequency.to_string(),
+            day_of_week,
+            day_of_month,
+            time: time.to_string(),
+            timezone: timezone.to_string(),
+            format: "pdf".to_string(),
+            recipients: vec![],
+            is_active: true,
+            status: "active".to_string(),
+            last_run_at: None,
+            next_run_at: None,
+            created_at: now,
+            updated_at: now,
+            cron_expression: cron_expression.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn resolver_uses_cron_expression_when_present() {
+        // cron says "every Friday 17:00" while the legacy columns say "weekly
+        // Monday 08:00" — the resolver must follow cron, never the stale legacy
+        // cadence (the exact dual-model split the issue flags).
+        let sched = schedule_fixture(
+            "weekly",
+            Some(1), // Monday, legacy
+            None,
+            "08:00", // legacy
+            "UTC",
+            Some("0 17 * * 5"), // cron: Friday 17:00
+        );
+        let after = Utc.with_ymd_and_hms(2026, 7, 13, 6, 0, 0).unwrap(); // a Monday
+        let next = compute_next_run_for_schedule(&sched, after).expect("cron cadence resolves");
+        assert!(next > after);
+        assert_eq!((next.hour(), next.minute()), (17, 0));
+        assert_eq!(
+            next.weekday().num_days_from_sunday(),
+            5,
+            "cron_expression must win over the legacy Monday/08:00 columns"
+        );
+    }
+
+    #[test]
+    fn resolver_falls_back_to_legacy_columns_without_cron() {
+        // No cron_expression → the legacy weekly/Wednesday/09:00 cadence drives it.
+        let sched = schedule_fixture("weekly", Some(3), None, "09:00", "UTC", None);
+        let after = Utc.with_ymd_and_hms(2026, 7, 13, 6, 0, 0).unwrap();
+        let next = compute_next_run_for_schedule(&sched, after).expect("legacy cadence resolves");
+        assert!(next > after);
+        assert_eq!((next.hour(), next.minute()), (9, 0));
+        assert_eq!(
+            next.weekday().num_days_from_sunday(),
+            3,
+            "legacy weekly cadence must land on Wednesday"
+        );
+    }
+
+    #[test]
+    fn resolver_returns_none_for_unsatisfiable_cadence() {
+        // A malformed cron expression yields no run → None, which the scheduler
+        // turns into a parked (NULL next_run_at) schedule instead of a re-fire loop.
+        let sched = schedule_fixture("weekly", None, None, "08:00", "UTC", Some("not a cron"));
+        let after = Utc.with_ymd_and_hms(2026, 7, 13, 6, 0, 0).unwrap();
+        assert!(compute_next_run_for_schedule(&sched, after).is_none());
+    }
 
     // --- parse_time_hhmm (issue #2198) ---
 
