@@ -3046,4 +3046,140 @@ mod tests {
         assert!(!err.success);
         assert_eq!(err.error.as_deref(), Some("rate rejected"));
     }
+
+    // ==================== fetch_property outbound happy path ====================
+
+    /// A well-formed `OTA_HotelDescriptiveInfoRS` success body carrying the
+    /// property fields `parse_property_response` extracts. Deliberately free of
+    /// any `<Errors>` / `<Error` marker so the parser takes the success branch.
+    const HOTEL_DESCRIPTIVE_INFO_RS: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelDescriptiveInfoRS xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <Success/>
+  <HotelDescriptiveContents>
+    <HotelDescriptiveContent HotelCode="H42" HotelName="Grand Test Hotel">
+      <HotelInfo Rating="4">
+        <Descriptions>
+          <DescriptiveText>A lovely seaside hotel.</DescriptiveText>
+        </Descriptions>
+        <Position Latitude="48.1486" Longitude="17.1077"/>
+      </HotelInfo>
+      <ContactInfos>
+        <ContactInfo>
+          <Address CountryCode="SK">
+            <AddressLine>123 Ocean Drive</AddressLine>
+            <CityName>Bratislava</CityName>
+            <StateProv>BL</StateProv>
+            <PostalCode>81101</PostalCode>
+          </Address>
+          <Email>info@grandtest.example</Email>
+          <Phone PhoneNumber="+421900000000"/>
+          <URL>https://grandtest.example</URL>
+        </ContactInfo>
+      </ContactInfos>
+      <Policies>
+        <Policy>
+          <PolicyInfo CheckInTime="14:00" CheckOutTime="11:00"/>
+        </Policy>
+      </Policies>
+    </HotelDescriptiveContent>
+  </HotelDescriptiveContents>
+</OTA_HotelDescriptiveInfoRS>"#;
+
+    /// The connect / sync "happy path" hinges on `fetch_property` issuing a real
+    /// `OTA_HotelDescriptiveInfoRQ` POST and parsing the descriptive-info
+    /// response — a path that was previously only reachable against the live
+    /// Booking.com endpoint (documented limitation). The base-URL seam
+    /// (`BookingCredentials::with_url`, mirroring Airbnb's `with_base_url`
+    /// from #2240) lets us point the client at [`MockOtaServer`] and exercise
+    /// the outbound call + response parsing deterministically.
+    #[tokio::test]
+    async fn test_fetch_property_happy_path_issues_request_and_parses_response() {
+        let server =
+            MockOtaServer::spawn(vec![MockResponse::status(200, HOTEL_DESCRIPTIVE_INFO_RS)]).await;
+
+        let creds = BookingCredentials::with_url(
+            "H42".to_string(),
+            "user".to_string(),
+            "pass".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds);
+
+        let property = client
+            .fetch_property("H42")
+            .await
+            .expect("fetch_property should succeed on a well-formed OTA response");
+
+        // Exactly one outbound call was made.
+        assert_eq!(server.hits(), 1, "fetch_property should POST once");
+
+        // The outbound request is a namespaced OTA_HotelDescriptiveInfoRQ that
+        // carries the requested hotel code.
+        let sent = server.bodies();
+        assert_eq!(sent.len(), 1);
+        assert!(
+            sent[0].contains("OTA_HotelDescriptiveInfoRQ"),
+            "outbound body should be an OTA_HotelDescriptiveInfoRQ, got: {}",
+            sent[0]
+        );
+        assert!(
+            sent[0].contains("HotelCode=\"H42\""),
+            "outbound body should target the requested hotel code, got: {}",
+            sent[0]
+        );
+
+        // The response was parsed into the typed property.
+        assert_eq!(property.hotel_id, "H42");
+        assert_eq!(property.name, "Grand Test Hotel");
+        assert_eq!(
+            property.description.as_deref(),
+            Some("A lovely seaside hotel.")
+        );
+        assert_eq!(property.star_rating, Some(4));
+        assert_eq!(property.address.street, "123 Ocean Drive");
+        assert_eq!(property.address.city, "Bratislava");
+        assert_eq!(property.address.state.as_deref(), Some("BL"));
+        assert_eq!(property.address.postal_code, "81101");
+        assert_eq!(property.address.country_code, "SK");
+        assert_eq!(
+            property.contact.email.as_deref(),
+            Some("info@grandtest.example")
+        );
+        assert_eq!(property.contact.phone.as_deref(), Some("+421900000000"));
+        assert_eq!(
+            property.contact.website.as_deref(),
+            Some("https://grandtest.example")
+        );
+        assert_eq!(property.check_in_time.as_deref(), Some("14:00"));
+        assert_eq!(property.check_out_time.as_deref(), Some("11:00"));
+        assert!(property.synced_at.is_some());
+    }
+
+    /// `fetch_properties` fans out to `fetch_property` for the configured hotel
+    /// id; on the happy path it returns the single parsed property (rather than
+    /// the placeholder fallback used when the descriptive-info call fails).
+    #[tokio::test]
+    async fn test_fetch_properties_happy_path_returns_parsed_property() {
+        let server =
+            MockOtaServer::spawn(vec![MockResponse::status(200, HOTEL_DESCRIPTIVE_INFO_RS)]).await;
+
+        let creds = BookingCredentials::with_url(
+            "H42".to_string(),
+            "user".to_string(),
+            "pass".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds);
+
+        let properties = client
+            .fetch_properties()
+            .await
+            .expect("fetch_properties should succeed");
+
+        assert_eq!(properties.len(), 1);
+        assert_eq!(properties[0].hotel_id, "H42");
+        // The real parsed name proves we took the success path, not the
+        // "Property {hotel_id}" placeholder built on fetch failure.
+        assert_eq!(properties[0].name, "Grand Test Hotel");
+    }
 }
