@@ -50,10 +50,12 @@ async fn resolve_user_id(app: &TestApp, user: &TestUser) -> Uuid {
 /// column only exist under pgvector, so the conversion assertions below are
 /// gated on this — CI's Postgres may not carry the extension.
 async fn pgvector_present(app: &TestApp) -> bool {
-    sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')")
-        .fetch_one(&app.pool)
-        .await
-        .unwrap_or(false)
+    sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')",
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap_or(false)
 }
 
 /// Seed a `documents` row so the `document_embeddings.document_id` FK
