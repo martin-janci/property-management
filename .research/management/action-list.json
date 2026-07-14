@@ -190,6 +190,57 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "security-news-articles-idor-2026-07-14",
+      "action": "Cross-tenant IDOR + data-loss in news_articles handlers (raw pool, no org scope, RLS not FORCEd)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-14T16:31:45Z (score=3 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T16:31:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-integrations-src-booking-mod-rs-2026-07-14",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3,049 lines this run (Booking.com fetch_property seam + tests)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-14T16:31:45Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T16:31:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-reports-rs-2026-07-14",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3,275 lines this run (report_schedules cadence work)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-14T16:31:45Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T16:31:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-07-13T18:40:00Z"
