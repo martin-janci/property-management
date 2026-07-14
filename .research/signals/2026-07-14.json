@@ -1,0 +1,63 @@
+{
+  "date": "2026-07-14",
+  "generated_at": "2026-07-14T08:14:00Z",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "signals": [
+    {
+      "id": "merged-review-finding-issue-2300",
+      "type": "merged-review-finding",
+      "source": "Issue #2300 (post-merge review of PR #2291)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "PR #2291 wired migrate_embeddings_to_pgvector to an HTTP route, but the underlying migrate_jsonb_to_vector() copies vectors without stamping metadata.embedding_model. filter_by_embedding_model retains null-provenance rows and search_similar_documents now surfaces previously-invisible legacy vectors — the exact mixing the task was meant to eliminate. severity=high correctness."
+    },
+    {
+      "id": "merged-review-finding-issue-2301",
+      "type": "merged-review-finding",
+      "source": "Issue #2301 (post-merge review of PR #2290)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "PR #2290 routed pipeline push through CombinedPushAdapter. IG3 test only exercises select_dispatch_targets (unchanged by the fix); real behavior swap is not pinned. CombinedPushAdapter maps (Ok, Err(PushNotConfigured)) → Ok, inflating Sent for iOS-only users when APNs unconfigured. Efficiency: double token fetch. severity=medium x3."
+    },
+    {
+      "id": "merged-review-finding-issue-2302",
+      "type": "merged-review-finding",
+      "source": "Issue #2302 (post-merge review of PR #2297)",
+      "score_delta": 2,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "PR #2297 canonicalised epic refs to letter-suffixed form (10A/10B/7B). But screen-map drift scanner extractor regexes (^EPIC-(\\d+)) drop the letter — collapse 10A and 10B to Epic-10, and any future docs/epics/ tree will mark the canonical refs as unknown-epic. Latent tooling mismatch. severity=medium."
+    },
+    {
+      "id": "merged-review-finding-issue-2303",
+      "type": "merged-review-finding",
+      "source": "Issue #2303 (post-merge review of PR #2295)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "PR #2295 recomputed report schedule next_run_at on cron edit, but there is no due-work consumer (get_due_schedules / WHERE next_run_at <= NOW()) and no post-fire advance for report_schedules — scheduled reports never fire. Also dual cadence model: create uses legacy frequency/time, edit uses cron_expression; rows can end up internally inconsistent. severity=high scheduler-missing + medium dual-cadence."
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-07-14.md && first-line matches", "observed": "will hold after brief write", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD (cursors + seen_signals)", "observed": "last_pr_seen 2271→2309, last_issue_seen 2272→2303, last_commit_sha 1691c9d→3babbb3, seen_signals +4", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true (190/190)", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no prior-run signal id re-emitted with score_delta != 0 outside cumulative allowlist", "observed": "4 new ids, none previously seen", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "cap 8 + decay -1/14d applied", "observed": "no scores > 8; 0 open items existed prior to this run so no decay candidates", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "each new plan has adversarial-pass annotation", "observed": "0 new plans this run (nothing to check)", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "<=2 new plans; readiness gates", "observed": "0 new plans (below promotion threshold — all 4 new items are score=2)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "staged diff paths all under .research/", "observed": "will hold at commit (only .research/ touched)", "expected": "0 non-.research paths" },
+    { "goal": "G9", "passed": true,  "command": "no secrets / private hostnames in staged diff (excluding baseline docs)", "observed": "no matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "exit 0 (self-consistent regen script)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty in brief", "observed": "no phases failed this run", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "plans from prior run still present or archived", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive count >= HEAD", "observed": "count unchanged (>=)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0 (self-consistent regen script)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + kill switch honored", "observed": "auto_fix_actions=[] (no candidate)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped — no-op gate", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}

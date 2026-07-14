@@ -4390,6 +4390,94 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "merged-review-finding-issue-2300",
+      "title": "pgvector back-fill copies vectors without provenance; can pull null-provenance rows into filtered search (issue #2300)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2300",
+        "PR #2291"
+      ],
+      "evidence": [
+        "Post-merge review of PR #2291: migrate_jsonb_to_vector() populates embedding_vector on rows without stamping metadata.embedding_model, so filter_by_embedding_model still retains them and search_similar_documents now includes previously-invisible legacy rows"
+      ],
+      "files": [
+        "backend/crates/db/migrations/00081_create_pgvector.sql",
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "merged-review-finding-issue-2301",
+      "title": "Harden gap-84-4 push wiring: pipeline regression guard doesnt pin the fix + iOS-only honest-metrics edge (issue #2301)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2301",
+        "PR #2290"
+      ],
+      "evidence": [
+        "Post-merge review of PR #2290: IG3 guard tests only select_dispatch_targets (unchanged by the fix); CombinedPushAdapter maps (Ok, Err(PushNotConfigured)) to Ok, inflating Sent metric for iOS-only users when APNs unconfigured"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs",
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "merged-review-finding-issue-2302",
+      "title": "screen-map epic extractor cannot represent letter-suffixed epics (10A/10B/7B) — PR #2297 canonical form will fail future drift scan (issue #2302)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2302",
+        "PR #2297"
+      ],
+      "evidence": [
+        "Post-merge review of PR #2297: extract-known.ts:47 regex ^EPIC-(\\d+) drops trailing letter; scan.ts:135-143 does the same; 10A and 10B collapse to Epic-10; masked today because docs/epics/ is empty"
+      ],
+      "files": [
+        "frontend/packages/screen-map/src/extract-known.ts",
+        "frontend/packages/screen-map/src/scan.ts"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
+    },
+    {
+      "id": "merged-review-finding-issue-2303",
+      "title": "report_schedules next_run_at still write-only (no due-work consumer / post-fire advance) + dual cadence model (issue #2303)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2303",
+        "PR #2295"
+      ],
+      "evidence": [
+        "Post-merge review of PR #2295: no ReportScheduleRepository::get_due_schedules() or WHERE next_run_at <= NOW() query anywhere; create_schedule uses legacy frequency/time cadence, update_schedule uses cron_expression; rows can hold inconsistent dual cadence after cron edit"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs",
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "plan": null
     }
   ]
 }
