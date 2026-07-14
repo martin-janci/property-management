@@ -150,7 +150,7 @@
       "action": "mobile dashboard silently renders zero stats on any API error (four useApiQuery calls with no isError branch) (Closes #2282)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2282)",
       "deadline": null,
       "dependency": null,

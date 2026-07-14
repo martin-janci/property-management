@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-13T00:14:11Z",
+  "generated": "2026-07-14T02:12:58Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
@@ -250,6 +250,34 @@
           "findings": 1,
           "specialist": "react-web",
           "note": "admin-web Org dashboard: reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-07-14T02:12:58Z",
+      "prs_scanned": 3,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2290,
+          "issue": 2301,
+          "findings": 1,
+          "specialist": "pm-backend",
+          "note": "mobile OS push (FCM/APNs) transport merge review — follow-up filed as #2301"
+        },
+        {
+          "pr": 2297,
+          "issue": 2302,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "core normalization correct but epic-extractor regex cannot represent 10A/10B/7B suffixes it canonicalized"
+        },
+        {
+          "pr": 2295,
+          "issue": 2303,
+          "findings": 2,
+          "specialist": "pm-backend",
+          "note": "recompute-on-edit correct+tested, but report_schedules.next_run_at still write-only (no due-consumer/post-fire advance; cf workflow.rs/automation.rs); create=legacy freq/time vs edit=cron dual model unreconciled"
         }
       ]
     }

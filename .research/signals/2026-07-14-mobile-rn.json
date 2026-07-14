@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-14",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 7 < floor 36; deterministic refills dry). No churn hotspots from Phase 1 (churn_files empty), so oldest-unreviewed by state.review_cursor: mobile-rn = 2026-06-16, the oldest of all 8 segments. Not backlog-saturated (0 open code-review-finding items for mobile-rn in backlog.json).",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 — NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 — validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 — both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 — DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication — a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 — DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 — the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
