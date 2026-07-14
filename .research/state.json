@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_run_iso": "2026-07-14T22:20:00Z",
+  "last_run_ms": 4000,
+  "last_pr_seen": 2316,
+  "last_issue_seen": 2314,
+  "last_commit_sha": "c497097e9068e91e37686a922337a16fc67610c5",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -143,14 +143,14 @@
       "recent_churn": 75
     },
     "backend/servers/api-server/src/routes/reports.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 134
+      "runs_seen": 2,
+      "last_seen": "2026-07-14",
+      "recent_churn": 3275
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-12",
-      "recent_churn": 4
+      "runs_seen": 4,
+      "last_seen": "2026-07-14",
+      "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-09",
-      "recent_churn": 2818
+      "runs_seen": 2,
+      "last_seen": "2026-07-14",
+      "recent_churn": 3185
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -592,7 +592,25 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "code-review-api-handlers-news-articles-idor",
+    "code-review-mobile-rn-nfc-no-tests",
+    "code-review-mobile-rn-dashboard-no-err-ui",
+    "code-review-mobile-rn-deeplink-mgr-untested",
+    "code-review-mobile-rn-fault-category-i18n",
+    "code-review-mobile-rn-meter-console-error",
+    "code-review-mobile-rn-onboarding-untested",
+    "code-review-mobile-rn-announcements-i18n",
+    "code-review-mobile-rn-queue-swallow-error",
+    "code-review-mobile-rn-voice-module-no-tests",
+    "code-review-ppt-web-core-units-fetch-noauth",
+    "code-review-ppt-web-core-dashboard-unguarded",
+    "code-review-ppt-web-core-sessions-cast",
+    "code-review-mobile-rn-wallet-passtype-id",
+    "code-review-mobile-rn-widget-api-swallow",
+    "code-review-mobile-rn-widget-switch-undef",
+    "lag-warning-2026-07-14",
+    "churn-hotspot-backend/crates/integrations/src/booking/mod.rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -600,14 +618,14 @@
     "api-core": "2026-07-13",
     "reality-server": "2026-07-13",
     "ppt-web-ui": "2026-07-13",
-    "ppt-web-core": "2026-07-07",
+    "ppt-web-core": "2026-07-14",
     "reality-web": "2026-07-13",
     "mobile-rn": "2026-07-14",
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
-    "vectors_created": 183,
+    "runs": 45,
+    "vectors_created": 200,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0

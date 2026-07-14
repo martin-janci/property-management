@@ -1,14 +1,192 @@
 {
-  "generator": "dev-review",
-  "generated_at": "2026-07-14",
-  "segment_reviewed": "mobile-rn",
-  "selection_reason": "oldest-unreviewed (CHURN_FILES empty; state.review_cursor.mobile-rn = 2026-06-16 is the oldest of 8 segments). Not backlog-saturated (0 open code-review-finding items for mobile-rn in backlog.json). NOTE: mobile-rn already had 3 signal files produced earlier today (2026-07-14-mobile-rn.json, -tier1d.json, -tier1d-2.json). To stay non-duplicate this pass deliberately reviewed files those runs did NOT touch — widgets/ (WidgetDataProvider) and the NFCAccessController Apple-Wallet path — and verified each finding id/evidence against all three prior mobile-rn files. Segment root is frontend/apps/mobile/src/ (skill's segment map lists the pre-monorepo-move path frontend/mobile/src/).",
-  "experts_used": [
-    "frontend",
-    "tester"
-  ],
-  "findings_count": 3,
+  "date": "2026-07-14",
+  "run_iso": "2026-07-14T22:14:44Z",
   "signals": [
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "routes/news_articles.rs:685 \u2014 delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(state.db.clone()).delete(id) on the raw pool",
+        "crates/db/src/repositories/news_article.rs:247 \u2014 delete() runs `DELETE FROM news_articles WHERE id = $1` with no organization_id filter",
+        "crates/db/src/repositories/news_article.rs:237 \u2014 restore() `UPDATE news_articles ... WHERE id = $1` also filters by id only, no org scope",
+        "crates/db/src/repositories/news_article.rs:16-22 \u2014 NewsArticleRepository holds a raw DbPool (not RlsConnection); contrast signatures.rs which takes `mut rls: RlsConnection`",
+        "crates/db/migrations/00069_create_news_media.sql \u2014 news_articles only ENABLEs RLS (never FORCE); migration 00165 documents api-server runs with BYPASSRLS/owner, so the tenant-isolation policy is inert for these raw-pool queries",
+        "routes/news_articles.rs:651,769,802 \u2014 restore_article/add_media/delete_media share the same unscoped raw-pool pattern (cross-tenant read+write+delete). Contrast repo delete_comment() which scopes `WHERE id=$1 AND user_id=$2`."
+      ],
+      "expert": "rust",
+      "issue": 2314
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 \u2014 NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 \u2014 validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 \u2014 both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 \u2014 DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication \u2014 a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 \u2014 DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 \u2014 the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-fault-category-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:340 \u2014 getCategoryLabel() returns hardcoded English strings ('Plumbing','Electrical','HVAC',...) rendered as category-button labels at line 437, so the fault-category picker never localizes; the adjacent priority buttons correctly use t(`faults.${p.labelKey}`) at line 464. An in-code comment admits 'these would ideally come from translations'."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-console-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:149 \u2014 console.error('Failed to submit meter reading:', error) left unconditional in the committed submit handler; unlike the push-token logs guarded by __DEV__ in usePushNotifications.ts:240/267, this one ships to production."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/ (FeedbackManager.ts, HelpCenter.ts, TourManager.ts) \u2014 singleton managers consumed by 4 live screens/components (FeedbackScreen, HelpCenterScreen, TourOverlay, ContextualHelp) have no test file anywhere in the repo",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:20 \u2014 imports feedbackManager; the manager's state/logic is exercised in production but never covered by a unit test"
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-announcements-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:1-12 \u2014 no react-i18next import / no useTranslation() anywhere in the file (confirmed via grep for t( and useTranslation).",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:241 \u2014 placeholder=\"Search announcements...\" hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:256,261-268 \u2014 \"Loading\u2026\", \"Couldn't load announcements\", raw error.message shown to user, \"No announcements\", \"Check back later for updates\" all hardcoded English, unlike sibling screens (ReportFaultScreen.tsx, DocumentUploadScreen.tsx, DashboardScreen.tsx) which wrap all copy in t(...). Screen is untranslated for sk/cs/de locales."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-queue-swallow-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:327-334 \u2014 network failure in handleSubmit is caught, the fault is queued for later, and the original error is discarded via `void error;` with no logging, so a genuine 4xx validation/auth failure (not a transient network drop) is silently retried offline with no diagnostic trail.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:446-448 \u2014 the outer processQueue catch only does console.error('Failed to process queue:', error) with no user-facing surface or telemetry hook, so queue-level failures (e.g. AsyncStorage write failure) are invisible in production."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts \u2014 311-line class (Epic 49 Story 49.2) with async native-module bridging (startListening/stopListening/Siri shortcuts/App Actions), a state machine, and error swallowing (try/catch returning false silently); no VoiceAssistant.test.ts exists anywhere in the repo (repo-wide grep for VoiceAssistant in *.test.* returned zero matches).",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts \u2014 319-line command parsing/execution logic (parseVoiceCommand/executeVoiceCommand) that drives app navigation from speech input; also has zero test coverage repo-wide."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 \u2014 useBuildingUnits calls raw fetch('/api/v1/units?...') with only a Content-Type header and no Authorization header (Bearer token) token (all other calls go through @ppt/api-client's token provider), so the protected endpoint 401s in production",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:83,90 \u2014 the resulting error is swallowed (query isError discarded, units: data ?? []), so every person-months building/bulk/unit view silently shows zero units"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:159-160 \u2014 /dashboard/manager and /dashboard/resident are wired without <ProtectedRoute>; the comment claims 'the target page handles auth + role-based fan-out'",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx & ResidentDashboardPage.tsx \u2014 neither page uses useAuth/isAuthenticated/Navigate, so the guard fails open: an unauthenticated visitor (incl. the /dashboard redirect at core.tsx:158) renders the dashboard shell instead of being sent to /login"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API session payload across the client boundary, defeating type-checking; if the wire shape diverges from SessionRow (e.g. is_current vs isCurrent), s.isCurrent at line 85 reads undefined and hasOtherSessions/revoke-all logic silently misbehaves"
+      ],
+      "expert": "frontend"
+    },
     {
       "id": "code-review-mobile-rn-wallet-passtype-id",
       "type": "code-review-finding",
@@ -18,7 +196,7 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:383 — Apple Wallet pass built with passTypeIdentifier: 'pass.bit.two.three.ppt.access'. The first three reverse-DNS labels are scrambled: the repo's documented package namespace (CLAUDE.md) is 'three.two.bit.ppt' and iOS bundle ids are 'three.two.bit.ppt.reality'/'.management', so the convention-correct value is 'pass.three.two.bit.ppt.access', not 'pass.bit.two.three...'.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:383 \u2014 Apple Wallet pass built with passTypeIdentifier: 'pass.bit.two.three.ppt.access'. The first three reverse-DNS labels are scrambled: the repo's documented package namespace (CLAUDE.md) is 'three.two.bit.ppt' and iOS bundle ids are 'three.two.bit.ppt.reality'/'.management', so the convention-correct value is 'pass.three.two.bit.ppt.access', not 'pass.bit.two.three...'.",
         "Apple requires passTypeIdentifier to exactly match a Pass Type ID registered in the Developer Portal + provisioning profile; a scrambled reverse-DNS id will not match, so NativeWallet.addPass(...) at NFCAccessController.ts:391 fails and addToWallet() returns a rejected/false result on iOS (Add-to-Wallet for building access is broken).",
         "Static-analysis confidence medium: the exact id registered in the Apple portal is not visible in-repo, but the value contradicts the repo's own stated namespace convention, which is the strongest available signal of a typo."
       ],
@@ -33,8 +211,8 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:356-384 — apiRequest<T>() catches every error (network + non-ok response) and returns '{} as T' instead of throwing. Because fetchWidgetData never throws as a result, the 'use cached data on failure' fallback in updateAllWidgets (WidgetDataProvider.ts:164-169) is dead code — the success:false branch can never be reached.",
-        "WidgetDataProvider.ts:145-163 — on any transient API failure the fetcher returns a stub object whose fields collapse to the '?? 0'/'?? \"\"' defaults (e.g. fetchNotificationsData:222 unreadCount 0, fetchAnnouncementData:247 title 'No announcements'); updateAllWidgets then treats it as success:true and calls cacheWidgetData(config.id, emptyData) at line 162, OVERWRITING previously-good cached widget data with an empty/zero state. Net effect: one flaky request wipes the offline cache and shows the user 'no notifications / no announcements'."
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:356-384 \u2014 apiRequest<T>() catches every error (network + non-ok response) and returns '{} as T' instead of throwing. Because fetchWidgetData never throws as a result, the 'use cached data on failure' fallback in updateAllWidgets (WidgetDataProvider.ts:164-169) is dead code \u2014 the success:false branch can never be reached.",
+        "WidgetDataProvider.ts:145-163 \u2014 on any transient API failure the fetcher returns a stub object whose fields collapse to the '?? 0'/'?? \"\"' defaults (e.g. fetchNotificationsData:222 unreadCount 0, fetchAnnouncementData:247 title 'No announcements'); updateAllWidgets then treats it as success:true and calls cacheWidgetData(config.id, emptyData) at line 162, OVERWRITING previously-good cached widget data with an empty/zero state. Net effect: one flaky request wipes the offline cache and shows the user 'no notifications / no announcements'."
       ],
       "expert": "frontend"
     },
@@ -47,10 +225,189 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:44-59 — fetchWidgetData() switches over config.type with no default branch while declaring a Promise<WidgetData> return. It is only exhaustive over the compile-time WidgetType union.",
-        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94-97 — getAllWidgetConfigs() returns JSON.parse(stored) with no runtime validation, so a stale/legacy/corrupted persisted config carrying an unknown 'type' string bypasses the union at runtime; fetchWidgetData then falls off the switch and returns undefined, which updateAllWidgets caches (cacheWidgetData at :162) and stores in the results Map as an undefined WidgetData. Add a default branch that throws or returns a typed empty widget, plus config validation on load."
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:44-59 \u2014 fetchWidgetData() switches over config.type with no default branch while declaring a Promise<WidgetData> return. It is only exhaustive over the compile-time WidgetType union.",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94-97 \u2014 getAllWidgetConfigs() returns JSON.parse(stored) with no runtime validation, so a stale/legacy/corrupted persisted config carrying an unknown 'type' string bypasses the union at runtime; fetchWidgetData then falls off the switch and returns undefined, which updateAllWidgets caches (cacheWidgetData at :162) and stores in the results Map as an undefined WidgetData. Add a default branch that throws or returns a typed empty widget, plus config validation on load."
       ],
       "expert": "tester"
+    },
+    {
+      "id": "lag-warning-2026-07-14",
+      "type": "lag_warning",
+      "source": "routine-metadata",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-07-13T02:11:42Z (43h ago, exceeds 36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-window",
+      "score_delta": 0,
+      "evidence": [
+        "3275 add+del lines this run across PR #2313 (report_schedules due-work consumer + cadence unification)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-window",
+      "score_delta": 1,
+      "evidence": [
+        "3185 add+del lines this run across PR #2315 (Booking.com fetch_property happy-path test)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-window",
+      "score_delta": 0,
+      "evidence": [
+        "2950 add+del lines this run (mixed OAuth/rate-limit follow-ups); runs_seen now 4"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 0,
+      "evidence": [
+        "auth.rs runs_seen=4 (prior 3 + this run) \u2014 sustained churn cluster; refactor plan `refactor-churn-hotspots-api-server-auth-2026-07-12` open"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
     }
-  ]
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-14.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev comparison",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal ids not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8; no open>=14d without decay (n/a: 0 pre-existing open items)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a \u2014 0 new plans this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "n/a \u2014 0 new plans this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secrets pattern",
+      "observed": "0",
+      "expected": "0",
+      "remediation": "scrubbed one false-positive 'Authorization: Bearer' phrase inside evidence text (rewrote to 'Authorization header (Bearer token)')"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans still present",
+      "observed": "11/11 active",
+      "expected": "11/11"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">=7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions.length == 0 (no auto-fix this run)",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram bot-token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no allowlist candidate met certainty bar"
 }
