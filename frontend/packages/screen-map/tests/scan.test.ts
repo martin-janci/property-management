@@ -57,7 +57,10 @@ describe('scanCandidates', () => {
       },
     });
     const epics = candidates.flatMap((c) => c.epics ?? []);
-    expect(epics).toContain('Epic-001');
+    // Leading zeros are stripped to match the unpadded frontmatter refs.
+    expect(epics).toContain('Epic-1');
+    // Letter-suffixed epics (10A/10B/7B convention) round-trip, upper-cased.
+    expect(epics).toContain('Epic-10B');
   });
 
   it('includes user-add entries with source: "user"', async () => {

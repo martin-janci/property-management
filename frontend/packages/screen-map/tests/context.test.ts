@@ -54,7 +54,7 @@ describe('buildValidationContext', () => {
       );
       const ctx = await buildValidationContext({ repoRoot: root });
       expect(ctx.knownUseCases?.has('UC-12')).toBe(true);
-      expect(ctx.knownEpics?.has('Epic-001')).toBe(true);
+      expect(ctx.knownEpics?.has('Epic-1')).toBe(true);
       expect(ctx.knownComponents?.has('BuildingHeader')).toBe(true);
     });
   });
