@@ -371,13 +371,16 @@ struct MigrateEmbeddingsResponse {
 /// Wires `LlmDocumentRepository::migrate_embeddings_to_pgvector` — previously
 /// reachable only from tests — to an operator-triggerable HTTP route. Legacy
 /// `document_embeddings` rows written before the pgvector column existed store
-/// their vector as JSONB and carry no `embedding_model` provenance. The
-/// retrieval path (`search_documents_pgvector`) keeps such provenance-less rows
-/// for backward compatibility, so until they are migrated they can mix
-/// embedding spaces in a provenance-filtered similarity search. This endpoint
-/// runs the idempotent `migrate_jsonb_to_vector()` back-fill — only rows with
-/// `embedding_vector IS NULL` and a 1536-dim JSONB array are converted — and
-/// reports how many rows moved.
+/// their vector as JSONB and carry no `embedding_model` provenance. This
+/// endpoint runs the idempotent `migrate_jsonb_to_vector()` back-fill — only
+/// rows with `embedding_vector IS NULL` and a 1536-dim JSONB array are
+/// converted — and reports how many rows moved.
+///
+/// As of migration 00215 (#2300) the back-fill also stamps assumed
+/// `metadata.embedding_model` provenance (`text-embedding-3-small`) on any
+/// converted row that lacks it, so the retrieval filter
+/// (`filter_by_embedding_model`) can isolate the row's embedding space instead
+/// of silently mixing it into a provenance-filtered similarity search.
 ///
 /// Platform-admin only: the run needs the super-admin RLS bypass so it can
 /// convert legacy rows across every organization in one pass rather than only
