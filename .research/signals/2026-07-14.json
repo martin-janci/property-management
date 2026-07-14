@@ -1,0 +1,178 @@
+{
+  "date": "2026-07-14",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "type": "code-review-finding",
+      "source": "issue #2314",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/routes/news_articles.rs handlers discard TenantExtractor and run every op via NewsArticleRepository::new(state.db.clone()) on the raw BYPASSRLS pool; repository queries WHERE id=$1 with no organization_id predicate — cross-tenant IDOR + data-loss (delete_article :685, restore_article :651, add/delete_media :769/:802). RLS is ENABLEd but not FORCEd on news_articles (migration 00069). Filed via dispatcher Tier-1d api-handlers review as issue #2314 (labels security/backend/follow-up).",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "severity": "high",
+      "backlog_id": "security-news-articles-idor-2026-07-14"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2295, #2292, #2313 (report_schedules cadence work) touched routes/reports.rs — 3275 add+del lines this run",
+      "score_delta": 1,
+      "evidence": "routes/reports.rs top-code-churn (3275 lines) across gap-81-1 recompute (#2295), Create-new-schedule wiring (#2292), and due-work consumer + cadence unification (#2313); prior hotspot_history runs_seen=1 (2026-05-30)",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "backlog_id": "refactor-churn-hotspot-backend-servers-api-server-src-routes-reports-rs-2026-07-14"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "draft PR #2315 (gap-83-2 fetch_property happy-path coverage) and prior iterations — 3049 add+del lines this run",
+      "score_delta": 1,
+      "evidence": "crates/integrations/src/booking/mod.rs code-churn 3049 lines this run; prior hotspot_history runs_seen=1 (2026-07-09) — repeated-churn candidate next run",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "backlog_id": "refactor-churn-hotspot-backend-crates-integrations-src-booking-mod-rs-2026-07-14"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "auth.rs top-3 code-churn again this run (2950 lines) — cumulative re-emit",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit; signal id present in seen_signals from prior runs; hotspot_history advances runs_seen 3→4",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "backlog_id": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "auth.rs runs_seen>=2 (currently 3, advancing to 4) — cumulative re-emit",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit; id present in seen_signals; refactor-churn-hotspots-api-server-auth-2026-07-12 backlog row already done — no new backlog row this run",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "backlog_id": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors/seen_signals/hotspot_history/quiet_days advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emitted with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — trivially passes",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "scan staged diff for secrets/hostnames",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md and diff -q",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; no cursor discrepancy",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present as active or archive",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now>=HEAD",
+      "observed": "7>=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md and diff -q",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions",
+      "expected": "≤3 total, ≤1 per action_type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "pm_cursor.next_index=5 (unchanged)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": []
+}
