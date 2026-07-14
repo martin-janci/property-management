@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-14T10:21:41Z",
+  "generated": "2026-07-14T10:23:04Z",
   "assignments": [
     {
       "task_id": "gh-issue-2300",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2302",
       "branch": "auto-impl/gh-issue-2302-da3e0e02",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-14T10:08:48Z",
-      "last_updated": "2026-07-14T10:08:48Z",
-      "status_changed_at": "2026-07-14T10:08:48Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-14T10:23:04Z",
+      "status_changed_at": "2026-07-14T10:23:04Z",
+      "pr_number": 2311,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2311",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2311 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=widened epic regex to match unpadded letter-suffixed refs (Epic-10A); vitest/typecheck/biome green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
