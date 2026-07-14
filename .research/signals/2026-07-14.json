@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-14",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (CHURN_FILES empty; state.review_cursor.mobile-rn = 2026-06-16 is the oldest of 8 segments). Not backlog-saturated (0 open code-review-finding items for mobile-rn in backlog.json). NOTE: mobile-rn already had 3 signal files produced earlier today (2026-07-14-mobile-rn.json, -tier1d.json, -tier1d-2.json). To stay non-duplicate this pass deliberately reviewed files those runs did NOT touch — widgets/ (WidgetDataProvider) and the NFCAccessController Apple-Wallet path — and verified each finding id/evidence against all three prior mobile-rn files. Segment root is frontend/apps/mobile/src/ (skill's segment map lists the pre-monorepo-move path frontend/mobile/src/).",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-wallet-passtype-id",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:383 — Apple Wallet pass built with passTypeIdentifier: 'pass.bit.two.three.ppt.access'. The first three reverse-DNS labels are scrambled: the repo's documented package namespace (CLAUDE.md) is 'three.two.bit.ppt' and iOS bundle ids are 'three.two.bit.ppt.reality'/'.management', so the convention-correct value is 'pass.three.two.bit.ppt.access', not 'pass.bit.two.three...'.",
+        "Apple requires passTypeIdentifier to exactly match a Pass Type ID registered in the Developer Portal + provisioning profile; a scrambled reverse-DNS id will not match, so NativeWallet.addPass(...) at NFCAccessController.ts:391 fails and addToWallet() returns a rejected/false result on iOS (Add-to-Wallet for building access is broken).",
+        "Static-analysis confidence medium: the exact id registered in the Apple portal is not visible in-repo, but the value contradicts the repo's own stated namespace convention, which is the strongest available signal of a typo."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-api-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:356-384 — apiRequest<T>() catches every error (network + non-ok response) and returns '{} as T' instead of throwing. Because fetchWidgetData never throws as a result, the 'use cached data on failure' fallback in updateAllWidgets (WidgetDataProvider.ts:164-169) is dead code — the success:false branch can never be reached.",
+        "WidgetDataProvider.ts:145-163 — on any transient API failure the fetcher returns a stub object whose fields collapse to the '?? 0'/'?? \"\"' defaults (e.g. fetchNotificationsData:222 unreadCount 0, fetchAnnouncementData:247 title 'No announcements'); updateAllWidgets then treats it as success:true and calls cacheWidgetData(config.id, emptyData) at line 162, OVERWRITING previously-good cached widget data with an empty/zero state. Net effect: one flaky request wipes the offline cache and shows the user 'no notifications / no announcements'."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-switch-undef",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:44-59 — fetchWidgetData() switches over config.type with no default branch while declaring a Promise<WidgetData> return. It is only exhaustive over the compile-time WidgetType union.",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94-97 — getAllWidgetConfigs() returns JSON.parse(stored) with no runtime validation, so a stale/legacy/corrupted persisted config carrying an unknown 'type' string bypasses the union at runtime; fetchWidgetData then falls off the switch and returns undefined, which updateAllWidgets caches (cacheWidgetData at :162) and stores in the results Map as an undefined WidgetData. Add a default branch that throws or returns a typed empty widget, plus config validation on load."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
