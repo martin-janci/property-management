@@ -148,5 +148,19 @@
   ],
   "goal_checks": [],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 the three screen-map-drift signals sit at score 2 (below the score>=3 auto-fix bar); the sole score>=3 open item is a test-gap off the auto-fix allowlist"
+  "auto_fix_skipped_reason": "no candidate \u2014 the three screen-map-drift signals sit at score 2 (below the score>=3 auto-fix bar); the sole score>=3 open item is a test-gap off the auto-fix allowlist",
+  "incremental_fires": [
+    {
+      "fired_at": "2026-07-14T12:26:00Z",
+      "trigger_text": "buffer-low: claimable=2/72 \u2014 refill planner",
+      "action": "acknowledged; no additional plans promoted (no score-3 items remain after morning's promotion)",
+      "delta": {
+        "merged_prs_since_prior_run": [
+          "#2311"
+        ],
+        "new_signals": 0,
+        "new_plans": 0
+      }
+    }
+  ]
 }
