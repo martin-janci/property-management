@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-14T18:11:03Z",
+  "archived_at": "2026-07-14T22:11:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2841,6 +2841,25 @@
       }
     },
     {
+      "id": "gap-81-1-frontend-create-new-schedule-ui-missing",
+      "action": "Frontend Create new schedule UI missing — no CreateScheduleModal/hook found (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2292,
+        "merged_at": "2026-07-13T21:03:49Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
       "id": "gap-81-1-report-schedule-cron-column",
       "action": "Report schedule editing round-trips cron through overloaded `time` field — add dedicated cron_expression column (migration+repo+route) (coverage 81-1; issue #616)",
       "owner_role": "pm-backend",
@@ -2871,6 +2890,25 @@
         "gap-81-1-report-schedule-edit-api"
       ],
       "resolved": "PR #623 merged 2026-05-27 (report schedule editor UI)"
+    },
+    {
+      "id": "gap-81-1-update-schedule-does-not-recompute-next",
+      "action": "update_schedule does NOT recompute next_run_at when cron_expression changes — stale fire time (issue #2242 finding still present) (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2295,
+        "merged_at": "2026-07-14T00:08:23Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
     },
     {
       "id": "gap-81-2-report-execution-history-download-verify",
@@ -3101,6 +3139,25 @@
       }
     },
     {
+      "id": "gap-83-3-no-frontend-screen-for-portal-webhook",
+      "action": "No frontend screen for portal webhook management/status (inbound-only, no manager visibility surface) (83-3-portal-webhooks Real Estate Portal Webhooks)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2294,
+        "merged_at": "2026-07-13T21:03:44Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
       "id": "gap-83-3-replay-protection-freshness-timestamp-window-explicitly",
       "action": "Replay-protection (freshness/timestamp window) explicitly deferred in webhook.rs — HMAC proves authenticity but not freshness (83-3-portal-webhooks Real Estate Portal Webhooks)",
       "owner_role": "pm-backend",
@@ -3236,6 +3293,63 @@
         "merged_pr": 2285,
         "merged_at": "2026-07-13T18:21:10Z",
         "at": "2026-07-13T18:30:54Z"
+      }
+    },
+    {
+      "id": "gap-84-4-mobile-os-push-fcm-apns-transport",
+      "action": "Mobile OS push (FCM/APNs) transport deferred — Push channel has no real device transport (84-4-notification-triggers Notification Trigger System)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2290,
+        "merged_at": "2026-07-14T00:19:29Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
+      "id": "gap-84-4-no-frontend-notification-trigger-management-ui",
+      "action": "No frontend notification-trigger management UI (84-4-notification-triggers Notification Trigger System)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2293,
+        "merged_at": "2026-07-13T22:12:36Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
+      "id": "gap-84-5-migrate-embeddings-to-pgvector-not-wired",
+      "action": "migrate_embeddings_to_pgvector not wired to any HTTP route — no way to reindex legacy no-provenance rows (they still mix embedding spaces in filtered search) (84-5-pgvector-rag pgvector RAG Migration)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2291,
+        "merged_at": "2026-07-14T00:08:23Z",
+        "at": "2026-07-14T22:05:43Z"
       }
     },
     {
@@ -3430,6 +3544,25 @@
       }
     },
     {
+      "id": "gap-screens-normalize-frontmatter-2026-07-13",
+      "action": "Normalize screen-map frontmatter: fix 9 validation errors (story-id-style epics like Epic-10B-7/6-5/Epic-9-1, empty epics fields, '7B') and re-point Epic-77/Epic-39 legacy refs to current epic ids; then link missing UCs (UC-33 disputes, UC-29 reports, UC-44 integrations, UC-10, UC-40)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2297,
+        "merged_at": "2026-07-13T23:28:27Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
       "id": "gap-security-435-cookie-scope",
       "action": "Fix P0-12 cookie scope from post-merge security findings on PR#435: ensure session cookies use SameSite=Strict and Secure flags, HttpOnly enforced, scope limited to API path prefix",
       "owner_role": "pm-security",
@@ -3439,6 +3572,25 @@
       "source": "pm-analysis 2026-05-27",
       "resolved": "PR #565 merged (session cookie scope hardening, P0-12) — but introduced cookie Path breaking change tracked as follow-up #617; see pm-security-617-cookie-path-reconcile",
       "depends_on": []
+    },
+    {
+      "id": "gap-tracking-reconcile-story-md-statuses-2026-07-13",
+      "action": "Reconcile tracking drift: flip story-md Status pending/in-progress -> done for verified-shipped 79-2/79-3/79-4/82-1..82-5/85-1/9-1 (code+tests verified 2026-07-07 and 2026-07-13) and add 84-x + 79-x/82-x/85-x/9-x ids to sprint-status.yaml development_status",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-13T18:40:00Z",
+      "source": "gap-scan 2026-07-13",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2298,
+        "merged_at": "2026-07-14T01:20:31Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
     },
     {
       "id": "gh-issue-1680",
@@ -5847,6 +5999,60 @@
       }
     },
     {
+      "id": "gh-issue-2282",
+      "action": "mobile dashboard silently renders zero stats on any API error (four useApiQuery calls with no isError branch) (Closes #2282)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2282)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T20:05:55Z",
+      "issue_ref": {
+        "number": 2282,
+        "url": "https://github.com/martin-janci/property-management/issues/2282",
+        "labels": [
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2304,
+        "merged_at": "2026-07-14T03:17:27Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
+      "id": "gh-issue-2283",
+      "action": "mobile useApi.ts (JWT decode + X-Tenant-ID injection) has no tests; every consumer mocks it (Closes #2283)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-13T20:05:55Z (#2283)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-13T20:05:55Z",
+      "issue_ref": {
+        "number": 2283,
+        "url": "https://github.com/martin-janci/property-management/issues/2283",
+        "labels": [
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2305,
+        "merged_at": "2026-07-14T05:19:29Z",
+        "at": "2026-07-14T22:05:43Z"
+      }
+    },
+    {
       "id": "gh-issue-2284",
       "action": "mobile DocumentUploadScreen has no test — highest-risk mutation path in documents/ is uncovered (Closes #2284)",
       "owner_role": "pm-frontend",
@@ -5978,6 +6184,34 @@
         "pr": 2311,
         "merge_sha": "1b4f6d13",
         "at": "2026-07-14T12:16:32Z"
+      }
+    },
+    {
+      "id": "gh-issue-2303",
+      "action": "Follow-up: report_schedules next_run_at is still write-only (no consumer/advance) + dual cadence model (PR #2295) (Closes #2303)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-14T04:04:36Z (#2303)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-14T04:04:36Z",
+      "issue_ref": {
+        "number": 2303,
+        "url": "https://github.com/martin-janci/property-management/issues/2303",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-14T12:10:48Z",
+      "leak_closed": {
+        "reason": "assignment-merged-item-stuck-inprogress",
+        "archive_status": "merged",
+        "merged_pr": 2313,
+        "merged_at": "2026-07-14T16:12:29Z",
+        "at": "2026-07-14T22:05:43Z"
       }
     },
     {

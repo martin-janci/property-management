@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-14T22:10:00Z",
+  "generator": "dispatcher-tier1d-dev-review",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (CHURN_FILES empty; state.review_cursor.ppt-web-core = 2026-07-07, oldest of 8 segments). Tier-1d demand-driven run (research backlog starved, claimable=0). NOTE: an earlier same-day Tier-1d run (2026-07-14-ppt-web-core.json, 10:20Z) already reviewed the routes/features paths (person-months fetch, dashboard guards, sessions cast). To stay non-duplicate this pass deliberately reviewed the infra files those runs did NOT touch — lib/websocket.ts, lib/errorHandler.ts, lib/api.ts, contexts/AuthContext.tsx, contexts/WebSocketContext.tsx, hooks/ — and verified each finding id/evidence against the earlier file (zero overlap: different files, different issue types). Segment root is frontend/apps/ppt-web/src/ (skill's segment map lists the pre-monorepo path frontend/ppt-web/src/).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-websocket-prod-console",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:344 — console.warn/console.error left in committed production service code, NOT gated by import.meta.env.DEV (unlike lib/api.ts:199 and hooks/usePerformanceMetrics.ts which ARE DEV-guarded); reachable on every send-while-disconnected, send failure, parse failure, and handler error (lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621), leaking noise and potential message-payload data to the production browser console.",
+        "Fix: route these through the same DEV-gated logger used in lib/api.ts, or a leveled logger, so prod builds stay quiet and do not spill payloads."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53 — the entire ERROR_MESSAGES catalogue (titles + messages) and formatFieldName() output are hardcoded English in a 4-locale app (sk/cs/de/en); this is the app's user-facing error-display infra yet nothing is wrapped in t('...').",
+        "Confidence medium: errorHandler is currently only barrel-exported via lib/index.ts with no component consumer found in this pass, so the strings are not yet on a live render path — an i18n gap waiting to surface rather than a shipped-visible defect."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
