@@ -2609,6 +2609,28 @@
       "merge_attempted_at": "2026-07-14T08:15:09Z"
     },
     {
+      "task_id": "gap-84-1-wire-frontend-direct-s3-upload",
+      "branch": "auto-impl/gap-84-1-wire-frontend-direct-s3-upload-10c06608",
+      "status": "merged",
+      "claimed_at": "2026-07-15T12:13:23Z",
+      "last_updated": "2026-07-15T16:24:04Z",
+      "status_changed_at": "2026-07-15T16:24:04Z",
+      "pr_number": 2345,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2345",
+      "merged_at": "2026-07-15T16:24:04Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2345 status=done specialist=react-web scope_drift=false note=wired useUploadDocumentDirect; api-client build+typecheck+biome+tests+ppt-web build green",
+      "reviewer_summary": "verdict=approve head_oid=7c69d20c227771925c0ce8cecc6d425921102aa4 note=approved-via-comment-review(self-approve-blocked)",
+      "last_reviewed_oid": "7c69d20c227771925c0ce8cecc6d425921102aa4",
+      "scope_drift": false,
+      "code_reuse_warn": "useU@reality-favorites-fp (truncated-prefix false-positive)",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-15T16:24:04Z"
+    },
+    {
       "task_id": "gap-84-2-no-frontend-ui-component-consuming-the",
       "branch": "auto-impl/gap-84-2-no-frontend-ui-component-consum-1030da47",
       "status": "failed",
@@ -5607,6 +5629,50 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2341",
+      "branch": "auto-impl/gh-issue-2341-44ef3660",
+      "status": "merged",
+      "claimed_at": "2026-07-15T14:08:55Z",
+      "last_updated": "2026-07-15T16:24:04Z",
+      "status_changed_at": "2026-07-15T16:24:04Z",
+      "pr_number": 2351,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2351",
+      "merged_at": "2026-07-15T16:24:04Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=a7394ca7c319267163de5caee4d38fd1ad274311 note=notfound-narrowing+type-guards verified;photos:{}-fails-on-main;CI-green;approve-not-posted(self-approval-blocked)",
+      "last_reviewed_oid": "a7394ca7c319267163de5caee4d38fd1ad274311",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-15T16:24:04Z"
+    },
+    {
+      "task_id": "gh-issue-2342",
+      "branch": "auto-impl/gh-issue-2342-1964dcea",
+      "status": "merged",
+      "claimed_at": "2026-07-15T14:08:55Z",
+      "last_updated": "2026-07-15T16:24:04Z",
+      "status_changed_at": "2026-07-15T16:24:04Z",
+      "pr_number": 2353,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2353",
+      "merged_at": "2026-07-15T16:24:04Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=f8b8a073bcc99c300db11b6ae6a8fc4010ca50e3 note=safe-5xx-retry(sig-verified-sender);deferred-db-findings-ok;CI-green;comment-review",
+      "last_reviewed_oid": "f8b8a073bcc99c300db11b6ae6a8fc4010ca50e3",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-15T16:24:04Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -6295,5 +6361,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T14:21:41Z"
+  "archived_at": "2026-07-15T16:24:44Z"
 }

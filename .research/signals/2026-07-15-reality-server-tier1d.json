@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-15",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor). state.review_cursor nominally lists ppt-web-core (2026-07-07) as oldest, but that cursor is stale under single-writer tier1d runs that never advance state.json: the actual signal history shows ppt-web-core was already reviewed today (2026-07-15-ppt-web-core-tier1d.json) and twice on 07-14, and a first-pass here re-derived the identical App.tsx:116 nav-aria-i18n finding (pure duplicate, zero new claimable value). Pivoted to the genuinely oldest-by-actual-history segment not touched today: reality-server, last reviewed 2026-07-13 (empty findings) and 2026-07-12/07-08. Not backlog-saturated (0 open code-review-finding items for reality-server). Rust expert swept routes/, handlers/, extractors/, services/, util/ + main.rs/state.rs. Prior-run duplicates excluded: services/saved_search_alerts.rs:237 (dup alert enqueue, 07-08) and util/url_validator.rs:145-164 (IPv4-mapped IPv6 SSRF, 07-12). Cleared as safe on inspection: extractors/auth.rs:63 unwrap (prefix guaranteed by preceding find), handlers/inquiries/mod.rs:179 unwrap (is_empty guard), sso.rs:665 / users/mod.rs:551 expect (OS CSPRNG fill), state.rs panics/expect (startup config, not request path), sso.rs:372 StatusCode::OK (success branch), health.rs degraded->200 (documented). Ownership gating verified intact on all /my/ portal paths.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-server-view-no-visibility-gate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:863-874 — record_view (public unauthenticated POST /api/v1/listings/{id}/view) takes an arbitrary Path<Uuid> and calls track_view(id, \"website\") with NO status='active' / visibility check, then returns 204 unconditionally. Every other public path in this file gates on status='active' (detail query :369, search :703, categories :793). Impact is limited to analytics pollution / view-count inflation against non-discoverable draft/paused/nonexistent listings — no data leak, no crash — hence Low. Additionally the OpenAPI contract at :858-861 advertises a '404 Listing not found' response the handler can never emit, so the documented contract and the implementation diverge."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
