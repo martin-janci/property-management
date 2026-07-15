@@ -261,68 +261,26 @@ impl AiChatRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    /// Update session title.
-    pub async fn update_session_title<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-        title: &str,
-    ) -> Result<AiChatSession, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            "UPDATE ai_chat_sessions SET title = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
-        )
-        .bind(id)
-        .bind(title)
-        .fetch_one(executor)
-        .await
-    }
+    // SECURITY (#2317): the unscoped `update_session_title` (WHERE id = $1,
+    // no org/user predicate) and the legacy org-unscoped `add_feedback` were
+    // deleted here — both had zero non-test callers and were latent
+    // within-tenant IDOR footguns if a future handler wired them up. Use
+    // owner-scoped variants (`(id, org_id, user_id)` in the WHERE clause) if
+    // either operation is ever needed again.
 
-    /// Add training feedback for a message.
-    /// Record AI training feedback for a message.
-    ///
-    /// `user_id` is passed explicitly by the caller and must originate from the
-    /// verified request principal, never from client input in `data`.
-    pub async fn add_feedback<'e, E>(
-        &self,
-        executor: E,
-        user_id: Uuid,
-        data: ProvideFeedback,
-    ) -> Result<AiTrainingFeedback, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            INSERT INTO ai_training_feedback (message_id, user_id, rating, helpful, feedback_text)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (message_id, user_id) DO UPDATE SET
-                rating = EXCLUDED.rating,
-                helpful = EXCLUDED.helpful,
-                feedback_text = EXCLUDED.feedback_text
-            RETURNING *
-            "#,
-        )
-        .bind(data.message_id)
-        .bind(user_id)
-        .bind(data.rating)
-        .bind(data.helpful)
-        .bind(data.feedback_text)
-        .fetch_one(executor)
-        .await
-    }
-
-    /// Record AI training feedback for a message — tenant-scoped (issue
-    /// #766 / #816).
+    /// Record AI training feedback for a message — tenant- AND owner-scoped
+    /// (issues #766 / #816 / #2317).
     ///
     /// `user_id` and `org_id` both originate from the verified request
     /// principal. The `INSERT ... SELECT ... WHERE EXISTS` only writes when
-    /// the target message's parent session belongs to the caller's org, so a
-    /// caller in org B cannot attach feedback to a message in org A's chat
-    /// session (an IDOR write + training-data-poisoning vector). Returns
-    /// `Ok(None)` when the message does not exist or belongs to another org.
+    /// the target message's parent session belongs to the caller's org AND is
+    /// owned by the caller. Sessions are per-user private within an org
+    /// (#2279), so the org-only guard let a colleague in the same org
+    /// attach/overwrite feedback on another member's private message and use
+    /// the write's success/failure as a message-UUID existence oracle (#2317).
+    /// Returns `Ok(None)` when the message does not exist, belongs to another
+    /// org, or belongs to another user's session — indistinguishably, to avoid
+    /// an existence oracle.
     pub async fn add_feedback_for_org<'e, E>(
         &self,
         executor: E,
@@ -340,7 +298,7 @@ impl AiChatRepository {
             WHERE EXISTS (
                 SELECT 1 FROM ai_chat_messages m
                 JOIN ai_chat_sessions s ON s.id = m.session_id
-                WHERE m.id = $1 AND s.organization_id = $6
+                WHERE m.id = $1 AND s.organization_id = $6 AND s.user_id = $2
             )
             ON CONFLICT (message_id, user_id) DO UPDATE SET
                 rating = EXCLUDED.rating,
@@ -359,7 +317,12 @@ impl AiChatRepository {
         .await
     }
 
-    /// Get escalated messages for review.
+    /// Get escalated messages for review — org-scoped, deliberately CROSS-USER.
+    ///
+    /// This is the one AI-chat read that spans every user's sessions in the
+    /// org (escalation review). It must only be reachable from a role-gated
+    /// handler: `list_escalated` in api-server enforces
+    /// `rls.role().is_manager()` before calling this (#2317).
     pub async fn list_escalated_messages<'e, E>(
         &self,
         executor: E,

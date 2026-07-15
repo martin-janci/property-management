@@ -852,11 +852,13 @@ async fn provide_feedback(
     let mut feedback = req;
     feedback.message_id = message_id;
 
-    // SECURITY (issue #766 / #816): feedback author AND the owning tenant are
-    // both derived from the RLS-validated request context, never from the body or
-    // the path. The repo only writes when the target message's session belongs
-    // to the caller's org — otherwise a caller in org B could attach feedback
-    // to (and poison the training signal for) org A's chat messages.
+    // SECURITY (issue #766 / #816 / #2317): feedback author AND the owning
+    // tenant are both derived from the RLS-validated request context, never
+    // from the body or the path. The repo only writes when the target message's
+    // session belongs to the caller's org AND is owned by the caller — sessions
+    // are per-user private (#2279), so an org-only guard let a colleague
+    // attach/overwrite feedback on another member's private message and use the
+    // 201-vs-404 response as a message-UUID existence oracle.
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let result = state
@@ -888,6 +890,23 @@ async fn list_escalated(
     mut rls: RlsConnection,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#2317): escalated messages are a cross-user, org-wide view of
+    // other members' private AI-chat content (sessions are per-user private,
+    // see #2279). Escalation review is a manager/admin function — without this
+    // gate any authenticated org member (e.g. a plain resident) could read the
+    // full content of every escalated message in the org. The RBAC check uses
+    // the DB-derived role from the RLS-validated request context, same pattern
+    // as the report-schedule handlers (`rls.role().is_manager()`).
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to review escalated messages",
+            )),
+        ));
+    }
     let tenant_id = rls.tenant_id();
 
     let result = state

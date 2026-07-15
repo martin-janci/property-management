@@ -31,6 +31,11 @@
 //! — otherwise any colleague in the same org can read/delete/post into another
 //! member's private session. Tests (1b)–(1d) pin that owner predicate.
 //!
+//! Issue #2317 extends the same per-user model to the feedback write path:
+//! `add_feedback_for_org` now also requires `s.user_id = <caller>` in its
+//! EXISTS guard (test 2b), and the unscoped legacy repo methods
+//! (`update_session_title`, `add_feedback`) were deleted outright.
+//!
 //! Why repo-layer and not HTTP-layer: `TestApp` mounts the router WITHOUT
 //! `host_tenant_middleware`, so `RequestPrincipal` can never resolve an
 //! `effective_org` in tests (see `equipment_cross_tenant_idor_tests.rs`'s
@@ -399,6 +404,115 @@ async fn add_feedback_for_org_blocks_cross_tenant_write(pool: PgPool) {
     assert_eq!(
         count_after_same, 1,
         "exactly one feedback row exists after the same-org write"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (2b) Feedback write is OWNER-scoped WITHIN a tenant (issue #2317) — a
+//      colleague in the same org cannot attach/overwrite feedback on another
+//      member's private message, nor use the write's success/failure as a
+//      message-UUID existence oracle. Sessions are per-user private (#2279);
+//      this pins the `s.user_id = $2` predicate added to the EXISTS guard in
+//      `add_feedback_for_org`.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_feedback_for_org_blocks_within_tenant_cross_user_write(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "wt-fb").await;
+    let owner = seed_user(&pool, "wt-fb-owner@ai-idor.test").await;
+    // `attacker` is a DIFFERENT user in the SAME org.
+    let attacker = seed_user(&pool, "wt-fb-attacker@ai-idor.test").await;
+    let session = seed_session(&pool, org, owner).await;
+    let message = seed_message(&pool, session).await;
+
+    // Same-org, different-user feedback write is refused: the repo returns
+    // None (indistinguishable from "message does not exist" — no oracle) and
+    // writes nothing.
+    let cross_user = repo
+        .add_feedback_for_org(
+            &pool,
+            attacker,
+            org,
+            ProvideFeedback {
+                message_id: message,
+                rating: Some(1),
+                helpful: Some(false),
+                feedback_text: Some("colleague poison".to_string()),
+            },
+        )
+        .await
+        .expect("query ok");
+    assert!(
+        cross_user.is_none(),
+        "issue #2317: a colleague in the same org must NOT attach feedback to \
+         another member's private message"
+    );
+
+    let count_after_cross: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM ai_training_feedback WHERE message_id = $1")
+            .bind(message)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        count_after_cross, 0,
+        "no feedback row may be written by a within-tenant cross-user caller"
+    );
+
+    // Demonstrate the leak the owner predicate closes: the org-only EXISTS
+    // (the vulnerable pre-fix guard) matches the message for ANY member of
+    // the same org.
+    let org_only_exists: bool = sqlx::query_scalar(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM ai_chat_messages m
+            JOIN ai_chat_sessions s ON s.id = m.session_id
+            WHERE m.id = $1 AND s.organization_id = $2
+        )
+        "#,
+    )
+    .bind(message)
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("query ok");
+    assert!(
+        org_only_exists,
+        "sanity: the org-only EXISTS (the vulnerable pre-fix guard) does match \
+         the message for any member of the same org"
+    );
+
+    // The session owner can attach feedback to their own message.
+    let as_owner = repo
+        .add_feedback_for_org(
+            &pool,
+            owner,
+            org,
+            ProvideFeedback {
+                message_id: message,
+                rating: Some(5),
+                helpful: Some(true),
+                feedback_text: Some("great".to_string()),
+            },
+        )
+        .await
+        .expect("query ok");
+    assert!(
+        as_owner.is_some(),
+        "the session owner must be able to attach feedback to their own message"
+    );
+
+    let count_after_owner: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM ai_training_feedback WHERE message_id = $1")
+            .bind(message)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        count_after_owner, 1,
+        "exactly one feedback row exists after the owner's write"
     );
 }
 
