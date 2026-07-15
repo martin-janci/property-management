@@ -354,9 +354,11 @@ pub struct CreateUploadUrlRequest {
     /// `Content-Type` header on the subsequent PUT, because the presigned URL
     /// is signed for exactly this content type.
     pub mime_type: String,
-    /// Optional declared size in bytes. When present it is validated against the
-    /// 50 MiB cap up-front so an oversize upload is rejected before the client
-    /// wastes a round-trip to S3. S3 still enforces the real byte count.
+    /// Exact size of the upload in bytes. REQUIRED (GH #2320): it is validated
+    /// against the 50 MiB cap up-front and signed into the presigned URL as
+    /// `Content-Length`, so S3 rejects a PUT whose body length differs. The
+    /// client MUST send exactly this many bytes. Kept `Option` at the serde
+    /// layer only so a missing field yields a clear 400 instead of a 422.
     #[serde(default)]
     pub size_bytes: Option<i64>,
 }
@@ -546,6 +548,16 @@ async fn create_document(
             )),
         ));
     }
+
+    // SECURITY (#2320): file_key must lie inside the caller's org namespace.
+    // Both key producers (the presigned upload-url mint and the multipart
+    // upload path) emit `{org_id}/{year}/{month}/{uuid}_{name}` via
+    // `integrations::generate_storage_key`. Without this guard, any org member
+    // could register a "document" pointing at an arbitrary bucket object
+    // (another org's files, or a `messages/{thread_id}/…` attachment) and then
+    // exfiltrate it through the presigned download/preview handlers — the same
+    // bucket-wide IDOR fixed for messaging in #1791/#1770.
+    validate_file_key_org_scope(&req.file_key, org_id)?;
 
     // Validate category
     if !document_category::ALL.contains(&req.category.as_str()) {
@@ -1499,17 +1511,47 @@ async fn get_preview_url(
 // Presigned Upload-URL Handler (gap-84-1)
 // ============================================================================
 
+/// Validate that a client-supplied `file_key` lies inside the caller's org
+/// namespace (GH #2320).
+///
+/// Mirrors the messaging guard from #1791/#1770 (`link_message_attachment`):
+/// the key must start with the tenant's own `{org_id}/` prefix (the shape both
+/// key producers emit via `integrations::generate_storage_key`) and must not
+/// contain a `..` component. Kept as a pure function so the accept/reject
+/// contract can be unit-tested without a DB.
+fn validate_file_key_org_scope(
+    file_key: &str,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let expected_prefix = format!("{org_id}/");
+    if !file_key.starts_with(&expected_prefix) || file_key.contains("..") {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_KEY",
+                "file_key must reference an object uploaded for this organization",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 /// Validate a presigned-upload request before minting a URL (gap-84-1).
 ///
 /// Mirrors the eager checks the multipart [`upload_document`] handler runs on
 /// received bytes, but applied up-front to the client's *declared* `mime_type`
 /// / `size_bytes` so an invalid request is rejected before a presigned URL is
 /// handed out. Kept as a pure function so it can be unit-tested without a live
-/// S3 client or DB. Returns the client error tuple on failure.
+/// S3 client or DB.
+///
+/// GH #2320: `size_bytes` is now REQUIRED — it is signed into the presigned
+/// PUT URL as `Content-Length`, which is what actually enforces the 50 MiB
+/// cap on the direct-to-S3 path. Returns the validated size on success, or
+/// the client error tuple on failure.
 fn validate_upload_url_request(
     mime_type: &str,
     size_bytes: Option<i64>,
-) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+) -> Result<i64, (StatusCode, Json<ErrorResponse>)> {
     if !ALLOWED_MIME_TYPES.contains(&mime_type) {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -1523,28 +1565,35 @@ fn validate_upload_url_request(
         ));
     }
 
-    if let Some(size) = size_bytes {
-        if size < 0 {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "BAD_REQUEST",
-                    "size_bytes must be non-negative",
-                )),
-            ));
-        }
-        if size > MAX_FILE_SIZE {
-            return Err((
-                StatusCode::PAYLOAD_TOO_LARGE,
-                Json(ErrorResponse::new(
-                    "FILE_TOO_LARGE",
-                    format!("File exceeds maximum size of {MAX_FILE_SIZE} bytes (50 MiB)"),
-                )),
-            ));
-        }
+    let Some(size) = size_bytes else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "size_bytes is required — it is signed into the upload URL as Content-Length",
+            )),
+        ));
+    };
+    if size < 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "size_bytes must be non-negative",
+            )),
+        ));
+    }
+    if size > MAX_FILE_SIZE {
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(ErrorResponse::new(
+                "FILE_TOO_LARGE",
+                format!("File exceeds maximum size of {MAX_FILE_SIZE} bytes (50 MiB)"),
+            )),
+        ));
     }
 
-    Ok(())
+    Ok(size)
 }
 
 /// Mint a presigned PUT URL for direct client-to-S3 upload (gap-84-1).
@@ -1554,7 +1603,9 @@ fn validate_upload_url_request(
 ///   1. `POST /api/v1/documents/upload-url` → this handler returns a short-lived
 ///      presigned PUT URL plus the storage `file_key`.
 ///   2. Client `PUT`s the bytes directly to that URL, setting
-///      `Content-Type: <content_type>` so the request matches the signature.
+///      `Content-Type: <content_type>` and a `Content-Length` equal to the
+///      declared `size_bytes` — both are signed headers (GH #2320), so a
+///      mismatched request fails S3 signature validation.
 ///   3. Client `POST`s `/api/v1/documents` with the `file_key` to register the
 ///      document record.
 ///
@@ -1592,7 +1643,7 @@ async fn create_upload_url(
         req.mime_type.clone()
     };
 
-    validate_upload_url_request(&content_type, req.size_bytes)?;
+    let size_bytes = validate_upload_url_request(&content_type, req.size_bytes)?;
 
     // Presigning needs a real S3 client. StorageService::from_env() (sync) does
     // not create one, so gate on has_s3_client() — same 503 contract the
@@ -1622,8 +1673,10 @@ async fn create_upload_url(
     let file_key = integrations::generate_storage_key(org_id, &req.file_name);
 
     // Default TTL (5 min) is applied by generate_upload_url when None is passed.
+    // size_bytes is signed into the URL as Content-Length (GH #2320) so S3
+    // rejects a PUT whose body length differs from the declared size.
     let presigned = storage
-        .generate_upload_url(&file_key, &content_type, None)
+        .generate_upload_url(&file_key, &content_type, size_bytes, None)
         .await
         .map_err(|e| {
             tracing::error!(

@@ -1446,8 +1446,11 @@ async fn request_attachment_upload_url(
         }
     };
 
+    // file_size is signed into the URL as Content-Length (GH #2320) so S3
+    // rejects a PUT whose body length differs from the declared size — this
+    // is what actually enforces the size cap on the direct PUT path.
     let presigned = storage
-        .generate_upload_url(&file_key, &body.file_type, None)
+        .generate_upload_url(&file_key, &body.file_type, body.file_size, None)
         .await
         .map_err(|e| {
             // Content-type rejections are a client error; everything else is a
