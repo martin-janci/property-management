@@ -1,0 +1,194 @@
+{
+  "date": "2026-07-15",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-15",
+      "type": "lag_warning",
+      "source": "routine last_run_iso 2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in ~62h (last: 2026-07-13T02:11:42Z) — > 36h lag threshold"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "evidence": [
+        "auth.rs — 2950 line-changes since 2026-07-13 (dominated by a7ba591 chore(research) mass-rename touching many *.rs files). Was already runs_seen=3 last seen 2026-07-12."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "evidence": [
+        "reports.rs — 3355 line-changes since 2026-07-13 across PRs #2313 (report_schedules due-work), #2338 (create-schedule UI) and the a7ba591 chore-rename. Prior runs_seen=1 (2026-05-30)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "evidence": [
+        "booking/mod.rs — 3185 line-changes since 2026-07-13 (mostly a7ba591 chore-rename; PR #2315 gap-83-2 also touched happy-path fetch). Prior runs_seen=1 (2026-07-09)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3 before this run",
+      "score_delta": 0,
+      "evidence": [
+        "auth.rs hit as churn-hotspot in 3 prior runs + this one — persistent instability proxy though this run's churn is dominated by the a7ba591 chore-rename."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2351-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2351",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2351 (gh-issue-2341: harden reality-web listing detail) modified frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx (a route file) with no matching update under docs/screens/reality/. Best-effort heuristic — likely covered by existing docs/screens/reality/listing-detail.md but signal fires per routine spec."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-15.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged vs HEAD state advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative id reuse w/ score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8",
+      "observed": "true",
+      "expected": "true (no open items with updated_at>14d — nothing to decay)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 plans",
+      "expected": "0 or matching adversarial pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged only .research/",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "prev=7 now=7",
+      "expected": "now>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap",
+      "observed": "[] (no candidate)",
+      "expected": "len<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op (gate skipped)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met confidence=high + score>=3 + allowlist this run"
+}

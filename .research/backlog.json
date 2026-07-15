@@ -4390,6 +4390,27 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2351-reality",
+      "title": "PR #2351 touched reality-web /listings/[slug]/page.tsx without updating docs/screens/reality/*",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2351"
+      ],
+      "evidence": [
+        "PR #2351 (gh-issue-2341: harden reality-web listing detail — type-guard features/photos, 404 status) changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx with no docs/screens/reality/ update in the same PR.",
+        "Best-effort heuristic — screen-doc slugs vs route basenames; docs/screens/reality/listing-detail.md likely already covers the route. Verify before promoting."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-07-15",
+      "updated_at": "2026-07-15",
+      "plan": null
     }
   ]
 }
