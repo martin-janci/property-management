@@ -122,4 +122,30 @@ describe('ListingDetailContent', () => {
     expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
     expect(screen.getByText('Bare Listing')).toBeInTheDocument();
   });
+
+  // #2341 (medium): a partial 200 can carry *wrong-typed* collection fields,
+  // not just null/undefined. `features: "x"` fed to `Object.entries` yields
+  // per-character garbage entries; nullish-coalescing (`?? {}`) does not catch
+  // it. The type-guard must reject a non-object `features`.
+  it('does not throw and renders no features when features is a string', () => {
+    const partial = {
+      ...validListing,
+      features: 'x' as unknown as ListingDetail['features'],
+    };
+    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
+    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
+    // No per-character feature ("x", "0", …) leaked into the features section.
+    expect(screen.queryByText('features')).not.toBeInTheDocument();
+  });
+
+  // #2341 (medium): a non-array `photos` (e.g. `{}`) makes PhotoGallery throw
+  // on `.length` / `.map`. `?? []` does not catch a truthy non-array.
+  it('does not throw when photos is a non-array object', () => {
+    const partial = {
+      ...validListing,
+      photos: {} as unknown as ListingDetail['photos'],
+    };
+    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
+    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
+  });
 });

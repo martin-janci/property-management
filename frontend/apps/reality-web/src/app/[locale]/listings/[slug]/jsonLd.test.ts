@@ -106,6 +106,22 @@ describe('buildListingJsonLd', () => {
     expect('image' in jsonLd).toBe(false);
   });
 
+  // #2341: a partial 200 can carry wrong-typed (not just missing) collection
+  // fields. buildListingJsonLd must tolerate a non-array `photos` (skip image)
+  // and a non-object `features` (ignored — never emitted) without throwing.
+  it('tolerates wrong-typed photos/features (non-array photos, string features)', () => {
+    const malformed = {
+      ...validListing,
+      photos: {} as unknown as ListingDetail['photos'],
+      features: 'x' as unknown as ListingDetail['features'],
+    };
+    expect(() => buildListingJsonLd(malformed)).not.toThrow();
+    const jsonLd = buildListingJsonLd(malformed) as Record<string, unknown>;
+    expect(jsonLd).not.toBeNull();
+    expect(jsonLd.name).toBe('Beautiful Apartment');
+    expect('image' in jsonLd).toBe(false);
+  });
+
   it('omits optional price/rooms/area blocks when missing', () => {
     const minimal = {
       title: 'Minimal',

@@ -97,14 +97,22 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
     return tFeatures(key);
   };
 
-  // `listing.features` / `listing.photos` are validated as present for bodies
-  // that reach here via `getListing`, but this component is exported and may
-  // receive a partial body from other callers. Guard the unguarded derefs so a
-  // missing `features` (Object.entries) or `photos` (PhotoGallery) can never
-  // crash SSR with a 500.
-  const activeFeatures = Object.entries(listing.features ?? {})
+  // `listing.features` / `listing.photos` are typed as present, but this
+  // component is exported and a partial/malformed 200 body (from getListing's
+  // upstream, or another caller) can carry *wrong-typed* values, not just
+  // null/undefined. `features: "x"` makes `Object.entries` emit per-character
+  // garbage entries, and a non-array `photos` (e.g. `{}`) makes `PhotoGallery`
+  // throw on `.length` / `.map` — the same SSR-500 this guard exists to
+  // prevent (#2276 / #2341). Type-guard both, not just nullish-coalesce.
+  const featuresObj =
+    listing.features && typeof listing.features === 'object' && !Array.isArray(listing.features)
+      ? listing.features
+      : {};
+  const activeFeatures = Object.entries(featuresObj)
     .filter(([, value]) => value === true)
     .map(([key]) => key as keyof ListingFeatures);
+
+  const photos = Array.isArray(listing.photos) ? listing.photos : [];
 
   return (
     <div className="page-container">
@@ -132,7 +140,7 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
             {/* Main Content */}
             <div className="main-content">
               {/* Photo Gallery */}
-              <PhotoGallery photos={listing.photos ?? []} title={listing.title} />
+              <PhotoGallery photos={photos} title={listing.title} />
 
               {/* Header */}
               <div className="listing-header">
