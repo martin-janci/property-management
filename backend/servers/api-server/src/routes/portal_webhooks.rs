@@ -680,16 +680,29 @@ async fn process_inquiry_webhook(
     let syndication = match syndication {
         Some(s) => s,
         None => {
-            tracing::warn!(
+            // #2342 finding 2: unlike the analytics (view / generic) paths, the
+            // inquiry path carries a *lead*. #2275 fixed the silent-drop only for
+            // the DB-error branch; an inquiry whose syndication mapping is briefly
+            // absent (e.g. racing the syndication upsert) still took a
+            // `success:false` / 200 ack and was dropped with only a `warn!`, and
+            // the portal never retried. Escalate to a retriable 500 so the portal
+            // re-delivers the lead instead of dropping it — mirroring #2275's
+            // "prefer retry over silent drop" contract for lead-bearing events.
+            //
+            // `event = "inquiry_syndication_unmatched"` is the stable token to
+            // alert on (a log-based metric surrogate until a counter facade
+            // lands — see PR notes). Trade-off: a genuinely-unknown external_id
+            // will be retried by the portal; acceptable here because the sender
+            // is signature-verified (#833) and only delivers inquiries for
+            // listings we syndicated to it, so unmatched ⇒ transient race. A
+            // bounded dead-letter table is the durable follow-up (finding 3).
+            tracing::error!(
                 portal = %portal,
                 external_id = %webhook.external_id,
-                "Syndication not found for external ID"
+                event = "inquiry_syndication_unmatched",
+                "No syndication mapping for inbound inquiry lead — returning 500 so the portal retries (#2342 finding 2)"
             );
-            return Ok(Json(WebhookAckResponse {
-                success: false,
-                message: Some("Syndication not found".to_string()),
-                acknowledged_at: Utc::now(),
-            }));
+            return inquiry_unmatched_syndication_response();
         }
     };
 
@@ -818,6 +831,24 @@ fn classify_inquiry_persist(result: Result<(), &sqlx::Error>) -> InquiryPersistO
         Err(e) if is_unique_violation(e) => InquiryPersistOutcome::Duplicate,
         Err(_) => InquiryPersistOutcome::Retry,
     }
+}
+
+/// Response for an inbound INQUIRY whose syndication mapping cannot be found.
+///
+/// The inquiry path is lead-bearing (#2342 finding 2): an unmatched syndication
+/// must escalate to a retriable `500` rather than a silent `success:false` / 200
+/// ack, so the portal re-delivers the lead instead of dropping it. Extracted as
+/// a pure fn so the contract is unit-testable without a DB/pool (mirroring
+/// `classify_inquiry_persist`).
+fn inquiry_unmatched_syndication_response(
+) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
+    Err((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "LEAD_SYNDICATION_UNMATCHED",
+            "No syndication mapping found for inquiry; please retry",
+        )),
+    ))
 }
 
 // ============================================================================
@@ -986,5 +1017,31 @@ mod tests {
         // idempotent duplicate; any other error must fall through to `Retry`.
         assert!(!is_unique_violation(&sqlx::Error::PoolClosed));
         assert!(!is_unique_violation(&sqlx::Error::RowNotFound));
+    }
+
+    // ------------------------------------------------------------------
+    // Regression for #2342 finding 2: the residual silent-drop. On dev the
+    // inquiry path returned `success:false` / HTTP 200 when the syndication
+    // mapping was not found — dropping a lead the same way #2275's DB-error
+    // branch did. An unmatched syndication on the lead-bearing inquiry path
+    // must now return a retriable 5xx so the portal re-delivers.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn inquiry_unmatched_syndication_returns_retriable_5xx_not_silent_ack() {
+        let res = inquiry_unmatched_syndication_response();
+        let (status, body) = res.expect_err(
+            "unmatched syndication on the lead-bearing inquiry path must return a \
+             retriable 5xx, not a silent success:false / 200 ack (#2342 finding 2)",
+        );
+        assert!(
+            status.is_server_error(),
+            "must be a 5xx so the portal retries; got {status}"
+        );
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            body.0.code, "LEAD_SYNDICATION_UNMATCHED",
+            "stable error code lets the portal / operators distinguish the unmatched-lead case"
+        );
     }
 }
