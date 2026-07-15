@@ -1,9 +1,121 @@
 {
-  "generated": "2026-07-14T02:12:58Z",
-  "window": "14d",
+  "generated": "2026-07-15T00:00:00Z",
+  "window": "3d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-15T00:00:00Z",
+      "prs_scanned": 15,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2313,
+          "issue": 2318,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "due-work consumer silent RLS no-op in prod (FORCE RLS, no worker context)"
+        },
+        {
+          "pr": 2312,
+          "issue": 2321,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "cross-org back-fill blocked by FORCE RLS (no super-admin policy); pgvector test dead in CI"
+        },
+        {
+          "pr": 2310,
+          "issue": 2319,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "worker warn-logs benign no-device skips + 4 low cleanups"
+        },
+        {
+          "pr": 2309,
+          "issue": 2320,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "file_key IDOR at document registration; unsigned Content-Length makes 50MiB cap advisory"
+        },
+        {
+          "pr": 2289,
+          "issue": 2317,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "core IDOR fix complete; adjacent exposures (escalated-list ungated, feedback org-scoped only)"
+        },
+        {
+          "pr": 2294,
+          "issue": 2322,
+          "findings": 6,
+          "specialist": "react-web",
+          "note": "route-level role gate missing, pagination ignored, no screen-map, en-only i18n"
+        },
+        {
+          "pr": 2293,
+          "issue": 2325,
+          "findings": 6,
+          "specialist": "react-web",
+          "note": "hooks bypass authenticatedFetchJson; orphan unprotected route; i18n missing"
+        },
+        {
+          "pr": 2292,
+          "issue": 2324,
+          "findings": 5,
+          "specialist": "react-web",
+          "note": "list hooks call nonexistent backend endpoints \u2014 create flow still broken"
+        },
+        {
+          "pr": 2287,
+          "issue": 2326,
+          "findings": 6,
+          "specialist": "nextjs-web",
+          "note": "Decimal-as-string wire bug flips drop/increase labels; AC-5 toggle untracked"
+        },
+        {
+          "pr": 2304,
+          "issue": 2323,
+          "findings": 5,
+          "specialist": "react-native",
+          "note": "core fix sound; ~24 sibling screens still silent-zero; banner not extracted"
+        },
+        {
+          "pr": 2286,
+          "issue": 2330,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "core replay design sound; sibling per-portal receivers unprotected, no dedup"
+        },
+        {
+          "pr": 2288,
+          "issue": 2331,
+          "findings": 5,
+          "specialist": "kotlin-mp",
+          "note": "Decimal-as-string wire mismatch kills alert/favorites decoding; no visible UI shipped"
+        },
+        {
+          "pr": 2311,
+          "issue": 2328,
+          "findings": 2,
+          "specialist": "generic",
+          "note": "scanEpics emits schema-invalid mixed-case candidate ids + greedy suffix regex"
+        },
+        {
+          "pr": 2305,
+          "issue": 2329,
+          "findings": 3,
+          "specialist": "react-native",
+          "note": "tests solid; JWT decode triplicated; stale useTenantId cache on logout"
+        },
+        {
+          "pr": 2308,
+          "issue": 2327,
+          "findings": 5,
+          "specialist": "react-native",
+          "note": "tests enshrine unauth-upload; pin transport #2309 obsoletes; no client-side size/MIME validation"
+        }
+      ]
+    },
     {
       "run_at": "2026-07-13T00:14:11Z",
       "prs_scanned": 15,
@@ -263,7 +375,7 @@
           "issue": 2301,
           "findings": 1,
           "specialist": "pm-backend",
-          "note": "mobile OS push (FCM/APNs) transport merge review — follow-up filed as #2301"
+          "note": "mobile OS push (FCM/APNs) transport merge review \u2014 follow-up filed as #2301"
         },
         {
           "pr": 2297,
