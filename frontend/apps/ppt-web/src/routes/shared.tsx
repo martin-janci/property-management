@@ -27,15 +27,24 @@ export function transformBuildingForUI(building: ApiBuilding): {
 }
 
 /**
+ * Roles permitted to perform manager-level (operator) actions.
+ *
+ * Single source of truth shared by {@link isManagerRole} (nav/inline gating)
+ * and `<ProtectedRoute requiredRoles={...}>` (route-level gating) so the two
+ * cannot drift apart.
+ */
+export const MANAGER_ROLES = [
+  'manager',
+  'org_admin',
+  'super_admin',
+  'technical_manager',
+  'property_manager',
+] as const;
+
+/**
  * Manager-equivalent role check shared by detail/workspace route wrappers.
  * Returns true for any role permitted to perform manager-level actions.
  */
 export function isManagerRole(role: string | undefined): boolean {
-  return (
-    role === 'manager' ||
-    role === 'org_admin' ||
-    role === 'super_admin' ||
-    role === 'technical_manager' ||
-    role === 'property_manager'
-  );
+  return role != null && (MANAGER_ROLES as readonly string[]).includes(role);
 }

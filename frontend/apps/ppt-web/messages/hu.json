@@ -64,7 +64,8 @@
     "admin": "Adminisztráció",
     "aiChat": "AI asszisztens",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integrációk"
+    "integrations": "Integrációk",
+    "portalWebhooks": "Portál webhookok"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -1025,6 +1026,46 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Portál webhookok",
+      "subtitle": "Az ingatlanportál-webhookok kézbesítési állapota és tevékenysége — megtekintések, érdeklődések és szinkronizálási állapot portálonként.",
+      "noOrganization": "Fiókjához nincs kiválasztva szervezet, ezért a portál webhookok tevékenysége nem jeleníthető meg.",
+      "loading": "Portáltevékenység betöltése…",
+      "loadError": "Nem sikerült betölteni a portál webhookok tevékenységét.",
+      "summary": {
+        "title": "Összegzés",
+        "active": "Aktív",
+        "pending": "Függőben",
+        "failed": "Sikertelen",
+        "views": "Megtekintések",
+        "inquiries": "Érdeklődések"
+      },
+      "byPortal": {
+        "caption": "Szinkronizálási tevékenység portálonként",
+        "portal": "Portál",
+        "empty": "Még nincs rögzített portáltevékenység."
+      },
+      "listings": {
+        "title": "Hirdetések",
+        "empty": "Még nincsenek szinkronizált hirdetések.",
+        "activity": "{{views}} megtekintés · {{inquiries}} érdeklődés",
+        "portalActivity": "{{views}} megtekintés · {{inquiries}} érdeklődés",
+        "lastActivity": "Utolsó tevékenység: {{when}}",
+        "lastError": "Utolsó hiba: {{error}}"
+      },
+      "health": {
+        "healthy": "Egészséges",
+        "degraded": "Csökkentett",
+        "unhealthy": "Hibás",
+        "notConfigured": "Nincs beállítva"
+      },
+      "pager": {
+        "label": "Hirdetések lapozása",
+        "summary": "{{total}} hirdetésből {{from}}–{{to}} megjelenítve",
+        "prev": "Előző",
+        "next": "Következő"
+      }
+    },
     "integrations": {
       "title": "Integrációk",
       "subtitle": "Kapcsoljon össze külső foglalási csatornákat a hirdetések és foglalások szinkronizálásához.",

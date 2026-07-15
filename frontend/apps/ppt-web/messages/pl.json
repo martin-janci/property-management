@@ -64,7 +64,8 @@
     "admin": "Administracja",
     "aiChat": "Asystent AI",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integracje"
+    "integrations": "Integracje",
+    "portalWebhooks": "Webhooki portali"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -1031,6 +1032,46 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Webhooki portali",
+      "subtitle": "Status dostarczania i aktywność webhooków portali nieruchomości — wyświetlenia, zapytania i stan synchronizacji dla każdego portalu.",
+      "noOrganization": "Do Twojego konta nie wybrano żadnej organizacji, więc nie można wyświetlić aktywności webhooków portali.",
+      "loading": "Ładowanie aktywności portali…",
+      "loadError": "Nie udało się załadować aktywności webhooków portali.",
+      "summary": {
+        "title": "Podsumowanie",
+        "active": "Aktywne",
+        "pending": "Oczekujące",
+        "failed": "Nieudane",
+        "views": "Wyświetlenia",
+        "inquiries": "Zapytania"
+      },
+      "byPortal": {
+        "caption": "Aktywność synchronizacji według portalu",
+        "portal": "Portal",
+        "empty": "Nie zarejestrowano jeszcze aktywności portalu."
+      },
+      "listings": {
+        "title": "Ogłoszenia",
+        "empty": "Brak zsynchronizowanych ogłoszeń.",
+        "activity": "{{views}} wyświetleń · {{inquiries}} zapytań",
+        "portalActivity": "{{views}} wyświetleń · {{inquiries}} zapytań",
+        "lastActivity": "Ostatnia aktywność: {{when}}",
+        "lastError": "Ostatni błąd: {{error}}"
+      },
+      "health": {
+        "healthy": "Sprawny",
+        "degraded": "Ograniczony",
+        "unhealthy": "Niesprawny",
+        "notConfigured": "Nie skonfigurowano"
+      },
+      "pager": {
+        "label": "Paginacja ogłoszeń",
+        "summary": "Wyświetlono {{from}}–{{to}} z {{total}} ogłoszeń",
+        "prev": "Poprzednia",
+        "next": "Następna"
+      }
+    },
     "integrations": {
       "title": "Integracje",
       "subtitle": "Połącz zewnętrzne kanały rezerwacji, aby synchronizować oferty i rezerwacje.",

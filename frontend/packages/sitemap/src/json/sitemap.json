@@ -208,6 +208,22 @@
         "tags": ["settings", "integrations", "airbnb", "protected"]
       },
       {
+        "id": "ppt-settings-portal-webhooks",
+        "app": "ppt-web",
+        "path": "/settings/portal-webhooks",
+        "name": "Portal Webhooks",
+        "description": "Real-estate portal webhook delivery status — per-listing syndication health & org stats",
+        "auth": {
+          "required": true,
+          "tenantContext": {
+            "required": true
+          }
+        },
+        "component": "PortalWebhooksPage",
+        "feature": "Epic-105",
+        "tags": ["settings", "syndication", "webhooks", "protected"]
+      },
+      {
         "id": "ppt-settings-notifications",
         "app": "ppt-web",
         "path": "/settings/notifications",
@@ -3693,10 +3709,10 @@
     }
   ],
   "metadata": {
-    "generated_at": "2026-07-08T22:20:18.727Z",
+    "generated_at": "2026-07-15T08:17:56.663Z",
     "version": "1.0.0",
     "stats": {
-      "ppt_web_routes": 19,
+      "ppt_web_routes": 20,
       "reality_web_routes": 9,
       "mobile_screens": 6,
       "api_server_endpoints": 77,

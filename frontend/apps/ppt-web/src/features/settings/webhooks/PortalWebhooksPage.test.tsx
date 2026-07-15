@@ -170,4 +170,22 @@ describe('PortalWebhooksPage (Gap 83-3)', () => {
     // The failed portal's last error is shown to the manager.
     expect(screen.getByText(/signature mismatch/i)).toBeInTheDocument();
   });
+
+  it('does not render a pager when all listings fit on one page', () => {
+    // total (1) <= limit (20) — single page, no pager (issue #2322).
+    dashboard = loadedDashboard();
+    render(<PortalWebhooksPage />);
+    expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
+  });
+
+  it('renders a prev/next pager with a range summary when listings span pages', () => {
+    const base = loadedDashboard();
+    // 45 listings at 20/page → 3 pages; page 1 shows "1–20 of 45".
+    dashboard = { ...base, data: { ...base.data, total: 45, page: 1, limit: 20 } };
+    render(<PortalWebhooksPage />);
+    expect(screen.getByText(/showing 1–20 of 45 listings/i)).toBeInTheDocument();
+    // On the first page, "Previous" is disabled and "Next" is enabled.
+    expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
+  });
 });

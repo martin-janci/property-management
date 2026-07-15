@@ -64,7 +64,8 @@
     "admin": "Administration",
     "aiChat": "KI-Assistent",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integrationen"
+    "integrations": "Integrationen",
+    "portalWebhooks": "Portal-Webhooks"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -1052,6 +1053,46 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Portal-Webhooks",
+      "subtitle": "Zustellstatus und Aktivität von Webhooks der Immobilienportale — Aufrufe, Anfragen und Synchronisierungszustand pro Portal.",
+      "noOrganization": "Für Ihr Konto ist keine Organisation ausgewählt, daher kann die Portal-Webhook-Aktivität nicht angezeigt werden.",
+      "loading": "Portalaktivität wird geladen…",
+      "loadError": "Portal-Webhook-Aktivität konnte nicht geladen werden.",
+      "summary": {
+        "title": "Zusammenfassung",
+        "active": "Aktiv",
+        "pending": "Ausstehend",
+        "failed": "Fehlgeschlagen",
+        "views": "Aufrufe",
+        "inquiries": "Anfragen"
+      },
+      "byPortal": {
+        "caption": "Synchronisierungsaktivität nach Portal",
+        "portal": "Portal",
+        "empty": "Noch keine Portalaktivität erfasst."
+      },
+      "listings": {
+        "title": "Inserate",
+        "empty": "Noch keine synchronisierten Inserate.",
+        "activity": "{{views}} Aufrufe · {{inquiries}} Anfragen",
+        "portalActivity": "{{views}} Aufrufe · {{inquiries}} Anfragen",
+        "lastActivity": "Letzte Aktivität: {{when}}",
+        "lastError": "Letzter Fehler: {{error}}"
+      },
+      "health": {
+        "healthy": "Gesund",
+        "degraded": "Beeinträchtigt",
+        "unhealthy": "Fehlerhaft",
+        "notConfigured": "Nicht konfiguriert"
+      },
+      "pager": {
+        "label": "Inserate-Seitennavigation",
+        "summary": "{{from}}–{{to}} von {{total}} Inseraten",
+        "prev": "Zurück",
+        "next": "Weiter"
+      }
+    },
     "integrations": {
       "title": "Integrationen",
       "subtitle": "Verbinden Sie externe Buchungskanäle, um Inserate und Reservierungen zu synchronisieren.",

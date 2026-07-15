@@ -66,7 +66,8 @@
     "admin": "Administrácia",
     "aiChat": "AI asistent",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integrácie"
+    "integrations": "Integrácie",
+    "portalWebhooks": "Webhooky portálov"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -1105,6 +1106,46 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Webhooky portálov",
+      "subtitle": "Stav doručenia a aktivita z webhookov realitných portálov — zobrazenia, dopyty a stav synchronizácie podľa portálu.",
+      "noOrganization": "Pre váš účet nie je vybraná žiadna organizácia, preto nie je možné zobraziť aktivitu webhookov portálov.",
+      "loading": "Načítava sa aktivita portálov…",
+      "loadError": "Nepodarilo sa načítať aktivitu webhookov portálov.",
+      "summary": {
+        "title": "Prehľad",
+        "active": "Aktívne",
+        "pending": "Čakajúce",
+        "failed": "Neúspešné",
+        "views": "Zobrazenia",
+        "inquiries": "Dopyty"
+      },
+      "byPortal": {
+        "caption": "Aktivita synchronizácie podľa portálu",
+        "portal": "Portál",
+        "empty": "Zatiaľ nebola zaznamenaná žiadna aktivita portálu."
+      },
+      "listings": {
+        "title": "Inzeráty",
+        "empty": "Zatiaľ žiadne synchronizované inzeráty.",
+        "activity": "{{views}} zobrazení · {{inquiries}} dopytov",
+        "portalActivity": "{{views}} zobrazení · {{inquiries}} dopytov",
+        "lastActivity": "Posledná aktivita: {{when}}",
+        "lastError": "Posledná chyba: {{error}}"
+      },
+      "health": {
+        "healthy": "V poriadku",
+        "degraded": "Zhoršené",
+        "unhealthy": "Nefunkčné",
+        "notConfigured": "Nenakonfigurované"
+      },
+      "pager": {
+        "label": "Stránkovanie inzerátov",
+        "summary": "Zobrazené {{from}}–{{to}} z {{total}} inzerátov",
+        "prev": "Predchádzajúce",
+        "next": "Ďalšie"
+      }
+    },
     "integrations": {
       "title": "Integrácie",
       "subtitle": "Pripojte externé rezervačné kanály na synchronizáciu ponúk a rezervácií.",
