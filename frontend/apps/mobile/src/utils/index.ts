@@ -7,3 +7,4 @@ export {
   MAX_TOTAL_BYTES,
   totalImageBytes,
 } from './imageCompression';
+export { decodeJwtPayload, extractTenantId } from './jwt';
