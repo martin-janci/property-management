@@ -5,6 +5,37 @@
   "scope": null,
   "runs": [
     {
+      "run_at": "2026-07-15T00:30:00Z",
+      "prs_scanned": 5,
+      "clean": [
+        2274,
+        2273
+      ],
+      "with_issues": [
+        {
+          "pr": 2281,
+          "issue": 2341,
+          "findings": 3,
+          "specialist": "nextjs-web",
+          "note": "partial-body fix sound; residual type-guard/schema/soft-404 hardening"
+        },
+        {
+          "pr": 2280,
+          "issue": 2343,
+          "findings": 4,
+          "specialist": "nextjs-web",
+          "note": "HIGH: 404-conflation inverted + useMyAgency hits nonexistent /agencies/me; siblings unfixed"
+        },
+        {
+          "pr": 2278,
+          "issue": 2342,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "core fix correct+tested; retry path dups leads (no unique index); residual silent-drops"
+        }
+      ]
+    },
+    {
       "run_at": "2026-07-15T00:00:00Z",
       "prs_scanned": 15,
       "clean": [],
