@@ -12,10 +12,10 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * Wire-tolerant serializers for reality-server monetary fields.
  *
- * The backend enables `rust_decimal` with the `serde-str` feature
- * (`backend/Cargo.toml`), so every `rust_decimal::Decimal` field serializes as a **JSON string**
- * with its full fractional scale — e.g. a `DECIMAL(15,2)` price is `"200000.00"` and a
- * `DECIMAL(5,2)` percentage is `"-7.50"`, NOT a JSON number.
+ * The backend enables `rust_decimal` with the `serde-str` feature (`backend/Cargo.toml`), so every
+ * `rust_decimal::Decimal` field serializes as a **JSON string** with its full fractional scale —
+ * e.g. a `DECIMAL(15,2)` price is `"200000.00"` and a `DECIMAL(5,2)` percentage is `"-7.50"`, NOT a
+ * JSON number.
  *
  * The favorites/alerts endpoints (`GET /api/v1/favorites`, `GET /api/v1/favorites/alerts`)
  * serialize the DB models (`PortalFavoriteWithListing`, `FavoriteAlert`) directly, so their
@@ -25,17 +25,17 @@ import kotlinx.serialization.json.jsonPrimitive
  * whole price-tracking payload decode (see issue #2331).
  *
  * These serializers read the raw JSON primitive and accept **either** a JSON number or a
- * (optionally fractional) JSON string, so a field annotated with them decodes both the real
- * server wire and the historical numeric fixtures. On the encode side they emit a plain number so
+ * (optionally fractional) JSON string, so a field annotated with them decodes both the real server
+ * wire and the historical numeric fixtures. On the encode side they emit a plain number so
  * client-authored round-trips stay compact.
  *
  * NOTE: these are JSON-only (they cast to [JsonDecoder]); the shared client only ever speaks JSON.
  */
 
 /**
- * Decodes a whole-currency amount from a JSON number or a decimal string, truncating any
- * fractional scale (`"200000.00"` -> `200000`, `200000` -> `200000`). Prices in the portal models
- * are whole-currency `Long`s, so the sub-unit scale carried by `DECIMAL(15,2)` is dropped.
+ * Decodes a whole-currency amount from a JSON number or a decimal string, truncating any fractional
+ * scale (`"200000.00"` -> `200000`, `200000` -> `200000`). Prices in the portal models are
+ * whole-currency `Long`s, so the sub-unit scale carried by `DECIMAL(15,2)` is dropped.
  */
 object DecimalAsLongSerializer : KSerializer<Long> {
     override val descriptor: SerialDescriptor =

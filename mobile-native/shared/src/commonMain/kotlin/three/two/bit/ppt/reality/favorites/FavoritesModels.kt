@@ -155,8 +155,8 @@ data class FavoriteAlert(
     /**
      * True when the price moved down (a drop) — only meaningful for price alerts.
      *
-     * Prefers the signed [changePercentage], but `change_percentage` is nullable in the DB, so on
-     * a price-change alert that carries prices without a percentage it falls back to comparing
+     * Prefers the signed [changePercentage], but `change_percentage` is nullable in the DB, so on a
+     * price-change alert that carries prices without a percentage it falls back to comparing
      * [newPrice] against [oldPrice].
      */
     val isPriceDrop: Boolean
