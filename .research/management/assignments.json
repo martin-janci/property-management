@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-15T12:40:53Z",
+  "generated": "2026-07-15T12:43:26Z",
   "assignments": [
     {
       "task_id": "gh-issue-2319",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2326",
       "branch": "auto-impl/gh-issue-2326-b46af9c8",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-15T12:13:23Z",
-      "last_updated": "2026-07-15T12:13:23Z",
-      "status_changed_at": "2026-07-15T12:13:23Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-15T12:43:26Z",
+      "status_changed_at": "2026-07-15T12:43:26Z",
+      "pr_number": 2348,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2348",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2348 status=done specialist=nextjs-web scope_drift=true note=all 6 findings; Decimal-string normalized + AC-5 PATCH route/toggle; FE+BE verify green (cross-stack: reality-server+api-client+docs)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
