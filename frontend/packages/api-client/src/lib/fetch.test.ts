@@ -10,7 +10,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearTokenProvider, setTokenProvider } from '../auth/token-provider';
-import { authenticatedFetchJson } from './fetch';
+import { ApiError, authenticatedFetchJson } from './fetch';
 import { setMfaChallengeHandler } from './mfa-handler';
 
 // ---------------------------------------------------------------------------
@@ -99,6 +99,28 @@ describe('authenticatedFetchJson', () => {
   it('throws HTTP <status> when server body has no message', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(mockErrResponse(500, {}));
     await expect(authenticatedFetchJson('/api/v1/test')).rejects.toThrow('HTTP 500');
+  });
+
+  it('throws an ApiError carrying the HTTP status and error code (403)', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockErrResponse(403, { message: 'Forbidden', error: 'forbidden' })
+    );
+    const err = (await authenticatedFetchJson('/api/v1/test').catch((e) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.status).toBe(403);
+    expect(err.code).toBe('forbidden');
+    expect(err.message).toBe('Forbidden');
+  });
+
+  it('propagates a 401 status on ApiError (session expired, non-mfa)', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockErrResponse(401, { error: 'unauthorized', message: 'Unauthorized' })
+    );
+    const err = (await authenticatedFetchJson('/api/v1/test').catch((e) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(401);
+    expect(err.code).toBe('unauthorized');
   });
 
   // ---------- MFA interception --------------------------------------------

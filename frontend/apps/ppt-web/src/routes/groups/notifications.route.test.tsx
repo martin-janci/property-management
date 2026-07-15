@@ -38,21 +38,31 @@ const mockUseTriggers = vi.fn();
 const mockUpdateMutate = vi.fn();
 const mockResetMutate = vi.fn();
 
-vi.mock('@ppt/api-client', () => ({
-  useNotificationTriggers: () => mockUseTriggers(),
-  useUpdateNotificationTrigger: () => ({
-    mutate: mockUpdateMutate,
-    isPending: false,
-    variables: undefined,
-  }),
-  useResetNotificationTriggers: () => ({ mutate: mockResetMutate, isPending: false }),
-  notificationTriggerKeys: {
-    all: ['notification-triggers'],
-    events: () => ['notification-triggers', 'events'],
-  },
-}));
+// Only the hooks are stubbed; the real `ApiError` class is preserved via
+// `importOriginal` so the route's `error instanceof ApiError` branch runs against
+// the genuine type `authenticatedFetchJson` actually throws (not a fabricated
+// `.status`). The error objects the query hook yields below are built with
+// `new ApiError(...)`, exactly what the shared fetch helper produces on 401/403.
+vi.mock('@ppt/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ppt/api-client')>();
+  return {
+    ApiError: actual.ApiError,
+    useNotificationTriggers: () => mockUseTriggers(),
+    useUpdateNotificationTrigger: () => ({
+      mutate: mockUpdateMutate,
+      isPending: false,
+      variables: undefined,
+    }),
+    useResetNotificationTriggers: () => ({ mutate: mockResetMutate, isPending: false }),
+    notificationTriggerKeys: {
+      all: ['notification-triggers'],
+      events: () => ['notification-triggers', 'events'],
+    },
+  };
+});
 
-// Import the route group AFTER mocks are in place.
+// Import the route group + the real ApiError AFTER mocks are in place.
+import { ApiError } from '@ppt/api-client';
 import { notificationAnalyticsRoutes } from './notifications';
 
 const noopRefetch = vi.fn().mockResolvedValue(undefined);
@@ -99,7 +109,7 @@ describe('NotificationTriggersPageRoute wiring (#2325)', () => {
     mockUseTriggers.mockReturnValue({
       data: undefined,
       isLoading: false,
-      error: Object.assign(new Error('forbidden'), { status: 403 }),
+      error: new ApiError(403, 'forbidden', 'forbidden'),
       refetch: noopRefetch,
     });
 
@@ -118,7 +128,7 @@ describe('NotificationTriggersPageRoute wiring (#2325)', () => {
     mockUseTriggers.mockReturnValue({
       data: undefined,
       isLoading: false,
-      error: Object.assign(new Error('unauthorized'), { status: 401 }),
+      error: new ApiError(401, 'unauthorized', 'unauthorized'),
       refetch: noopRefetch,
     });
 

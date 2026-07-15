@@ -12,6 +12,7 @@
  */
 import type { TriggerChannel } from '@ppt/api-client';
 import {
+  ApiError,
   useNotificationTriggers,
   useResetNotificationTriggers,
   useUpdateNotificationTrigger,
@@ -75,7 +76,9 @@ function NotificationTriggersPageRoute() {
   const updateTrigger = useUpdateNotificationTrigger();
   const resetTriggers = useResetNotificationTriggers();
 
-  const status = (error as (Error & { status?: number }) | null)?.status;
+  // `authenticatedFetchJson` throws `ApiError` carrying the real HTTP status, so
+  // the 401/403 branches below actually fire in production.
+  const status = error instanceof ApiError ? error.status : undefined;
   const isForbidden = status === 403;
 
   // A 401 on a per-user page means the session is gone — send the user to login

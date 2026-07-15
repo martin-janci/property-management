@@ -42,6 +42,9 @@ export * from './granular-notifications';
 export * from './integrations';
 export * from './iot';
 export * from './leases';
+// Shared authenticated-fetch error type — carries HTTP `status` so callers can
+// branch on 401/403 (see `./lib/fetch`).
+export { ApiError } from './lib/fetch';
 export * from './messaging';
 export * from './meters';
 export * from './mfa';
