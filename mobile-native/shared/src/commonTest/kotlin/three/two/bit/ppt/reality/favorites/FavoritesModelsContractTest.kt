@@ -49,6 +49,9 @@ class FavoritesModelsContractTest {
      */
     @Test
     fun favoriteEntry_decodes_flat_portal_favorite_with_listing_shape() {
+        // Real reality-server wire: `current_price` (DECIMAL(15,2)) and `price_change_percentage`
+        // (DECIMAL(5,2)) are rust_decimal Decimals with `serde-str`, so they arrive as JSON
+        // *strings* with fractional scale — NOT numbers. This fixture pins that real shape.
         val raw =
             """
             {
@@ -56,7 +59,7 @@ class FavoritesModelsContractTest {
               "listing_id": "00000000-0000-0000-0000-000000000001",
               "created_at": "2026-04-26T10:00:00Z",
               "title": "Bright 2br in Old Town",
-              "current_price": 185000,
+              "current_price": "185000.00",
               "currency": "EUR",
               "city": "Bratislava",
               "property_type": "apartment",
@@ -64,7 +67,7 @@ class FavoritesModelsContractTest {
               "photo_url": "https://cdn.example.com/img/a.jpg",
               "status": "active",
               "price_changed": true,
-              "price_change_percentage": -5.2,
+              "price_change_percentage": "-5.20",
               "price_alert_enabled": false
             }
             """
@@ -72,6 +75,7 @@ class FavoritesModelsContractTest {
         val entry: FavoriteEntry = json.decodeFromString(raw)
         assertEquals("Bright 2br in Old Town", entry.title)
         assertEquals(185_000L, entry.currentPrice)
+        assertEquals(-5.2, entry.priceChangePercentage)
         assertEquals("EUR", entry.currency)
         assertEquals("Bratislava", entry.city)
         assertEquals("sale", entry.transactionType)
@@ -79,6 +83,28 @@ class FavoritesModelsContractTest {
         assertTrue(entry.priceChanged)
         assertNull(entry.userId) // not in PortalFavoriteWithListing
         assertNull(entry.listing) // no nested listing on this endpoint
+    }
+
+    /**
+     * Tolerance: the serializers must still accept a bare JSON *number* for the decimal fields, so
+     * the historical numeric fixtures and any numeric-emitting caller keep decoding.
+     */
+    @Test
+    fun favoriteEntry_decodes_numeric_price_shape_for_tolerance() {
+        val raw =
+            """
+            {
+              "id": "fav-1",
+              "listing_id": "lst-1",
+              "created_at": "2026-04-26T10:00:00Z",
+              "current_price": 185000,
+              "price_change_percentage": -5.2
+            }
+            """
+                .trimIndent()
+        val entry: FavoriteEntry = json.decodeFromString(raw)
+        assertEquals(185_000L, entry.currentPrice)
+        assertEquals(-5.2, entry.priceChangePercentage)
     }
 
     @Test
@@ -242,8 +268,10 @@ class FavoritesModelsContractTest {
 
     /**
      * Pin the `FavoriteAlertsResponse` / `FavoriteAlert` snake_case wire shape returned by `GET
-     * /api/v1/favorites/alerts` (gap-84-3). Monetary fields are whole-currency numbers and
-     * `change_percentage` is a signed fraction — matching the rest of the portal price models.
+     * /api/v1/favorites/alerts` (gap-84-3). `old_price`/`new_price` (`DECIMAL(15,2)`) and
+     * `change_percentage` (`DECIMAL(5,2)`) are rust_decimal Decimals serialized with `serde-str`,
+     * so they arrive as JSON **strings** with fractional scale — this pins the real server wire,
+     * not the numeric shape the server never emits.
      */
     @Test
     fun favoriteAlertsResponse_decodes_snake_case_price_change_shape() {
@@ -257,10 +285,10 @@ class FavoritesModelsContractTest {
                   "listing_id": "lst-1",
                   "title": "Bright 2br in Old Town",
                   "alert_type": "price_change",
-                  "old_price": 200000,
-                  "new_price": 185000,
+                  "old_price": "200000.00",
+                  "new_price": "185000.00",
                   "currency": "EUR",
-                  "change_percentage": -7.5,
+                  "change_percentage": "-7.50",
                   "status": "pending",
                   "created_at": "2026-07-10T10:00:00Z"
                 }
@@ -283,6 +311,61 @@ class FavoritesModelsContractTest {
         assertTrue(alert.isPriceChange)
         assertTrue(alert.isUnread)
         assertTrue(alert.isPriceDrop)
+    }
+
+    /** Tolerance: the alert serializers still accept a bare numeric wire shape. */
+    @Test
+    fun favoriteAlert_decodes_numeric_price_shape_for_tolerance() {
+        val raw =
+            """
+            {
+              "id": "al-1",
+              "favorite_id": "fav-1",
+              "listing_id": "lst-1",
+              "title": "Bright 2br in Old Town",
+              "alert_type": "price_change",
+              "old_price": 200000,
+              "new_price": 185000,
+              "change_percentage": -7.5,
+              "status": "pending",
+              "created_at": "2026-07-10T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val alert: FavoriteAlert = json.decodeFromString(raw)
+        assertEquals(200000L, alert.oldPrice)
+        assertEquals(185000L, alert.newPrice)
+        assertEquals(-7.5, alert.changePercentage)
+        assertTrue(alert.isPriceDrop)
+    }
+
+    /**
+     * A price-change alert can carry prices without a `change_percentage` (the column is nullable).
+     * [FavoriteAlert.isPriceDrop] must then fall back to comparing `new_price` < `old_price`.
+     */
+    @Test
+    fun favoriteAlert_isPriceDrop_falls_back_to_prices_when_percentage_null() {
+        val raw =
+            """
+            {
+              "id": "al-3",
+              "favorite_id": "fav-3",
+              "listing_id": "lst-3",
+              "title": "Loft with a view",
+              "alert_type": "price_change",
+              "old_price": "200000.00",
+              "new_price": "185000.00",
+              "currency": "EUR",
+              "status": "pending",
+              "created_at": "2026-07-11T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val alert: FavoriteAlert = json.decodeFromString(raw)
+        assertNull(alert.changePercentage)
+        assertEquals(200000L, alert.oldPrice)
+        assertEquals(185000L, alert.newPrice)
+        assertTrue(alert.isPriceDrop, "new_price < old_price with null percentage should be a drop")
     }
 
     /** Status-only alerts omit the price fields entirely; they must still decode. */

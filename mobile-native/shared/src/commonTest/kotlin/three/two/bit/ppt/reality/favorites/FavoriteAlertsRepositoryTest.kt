@@ -61,10 +61,10 @@ class FavoriteAlertsRepositoryTest {
               "listing_id": "lst-1",
               "title": "Bright 2br in Old Town",
               "alert_type": "price_change",
-              "old_price": 200000,
-              "new_price": 185000,
+              "old_price": "200000.00",
+              "new_price": "185000.00",
               "currency": "EUR",
-              "change_percentage": -7.5,
+              "change_percentage": "-7.50",
               "status": "pending",
               "created_at": "2026-07-10T10:00:00Z"
             },
