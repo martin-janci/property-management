@@ -99,3 +99,43 @@ export interface CancelSignatureRequestResponse {
   signature_request: SignatureRequest;
   message: string;
 }
+
+// ---------------------------------------------------------------------------
+// Signer-facing /sign consumer endpoint (Epic 84.2).
+// Public: authority is the HMAC token in the `?token=` query string, so these
+// carry NO auth header. Mirrors backend `SignRenderContext` /
+// `SubmitSignatureRequest` / `SubmitSignatureResponse` in
+// `routes/signatures.rs` (snake_case JSON, matching the types above).
+// ---------------------------------------------------------------------------
+
+/** Render context returned by `GET /api/v1/signatures/sign?token=…`. */
+export interface SignRenderContext {
+  /** The signature request (envelope) id. */
+  request_id: string;
+  /** The document being signed. */
+  document_id: string;
+  /** Human-facing subject/title of the request. */
+  subject?: string;
+  /** Optional message the requester attached for signers. */
+  message?: string;
+  /** The signer's display name (from the request roster). */
+  signer_name: string;
+  /** The signer's email (echoed from the verified token). */
+  signer_email: string;
+  /** The signer's current status (e.g. `pending`, `viewed`). */
+  signer_status: string;
+}
+
+/** Body for `POST /api/v1/signatures/sign?token=…`. A bare `{}` is accepted. */
+export interface SubmitSignatureBody {
+  /** The full name the signer typed to adopt their signature (evidence). */
+  typed_name?: string;
+}
+
+/** Response from `POST /api/v1/signatures/sign?token=…`. */
+export interface SubmitSignatureResponse {
+  /** Request status AFTER recording this signature (`in_progress` / `completed`). */
+  status: string;
+  /** Human-facing confirmation message. */
+  message: string;
+}

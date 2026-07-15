@@ -18,6 +18,10 @@ export const DocumentUploadPage = lazy(() =>
 export const DocumentDetailPage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.DocumentDetailPage }))
 );
+// Signer-facing public signing page (Epic 84.2) — no auth; opened from email.
+export const DocumentSignPage = lazy(() =>
+  import('../features/documents').then((m) => ({ default: m.DocumentSignPage }))
+);
 export const FolderTreePage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.FolderTreePage }))
 );
