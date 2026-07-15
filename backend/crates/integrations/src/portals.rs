@@ -561,6 +561,30 @@ fn constant_time_compare(a: &str, b: &str) -> bool {
         == 0
 }
 
+/// Whether an inbound webhook's signed unix-seconds `timestamp` is within
+/// `tolerance_secs` of `now_unix` in either direction — the freshness half of
+/// replay protection (gap 83-3 / issue #2330).
+///
+/// Shared by every webhook receiver that folds a timestamp into its signed
+/// payload (the connection-scoped and per-portal receivers in
+/// `api-server::routes`, and `services::stripe::verify_signature`) so the
+/// arithmetic lives in exactly one place.
+///
+/// Overflow-proof: a naive `(now_unix - timestamp).abs() > tolerance_secs`
+/// **panics** under debug/overflow-checks builds (a per-request panic aborts
+/// the task) and silently **wraps** in release for an adversarial `timestamp`
+/// near `i64::MIN`/`i64::MAX`, because the subtraction overflows before
+/// `abs()` runs. We instead compute the skew with a checked subtraction and
+/// take the *unsigned* absolute value; a subtraction that overflows is treated
+/// as "out of tolerance" (reject), so the freshness gate is self-contained and
+/// never panics on hostile input.
+pub fn timestamp_within_tolerance(now_unix: i64, timestamp: i64, tolerance_secs: i64) -> bool {
+    match now_unix.checked_sub(timestamp) {
+        Some(skew) => skew.unsigned_abs() <= tolerance_secs.max(0) as u64,
+        None => false,
+    }
+}
+
 /// Compute HMAC-SHA256 signature for a payload.
 ///
 /// # Arguments
@@ -641,6 +665,69 @@ impl PortalClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ---- timestamp_within_tolerance (issue #2330) ----
+
+    #[test]
+    fn timestamp_within_tolerance_accepts_inside_window() {
+        assert!(timestamp_within_tolerance(
+            1_700_000_000,
+            1_700_000_000,
+            300
+        ));
+        assert!(timestamp_within_tolerance(
+            1_700_000_000,
+            1_700_000_299,
+            300
+        ));
+        assert!(timestamp_within_tolerance(
+            1_700_000_000,
+            1_699_999_701,
+            300
+        ));
+    }
+
+    #[test]
+    fn timestamp_within_tolerance_accepts_exact_boundary() {
+        // The gate is inclusive (`<=`): a delivery exactly `tolerance` away is
+        // still fresh in either direction.
+        assert!(timestamp_within_tolerance(
+            1_700_000_000,
+            1_700_000_300,
+            300
+        ));
+        assert!(timestamp_within_tolerance(
+            1_700_000_000,
+            1_699_999_700,
+            300
+        ));
+    }
+
+    #[test]
+    fn timestamp_within_tolerance_rejects_outside_window() {
+        assert!(!timestamp_within_tolerance(
+            1_700_000_000,
+            1_700_000_301,
+            300
+        ));
+        assert!(!timestamp_within_tolerance(
+            1_700_000_000,
+            1_699_999_699,
+            300
+        ));
+    }
+
+    #[test]
+    fn timestamp_within_tolerance_is_overflow_proof() {
+        // Adversarial timestamps that would overflow a naive
+        // `(now - ts).abs()` must be rejected, not panic (debug) or wrap
+        // (release). See the function docs.
+        let now = 1_700_000_000;
+        assert!(!timestamp_within_tolerance(now, i64::MIN, 300));
+        assert!(!timestamp_within_tolerance(now, i64::MAX, 300));
+        assert!(!timestamp_within_tolerance(i64::MIN, i64::MAX, 300));
+        assert!(!timestamp_within_tolerance(i64::MAX, i64::MIN, 300));
+    }
 
     #[test]
     fn test_portal_type_from_str() {

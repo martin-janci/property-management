@@ -224,7 +224,11 @@ pub fn verify_signature(
     }
 
     // Replay defense: reject deliveries whose timestamp is too far from now.
-    if (now_unix - timestamp).abs() > tolerance_secs {
+    // Overflow-proof (issue #2330): a naive `(now_unix - timestamp).abs()`
+    // panics (debug) / wraps (release) for an adversarial `t` near i64::MIN;
+    // the shared helper computes the skew with a checked subtraction. Shared
+    // with the portal receivers so all three gates behave identically.
+    if !integrations::portals::timestamp_within_tolerance(now_unix, timestamp, tolerance_secs) {
         return Err(SignatureError::TimestampOutOfTolerance);
     }
 
@@ -345,6 +349,34 @@ mod tests {
         assert_eq!(
             verify_signature(body, &header, "whsec_test", 1_000_600, 300),
             Err(SignatureError::TimestampOutOfTolerance)
+        );
+    }
+
+    #[test]
+    fn adversarial_timestamp_does_not_panic_and_is_rejected() {
+        // Regression for issue #2330: a parseable but adversarial `t` near
+        // i64::MIN/MAX must be rejected by the freshness gate WITHOUT panicking
+        // under overflow-checks builds (the old `(now - t).abs()` overflowed).
+        let body = br#"{"a":1}"#;
+        for t in [i64::MIN, i64::MIN + 1, i64::MAX, i64::MAX - 1] {
+            let header = format!("t={t},v1=deadbeef");
+            assert_eq!(
+                verify_signature(body, &header, "whsec_test", 1_000_000, 300),
+                Err(SignatureError::TimestampOutOfTolerance),
+                "adversarial timestamp {t} must be rejected as out-of-tolerance, not panic"
+            );
+        }
+    }
+
+    #[test]
+    fn timestamp_at_exact_tolerance_boundary_passes() {
+        // The freshness gate is inclusive; pin it so an off-by-one refactor
+        // (`<=` vs `<`) is caught.
+        let body = br#"{"a":1}"#;
+        let header = sign(body, "whsec_test", 1_000_000);
+        assert_eq!(
+            verify_signature(body, &header, "whsec_test", 1_000_300, 300),
+            Ok(())
         );
     }
 

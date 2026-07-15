@@ -29,6 +29,14 @@ use utoipa::ToSchema;
 
 type HmacSha256 = Hmac<Sha256>;
 
+/// Header carrying the signed unix-seconds timestamp for replay protection.
+const TIMESTAMP_HEADER: &str = "X-Webhook-Timestamp";
+
+/// Maximum accepted skew (seconds) between a per-portal webhook's signed
+/// timestamp and the receiver's clock. Mirrors the connection-scoped portal
+/// receiver and the Stripe receiver (both ±300s).
+const PORTAL_WEBHOOK_TOLERANCE_SECS: i64 = 300;
+
 // ============================================================================
 // Router
 // ============================================================================
@@ -166,12 +174,124 @@ fn require_portal_webhook_verification(
         ));
     };
 
+    // Replay protection (issue #2330, gap 83-3): these per-portal receivers
+    // PERSIST state (views/inquiries), so an unguarded body-only HMAC lets a
+    // captured valid delivery be replayed indefinitely to inflate view counts
+    // or duplicate inquiries. When the sender includes an `X-Webhook-Timestamp`,
+    // enforce the same signed-timestamp freshness window as the connection-
+    // scoped and Stripe receivers: the timestamp is folded into the signed
+    // payload (`"{timestamp}.{body}"`) so it cannot be swapped independently of
+    // the signature, and deliveries outside ±PORTAL_WEBHOOK_TOLERANCE_SECS are
+    // rejected 401.
+    //
+    // Staged rollout (accept-both -> enforce): external portals currently sign
+    // the bare body with no timestamp. Until those senders are migrated we still
+    // accept a legacy body-only signature when no timestamp header is present,
+    // logging a deprecation warning. Once every portal signs "{timestamp}.{body}"
+    // this legacy branch should be removed so replay protection is mandatory.
+    if let Some(timestamp_raw) = headers.get(TIMESTAMP_HEADER).and_then(|v| v.to_str().ok()) {
+        return verify_timestamped_portal_webhook(
+            portal,
+            &secret,
+            headers,
+            body,
+            signature_header,
+            timestamp_raw,
+            Utc::now().timestamp(),
+            PORTAL_WEBHOOK_TOLERANCE_SECS,
+        );
+    }
+
     if let Err(e) = verify_webhook_signature(headers, body, &secret, signature_header) {
         tracing::warn!(portal = %portal, error = %e, "Webhook signature verification failed");
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
         ));
+    }
+
+    tracing::warn!(
+        portal = %portal,
+        "Portal webhook accepted with a legacy body-only signature and no {TIMESTAMP_HEADER} — \
+         replay protection is NOT in effect for this delivery. Migrate this sender to sign \
+         \"{{timestamp}}.{{body}}\" and send {TIMESTAMP_HEADER} (issue #2330)."
+    );
+
+    Ok(())
+}
+
+/// Verify a per-portal webhook that carries an `X-Webhook-Timestamp`, enforcing
+/// both authenticity **and** freshness (issue #2330).
+///
+/// The signature covers the signed payload `"{timestamp}.{body}"` (base64
+/// HMAC-SHA256, matching the encoding the body-only per-portal scheme already
+/// uses) so the timestamp cannot be swapped without invalidating the signature,
+/// and the timestamp must be within `tolerance_secs` of `now_unix`. Every
+/// rejection maps to an opaque `401 INVALID_SIGNATURE` so the reason is not
+/// leaked to the caller (the discriminant is logged instead). `now_unix` is
+/// injected so the window is unit-testable without wall-clock dependence.
+#[allow(clippy::too_many_arguments)]
+fn verify_timestamped_portal_webhook(
+    portal: &str,
+    secret: &str,
+    headers: &HeaderMap,
+    body: &Bytes,
+    signature_header: &str,
+    timestamp_raw: &str,
+    now_unix: i64,
+    tolerance_secs: i64,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    fn reject() -> (StatusCode, Json<ErrorResponse>) {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNATURE",
+                "Webhook signature or freshness verification failed",
+            )),
+        )
+    }
+
+    let Ok(timestamp) = timestamp_raw.trim().parse::<i64>() else {
+        tracing::warn!(portal = %portal, "Portal webhook rejected: malformed {TIMESTAMP_HEADER}");
+        return Err(reject());
+    };
+
+    // Freshness — overflow-proof shared helper (rejects adversarial i64::MIN/MAX).
+    if !integrations::portals::timestamp_within_tolerance(now_unix, timestamp, tolerance_secs) {
+        tracing::warn!(
+            portal = %portal,
+            "Portal webhook rejected: timestamp outside tolerance window (replay defense)"
+        );
+        return Err(reject());
+    }
+
+    let Some(signature) = headers.get(signature_header).and_then(|v| v.to_str().ok()) else {
+        tracing::warn!(portal = %portal, "Portal webhook rejected: missing signature header");
+        return Err(reject());
+    };
+
+    let Ok(expected) = BASE64.decode(signature.trim_start_matches("sha256=")) else {
+        tracing::warn!(portal = %portal, "Portal webhook rejected: signature is not valid base64");
+        return Err(reject());
+    };
+
+    // signed_payload = "{timestamp}.{raw_body}"
+    let mut signed = Vec::with_capacity(body.len() + 20);
+    signed.extend_from_slice(timestamp.to_string().as_bytes());
+    signed.push(b'.');
+    signed.extend_from_slice(body);
+
+    let Ok(mut mac) = HmacSha256::new_from_slice(secret.as_bytes()) else {
+        return Err(reject());
+    };
+    mac.update(&signed);
+    // `verify_slice` is constant-time.
+    if mac.verify_slice(&expected).is_err() {
+        tracing::warn!(
+            portal = %portal,
+            "Portal webhook rejected: signature mismatch over \"{{timestamp}}.{{body}}\""
+        );
+        return Err(reject());
     }
 
     Ok(())
@@ -955,6 +1075,121 @@ mod tests {
     // a lead when the DB write fails. A genuine persistence failure must map
     // to a retry (-> 500), NOT an idempotent ack (-> 200).
     // ------------------------------------------------------------------
+
+    // ------------------------------------------------------------------
+    // Replay protection for the per-portal receivers (issue #2330, gap 83-3).
+    // These pin `verify_timestamped_portal_webhook` directly (now_unix is
+    // injected) so the freshness window is deterministic and wall-clock-free.
+    // ------------------------------------------------------------------
+
+    const TS_SECRET: &str = "portal-ts-secret";
+    const TS_BODY: &[u8] = br#"{"external_id":"abc","views_count":3}"#;
+    const NOW: i64 = 1_700_000_000;
+    const TS_SIG_HEADER: &str = "X-Webhook-Signature";
+
+    /// Sign `"{ts}.{body}"` as base64 HMAC-SHA256 — the timestamped per-portal
+    /// contract this receiver enforces.
+    fn sign_ts(secret: &str, ts: i64, body: &[u8]) -> String {
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
+        mac.update(format!("{ts}.").as_bytes());
+        mac.update(body);
+        format!("sha256={}", BASE64.encode(mac.finalize().into_bytes()))
+    }
+
+    fn ts_headers(sig: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(TS_SIG_HEADER, sig.parse().unwrap());
+        headers
+    }
+
+    fn verify_ts(ts: i64, sig: &str, now: i64) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+        verify_timestamped_portal_webhook(
+            "reality_portal",
+            TS_SECRET,
+            &ts_headers(sig),
+            &Bytes::from_static(TS_BODY),
+            TS_SIG_HEADER,
+            &ts.to_string(),
+            now,
+            PORTAL_WEBHOOK_TOLERANCE_SECS,
+        )
+    }
+
+    #[test]
+    fn timestamped_accepts_fresh_valid_signature() {
+        let sig = sign_ts(TS_SECRET, NOW, TS_BODY);
+        assert!(verify_ts(NOW, &sig, NOW).is_ok());
+    }
+
+    #[test]
+    fn timestamped_accepts_exact_tolerance_boundary() {
+        let ts = NOW - PORTAL_WEBHOOK_TOLERANCE_SECS;
+        let sig = sign_ts(TS_SECRET, ts, TS_BODY);
+        assert!(
+            verify_ts(ts, &sig, NOW).is_ok(),
+            "boundary must be inclusive"
+        );
+    }
+
+    #[test]
+    fn timestamped_rejects_stale_delivery() {
+        // Correctly signed but too old — the replay case the per-portal
+        // receivers previously accepted indefinitely.
+        let ts = NOW - PORTAL_WEBHOOK_TOLERANCE_SECS - 1;
+        let sig = sign_ts(TS_SECRET, ts, TS_BODY);
+        let (status, _) = verify_ts(ts, &sig, NOW).expect_err("stale delivery must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn timestamped_rejects_timestamp_swap_replay() {
+        // Attacker captures a valid (old_ts, sig) pair and presents a fresh
+        // timestamp header to beat the window while reusing the old signature.
+        // Because the timestamp is folded into the HMAC, the swap fails.
+        let old_ts = NOW - 10_000;
+        let sig = sign_ts(TS_SECRET, old_ts, TS_BODY);
+        let (status, _) =
+            verify_ts(NOW, &sig, NOW).expect_err("timestamp-swap replay must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn timestamped_rejects_wrong_signature() {
+        let (status, _) =
+            verify_ts(NOW, "sha256=AAAA", NOW).expect_err("bad signature must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn timestamped_rejects_adversarial_overflow_timestamp() {
+        // Regression for the overflow edge — must reject without panicking.
+        let sig = sign_ts(TS_SECRET, i64::MIN, TS_BODY);
+        let (status, _) =
+            verify_ts(i64::MIN, &sig, NOW).expect_err("overflow timestamp must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn legacy_body_only_still_accepted_without_timestamp_header() {
+        // Backward-compat (accept-both phase): a sender that has not yet
+        // migrated — body-only base64 signature, no X-Webhook-Timestamp — is
+        // still accepted so live portal integrations don't break.
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "reality_portal";
+        std::env::set_var(env_key(portal), TS_SECRET);
+
+        let body = Bytes::from_static(TS_BODY);
+        let mut headers = HeaderMap::new();
+        headers.insert(SIG_HEADER, sign(TS_SECRET, &body).parse().unwrap());
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+        std::env::remove_var(env_key(portal));
+
+        assert!(
+            res.is_ok(),
+            "legacy body-only signature must still be accepted during the accept-both rollout"
+        );
+    }
 
     #[test]
     fn inquiry_persist_success_is_recorded() {
