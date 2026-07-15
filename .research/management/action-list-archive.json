@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-15T18:20:14Z",
+  "archived_at": "2026-07-15T20:14:47Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3243,6 +3243,25 @@
       }
     },
     {
+      "id": "gap-84-2-build-document-sign-page",
+      "action": "Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR — fresh scoped attempt (84-2 E-Signature Email Integration)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15 | gc1-reconcile 2026-07-15T20:07:26Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2347,
+        "merged_at": "2026-07-15T18:18:30Z",
+        "at": "2026-07-15T20:07:26Z"
+      }
+    },
+    {
       "id": "gap-84-2-esignature-email-backend",
       "action": "Integrate e-signature provider (DocuSign/HelloSign) for lease agreements: POST /api/v1/leases/{id}/sign-request, webhook status callback",
       "owner_role": "pm-backend",
@@ -6302,6 +6321,33 @@
       }
     },
     {
+      "id": "gh-issue-2317",
+      "action": "Follow-up: AI chat privacy — role-gate /escalated, owner-scope feedback, remove unscoped dead repo methods, RLS defense-in-depth (PR #2289) (Closes #2317)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2317) | gc1-reconcile 2026-07-15T20:14:36Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T00:05:03Z",
+      "issue_ref": {
+        "number": 2317,
+        "url": "https://github.com/martin-janci/property-management/issues/2317",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2356,
+        "merged_at": "2026-07-15T19:42:54Z",
+        "at": "2026-07-15T20:14:36Z"
+      }
+    },
+    {
       "id": "gh-issue-2318",
       "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318)",
       "owner_role": "pm-tech-lead",
@@ -6599,6 +6645,33 @@
       }
     },
     {
+      "id": "gh-issue-2331",
+      "action": "Follow-up: KMP price-tracking surface — Decimal-as-string wire mismatch breaks alert/favorites decoding + no visible screen shipped (PR #2288) (Closes #2331)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T05:14:16Z (#2331) | gc1-reconcile 2026-07-15T20:07:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T05:14:16Z",
+      "issue_ref": {
+        "number": 2331,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2350,
+        "merged_at": "2026-07-15T18:18:30Z",
+        "at": "2026-07-15T20:07:26Z"
+      }
+    },
+    {
       "id": "gh-issue-2341",
       "action": "Follow-up: harden reality-web listing detail body validation — type-guard features/photos, 404 status (PR #2281) (Closes #2341)",
       "owner_role": "pm-tech-lead",
@@ -6650,6 +6723,33 @@
         "merged_pr": 2353,
         "merged_at": "2026-07-15T16:24:04Z",
         "at": "2026-07-15T16:24:54Z"
+      }
+    },
+    {
+      "id": "gh-issue-2343",
+      "action": "Follow-up: agency 404 conflation + unfixed sibling dashboards + missing /agencies/me endpoint (PR #2280) (Closes #2343)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T10:07:46Z (#2343) | gc1-reconcile 2026-07-15T20:07:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:07:46Z",
+      "issue_ref": {
+        "number": 2343,
+        "url": "https://github.com/martin-janci/property-management/issues/2343",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2355,
+        "merged_at": "2026-07-15T18:18:30Z",
+        "at": "2026-07-15T20:07:26Z"
       }
     },
     {

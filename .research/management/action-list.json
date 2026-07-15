@@ -2,18 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "gap-84-2-build-document-sign-page",
-      "action": "Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR — fresh scoped attempt (84-2 E-Signature Email Integration)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": null,
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "first_open_at": "2026-07-15T01:55:00Z",
-      "source": "gap-scan 2026-07-15"
-    },
-    {
       "id": "gap-tracking-stale-status-flips-2026-07-15",
       "action": "Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus partial->complete (#2292/#2295/#2313 filled the last gaps)",
       "owner_role": "pm-backend",
@@ -24,26 +12,6 @@
       "deadline": null,
       "first_open_at": "2026-07-15T01:55:00Z",
       "source": "gap-scan 2026-07-15"
-    },
-    {
-      "id": "gh-issue-2317",
-      "action": "Follow-up: AI chat privacy — role-gate /escalated, owner-scope feedback, remove unscoped dead repo methods, RLS defense-in-depth (PR #2289) (Closes #2317)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2317)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2317,
-        "url": "https://github.com/martin-janci/property-management/issues/2317",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     },
     {
       "id": "gh-issue-2329",
@@ -79,46 +47,6 @@
       "issue_ref": {
         "number": 2330,
         "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2331",
-      "action": "Follow-up: KMP price-tracking surface — Decimal-as-string wire mismatch breaks alert/favorites decoding + no visible screen shipped (PR #2288) (Closes #2331)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T05:14:16Z (#2331)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T05:14:16Z",
-      "issue_ref": {
-        "number": 2331,
-        "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2343",
-      "action": "Follow-up: agency 404 conflation + unfixed sibling dashboards + missing /agencies/me endpoint (PR #2280) (Closes #2343)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T10:07:46Z (#2343)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T10:07:46Z",
-      "issue_ref": {
-        "number": 2343,
-        "url": "https://github.com/martin-janci/property-management/issues/2343",
         "labels": [
           "follow-up",
           "from-merged-review"
