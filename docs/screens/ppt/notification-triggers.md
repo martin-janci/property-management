@@ -17,6 +17,10 @@ endpoints: []
 relatedScreens:
   - id: ppt/notification-analytics
     rel: sibling
+  - id: ppt/settings-notifications-advanced
+    rel: sibling
+  - id: ppt/settings-notifications
+    rel: sibling
 useCases:
   - UC-01
 sharedComponents:
@@ -50,7 +54,7 @@ owner: pm-frontend
 - **Empty**: when `preferences` is empty, a single-line "No notification triggers are available for your account." is shown.
 - **Loading**: centered spinner with `aria-busy` while `useNotificationTriggers` is fetching.
 - **Error**: inline `role="alert"` danger tile ("Failed to load notification triggers") + `common.retry` button wired to `refetch()`.
-- **Forbidden**: a backend `401`/`403` surfaces an amber `role="alert"` access notice and no table.
+- **Forbidden**: a genuine `403` surfaces an amber `role="alert"` access notice and no table. A `401` (expired/absent session) redirects to `/login` instead of claiming a permissions problem.
 
 ## Notes
 
@@ -73,11 +77,24 @@ delivery dashboard at `ppt/notification-analytics`.
 - **Route not in sitemap**: `/notifications/triggers` is not in `@ppt/sitemap`
   `pptWebRoutes`, so `sitemapRefs` is omitted. It shares the `routes/groups/notifications.tsx`
   group with `/notifications/analytics`.
-- Auth: the bearer token is read from `localStorage` (`ppt_access_token`) in the
-  fetch helpers, matching `authApiClient` / `gdprClient` / `useNotificationAnalytics`.
+- Auth: the hooks + types now live in `@ppt/api-client` (`granular-notifications`)
+  and go through the shared `authenticatedFetchJson` helper (#486) — token via the
+  registered `tokenProvider` + transparent `401 mfa_required` challenge/retry, same
+  as the sibling `advanced-notifications` module (Epic 40). The app no longer reads
+  `ppt_access_token` from `localStorage`.
+- Reachability: linked from the main nav (`nav.notificationTriggers`, authenticated
+  users) and cross-linked from `ppt/settings-notifications-advanced` ("Per-event
+  triggers →") so the category-level and per-event preference surfaces are
+  discoverable from one place.
+- Route is wrapped in `<ProtectedRoute>`; per-user page, so 403 is near-impossible
+  and 401 routes to login.
+- i18n: `notificationTriggers.*` keys (+ `nav.notificationTriggers`,
+  `nav.notificationAnalytics`) added to all six locales (en/sk/cs/de/pl/hu); inline
+  `defaultValue`s retained as fallback.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-07-15 — agent: #2325 (react-web) — post-merge follow-up to PR #2293. Moved the trigger hooks + types into `@ppt/api-client` (`granular-notifications`) on `authenticatedFetchJson` (kills the `localStorage` token read; gains MFA-retry); optimistic checkbox toggle with rollback. Wrapped the route in `<ProtectedRoute>`, mapped 401→/login (403-only forbidden). Added nav link + advanced-settings cross-link. Added `notificationTriggers.*` i18n keys to all 6 locales. New `notifications.route.test.tsx` (401/403 mapping, patch construction, error toast). typecheck + biome + vitest (14) + Vite build green.
 - 2026-07-13 — agent: gap-84-4 (react-web) — created from scratch. New `/notifications/triggers` route + `NotificationTriggersPage` + `useNotificationTriggers` / `useUpdateNotificationTrigger` / `useResetNotificationTriggers` (direct REST over granular `/events`, analytics precedent). Category-grouped trigger list, per-channel toggles, forced-on in-app for priority triggers, reset-to-defaults, toast feedback. ppt-web buildStatus shipped / apiStatus complete; mobile n/a. 10 page tests; typecheck + biome + vitest + Vite build green.

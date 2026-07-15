@@ -1,5 +1,5 @@
 /**
- * Notification trigger management types (Story 84.4 — Notification Trigger System,
+ * Granular notification-trigger types (Story 84.4 — Notification Trigger System,
  * PM gap 84-4).
  *
  * Mirrors the granular notification-event API shipped by the backend (Epic 8B,
@@ -8,9 +8,10 @@
  * preferences ARE the trigger surface: each event type (trigger) fans out to the
  * push / email / in-app channels according to the flags below.
  *
- * The granular endpoints are NOT in the generated `@ppt/api-client`, so — as with
- * `features/notification-analytics` — these types are hand-authored alongside a
- * direct-REST hook. JSON is camelCase (backend `#[serde(rename_all = "camelCase")]`).
+ * The granular endpoints are not catalogued in `@ppt/sitemap` and are absent from
+ * the generated client, so these types are hand-authored alongside a fetch built
+ * on the shared `authenticatedFetchJson` helper (see `../lib/fetch`, #486). JSON
+ * is camelCase (backend `#[serde(rename_all = "camelCase")]`).
  */
 
 /** Delivery channels a trigger can fan out to. */

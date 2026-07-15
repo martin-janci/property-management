@@ -10,19 +10,20 @@
  * `isManagerRole` (operator-equivalent); the backend remains the source of truth
  * and a 403 surfaces the forbidden notice.
  */
-import { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Route } from 'react-router-dom';
-import { useToast } from '../../components';
-import { useAuth } from '../../contexts';
-import type { NotificationAnalyticsFilters } from '../../features/notification-analytics';
-import { useNotificationAnalytics } from '../../features/notification-analytics';
-import type { TriggerChannel } from '../../features/notification-triggers';
+import type { TriggerChannel } from '@ppt/api-client';
 import {
+  ApiError,
   useNotificationTriggers,
   useResetNotificationTriggers,
   useUpdateNotificationTrigger,
-} from '../../features/notification-triggers';
+} from '@ppt/api-client';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Route, useNavigate } from 'react-router-dom';
+import { ProtectedRoute, useToast } from '../../components';
+import { useAuth } from '../../contexts';
+import type { NotificationAnalyticsFilters } from '../../features/notification-analytics';
+import { useNotificationAnalytics } from '../../features/notification-analytics';
 import { NotificationAnalyticsPage, NotificationTriggersPage } from '../lazyRoutes';
 import { isManagerRole } from '../shared';
 
@@ -61,20 +62,32 @@ function NotificationAnalyticsPageRoute() {
  *
  * Owns the granular-events query + per-trigger channel mutations and the reset
  * action, bridging them to the presentational `NotificationTriggersPage`. Any
- * authenticated user manages their own triggers; a 401/403 surfaces the same
- * forbidden notice. The endpoint is not in the generated client, so the hooks
- * call the REST path directly.
+ * authenticated user manages their own triggers, so only a genuine **403**
+ * surfaces the forbidden notice; a **401** means the session expired/absent and
+ * routes to login rather than claiming a permissions problem. The hooks live in
+ * `@ppt/api-client` (`granular-notifications`) over `authenticatedFetchJson`.
  */
 function NotificationTriggersPageRoute() {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const { data, isLoading, error, refetch } = useNotificationTriggers();
   const updateTrigger = useUpdateNotificationTrigger();
   const resetTriggers = useResetNotificationTriggers();
 
-  const status = (error as (Error & { status?: number }) | null)?.status;
-  const isForbidden = status === 401 || status === 403;
+  // `authenticatedFetchJson` throws `ApiError` carrying the real HTTP status, so
+  // the 401/403 branches below actually fire in production.
+  const status = error instanceof ApiError ? error.status : undefined;
+  const isForbidden = status === 403;
+
+  // A 401 on a per-user page means the session is gone — send the user to login
+  // instead of surfacing a "no permission" notice.
+  useEffect(() => {
+    if (status === 401) {
+      navigate('/login', { replace: true });
+    }
+  }, [status, navigate]);
 
   const onToggle = useCallback(
     (eventType: string, channel: TriggerChannel, enabled: boolean) => {
@@ -150,7 +163,14 @@ export function notificationAnalyticsRoutes() {
   return (
     <>
       <Route path="/notifications/analytics" element={<NotificationAnalyticsPageRoute />} />
-      <Route path="/notifications/triggers" element={<NotificationTriggersPageRoute />} />
+      <Route
+        path="/notifications/triggers"
+        element={
+          <ProtectedRoute>
+            <NotificationTriggersPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

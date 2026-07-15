@@ -65,7 +65,9 @@
     "aiChat": "Asystent AI",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integracje",
-    "portalWebhooks": "Webhooki portali"
+    "portalWebhooks": "Webhooki portali",
+    "notificationTriggers": "Wyzwalacze powiadomień",
+    "notificationAnalytics": "Analityka powiadomień"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -1456,5 +1458,24 @@
     "errors": {
       "downloadFailed": "Nie udało się pobrać załącznika"
     }
+  },
+  "notificationTriggers": {
+    "title": "Wyzwalacze powiadomień",
+    "subtitle": "Wybierz, które zdarzenia mają Cię powiadamiać i na których kanałach (push, e-mail, w aplikacji).",
+    "forbidden": "Nie masz uprawnień do zarządzania wyzwalaczami powiadomień.",
+    "resetting": "Resetowanie…",
+    "resetDefaults": "Przywróć domyślne",
+    "failedToLoad": "Nie udało się załadować wyzwalaczy powiadomień",
+    "empty": "Dla Twojego konta nie są dostępne żadne wyzwalacze powiadomień.",
+    "enabledCount": "Włączono {{enabled}} z {{total}}",
+    "tableCaption": "Kanały powiadomień według wyzwalacza",
+    "colTrigger": "Wyzwalacz",
+    "channelPush": "Push",
+    "channelEmail": "E-mail",
+    "channelInApp": "W aplikacji",
+    "priorityBadge": "Priorytet",
+    "saveFailed": "Nie udało się zaktualizować wyzwalacza",
+    "resetDone": "Przywrócono domyślne wyzwalacze",
+    "resetFailed": "Nie udało się zresetować wyzwalaczy"
   }
 }

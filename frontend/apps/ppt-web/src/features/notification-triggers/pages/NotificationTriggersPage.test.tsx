@@ -5,8 +5,8 @@
  */
 
 /// <reference types="vitest/globals" />
+import type { EventTriggersResponse } from '@ppt/api-client';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import type { EventTriggersResponse } from '../types';
 import { NotificationTriggersPage } from './NotificationTriggersPage';
 
 const noop = () => {};

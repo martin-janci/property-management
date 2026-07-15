@@ -20,6 +20,31 @@
 import { getToken } from '../auth';
 import { requestMfaChallenge } from './mfa-handler';
 
+/**
+ * Error thrown by `authenticatedFetchJson` on a non-2xx response.
+ *
+ * Carries the HTTP `status` (and the server-provided `error` code, when present)
+ * as first-class fields so callers can branch on them — e.g. mapping `403` to a
+ * forbidden notice or `401` to a `/login` redirect. Before this existed the
+ * helper threw a plain `Error`, so the status was lost and any status-based
+ * routing downstream silently became dead code.
+ */
+export class ApiError extends Error {
+  /** HTTP status code of the failed response. */
+  readonly status: number;
+  /** Machine-readable `error` field from the response body, if any. */
+  readonly code?: string;
+
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    // Restore prototype chain for `instanceof` across transpile targets.
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -58,7 +83,11 @@ async function fetchJsonInner<T>(
       }
     }
 
-    throw new Error(err.message || err.error || `HTTP ${response.status}`);
+    throw new ApiError(
+      response.status,
+      err.message || err.error || `HTTP ${response.status}`,
+      err.error
+    );
   }
   if (response.status === 204) return undefined as unknown as T;
   return response.json() as Promise<T>;
@@ -68,8 +97,9 @@ async function fetchJsonInner<T>(
  * Fetch the given URL, automatically attaching the bearer token from the
  * registered token provider, and parsing the JSON response.
  *
- * Throws `Error` (with the server-provided `message` if any) on non-2xx
- * responses. Returns `undefined as unknown as T` for 204.
+ * Throws `ApiError` (carrying the HTTP `status` and, when present, the server
+ * `error` code plus its `message`) on non-2xx responses. Returns
+ * `undefined as unknown as T` for 204.
  *
  * When the server responds `401 { error: "mfa_required" }` and a handler has
  * been registered via `setMfaChallengeHandler`, the MFA modal is shown and
