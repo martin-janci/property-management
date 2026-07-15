@@ -178,7 +178,7 @@ async fn successful_fcm_delivery_receipt_returns_ok(pool: PgPool) {
     );
     let notification = make_notification(user_id);
 
-    let result = adapter.send(user_id, &[], &notification).await;
+    let result = adapter.send(user_id, &notification).await;
 
     assert!(
         result.is_ok(),
@@ -223,7 +223,7 @@ async fn apns_only_path_no_fcm_attempted_returns_ok(pool: PgPool) {
     );
     let notification = make_notification(user_id);
 
-    let result = adapter.send(user_id, &[], &notification).await;
+    let result = adapter.send(user_id, &notification).await;
 
     // APNs-only → fcm_attempted == false → must return Ok(()) regardless.
     assert!(
@@ -288,7 +288,7 @@ async fn fcm_not_registered_deletes_stale_token(pool: PgPool) {
 
     // The adapter may return Err (all FCM attempts failed) — that is fine.
     // What matters is that the stale token was deleted.
-    let _ = adapter.send(user_id, &[], &notification).await;
+    let _ = adapter.send(user_id, &notification).await;
 
     assert!(
         !token_exists(&pool, &stale_token).await,
@@ -343,7 +343,7 @@ async fn fcm_failure_with_apns_token_returns_err_not_silent_ok(pool: PgPool) {
     );
     let notification = make_notification(user_id);
 
-    let result = adapter.send(user_id, &[], &notification).await;
+    let result = adapter.send(user_id, &notification).await;
 
     // FCM was attempted and failed; fcm_attempted=true and any_sent=false
     // → must return Err, NOT silently Ok(()) as if only APNs tokens existed.
@@ -397,7 +397,7 @@ async fn legacy_fcm_successful_delivery_returns_ok(pool: PgPool) {
     let adapter = make_legacy_adapter(pool.clone(), server.uri(), "AAAA-legacy-server-key");
     let notification = make_notification(user_id);
 
-    let result = adapter.send(user_id, &[], &notification).await;
+    let result = adapter.send(user_id, &notification).await;
 
     assert!(
         result.is_ok(),
@@ -444,7 +444,7 @@ async fn legacy_fcm_not_registered_deletes_stale_token(pool: PgPool) {
     let adapter = make_legacy_adapter(pool.clone(), server.uri(), "AAAA-legacy-server-key");
     let notification = make_notification(user_id);
 
-    let _ = adapter.send(user_id, &[], &notification).await;
+    let _ = adapter.send(user_id, &notification).await;
 
     assert!(
         !token_exists(&pool, &stale_token).await,
