@@ -1,60 +1,95 @@
 /**
- * Tests for the shared client-side JWT helpers.
+ * Unit tests for the shared JWT decode util.
  *
- * This is the *single* suite for `decodeJwtPayload` / `extractTenantId` after
- * the duplicate copies in `hooks/useApi.ts` and
- * `screens/documents/DocumentUploadScreen.tsx` were consolidated here
- * (GitHub #2327). `useApi.test.ts` still exercises `decodeJwtPayload`
- * indirectly through `getTenantId`; the screen no longer owns its own copy.
- *
- * The decode relies on the `atob`/`btoa` globals shipped by the jest-expo
- * runtime.
+ * `src/utils/jwt.ts` is the single source of truth for the base64url JWT
+ * payload decode + `tenant_id` extraction that feeds the `X-Tenant-ID` header
+ * on every tenant-scoped request. It used to be triplicated (issues #2327 /
+ * #2329) with only the `useApi` copy tested; these cases pin the shared unit
+ * directly so all three callers (`useApi`, `useOfflineSupport`,
+ * `DocumentUploadScreen`) are covered by one suite.
  */
 
+import { makeJwt } from '../test/jwt';
 import { decodeJwtPayload, extractTenantId } from './jwt';
 
-/** Build an unsigned JWT (`header.base64url(payload).sig`). */
-function makeJwt(payload: Record<string, unknown>): string {
-  const b64url = (obj: unknown) =>
-    globalThis.btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `${b64url({ alg: 'none', typ: 'JWT' })}.${b64url(payload)}.sig`;
-}
-
 describe('decodeJwtPayload', () => {
-  it('decodes the payload object from a base64url JWT', () => {
-    expect(decodeJwtPayload(makeJwt({ sub: 'user-1', tenant_id: 'org-7f3c' }))).toEqual({
-      sub: 'user-1',
-      tenant_id: 'org-7f3c',
+  it('decodes a well-formed payload into an object', () => {
+    expect(decodeJwtPayload(makeJwt({ sub: 'u-1', tenant_id: 'org-42' }))).toEqual({
+      sub: 'u-1',
+      tenant_id: 'org-42',
     });
   });
 
-  it('returns null for a token with fewer than two segments', () => {
-    expect(decodeJwtPayload('not-a-jwt')).toBeNull();
+  // Byte lengths chosen so the base64url length hits each `% 4` residue,
+  // forcing the padding math down all three branches (0, 1, 2 `=`).
+  it.each([
+    ['no padding needed (len % 4 === 0)', 'tt'],
+    ['two padding chars (len % 4 === 2)', 'ttt'],
+    ['one padding char (len % 4 === 3)', 't'],
+  ])('decodes a base64url payload with %s', (_label, tenant) => {
+    expect(decodeJwtPayload(makeJwt({ tenant_id: tenant }))).toEqual({ tenant_id: tenant });
   });
 
-  it('returns null when the payload segment is not valid base64/JSON', () => {
-    expect(decodeJwtPayload('header.%%%not-base64%%%.sig')).toBeNull();
+  it('decodes a payload whose base64url segment still carries `=` padding', () => {
+    const withPadding = makeJwt({ tenant_id: 'ttt' }, /* keepPadding */ true);
+    // Guard the fixture: this variant must actually contain `=` so the test
+    // exercises the padded path rather than silently matching the stripped one.
+    expect(withPadding).toContain('=');
+    expect(decodeJwtPayload(withPadding)).toEqual({ tenant_id: 'ttt' });
+  });
+
+  it('converts base64url `-` and `_` back to `+`/`/` before decoding', () => {
+    const dashToken = makeJwt({ tenant_id: 'tn->??' });
+    const underscoreToken = makeJwt({ tenant_id: 'tn-???' });
+    expect(dashToken.split('.')[1]).toContain('-');
+    expect(underscoreToken.split('.')[1]).toContain('_');
+
+    expect(decodeJwtPayload(dashToken)).toEqual({ tenant_id: 'tn->??' });
+    expect(decodeJwtPayload(underscoreToken)).toEqual({ tenant_id: 'tn-???' });
+  });
+
+  it.each([
+    ['a token with no dots', 'not-a-jwt'],
+    ['a single-segment token', 'onlyheader'],
+    ['an empty string', ''],
+    ['a token whose payload is not valid base64', 'header.!!!not-base64!!!.sig'],
+    ['a token whose payload is not JSON', `header.${btoa('plain text').replace(/=+$/, '')}.sig`],
+  ])('returns null (no throw) for %s', (_label, token) => {
+    expect(decodeJwtPayload(token)).toBeNull();
+  });
+
+  it('mojibakes multi-byte (UTF-8) claim values — Latin1 `atob` limitation, pinned', () => {
+    // A real server base64-encodes the UTF-8 *bytes* of the payload. `atob`
+    // returns a Latin1 string, so a genuinely multi-byte char (outside the
+    // Latin1 range that `btoa` can encode) comes back mojibake'd. `tenant_id`
+    // is a UUID today so this never bites; this pins the limitation the source
+    // only notes in a comment. Built by hand because `makeJwt`'s `btoa` can't
+    // encode multi-byte chars directly.
+    const json = JSON.stringify({ note: '你好' });
+    const b64url = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    const decoded = decodeJwtPayload(`header.${b64url}.sig`);
+    expect(decoded).not.toBeNull();
+    expect(decoded?.note).not.toBe('你好');
   });
 });
 
 describe('extractTenantId', () => {
-  it('decodes the tenant_id claim from a base64url JWT payload', () => {
-    expect(extractTenantId(makeJwt({ tenant_id: 'org-7f3c' }))).toBe('org-7f3c');
+  it('extracts the tenant_id claim from a well-formed token', () => {
+    expect(extractTenantId(makeJwt({ sub: 'u-1', tenant_id: 'org-42' }))).toBe('org-42');
   });
 
-  it('returns null when the tenant_id claim is absent', () => {
-    expect(extractTenantId(makeJwt({ sub: 'user-1' }))).toBeNull();
+  it('returns null when the payload has no tenant_id claim', () => {
+    expect(extractTenantId(makeJwt({ sub: 'u-1', role: 'owner' }))).toBeNull();
   });
 
-  it('returns null when tenant_id is not a string', () => {
-    expect(extractTenantId(makeJwt({ tenant_id: 42 }))).toBeNull();
+  it('returns null when tenant_id is present but not a string', () => {
+    expect(extractTenantId(makeJwt({ tenant_id: 12345 }))).toBeNull();
   });
 
-  it('returns null for a token with fewer than two segments', () => {
+  it('returns null (no throw) for a malformed token', () => {
     expect(extractTenantId('not-a-jwt')).toBeNull();
-  });
-
-  it('returns null when the payload segment is not valid base64/JSON', () => {
-    expect(extractTenantId('header.%%%not-base64%%%.sig')).toBeNull();
   });
 });
