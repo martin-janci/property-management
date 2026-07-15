@@ -132,14 +132,19 @@ async function scanEpics(dir: string, product: Product): Promise<CandidateScreen
   } catch {
     return [];
   }
-  // Capture an optional upper-cased letter suffix (10A/10B/7B convention, see
-  // docs/EPIC_STORY_STATUS.md) and strip leading zeros so the synthesized
-  // candidate matches the unpadded `Epic-10A` frontmatter refs.
+  // Capture an optional single upper-cased letter suffix (10A/10B/7B
+  // convention, see docs/EPIC_STORY_STATUS.md) bounded by the segment end, and
+  // strip leading zeros so the synthesized candidate matches the unpadded
+  // `Epic-10A` frontmatter refs. The `(?=[-.]|$)` boundary rejects malformed
+  // ids (`EPIC-10beta`, `EPIC-7A2-*`) instead of silently mis-binning them.
   const epics = entries
-    .map((entry) => entry.match(/^EPIC-0*(\d+[A-Z]*)/i)?.[1]?.toUpperCase())
+    .map((entry) => entry.match(/^EPIC-0*(\d+[A-Z]?)(?=[-.]|$)/i)?.[1]?.toUpperCase())
     .filter((id): id is string => Boolean(id));
   return [...new Set(epics)].map((num) => ({
-    id: `${product}/epic-${num}`,
+    // Human-facing fields keep the upper-cased suffix (`Epic-10B`) so they
+    // match frontmatter refs; the id slug is lower-cased to satisfy the
+    // schema id regex (`/^[a-z...]/`) — see schema.ts IdSchema.
+    id: `${product}/epic-${num.toLowerCase()}`,
     name: `Epic-${num}`,
     product,
     source: 'epics' as const,

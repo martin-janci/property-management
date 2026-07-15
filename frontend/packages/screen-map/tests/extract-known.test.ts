@@ -52,6 +52,22 @@ describe('extractKnownContexts', () => {
     expect(ctx.knownEpics.has('Epic-010A')).toBe(false);
   });
 
+  it('rejects malformed epic filenames instead of mis-binning them', async () => {
+    await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
+    // Missing hyphen typo — must NOT become a garbage `Epic-10BETA`.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-10beta.md'), '');
+    // Multi-char malformed suffix — must NOT silently truncate onto `Epic-7A`.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-7A2-x.md'), '');
+    // A well-formed epic alongside them still extracts normally.
+    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-011-billing.md'), '');
+    const ctx = await extractKnownContexts(tmpRoot);
+    expect(ctx.knownEpics.has('Epic-11')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-10BETA')).toBe(false);
+    expect(ctx.knownEpics.has('Epic-7A')).toBe(false);
+    // The two malformed names contribute nothing; only the valid epic remains.
+    expect(ctx.knownEpics.size).toBe(1);
+  });
+
   it('extracts component names from frontend/packages/ui-kit exports', async () => {
     await mkdir(path.join(tmpRoot, 'frontend/packages/ui-kit/src'), { recursive: true });
     await writeFile(
