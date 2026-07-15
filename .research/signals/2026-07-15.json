@@ -1,0 +1,566 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-handlers-news-articles-idor",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-api-handlers.json",
+      "score_delta": 3,
+      "evidence": [
+        "routes/news_articles.rs:685 \u2014 delete_article discards TenantExtractor(_tenant) and calls NewsArticleRepository::new(state.db.clone()).delete(id) on the raw pool",
+        "crates/db/src/repositories/news_article.rs:247 \u2014 delete() runs `DELETE FROM news_articles WHERE id = $1` with no organization_id filter",
+        "crates/db/src/repositories/news_article.rs:237 \u2014 restore() `UPDATE news_articles ... WHERE id = $1` also filters by id only, no org scope",
+        "crates/db/src/repositories/news_article.rs:16-22 \u2014 NewsArticleRepository holds a raw DbPool (not RlsConnection); contrast signatures.rs which takes `mut rls: RlsConnection`",
+        "crates/db/migrations/00069_create_news_media.sql \u2014 news_articles only ENABLEs RLS (never FORCE); migration 00165 documents api-server runs with BYPASSRLS/owner, so the tenant-isolation policy is inert for these raw-pool queries",
+        "routes/news_articles.rs:651,769,802 \u2014 restore_article/add_media/delete_media share the same unscoped raw-pool pattern (cross-tenant read+write+delete). Contrast repo delete_comment() which scopes `WHERE id=$1 AND user_id=$2`."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-rn-announcements-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d-2.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:1-12 \u2014 no react-i18next import / no useTranslation() anywhere in the file (confirmed via grep for t( and useTranslation).",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:241 \u2014 placeholder=\"Search announcements...\" hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:256,261-268 \u2014 \"Loading\u2026\", \"Couldn't load announcements\", raw error.message shown to user, \"No announcements\", \"Check back later for updates\" all hardcoded English, unlike sibling screens (ReportFaultScreen.tsx, DocumentUploadScreen.tsx, DashboardScreen.tsx) which wrap all copy in t(...). Screen is untranslated for sk/cs/de locales."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-queue-swallow-error",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d-2.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:327-334 \u2014 network failure in handleSubmit is caught, the fault is queued for later, and the original error is discarded via `void error;` with no logging, so a genuine 4xx validation/auth failure (not a transient network drop) is silently retried offline with no diagnostic trail.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:446-448 \u2014 the outer processQueue catch only does console.error('Failed to process queue:', error) with no user-facing surface or telemetry hook, so queue-level failures (e.g. AsyncStorage write failure) are invisible in production."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-no-tests",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d-2.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts \u2014 311-line class (Epic 49 Story 49.2) with async native-module bridging (startListening/stopListening/Siri shortcuts/App Actions), a state machine, and error swallowing (try/catch returning false silently); no VoiceAssistant.test.ts exists anywhere in the repo (repo-wide grep for VoiceAssistant in *.test.* returned zero matches).",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts \u2014 319-line command parsing/execution logic (parseVoiceCommand/executeVoiceCommand) that drives app navigation from speech input; also has zero test coverage repo-wide."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-fault-category-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:340 \u2014 getCategoryLabel() returns hardcoded English strings ('Plumbing','Electrical','HVAC',...) rendered as category-button labels at line 437, so the fault-category picker never localizes; the adjacent priority buttons correctly use t(`faults.${p.labelKey}`) at line 464. An in-code comment admits 'these would ideally come from translations'."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-console-error",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:149 \u2014 console.error('Failed to submit meter reading:', error) left unconditional in the committed submit handler; unlike the push-token logs guarded by __DEV__ in usePushNotifications.ts:240/267, this one ships to production."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/ (FeedbackManager.ts, HelpCenter.ts, TourManager.ts) \u2014 singleton managers consumed by 4 live screens/components (FeedbackScreen, HelpCenterScreen, TourOverlay, ContextualHelp) have no test file anywhere in the repo",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:20 \u2014 imports feedbackManager; the manager's state/logic is exercised in production but never covered by a unit test"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-no-tests",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn.json",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:34 \u2014 NFCCredentialManager manages building-access credentials in expo-secure-store (encrypted-at-rest), legacy-key migration with corrupt-blob discard (loadStoredCredentials ~L262), emergencyRevokeAll (~L223), and refresh/expiry logic; grep across the whole repo (--include=*.test.ts/tsx) returns zero test files referencing NFCCredentialManager.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249 \u2014 validateAccess() implements all access grant/deny logic (status, expiry, access-point authorization, time-restriction windows crossing midnight ~L300-336) plus handleTap() transmit/log flow (~L163); no test anywhere exercises this security-critical decision path.",
+        "frontend/apps/mobile/src/nfc/index.ts:1 \u2014 both NFC classes are exported publicly with no *.test.* or __tests__ coverage in the segment or repo (confirmed repo-wide by grep)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-no-err-ui",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx:72 \u2014 DashboardScreen fires four useApiQuery calls (announcements L72, faults-stats L77, votes L82, unread-messages L85) and never reads .isError/.error on any of them; the render (L199-296) has no error branch and no ErrorBoundary above. On a failed/offline API the primary landing screen silently shows all-zero stat cards and empty lists with no failure indication \u2014 a silent-failure user-facing path (sibling list screens surface `error`). Confirmed by grep: only the query declarations appear, no isError usage."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-mgr-untested",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-mobile-rn.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:199 \u2014 DeepLinkManager (consumed by hooks/useDeepLinkRouting.ts and hooks/usePushNotifications.ts) implements auth-gated routing: setAuthenticated() dispatches a queued pendingLink after login (~L223) and handleUrl() suppresses/queues links that requiresAuth while unauthenticated (~L256). This auth-boundary logic has no test.",
+        "frontend/apps/mobile/src/qrcode/universalLinks.test.ts:5 \u2014 the only test importing DeepLinkHandler covers just parseDeepLink; the DeepLinkManager class (pending-link queuing, dispatch-after-auth, handler subscription) is never instantiated or asserted, leaving the deep-link auth gate uncovered."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-ppt-web-core-websocket-prod-console",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-ppt-web-core-tier1d-2.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:344 \u2014 console.warn/console.error left in committed production service code, NOT gated by import.meta.env.DEV (unlike lib/api.ts:199 and hooks/usePerformanceMetrics.ts which ARE DEV-guarded); reachable on every send-while-disconnected, send failure, parse failure, and handler error (lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621), leaking noise and potential message-payload data to the production browser console.",
+        "Fix: route these through the same DEV-gated logger used in lib/api.ts, or a leveled logger, so prod builds stay quiet and do not spill payloads."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-ppt-web-core-tier1d-2.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53 \u2014 the entire ERROR_MESSAGES catalogue (titles + messages) and formatFieldName() output are hardcoded English in a 4-locale app (sk/cs/de/en); this is the app's user-facing error-display infra yet nothing is wrapped in t('...').",
+        "Confidence medium: errorHandler is currently only barrel-exported via lib/index.ts with no component consumer found in this pass, so the strings are not yet on a live render path \u2014 an i18n gap waiting to surface rather than a shipped-visible defect."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-units-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-ppt-web-core.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:80 \u2014 useBuildingUnits calls raw fetch('/api/v1/units?...') with only a Content-Type header and no Authorization/Bearer token (all other calls go through @ppt/api-client's token provider), so the protected endpoint 401s in production",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:83,90 \u2014 the resulting error is swallowed (query isError discarded, units: data ?? []), so every person-months building/bulk/unit view silently shows zero units"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-ppt-web-core.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:159-160 \u2014 /dashboard/manager and /dashboard/resident are wired without <ProtectedRoute>; the comment claims 'the target page handles auth + role-based fan-out'",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx & ResidentDashboardPage.tsx \u2014 neither page uses useAuth/isAuthenticated/Navigate, so the guard fails open: an unauthenticated visitor (incl. the /dashboard redirect at core.tsx:158) renders the dashboard shell instead of being sent to /login"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-cast",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-14-ppt-web-core.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[] double-casts the API session payload across the client boundary, defeating type-checking; if the wire shape diverges from SessionRow (e.g. is_current vs isCurrent), s.isCurrent at line 85 reads undefined and hasOtherSessions/revoke-all logic silently misbehaves"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-api-core-scheduler-mutex-poison",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-api-core-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:168,314,377,497,549,832,858,878,1033,1163,1256,1323,1445,1454 \u2014 every metrics access uses self.metrics.lock().unwrap(); if any code panics while holding this Mutex the lock is poisoned and all subsequent locks (including get_metrics() reachable from a metrics/status handler and every counter update in the indefinitely-running background scheduler loop) panic permanently, silently killing scheduled-job processing. Prefer lock().unwrap_or_else(|e| e.into_inner()) or a poison-tolerant guard."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-handlers-missing-authz-article",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-api-handlers-tier1d.json",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:607-770 \u2014 publish_article, archive_article, restore_article, pin_article extract `_user: AuthUser` but never check `is_manager()`/authorship, unlike create_article (line 446) and update_article (line 542) which explicitly gate on `is_manager || is_author`.",
+        "backend/servers/api-server/src/routes/news_articles.rs:710-728 \u2014 delete_article permanently deletes an article with no role/author check at all; any authenticated org member can destroy any article in their tenant.",
+        "backend/servers/api-server/src/routes/news_articles.rs:794-851 \u2014 add_media/delete_media have no authorization check; any authenticated org member can attach or remove media on any article, bypassing the manager-only authoring model documented in the handler comments for create_article."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-unenforced-toggle-flags",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:958-987 \u2014 create_comment never reads article.comments_enabled before inserting a comment, so an article with comments disabled (CreateArticleRequest.comments_enabled=false / UpdateArticleRequest) can still be commented on.",
+        "backend/servers/api-server/src/routes/news_articles.rs:858-891 \u2014 toggle_reaction never reads article.reactions_enabled, so reactions can be added even when the author/manager disabled them.",
+        "backend/crates/db/src/models/news_article.rs:50-51,352-354 \u2014 comments_enabled/reactions_enabled are persisted columns but grep across news_articles.rs/news_article.rs repo shows no handler-side check gating create_comment or toggle_reaction on these flags."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-api-handlers-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/memberships.rs:365 \u2014 generate_token() calls `rand::TryRng::try_fill_bytes(...).expect(\"OS rng failed\")`; this helper is called directly from the `invite` handler (line 194) on the request path, so an OS RNG failure panics the handler instead of returning a 500."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-restore-drops-token",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-mobile-native-kmp.json",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:318 \u2014 restoreSession() calls getSession(); any getSession failure (onFailure) nulls sessionToken and sets Unauthenticated, but getSession catches transient network exceptions (line 107-109) the same as 401. A cold app launch while offline therefore discards the restored session and forces the user signed-out, instead of distinguishing an auth failure (401 -> logout) from a recoverable network error."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-no-test",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-mobile-native-kmp.json",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt \u2014 ApiClient has no test file (its only appearance in commonTest is a code comment in ListingDetailRepositoryTest.kt); it attaches the Authorization/Bearer token and X-Tenant-ID isolation header and has reachable, untested error-mapping branches (Unauthorized -> 'Please sign in', Conflict -> 'Already in favorites', NotFound) for getListings/getListing/getFavorites/addFavorite/removeFavorite/submitInquiry \u2014 an auth/tenant-carrying network core with untested Unauthorized handling."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nn-assert-state",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-mobile-native-kmp.json",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt:115 \u2014 onCallClick lambda re-reads `state.listing!!` (state is a collectAsState()-backed StateFlow value) at click time rather than capturing the render-time snapshot; if the VM state emits listing=null between render and the deferred click, the non-null assertion throws NPE. Same latent double-read pattern in FavoritesScreen.kt:164 and InquiriesScreen.kt:169 (`errorMessage!!`)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-networkerror-untested",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-mobile-native-kmp.json",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt \u2014 the isNetworkError() error-classification heuristic (exception-name matching, message-hint matching, and the cause-chain walk with its self-reference guard `it !== cause`) is referenced by no test in commonTest; the UI relies on it to swap technical exceptions for friendly copy, so every mapping branch is unverified."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiryrepo-err-branch",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-mobile-native-kmp.json",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt \u2014 its only test (InquiryRepositoryPathEncodingTest.kt) asserts path percent-encoding only; the Unauthorized ('Please sign in...') and NotFound ('Inquiry not found') error-mapping branches across getInquiries/getRealtorInquiries/getInquiry/replyToInquiry/getViewings/cancelViewing are exercised by no test."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-stale-token-init",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-ppt-web-core-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396 \u2014 initializeAuth trusts a stored access token as authenticated without any expiry check (the inline comment even concedes 'Validate the token is not expired... In production we might verify with the server'). The proactive refresh path is only taken in the else-if branch when the access token is ABSENT (line 400). A returning user whose access token has expired but whose refresh token is still valid is rendered as logged-in and fires a doomed API call that 401s (onUnauthorizedCallback -> logout) instead of being silently refreshed, bouncing the user to login."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-nav-aria-no-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-ppt-web-core-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:116 \u2014 hardcoded English aria-label=\"Main navigation\" on the app-shell <nav> is not wrapped in t(), while every other user-facing string in the same component uses useTranslation (nav.*, auth.signIn, common.loading). Screen-reader users on sk/cs/de/pl/hu locales hear the untranslated landmark label."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymatch-mut-noerr",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:54,61,68 \u2014 all three financial-reconciliation mutations (uploadMutation=uploadStatement, confirmMutation=confirmMatch, rejectMutation=rejectMatch) declare only onSuccess (queryClient.invalidateQueries) and have NO onError handler; the page also never destructures isError/error from any mutation (grep 'onError' -> 0 hits in the file). This is a bank-statement upload + payment-match confirm/reject workflow ('Review and confirm matches from bank statements'). If confirmMatch/rejectMatch POST fails (422/500/network), the error is silently swallowed: the list simply re-fetches unchanged, so a manager who clicks Confirm believes a payment was reconciled when it was not \u2014 a correctness/financial-integrity gap, not a cosmetic one. Sibling accounting/finance pages (routes/groups/financial.tsx:179,204; routes/groups/reports.tsx:123,234) DO wire onError, making this an outlier regression."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-mut-noerr",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:36,44 \u2014 createMutation (invoicesApiCreate) and deleteMutation (invoicesApiDelete) both declare only onSuccess and no onError; the file has 0 'onError' hits. On create success the form is dismissed (setIsCreating(false)); on failure (e.g. 422 validation, 409 duplicate number, 500) nothing is surfaced \u2014 the create form just sits with no message and the manager gets no signal that the invoice was NOT issued. deleteMutation is likewise silent on failure. Verified against sibling pages that DO handle mutation errors (financial.tsx, notifications.tsx onError branches), so the pattern is established and this page dropped it."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:16-208 \u2014 the entire Epic-144 Portfolio Performance dashboard renders hardcoded mock data (mockDashboardSummary, mockPropertyCards, mockCashFlowTrend, mockBenchmark, mockAlerts, mockMetrics) with the comment 'Mock data for demonstration - would be fetched from API'; the 377-line component has NO useQuery / API import / fetch of any kind. It displays fabricated financial figures (totalPortfolioValue, totalEquity, ytdNoi, ytdCashFlow, ltvRatio). Static trace: the page is exported via features/portfolio-performance/pages/index.ts + feature index.ts but is NOT wired into any route (0 references in routes/ or App.tsx), so it is currently unreachable \u2014 but the module ships an analytics dashboard that will surface real-looking-but-fake numbers the moment it is routed. Completeness/data-integrity gap: the API integration for this Epic-144 feature is unimplemented."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-reality-server-view-no-visibility-gate",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-reality-server-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:863-874 \u2014 record_view (public unauthenticated POST /api/v1/listings/{id}/view) takes an arbitrary Path<Uuid> and calls track_view(id, \"website\") with NO status='active' / visibility check, then returns 204 unconditionally. Every other public path in this file gates on status='active' (detail query :369, search :703, categories :793). Impact is limited to analytics pollution / view-count inflation against non-discoverable draft/paused/nonexistent listings \u2014 no data leak, no crash \u2014 hence Low. Additionally the OpenAPI contract at :858-861 advertises a '404 Listing not found' response the handler can never emit, so the documented contract and the implementation diverge."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-web-pricealert-mut-noerr",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-reality-web-tier1d.json",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 \u2014 markAllRead.mutate() and markRead.mutate(alert.id) are fired with no onError handler and no isError/error branch consumed for either mutation (useMarkFavoriteAlertRead / useMarkAllFavoriteAlertsRead). If the mark-read POST fails (network/500), the error is silently swallowed: the row stays visually 'unread', the button re-enables, and the user gets no feedback or retry cue. The query error IS handled (line ~105) but the mutation errors are not \u2014 a persistently failing mark-read looks like a broken/ignored click. Verified: onError absent; only isPending is consumed for disabling."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher review \u00b7 2026-07-15-reality-web-tier1d.json",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:67,91,94,105 \u2014 SSO callback ('use client') page renders hardcoded English user-facing strings ('Invalid state token. Please try logging in again.', 'Login Failed', 'Return Home', 'Completing login...') with NO next-intl import (no useTranslations; verified the file imports only next/navigation + react). This page lives under [locale] and is hit by every SSO login redirect, so cs/de/sk users see untranslated English at a critical auth step. Sibling components (AgencyDashboard, PriceAlerts) all use useTranslations, making this the outlier i18n gap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "reality-web"
+    },
+    {
+      "id": "lag-warning-2026-07-15",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso was 2026-07-13T02:11:42Z (~68 h ago); routine missed two scheduled runs and skipped the incremental sweep for 2 days.",
+        "Dispatcher continued to run (49 non-research commits + hundreds of PR events landed in the window), so this run is doing a catch-up ingest of the dispatcher's accumulated code-review signals rather than fresh observation."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/portal_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs touched 3\u00d7 since last cursor (PR #2286 replay-protection window; PR #2353 inquiry-webhook 5xx retry; PR #2354 per-portal replay + dedup extension). ~1289 net line-churn across the window \u2014 highest single code-file churn after i18n/lockfile/generated exclusions."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "resolution-code-review-api-handlers-news-articles-idor",
+      "type": "resolution",
+      "source": "resolution check",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2316 (merged 2026-07-15) closes issue #2314 which was the dispatcher-filed tracking issue for code-review-api-handlers-news-articles-idor. Backlog row flipped to status=done."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-15.md && head -1 == '# 2026-07-15'",
+      "observed": "will be true after brief written",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor advancement check",
+      "observed": "last_pr_seen 2271\u21922356; last_issue_seen 2272\u21922343; seen_signals +34; hotspot_history +1 (portal_webhooks.rs)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [items[].id]|unique length",
+      "observed": "unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with non-zero score_delta",
+      "observed": "true (all 32 code-review-* signals are first-time)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8; decayed items updated (no open items >14d)",
+      "observed": "max score = 6 (test-gap-inquiry-idor-regression, terminal-done); every open item created today \u2014 no decay applicable",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation present per new plan",
+      "observed": "brief lists 'adversarial pass: passed' per new plan",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + all 15 sections + capability + mode + files exist",
+      "observed": "2 new plans; both pass placeholder-rot + section + files-exist checks",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/ | wc -l",
+      "observed": "will be 0 (routine touches only .research/)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "no matches in staged .research/ diff",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "regenerated from backlog.json this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures this run (Phase 1.5 and 1.6 skipped intentionally, not failed)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still tracked",
+      "observed": "no plans were removed this run (2 new plans only)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "archive not touched this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "regenerated from backlog.json this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions empty (no candidate this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifact validity when Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped this run \u2192 no-op gate",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score\u22653 + allowlist this run"
+}

@@ -1,9 +1,12 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-13 02:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-15 22:16 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | security | `code-review-api-handlers-news-articles-idor` | code-review: api handlers news articles idor | done | 2026-07-15 |  |
+| 3 | test-gap | `code-review-mobile-rn-nfc-no-tests` | code-review: mobile rn nfc no tests | ready | 2026-07-15 | [plan](plans/code-review-mobile-rn-nfc-no-tests.md) |
+| 3 | bug | `code-review-api-handlers-missing-authz-article` | code-review: api handlers missing authz article | ready | 2026-07-15 | [plan](plans/code-review-api-handlers-missing-authz-article.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
@@ -18,7 +21,20 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs | open | 2026-07-12 |  |
+| 2 | bug | `code-review-mobile-rn-announcements-i18n` | code-review: mobile rn announcements i18n | open | 2026-07-15 |  |
+| 2 | bug | `code-review-mobile-rn-dashboard-no-err-ui` | code-review: mobile rn dashboard no err ui | open | 2026-07-15 |  |
+| 2 | test-gap | `code-review-mobile-rn-deeplink-mgr-untested` | code-review: mobile rn deeplink mgr untested | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-core-units-fetch-noauth` | code-review: ppt web core units fetch noauth | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-core-dashboard-unguarded` | code-review: ppt web core dashboard unguarded | open | 2026-07-15 |  |
+| 2 | bug | `code-review-api-handlers-unenforced-toggle-flags` | code-review: api handlers unenforced toggle flags | open | 2026-07-15 |  |
+| 2 | bug | `code-review-mobile-native-kmp-sso-restore-drops-token` | code-review: mobile native kmp sso restore drops token | open | 2026-07-15 |  |
+| 2 | test-gap | `code-review-mobile-native-kmp-apiclient-no-test` | code-review: mobile native kmp apiclient no test | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-core-auth-stale-token-init` | code-review: ppt web core auth stale token init | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-ui-paymatch-mut-noerr` | code-review: ppt web ui paymatch mut noerr | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-ui-invoice-mut-noerr` | code-review: ppt web ui invoice mut noerr | open | 2026-07-15 |  |
+| 2 | bug | `code-review-ppt-web-ui-portfolio-dash-mock` | code-review: ppt web ui portfolio dash mock | open | 2026-07-15 |  |
+| 2 | bug | `code-review-reality-web-pricealert-mut-noerr` | code-review: reality web pricealert mut noerr | open | 2026-07-15 |  |
+| 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs | done | 2026-07-12 |  |
 | 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | done | 2026-07-05 |  |
@@ -63,6 +79,23 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | bug | `code-review-mobile-rn-queue-swallow-error` | code-review: mobile rn queue swallow error | open | 2026-07-15 |  |
+| 1 | test-gap | `code-review-mobile-rn-voice-module-no-tests` | code-review: mobile rn voice module no tests | open | 2026-07-15 |  |
+| 1 | bug | `code-review-mobile-rn-fault-category-i18n` | code-review: mobile rn fault category i18n | open | 2026-07-15 |  |
+| 1 | bug | `code-review-mobile-rn-meter-console-error` | code-review: mobile rn meter console error | open | 2026-07-15 |  |
+| 1 | bug | `code-review-mobile-rn-onboarding-untested` | code-review: mobile rn onboarding untested | open | 2026-07-15 |  |
+| 1 | bug | `code-review-ppt-web-core-websocket-prod-console` | code-review: ppt web core websocket prod console | open | 2026-07-15 |  |
+| 1 | bug | `code-review-ppt-web-core-errorhandler-i18n-gap` | code-review: ppt web core errorhandler i18n gap | open | 2026-07-15 |  |
+| 1 | bug | `code-review-ppt-web-core-sessions-cast` | code-review: ppt web core sessions cast | open | 2026-07-15 |  |
+| 1 | bug | `code-review-api-core-scheduler-mutex-poison` | code-review: api core scheduler mutex poison | open | 2026-07-15 |  |
+| 1 | bug | `code-review-api-handlers-rng-expect-panic` | code-review: api handlers rng expect panic | open | 2026-07-15 |  |
+| 1 | bug | `code-review-mobile-native-kmp-nn-assert-state` | code-review: mobile native kmp nn assert state | open | 2026-07-15 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-networkerror-untested` | code-review: mobile native kmp networkerror untested | open | 2026-07-15 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-inquiryrepo-err-branch` | code-review: mobile native kmp inquiryrepo err branch | open | 2026-07-15 |  |
+| 1 | bug | `code-review-ppt-web-core-nav-aria-no-i18n` | code-review: ppt web core nav aria no i18n | open | 2026-07-15 |  |
+| 1 | bug | `code-review-reality-server-view-no-visibility-gate` | code-review: reality server view no visibility gate | open | 2026-07-15 |  |
+| 1 | bug | `code-review-reality-web-sso-callback-i18n` | code-review: reality web sso callback i18n | open | 2026-07-15 |  |
+| 1 | refactor | `refactor-churn-hotspots-api-server-portal_webhooks-2026-07-15` | code-churn hotspot: api-server routes/portal_webhooks.rs (3 touches in this window) | open | 2026-07-15 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | dropped | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | done | 2026-07-09 |  |
