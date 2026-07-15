@@ -6672,6 +6672,32 @@
       }
     },
     {
+      "id": "gh-issue-2330",
+      "action": "Follow-up: extend replay protection to per-portal receivers, dedup, docs, overflow edge (PR #2286) (Closes #2330)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T05:14:16Z (#2330) | dev-reconcile 2026-07-15T22:04:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T05:14:16Z",
+      "issue_ref": {
+        "number": 2330,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "8493c6d45bb2b10aa67e25cfd1dce21a7d0e015e",
+        "subject": "gh-issue-2330: extend webhook replay protection to per-portal receivers, dedup, docs, overflow edge (#2354)",
+        "at": "2026-07-15T22:04:23Z"
+      }
+    },
+    {
       "id": "gh-issue-2331",
       "action": "Follow-up: KMP price-tracking surface — Decimal-as-string wire mismatch breaks alert/favorites decoding + no visible screen shipped (PR #2288) (Closes #2331)",
       "owner_role": "pm-tech-lead",

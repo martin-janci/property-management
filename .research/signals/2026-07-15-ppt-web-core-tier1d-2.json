@@ -1,0 +1,26 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-15",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: claimable=0 < floor=36; backlog has 0 open code-review-finding items so no saturation-skip). state.review_cursor lists ppt-web-core as oldest-unreviewed (2026-07-07). NOTE: the cursor is stale — ppt-web-core was in fact reviewed again on 07-10, 07-14, and earlier today (2026-07-15-ppt-web-core-tier1d.json). To avoid duplicates the Frontend expert examined the IoT WS hook + settings/session logic, disjoint from the file sets covered by prior runs (which hit lib/api.ts, lib/websocket.ts, contexts/AuthContext.tsx, App.tsx, lib/errorHandler.ts, routes/groups/*, useActionQueue, usePerformanceMetrics). Of 2 raw expert findings, 1 was discarded as an exact duplicate of code-review-ppt-web-core-sessions-cast (2026-07-14-ppt-web-core.json, SessionsPage.tsx:84). 1 genuinely fresh finding survives.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:88 — onclose reconnects on a fixed 5s timer with NO max-attempt cap and NO exponential backoff; against a persistently-down/unreachable WS endpoint or a token that keeps being rejected, the hook reconnects forever every 5s, hammering the server. This diverges from the app's own hardened pattern in lib/websocket.ts:514-529, which explicitly guards this case ('hammer a dead endpoint forever ... acting as a small DoS amplifier').",
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:57 — connect() early-returns without scheduling any retry when the token/org is briefly absent, so a transient-missing token leaves isConnected=false with no recovery path. Distinct from the prior 2026-07-07 iot-ws finding (buildWsUrl base URL, lines 32-36)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

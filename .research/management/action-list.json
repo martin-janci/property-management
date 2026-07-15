@@ -12,26 +12,6 @@
       "deadline": null,
       "first_open_at": "2026-07-15T01:55:00Z",
       "source": "gap-scan 2026-07-15"
-    },
-    {
-      "id": "gh-issue-2330",
-      "action": "Follow-up: extend replay protection to per-portal receivers, dedup, docs, overflow edge (PR #2286) (Closes #2330)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T05:14:16Z (#2330)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T05:14:16Z",
-      "issue_ref": {
-        "number": 2330,
-        "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"

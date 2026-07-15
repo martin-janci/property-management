@@ -1,27 +1,4 @@
 {
-  "generated": "2026-07-15T20:29:25Z",
-  "assignments": [
-    {
-      "task_id": "gh-issue-2330",
-      "branch": "auto-impl/gh-issue-2330-e38e6d0f",
-      "status": "review",
-      "claimed_at": "2026-07-15T14:08:55Z",
-      "last_updated": "2026-07-15T20:29:25Z",
-      "status_changed_at": "2026-07-15T20:29:25Z",
-      "pr_number": 2354,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2354",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [ci-fail: generate-sdks stale after API surface change; respawn to regenerate SDK/OpenAPI] [CI-fix applied round=1: generate-sdks was a PR-independent tooling crash (unpinned @hey-api/openapi-ts); pinned versions in api-validation.yml, CI green; auto-merge SQUASH enabled] [respawn round=2: backend test-shard(0)+test-rest failing on head c0cfba1; followup driver to diagnose+fix] [round=2 diagnosis: NOT a code defect — utoipa-swagger-ui zip-download build flake on 2 of 5 api-server CI legs; PR Rust changes passed on earlier head 7f98e64; re-triggered CI via empty commit 1b66151; reset to review, fix_rounds->1 to avoid flake-driven quarantine]",
-      "reviewer_summary": "verdict=approve head_oid=c0cfba13634cfd662e8e9a40ff3e3993a3106cd3 note=approved security work + CI-tooling pin (openapi-ts@0.99.0/typescript pin fixes generate-sdks); auto-merge enabled",
-      "last_reviewed_oid": "c0cfba13634cfd662e8e9a40ff3e3993a3106cd3",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": "2026-07-15T18:27:47Z"
-    }
-  ]
+  "generated": "2026-07-15T22:13:43Z",
+  "assignments": []
 }
