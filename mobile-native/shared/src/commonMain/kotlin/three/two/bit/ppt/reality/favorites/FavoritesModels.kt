@@ -2,6 +2,8 @@ package three.two.bit.ppt.reality.favorites
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import three.two.bit.ppt.reality.api.DecimalAsDoubleSerializer
+import three.two.bit.ppt.reality.api.DecimalAsLongSerializer
 import three.two.bit.ppt.reality.listing.ListingSummary
 
 /**
@@ -25,6 +27,11 @@ import three.two.bit.ppt.reality.listing.ListingSummary
  * - `title`, `current_price`, `currency`, `city`, `property_type`, `transaction_type`, `photo_url`,
  *   `status`, `price_changed`, `price_change_percentage`, `price_alert_enabled` — flat listing
  *   summary embedded by the server.
+ *
+ * Wire note: `current_price` (`DECIMAL(15,2)`) and `price_change_percentage` (`DECIMAL(5,2)`) are
+ * `rust_decimal::Decimal` columns and the backend enables `serde-str`, so they arrive as JSON
+ * **strings** (`"185000.00"`, `"-5.20"`), not numbers — decoded via the wire-tolerant
+ * [DecimalAsLongSerializer] / [DecimalAsDoubleSerializer] (which also accept the numeric form).
  * - `listing` — always `null` for this endpoint; kept for backward compat with any code that still
  *   checks `entry.listing`.
  */
@@ -38,7 +45,9 @@ data class FavoriteEntry(
     @SerialName("created_at") val createdAt: String,
     // Flat listing summary (reality-server embeds these directly).
     val title: String? = null,
-    @SerialName("current_price") val currentPrice: Long? = null,
+    @SerialName("current_price")
+    @Serializable(with = DecimalAsLongSerializer::class)
+    val currentPrice: Long? = null,
     val currency: String? = null,
     val city: String? = null,
     @SerialName("property_type") val propertyType: String? = null,
@@ -46,7 +55,9 @@ data class FavoriteEntry(
     @SerialName("photo_url") val photoUrl: String? = null,
     val status: String? = null,
     @SerialName("price_changed") val priceChanged: Boolean = false,
-    @SerialName("price_change_percentage") val priceChangePercentage: Double? = null,
+    @SerialName("price_change_percentage")
+    @Serializable(with = DecimalAsDoubleSerializer::class)
+    val priceChangePercentage: Double? = null,
     @SerialName("price_alert_enabled") val priceAlertEnabled: Boolean = false,
     // Retained for any callers that still check the nested shape; always null
     // from the real server but may be set in unit tests using mock data.
@@ -99,11 +110,14 @@ data class AddFavoriteResponse(
  *
  * Wire notes:
  * - `alert_type` is `"price_change"` or `"status_change"`. Use [isPriceChange].
- * - Monetary fields (`old_price` / `new_price`) are whole-currency numbers on the wire — mapped to
- *   `Long?` to match the rest of the portal models ([FavoriteEntry.currentPrice],
- *   `ListingSummary.price`). They are `null` for status-only alerts.
- * - `change_percentage` is a signed fractional number (negative = price drop), mapped to `Double?`
- *   to match [FavoriteEntry.priceChangePercentage].
+ * - Monetary fields (`old_price` / `new_price`) are `rust_decimal::Decimal` columns
+ *   (`DECIMAL(15,2)`) and the backend enables `serde-str`, so they arrive as JSON **strings**
+ *   (`"200000.00"`), NOT numbers. They are decoded via the wire-tolerant [DecimalAsLongSerializer]
+ *   (which drops the sub-unit scale and also accepts the numeric form) and are `null` for
+ *   status-only alerts.
+ * - `change_percentage` is a signed fractional `DECIMAL(5,2)` (negative = price drop), likewise a
+ *   JSON string (`"-7.50"`) on the wire — decoded via [DecimalAsDoubleSerializer]. It is nullable
+ *   in the DB, so it can be absent even on a genuine price-change alert.
  * - `status` is the delivery state: `"pending"` (unread) | `"sent"` (read) | `"failed"`. Use
  *   [isUnread].
  */
@@ -114,10 +128,16 @@ data class FavoriteAlert(
     @SerialName("listing_id") val listingId: String,
     val title: String,
     @SerialName("alert_type") val alertType: String,
-    @SerialName("old_price") val oldPrice: Long? = null,
-    @SerialName("new_price") val newPrice: Long? = null,
+    @SerialName("old_price")
+    @Serializable(with = DecimalAsLongSerializer::class)
+    val oldPrice: Long? = null,
+    @SerialName("new_price")
+    @Serializable(with = DecimalAsLongSerializer::class)
+    val newPrice: Long? = null,
     val currency: String? = null,
-    @SerialName("change_percentage") val changePercentage: Double? = null,
+    @SerialName("change_percentage")
+    @Serializable(with = DecimalAsDoubleSerializer::class)
+    val changePercentage: Double? = null,
     @SerialName("previous_status") val previousStatus: String? = null,
     @SerialName("new_status") val newStatus: String? = null,
     val status: String,
@@ -132,9 +152,24 @@ data class FavoriteAlert(
     val isUnread: Boolean
         get() = status == "pending"
 
-    /** True when the price moved down (a drop) — only meaningful for price alerts. */
+    /**
+     * True when the price moved down (a drop) — only meaningful for price alerts.
+     *
+     * Prefers the signed [changePercentage], but `change_percentage` is nullable in the DB, so on
+     * a price-change alert that carries prices without a percentage it falls back to comparing
+     * [newPrice] against [oldPrice].
+     */
     val isPriceDrop: Boolean
-        get() = isPriceChange && (changePercentage ?: 0.0) < 0.0
+        get() =
+            isPriceChange &&
+                when (val pct = changePercentage) {
+                    null -> {
+                        val old = oldPrice
+                        val new = newPrice
+                        old != null && new != null && new < old
+                    }
+                    else -> pct < 0.0
+                }
 }
 
 /**
