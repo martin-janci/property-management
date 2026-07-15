@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-15T20:14:47Z",
+  "archived_at": "2026-07-15T20:29:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6642,6 +6642,33 @@
         "merged_pr": 2344,
         "merged_at": "2026-07-15T14:19:43Z",
         "at": "2026-07-15T16:05:45Z"
+      }
+    },
+    {
+      "id": "gh-issue-2329",
+      "action": "Follow-up: consolidate triplicated JWT tenant-decode + fix stale useTenantId cache on logout (PR #2305) (Closes #2329)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T05:14:16Z (#2329) | gc1-reconcile 2026-07-15T20:29:25Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T05:14:16Z",
+      "issue_ref": {
+        "number": 2329,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2352,
+        "merged_at": "2026-07-15T20:23:58Z",
+        "at": "2026-07-15T20:29:25Z"
       }
     },
     {
