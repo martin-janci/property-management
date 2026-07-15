@@ -1050,6 +1050,12 @@
       "errorTitle": "Nepodařilo se načíst spuštění",
       "errorMessage": "Zkuste to prosím později."
     },
+    "schedule": {
+      "created": "Plán byl úspěšně vytvořen.",
+      "createFailed": "Plán se nepodařilo vytvořit.",
+      "updated": "Plán byl úspěšně aktualizován.",
+      "updateFailed": "Plán se nepodařilo aktualizovat."
+    },
     "execution": {
       "downloadFailed": "Nepodařilo se stáhnout zprávu.",
       "retryQueued": "Spuštění bylo zařazeno do fronty k opakování.",

@@ -16,7 +16,6 @@ import {
   useDownloadReport,
   useReportExecutionHistory,
   useReportSchedules,
-  useReports,
   useRetryReportExecution,
   useUpdateScheduleCron,
 } from '@ppt/api-client';
@@ -40,10 +39,10 @@ function ReportsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? '';
 
-  // gap-81-1: report definitions + schedules feed the Schedules tab. Without
-  // the report list the "New Schedule" form's report selector is empty and a
-  // schedule can never be created.
-  const { data: reportsData, isLoading: reportsLoading } = useReports(organizationId);
+  // issue #2324: the "New Schedule" report selector is fed by the fixed set of
+  // built-in report types (ScheduleForm → BUILTIN_REPORTS), not a
+  // report-definitions endpoint — there is deliberately no such table (#2198).
+  // The Schedules tab list is backed by GET /api/v1/reports/schedules.
   const { data: schedulesData, isLoading: schedulesLoading } = useReportSchedules(organizationId);
   const createScheduleMutation = useCreateSchedule(organizationId);
 
@@ -56,10 +55,13 @@ function ReportsPageRoute() {
         message: t('reports.schedule.created', 'Schedule created successfully.'),
       });
     } catch (e) {
+      // Surface the backend's specific error (e.g. INVALID_FREQUENCY) instead of
+      // a fixed string so the user sees why creation failed (issue #2324).
+      const detail = e instanceof Error && e.message ? e.message : undefined;
       showToast({
         type: 'error',
         title: t('common.error'),
-        message: t('reports.schedule.createFailed', 'Failed to create schedule.'),
+        message: detail ?? t('reports.schedule.createFailed', 'Failed to create schedule.'),
       });
       throw e;
     }
@@ -150,9 +152,9 @@ function ReportsPageRoute() {
     <ReportsPage
       organizationId={organizationId}
       dataSources={[]}
-      reports={reportsData?.reports ?? []}
+      reports={[]}
       schedules={schedulesData?.schedules ?? []}
-      isLoading={reportsLoading || schedulesLoading}
+      isLoading={schedulesLoading}
       kpis={[]}
       buildings={[]}
       trendAnalysis={

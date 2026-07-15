@@ -211,8 +211,11 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
-        // gap-81-1: Create a new report schedule
-        .route("/schedules", axum::routing::post(create_schedule))
+        // gap-81-1: Create a new report schedule; issue #2324: list schedules
+        .route(
+            "/schedules",
+            axum::routing::post(create_schedule).get(list_schedules),
+        )
         // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
         .route("/schedules/{id}", axum::routing::put(update_schedule))
         // Epic 81: Story 81.1 — Schedule pause/resume
@@ -2138,6 +2141,85 @@ pub(crate) fn compute_next_run_for_schedule(
             )
         }
     }
+}
+
+/// Query parameters for `GET /api/v1/reports/schedules` (issue #2324).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ListSchedulesQuery {
+    /// Accepted for client compatibility but **ignored for scoping** — the
+    /// organisation is always taken from the authenticated `RlsConnection`
+    /// tenant, never a client-supplied value, so a caller cannot list another
+    /// org's schedules.
+    #[serde(default)]
+    #[allow(dead_code)]
+    pub organization_id: Option<Uuid>,
+    /// Optional filter: only schedules for this (opaque) `report_id`.
+    pub report_id: Option<Uuid>,
+    /// Optional filter: `true` = active only, `false` = paused/inactive only.
+    pub is_active: Option<bool>,
+}
+
+/// Response for `GET /api/v1/reports/schedules` (issue #2324).
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ListSchedulesResponse {
+    /// Schedules belonging to the caller's organisation, newest first.
+    pub schedules: Vec<ReportSchedule>,
+    /// Number of schedules returned.
+    pub total: usize,
+}
+
+/// List report schedules for the authenticated tenant (issue #2324).
+///
+/// Backs the ppt-web Schedules tab (`useReportSchedules` → `listSchedules()`),
+/// which before this endpoint existed called a route the router only registered
+/// as POST — so the list never loaded (405) and a freshly created schedule was
+/// invisible. Any authenticated org member may read their org's schedules.
+///
+/// # Security
+///
+/// Uses `RlsConnection` so the tenant is re-derived from the database session,
+/// and the repository query filters on `organization_id = rls.tenant_id()` —
+/// a principal can never see another org's schedules even by guessing IDs.
+#[utoipa::path(
+    get,
+    path = "/api/v1/reports/schedules",
+    tag = "reports",
+    params(ListSchedulesQuery),
+    responses(
+        (status = 200, description = "Schedules for the caller's organisation", body = ListSchedulesResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    )
+)]
+pub async fn list_schedules(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Query(query): Query<ListSchedulesQuery>,
+) -> Result<Json<ListSchedulesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Tenant scoping comes from the authenticated context, not the query string.
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
+    let schedules = state
+        .report_schedule_repo
+        .list_by_org(caller_org_id, query.report_id, query.is_active)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                org_id = %caller_org_id,
+                "Failed to list report schedules"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to list report schedules",
+                )),
+            )
+        })?;
+
+    let total = schedules.len();
+    Ok(Json(ListSchedulesResponse { schedules, total }))
 }
 
 /// Request body for `POST /api/v1/reports/schedules`.

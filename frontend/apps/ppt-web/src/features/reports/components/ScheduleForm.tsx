@@ -4,29 +4,56 @@
  * Form for creating and editing report schedules.
  */
 
-import type {
-  CreateReportSchedule,
-  ReportDefinition,
-  ReportFormat,
-  ScheduleFrequency,
-} from '@ppt/api-client';
+import type { CreateReportSchedule, ReportFormat, ScheduleFrequency } from '@ppt/api-client';
 import { useState } from 'react';
+import { BUILTIN_REPORTS } from '../builtinReports';
 
 interface ScheduleFormProps {
-  reports: ReportDefinition[];
   initialData?: Partial<CreateReportSchedule>;
   onSubmit: (data: CreateReportSchedule) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
+// Only the cadences the backend `create_schedule` handler accepts. Quarterly and
+// yearly used to be offered here but the backend rejects them with 400
+// INVALID_FREQUENCY (issue #2324, finding 2), so they are removed to keep the
+// form in sync with the contract.
 const FREQUENCIES: { value: ScheduleFrequency; label: string }[] = [
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'yearly', label: 'Yearly' },
 ];
+
+/**
+ * Derive a 5-field UNIX cron expression from the legacy form fields (issue
+ * #2324, finding 3) so a freshly-created schedule is cron-canonical from birth
+ * and round-trips losslessly through the cron-first edit modal. Returns
+ * `undefined` when the time can't be parsed (the backend then falls back to the
+ * legacy frequency/time cadence).
+ */
+function deriveCron(
+  frequency: ScheduleFrequency,
+  time: string,
+  dayOfWeek: number,
+  dayOfMonth: number
+): string | undefined {
+  const match = /^(\d{1,2}):(\d{1,2})$/.exec(time);
+  if (!match) return undefined;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return undefined;
+  switch (frequency) {
+    case 'daily':
+      return `${minute} ${hour} * * *`;
+    case 'weekly':
+      return `${minute} ${hour} * * ${dayOfWeek}`;
+    case 'monthly':
+      return `${minute} ${hour} ${dayOfMonth} * *`;
+    default:
+      return undefined;
+  }
+}
 
 const FORMATS: { value: ReportFormat; label: string }[] = [
   { value: 'pdf', label: 'PDF' },
@@ -51,13 +78,7 @@ interface FormErrors {
   time?: string;
 }
 
-export function ScheduleForm({
-  reports,
-  initialData,
-  onSubmit,
-  onCancel,
-  isSubmitting,
-}: ScheduleFormProps) {
+export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: ScheduleFormProps) {
   const [reportId, setReportId] = useState(initialData?.report_id || '');
   const [name, setName] = useState(initialData?.name || '');
   const [frequency, setFrequency] = useState<ScheduleFrequency>(initialData?.frequency || 'weekly');
@@ -107,16 +128,22 @@ export function ScheduleForm({
 
     if (!validate()) return;
 
+    const dow = frequency === 'weekly' ? dayOfWeek : undefined;
+    const dom = frequency === 'monthly' ? dayOfMonth : undefined;
+
     onSubmit({
       report_id: reportId,
       name,
       frequency,
-      day_of_week: frequency === 'weekly' ? dayOfWeek : undefined,
-      day_of_month: frequency === 'monthly' || frequency === 'quarterly' ? dayOfMonth : undefined,
+      day_of_week: dow,
+      day_of_month: dom,
       time,
       timezone,
       format,
       recipients: recipients.split(',').map((e) => e.trim()),
+      // Cron-canonical from birth (issue #2324, finding 3): the backend prefers
+      // this over the legacy frequency/time fields when computing next_run_at.
+      cron_expression: deriveCron(frequency, time, dayOfWeek, dayOfMonth),
     });
   };
 
@@ -139,7 +166,7 @@ export function ScheduleForm({
           }`}
         >
           <option value="">Select a report</option>
-          {reports.map((report) => (
+          {BUILTIN_REPORTS.map((report) => (
             <option key={report.id} value={report.id}>
               {report.name}
             </option>
@@ -209,7 +236,7 @@ export function ScheduleForm({
         </div>
       )}
 
-      {(frequency === 'monthly' || frequency === 'quarterly') && (
+      {frequency === 'monthly' && (
         <div>
           <label htmlFor="day-of-month" className="block text-sm font-medium text-gray-700">
             Day of Month

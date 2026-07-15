@@ -9,7 +9,6 @@ import {
   createSchedule,
   getReportExecutionDownloadUrl,
   getReportExecutionHistory,
-  listReports,
   listSchedules,
   pauseSchedule,
   resumeSchedule,
@@ -20,7 +19,6 @@ import {
 import type {
   CreateReportSchedule,
   CronScheduleUpdateRequest,
-  ListReportsParams,
   ListSchedulesParams,
   ReportExecutionHistoryParams,
   ReportExecutionStatus,
@@ -29,9 +27,6 @@ import type {
 // Query keys factory for cache management
 export const reportKeys = {
   all: ['reports'] as const,
-  definitions: () => [...reportKeys.all, 'definitions'] as const,
-  definitionList: (organizationId: string, filters?: Omit<ListReportsParams, 'organization_id'>) =>
-    [...reportKeys.definitions(), organizationId, filters] as const,
   schedules: () => [...reportKeys.all, 'schedules'] as const,
   scheduleList: (organizationId: string, filters?: Omit<ListSchedulesParams, 'organization_id'>) =>
     [...reportKeys.schedules(), 'list', organizationId, filters] as const,
@@ -45,23 +40,11 @@ export const reportKeys = {
   execution: (id: string) => [...reportKeys.all, 'execution', id] as const,
 };
 
-/**
- * Hook to list report definitions for an organization (Epic 53 / gap-81-1).
- *
- * Populates the report selector in the "New Schedule" form — without this the
- * ScheduleForm dropdown is empty and a schedule can never be created.
- */
-export function useReports(
-  organizationId: string,
-  filters?: Omit<ListReportsParams, 'organization_id'>,
-  options?: { enabled?: boolean }
-) {
-  return useQuery({
-    queryKey: reportKeys.definitionList(organizationId, filters),
-    queryFn: () => listReports({ organization_id: organizationId, ...filters }),
-    enabled: options?.enabled !== false && !!organizationId,
-  });
-}
+// NOTE (issue #2324): the former `useReports` hook was removed. It fetched
+// `GET /api/v1/reports/definitions`, a route that does not exist (there is no
+// report-definitions table by design — #2198), so it never populated the
+// "New Schedule" report selector. The selector now uses the fixed built-in
+// report set (`ppt-web` `features/reports/builtinReports.ts`) instead.
 
 /**
  * Hook to list report schedules for an organization (Epic 53 / gap-81-1).

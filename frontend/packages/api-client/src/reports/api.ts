@@ -13,8 +13,6 @@ import type {
   CreateReportSchedule,
   CronScheduleUpdateRequest,
   DataSource,
-  ListReportsParams,
-  ListReportsResponse,
   ListSchedulesParams,
   ListSchedulesResponse,
   PeriodComparison,
@@ -61,16 +59,6 @@ export async function createReport(
     method: 'POST',
     body: JSON.stringify({ organization_id: organizationId, ...data }),
   });
-}
-
-export async function listReports(params: ListReportsParams): Promise<ListReportsResponse> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('organization_id', params.organization_id);
-  if (params.type) searchParams.set('type', params.type);
-  if (params.created_by) searchParams.set('created_by', params.created_by);
-  if (params.limit) searchParams.set('limit', String(params.limit));
-  if (params.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/definitions?${searchParams}`);
 }
 
 export async function getReport(id: string): Promise<ReportDefinition> {

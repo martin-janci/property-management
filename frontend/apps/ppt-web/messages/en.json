@@ -3369,6 +3369,12 @@
       "errorTitle": "Failed to load executions",
       "errorMessage": "Please try again later."
     },
+    "schedule": {
+      "created": "Schedule created successfully.",
+      "createFailed": "Failed to create schedule.",
+      "updated": "Schedule updated successfully.",
+      "updateFailed": "Failed to update schedule."
+    },
     "execution": {
       "downloadFailed": "Failed to download report.",
       "retryQueued": "Execution queued for retry.",

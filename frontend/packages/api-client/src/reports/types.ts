@@ -125,6 +125,16 @@ export interface CreateReportSchedule {
   timezone?: string;
   format?: ReportFormat;
   recipients: string[];
+  /**
+   * Optional 5-field UNIX cron expression (issue #2324, finding 3).
+   *
+   * When present the backend treats it as the cadence source of truth and
+   * computes `next_run_at` from it, keeping newly-created rows cron-canonical
+   * so a later edit via the cron-first EditScheduleModal does not cross two
+   * different cadence models. The create form derives this from the legacy
+   * frequency/day/time fields on submit.
+   */
+  cron_expression?: string;
 }
 
 export interface ReportRun {

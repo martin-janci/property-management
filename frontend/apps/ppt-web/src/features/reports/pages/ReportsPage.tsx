@@ -364,7 +364,6 @@ export function ReportsPage({
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-6">Create Schedule</h2>
                 <ScheduleForm
-                  reports={reports}
                   onSubmit={async (data) => {
                     await onCreateSchedule?.(data);
                     setShowScheduleForm(false);

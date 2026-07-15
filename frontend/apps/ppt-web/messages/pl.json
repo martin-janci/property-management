@@ -1005,6 +1005,12 @@
       "errorTitle": "Nie udało się wczytać wykonań",
       "errorMessage": "Spróbuj ponownie później."
     },
+    "schedule": {
+      "created": "Harmonogram został utworzony.",
+      "createFailed": "Nie udało się utworzyć harmonogramu.",
+      "updated": "Harmonogram został zaktualizowany.",
+      "updateFailed": "Nie udało się zaktualizować harmonogramu."
+    },
     "execution": {
       "downloadFailed": "Nie udało się pobrać raportu.",
       "retryQueued": "Wykonanie zostało dodane do kolejki ponowień.",

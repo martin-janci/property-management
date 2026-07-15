@@ -22,6 +22,7 @@ import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BUILTIN_REPORTS } from '../../features/reports/builtinReports';
 import { reportRoutes } from './reports';
 
 const ORG_ID = 'org-1';
@@ -42,10 +43,6 @@ vi.mock('../../contexts', async (importOriginal) => ({
 
 vi.mock('@ppt/api-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@ppt/api-client')>()),
-  useReports: () => ({
-    data: { reports: [{ id: 'rep-1', name: 'Monthly Revenue' }], total: 1 },
-    isLoading: false,
-  }),
   useReportSchedules: () => ({ data: { schedules: [], total: 0 }, isLoading: false }),
   useCreateSchedule: () => ({ mutateAsync: mockCreateMutateAsync }),
   useReportExecutionHistory: () => ({
@@ -88,9 +85,11 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
     // Open the create form.
     await user.click(await screen.findByRole('button', { name: /new schedule/i }));
 
-    // Fill the required fields. The report selector is populated from the
-    // route's useReports data — empty before this fix.
-    await user.selectOptions(screen.getByRole('combobox', { name: /report/i }), 'rep-1');
+    // Fill the required fields. The report selector is now populated from the
+    // fixed built-in report set (issue #2324) — there is no report-definitions
+    // endpoint, so the dropdown no longer depends on a network call.
+    const builtin = BUILTIN_REPORTS[0];
+    await user.selectOptions(screen.getByRole('combobox', { name: /report/i }), builtin.id);
     await user.type(screen.getByLabelText(/schedule name/i), 'Weekly Revenue Summary');
     await user.type(screen.getByLabelText(/recipients/i), 'owner@example.com');
 
@@ -101,7 +100,7 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
     });
     expect(mockCreateMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
-        report_id: 'rep-1',
+        report_id: builtin.id,
         name: 'Weekly Revenue Summary',
         recipients: ['owner@example.com'],
       })

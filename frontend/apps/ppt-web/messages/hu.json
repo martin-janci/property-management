@@ -999,6 +999,12 @@
       "errorTitle": "Nem sikerült betölteni a végrehajtásokat",
       "errorMessage": "Kérjük, próbálja újra később."
     },
+    "schedule": {
+      "created": "Ütemezés sikeresen létrehozva.",
+      "createFailed": "Nem sikerült létrehozni az ütemezést.",
+      "updated": "Ütemezés sikeresen frissítve.",
+      "updateFailed": "Nem sikerült frissíteni az ütemezést."
+    },
     "execution": {
       "downloadFailed": "Nem sikerült letölteni a jelentést.",
       "retryQueued": "A végrehajtás újraküldésre várakozik.",
