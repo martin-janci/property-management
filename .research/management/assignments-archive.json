@@ -5431,6 +5431,28 @@
       "merge_attempted_at": "2026-07-15T10:15:46Z"
     },
     {
+      "task_id": "gh-issue-2322",
+      "branch": "auto-impl/gh-issue-2322-26273087",
+      "status": "merged",
+      "claimed_at": "2026-07-15T08:08:53Z",
+      "last_updated": "2026-07-15T12:24:07Z",
+      "status_changed_at": "2026-07-15T12:24:07Z",
+      "pr_number": 2336,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2336",
+      "merged_at": "2026-07-15T12:22:56Z",
+      "specialist": null,
+      "implementer_summary": "[Phase5.5 ci-fail: Test Property Management Web failed; respawn to fix]",
+      "reviewer_summary": "verdict=approve note=fix-round-route-count-19to20-ci-green",
+      "last_reviewed_oid": "ab4fe75b75fcf67f94b8346e018003c296b48b42",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-15T12:21:17Z"
+    },
+    {
       "task_id": "gh-issue-2323",
       "branch": "auto-impl/gh-issue-2323-06ee1bbe",
       "status": "merged",
@@ -6163,5 +6185,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T12:14:06Z"
+  "archived_at": "2026-07-15T12:29:33Z"
 }

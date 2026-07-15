@@ -1,0 +1,52 @@
+{
+ "generator": "dispatcher-tier1d-dev-review",
+ "generated_at": "2026-07-15",
+ "segment_reviewed": "ppt-web-ui",
+ "selection_reason": "Tier-1d demand-driven run (research backlog starved, claimable=13 < floor=36). CHURN_FILES empty (hotspot_history is all May/June, stale). By state.review_cursor the nominal oldest is ppt-web-core (2026-07-07), BUT ppt-web-core was already covered three times in the last two days by tier1d/regular runs (2026-07-14-ppt-web-core.json, 2026-07-14-ppt-web-core-tier1d-2.json, 2026-07-15-ppt-web-core-tier1d.json) — re-reviewing would duplicate and yield diminishing returns. Following the same anti-duplication precedent the 2026-07-15 reality-web tier1d run set, picked a segment NOT touched in today's flurry (today covered: api-core, api-handlers, ppt-web-core, reality-web, mobile-native-kmp). Among untouched segments, ppt-web-ui and reality-server are tied oldest at 2026-07-07..07-13; chose ppt-web-ui for warm frontend context. Not backlog-saturated (0 open code-review-finding items for ppt-web-ui). Deliberately avoided every previously-flagged file: ProtectedRoute, OfflineIndicator, SessionsPage cast, ContentModerationPage, AutomationRulesPage, CreateDisputePage, TemplateLibraryPage (from 2026-07-08/12/13 ppt-web-ui runs) — zero overlap.",
+ "experts_used": [
+  "frontend",
+  "completeness"
+ ],
+ "findings_count": 3,
+ "signals": [
+  {
+   "id": "code-review-ppt-web-ui-paymatch-mut-noerr",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-ui",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "evidence": [
+    "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:54,61,68 — all three financial-reconciliation mutations (uploadMutation=uploadStatement, confirmMutation=confirmMatch, rejectMutation=rejectMatch) declare only onSuccess (queryClient.invalidateQueries) and have NO onError handler; the page also never destructures isError/error from any mutation (grep 'onError' -> 0 hits in the file). This is a bank-statement upload + payment-match confirm/reject workflow ('Review and confirm matches from bank statements'). If confirmMatch/rejectMatch POST fails (422/500/network), the error is silently swallowed: the list simply re-fetches unchanged, so a manager who clicks Confirm believes a payment was reconciled when it was not — a correctness/financial-integrity gap, not a cosmetic one. Sibling accounting/finance pages (routes/groups/financial.tsx:179,204; routes/groups/reports.tsx:123,234) DO wire onError, making this an outlier regression."
+   ],
+   "expert": "frontend"
+  },
+  {
+   "id": "code-review-ppt-web-ui-invoice-mut-noerr",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-ui",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "evidence": [
+    "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:36,44 — createMutation (invoicesApiCreate) and deleteMutation (invoicesApiDelete) both declare only onSuccess and no onError; the file has 0 'onError' hits. On create success the form is dismissed (setIsCreating(false)); on failure (e.g. 422 validation, 409 duplicate number, 500) nothing is surfaced — the create form just sits with no message and the manager gets no signal that the invoice was NOT issued. deleteMutation is likewise silent on failure. Verified against sibling pages that DO handle mutation errors (financial.tsx, notifications.tsx onError branches), so the pattern is established and this page dropped it."
+   ],
+   "expert": "frontend"
+  },
+  {
+   "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-ui",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "evidence": [
+    "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:16-208 — the entire Epic-144 Portfolio Performance dashboard renders hardcoded mock data (mockDashboardSummary, mockPropertyCards, mockCashFlowTrend, mockBenchmark, mockAlerts, mockMetrics) with the comment 'Mock data for demonstration - would be fetched from API'; the 377-line component has NO useQuery / API import / fetch of any kind. It displays fabricated financial figures (totalPortfolioValue, totalEquity, ytdNoi, ytdCashFlow, ltvRatio). Static trace: the page is exported via features/portfolio-performance/pages/index.ts + feature index.ts but is NOT wired into any route (0 references in routes/ or App.tsx), so it is currently unreachable — but the module ships an analytics dashboard that will surface real-looking-but-fake numbers the moment it is routed. Completeness/data-integrity gap: the API integration for this Epic-144 feature is unimplemented."
+   ],
+   "expert": "completeness"
+  }
+ ]
+}
