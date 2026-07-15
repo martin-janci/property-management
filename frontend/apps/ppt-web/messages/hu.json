@@ -65,7 +65,9 @@
     "aiChat": "AI asszisztens",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integrációk",
-    "portalWebhooks": "Portál webhookok"
+    "portalWebhooks": "Portál webhookok",
+    "notificationTriggers": "Értesítési triggerek",
+    "notificationAnalytics": "Értesítési analitika"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -1450,5 +1452,24 @@
     "errors": {
       "downloadFailed": "A melléklet letöltése nem sikerült"
     }
+  },
+  "notificationTriggers": {
+    "title": "Értesítési triggerek",
+    "subtitle": "Válassza ki, mely események értesítsék, és mely csatornákon (push, e-mail, alkalmazáson belül).",
+    "forbidden": "Nincs jogosultsága az értesítési triggerek kezelésére.",
+    "resetting": "Visszaállítás…",
+    "resetDefaults": "Alapértékek visszaállítása",
+    "failedToLoad": "Az értesítési triggerek betöltése sikertelen",
+    "empty": "Fiókjához nem érhetők el értesítési triggerek.",
+    "enabledCount": "{{enabled}} / {{total}} engedélyezve",
+    "tableCaption": "Értesítési csatornák triggerenként",
+    "colTrigger": "Trigger",
+    "channelPush": "Push",
+    "channelEmail": "E-mail",
+    "channelInApp": "Alkalmazásban",
+    "priorityBadge": "Prioritás",
+    "saveFailed": "A trigger frissítése sikertelen",
+    "resetDone": "Triggerek visszaállítva alapértékre",
+    "resetFailed": "A triggerek visszaállítása sikertelen"
   }
 }

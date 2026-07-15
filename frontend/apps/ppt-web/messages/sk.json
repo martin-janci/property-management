@@ -67,7 +67,9 @@
     "aiChat": "AI asistent",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integrácie",
-    "portalWebhooks": "Webhooky portálov"
+    "portalWebhooks": "Webhooky portálov",
+    "notificationTriggers": "Spúšťače notifikácií",
+    "notificationAnalytics": "Analytika notifikácií"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -1586,5 +1588,24 @@
     "errors": {
       "downloadFailed": "Prílohu sa nepodarilo stiahnuť"
     }
+  },
+  "notificationTriggers": {
+    "title": "Spúšťače notifikácií",
+    "subtitle": "Vyberte, ktoré udalosti vás upozornia a na ktorých kanáloch (push, e-mail, v aplikácii).",
+    "forbidden": "Nemáte oprávnenie spravovať spúšťače notifikácií.",
+    "resetting": "Obnovuje sa…",
+    "resetDefaults": "Obnoviť predvolené",
+    "failedToLoad": "Nepodarilo sa načítať spúšťače notifikácií",
+    "empty": "Pre váš účet nie sú k dispozícii žiadne spúšťače notifikácií.",
+    "enabledCount": "Povolené {{enabled}} z {{total}}",
+    "tableCaption": "Kanály notifikácií podľa spúšťača",
+    "colTrigger": "Spúšťač",
+    "channelPush": "Push",
+    "channelEmail": "E-mail",
+    "channelInApp": "V aplikácii",
+    "priorityBadge": "Prioritné",
+    "saveFailed": "Spúšťač sa nepodarilo aktualizovať",
+    "resetDone": "Spúšťače obnovené na predvolené",
+    "resetFailed": "Spúšťače sa nepodarilo obnoviť"
   }
 }

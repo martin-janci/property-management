@@ -84,7 +84,9 @@
     "admin": "Admin",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integrations",
-    "portalWebhooks": "Portal Webhooks"
+    "portalWebhooks": "Portal Webhooks",
+    "notificationTriggers": "Notification Triggers",
+    "notificationAnalytics": "Notification Analytics"
   },
   "auth": {
     "signIn": "Sign In",
@@ -3870,5 +3872,24 @@
       "under_repair": "Under repair",
       "decommissioned": "Decommissioned"
     }
+  },
+  "notificationTriggers": {
+    "title": "Notification Triggers",
+    "subtitle": "Choose which events notify you, and on which channels (push, email, in-app).",
+    "forbidden": "You do not have permission to manage notification triggers.",
+    "resetting": "Resetting…",
+    "resetDefaults": "Reset to defaults",
+    "failedToLoad": "Failed to load notification triggers",
+    "empty": "No notification triggers are available for your account.",
+    "enabledCount": "{{enabled}} of {{total}} enabled",
+    "tableCaption": "Notification channels per trigger",
+    "colTrigger": "Trigger",
+    "channelPush": "Push",
+    "channelEmail": "Email",
+    "channelInApp": "In app",
+    "priorityBadge": "Priority",
+    "saveFailed": "Could not update trigger",
+    "resetDone": "Triggers reset to defaults",
+    "resetFailed": "Could not reset triggers"
   }
 }

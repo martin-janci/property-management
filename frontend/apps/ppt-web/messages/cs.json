@@ -65,7 +65,9 @@
     "aiChat": "AI asistent",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integrace",
-    "portalWebhooks": "Webhooky portálů"
+    "portalWebhooks": "Webhooky portálů",
+    "notificationTriggers": "Spouštěče oznámení",
+    "notificationAnalytics": "Analytika oznámení"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -1584,5 +1586,24 @@
     "errors": {
       "downloadFailed": "Přílohu se nepodařilo stáhnout"
     }
+  },
+  "notificationTriggers": {
+    "title": "Spouštěče oznámení",
+    "subtitle": "Vyberte, které události vás upozorní a na kterých kanálech (push, e-mail, v aplikaci).",
+    "forbidden": "Nemáte oprávnění spravovat spouštěče oznámení.",
+    "resetting": "Obnovuje se…",
+    "resetDefaults": "Obnovit výchozí",
+    "failedToLoad": "Nepodařilo se načíst spouštěče oznámení",
+    "empty": "Pro váš účet nejsou k dispozici žádné spouštěče oznámení.",
+    "enabledCount": "Povoleno {{enabled}} z {{total}}",
+    "tableCaption": "Kanály oznámení podle spouštěče",
+    "colTrigger": "Spouštěč",
+    "channelPush": "Push",
+    "channelEmail": "E-mail",
+    "channelInApp": "V aplikaci",
+    "priorityBadge": "Prioritní",
+    "saveFailed": "Spouštěč se nepodařilo aktualizovat",
+    "resetDone": "Spouštěče obnoveny na výchozí",
+    "resetFailed": "Spouštěče se nepodařilo obnovit"
   }
 }

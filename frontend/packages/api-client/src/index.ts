@@ -38,6 +38,7 @@ export * from './forms';
 export * from './generated';
 export { client } from './generated/client.gen';
 export * from './government-portal';
+export * from './granular-notifications';
 export * from './integrations';
 export * from './iot';
 export * from './leases';

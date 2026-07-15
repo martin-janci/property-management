@@ -142,6 +142,11 @@ function AppNavigation() {
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
       <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>
+      {isAuthenticated && (
+        <Link to="/notifications/triggers">
+          {t('nav.notificationTriggers', { defaultValue: 'Notification Triggers' })}
+        </Link>
+      )}
       {/* Super-admin moved to admin.rlt.sk (separate SPA) — no nav link here. */}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}

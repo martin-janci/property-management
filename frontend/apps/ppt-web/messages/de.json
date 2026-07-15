@@ -65,7 +65,9 @@
     "aiChat": "KI-Assistent",
     "iotAlerts": "Sensor Alerts",
     "integrations": "Integrationen",
-    "portalWebhooks": "Portal-Webhooks"
+    "portalWebhooks": "Portal-Webhooks",
+    "notificationTriggers": "Benachrichtigungsauslöser",
+    "notificationAnalytics": "Benachrichtigungsanalyse"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -1477,5 +1479,24 @@
     "errors": {
       "downloadFailed": "Anhang konnte nicht heruntergeladen werden"
     }
+  },
+  "notificationTriggers": {
+    "title": "Benachrichtigungsauslöser",
+    "subtitle": "Wählen Sie, welche Ereignisse Sie benachrichtigen und über welche Kanäle (Push, E-Mail, In-App).",
+    "forbidden": "Sie haben keine Berechtigung, Benachrichtigungsauslöser zu verwalten.",
+    "resetting": "Wird zurückgesetzt…",
+    "resetDefaults": "Auf Standard zurücksetzen",
+    "failedToLoad": "Benachrichtigungsauslöser konnten nicht geladen werden",
+    "empty": "Für Ihr Konto sind keine Benachrichtigungsauslöser verfügbar.",
+    "enabledCount": "{{enabled}} von {{total}} aktiviert",
+    "tableCaption": "Benachrichtigungskanäle pro Auslöser",
+    "colTrigger": "Auslöser",
+    "channelPush": "Push",
+    "channelEmail": "E-Mail",
+    "channelInApp": "In-App",
+    "priorityBadge": "Priorität",
+    "saveFailed": "Auslöser konnte nicht aktualisiert werden",
+    "resetDone": "Auslöser auf Standard zurückgesetzt",
+    "resetFailed": "Auslöser konnten nicht zurückgesetzt werden"
   }
 }

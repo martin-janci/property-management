@@ -25,6 +25,7 @@ import {
 } from '@ppt/api-client';
 import type * as React from 'react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CategoryPreferenceCard,
   DigestPreferences,
@@ -191,7 +192,17 @@ export function AdvancedNotificationSettingsPage() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Advanced Notification Settings</h1>
-      <p className="text-gray-600 mb-6">Fine-tune how and when you receive notifications.</p>
+      <p className="text-gray-600 mb-2">Fine-tune how and when you receive notifications.</p>
+      {/* Cross-link to the per-event trigger UI so the two preference surfaces
+          (category-level here, per-event there) are discoverable from one place. */}
+      <p className="mb-6">
+        <Link
+          to="/notifications/triggers"
+          className="text-sm font-medium text-blue-600 hover:text-blue-500"
+        >
+          Per-event triggers →
+        </Link>
+      </p>
 
       {/* Update error alert */}
       {updateError && (

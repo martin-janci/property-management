@@ -9,19 +9,19 @@
  * render it disabled here to set expectations.
  */
 
-import { useTranslation } from 'react-i18next';
 import type {
   CategorySummary,
   EventTriggerPreference,
   EventTriggersResponse,
   TriggerChannel,
-} from '../types';
+} from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 export interface NotificationTriggersPageProps {
   data?: EventTriggersResponse;
   isLoading?: boolean;
   isError?: boolean;
-  /** True when the backend rejected the request with 401/403. */
+  /** True when the backend rejected the request with 403 (no permission). */
   isForbidden?: boolean;
   onRetry?: () => void;
   /** Event type currently being persisted (disables its row's inputs). */
