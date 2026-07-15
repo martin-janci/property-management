@@ -1382,9 +1382,46 @@ impl Scheduler {
     /// concern — a future generator worker consumes the `pending` executions
     /// recorded here and transitions them to completed/failed. This method owns
     /// only the select-fire-advance loop.
+    ///
+    /// RLS (issue #2318): both tables carry FORCE RLS, and the production
+    /// api-server connects as the table owner (bound by FORCE, no BYPASSRLS —
+    /// see migration 00179). Running on the bare pool therefore made this loop
+    /// a silent no-op: no GUC set → `get_current_org_id()` NULL → the due-work
+    /// SELECT returned 0 rows. The loop now checks out a dedicated connection,
+    /// reads due work under the global-read context (SELECT-only policy leg,
+    /// migration 00218), and performs each schedule's writes under that
+    /// schedule's own tenant context. The context is cleared before the
+    /// connection returns to the pool.
     async fn fire_due_report_schedules(&self) -> Result<(), common::errors::AppError> {
-        let due = self.report_schedule_repo.get_due_schedules().await?;
+        // Dedicated connection: RLS context GUCs are session-local, so the
+        // whole select-fire-advance loop must run on one connection.
+        let mut conn = self
+            .pool
+            .acquire()
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        // Global-read context for the cross-org due-work SELECT.
+        db::tenant_context::set_global_read_context(&mut *conn, true)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        let due = self
+            .report_schedule_repo
+            .get_due_schedules(&mut *conn)
+            .await;
+
+        // Drop the global-read flag before any writes; the per-schedule writes
+        // below run under each schedule's own tenant context.
+        db::tenant_context::set_global_read_context(&mut *conn, false)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        let due = due?;
         if due.is_empty() {
+            db::tenant_context::clear_request_context(&mut *conn)
+                .await
+                .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
             return Ok(());
         }
 
@@ -1394,12 +1431,26 @@ impl Scheduler {
         let mut fired = 0u64;
 
         for schedule in &due {
+            // Each due row carries its organization_id: scope the connection to
+            // that tenant so the org-scoped write policies pass.
+            if let Err(e) =
+                db::tenant_context::set_tenant_context(&mut *conn, schedule.organization_id).await
+            {
+                tracing::error!(
+                    schedule_id = %schedule.id,
+                    organization_id = %schedule.organization_id,
+                    error = %e,
+                    "Failed to set tenant context — leaving schedule due for retry"
+                );
+                continue;
+            }
+
             // Record the fire in execution history (Story 81.2). If this fails,
             // skip the advance so the schedule stays due and retries next tick
             // instead of silently losing the run.
             if let Err(e) = self
                 .report_schedule_repo
-                .record_execution(schedule.id)
+                .record_execution(&mut *conn, schedule.id)
                 .await
             {
                 tracing::error!(
@@ -1421,7 +1472,7 @@ impl Scheduler {
 
             if let Err(e) = self
                 .report_schedule_repo
-                .advance_after_run(schedule.id, next)
+                .advance_after_run(&mut *conn, schedule.id, next)
                 .await
             {
                 tracing::error!(
@@ -1440,6 +1491,12 @@ impl Scheduler {
                 "Fired report schedule and advanced next_run_at"
             );
         }
+
+        // Defensive: reset every RLS-relevant GUC before the connection goes
+        // back to the pool so tenant context cannot bleed onto the next user.
+        db::tenant_context::clear_request_context(&mut *conn)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
 
         if fired > 0 {
             let mut metrics = self.metrics.lock().unwrap();

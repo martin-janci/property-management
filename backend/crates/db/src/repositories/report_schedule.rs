@@ -13,6 +13,7 @@ use crate::models::report_schedule::{
 use crate::DbPool;
 use chrono::{DateTime, Duration, Utc};
 use common::errors::AppError;
+use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
 /// Canonical projection for `report_schedules` rows.
@@ -630,10 +631,24 @@ impl ReportScheduleRepository {
     ///
     /// A NULL `next_run_at` (parked schedule — see [`Self::advance_after_run`])
     /// is excluded, so a schedule whose next fire could not be computed does not
-    /// re-fire. Runs unscoped on the pool because the background scheduler has no
-    /// request tenant; each returned row still carries its own `organization_id`
-    /// for downstream per-tenant handling.
-    pub async fn get_due_schedules(&self) -> Result<Vec<ReportSchedule>, AppError> {
+    /// re-fire. Each returned row carries its own `organization_id` for
+    /// downstream per-tenant handling.
+    ///
+    /// RLS (issue #2318): `report_schedules` has FORCE RLS, so this must NOT
+    /// run on the bare pool — with no GUC set, `get_current_org_id()` returns
+    /// NULL, the tenant-isolation policy evaluates false, and the query
+    /// silently returns 0 rows. The caller must supply an executor (a
+    /// checked-out connection) with `set_global_read_context(TRUE)` applied so
+    /// the cross-org `report_schedules_global_read` SELECT policy (migration
+    /// 00216) grants visibility. Follows the executor-passing shape of
+    /// `WorkflowRepository::list_due_schedules`.
+    pub async fn get_due_schedules<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<ReportSchedule>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let rows = sqlx::query_as::<_, ReportScheduleRow>(concat!(
             "SELECT ",
             report_schedule_columns!(),
@@ -643,7 +658,7 @@ impl ReportScheduleRepository {
                AND next_run_at <= NOW() \
              ORDER BY next_run_at ASC"
         ))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to fetch due report schedules");
@@ -662,11 +677,19 @@ impl ReportScheduleRepository {
     /// (no `COALESCE`): a `None` deliberately parks the schedule with a NULL
     /// `next_run_at` so a fire whose next occurrence could not be computed stops
     /// re-firing on every tick instead of spinning on a stale past timestamp.
-    pub async fn advance_after_run(
+    ///
+    /// RLS (issue #2318): under FORCE RLS an unscoped UPDATE matches 0 rows →
+    /// `fetch_one` → RowNotFound. The caller must supply an executor with
+    /// `set_tenant_context(schedule.organization_id)` applied.
+    pub async fn advance_after_run<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         next_run_at: Option<DateTime<Utc>>,
-    ) -> Result<ReportSchedule, AppError> {
+    ) -> Result<ReportSchedule, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
             "UPDATE report_schedules \
              SET last_run_at = NOW(), next_run_at = $2, updated_at = NOW() \
@@ -676,7 +699,7 @@ impl ReportScheduleRepository {
         ))
         .bind(id)
         .bind(next_run_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, schedule_id = %id, "Failed to advance report schedule after run");
@@ -693,7 +716,19 @@ impl ReportScheduleRepository {
     /// Story 81.2 execution-history endpoints. The row starts in `pending`; a
     /// downstream report generator transitions it to
     /// `running`/`completed`/`failed`.
-    pub async fn record_execution(&self, schedule_id: Uuid) -> Result<ReportExecution, AppError> {
+    ///
+    /// RLS (issue #2318): `report_executions` has FORCE RLS with an org-scoped
+    /// `WITH CHECK` (via the parent schedule), so an unscoped INSERT is
+    /// rejected. The caller must supply an executor with
+    /// `set_tenant_context(schedule.organization_id)` applied.
+    pub async fn record_execution<'e, E>(
+        &self,
+        executor: E,
+        schedule_id: Uuid,
+    ) -> Result<ReportExecution, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ReportExecution>(
             r#"
             INSERT INTO report_executions (schedule_id, status)
@@ -707,7 +742,7 @@ impl ReportScheduleRepository {
         )
         .bind(schedule_id)
         .bind(report_execution_status::PENDING)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, schedule_id = %schedule_id, "Failed to record report execution");
