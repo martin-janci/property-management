@@ -102,7 +102,7 @@ impl NewsArticleRepository {
                 a.reaction_count, a.comment_count, a.share_count,
                 a.created_at, a.updated_at,
                 COALESCE(u.name, 'Unknown') as author_name,
-                u.avatar_url as author_avatar_url
+                u.profile_image_url as author_avatar_url
             FROM news_articles a
             LEFT JOIN users u ON a.author_id = u.id
             WHERE a.id = $1 AND a.organization_id = $2
@@ -557,7 +557,7 @@ impl NewsArticleRepository {
             SELECT
                 c.*,
                 u.name as author_name,
-                u.avatar_url as author_avatar_url,
+                u.profile_image_url as author_avatar_url,
                 (SELECT COUNT(*) FROM article_comments WHERE parent_id = c.id AND deleted_at IS NULL) as reply_count
             FROM article_comments c
             LEFT JOIN users u ON c.user_id = u.id
