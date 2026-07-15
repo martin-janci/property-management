@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-15T16:24:54Z",
+  "archived_at": "2026-07-15T18:20:14Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1422,6 +1422,20 @@
       "first_open_at": "2026-07-08T08:10:10Z"
     },
     {
+      "id": "code-review-mobile-native-kmp-mylistings-analytics-stub-retry1",
+      "action": "[BLOCKED-DROP: backend endpoints missing — superseded by gap-realtor-listings-analytics-endpoints] gap: MyListings and ListingAnalytics routes (Navigation.kt:440,:458) are live in the nav graph but render hardcoded emptyList()/isLoading=false with no repository/ApiClient backing; realtor listing dashboard + analytics are permanent empty stubs in production. Wire to a listings/analytics API. [retry 1/2 of failed code-review-mobile-native-kmp-mylistings-analytics-stub]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-15T14:05:28Z (retry_of=code-review-mobile-native-kmp-mylistings-analytics-stub reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T12:21:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T14:05:28Z",
+      "retry_of": "code-review-mobile-native-kmp-mylistings-analytics-stub",
+      "retry_round": 1
+    },
+    {
       "id": "code-review-mobile-native-kmp-notifrepo-no-test",
       "action": "test-gap: NotificationRepository.kt (fetch/mark-read/DTO-mapping) has no repository test in shared/commonTest (only a models contract test exists); 401 and mark-read mutation branches uncovered. Add a repository test with a mocked HTTP engine.",
       "owner_role": "pm-frontend",
@@ -2335,6 +2349,20 @@
       "deadline": null,
       "first_open_at": "2026-07-07T14:30:00Z",
       "source": "gap-scan 2026-07-07"
+    },
+    {
+      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
+      "action": "[RECONCILED-DONE: implementer verified #482 deriveActiveRole+ProtectedRoute fix already on dev, 919 ppt-web tests green, zero diff] ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration) [retry 1/2 of failed gap-10a-2-protectedroute-role-fallback-fix-for-multi]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-15T10:08:18Z (retry_of=gap-10a-2-protectedroute-role-fallback-fix-for-multi reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T08:18:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:08:18Z",
+      "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
+      "retry_round": 1
     },
     {
       "id": "gap-10a-2-protectedroute-unit-test-coverage-issue-482",
