@@ -11,7 +11,8 @@
 import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { ListingDetailContent, ListingNotFound } from '@/components/listings';
+import { notFound } from 'next/navigation';
+import { ListingDetailContent } from '@/components/listings';
 import { buildListingJsonLd, isRenderableListing } from './jsonLd';
 import { buildListingMetadata } from './metadata';
 
@@ -100,8 +101,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const host = await resolveHost();
   const listing = await getListing(slug, host);
 
+  // A missing / malformed listing must emit a real HTTP 404, not a 200 with
+  // "not found" markup: this is a public, SEO-indexed portal, and a soft-404
+  // (200 body) lets crawlers index dead listings. `notFound()` renders the
+  // locale-aware `app/[locale]/not-found.tsx` with a 404 status. `notFound()`
+  // returns `never`, so `listing` is non-null below (#2341).
   if (!listing) {
-    return <ListingNotFound />;
+    notFound();
   }
 
   // JSON-LD structured data, built defensively: a partial/malformed 200 body
