@@ -1053,9 +1053,14 @@ enum PortalWebhookError {
 /// Verify an inbound portal webhook's authenticity **and** freshness.
 ///
 /// *Authenticity*: `X-Webhook-Signature` is the hex-encoded HMAC-SHA256
-/// (optionally `sha256=`-prefixed, matching the format this service emits for
-/// its own outbound test deliveries — see [`test_webhook`]) over the signed
-/// payload `"{timestamp}.{body}"` keyed by the shared `PORTAL_WEBHOOK_SECRET`.
+/// (optionally `sha256=`-prefixed) over the signed payload `"{timestamp}.{body}"`
+/// keyed by the shared `PORTAL_WEBHOOK_SECRET`.
+///
+/// NOTE: this **inbound** contract signs `"{timestamp}.{body}"`. It is
+/// deliberately *not* the same as the receiver's own **outbound** test-delivery
+/// signer ([`test_webhook`]), which signs the bare body with no timestamp — do
+/// not use the outbound signer as a reference for this inbound format (the two
+/// diverged when gap 83-3 folded the timestamp into the inbound signature).
 /// The timestamp is bound *into* the signed material rather than trusted as a
 /// bare header — this is what makes the freshness check meaningful: an attacker
 /// replaying a captured delivery cannot swap in a fresh timestamp without
@@ -1093,7 +1098,10 @@ fn verify_portal_webhook(
 
     // Replay defense: reject deliveries whose signed timestamp is too far from
     // now — a stale capture being replayed, or an absurd future-dated delivery.
-    if (now_unix - timestamp).abs() > tolerance_secs {
+    // Overflow-proof (issue #2330): the skew is computed with a checked
+    // subtraction in the shared helper, so an adversarial timestamp near
+    // i64::MIN cannot panic (debug) or wrap the freshness gate (release).
+    if !integrations::portals::timestamp_within_tolerance(now_unix, timestamp, tolerance_secs) {
         return Err(PortalWebhookError::StaleTimestamp);
     }
 
@@ -1134,7 +1142,13 @@ fn verify_portal_webhook(
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/webhooks/portal/{connection_id}",
-    params(ConnectionIdPath),
+    params(
+        ConnectionIdPath,
+        ("X-Webhook-Timestamp" = String, Header,
+         description = "Unix-seconds timestamp of the delivery. Signed as part of \"{timestamp}.{body}\"; deliveries whose timestamp is outside ±300s of server time are rejected 401 (replay defense, gap 83-3)."),
+        ("X-Webhook-Signature" = String, Header,
+         description = "Hex HMAC-SHA256 (optionally `sha256=`-prefixed) over \"{X-Webhook-Timestamp}.{raw_body}\" keyed by PORTAL_WEBHOOK_SECRET."),
+    ),
     responses(
         (status = 200, description = "Webhook processed"),
         (status = 400, description = "Invalid webhook"),
@@ -1212,6 +1226,16 @@ pub async fn handle_portal_webhook(
         )
     })?;
 
+    // FOLLOW-UP (issue #2330, originally #2196): the signed-timestamp window
+    // bounds the replay *duration* (±PORTAL_WEBHOOK_TOLERANCE_SECS) but NOT the
+    // *count* — within the tolerance a captured valid delivery can still be
+    // replayed N times. Harmless today because this receiver only parses the
+    // body and has no side effects, but BEFORE it is ever wired to mutate state
+    // (persist views/inquiries like the per-portal receiver), add an
+    // idempotency/nonce dedup keyed on a delivery id (e.g. an `X-Webhook-ID`
+    // header folded into the signed payload, or a payload `event_id`), reusing
+    // the Airbnb dedup-ledger pattern (`airbnb_dedup_key` +
+    // `record_airbnb_webhook_event`) with retention ≥ the tolerance window.
     Ok(StatusCode::OK)
 }
 
@@ -2093,6 +2117,52 @@ mod portal_webhook_signature_tests {
             ),
             Ok(())
         );
+    }
+
+    #[test]
+    fn accepts_timestamp_at_exact_tolerance_boundary() {
+        // The freshness gate is inclusive (`|now - ts| == tolerance` passes).
+        // Pin both edges so an off-by-one refactor (`<=` -> `<`) is caught.
+        for boundary in [
+            NOW - PORTAL_WEBHOOK_TOLERANCE_SECS,
+            NOW + PORTAL_WEBHOOK_TOLERANCE_SECS,
+        ] {
+            let sig = sign_at(SECRET, boundary, BODY);
+            assert_eq!(
+                verify_portal_webhook(
+                    SECRET,
+                    BODY,
+                    Some(&boundary.to_string()),
+                    Some(&sig),
+                    NOW,
+                    PORTAL_WEBHOOK_TOLERANCE_SECS,
+                ),
+                Ok(()),
+                "a delivery exactly {PORTAL_WEBHOOK_TOLERANCE_SECS}s away must still be fresh"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_adversarial_overflow_timestamp_without_panicking() {
+        // Regression for issue #2330: a parseable but adversarial timestamp near
+        // i64::MIN/MAX must be rejected as stale WITHOUT panicking under
+        // overflow-checks builds (the old `(now - ts).abs()` overflowed).
+        for ts in [i64::MIN, i64::MIN + 1, i64::MAX, i64::MAX - 1] {
+            let sig = sign_at(SECRET, ts, BODY);
+            assert_eq!(
+                verify_portal_webhook(
+                    SECRET,
+                    BODY,
+                    Some(&ts.to_string()),
+                    Some(&sig),
+                    NOW,
+                    PORTAL_WEBHOOK_TOLERANCE_SECS,
+                ),
+                Err(PortalWebhookError::StaleTimestamp),
+                "adversarial timestamp {ts} must be rejected as stale, not panic"
+            );
+        }
     }
 
     #[test]

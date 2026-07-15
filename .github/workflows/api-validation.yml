@@ -75,8 +75,14 @@ jobs:
 
       - name: Generate TypeScript SDK
         run: |
-          npm install -g @hey-api/openapi-ts
-          openapi-ts -i docs/api/generated/openapi.yaml -o frontend/packages/api-client/src/generated
+          # Pin @hey-api/openapi-ts and co-install its `typescript` peer so the
+          # generator can initialize. An unpinned `npm install -g` pulled a
+          # newer release without typescript present, crashing at init with
+          # "Cannot read properties of undefined (reading 'NewLineKind')".
+          # Versions mirror frontend/packages/api-client (openapi-ts ^0.99.0,
+          # typescript ^5.3 -> resolved 5.9.3 in pnpm-lock).
+          npm install --no-save @hey-api/openapi-ts@0.99.0 typescript@5.9.3
+          npx openapi-ts -i docs/api/generated/openapi.yaml -o frontend/packages/api-client/src/generated
 
       - name: Upload TypeScript SDK
         uses: actions/upload-artifact@v7
