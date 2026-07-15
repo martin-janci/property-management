@@ -12,9 +12,11 @@ import { getApiBase } from '../config';
 import type {
   CreateSavedSearchRequest,
   FavoriteAlertsResponse,
+  FavoriteAlertsWireResponse,
   MarkAllFavoriteAlertsReadResponse,
   PaginatedFavorites,
   SavedSearch,
+  UpdateFavoriteRequest,
   UpdateSavedSearchRequest,
 } from './types';
 
@@ -97,9 +99,55 @@ export function useRemoveFavorite() {
   });
 }
 
+/**
+ * Update a favorite's settings — notes and/or the price-alert opt-in
+ * (`price_alert_enabled`). Completes AC-5 of story 84.3: this is how a user
+ * subscribes / unsubscribes a favorited listing from price-change alerts.
+ *
+ * Consumes `PATCH /api/v1/favorites/{listingId}`. The body is partial-merged
+ * server-side, so passing only `price_alert_enabled` leaves notes untouched.
+ */
+export function useUpdateFavorite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      listingId,
+      data,
+    }: {
+      listingId: string;
+      data: UpdateFavoriteRequest;
+    }): Promise<void> => {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to update favorite');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.invalidateQueries({ queryKey: FAVORITE_ALERTS_KEY });
+    },
+  });
+}
+
 // Favorite Price-Alert Hooks (Story 84.3)
 
 const FAVORITE_ALERTS_KEY = ['favorite-alerts'] as const;
+
+/**
+ * Coerce a wire Decimal field (delivered by reality-server as a JSON string via
+ * `rust_decimal` `serde-str`) into a `number`, preserving `null` / `undefined`.
+ * Without this, `PriceAlerts` would compare prices lexicographically
+ * (`'180000' < '95000'` is `true`), mislabelling drops as increases.
+ */
+function toNumeric(value: string | number | null | undefined): number | null {
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
+}
 
 /**
  * Fetch the authenticated user's favorite price / status alerts (newest first).
@@ -107,6 +155,14 @@ const FAVORITE_ALERTS_KEY = ['favorite-alerts'] as const;
  * Consumes `GET /api/v1/favorites/alerts` — the price-tracking feed populated
  * by reality-server's `FavoriteAlertWorker`. `unread_count` reflects alerts
  * still in `pending` status.
+ *
+ * The backend serializes `old_price` / `new_price` / `change_percentage`
+ * (`rust_decimal::Decimal`) as JSON **strings**; this hook normalizes them to
+ * numbers at the boundary so consumers get a numerically-correct shape.
+ *
+ * NOTE: this fetches a single page of up to `limit` (default 100) alerts; the
+ * API supports `offset` paging but no "load more" affordance is wired yet, so
+ * alerts beyond the first page are currently unreachable from the UI.
  */
 export function useFavoriteAlerts(limit = 100, offset = 0) {
   return useQuery({
@@ -120,7 +176,17 @@ export function useFavoriteAlerts(limit = 100, offset = 0) {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorite alerts');
-      return response.json();
+
+      const raw: FavoriteAlertsWireResponse = await response.json();
+      return {
+        ...raw,
+        alerts: raw.alerts.map((a) => ({
+          ...a,
+          old_price: toNumeric(a.old_price),
+          new_price: toNumeric(a.new_price),
+          change_percentage: toNumeric(a.change_percentage),
+        })),
+      };
     },
     staleTime: 30 * 1000,
   });

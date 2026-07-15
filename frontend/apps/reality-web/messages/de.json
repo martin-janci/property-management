@@ -520,7 +520,8 @@
       "title": "Meine Favoriten",
       "description": "Immobilien, die Sie gespeichert haben.",
       "h1": "Meine Favoriten",
-      "priceAlertsLink": "Preisbenachrichtigungen"
+      "priceAlertsLink": "Preisbenachrichtigungen",
+      "watchPrice": "Preis beobachten"
     },
     "login": {
       "title": "Anmelden",

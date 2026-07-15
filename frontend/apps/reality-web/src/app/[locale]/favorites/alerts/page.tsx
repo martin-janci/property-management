@@ -7,11 +7,11 @@
 
 'use client';
 
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ProtectedRoute } from '@/components/auth';
 import { PriceAlerts } from '@/components/favorites';
 import { Footer, Header } from '@/components/ui';
+import { Link } from '@/i18n/routing';
 
 export default function PriceAlertsPage() {
   const t = useTranslations('priceAlerts');

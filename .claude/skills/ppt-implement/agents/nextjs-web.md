@@ -36,7 +36,7 @@ frontend/apps/reality-web/
 
 ## Step-by-step
 1. Add route under `src/app/[locale]/<path>/page.tsx`.
-2. Translate all user-visible strings: add keys to ALL FOUR `messages/*.json` files (even placeholder text — at least sk + en must be real).
+2. Translate all user-visible strings: add keys to ALL SIX `messages/*.json` files — `en`, `sk`, `cs`, `de`, `pl`, `hu` (even placeholder text — at least sk + en must be real).
 3. If the page is dynamic per-org: use ISR with a short revalidate window.
 4. Update `generateStaticParams` if pre-rendering all locales.
 
@@ -47,7 +47,7 @@ pnpm -F reality-web lint
 ```
 Quote both exit codes. If you added a new locale key:
 ```bash
-node -e "const en=require('./frontend/apps/reality-web/messages/en.json'); for (const l of ['sk','cs','de']) { const o=require(\`./frontend/apps/reality-web/messages/\${l}.json\`); if (Object.keys(en).length!==Object.keys(o).length) process.exit(1); }"
+node -e "const en=require('./frontend/apps/reality-web/messages/en.json'); for (const l of ['sk','cs','de','pl','hu']) { const o=require(\`./frontend/apps/reality-web/messages/\${l}.json\`); if (Object.keys(en).length!==Object.keys(o).length) process.exit(1); }"
 ```
 
 ## Common pitfalls

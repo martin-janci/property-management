@@ -13,6 +13,11 @@ export interface FavoriteListing {
   listing: ListingSummary;
   addedAt: string;
   notes?: string;
+  /**
+   * Whether this favorite is subscribed to price-change alerts (AC-5, story
+   * 84.3). Backend default is `true`; toggled via `useUpdateFavorite`.
+   */
+  price_alert_enabled?: boolean;
 }
 
 // Saved Search
@@ -58,12 +63,50 @@ export interface PaginatedFavorites {
 // ============================================
 
 /**
- * A single queued favorite alert, as delivered by
+ * A single queued favorite alert exactly as it arrives **on the wire** from
  * `GET /api/v1/favorites/alerts`.
  *
  * Field names mirror the reality-server `FavoriteAlert` DTO verbatim
- * (snake_case on the wire — that DTO has no `rename_all = "camelCase"`),
- * so this interface is the runtime-accurate shape of the response.
+ * (snake_case — that DTO has no `rename_all = "camelCase"`). Crucially, the
+ * price / percentage fields are backed by `rust_decimal::Decimal`, which the
+ * backend serializes **as a JSON string** (`rust_decimal` `serde-str`
+ * feature). They therefore arrive as strings like `"180000.00"` / `"-47.2"`,
+ * NOT numbers. `useFavoriteAlerts` normalizes this raw shape into
+ * {@link FavoriteAlert} (numbers) once at the client boundary — do not consume
+ * this interface directly in components.
+ */
+export interface FavoriteAlertWire {
+  id: string;
+  favorite_id: string;
+  listing_id: string;
+  title: string;
+  /** `price_change` (price drop/increase) or `back_on_market`. */
+  alert_type: string;
+  old_price?: string | null;
+  new_price?: string | null;
+  currency?: string | null;
+  change_percentage?: string | null;
+  previous_status?: string | null;
+  new_status?: string | null;
+  /** `pending` (unread) or `sent` (read). */
+  status: string;
+  created_at: string;
+  processed_at?: string | null;
+}
+
+/** Raw response of `GET /api/v1/favorites/alerts` (Decimal fields as strings). */
+export interface FavoriteAlertsWireResponse {
+  alerts: FavoriteAlertWire[];
+  unread_count: number;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * A favorite alert with its Decimal price / percentage fields normalized to
+ * `number` (see {@link FavoriteAlertWire} for why the wire delivers strings).
+ * This is the shape components consume, so `<` / `>` price comparisons are
+ * numeric — never lexicographic string comparisons.
  */
 export interface FavoriteAlert {
   id: string;
@@ -84,7 +127,7 @@ export interface FavoriteAlert {
   processed_at?: string | null;
 }
 
-/** Response of `GET /api/v1/favorites/alerts`. */
+/** Response of `GET /api/v1/favorites/alerts` (normalized numeric prices). */
 export interface FavoriteAlertsResponse {
   alerts: FavoriteAlert[];
   unread_count: number;
@@ -95,4 +138,16 @@ export interface FavoriteAlertsResponse {
 /** Response of `POST /api/v1/favorites/alerts/read-all`. */
 export interface MarkAllFavoriteAlertsReadResponse {
   marked_read: number;
+}
+
+/**
+ * Body of `PATCH /api/v1/favorites/{listing_id}` — mirrors the reality-server
+ * `UpdatePortalFavorite` DTO. Both fields are optional and `COALESCE`-merged
+ * server-side, so sending only `price_alert_enabled` leaves notes untouched.
+ * This is how AC-5 (story 84.3) subscribes / unsubscribes a favorite from
+ * price-change alerts.
+ */
+export interface UpdateFavoriteRequest {
+  notes?: string | null;
+  price_alert_enabled?: boolean | null;
 }

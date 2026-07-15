@@ -16,8 +16,8 @@ import {
   useMarkAllFavoriteAlertsRead,
   useMarkFavoriteAlertRead,
 } from '@ppt/reality-api-client';
-import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import { formatPrice } from '@/lib/format';
 
 const UNREAD_STATUS = 'pending';
@@ -186,7 +186,7 @@ export function PriceAlerts() {
               <button
                 type="button"
                 className="mark-read"
-                disabled={markRead.isPending}
+                disabled={markRead.isPending && markRead.variables === alert.id}
                 onClick={() => markRead.mutate(alert.id)}
               >
                 {t('markRead')}

@@ -519,7 +519,8 @@
       "title": "Moje ulubione",
       "description": "Nieruchomości, które zapisałeś.",
       "h1": "Moje ulubione",
-      "priceAlertsLink": "Alerty cenowe"
+      "priceAlertsLink": "Alerty cenowe",
+      "watchPrice": "Śledź cenę"
     },
     "login": {
       "title": "Sign in",
