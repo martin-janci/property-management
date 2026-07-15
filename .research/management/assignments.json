@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-15T18:20:14Z",
+  "generated": "2026-07-15T18:27:47Z",
   "assignments": [
     {
       "task_id": "gh-issue-2317",
@@ -48,24 +48,24 @@
     {
       "task_id": "gh-issue-2330",
       "branch": "auto-impl/gh-issue-2330-e38e6d0f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-15T14:08:55Z",
-      "last_updated": "2026-07-15T18:12:30Z",
-      "status_changed_at": "2026-07-15T18:12:30Z",
+      "last_updated": "2026-07-15T18:27:47Z",
+      "status_changed_at": "2026-07-15T18:27:47Z",
       "pr_number": 2354,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2354",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": " [ci-fail: generate-sdks stale after API surface change; respawn to regenerate SDK/OpenAPI]",
-      "reviewer_summary": "verdict=approve head_oid=7f98e64afd1b00f3a6b306fae73868243077b14c note=security-sound;accept-both-rollout-ok;only-red=generate-sdks-hey-api-flake;comment-review",
-      "last_reviewed_oid": "7f98e64afd1b00f3a6b306fae73868243077b14c",
+      "implementer_summary": " [ci-fail: generate-sdks stale after API surface change; respawn to regenerate SDK/OpenAPI] [CI-fix applied round=1: generate-sdks was a PR-independent tooling crash (unpinned @hey-api/openapi-ts); pinned versions in api-validation.yml, CI green; auto-merge SQUASH enabled]",
+      "reviewer_summary": "verdict=approve head_oid=c0cfba13634cfd662e8e9a40ff3e3993a3106cd3 note=approved security work + CI-tooling pin (openapi-ts@0.99.0/typescript pin fixes generate-sdks); auto-merge enabled",
+      "last_reviewed_oid": "c0cfba13634cfd662e8e9a40ff3e3993a3106cd3",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-07-15T18:27:47Z"
     }
   ]
 }
