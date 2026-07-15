@@ -1477,5 +1477,34 @@
     "saveFailed": "Nie udało się zaktualizować wyzwalacza",
     "resetDone": "Przywrócono domyślne wyzwalacze",
     "resetFailed": "Nie udało się zresetować wyzwalaczy"
+  },
+  "documentSign": {
+    "title": "Podpisz dokument",
+    "subtitle": "Sprawdź poniższe dane i podpisz, przyjmując swój podpis.",
+    "loading": "Trwa wczytywanie Twojej prośby o podpis…",
+    "documentLabel": "Dokument",
+    "untitledDocument": "Dokument bez tytułu",
+    "messageLabel": "Wiadomość od nadawcy",
+    "signerLabel": "Podpisujesz jako",
+    "confirmationTitle": "Podpis zapisany",
+    "allSigned": "Wszyscy podpisujący już podpisali. Ukończony dokument zostanie wysłany do zamawiającego.",
+    "othersRemain": "Twój podpis został zapisany. Nadal czekamy na pozostałych podpisujących.",
+    "alreadySignedTitle": "Już podpisano",
+    "form": {
+      "nameLabel": "Wpisz swoje imię i nazwisko, aby podpisać",
+      "nameRequired": "Wpisz swoje imię i nazwisko, aby podpisać.",
+      "consent": "Wpisując swoje imię i nazwisko oraz wybierając Podpisz, zgadzasz się, że jest to Twój podpis elektroniczny na tym dokumencie.",
+      "submit": "Przyjmij i podpisz",
+      "submitting": "Podpisywanie…"
+    },
+    "errors": {
+      "invalidTitle": "Nieprawidłowy link do podpisu",
+      "invalid": "Ten link do podpisu jest nieprawidłowy. Sprawdź link w wiadomości e-mail lub poproś nadawcę o nowy.",
+      "expired": "Ten link do podpisu wygasł. Poproś nadawcę o nowy.",
+      "alreadySigned": "Już odpowiedziałeś na tę prośbę o podpis. Nie są potrzebne żadne dalsze działania.",
+      "linkUsed": "Ten link do podpisu został już użyty. Jeśli nadal musisz podpisać, poproś nadawcę o nowy link.",
+      "notOpen": "Ta prośba o podpis nie jest już otwarta do podpisania.",
+      "generic": "Podczas wczytywania tej prośby o podpis wystąpił błąd. Spróbuj ponownie."
+    }
   }
 }

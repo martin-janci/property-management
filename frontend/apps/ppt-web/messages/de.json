@@ -1498,5 +1498,34 @@
     "saveFailed": "Auslöser konnte nicht aktualisiert werden",
     "resetDone": "Auslöser auf Standard zurückgesetzt",
     "resetFailed": "Auslöser konnten nicht zurückgesetzt werden"
+  },
+  "documentSign": {
+    "title": "Dokument unterschreiben",
+    "subtitle": "Bitte überprüfen Sie die folgenden Angaben und unterschreiben Sie, indem Sie Ihre Unterschrift übernehmen.",
+    "loading": "Ihre Signaturanfrage wird geladen…",
+    "documentLabel": "Dokument",
+    "untitledDocument": "Unbenanntes Dokument",
+    "messageLabel": "Nachricht des Absenders",
+    "signerLabel": "Unterschreiben als",
+    "confirmationTitle": "Unterschrift erfasst",
+    "allSigned": "Alle Unterzeichner haben nun unterschrieben. Das fertiggestellte Dokument wird an den Anforderer gesendet.",
+    "othersRemain": "Ihre Unterschrift wurde erfasst. Wir warten noch auf die übrigen Unterzeichner.",
+    "alreadySignedTitle": "Bereits unterschrieben",
+    "form": {
+      "nameLabel": "Geben Sie zum Unterschreiben Ihren vollständigen Namen ein",
+      "nameRequired": "Bitte geben Sie zum Unterschreiben Ihren vollständigen Namen ein.",
+      "consent": "Durch Eingabe Ihres Namens und Auswahl von „Unterschreiben“ stimmen Sie zu, dass dies Ihre elektronische Unterschrift auf diesem Dokument ist.",
+      "submit": "Übernehmen und unterschreiben",
+      "submitting": "Wird unterschrieben…"
+    },
+    "errors": {
+      "invalidTitle": "Signaturlink ungültig",
+      "invalid": "Dieser Signaturlink ist ungültig. Bitte überprüfen Sie den Link in Ihrer E-Mail oder bitten Sie den Absender um einen neuen.",
+      "expired": "Dieser Signaturlink ist abgelaufen. Bitten Sie den Absender um einen neuen.",
+      "alreadySigned": "Sie haben auf diese Signaturanfrage bereits reagiert. Es sind keine weiteren Schritte erforderlich.",
+      "linkUsed": "Dieser Signaturlink wurde bereits verwendet. Wenn Sie noch unterschreiben müssen, bitten Sie den Absender um einen neuen Link.",
+      "notOpen": "Diese Signaturanfrage ist nicht mehr zur Unterschrift geöffnet.",
+      "generic": "Beim Laden dieser Signaturanfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+    }
   }
 }

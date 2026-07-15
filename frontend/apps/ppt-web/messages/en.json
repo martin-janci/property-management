@@ -3891,5 +3891,34 @@
     "saveFailed": "Could not update trigger",
     "resetDone": "Triggers reset to defaults",
     "resetFailed": "Could not reset triggers"
+  },
+  "documentSign": {
+    "title": "Sign document",
+    "subtitle": "Please review the details below and adopt your signature to sign.",
+    "loading": "Loading your signing request…",
+    "documentLabel": "Document",
+    "untitledDocument": "Untitled document",
+    "messageLabel": "Message from sender",
+    "signerLabel": "Signing as",
+    "confirmationTitle": "Signature recorded",
+    "allSigned": "All signers have now signed. The completed document will be sent to the requester.",
+    "othersRemain": "Your signature is recorded. We're still waiting on the other signers.",
+    "alreadySignedTitle": "Already signed",
+    "form": {
+      "nameLabel": "Type your full name to sign",
+      "nameRequired": "Please type your full name to sign.",
+      "consent": "By typing your name and selecting Sign, you agree that this is your electronic signature on this document.",
+      "submit": "Adopt & sign",
+      "submitting": "Signing…"
+    },
+    "errors": {
+      "invalidTitle": "Signing link not valid",
+      "invalid": "This signing link is invalid. Please check the link in your email or ask the sender for a new one.",
+      "expired": "This signing link has expired. Ask the sender for a new one.",
+      "alreadySigned": "You have already responded to this signature request. No further action is needed.",
+      "linkUsed": "This signing link has already been used. If you still need to sign, ask the sender for a new link.",
+      "notOpen": "This signature request is no longer open for signing.",
+      "generic": "Something went wrong while loading this signing request. Please try again."
+    }
   }
 }

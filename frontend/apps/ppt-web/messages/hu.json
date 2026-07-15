@@ -1471,5 +1471,34 @@
     "saveFailed": "A trigger frissítése sikertelen",
     "resetDone": "Triggerek visszaállítva alapértékre",
     "resetFailed": "A triggerek visszaállítása sikertelen"
+  },
+  "documentSign": {
+    "title": "Dokumentum aláírása",
+    "subtitle": "Kérjük, ellenőrizze az alábbi adatokat, és írja alá az aláírása elfogadásával.",
+    "loading": "Az aláírási kérelme betöltése folyamatban…",
+    "documentLabel": "Dokumentum",
+    "untitledDocument": "Névtelen dokumentum",
+    "messageLabel": "Üzenet a küldőtől",
+    "signerLabel": "Aláírás mint",
+    "confirmationTitle": "Aláírás rögzítve",
+    "allSigned": "Minden aláíró aláírta. Az elkészült dokumentumot elküldjük a kérelmezőnek.",
+    "othersRemain": "Aláírását rögzítettük. Még várunk a többi aláíróra.",
+    "alreadySignedTitle": "Már aláírva",
+    "form": {
+      "nameLabel": "Az aláíráshoz írja be a teljes nevét",
+      "nameRequired": "Az aláíráshoz kérjük, írja be a teljes nevét.",
+      "consent": "Neve beírásával és az Aláírás lehetőség kiválasztásával elfogadja, hogy ez az Ön elektronikus aláírása ezen a dokumentumon.",
+      "submit": "Elfogadás és aláírás",
+      "submitting": "Aláírás folyamatban…"
+    },
+    "errors": {
+      "invalidTitle": "Érvénytelen aláírási hivatkozás",
+      "invalid": "Ez az aláírási hivatkozás érvénytelen. Ellenőrizze a hivatkozást az e-mailjében, vagy kérjen újat a küldőtől.",
+      "expired": "Ez az aláírási hivatkozás lejárt. Kérjen újat a küldőtől.",
+      "alreadySigned": "Erre az aláírási kérelemre már válaszolt. Nincs szükség további teendőre.",
+      "linkUsed": "Ezt az aláírási hivatkozást már felhasználták. Ha még alá kell írnia, kérjen új hivatkozást a küldőtől.",
+      "notOpen": "Ez az aláírási kérelem már nem nyitott aláírásra.",
+      "generic": "Hiba történt az aláírási kérelem betöltése közben. Kérjük, próbálja újra."
+    }
   }
 }

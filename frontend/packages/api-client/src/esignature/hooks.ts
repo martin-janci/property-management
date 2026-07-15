@@ -8,6 +8,7 @@ import type {
   CancelSignatureRequestBody,
   CreateSignatureRequestBody,
   SendReminderBody,
+  SubmitSignatureBody,
 } from './types';
 
 // Query keys
@@ -16,6 +17,7 @@ export const esignatureKeys = {
   requestsForDocument: (documentId: string) =>
     [...esignatureKeys.all, 'document', documentId] as const,
   request: (id: string) => [...esignatureKeys.all, 'request', id] as const,
+  signContext: (token: string) => [...esignatureKeys.all, 'sign-context', token] as const,
 };
 
 /**
@@ -98,5 +100,32 @@ export function useCancelSignatureRequest(documentId?: string) {
         });
       }
     },
+  });
+}
+
+/**
+ * Signer-facing render context for a signing link (Epic 84.2).
+ * Read-only — does NOT consume the single-use nonce. Token errors (expired /
+ * invalid / already-signed) are surfaced as `SignError`; we disable retries so
+ * the signer sees the terminal state immediately rather than after backoff.
+ */
+export function useSignContext(token: string | undefined) {
+  return useQuery({
+    queryKey: esignatureKeys.signContext(token ?? ''),
+    queryFn: () => api.getSignContext(token!),
+    enabled: !!token,
+    retry: false,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+/**
+ * Record the signature for a signing link (Epic 84.2).
+ * The single-use nonce is consumed server-side, so this is not retried.
+ */
+export function useSubmitSignature(token: string) {
+  return useMutation({
+    mutationFn: (body: SubmitSignatureBody = {}) => api.submitSignature(token, body),
   });
 }

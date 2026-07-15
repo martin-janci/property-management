@@ -6,7 +6,7 @@ implementations:
   ppt-web:
     route: /sign
     component: DocumentSignPage
-    buildStatus: planned
+    buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
   mobile:
@@ -35,20 +35,21 @@ owner: pm-integration
 Signer-facing public page opened from the emailed `{BASE_URL}/sign?token=<v1…>`
 link (E-Signature Email Integration, Epic 84.2). No auth — the `v1.` HMAC token
 is the only credential. This screen is the frontend consumer for the
-already-shipped backend `/api/v1/signatures/sign` endpoints; the ppt-web page
-itself is not built yet (`buildStatus: planned`).
+already-shipped backend `/api/v1/signatures/sign` endpoints. The ppt-web page
+is built and wired as a public (unauthenticated) `/sign` route
+(`buildStatus: shipped`).
 
 ### Load / render context (`GET /api/v1/signatures/sign?token=…`)
-- [ ] [w] Lift `token` from the query string and call `getSignContext`
-- [ ] [w] Show document subject/title (`subject`) and the requester's optional `message`
-- [ ] [w] Show signer identity — `signer_name` + `signer_email` (echoed from the verified token)
-- [ ] [w] Render the document to sign (PDF preview surface)
-- [ ] [w] Reflect `signer_status` (`pending` / `viewed`) so a returning signer sees their state
+- [x] [w] Lift `token` from the query string and call `getSignContext`
+- [x] [w] Show document subject/title (`subject`) and the requester's optional `message`
+- [x] [w] Show signer identity — `signer_name` + `signer_email` (echoed from the verified token)
+- [ ] [w] Render the document to sign (PDF preview surface) — deferred: the public render context returns no document URL (document fetch is auth-gated), so no PDF is shown yet; only document metadata is surfaced
+- [x] [w] Reflect `signer_status` (`pending` / `viewed`) so a returning signer sees their state
 
 ### Sign / decline (`POST /api/v1/signatures/sign?token=…`)
-- [ ] [w] "Adopt & sign" flow — capture `typed_name` as lightweight signing evidence
-- [ ] [w] On success, show confirmation from `SubmitSignatureResponse.message`; branch on `status` (`in_progress` while other signers remain vs `completed` once everyone has signed)
-- [ ] [w] Guard against re-sign — once the signer is `signed`/`declined` the endpoint refuses; surface a friendly "already signed" state instead of an error toast
+- [x] [w] "Adopt & sign" flow — capture `typed_name` as lightweight signing evidence
+- [x] [w] On success, show confirmation from `SubmitSignatureResponse.message`; branch on `status` (`in_progress` while other signers remain vs `completed` once everyone has signed)
+- [x] [w] Guard against re-sign — once the signer is `signed`/`declined` the endpoint refuses; surface a friendly "already signed" state instead of an error toast
 
 ## States
 
@@ -83,9 +84,17 @@ No `sitemapRefs` for the same reason — `/sign` is not in the sitemap route tab
 
 ### Specific (recent)
 
-- ppt-web page is not implemented yet; `route: /sign` records the intended
-  public path. When the page is built, wire it as an unauthenticated route and
-  flip `ppt-web.buildStatus` → `shipped`.
+- ppt-web page is now built: `DocumentSignPage`
+  (`features/documents/pages/DocumentSignPage.tsx`) wired as a PUBLIC `/sign`
+  route in `routes/groups/documents.tsx` (no `ProtectedRoute`). It consumes the
+  new `@ppt/api-client` signer hooks `useSignContext` / `useSubmitSignature`
+  (auth-less `fetch`, typed `SignError` carrying the backend error `code`).
+  Strings live under the `documentSign.*` i18n namespace in all six locale
+  bundles (parity locked by `documentSignI18n.test.ts`).
+- PDF preview is intentionally deferred — the public render context carries no
+  document URL (the document blob is behind an authenticated endpoint), so the
+  page shows the document subject/message metadata rather than the file itself.
+  Revisit if a token-scoped public document-fetch endpoint is added.
 - Mobile is `n/a` — the signing link is a public web page opened from email, not
   a screen in the RN app.
 
@@ -93,4 +102,5 @@ No `sitemapRefs` for the same reason — `/sign` is not in the sitemap route tab
 
 <!-- newest entries on top -->
 
+- 2026-07-15 — agent: gap-84-2-build-document-sign-page — built the signer-facing `/sign` page (`DocumentSignPage`) against the shipped `/api/v1/signatures/sign` API; added public signer client (`getSignContext`/`submitSignature`/`SignError` + `useSignContext`/`useSubmitSignature`) to `@ppt/api-client` esignature module; added `documentSign.*` strings to all 6 locales + a key-parity regression test; flipped `ppt-web.buildStatus` planned→shipped. PDF preview deferred (no public document URL in render context).
 - 2026-07-14 — agent: gap-84-2-no-screen-map-entry-for-a — created this screen-map for the signer-facing `/sign` page (Epic 84.2 E-Signature Email Integration). Backend `/api/v1/signatures/sign` consumer endpoints are shipped + tested; frontend page is `planned`. Endpoints/sitemapRefs left empty by design (signature routes are not in `@ppt/sitemap`); documented in prose. Manager-side request creation stays on `ppt/document-detail`.

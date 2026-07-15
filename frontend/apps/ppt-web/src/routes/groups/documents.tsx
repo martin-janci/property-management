@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts';
 import {
   ArticleDetailPage,
   DocumentDetailPage,
+  DocumentSignPage,
   DocumentsPage,
   DocumentTemplatesPage,
   DocumentUploadPage,
@@ -100,6 +101,10 @@ export function documentRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Signer-facing public signing page (Epic 84.2). PUBLIC — no
+          ProtectedRoute: authority is the HMAC `?token=` from the emailed
+          `{BASE_URL}/sign?token=…` link, not a platform session. */}
+      <Route path="/sign" element={<DocumentSignPage />} />
     </>
   );
 }

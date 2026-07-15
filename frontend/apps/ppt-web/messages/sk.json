@@ -1607,5 +1607,34 @@
     "saveFailed": "Spúšťač sa nepodarilo aktualizovať",
     "resetDone": "Spúšťače obnovené na predvolené",
     "resetFailed": "Spúšťače sa nepodarilo obnoviť"
+  },
+  "documentSign": {
+    "title": "Podpísať dokument",
+    "subtitle": "Skontrolujte nižšie uvedené údaje a podpíšte prijatím svojho podpisu.",
+    "loading": "Načítava sa vaša žiadosť o podpis…",
+    "documentLabel": "Dokument",
+    "untitledDocument": "Dokument bez názvu",
+    "messageLabel": "Správa od odosielateľa",
+    "signerLabel": "Podpisujete ako",
+    "confirmationTitle": "Podpis zaznamenaný",
+    "allSigned": "Všetci podpisujúci teraz podpísali. Dokončený dokument bude odoslaný žiadateľovi.",
+    "othersRemain": "Váš podpis je zaznamenaný. Stále čakáme na ostatných podpisujúcich.",
+    "alreadySignedTitle": "Už podpísané",
+    "form": {
+      "nameLabel": "Na podpísanie zadajte svoje celé meno",
+      "nameRequired": "Na podpísanie zadajte svoje celé meno.",
+      "consent": "Zadaním svojho mena a výberom možnosti Podpísať súhlasíte, že ide o váš elektronický podpis na tomto dokumente.",
+      "submit": "Prijať a podpísať",
+      "submitting": "Podpisuje sa…"
+    },
+    "errors": {
+      "invalidTitle": "Neplatný odkaz na podpis",
+      "invalid": "Tento odkaz na podpis je neplatný. Skontrolujte odkaz vo svojom e-maile alebo požiadajte odosielateľa o nový.",
+      "expired": "Platnosť tohto odkazu na podpis vypršala. Požiadajte odosielateľa o nový.",
+      "alreadySigned": "Na túto žiadosť o podpis ste už odpovedali. Nie je potrebná žiadna ďalšia akcia.",
+      "linkUsed": "Tento odkaz na podpis už bol použitý. Ak stále potrebujete podpísať, požiadajte odosielateľa o nový odkaz.",
+      "notOpen": "Táto žiadosť o podpis už nie je otvorená na podpisovanie.",
+      "generic": "Pri načítavaní tejto žiadosti o podpis sa vyskytla chyba. Skúste to znova."
+    }
   }
 }
