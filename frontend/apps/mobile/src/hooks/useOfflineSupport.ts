@@ -3,6 +3,7 @@ import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../config/api';
+import { extractTenantId } from '../utils/jwt';
 
 // Storage keys
 const CACHE_PREFIX = 'ppt_cache_';
@@ -41,25 +42,6 @@ export interface QueuedAction {
    *   the replayed edit hits the right resource.
    */
   localId?: string;
-}
-
-/**
- * Decode a JWT payload (no signature verification — that happens server-side)
- * and pull the `tenant_id` claim. Used so replayed offline actions can send
- * the X-Tenant-ID header that tenant-scoped routes require.
- */
-function extractTenantIdFromJwt(token: string): string | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
-    const claims = JSON.parse(atob(padded + padding)) as Record<string, unknown>;
-    const value = claims.tenant_id;
-    return typeof value === 'string' ? value : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -245,7 +227,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
         // claim — extract it so replayed offline actions hit the same
         // tenant the user was signed into when they enqueued.
-        const tenantId = extractTenantIdFromJwt(accessToken);
+        const tenantId = extractTenantId(accessToken);
         if (tenantId) {
           headers['X-Tenant-ID'] = tenantId;
         }

@@ -10,6 +10,7 @@
     "frontend/apps/ppt-web/**",
     "frontend/apps/reality-web/**",
     "frontend/apps/admin-web/**",
+    "frontend/apps/mobile/**",
     "frontend/packages/**",
     "frontend/packages/api-client/**",
     "docs/screens/**"

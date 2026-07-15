@@ -28,11 +28,37 @@ import {
   View,
 } from 'react-native';
 import { getApiBaseUrl } from '../../config/api';
+import { extractTenantId } from '../../utils/jwt';
 import { colors } from '../shared/screenStyles';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
+
+/**
+ * Client-side upload guards — kept in sync with the backend's
+ * `MAX_FILE_SIZE` / `ALLOWED_MIME_TYPES` on `POST /api/v1/documents/upload`
+ * (`backend/crates/db/src/models/document.rs`). Enforcing them here rejects
+ * an oversize / disallowed file *before* the multipart body is streamed over
+ * cellular data, instead of letting the user find out via the server's 422.
+ */
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MiB
+
+const ALLOWED_MIME_TYPES: readonly string[] = [
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/csv',
+  // Images
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
 
 const DOCUMENT_CATEGORIES = [
   'contract',
@@ -81,19 +107,17 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Decode the JWT payload to extract the tenant_id claim (no verification). */
-export function extractTenantId(token: string): string | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
-    const json = atob(padded + padding);
-    const payload = JSON.parse(json) as Record<string, unknown>;
-    const value = payload.tenant_id;
-    return typeof value === 'string' ? value : null;
-  } catch {
-    return null;
+/**
+ * Thrown by {@link uploadDocumentMultipart} when there is no readable access
+ * token. The upload endpoint is auth-protected, so proceeding without a
+ * bearer token is a guaranteed 401 — we fail fast *before* streaming the
+ * multipart body over the network and let the caller surface a translated
+ * "session expired / log in again" message (GitHub #2327).
+ */
+export class UploadAuthError extends Error {
+  constructor() {
+    super('AUTH_REQUIRED');
+    this.name = 'UploadAuthError';
   }
 }
 
@@ -106,6 +130,9 @@ export function extractTenantId(token: string): string | null {
  * X-Tenant-ID without accidentally overriding the boundary in the
  * Content-Type header (React Native's FormData sets that automatically when
  * you omit it).
+ *
+ * Throws {@link UploadAuthError} when no access token can be read — the
+ * request is auth-protected, so an unauthenticated POST would only ever 401.
  */
 export async function uploadDocumentMultipart(params: {
   file: PickedFile;
@@ -113,8 +140,17 @@ export async function uploadDocumentMultipart(params: {
   description: string;
   category: string;
 }): Promise<{ id: string; message: string }> {
-  const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY).catch(() => null);
-  const tenantId = token ? extractTenantId(token) : null;
+  let token: string | null;
+  try {
+    token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  } catch {
+    token = null;
+  }
+  if (!token) {
+    // Fail fast: no point streaming the file only to be rejected with a 401.
+    throw new UploadAuthError();
+  }
+  const tenantId = extractTenantId(token);
   const baseUrl = getApiBaseUrl();
 
   const formData = new FormData();
@@ -134,7 +170,7 @@ export async function uploadDocumentMultipart(params: {
   formData.append('category', params.category);
 
   const headers: Record<string, string> = {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    Authorization: `Bearer ${token}`,
     ...(tenantId ? { 'X-Tenant-ID': tenantId } : {}),
   };
   // NOTE: Do NOT set Content-Type — fetch + FormData sets the boundary automatically.
@@ -231,7 +267,21 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
 
   const validate = (): boolean => {
     const next: UploadFormErrors = {};
-    if (!pickedFile) next.file = t('documents.upload.fileRequired');
+    if (!pickedFile) {
+      next.file = t('documents.upload.fileRequired');
+    } else if (!ALLOWED_MIME_TYPES.includes(pickedFile.mimeType)) {
+      // Mirror the backend's ALLOWED_MIME_TYPES allow-list. A file the picker
+      // couldn't type falls back to application/octet-stream, which is (also)
+      // rejected here rather than after a full upload.
+      next.file = t('documents.upload.fileTypeNotAllowed');
+    } else if (pickedFile.size > MAX_FILE_SIZE) {
+      // size === 0 means the picker didn't report a size; we can't enforce the
+      // cap client-side in that case, so we let the server's 422 be the
+      // backstop rather than blocking a legitimate file.
+      next.file = t('documents.upload.fileTooLarge', {
+        max: formatBytes(MAX_FILE_SIZE),
+      });
+    }
     if (!title.trim()) next.title = t('documents.upload.titleRequired');
     if (!category) next.category = t('documents.upload.categoryRequired');
     setErrors(next);
@@ -256,7 +306,12 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
         { text: t('common.ok'), onPress: onSuccess },
       ]);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('errors.generic');
+      const message =
+        err instanceof UploadAuthError
+          ? t('documents.upload.sessionExpired')
+          : err instanceof Error
+            ? err.message
+            : t('errors.generic');
       Alert.alert(t('documents.upload.errorTitle'), message);
     } finally {
       setIsUploading(false);
@@ -567,17 +622,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     marginBottom: 6,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: colors.accent,
-    borderRadius: 3,
   },
   // Submit
   submitButton: {

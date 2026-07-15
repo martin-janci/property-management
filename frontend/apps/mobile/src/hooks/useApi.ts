@@ -22,6 +22,7 @@
 import { type UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import * as SecureStore from 'expo-secure-store';
 import { getApiBaseUrl } from '../config/api';
+import { decodeJwtPayload } from '../utils/jwt';
 
 export { getTenantId };
 
@@ -31,30 +32,6 @@ const ACCESS_TOKEN_KEY = 'ppt_access_token';
 async function getAccessToken(): Promise<string | null> {
   try {
     return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Decode a JWT payload without verifying the signature.
- *
- * Verification happens server-side; the client only needs the payload to
- * extract the `tenant_id` claim that goes into the `X-Tenant-ID` header
- * (used by tenant-scoped routes such as `/voting`, `/buildings`, …).
- *
- * Returns `null` if the token is malformed or doesn't contain a payload.
- */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    // Convert base64url → base64 so atob can decode it. React Native ships
-    // a global `atob`, so we rely on it instead of pulling in `Buffer`.
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
-    const json = atob(padded + padding);
-    return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
   }
