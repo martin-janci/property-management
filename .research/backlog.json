@@ -4187,16 +4187,18 @@
       "score": 0,
       "status": "open",
       "sources": [
-        "routine self-signal 2026-07-09"
+        "routine self-signal 2026-07-09",
+        "lag-warning-2026-07-15"
       ],
       "evidence": [
-        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look."
+        "Last successful commit 2026-07-05T03:10Z; today 2026-07-09 — 3d 21h gap. Previous run (2026-07-05) was itself a 19d catch-up. Cloud cron is landing incremental runs but cadence has not returned to daily. If the scheduler is still fine, the recovery is just time; if it's a policy/quota issue, needs an operator look.",
+        "2026-07-15: 6d 9h since previous run — fourth consecutive over-cadence gap. Dispatcher on planning branch still ticking (50 PRs merged in window #2186–#2338), but research routine has not fired. If cloud cron unhealthy, needs operator look."
       ],
       "files": [
         ".research/state.json"
       ],
       "created_at": "2026-07-09",
-      "updated_at": "2026-07-09",
+      "updated_at": "2026-07-15",
       "plan": null
     },
     {

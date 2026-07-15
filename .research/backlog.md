@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-09 02:36 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-15 12:22 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -149,7 +149,7 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | done | 2026-05-31 |  |
-| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | open | 2026-07-09 |  |
+| 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | open | 2026-07-15 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-emergency-rs` | Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-vendors-rs` | Churn hotspot: 929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06 | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs` | Churn hotspot: 709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening. | dropped | 2026-07-05 |  |

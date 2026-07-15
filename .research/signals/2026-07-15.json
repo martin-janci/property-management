@@ -1,0 +1,142 @@
+{
+  "date": "2026-07-15",
+  "generated_iso": "2026-07-15T12:22:00Z",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief exists + head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor / signals advanced vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signal (only 1 new signal, not in prior seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8 + decay applied (N/A this run — no items >14d)",
+      "observed": "cap=true; decay=N/A (no open items updated_at ≤ 2026-07-01)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation on new plans (N/A — 0 new plans)",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each meets readiness (N/A — 0 new plans)",
+      "observed": "0 new plans",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — 0 phase failures, brief lists Phase 1.5 + 1.6 as skipped (not failed)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still in plans/ or plans/_archive/",
+      "observed": "11 slugs verified",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged ≥ HEAD",
+      "observed": "staged=7, head=7",
+      "expected": "staged ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen from backlog.json (triage vector)",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (N/A — 0 auto_fix_actions this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "≤3 total, ≤1 per action_type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (N/A — Phase 1.6 skipped; pm_cursor + coverage_cursor unchanged vs HEAD)",
+      "observed": "pm_cursor.next_index=5 unchanged; coverage_cursor.next_index=12 unchanged",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in added lines (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-15",
+      "type": "lag_warning",
+      "source": ".research/state.json (last_run_iso=2026-07-09T02:37:00Z)",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-07-09T02:37Z; today 2026-07-15T12:22Z — 6d 9h gap (LAG_HOURS=153, LAG_DAYS=6). Fourth consecutive over-cadence lag (prior windows: 2026-06-16→2026-07-05 was 19d, 2026-07-05→2026-07-09 was 3d 21h). Dispatcher on planning branch also appears paused since 2026-07-10 20:12 (latest visible dispatcher chore commit `ac3afb3`). stale_routine_alert threshold (3+d) crossed. Fired by a buffer-low planner nudge (payload: 'claimable=13/72 — refill planner (backlog+retry+coverage all drained)'), not the daily cron — operator to check cron health.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "phase_notes": {
+    "phase_1_5_skipped": "catch-up mode (6d 9h lag) — rotating expert review deferred to next incremental run; state.review_cursor left unchanged (mobile-native-kmp remains oldest-unreviewed at 2026-06-06)",
+    "phase_1_6_skipped": "catch-up mode (6d 9h lag) — project-management analysis + Scrum Master synthesis deferred; state.pm_cursor.next_index (=5) unchanged; state.coverage_cursor.next_index (=12) unchanged. G16 is a no-op this run.",
+    "phase_5_no_candidate": "the only new signal (lag_warning) is informational (score_delta=0) and doesn't match the Phase-5 allowlist; the 7 pre-existing open items are bug/security/refactor/test-gap/dx — none on the allowlist."
+  }
+}
