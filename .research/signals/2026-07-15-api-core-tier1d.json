@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-15",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved: claimable=14 < floor=36). No CHURN_FILES passed to this standalone slice, so selection fell to oldest-unreviewed. state.review_cursor oldest entries were ppt-web-core (2026-07-07) and mobile-native-kmp (2026-07-12), but both already have signals files dated today (2026-07-15-ppt-web-core-tier1d.json, 2026-07-15-mobile-native-kmp.json), as does reality-web (2026-07-15-reality-web-tier1d.json); excluding segments already reviewed today, the oldest remaining were tied at 2026-07-13 (api-core, reality-server, ppt-web-ui) and segment-map order broke the tie to api-core. Not backlog-saturated (0 open code-review-finding items for api-core). The Rust expert reviewed the non-handler core: services/, state.rs, main.rs, lib.rs, observability.rs, preflight.rs, bin/ (routes/ excluded — that is the api-handlers segment). The segment is defensively written: nearly all unwrap()/expect() hits are #[cfg(test)]-gated, on hardcoded constants, on OS-RNG with documented invariants, or in RUST_ENV-guarded startup panics; no unsafe, no sensitive-field logging, no reachable todo!()/unimplemented!(), and the only raw sqlx in services (feature_service.rs) is correctly scoped by flag_id+scope_id/org_id. One defensible robustness finding survived.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-core-scheduler-mutex-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:168,314,377,497,549,832,858,878,1033,1163,1256,1323,1445,1454 — every metrics access uses self.metrics.lock().unwrap(); if any code panics while holding this Mutex the lock is poisoned and all subsequent locks (including get_metrics() reachable from a metrics/status handler and every counter update in the indefinitely-running background scheduler loop) panic permanently, silently killing scheduled-job processing. Prefer lock().unwrap_or_else(|e| e.into_inner()) or a poison-tolerant guard."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
