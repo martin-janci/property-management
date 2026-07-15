@@ -47,7 +47,7 @@ export const DesignSourceRefSchema = z
   })
   .passthrough();
 
-const IdSchema = z.string().regex(/^(ppt|reality|reality-mobile)\/[a-z0-9-]+$/, {
+export const IdSchema = z.string().regex(/^(ppt|reality|reality-mobile)\/[a-z0-9-]+$/, {
   message: 'id must match <product>/<slug> using kebab-case',
 });
 
