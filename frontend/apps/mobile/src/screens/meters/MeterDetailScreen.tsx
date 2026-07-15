@@ -158,7 +158,6 @@ export function MeterDetailScreen({
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load meter</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : (
           <>

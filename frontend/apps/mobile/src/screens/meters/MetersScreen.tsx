@@ -164,7 +164,6 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load meters</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : meters.length === 0 ? (
           <View style={s.emptyState}>

@@ -144,7 +144,6 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn’t load document</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
             <Pressable style={[s.primaryButton, styles.retryButton]} onPress={handleRetry}>
               <Text style={s.primaryButtonText}>Retry</Text>
             </Pressable>

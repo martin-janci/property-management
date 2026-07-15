@@ -57,7 +57,13 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "loadError": "Dashboard konnte nicht geladen werden. Zum Aktualisieren nach unten ziehen oder auf Wiederholen tippen.",
+    "loadError": "Dashboard konnte nicht geladen werden. Zum Aktualisieren nach unten ziehen oder auf Erneut versuchen tippen.",
+    "category": {
+      "general": "Allgemein",
+      "urgent": "Dringend",
+      "maintenance": "Wartung",
+      "event": "Ereignis"
+    },
     "welcome": "Willkommen",
     "welcomeBack": "Willkommen zuruck,",
     "recentActivity": "Letzte Aktivitat",

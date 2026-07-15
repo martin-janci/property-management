@@ -259,7 +259,6 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
             <Text style={styles.emptyTitle}>Couldn't load announcements</Text>
-            <Text style={styles.emptyText}>{error.message}</Text>
           </View>
         ) : filteredAnnouncements.length === 0 ? (
           <View style={styles.emptyState}>

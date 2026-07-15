@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { QueryErrorBanner } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
@@ -63,7 +64,7 @@ interface DashboardScreenProps {
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
 
   // Each card pulls its own count so a single slow/down endpoint doesn't
@@ -155,9 +156,11 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     ]);
   }, [announcementsQuery, faultsStatsQuery, votesQuery, unreadMessagesQuery]);
 
+  // Localize dates to the active UI language (mirrors VotingScreen). Previously
+  // hardcoded `'en-US'`, so dates never localized for sk/cs/de/hu/pl users (#2282).
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
   };
 
   const getCategoryColor = (category: Announcement['category']): string => {
@@ -210,20 +213,9 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         }
       >
         {/* Error banner — shown when any card's query failed so the zeroed
-            stats below aren't mistaken for a genuinely empty building (#2282). */}
-        {hasError && (
-          <View style={styles.errorBanner} accessibilityRole="alert">
-            <Text style={styles.errorBannerIcon}>⚠️</Text>
-            <Text style={styles.errorBannerText}>{t('dashboard.loadError')}</Text>
-            <Pressable
-              style={styles.errorBannerButton}
-              onPress={onRefresh}
-              accessibilityRole="button"
-            >
-              <Text style={styles.errorBannerButtonText}>{t('common.retry')}</Text>
-            </Pressable>
-          </View>
-        )}
+            stats below aren't mistaken for a genuinely empty building (#2282).
+            Extracted to the shared QueryErrorBanner component (#2323). */}
+        {hasError && <QueryErrorBanner message={t('dashboard.loadError')} onRetry={onRefresh} />}
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
@@ -286,7 +278,9 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
                       { backgroundColor: getCategoryColor(announcement.category) },
                     ]}
                   >
-                    <Text style={styles.categoryText}>{announcement.category}</Text>
+                    <Text style={styles.categoryText}>
+                      {t(`dashboard.category.${announcement.category}`)}
+                    </Text>
                   </View>
                   <Text style={styles.announcementDate}>{formatDate(announcement.createdAt)}</Text>
                 </View>
@@ -341,27 +335,6 @@ const styles = StyleSheet.create({
   logoutButton: { padding: 8 },
   logoutText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
   scrollView: { flex: 1 },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors.dangerBg,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  errorBannerIcon: { fontSize: 20 },
-  errorBannerText: { flex: 1, fontSize: 13, color: colors.dangerDark },
-  errorBannerButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.danger,
-  },
-  errorBannerButtonText: { color: colors.white, fontSize: 13, fontWeight: '600' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12 },
   statCard: {
     flex: 1,

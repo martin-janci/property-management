@@ -179,7 +179,6 @@ export function DocumentPermissionsScreen({ documentId, onBack }: DocumentPermis
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>{t('documents.permissions.loadError')}</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
             <Pressable style={[s.primaryButton, styles.retryButton]} onPress={handleRetry}>
               <Text style={s.primaryButtonText}>{t('common.retry')}</Text>
             </Pressable>

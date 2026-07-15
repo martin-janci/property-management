@@ -171,7 +171,6 @@ export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load leases</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : leases.length === 0 ? (
           <View style={s.emptyState}>

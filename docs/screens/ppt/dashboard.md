@@ -86,6 +86,8 @@ UC-15 + UC-02 + UC-03 + UC-04 hub for residents on mobile (RN). The home screen 
 
 ### Specific (recent)
 
+- Load errors surface via a retryable inline banner above the stats grid (`hasError` across all four dashboard queries; #2282/#2304). The banner is now the shared `components/QueryErrorBanner.tsx` (extracted #2323) so sibling screens can reuse the same contract — it renders a caller-provided, already-localized message and never a raw `error.message`. The whole mobile screens tree was swept in #2323 to drop raw `error.message`/`combinedError.message` renders (backend-internals leak).
+- Dashboard dates now localize to `i18n.language` (was hardcoded `en-US`); the announcement category badge is translated via `dashboard.category.*` (was rendering the raw enum).
 - Mobile tokens defined as a JS object (`MOB_TOKENS`) inline in screens.jsx — production must replace with imports from a shared RN theme file consumed from `@ppt/ui-kit` or equivalent. Don't ship inline-token objects.
 - 📌 emoji in pinned-announcement card violates SKILL.md non-negotiable — replace with Lucide `pin` SVG. Same for any other emoji glyph elsewhere.
 - Greeting "Good morning," is time-of-day dependent; use locale-aware ranges (sk: "Dobré ráno" until 10:00, "Dobrý deň" 10–18, "Dobrý večer" 18–22, "Dobrú noc" 22+).
@@ -101,5 +103,6 @@ UC-15 + UC-02 + UC-03 + UC-04 hub for residents on mobile (RN). The home screen 
 
 <!-- newest entries on top -->
 
+- 2026-07-15 — agent: extracted reusable `QueryErrorBanner` from DashboardScreen and swept sibling mobile screens to drop raw `error.message` leaks (#2282/#2304 follow-up, #2323); localized dashboard dates (`i18n.language`) + announcement category badge (`dashboard.category.*`); fixed cs/de `dashboard.loadError` retry-label copy; added QueryErrorBanner regression suite
 - 2026-05-09 — agent: design analyzed (ui_kits/mobile/screens.jsx — MobHomeScreen); flipped mobile redesignStatus → in-progress; attached designSource; populated functionality checklist (6 sections), states, design-specific notes; declared 4 sharedComponents; added 3 relatedScreens (faults-list / announcements / report-fault as children of dashboard)
 - 2026-05-08 — init: created from scan (source: sitemap)

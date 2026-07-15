@@ -188,7 +188,6 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
             <Text style={styles.emptyTitle}>Couldn't load faults</Text>
-            <Text style={styles.emptyText}>{error.message}</Text>
           </View>
         ) : filteredFaults.length === 0 ? (
           <View style={styles.emptyState}>

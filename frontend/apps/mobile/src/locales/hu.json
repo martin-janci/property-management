@@ -58,6 +58,12 @@
   "dashboard": {
     "title": "Iranyitopult",
     "loadError": "Nem sikerult betolteni az iranyitopultot. Huzza le a frissiteshez, vagy koppintson az Ujra gombra.",
+    "category": {
+      "general": "Altalanos",
+      "urgent": "Surgos",
+      "maintenance": "Karbantartas",
+      "event": "Esemeny"
+    },
     "welcome": "Udvozoljuk",
     "welcomeBack": "Udvozoljuk ujra,",
     "recentActivity": "Legutobbi tevekenyseg",

@@ -137,7 +137,6 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load messages</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
             <Pressable style={s.primaryButton} onPress={() => refetch()}>
               <Text style={s.primaryButtonText}>Try again</Text>
             </Pressable>
