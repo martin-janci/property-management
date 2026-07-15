@@ -10,6 +10,12 @@ import type { AgencyListing, AgencyListingStatus } from '@ppt/reality-api-client
 import { useAgencyListings, useMyAgency, useRealtors } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useState } from 'react';
+import {
+  AgencyLoadError,
+  isNotFoundError,
+  NoAgencyMessage,
+  SectionError,
+} from './AgencyErrorStates';
 
 type StatusFilter = 'all' | AgencyListingStatus;
 
@@ -18,14 +24,34 @@ export function AgencyListings() {
   const [realtorFilter, setRealtorFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
 
-  const { data: agency } = useMyAgency();
+  const {
+    data: agency,
+    isLoading: agencyLoading,
+    isError: agencyError,
+    error: agencyErrorObj,
+    refetch: refetchAgency,
+  } = useMyAgency();
   const { data: realtors } = useRealtors(agency?.id || '');
-  const { data: listingsData, isLoading } = useAgencyListings(agency?.id || '', {
+  const {
+    data: listingsData,
+    isLoading,
+    isError: listingsError,
+  } = useAgencyListings(agency?.id || '', {
     status: statusFilter === 'all' ? undefined : statusFilter,
     realtorId: realtorFilter === 'all' ? undefined : realtorFilter,
     page,
     limit: 20,
   });
+
+  // Distinguish an agency-load failure from a genuine "no agency" state so a
+  // transport/server error no longer renders the misleading empty state
+  // ("No listings yet") one route over from Issue #2277 (Issue #2343).
+  if (agencyError && !isNotFoundError(agencyErrorObj)) {
+    return <AgencyLoadError onRetry={() => refetchAgency()} />;
+  }
+  if (!agencyLoading && !agency) {
+    return <NoAgencyMessage />;
+  }
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -117,6 +143,8 @@ export function AgencyListings() {
       <div className="table-container">
         {isLoading ? (
           <ListingsTableSkeleton />
+        ) : listingsError ? (
+          <SectionError message="Couldn't load listings. Please try again." />
         ) : listingsData?.listings.length === 0 ? (
           <EmptyState />
         ) : (

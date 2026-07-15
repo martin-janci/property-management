@@ -75,6 +75,31 @@ impl RealityPortalRepository {
             .await
     }
 
+    /// Get the agency the given portal user belongs to.
+    ///
+    /// Resolves the agency via the caller's `reality_agency_members` row,
+    /// picking the earliest-joined membership when a user belongs to more
+    /// than one. Returns `None` when the user is not a member of any agency
+    /// so the caller can answer `404` (used by `GET /api/v1/agencies/me`).
+    pub async fn get_agency_for_user(
+        &self,
+        user_id: Uuid,
+    ) -> Result<Option<RealityAgency>, SqlxError> {
+        sqlx::query_as::<_, RealityAgency>(
+            r#"
+            SELECT a.*
+            FROM reality_agencies a
+            JOIN reality_agency_members m ON m.agency_id = a.id
+            WHERE m.user_id = $1
+            ORDER BY m.joined_at ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     /// List public agencies (verified status only). Used by the public
     /// directory surface in `reality-web` and the KMP mobile clients.
     pub async fn list_public_agencies(

@@ -8,9 +8,16 @@
 import { useAgencyBranding, useMyAgency, useUpdateBranding } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { AgencyLoadError, isNotFoundError, NoAgencyMessage } from './AgencyErrorStates';
 
 export function AgencyBranding() {
-  const { data: agency } = useMyAgency();
+  const {
+    data: agency,
+    isLoading: agencyLoading,
+    isError: agencyError,
+    error: agencyErrorObj,
+    refetch: refetchAgency,
+  } = useMyAgency();
   const { data: branding, isLoading } = useAgencyBranding(agency?.id || '');
   const updateBranding = useUpdateBranding();
 
@@ -85,7 +92,17 @@ export function AgencyBranding() {
     setCoverFile(null);
   };
 
-  if (isLoading) {
+  // Distinguish an agency-load failure from a genuine "no agency" state so a
+  // transport/server error no longer renders the empty branding form against a
+  // missing agency (Issue #2343, sibling of Issue #2277).
+  if (agencyError && !isNotFoundError(agencyErrorObj)) {
+    return <AgencyLoadError onRetry={() => refetchAgency()} />;
+  }
+  if (!agencyLoading && !agency) {
+    return <NoAgencyMessage />;
+  }
+
+  if (agencyLoading || isLoading) {
     return <BrandingSkeleton />;
   }
 

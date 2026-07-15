@@ -174,6 +174,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         // Epic 32: Agencies
         routes::agencies::create_agency,
         routes::agencies::get_agency,
+        routes::agencies::get_my_agency,
         routes::agencies::get_agency_by_slug,
         routes::agencies::update_agency,
         routes::agencies::update_branding,

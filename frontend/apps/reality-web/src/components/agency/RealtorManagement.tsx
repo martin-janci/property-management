@@ -18,6 +18,12 @@ import {
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import {
+  AgencyLoadError,
+  isNotFoundError,
+  NoAgencyMessage,
+  SectionError,
+} from './AgencyErrorStates';
 
 type TabType = 'all' | 'active' | 'invited' | 'inactive';
 
@@ -26,8 +32,14 @@ export function RealtorManagement() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedRealtor, setSelectedRealtor] = useState<Realtor | null>(null);
 
-  const { data: agency } = useMyAgency();
-  const { data: realtors, isLoading } = useRealtors(agency?.id || '');
+  const {
+    data: agency,
+    isLoading: agencyLoading,
+    isError: agencyError,
+    error: agencyErrorObj,
+    refetch: refetchAgency,
+  } = useMyAgency();
+  const { data: realtors, isLoading, isError: realtorsError } = useRealtors(agency?.id || '');
 
   const filteredRealtors = realtors?.filter((r) => {
     if (activeTab === 'all') return true;
@@ -56,6 +68,16 @@ export function RealtorManagement() {
         realtors?.filter((r) => r.status === 'inactive' || r.status === 'suspended').length || 0,
     },
   ];
+
+  // Distinguish an agency-load failure from a genuine "no agency" state so a
+  // transport/server error no longer renders the misleading "No realtors yet"
+  // empty state (Issue #2343, sibling of Issue #2277).
+  if (agencyError && !isNotFoundError(agencyErrorObj)) {
+    return <AgencyLoadError onRetry={() => refetchAgency()} />;
+  }
+  if (!agencyLoading && !agency) {
+    return <NoAgencyMessage />;
+  }
 
   return (
     <div className="realtor-management">
@@ -106,6 +128,8 @@ export function RealtorManagement() {
       <div className="realtor-list">
         {isLoading ? (
           <RealtorListSkeleton />
+        ) : realtorsError ? (
+          <SectionError message="Couldn't load realtors. Please try again." />
         ) : filteredRealtors?.length === 0 ? (
           <EmptyState tab={activeTab} onInvite={() => setShowInviteModal(true)} />
         ) : (

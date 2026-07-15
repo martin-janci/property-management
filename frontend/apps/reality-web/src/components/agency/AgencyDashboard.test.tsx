@@ -61,6 +61,39 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
     expect(refetch).toHaveBeenCalledOnce();
   });
 
+  it('shows "No Agency Found" (not the error/retry state) when the query fails with a 404', () => {
+    // Issue #2343: GET /api/v1/agencies/me answers 404 when the caller has no
+    // agency. A 404 is the genuine "no agency" case, so it must reach the
+    // onboarding CTA — NOT the transport-error/retry screen.
+    mockUseMyAgency.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { status: 404 },
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useMyAgency>);
+
+    render(<AgencyDashboard />);
+
+    expect(screen.getByText(/No Agency Found/i)).toBeInTheDocument();
+    expect(screen.queryByText('loadErrorTitle')).not.toBeInTheDocument();
+  });
+
+  it('shows the error/retry state (not "No Agency Found") when the query fails with a 500', () => {
+    mockUseMyAgency.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { status: 500 },
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useMyAgency>);
+
+    render(<AgencyDashboard />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('loadErrorTitle');
+    expect(screen.queryByText(/No Agency Found/i)).not.toBeInTheDocument();
+  });
+
   it('still shows the "No Agency Found" empty state when the query succeeds with no agency', () => {
     mockUseMyAgency.mockReturnValue({
       data: undefined,
