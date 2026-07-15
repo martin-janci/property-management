@@ -4,7 +4,11 @@
  * Upload documents with OCR processing support.
  */
 
-import { DOCUMENT_CATEGORIES, type DocumentCategory, useUploadDocument } from '@ppt/api-client';
+import {
+  DOCUMENT_CATEGORIES,
+  type DocumentCategory,
+  useUploadDocumentDirect,
+} from '@ppt/api-client';
 import { type ChangeEvent, type DragEvent, useCallback, useState } from 'react';
 
 interface DocumentUploadProps {
@@ -49,7 +53,9 @@ export function DocumentUpload({
   const [category, setCategory] = useState<DocumentCategory>('other');
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const uploadDocument = useUploadDocument();
+  // Direct-to-S3 upload (gap-84-1): bytes go straight to storage via a
+  // presigned PUT URL instead of proxying through the api-server.
+  const uploadDocument = useUploadDocumentDirect();
 
   // Note: Client-side validation improves UX, but server-side validation of file
   // signatures (magic bytes) is required for security. The backend validates file types.

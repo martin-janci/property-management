@@ -225,6 +225,50 @@ export interface UpdateDocumentRequest {
   access_roles?: string[];
 }
 
+// --- Direct-to-S3 upload (gap-84-1) ---
+
+/**
+ * Request for a presigned direct-to-S3 upload URL
+ * (`POST /api/v1/documents/upload-url`). Mirrors the Rust
+ * `CreateUploadUrlRequest`. The server derives the storage key from
+ * `file_name` and validates `mime_type` / `size_bytes` up-front against the
+ * 50 MiB cap before minting a URL.
+ */
+export interface CreateUploadUrlRequest {
+  /** Original filename — used to derive the storage key and detect the content
+   * type from the extension when `mime_type` is blank. */
+  file_name: string;
+  /** MIME type the client will upload with. It MUST be sent as the
+   * `Content-Type` header on the subsequent PUT, because the presigned URL is
+   * signed for exactly this content type. */
+  mime_type: string;
+  /** Optional declared size in bytes, validated against the 50 MiB cap
+   * up-front. S3 still enforces the real byte count. */
+  size_bytes?: number;
+}
+
+/**
+ * Response carrying a presigned PUT URL for direct client-to-S3 upload
+ * (`POST /api/v1/documents/upload-url`). Mirrors the Rust
+ * `CreateUploadUrlResponse`. The client PUTs bytes straight to `url`, then
+ * registers the document via `POST /api/v1/documents` with `file_key`.
+ */
+export interface CreateUploadUrlResponse {
+  /** Presigned S3 PUT URL — the client uploads bytes directly here, bypassing
+   * the api-server byte proxy. */
+  url: string;
+  /** Storage key the object will live at. Echo back to
+   * `POST /api/v1/documents` to register the document record. */
+  file_key: string;
+  /** MIME type the client MUST set as the `Content-Type` header on the PUT so
+   * the request matches the presigned signature. */
+  content_type: string;
+  /** HTTP method to use for the upload (always `PUT`). */
+  method: string;
+  /** ISO-8601 timestamp when the presigned URL expires. */
+  expires_at: string;
+}
+
 // Document categories
 export const DOCUMENT_CATEGORIES = [
   'contract',
