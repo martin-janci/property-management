@@ -762,9 +762,8 @@ impl NotificationPipeline {
                 // Epic 8A-3 / gap-84-4: `CombinedPushAdapter` fetches device
                 // tokens internally from `device_push_tokens` via the
                 // service-role pool and routes each token to its provider
-                // (FCM for Android, APNs for iOS). The `device_tokens` slice is
-                // left empty here; adapters that pre-fetch tokens can still use it.
-                self.push_adapter.send(user_id, &[], notification).await
+                // (FCM for Android, APNs for iOS).
+                self.push_adapter.send(user_id, notification).await
             }
             NotificationChannel::InApp => {
                 self.in_app_adapter
@@ -778,10 +777,15 @@ impl NotificationPipeline {
             // Issue #484: transport-not-configured is a `skipped`
             // outcome, not a failure. Keeps `sent` counters honest.
             Err(NotificationError::PushNotConfigured) => {
+                // `PushNotConfigured` is returned both when no provider is
+                // configured AND when providers are configured but the user has
+                // no deliverable device tokens (`combine()` NoTargets + NoTargets).
+                // Both are Skipped, not Failed — keep the wording accurate for
+                // operators diagnosing why a push was skipped.
                 tracing::debug!(
                     user_id = %user_id,
                     channel = %channel,
-                    "[Epic 2B] Push channel skipped — FCM not configured"
+                    "[Epic 2B] Push channel skipped — provider not configured or no deliverable device targets"
                 );
                 record.into_skipped()
             }

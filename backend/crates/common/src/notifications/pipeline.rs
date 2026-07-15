@@ -177,12 +177,12 @@ pub trait EmailTransport: Send + Sync {
 #[async_trait::async_trait]
 pub trait PushTransport: Send + Sync {
     /// Send a push notification to every registered device token for the user.
-    async fn send(
-        &self,
-        user_id: Uuid,
-        device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult;
+    ///
+    /// Implementations look up the user's device tokens themselves (once, via the
+    /// service-role pool) and route each to its provider. There is intentionally no
+    /// `device_tokens` parameter: the pipeline does not pre-fetch tokens, and a
+    /// vestigial slice only invites callers to populate it and expect it to matter.
+    async fn send(&self, user_id: Uuid, notification: &Notification) -> TransportResult;
 }
 
 /// Transport adapter for in-app (stored) notifications.

@@ -589,12 +589,7 @@ impl FcmHttpAdapter {
 
 #[async_trait]
 impl PushTransport for FcmHttpAdapter {
-    async fn send(
-        &self,
-        user_id: Uuid,
-        _device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult {
+    async fn send(&self, user_id: Uuid, notification: &Notification) -> TransportResult {
         // Standalone use (not via `CombinedPushAdapter`): fetch the user's
         // tokens ourselves, then run the shared delivery core.
         if !self.fcm_config.is_configured() {
@@ -978,12 +973,7 @@ impl ApnsHttpAdapter {
 
 #[async_trait]
 impl PushTransport for ApnsHttpAdapter {
-    async fn send(
-        &self,
-        user_id: Uuid,
-        _device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult {
+    async fn send(&self, user_id: Uuid, notification: &Notification) -> TransportResult {
         if !self.apns_config.is_configured() {
             return ProviderOutcome::NotConfigured.into_result();
         }
@@ -1057,6 +1047,11 @@ impl ProviderOutcome {
 pub struct CombinedPushAdapter {
     fcm: FcmHttpAdapter,
     apns: ApnsHttpAdapter,
+    /// The combined adapter owns the single token fetch (see [`CombinedPushAdapter::send`]).
+    /// Kept as its own field rather than reaching into `self.fcm.token_repo`, so the
+    /// "fetch once" responsibility is expressed on the adapter that owns it and does not
+    /// break if `FcmHttpAdapter` is later extracted to another module.
+    token_repo: DevicePushTokenRepository,
 }
 
 impl CombinedPushAdapter {
@@ -1064,7 +1059,8 @@ impl CombinedPushAdapter {
     pub fn from_env(pool: DbPool) -> Self {
         Self {
             fcm: FcmHttpAdapter::from_env(pool.clone()),
-            apns: ApnsHttpAdapter::from_env(pool),
+            apns: ApnsHttpAdapter::from_env(pool.clone()),
+            token_repo: DevicePushTokenRepository::new(pool),
         }
     }
 
@@ -1072,7 +1068,8 @@ impl CombinedPushAdapter {
     pub fn new(pool: DbPool, fcm_config: FcmConfig, apns_config: ApnsConfig) -> Self {
         Self {
             fcm: FcmHttpAdapter::new(pool.clone(), fcm_config),
-            apns: ApnsHttpAdapter::new(pool, apns_config),
+            apns: ApnsHttpAdapter::new(pool.clone(), apns_config),
+            token_repo: DevicePushTokenRepository::new(pool),
         }
     }
 
@@ -1151,17 +1148,12 @@ impl CombinedPushAdapter {
 
 #[async_trait]
 impl PushTransport for CombinedPushAdapter {
-    async fn send(
-        &self,
-        user_id: Uuid,
-        _device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult {
+    async fn send(&self, user_id: Uuid, notification: &Notification) -> TransportResult {
         // Fetch the user's device tokens ONCE. Previously `FcmHttpAdapter` and
         // `ApnsHttpAdapter` each ran `get_tokens_for_user` independently — 2N
         // identical queries on the `dispatch_to_users` fanout hot path. Fetch
         // here and hand both providers the shared slice.
-        let tokens = match self.fcm.token_repo.get_tokens_for_user(user_id).await {
+        let tokens = match self.token_repo.get_tokens_for_user(user_id).await {
             Ok(t) => t,
             Err(e) => {
                 tracing::error!(
@@ -1221,7 +1213,7 @@ impl PushFanoutConfig {
 /// Redis list key the notification pipeline enqueues push jobs onto.
 ///
 /// Producers `RPUSH` a JSON-serialized [`Notification`] onto this list; the
-/// worker `BLPOP`s from the head and delivers each one via [`FcmHttpAdapter`].
+/// worker `BLPOP`s from the head and delivers each one via [`CombinedPushAdapter`].
 pub const PUSH_FANOUT_QUEUE_KEY: &str = "push_fanout_queue";
 
 /// BLPOP block timeout (seconds) used when draining the queue.
@@ -1255,8 +1247,8 @@ const MAX_JOBS_PER_TICK: usize = 256;
 /// ```
 ///
 /// On each tick the worker `BLPOP`s from the head of the list (short timeout)
-/// and delivers each job via [`FcmHttpAdapter::send`], up to
-/// [`MAX_JOBS_PER_TICK`] jobs per tick.
+/// and delivers each job via [`CombinedPushAdapter::send`] (one token fetch,
+/// platform-routed FCM + APNs), up to [`MAX_JOBS_PER_TICK`] jobs per tick.
 ///
 /// When Redis is not available (or the worker is disabled) the worker falls
 /// through to a no-op heartbeat loop so the server always starts cleanly — the
@@ -1335,8 +1327,9 @@ impl PushFanoutWorker {
     /// Process pending push jobs from the queue.
     ///
     /// When Redis is available we `BLPOP` jobs off [`PUSH_FANOUT_QUEUE_KEY`] and
-    /// deliver each one via [`FcmHttpAdapter::send`], up to
-    /// [`MAX_JOBS_PER_TICK`] jobs per tick. When Redis is not available we just
+    /// deliver each one via [`CombinedPushAdapter::send`] (one token fetch,
+    /// platform-routed FCM + APNs), up to [`MAX_JOBS_PER_TICK`] jobs per tick.
+    /// When Redis is not available we just
     /// log a heartbeat (the in-process pipeline delivers push synchronously).
     async fn process_pending_jobs(&self) {
         let Some(ref pubsub) = self.pubsub else {
@@ -1399,13 +1392,7 @@ impl PushFanoutWorker {
             }
         };
 
-        // `device_tokens` is unused by the adapters (they re-fetch from the DB),
-        // so an empty slice is fine here.
-        match self
-            .adapter
-            .send(notification.user_id, &[], &notification)
-            .await
-        {
+        match self.adapter.send(notification.user_id, &notification).await {
             Ok(()) => {
                 tracing::debug!(
                     notification_id = %notification.id,
@@ -1413,11 +1400,24 @@ impl PushFanoutWorker {
                     "[8A-3] PushFanoutWorker delivered queued push job"
                 );
             }
+            Err(NotificationError::PushNotConfigured) => {
+                // Not a failure: either no provider is configured, or the user
+                // has no deliverable device tokens (`combine()` maps both to
+                // `PushNotConfigured`, which the synchronous pipeline records as
+                // Skipped). Mirror that here — a benign no-device user must not
+                // emit warn-level "delivery failed" noise or trip warn-based
+                // alerting.
+                tracing::debug!(
+                    notification_id = %notification.id,
+                    user_id = %notification.user_id,
+                    "[8A-3] PushFanoutWorker: push skipped — no configured provider had a deliverable target"
+                );
+            }
             Err(e) => {
-                // Delivery failed (FCM not configured, DB error, or all sends
-                // failed). The in-app channel remains the mandatory record, so
-                // we log and move on rather than re-queue (avoids hot-looping on
-                // a permanently failing job).
+                // Genuine failure (DB error or all provider sends failed). The
+                // in-app channel remains the mandatory record, so we log and move
+                // on rather than re-queue (avoids hot-looping on a permanently
+                // failing job).
                 tracing::warn!(
                     notification_id = %notification.id,
                     user_id = %notification.user_id,
