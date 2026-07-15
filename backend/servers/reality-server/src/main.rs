@@ -18,8 +18,8 @@ use db::models::{
     InquiryMessage, ListingInquiry, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
     PortalImportJobWithStats, PortalSavedSearch, PublicListingSearchResponse, RealityAgency,
     RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription, RealtorProfile,
-    SendInquiryMessage, UpdateAgencyBranding, UpdateFeedSubscription, UpdatePortalImportJob,
-    UpdatePortalSavedSearch, UpdateRealityAgency, UpdateRealtorProfile,
+    SendInquiryMessage, UpdateAgencyBranding, UpdateFeedSubscription, UpdatePortalFavorite,
+    UpdatePortalImportJob, UpdatePortalSavedSearch, UpdateRealityAgency, UpdateRealtorProfile,
 };
 use http::HeaderValue;
 use std::net::SocketAddr;
@@ -155,6 +155,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::favorites::list_favorites,
         routes::favorites::list_favorite_ids,
         routes::favorites::add_favorite,
+        routes::favorites::update_favorite,
         routes::favorites::remove_favorite,
         routes::favorites::check_favorite,
         routes::saved_searches::list_saved_searches,
@@ -251,6 +252,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::saved_searches::SavedSearchesResponse,
         routes::saved_searches::RunSavedSearchResponse,
         AddFavorite,
+        UpdatePortalFavorite,
         PortalFavorite,
         PortalFavoriteWithListing,
         PublicListingSearchResponse,

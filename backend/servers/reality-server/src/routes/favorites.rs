@@ -23,10 +23,12 @@ use crate::state::AppState;
 use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
     extract::{Path, Query, State},
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Json, Router,
 };
-use db::models::{AddFavorite, FavoriteAlert, PortalFavorite, PortalFavoriteWithListing};
+use db::models::{
+    AddFavorite, FavoriteAlert, PortalFavorite, PortalFavoriteWithListing, UpdatePortalFavorite,
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -42,6 +44,7 @@ pub fn router() -> Router<AppState> {
         // prefers the literal segment over the UUID capture.
         .route("/ids", get(list_favorite_ids))
         .route("/{listing_id}", post(add_favorite))
+        .route("/{listing_id}", patch(update_favorite))
         .route("/{listing_id}", delete(remove_favorite))
         .route("/{listing_id}/check", get(check_favorite))
 }
@@ -149,6 +152,52 @@ pub async fn add_favorite(
                 )
             } else {
                 crate::util::errors::db_error("add favorite", e)
+            }
+        })?;
+
+    Ok(Json(favorite))
+}
+
+/// Update a favorite's settings (notes / price-alert opt-in).
+///
+/// Completes AC-5 of story 84.3: lets a user subscribe or unsubscribe from
+/// price-change alerts on a favorited listing by toggling
+/// `price_alert_enabled`. Both fields are `COALESCE`-merged server-side, so a
+/// partial body (e.g. just `{"price_alert_enabled": false}`) leaves `notes`
+/// untouched. Favorites are user-scoped — the principal is the owning-user
+/// identifier only (see file-level docs).
+#[utoipa::path(
+    patch,
+    path = "/api/v1/favorites/{listing_id}",
+    tag = "Favorites",
+    params(("listing_id" = Uuid, Path, description = "Listing ID")),
+    request_body = UpdatePortalFavorite,
+    responses(
+        (status = 200, description = "Updated favorite", body = PortalFavorite),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Favorite not found")
+    )
+)]
+pub async fn update_favorite(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(listing_id): Path<Uuid>,
+    Json(data): Json<UpdatePortalFavorite>,
+) -> Result<Json<PortalFavorite>, (axum::http::StatusCode, String)> {
+    let favorite = state
+        .reality_portal_repo
+        .update_favorite(principal.user_id, listing_id, data)
+        .await
+        .map_err(|e| {
+            // `fetch_one` yields RowNotFound ("no rows") when the user has no
+            // such favorite — surface that as 404 rather than a 500.
+            if e.to_string().contains("no rows") {
+                (
+                    axum::http::StatusCode::NOT_FOUND,
+                    "Favorite not found".to_string(),
+                )
+            } else {
+                crate::util::errors::db_error("update favorite", e)
             }
         })?;
 

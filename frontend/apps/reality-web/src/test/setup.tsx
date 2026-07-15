@@ -25,6 +25,21 @@ vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Mock next-intl/navigation (used by src/i18n/routing.ts `createNavigation`).
+// Returns a plain <a> Link so components using the locale-aware Link render in
+// jsdom without a NextIntlClientProvider.
+vi.mock('next-intl/navigation', () => ({
+  createNavigation: () => ({
+    Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+      <a href={href}>{children}</a>
+    ),
+    redirect: vi.fn(),
+    usePathname: () => '/',
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    getPathname: () => '/',
+  }),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({

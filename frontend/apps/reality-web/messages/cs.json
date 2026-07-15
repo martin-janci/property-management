@@ -520,7 +520,8 @@
       "title": "Moje oblíbené",
       "description": "Nemovitosti, které jste si uložili.",
       "h1": "Moje oblíbené",
-      "priceAlertsLink": "Cenová upozornění"
+      "priceAlertsLink": "Cenová upozornění",
+      "watchPrice": "Sledovat cenu"
     },
     "login": {
       "title": "Přihlášení",

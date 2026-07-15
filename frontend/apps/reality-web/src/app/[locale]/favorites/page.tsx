@@ -6,21 +6,27 @@
 
 'use client';
 
-import { useFavorites, useRemoveFavorite } from '@ppt/reality-api-client';
-import Link from 'next/link';
+import { useFavorites, useRemoveFavorite, useUpdateFavorite } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingCard } from '@/components/listings';
 import { Footer, Header } from '@/components/ui';
+import { Link } from '@/i18n/routing';
 
 function FavoritesContent() {
+  const t = useTranslations('pages.favorites');
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useFavorites(page, 12);
   const removeFavorite = useRemoveFavorite();
+  const updateFavorite = useUpdateFavorite();
 
   const handleRemoveFavorite = (listingId: string) => {
     removeFavorite.mutate(listingId);
+  };
+
+  const handleToggleWatch = (listingId: string, enabled: boolean) => {
+    updateFavorite.mutate({ listingId, data: { price_alert_enabled: enabled } });
   };
 
   if (isLoading) {
@@ -125,13 +131,31 @@ function FavoritesContent() {
   return (
     <>
       <div className="favorites-grid">
-        {data.data.map((favorite) => (
-          <ListingCard
-            key={favorite.id}
-            listing={{ ...favorite.listing, isFavorite: true }}
-            onToggleFavorite={() => handleRemoveFavorite(favorite.listingId)}
-          />
-        ))}
+        {data.data.map((favorite) => {
+          // Backend default for `price_alert_enabled` is `true`; treat an
+          // absent field as watching so the toggle reflects server default.
+          const watching = favorite.price_alert_enabled ?? true;
+          return (
+            <div key={favorite.id} className="favorite-cell">
+              <ListingCard
+                listing={{ ...favorite.listing, isFavorite: true }}
+                onToggleFavorite={() => handleRemoveFavorite(favorite.listingId)}
+              />
+              <label className="watch-toggle">
+                <input
+                  type="checkbox"
+                  checked={watching}
+                  disabled={
+                    updateFavorite.isPending &&
+                    updateFavorite.variables?.listingId === favorite.listingId
+                  }
+                  onChange={(e) => handleToggleWatch(favorite.listingId, e.target.checked)}
+                />
+                <span>{t('watchPrice')}</span>
+              </label>
+            </div>
+          );
+        })}
       </div>
 
       {data.totalPages > 1 && (
@@ -163,6 +187,25 @@ function FavoritesContent() {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 24px;
+        }
+        .favorite-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .watch-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          color: var(--ppt-fg-muted);
+          cursor: pointer;
+        }
+        .watch-toggle input {
+          cursor: pointer;
+        }
+        .watch-toggle input:disabled {
+          cursor: not-allowed;
         }
         .pagination {
           display: flex;

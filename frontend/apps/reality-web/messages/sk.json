@@ -520,7 +520,8 @@
       "title": "Moje obľúbené",
       "description": "Nehnuteľnosti, ktoré ste si uložili.",
       "h1": "Moje obľúbené",
-      "priceAlertsLink": "Cenové upozornenia"
+      "priceAlertsLink": "Cenové upozornenia",
+      "watchPrice": "Sledovať cenu"
     },
     "login": {
       "title": "Prihlásenie",

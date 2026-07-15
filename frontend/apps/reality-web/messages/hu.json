@@ -519,7 +519,8 @@
       "title": "Kedvenceim",
       "description": "Az Ön által mentett ingatlanok.",
       "h1": "Kedvenceim",
-      "priceAlertsLink": "Árriasztások"
+      "priceAlertsLink": "Árriasztások",
+      "watchPrice": "Ár figyelése"
     },
     "login": {
       "title": "Sign in",

@@ -520,7 +520,8 @@
       "title": "My Favorites",
       "description": "Properties you have saved for later.",
       "h1": "My Favorites",
-      "priceAlertsLink": "Price alerts"
+      "priceAlertsLink": "Price alerts",
+      "watchPrice": "Watch price"
     },
     "login": {
       "title": "Sign in",
