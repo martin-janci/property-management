@@ -10,6 +10,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{alert_type, CreateSentimentAlert, UpsertSentimentTrend};
 use db::models::{
     CreateChatSession, ProvideFeedback, SendChatMessage, SentimentTrendQuery,
@@ -852,11 +853,15 @@ async fn provide_feedback(
     let mut feedback = req;
     feedback.message_id = message_id;
 
-    // SECURITY (issue #766 / #816): feedback author AND the owning tenant are
-    // both derived from the RLS-validated request context, never from the body or
-    // the path. The repo only writes when the target message's session belongs
-    // to the caller's org — otherwise a caller in org B could attach feedback
-    // to (and poison the training signal for) org A's chat messages.
+    // SECURITY (issue #766 / #816, owner predicate #2317): the feedback author,
+    // the owning tenant, AND the owning user are all derived from the
+    // RLS-validated request context, never from the body or the path. The repo
+    // only writes when the target message's session belongs to the caller's org
+    // AND to the caller themselves — otherwise (a) a caller in org B could
+    // attach feedback to (and poison the training signal for) org A's chat
+    // messages, and (b) a colleague in the same org could attach/overwrite
+    // feedback on another member's private message or use the 201-vs-404
+    // response as an existence oracle for org-internal message UUIDs.
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let result = state
@@ -889,6 +894,27 @@ async fn list_escalated(
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = rls.tenant_id();
+
+    // SECURITY (#2317): `list_escalated_messages` is a cross-user, org-wide read
+    // — it returns the full content of EVERY member's escalated AI-chat messages
+    // in the org. Under the per-user privacy model #2279/#2289 pinned for
+    // sessions, this must not be an implicit right of every authenticated member
+    // (a plain resident could otherwise read colleagues' escalated messages
+    // without even a session UUID). Escalation review is a manager/admin
+    // function, so gate it on org role here. (We use the org-level `TenantRole`
+    // gate — the `admin-core` `RequireCapability` extractor is a
+    // platform-principal-only mechanism for `/admin/*` and is the wrong tool for
+    // an org-scoped tenant route.)
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to review escalated AI messages",
+            )),
+        ));
+    }
 
     let result = state
         .ai_chat_repo

@@ -403,6 +403,102 @@ async fn add_feedback_for_org_blocks_cross_tenant_write(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// (2b) Feedback write is OWNER-scoped WITHIN a tenant (issue #2317) — a
+//      colleague in the SAME org cannot attach/overwrite training feedback on
+//      another member's private message, nor use the write's success/failure as
+//      an existence oracle for org-internal message UUIDs. AI chat messages are
+//      per-user private (#2279/#2289); `add_feedback_for_org` used to guard by
+//      `s.organization_id` alone. This pins the added `s.user_id = $2`
+//      predicate.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_feedback_for_org_blocks_within_tenant_cross_user_write(pool: PgPool) {
+    let repo = AiChatRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "fb-wt").await;
+    let owner = seed_user(&pool, "fb-wt-owner@ai-idor.test").await;
+    let attacker = seed_user(&pool, "fb-wt-attacker@ai-idor.test").await;
+    let session = seed_session(&pool, org, owner).await;
+    let message = seed_message(&pool, session).await;
+
+    // Same-org, different-user feedback (attacker targeting the owner's private
+    // message) is refused: the repo returns None and writes nothing.
+    let cross_user = repo
+        .add_feedback_for_org(
+            &pool,
+            attacker,
+            org,
+            ProvideFeedback {
+                message_id: message,
+                rating: Some(1),
+                helpful: Some(false),
+                feedback_text: Some("poison".to_string()),
+            },
+        )
+        .await
+        .expect("query ok");
+    assert!(
+        cross_user.is_none(),
+        "issue #2317: a colleague in the same org must NOT attach feedback to \
+         another member's private message"
+    );
+
+    let count_after_cross: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM ai_training_feedback WHERE message_id = $1")
+            .bind(message)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        count_after_cross, 0,
+        "no feedback row may be written by a same-org non-owner caller"
+    );
+
+    // The owner can attach feedback to their own message.
+    let as_owner = repo
+        .add_feedback_for_org(
+            &pool,
+            owner,
+            org,
+            ProvideFeedback {
+                message_id: message,
+                rating: Some(5),
+                helpful: Some(true),
+                feedback_text: Some("great".to_string()),
+            },
+        )
+        .await
+        .expect("query ok");
+    assert!(
+        as_owner.is_some(),
+        "the owning user must be able to attach feedback to their own message"
+    );
+
+    // Sanity: the org-only EXISTS guard (the vulnerable pre-fix path) would have
+    // accepted the attacker's write — the target message IS visible org-wide, so
+    // only the owner predicate distinguishes the two callers.
+    let org_only_visible: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*) FROM ai_chat_messages m
+        JOIN ai_chat_sessions s ON s.id = m.session_id
+        WHERE m.id = $1 AND s.organization_id = $2
+        "#,
+    )
+    .bind(message)
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("query ok");
+    assert_eq!(
+        org_only_visible, 1,
+        "sanity: the org-only EXISTS guard (the vulnerable pre-fix path) matches \
+         the message for any member of the same org, so it would have let the \
+         non-owner write through"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // (3) Listing-description list read is tenant-scoped — org B cannot read org
 //     A's generated listing descriptions by enumerating a listing id.
 //
