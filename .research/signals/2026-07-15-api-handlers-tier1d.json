@@ -1,0 +1,51 @@
+{
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-missing-authz-article",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:607-770 — publish_article, archive_article, restore_article, pin_article extract `_user: AuthUser` but never check `is_manager()`/authorship, unlike create_article (line 446) and update_article (line 542) which explicitly gate on `is_manager || is_author`.",
+        "backend/servers/api-server/src/routes/news_articles.rs:710-728 — delete_article permanently deletes an article with no role/author check at all; any authenticated org member can destroy any article in their tenant.",
+        "backend/servers/api-server/src/routes/news_articles.rs:794-851 — add_media/delete_media have no authorization check; any authenticated org member can attach or remove media on any article, bypassing the manager-only authoring model documented in the handler comments for create_article."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-unenforced-toggle-flags",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:958-987 — create_comment never reads article.comments_enabled before inserting a comment, so an article with comments disabled (CreateArticleRequest.comments_enabled=false / UpdateArticleRequest) can still be commented on.",
+        "backend/servers/api-server/src/routes/news_articles.rs:858-891 — toggle_reaction never reads article.reactions_enabled, so reactions can be added even when the author/manager disabled them.",
+        "backend/crates/db/src/models/news_article.rs:50-51,352-354 — comments_enabled/reactions_enabled are persisted columns but grep across news_articles.rs/news_article.rs repo shows no handler-side check gating create_comment or toggle_reaction on these flags."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/memberships.rs:365 — generate_token() calls `rand::TryRng::try_fill_bytes(...).expect(\"OS rng failed\")`; this helper is called directly from the `invite` handler (line 194) on the request path, so an OS RNG failure panics the handler instead of returning a 500."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

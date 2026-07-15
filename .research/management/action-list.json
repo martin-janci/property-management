@@ -118,26 +118,6 @@
       }
     },
     {
-      "id": "gh-issue-2321",
-      "action": "Follow-up: rag/migrate cross-org back-fill blocked by FORCE RLS + assumed-provenance &amp; CI pgvector gaps (PR #2312) (Closes #2321)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2321)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2321,
-        "url": "https://github.com/martin-janci/property-management/issues/2321",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2322",
       "action": "Follow-up: portal-webhooks screen — role gate, pagination, screen-map, i18n, OpenAPI swap (PR #2294) (Closes #2322)",
       "owner_role": "pm-tech-lead",
@@ -151,46 +131,6 @@
       "issue_ref": {
         "number": 2322,
         "url": "https://github.com/martin-janci/property-management/issues/2322",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2323",
-      "action": "Follow-up: extract reusable query-error banner + sweep sibling mobile screens with silent-zero pattern (PR #2304) (Closes #2323)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2323)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2323,
-        "url": "https://github.com/martin-janci/property-management/issues/2323",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2324",
-      "action": "Follow-up: create-schedule UI wired to nonexistent list endpoints — flow still broken in prod (PR #2292) (Closes #2324)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2324)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2324,
-        "url": "https://github.com/martin-janci/property-management/issues/2324",
         "labels": [
           "follow-up",
           "from-merged-review"
@@ -336,6 +276,80 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "gh-issue-2341",
+      "action": "Follow-up: harden reality-web listing detail body validation — type-guard features/photos, 404 status (PR #2281) (Closes #2341)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-15T10:07:46Z (#2341)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:07:46Z",
+      "issue_ref": {
+        "number": 2341,
+        "url": "https://github.com/martin-janci/property-management/issues/2341",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2342",
+      "action": "Follow-up: portal inquiry retry path creates duplicate leads + residual silent-drops (PR #2278) (Closes #2342)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-15T10:07:46Z (#2342)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:07:46Z",
+      "issue_ref": {
+        "number": 2342,
+        "url": "https://github.com/martin-janci/property-management/issues/2342",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2343",
+      "action": "Follow-up: agency 404 conflation + unfixed sibling dashboards + missing /agencies/me endpoint (PR #2280) (Closes #2343)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-15T10:07:46Z (#2343)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:07:46Z",
+      "issue_ref": {
+        "number": 2343,
+        "url": "https://github.com/martin-janci/property-management/issues/2343",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
+      "action": "[RECONCILED-DONE: implementer verified #482 deriveActiveRole+ProtectedRoute fix already on dev, 919 ppt-web tests green, zero diff] ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration) [retry 1/2 of failed gap-10a-2-protectedroute-role-fallback-fix-for-multi]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-15T10:08:18Z (retry_of=gap-10a-2-protectedroute-role-fallback-fix-for-multi reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T08:18:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T10:08:18Z",
+      "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-15T01:55:00Z"

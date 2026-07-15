@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-15T05:17:50Z",
+  "archived_at": "2026-07-15T10:22:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6252,6 +6252,87 @@
           "backend",
           "follow-up"
         ]
+      }
+    },
+    {
+      "id": "gh-issue-2321",
+      "action": "Follow-up: rag/migrate cross-org back-fill blocked by FORCE RLS + assumed-provenance &amp; CI pgvector gaps (PR #2312) (Closes #2321)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2321) | gc1-reconcile 2026-07-15T10:22:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T00:05:03Z",
+      "issue_ref": {
+        "number": 2321,
+        "url": "https://github.com/martin-janci/property-management/issues/2321",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2335,
+        "merged_at": "2026-07-15T10:19:48Z",
+        "at": "2026-07-15T10:22:18Z"
+      }
+    },
+    {
+      "id": "gh-issue-2323",
+      "action": "Follow-up: extract reusable query-error banner + sweep sibling mobile screens with silent-zero pattern (PR #2304) (Closes #2323)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2323) | gc1-reconcile 2026-07-15T10:22:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T00:05:03Z",
+      "issue_ref": {
+        "number": 2323,
+        "url": "https://github.com/martin-janci/property-management/issues/2323",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2334,
+        "merged_at": "2026-07-15T10:18:05Z",
+        "at": "2026-07-15T10:22:18Z"
+      }
+    },
+    {
+      "id": "gh-issue-2324",
+      "action": "Follow-up: create-schedule UI wired to nonexistent list endpoints — flow still broken in prod (PR #2292) (Closes #2324)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2324) | gc1-reconcile 2026-07-15T10:22:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T00:05:03Z",
+      "issue_ref": {
+        "number": 2324,
+        "url": "https://github.com/martin-janci/property-management/issues/2324",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2338,
+        "merged_at": "2026-07-15T10:17:50Z",
+        "at": "2026-07-15T10:22:18Z"
       }
     },
     {
