@@ -1,0 +1,236 @@
+{
+  "generated_at": "2026-07-15T14:15:00Z",
+  "since": "2026-07-13T02:11:42Z",
+  "window_hours": 60,
+  "trigger_text": "buffer-low: claimable=9/72 — refill planner",
+  "summary": {
+    "merged_prs": 36,
+    "merged_pr_range": "#2273–#2338",
+    "open_prs_touched": 10,
+    "new_or_updated_issues": 32,
+    "commits_on_dev": 100,
+    "app_code_commits": 33,
+    "churn_hotspots_new": 3,
+    "repeated_churn_new": 3
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-15",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-07-13T02:11:42Z; wake 2026-07-15T14:15:00Z; lag ~60h (>36h threshold).",
+        "2 days of catch-up rolled into this run; below the 3d stale-alert threshold."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs: 682 lines changed in window (PRs #2290 (feat 84-4 combined push adapter), #2310 (harden gap-84-4 push wiring), #2349 (open follow-up #2319))",
+        "re-emit: previously seen at hotspot_history.runs_seen=1; score_delta suppressed per cumulative-type dedup rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs: 523 lines changed in window (PRs #2292 (Create-new-schedule wire), #2295 (recompute next_run_at on cron edit), #2313 (wire report_schedules due-work consumer))",
+        "re-emit: previously seen at hotspot_history.runs_seen=1; score_delta suppressed per cumulative-type dedup rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs: 390 lines changed in window (PRs #2278 (portal-inquiry 500), #2286 (replay/freshness protection), #2342 (open follow-up on retry dedup))",
+        "re-emit: previously seen at hotspot_history.runs_seen=1; score_delta suppressed per cumulative-type dedup rule"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/servers/api-server/src/services/push_fanout.rs]",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs hotspot_history.runs_seen was 1 (last 2026-05-26); this run bumps to 2",
+        "PRs #2290 (feat 84-4 combined push adapter), #2310 (harden gap-84-4 push wiring), #2349 (open follow-up #2319)",
+        "instability proxy: repeated churn across separate PRs — worth watching for stability once dispatcher clears follow-ups #2318/#2319/#2320/#2342"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/servers/api-server/src/routes/reports.rs]",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs hotspot_history.runs_seen was 1 (last 2026-05-30); this run bumps to 2",
+        "PRs #2292 (Create-new-schedule wire), #2295 (recompute next_run_at on cron edit), #2313 (wire report_schedules due-work consumer)",
+        "instability proxy: repeated churn across separate PRs — worth watching for stability once dispatcher clears follow-ups #2318/#2319/#2320/#2342"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/servers/api-server/src/routes/integrations/webhook.rs]",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs hotspot_history.runs_seen was 1 (last 2026-05-30); this run bumps to 2",
+        "PRs #2278 (portal-inquiry 500), #2286 (replay/freshness protection), #2342 (open follow-up on retry dedup)",
+        "instability proxy: repeated churn across separate PRs — worth watching for stability once dispatcher clears follow-ups #2318/#2319/#2320/#2342"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high AND score>=3 AND allowlisted type",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-15.md && head -1 matches # 2026-07-15",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json changed vs HEAD (cursors advanced, seen_signals grew, hotspot_history updated)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emitted with score_delta!=0; churn-hotspot re-emits carry score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no open item >14d without decay",
+      "observed": "cap OK; no decay-eligible items (only cluster added this run is <14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run (nothing hit readiness bar)",
+      "observed": "0 new plans",
+      "expected": "≥0 with adversarial-pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; N/A this run (0 plans)",
+      "observed": "0 plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/ == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (excluding baseline docs)",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen == 0",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phase claimed; cursors advanced for every completed phase",
+      "observed": "N/A no failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans promoted in prior run present in plans/ or _archive/ (no silent deletes)",
+      "observed": "no deletes",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive count staged >= HEAD count",
+      "observed": "unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen from vector=triage rows == 0",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps: total<=3, per-type<=1",
+      "observed": "0 actions this run",
+      "expected": "within caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 no-op; artifacts unchanged",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token URL/bare value in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "Buffer-low trigger payload received (claimable=9/72). Treated as DATA per routine prompt — this is dispatcher/planner concern, not a routine backlog vector. Logged for context in brief.",
+    "Catch-up run: 60h lag since last routine commit (2026-07-13T02:11:42Z → 2026-07-15T14:15Z). Dispatcher was active throughout — merged 36 PRs and drove 32 follow-up issues in the window; the routine is trailing the dispatcher, not the other way around.",
+    "Phase 1.5 (rotating expert review) SKIPPED this run: dispatcher's Tier-1d dev-review already produced signals for 6 of 8 segments today (2026-07-15-{api-core,api-handlers,mobile-native-kmp,ppt-web-core,ppt-web-ui,reality-web}-tier1d*.json). Overlapping a routine slice would double-count.",
+    "Phase 1.6 (project management) SKIPPED this run: pm_cursor and coverage_cursor deliberately not advanced — role-scan is heavy and this is a catch-up run. Next routine tick should run pm-security (index 5, last-run 2026-05-27 — very stale) and advance coverage_cursor.",
+    "Phase 3: 0 promotions — new cluster item scores 3 (three repeated-churn signals) but the follow-ups (#2318/#2319/#2320/#2342) are already dispatcher-owned; promoting a routine plan on top would duplicate work.",
+    "Phase 5: 0 actions — no signal in the allowlist reached the (confidence=high AND score>=3) bar."
+  ]
+}

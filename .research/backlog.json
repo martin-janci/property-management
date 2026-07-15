@@ -4390,6 +4390,39 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "refactor-churn-hotspots-api-server-2026-07-15",
+      "title": "Churn hotspot cluster: api-server push_fanout.rs + routes/reports.rs + routes/integrations/webhook.rs (Epic-84.x wave)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "PR #2278",
+        "PR #2286",
+        "PR #2290",
+        "PR #2292",
+        "PR #2295",
+        "PR #2310",
+        "PR #2313",
+        "commit 1691c9d..eeadc13"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs churned 682 lines in window (#2290 combined FCM+APNs adapter + #2310 hardening; open follow-up #2349 for #2319 push-worker log noise)",
+        "backend/servers/api-server/src/routes/reports.rs churned 523 lines (#2292 create-schedule flow + #2295 next_run_at recompute + #2313 due-work consumer; open follow-up #2340 for #2318 RLS/scheduler context)",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs churned 390 lines (#2278 500-on-lead-failure fix + #2286 replay/freshness protection; open follow-up #2342 for retry-path duplicate-lead)",
+        "all three files bump hotspot_history.runs_seen from 1 → 2 this run — repeated-churn threshold reached, but each PR is a real correctness/security branch (not stylistic churn)",
+        "dispatcher-tracked follow-ups already open for every hotspot cluster (2318/2319/2320/2342); no fresh action required from routine — cluster is watch-only until follow-ups drain"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs",
+        "backend/servers/api-server/src/routes/reports.rs",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-07-15",
+      "updated_at": "2026-07-15",
+      "plan": null
     }
   ]
 }
