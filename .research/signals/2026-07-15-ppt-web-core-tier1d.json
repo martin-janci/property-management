@@ -1,0 +1,38 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-15",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor). state.review_cursor listed ppt-web-core last-reviewed 2026-07-07 (oldest of 8 segments) -> oldest-unreviewed. NOTE: the cursor is stale — ppt-web-core was in fact reviewed on 2026-07-10 and twice on 2026-07-14 (2026-07-14-ppt-web-core.json, 2026-07-14-ppt-web-core-tier1d-2.json). Not backlog-saturated (0 open code-review-finding items for ppt-web-core). The frontend expert examined the auth/websocket/app-shell core (contexts/, hooks/, lib/, routes/, i18n/, main.tsx, App.tsx). Of 3 raw findings, one (lib/websocket.ts:344 ungated console) was dropped as an exact duplicate of code-review-ppt-web-core-websocket-prod-console from the 2026-07-14 tier1d-2 run; the two below were verified non-duplicate against all prior ppt-web-core signal files (07-07, 07-10, 07-14 x2).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-auth-stale-token-init",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396 — initializeAuth trusts a stored access token as authenticated without any expiry check (the inline comment even concedes 'Validate the token is not expired... In production we might verify with the server'). The proactive refresh path is only taken in the else-if branch when the access token is ABSENT (line 400). A returning user whose access token has expired but whose refresh token is still valid is rendered as logged-in and fires a doomed API call that 401s (onUnauthorizedCallback -> logout) instead of being silently refreshed, bouncing the user to login."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-nav-aria-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:116 — hardcoded English aria-label=\"Main navigation\" on the app-shell <nav> is not wrapped in t(), while every other user-facing string in the same component uses useTranslation (nav.*, auth.signIn, common.loading). Screen-reader users on sk/cs/de/pl/hu locales hear the untranslated landmark label."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2303",
-  "selected_at": "2026-07-14T10:13:15Z",
-  "last_action": "keep",
-  "reason": "current target still has claimable work",
+  "epic_prefix": "gap-screens-link-uc-33-sub-ucs",
+  "selected_at": "2026-07-15T00:09:06Z",
+  "last_action": "repick",
+  "reason": "prior target 'gh-issue-2303' exhausted; closest-to-done is 'gap-screens-link-uc-33-sub-ucs' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
