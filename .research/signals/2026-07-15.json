@@ -1,0 +1,75 @@
+{
+  "date": "2026-07-15",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-15",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-13T02:11:42Z, now=2026-07-15T03:08:07Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in ~49h (>36h lag threshold); prior last_run_iso 2026-07-13T02:11:42Z",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log 1691c9d..6e64fb1",
+      "score_delta": 1,
+      "evidence": "3185 lines changed in backend/crates/integrations/src/booking/mod.rs since last run (PR #2315 gap-83-2 Booking.com fetch_property outbound happy-path test + related touches); hotspot_history runs_seen 1→2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log 1691c9d..6e64fb1",
+      "score_delta": 0,
+      "evidence": "3269 lines changed in backend/servers/api-server/src/routes/reports.rs since last run (PR #2313 report_schedules due-work consumer + cadence unification, PR #2295 next_run_at recompute); re-emit — signal id already in state.seen_signals, cumulative type; hotspot_history runs_seen 1→2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log 1691c9d..6e64fb1",
+      "score_delta": 0,
+      "evidence": "2950 lines changed in backend/servers/api-server/src/routes/auth.rs since last run (ongoing OAuth/auth iteration cluster); re-emit — signal id already in state.seen_signals, cumulative type; hotspot_history runs_seen 3→4",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history[auth.rs].runs_seen=3 (pre-run)",
+      "score_delta": 0,
+      "evidence": "auth.rs runs_seen 3→4 — instability continues across successive routine windows; re-emit — signal id already in state.seen_signals, cumulative type",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 allowlist not matched (no screen-map-drift/orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, or stalled-review signal fired this run)",
+  "phase_notes": {
+    "phase_1_5_skipped": "Rotating expert review not run this cycle — post-merge review already opened 15 follow-up issues (#2317–#2331) covering the same segments; deferring code-review-finding pass to avoid duplicate signal generation. review_cursor unchanged.",
+    "phase_1_6_skipped": "PM role rotation (pm_cursor next_index=5 → pm-security) not run this cycle — no new sprint delivery data to synthesize since 2026-07-13; pm_cursor/coverage_cursor unchanged. G16 gate is a no-op when Phase 1.6 is skipped."
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-15.md && head -1 matches", "observed": "brief exists with matching H1", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq slurpfile prev state.json comparison", "observed": "last_pr_seen 2271→2316, last_issue_seen 2272→2331, last_commit_sha changed, seen_signals grew, hotspot_history advanced", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq ids unique in backlog.json", "observed": "187 items, 187 unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no re-emitted non-cumulative signal with score_delta≠0", "observed": "all re-emits are churn-hotspot/repeated-churn (allowlisted) with score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score >8; decay applied", "observed": "max score 6; no open items >14d old (only new open item created today)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — vacuous", "observed": "0 new plans", "expected": "0 new plans" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans this run — vacuous", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached only .research/", "observed": "only .research/ paths staged", "expected": "exit 0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff", "observed": "no matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regen backlog.md byte-identical", "observed": "diff -q reports no differences", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures listed and cursors held", "observed": "no phase failures this run; Phase 1.5/1.6 skipped by policy (not failure), cursors held", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive/ count non-decreasing", "observed": "archive unchanged this run", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "regen IDEAS_TRIAGE.md byte-identical", "observed": "diff -q reports no differences", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix cap/idempotency/kill-switch", "observed": "auto_fix_actions=[] (no candidate); no PR/issue/comment opened", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts (only when Phase 1.6 ran)", "observed": "Phase 1.6 skipped — gate is a no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff", "observed": "no matches", "expected": "0" }
+  ]
+}
