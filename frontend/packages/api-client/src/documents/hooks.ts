@@ -187,6 +187,25 @@ export function useUploadDocument() {
   });
 }
 
+/**
+ * Direct-to-S3 upload (gap-84-1).
+ *
+ * Same call signature as {@link useUploadDocument} but uploads bytes straight
+ * to S3 via a presigned PUT URL (`POST /api/v1/documents/upload-url`) instead
+ * of proxying them through the api-server multipart `/upload` route. Invalidates
+ * the document lists on success so the new document appears.
+ */
+export function useUploadDocumentDirect() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: api.UploadDocumentParams) => api.uploadDocumentDirect(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+    },
+  });
+}
+
 // Create folder (gap-7a-2)
 export function useCreateFolder() {
   const queryClient = useQueryClient();

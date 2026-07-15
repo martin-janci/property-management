@@ -11,6 +11,8 @@ import type {
   CreateDocumentRequest,
   CreateShareRequest,
   CreateShareResponse,
+  CreateUploadUrlRequest,
+  CreateUploadUrlResponse,
   Document,
   DocumentIntelligenceStats,
   DocumentListQuery,
@@ -298,6 +300,119 @@ export async function uploadDocument(
 
     xhr.send(formData);
   });
+}
+
+// --- Direct-to-S3 upload (gap-84-1) ---
+
+/**
+ * Request a presigned PUT URL for a direct client-to-S3 upload
+ * (`POST /api/v1/documents/upload-url`).
+ *
+ * Goes through the shared authenticated transport (the endpoint is
+ * auth-protected + tenant-scoped; the org is derived server-side from the JWT).
+ * The returned `url` is a short-lived (5 min) presigned S3 URL — the bytes are
+ * PUT straight there via {@link uploadFileToPresignedUrl}, bypassing the
+ * api-server byte proxy.
+ */
+export async function createUploadUrl(
+  data: CreateUploadUrlRequest
+): Promise<CreateUploadUrlResponse> {
+  return fetchApi(`${API_BASE}/upload-url`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * PUT raw file bytes to a presigned S3 URL (gap-84-1).
+ *
+ * Uses `XMLHttpRequest` for upload-progress events. The request goes directly
+ * to the S3-compatible host, so it MUST NOT carry the api-server `Authorization`
+ * header — the presigned URL is the credential, and it is signed for exactly
+ * the `contentType` passed here, which is set as the `Content-Type` header so
+ * the request matches the signature.
+ */
+export function uploadFileToPresignedUrl(
+  url: string,
+  file: File,
+  contentType: string,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload to storage failed (HTTP ${xhr.status})`));
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      reject(
+        new Error('Network connection lost. Please check your internet connection and try again.')
+      );
+    });
+
+    xhr.addEventListener('abort', () => {
+      reject(new Error('Upload was cancelled.'));
+    });
+
+    xhr.open('PUT', url);
+    // Match the Content-Type the URL was signed for — no auth header (the
+    // presigned URL is the credential).
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.send(file);
+  });
+}
+
+/**
+ * Upload a document directly to S3, then register it (gap-84-1).
+ *
+ * Three-step flow that replaces the byte-proxying multipart {@link uploadDocument}:
+ *   1. `POST /api/v1/documents/upload-url` → presigned PUT URL + `file_key`.
+ *   2. PUT the bytes straight to S3 (progress reported here).
+ *   3. `POST /api/v1/documents` with the `file_key` to register the record.
+ *
+ * Accepts the same {@link UploadDocumentParams} shape as the legacy multipart
+ * path so callers can switch with no call-site change. The organization is
+ * derived server-side from the JWT, so `organizationId` is accepted but unused.
+ */
+export async function uploadDocumentDirect(
+  params: UploadDocumentParams
+): Promise<{ id: string; message: string }> {
+  const presigned = await createUploadUrl({
+    file_name: params.file.name,
+    mime_type: params.file.type,
+    size_bytes: params.file.size,
+  });
+
+  await uploadFileToPresignedUrl(
+    presigned.url,
+    params.file,
+    presigned.content_type,
+    params.onProgress
+  );
+
+  const registration: CreateDocumentRequest = {
+    title: params.title,
+    description: params.description,
+    category: params.category,
+    folder_id: params.folderId,
+    file_key: presigned.file_key,
+    file_name: params.file.name,
+    mime_type: presigned.content_type,
+    size_bytes: params.file.size,
+  };
+
+  return createDocument(registration);
 }
 
 // --- Document Sharing (Story 7A.5) ---
