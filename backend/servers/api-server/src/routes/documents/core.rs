@@ -1519,7 +1519,7 @@ async fn get_preview_url(
 /// key producers emit via `integrations::generate_storage_key`) and must not
 /// contain a `..` component. Kept as a pure function so the accept/reject
 /// contract can be unit-tested without a DB.
-fn validate_file_key_org_scope(
+pub(crate) fn validate_file_key_org_scope(
     file_key: &str,
     org_id: Uuid,
 ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {

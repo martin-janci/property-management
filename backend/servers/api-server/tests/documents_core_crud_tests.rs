@@ -110,7 +110,7 @@ async fn create_document_succeeds(pool: PgPool) {
                 .json(json!({
                     "title": "Contract 2026",
                     "category": "contracts",
-                    "file_key": "org/contracts/2026.pdf",
+                    "file_key": format!("{org_id}/contracts/2026.pdf"),
                     "file_name": "2026.pdf",
                     "mime_type": "application/pdf",
                     "size_bytes": 4096
@@ -277,7 +277,7 @@ async fn create_version_succeeds(pool: PgPool) {
             app.session(token, org_id)
                 .post(&format!("/api/v1/documents/{doc_id}/versions"))
                 .json(json!({
-                    "file_key": "org/docs/v2.pdf",
+                    "file_key": format!("{org_id}/docs/v2.pdf"),
                     "file_name": "v2.pdf",
                     "mime_type": "application/pdf",
                     "size_bytes": 8192
