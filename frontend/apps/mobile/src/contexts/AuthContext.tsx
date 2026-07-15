@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
@@ -56,6 +57,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>({
     isLoading: true,
     isAuthenticated: false,
@@ -138,6 +140,12 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
         await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 
+        // Drop the cached tenant id (issue #2329). `useTenantId` caches the
+        // JWT's `tenant_id` claim with `staleTime: Infinity`, so without this a
+        // login that follows a session which wasn't explicitly logged out would
+        // keep serving the previous org's tenant id.
+        queryClient.removeQueries({ queryKey: ['auth', 'tenant-id'] });
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -150,7 +158,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         throw error;
       }
     },
-    [apiBaseUrl]
+    [apiBaseUrl, queryClient]
   );
 
   const logout = useCallback(async () => {
@@ -159,6 +167,14 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+
+      // Wipe the whole query cache on logout (issue #2329). `useTenantId`
+      // caches the tenant id forever (`staleTime: Infinity`) and nothing else
+      // invalidated it, so after logout + login as a user in a *different* org
+      // its consumers kept serving the previous org's tenant id until an app
+      // restart — producing persistent cross-tenant 403s / wrong cache keys.
+      // Clearing everything also ensures no other org's data survives logout.
+      queryClient.clear();
 
       setState((prev) => ({
         ...prev,
@@ -170,7 +186,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Failed to logout:', error);
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const refreshToken = useCallback(async () => {
     try {

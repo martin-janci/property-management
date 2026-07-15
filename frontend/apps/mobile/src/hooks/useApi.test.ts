@@ -2,45 +2,41 @@
  * Unit tests for the mobile app's core fetch/auth module.
  *
  * `useApi.ts` owns tenant-scoping for *every* api-server request: it decodes
- * the JWT client-side to pull the `tenant_id` claim and injects it as the
- * `X-Tenant-ID` header that the server's RLS extractor requires. Until now it
- * had no direct coverage — every consumer just mocked it — so these tests pin
- * the three pure-ish units the module is built on:
+ * the JWT client-side (via the shared `utils/jwt` module) to pull the
+ * `tenant_id` claim and injects it as the `X-Tenant-ID` header that the
+ * server's RLS extractor requires. These tests pin the module-specific
+ * behavior:
  *
- * - `decodeJwtPayload` (exercised through `getTenantId`, which is the only
- *   caller): base64url with and without `=` padding, the `-`/`_` → `+`/`/`
- *   conversion, and malformed tokens returning `null` without throwing.
- * - `getTenantId`: extracts the `tenant_id` claim, and yields `null` (so no
- *   header is injected) when the token/claim is missing or non-string.
- * - `apiRequest`: composes the `X-Tenant-ID` header, surfaces server error
- *   messages, and handles a 204 No-Content response.
+ * - `getTenantId`: reads the token from SecureStore and extracts the claim,
+ *   yielding `null` (so no header is injected) when the token/claim is missing.
+ *   The exhaustive base64url decode edge-cases live with the shared unit in
+ *   `utils/jwt.test.ts`; here we only cover the SecureStore integration.
+ * - `apiRequest`: composes `Authorization` / `X-Tenant-ID` headers, prefixes
+ *   relative paths with the API base URL, surfaces server error messages,
+ *   handles 204, and stays unauthenticated when the keystore read throws.
+ * - `useTenantId`: resolves the claim reactively and re-derives it after the
+ *   query cache is cleared (the logout/login cross-tenant swap of issue #2329).
  *
  * `expo-secure-store` and `expo-constants` are mocked globally in
- * `src/test/setup.ts`; `fetch` is stubbed per suite.
+ * `src/test/setup.ts`; `config/api` and `fetch` are stubbed here.
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
-import { apiRequest, getTenantId } from './useApi';
+import { createElement, type ReactNode } from 'react';
+import { makeJwt } from '../test/jwt';
+import { apiRequest, getTenantId, useTenantId } from './useApi';
+
+// Fixed base URL so the relative-path composition is deterministic (the real
+// resolver is env/platform-dependent).
+jest.mock('../config/api', () => ({
+  getApiBaseUrl: () => 'https://api.mocked',
+}));
 
 const mockedGetItem = SecureStore.getItemAsync as jest.Mock;
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
-
-/**
- * Build a JWT-shaped string (`header.payload.signature`) whose payload is the
- * given object, encoded exactly the way a real base64url JWT payload is.
- *
- * `keepPadding` retains the standard-base64 `=` padding instead of stripping
- * it (real JWTs strip it, but the decoder must tolerate both — see the issue).
- */
-function makeJwt(payload: Record<string, unknown>, keepPadding = false): string {
-  // `btoa` (a global in the RN runtime and Node ≥16, same one the source's
-  // decoder pairs with `atob`) keeps the test off `Buffer`, which isn't in the
-  // mobile app's TS `types`. Payloads are ASCII, so Latin1 `btoa` is safe.
-  const base64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_');
-  const segment = keepPadding ? base64 : base64.replace(/=+$/, '');
-  return `header.${segment}.signature`;
-}
 
 /** Prime the SecureStore mock so `getAccessToken()` returns `token`. */
 function primeToken(token: string | null): void {
@@ -53,56 +49,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('getTenantId (and decodeJwtPayload via it)', () => {
-  it('extracts the tenant_id claim from a well-formed token', async () => {
+describe('getTenantId (SecureStore integration)', () => {
+  it('extracts the tenant_id claim from the stored token', async () => {
     primeToken(makeJwt({ sub: 'u-1', tenant_id: 'org-42' }));
     await expect(getTenantId()).resolves.toBe('org-42');
-  });
-
-  // Byte lengths chosen so the base64url length hits each `% 4` residue,
-  // forcing the decoder's padding math down all three branches (0, 1, 2 `=`).
-  it.each([
-    ['no padding needed (len % 4 === 0)', 'tt'],
-    ['two padding chars (len % 4 === 2)', 'ttt'],
-    ['one padding char (len % 4 === 3)', 't'],
-  ])('decodes a base64url payload with %s', async (_label, tenant) => {
-    primeToken(makeJwt({ tenant_id: tenant }));
-    await expect(getTenantId()).resolves.toBe(tenant);
-  });
-
-  it('decodes a payload whose base64url segment still carries `=` padding', async () => {
-    const withPadding = makeJwt({ tenant_id: 'ttt' }, /* keepPadding */ true);
-    // Guard the fixture: this variant must actually contain `=` so the test
-    // is exercising the padded path rather than silently matching the stripped one.
-    expect(withPadding).toContain('=');
-    primeToken(withPadding);
-    await expect(getTenantId()).resolves.toBe('ttt');
-  });
-
-  it('converts base64url `-` and `_` back to `+`/`/` before decoding', async () => {
-    // 'tn->??' encodes to a segment containing '-'; 'tn-???' contains '_'.
-    // Both must round-trip, proving the char-class replacement runs.
-    const dashToken = makeJwt({ tenant_id: 'tn->??' });
-    const underscoreToken = makeJwt({ tenant_id: 'tn-???' });
-    expect(dashToken.split('.')[1]).toContain('-');
-    expect(underscoreToken.split('.')[1]).toContain('_');
-
-    primeToken(dashToken);
-    await expect(getTenantId()).resolves.toBe('tn->??');
-
-    primeToken(underscoreToken);
-    await expect(getTenantId()).resolves.toBe('tn-???');
-  });
-
-  it.each([
-    ['a token with no dots', 'not-a-jwt'],
-    ['a single-segment token', 'onlyheader'],
-    ['an empty string', ''],
-    ['a token whose payload is not valid base64', 'header.!!!not-base64!!!.sig'],
-    ['a token whose payload is not JSON', `header.${btoa('plain text').replace(/=+$/, '')}.sig`],
-  ])('returns null (no throw) for %s', async (_label, token) => {
-    primeToken(token);
-    await expect(getTenantId()).resolves.toBeNull();
   });
 
   it('returns null when the payload has no tenant_id claim', async () => {
@@ -115,14 +65,25 @@ describe('getTenantId (and decodeJwtPayload via it)', () => {
     await expect(getTenantId()).resolves.toBeNull();
   });
 
+  it('returns null (no throw) for a malformed token', async () => {
+    primeToken('not-a-jwt');
+    await expect(getTenantId()).resolves.toBeNull();
+  });
+
   it('returns null when no token is stored', async () => {
     primeToken(null);
+    await expect(getTenantId()).resolves.toBeNull();
+  });
+
+  it('returns null (no auth) when the keystore read throws', async () => {
+    mockedGetItem.mockRejectedValue(new Error('keystore locked'));
     await expect(getTenantId()).resolves.toBeNull();
   });
 });
 
 describe('apiRequest', () => {
   let fetchMock: jest.Mock;
+  let originalFetch: typeof globalThis.fetch;
 
   /** Build a minimal `Response`-like object for the fetch mock. */
   function fakeResponse(opts: { status?: number; ok?: boolean; json?: () => Promise<unknown> }) {
@@ -135,8 +96,15 @@ describe('apiRequest', () => {
   }
 
   beforeEach(() => {
+    originalFetch = globalThis.fetch;
     fetchMock = jest.fn();
     globalThis.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    // Restore the original fetch so the stub can't leak across files (harmless
+    // under per-file jest isolation, but keeps the suite future-proof).
+    globalThis.fetch = originalFetch;
   });
 
   /** Return the headers object fetch was called with on its first call. */
@@ -167,6 +135,53 @@ describe('apiRequest', () => {
     const headers = firstCallHeaders();
     expect(headers.Authorization).toBeDefined();
     expect(headers).not.toHaveProperty('X-Tenant-ID');
+  });
+
+  it('proceeds unauthenticated (no Authorization / X-Tenant-ID) when the keystore read throws', async () => {
+    // Pins the current design: a SecureStore failure is swallowed and the
+    // request goes out anonymous rather than failing (issue #2329, finding 3).
+    mockedGetItem.mockRejectedValue(new Error('keystore locked'));
+    fetchMock.mockResolvedValueOnce(fakeResponse({ json: async () => ({}) }));
+
+    await apiRequest('https://api.test/v1/me');
+
+    const headers = firstCallHeaders();
+    expect(headers).not.toHaveProperty('Authorization');
+    expect(headers).not.toHaveProperty('X-Tenant-ID');
+  });
+
+  it('prefixes a relative path with the configured API base URL', async () => {
+    primeToken(makeJwt({ tenant_id: 'org-42' }));
+    fetchMock.mockResolvedValueOnce(fakeResponse({ json: async () => ({}) }));
+
+    await apiRequest('/api/v1/buildings');
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.mocked/api/v1/buildings');
+  });
+
+  it('leaves an absolute URL untouched', async () => {
+    primeToken(makeJwt({ tenant_id: 'org-42' }));
+    fetchMock.mockResolvedValueOnce(fakeResponse({ json: async () => ({}) }));
+
+    await apiRequest('https://api.test/v1/outages');
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.test/v1/outages');
+  });
+
+  it('still sends an expired token (no exp check) — documents the current contract', async () => {
+    // There is no `exp` check in the module and no 401→refresh→retry here
+    // (refresh is AuthContext's job), so an expired token is sent as-is.
+    const expired = makeJwt({ tenant_id: 'org-42', exp: 1 });
+    primeToken(expired);
+    fetchMock.mockResolvedValueOnce(fakeResponse({ json: async () => ({}) }));
+
+    await apiRequest('https://api.test/v1/me');
+
+    const headers = firstCallHeaders();
+    expect(headers.Authorization).toBe(`Bearer ${expired}`);
+    expect(headers['X-Tenant-ID']).toBe('org-42');
   });
 
   it('sets Content-Type and serializes the body for a mutation', async () => {
@@ -222,5 +237,35 @@ describe('apiRequest', () => {
 
     expect(result).toBeUndefined();
     expect(json).not.toHaveBeenCalled();
+  });
+});
+
+describe('useTenantId', () => {
+  function makeWrapper(client: QueryClient) {
+    return ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client }, children);
+  }
+
+  function freshClient(): QueryClient {
+    return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  }
+
+  it('resolves the tenant id from the stored token', async () => {
+    primeToken(makeJwt({ tenant_id: 'org-A' }));
+    const { result } = renderHook(() => useTenantId(), { wrapper: makeWrapper(freshClient()) });
+
+    await waitFor(() => expect(result.current.tenantId).toBe('org-A'));
+  });
+
+  it('derives the new tenant from a fresh (post-logout) cache after a token swap', async () => {
+    // The issue #2329 fix: AuthContext.logout() clears the query cache (pinned
+    // in the auth integration suite), so a subsequent login as a user in a
+    // *different* org resolves the new tenant instead of the `staleTime:
+    // Infinity` cached value. Modeled here as a fresh client + swapped token —
+    // the empty post-logout cache no longer holds the previous org's id.
+    primeToken(makeJwt({ tenant_id: 'org-B' }));
+    const { result } = renderHook(() => useTenantId(), { wrapper: makeWrapper(freshClient()) });
+
+    await waitFor(() => expect(result.current.tenantId).toBe('org-B'));
   });
 });

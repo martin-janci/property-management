@@ -18,6 +18,7 @@
  * payload contract.
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -26,8 +27,16 @@ import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 
 const API_BASE = 'http://test.local';
 
+// AuthProvider calls `useQueryClient` (issue #2329 — it clears the query cache
+// on logout / after login), so it must render under a QueryClientProvider, just
+// like it does in the real app tree. A fresh client per test keeps them
+// isolated.
+let queryClient: QueryClient;
+
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <AuthProvider apiBaseUrl={API_BASE}>{children}</AuthProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider apiBaseUrl={API_BASE}>{children}</AuthProvider>
+  </QueryClientProvider>
 );
 
 const mockedSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
@@ -80,6 +89,7 @@ function mockFetchOnce(body: unknown, status = 200) {
 describe('AuthContext integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     globalThis.fetch = jest.fn() as jest.Mock;
     primeSecureStore();
     mockedLocalAuth.hasHardwareAsync.mockResolvedValue(true);
@@ -164,6 +174,27 @@ describe('AuthContext integration', () => {
       expect(JSON.parse(store.get('ppt_user') ?? '{}')).toEqual(sampleUser);
     });
 
+    it('evicts a stale cached tenant id on login (issue #2329)', async () => {
+      primeSecureStore();
+      // A tenant id left over from a prior session that was never explicitly
+      // logged out — must not survive into the new login.
+      queryClient.setQueryData(['auth', 'tenant-id'], 'org-stale');
+      mockFetchOnce({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+        user: sampleUser,
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('jane@example.com', 'pw');
+      });
+
+      expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
+    });
+
     it('throws on bad credentials and leaves the state unauthenticated', async () => {
       primeSecureStore();
       mockFetchOnce({ message: 'Invalid credentials' }, 401);
@@ -208,6 +239,29 @@ describe('AuthContext integration', () => {
       expect(store.has('ppt_access_token')).toBe(false);
       expect(store.has('ppt_refresh_token')).toBe(false);
       expect(store.has('ppt_user')).toBe(false);
+    });
+
+    it('clears the query cache so no previous-tenant data survives (issue #2329)', async () => {
+      primeSecureStore({
+        ppt_access_token: 'access',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      // Seed a cached tenant id the way `useTenantId` would (staleTime:Infinity,
+      // so nothing else would ever evict it).
+      queryClient.setQueryData(['auth', 'tenant-id'], 'org-old');
+      // ...and some unrelated tenant-scoped data.
+      queryClient.setQueryData(['buildings', 'org-old'], [{ id: 'b-1' }]);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await act(async () => {
+        await result.current.logout();
+      });
+
+      expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
+      expect(queryClient.getQueryData(['buildings', 'org-old'])).toBeUndefined();
     });
   });
 
