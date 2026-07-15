@@ -3029,6 +3029,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-tracking-stale-status-flips-2026-07-15",
+      "branch": "auto-impl/gap-tracking-stale-status-flips-2026-07-f8dbd4bf",
+      "status": "merged",
+      "claimed_at": "2026-07-15T05:17:31Z",
+      "last_updated": "2026-07-15T06:16:53Z",
+      "status_changed_at": "2026-07-15T06:16:53Z",
+      "pr_number": 2333,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2333",
+      "merged_at": "2026-07-15T06:16:10Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2333 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=both claims verified against tree; 80-2 AC-4 shipped (PR #2298), reports create-schedule route+wiring shipped (PR #2313); /screens validate 166/0-err",
+      "reviewer_summary": "verdict=approve head_oid=61d9d00ab4af0b99eba729b4c45e600b5a84d0de note=both-status-flips-verified-on-dev(useDraftStorage.ts+create_schedule route/handler/frontend-wiring);docs-only;self-approve-blocked-by-gh",
+      "last_reviewed_oid": "61d9d00ab4af0b99eba729b4c45e600b5a84d0de",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-15T06:15:31Z"
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -6031,5 +6053,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T05:17:11Z"
+  "archived_at": "2026-07-15T06:17:26Z"
 }
