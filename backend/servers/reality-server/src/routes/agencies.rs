@@ -25,6 +25,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_agency))
         .route("/", get(list_agencies))
+        // `/me` must be registered before `/{id}` so the literal segment
+        // isn't shadowed by the UUID path param (a `GET /agencies/me` used
+        // to fall through to `get_agency` and fail UUID parsing).
+        .route("/me", get(get_my_agency))
         .route("/{id}", get(get_agency))
         .route("/{id}", put(update_agency))
         // /{id}/branding handled by routes::agency_branding (mounted at
@@ -157,6 +161,43 @@ pub async fn get_agency(
         })?;
 
     Ok(Json(AgencyResponse { agency }))
+}
+
+/// Get the agency the authenticated portal user belongs to.
+///
+/// Returns the caller's agency as a bare `RealityAgency` (the reality-web
+/// `useMyAgency()` hook reads the entity directly, not wrapped in
+/// `AgencyResponse`). Answers `404` when the caller has no agency so the
+/// frontend can show the "Create Agency" onboarding CTA rather than the
+/// generic load-error/retry screen (Issue #2343).
+#[utoipa::path(
+    get,
+    path = "/api/v1/agencies/me",
+    tag = "Agencies",
+    responses(
+        (status = 200, description = "The caller's agency", body = RealityAgency),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Caller is not a member of any agency")
+    ),
+    security(("session_token" = []))
+)]
+pub async fn get_my_agency(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<RealityAgency>, (axum::http::StatusCode, String)> {
+    let agency = state
+        .reality_portal_repo
+        .get_agency_for_user(principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("get my agency", e))?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "You are not a member of any agency".to_string(),
+            )
+        })?;
+
+    Ok(Json(agency))
 }
 
 /// Get agency by slug.

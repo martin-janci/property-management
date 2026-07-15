@@ -16,6 +16,12 @@ import {
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import {
+  AgencyLoadError,
+  isNotFoundError,
+  NoAgencyMessage,
+  SectionError,
+} from './AgencyErrorStates';
 
 type PeriodType = '7d' | '30d' | '90d' | '12m';
 
@@ -26,6 +32,7 @@ export function AgencyDashboard() {
     data: agency,
     isLoading: agencyLoading,
     isError: agencyError,
+    error: agencyErrorObj,
     refetch: refetchAgency,
   } = useMyAgency();
   const {
@@ -45,11 +52,14 @@ export function AgencyDashboard() {
     return <DashboardSkeleton />;
   }
 
-  // Distinguish a failed fetch from a genuine "no agency" state. Without this
-  // branch, a 500/network error settles as `agency === undefined` and falls
-  // through to <NoAgencyMessage />, showing an actual agency owner the
-  // misleading "No Agency Found / Create Agency" screen (Issue #2277).
-  if (agencyError) {
+  // Distinguish a failed fetch from a genuine "no agency" state. A 500/network
+  // error settles as `agency === undefined` and would fall through to
+  // <NoAgencyMessage />, showing an actual agency owner the misleading
+  // "No Agency Found / Create Agency" screen (Issue #2277). Conversely a 404
+  // *is* the genuine "no agency" case (Issue #2343) — GET /agencies/me returns
+  // 404 when the caller has no agency — so it must reach <NoAgencyMessage />,
+  // not the error/retry screen.
+  if (agencyError && !isNotFoundError(agencyErrorObj)) {
     return <AgencyLoadError onRetry={() => refetchAgency()} />;
   }
 
@@ -864,135 +874,6 @@ function StatsCardsSkeleton() {
           height: 100px;
           background: var(--ppt-border-default);
           border-radius: 12px;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function NoAgencyMessage() {
-  return (
-    <div className="no-agency">
-      <svg
-        width="64"
-        height="64"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--ppt-fg-subtle)"
-        strokeWidth="1.5"
-        aria-hidden="true"
-      >
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-      <h2>No Agency Found</h2>
-      <p>You are not associated with any agency.</p>
-      <Link href="/agency/create" className="create-button">
-        Create Agency
-      </Link>
-      <style jsx>{`
-        .no-agency {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 64px 24px;
-          text-align: center;
-          min-height: 50vh;
-        }
-        h2 {
-          font-size: 1.5rem;
-          color: var(--ppt-fg-primary);
-          margin: 24px 0 8px;
-        }
-        p {
-          color: var(--ppt-fg-muted);
-          margin: 0 0 24px;
-        }
-        .create-button {
-          padding: 12px 24px;
-          background: var(--ppt-color-primary);
-          color: var(--ppt-fg-on-accent);
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        .create-button:hover {
-          background: var(--ppt-color-primary-hover);
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function AgencyLoadError({ onRetry }: { onRetry: () => void }) {
-  const t = useTranslations('agency');
-  return (
-    <div className="agency-error" role="alert">
-      <svg
-        width="64"
-        height="64"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--ppt-color-danger, #ef4444)"
-        strokeWidth="1.5"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      <h2>{t('loadErrorTitle')}</h2>
-      <p>{t('loadErrorMessage')}</p>
-      <button type="button" className="retry-button" onClick={onRetry}>
-        {t('retry')}
-      </button>
-      <style jsx>{`
-        .agency-error {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 64px 24px;
-          text-align: center;
-          min-height: 50vh;
-        }
-        h2 {
-          font-size: 1.5rem;
-          color: var(--ppt-fg-primary);
-          margin: 24px 0 8px;
-        }
-        p {
-          color: var(--ppt-fg-muted);
-          margin: 0 0 24px;
-        }
-        .retry-button {
-          padding: 12px 24px;
-          background: var(--ppt-color-primary);
-          color: var(--ppt-fg-on-accent);
-          border: none;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-        }
-        .retry-button:hover {
-          background: var(--ppt-color-primary-hover);
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function SectionError({ message }: { message: string }) {
-  return (
-    <div className="section-error" role="alert">
-      <span>{message}</span>
-      <style jsx>{`
-        .section-error {
-          padding: 24px;
-          text-align: center;
-          color: var(--ppt-fg-muted);
-          font-size: 14px;
         }
       `}</style>
     </div>

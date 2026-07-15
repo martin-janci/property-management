@@ -22,6 +22,30 @@ import type {
   UpdateRealtorRequest,
 } from './types';
 
+/**
+ * Error thrown by the agency fetchers on a non-2xx response.
+ *
+ * Carries the HTTP `status` so callers can distinguish a genuine `404`
+ * ("you have no agency" — an expected onboarding state) from a transport
+ * or server error (5xx/network) that warrants an error/retry screen.
+ * Before this existed every failure was an opaque `Error`, so a 404 and a
+ * 500 were indistinguishable and both surfaced the retry UI (Issue #2343).
+ */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`API error: ${status}`);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+/** Type guard for {@link ApiError} with an optional status match. */
+export function isApiError(error: unknown, status?: number): error is ApiError {
+  return error instanceof ApiError && (status === undefined || error.status === status);
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${getApiBase()}${endpoint}`, {
     headers: {
@@ -33,7 +57,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    throw new ApiError(response.status);
   }
 
   return response.json();
@@ -85,6 +109,10 @@ export function useMyAgency() {
   return useQuery({
     queryKey: ['my-agency'],
     queryFn: () => fetchApi<Agency>('/api/v1/agencies/me'),
+    // A 404 means "this user has no agency" — an expected state, not a
+    // transient failure — so don't burn retries spinning on it. Transport
+    // and server errors (5xx/network) still get the default retry behaviour.
+    retry: (failureCount, error) => !isApiError(error, 404) && failureCount < 3,
   });
 }
 
@@ -247,7 +275,7 @@ export function useUpdateBranding() {
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        throw new ApiError(response.status);
       }
 
       return response.json();
