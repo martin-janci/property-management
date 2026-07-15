@@ -5365,6 +5365,50 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2318",
+      "branch": "auto-impl/gh-issue-2318-e7af070e",
+      "status": "failed",
+      "claimed_at": "2026-07-15T06:10:14Z",
+      "last_updated": "2026-07-15T12:08:02Z",
+      "status_changed_at": "2026-07-15T12:08:02Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "dispatcher implementer timed out (no auto-impl branch after 5h); issue addressed by open PR #2340 on fix/ branch (separate rust-backend fixer flow) — reclaim skipped to avoid duplicate implementation",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2320",
+      "branch": "auto-impl/gh-issue-2320-41f7d585",
+      "status": "failed",
+      "claimed_at": "2026-07-15T06:10:14Z",
+      "last_updated": "2026-07-15T12:08:02Z",
+      "status_changed_at": "2026-07-15T12:08:02Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "dispatcher implementer timed out (no auto-impl branch after 5h); issue addressed by open PR #2339 on fix/ branch (separate rust-backend fixer flow) — reclaim skipped to avoid duplicate implementation",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2321",
       "branch": "auto-impl/gh-issue-2321-8f9344fa",
       "status": "merged",
@@ -6119,5 +6163,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T10:21:54Z"
+  "archived_at": "2026-07-15T12:14:06Z"
 }
