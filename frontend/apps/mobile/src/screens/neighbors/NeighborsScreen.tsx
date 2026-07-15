@@ -169,7 +169,6 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
       <View style={[s.container, styles.center]}>
         <Text style={s.emptyIcon}>⚠️</Text>
         <Text style={s.emptyTitle}>Could not load neighbours</Text>
-        <Text style={s.emptyText}>{error instanceof Error ? error.message : 'Unknown error'}</Text>
         <Pressable style={[s.primaryButton, { marginTop: 16 }]} onPress={onRefresh}>
           <Text style={s.primaryButtonText}>Retry</Text>
         </Pressable>

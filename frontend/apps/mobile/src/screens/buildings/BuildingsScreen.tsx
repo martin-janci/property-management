@@ -129,7 +129,6 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load buildings</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : buildings.length === 0 ? (
           <View style={s.emptyState}>

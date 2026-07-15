@@ -119,7 +119,6 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load news</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View style={s.emptyState}>

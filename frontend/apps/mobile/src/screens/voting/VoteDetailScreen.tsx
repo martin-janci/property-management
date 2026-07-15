@@ -288,7 +288,6 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>{t('voting.loadError') ?? "Couldn't load vote"}</Text>
-            <Text style={s.emptyText}>{loadError.message}</Text>
           </View>
         ) : (
           <>

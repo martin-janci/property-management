@@ -58,6 +58,12 @@
   "dashboard": {
     "title": "Prehlad",
     "loadError": "Nepodarilo sa nacitat prehlad. Potiahnutim obnovte alebo klepnite na Skusit znova.",
+    "category": {
+      "general": "Vseobecne",
+      "urgent": "Naliehave",
+      "maintenance": "Udrzba",
+      "event": "Udalost"
+    },
     "welcome": "Vitajte",
     "welcomeBack": "Vitajte spat,",
     "recentActivity": "Posledna aktivita",

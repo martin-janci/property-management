@@ -57,7 +57,13 @@
   },
   "dashboard": {
     "title": "Prehled",
-    "loadError": "Nepodarilo se nacist prehled. Pretazenim obnovte nebo klepnete na Opakovat.",
+    "loadError": "Nepodarilo se nacist prehled. Potazenim dolu obnovte nebo klepnete na Zkusit znovu.",
+    "category": {
+      "general": "Obecne",
+      "urgent": "Nalehave",
+      "maintenance": "Udrzba",
+      "event": "Udalost"
+    },
     "welcome": "Vitejte",
     "welcomeBack": "Vitejte zpet,",
     "recentActivity": "Posledni aktivita",

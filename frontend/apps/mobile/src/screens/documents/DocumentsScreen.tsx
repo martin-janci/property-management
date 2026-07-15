@@ -339,7 +339,6 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
             <Text style={styles.emptyTitle}>{t('documents.loadError') ?? "Couldn't load"}</Text>
-            <Text style={styles.emptyText}>{combinedError.message}</Text>
           </View>
         ) : filteredDocuments.length === 0 ? (
           <View style={styles.emptyState}>

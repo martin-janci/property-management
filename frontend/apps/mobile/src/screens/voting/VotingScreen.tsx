@@ -254,7 +254,6 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
             <Text style={styles.emptyTitle}>{t('voting.loadError') ?? "Couldn't load votes"}</Text>
-            <Text style={styles.emptyText}>{error.message}</Text>
           </View>
         ) : filteredVotes.length === 0 ? (
           <View style={styles.emptyState}>

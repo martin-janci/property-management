@@ -181,7 +181,6 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load outages</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View style={s.emptyState}>

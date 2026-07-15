@@ -193,7 +193,6 @@ export function LeaseSignatureScreen({ esignatureId, onBack }: LeaseSignatureScr
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>{t('esignature.loadError')}</Text>
-            <Text style={s.emptyText}>{loadError.message}</Text>
             <Pressable
               style={[s.primaryButton, { marginTop: 24 }]}
               onPress={() => requestQuery.refetch()}

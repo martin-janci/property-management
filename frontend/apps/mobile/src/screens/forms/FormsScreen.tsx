@@ -132,7 +132,6 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
             <Text style={s.emptyTitle}>Couldn't load forms</Text>
-            <Text style={s.emptyText}>{error.message}</Text>
           </View>
         ) : forms.length === 0 ? (
           <View style={s.emptyState}>
