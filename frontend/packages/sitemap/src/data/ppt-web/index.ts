@@ -185,6 +185,18 @@ export const pptWebRoutes: FrontendRoute[] = [
     tags: ['settings', 'integrations', 'airbnb', 'protected'],
   },
   {
+    id: 'ppt-settings-portal-webhooks',
+    app: 'ppt-web',
+    path: '/settings/portal-webhooks',
+    name: 'Portal Webhooks',
+    description:
+      'Real-estate portal webhook delivery status — per-listing syndication health & org stats',
+    auth: { required: true, tenantContext: { required: true } },
+    component: 'PortalWebhooksPage',
+    feature: 'Epic-105',
+    tags: ['settings', 'syndication', 'webhooks', 'protected'],
+  },
+  {
     id: 'ppt-settings-notifications',
     app: 'ppt-web',
     path: '/settings/notifications',

@@ -20,8 +20,12 @@
 
 import { useSyndicationDashboard } from '@ppt/api-client';
 import type React from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts';
+
+/** Per-page size for the per-listing dashboard rows (matches the API default). */
+const PAGE_SIZE = 20;
 
 /** Human-readable portal labels for the known real-estate portals. */
 const PORTAL_LABELS: Record<string, string> = {
@@ -84,9 +88,27 @@ export const PortalWebhooksPage: React.FC = () => {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? '';
 
-  const dashboard = useSyndicationDashboard();
+  const [page, setPage] = useState(1);
+  // Gate the query on a resolved organization: without it the request is doomed
+  // and would surface a spurious loadError alert beneath the noOrganization
+  // banner (issue #2322).
+  const dashboard = useSyndicationDashboard(
+    { page, limit: PAGE_SIZE },
+    { enabled: !!organizationId }
+  );
   const stats = dashboard.data?.organization_stats;
   const listings = dashboard.data?.listings ?? [];
+
+  // Pagination is over the per-listing rows only; the org-wide summary stats
+  // are aggregate and page-independent.
+  const total = dashboard.data?.total ?? 0;
+  const limit = dashboard.data?.limit ?? PAGE_SIZE;
+  const currentPage = dashboard.data?.page ?? page;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const rangeFrom = total === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const rangeTo = Math.min(currentPage * limit, total);
+  const canPrev = currentPage > 1;
+  const canNext = currentPage < totalPages;
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -293,6 +315,45 @@ export const PortalWebhooksPage: React.FC = () => {
                 );
               })}
             </ul>
+          )}
+
+          {/* Pager — the per-listing rows are paginated (default 20/page); the
+              summary stats above stay page-independent. Only shown when the
+              org has more listings than a single page can hold. */}
+          {totalPages > 1 && (
+            <nav
+              className="flex items-center justify-between gap-4 pt-2"
+              aria-label={t('settings.portalWebhooks.pager.label', {
+                defaultValue: 'Listings pagination',
+              })}
+            >
+              <p className="text-xs text-gray-500">
+                {t('settings.portalWebhooks.pager.summary', {
+                  defaultValue: 'Showing {{from}}–{{to}} of {{total}} listings',
+                  from: rangeFrom,
+                  to: rangeTo,
+                  total,
+                })}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={!canPrev}
+                >
+                  {t('settings.portalWebhooks.pager.prev', { defaultValue: 'Previous' })}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setPage((p) => (canNext ? p + 1 : p))}
+                  disabled={!canNext}
+                >
+                  {t('settings.portalWebhooks.pager.next', { defaultValue: 'Next' })}
+                </button>
+              </div>
+            </nav>
           )}
         </section>
       )}

@@ -38,6 +38,7 @@ import {
   TemplateLibraryPage,
   TwoFactorAuthPage,
 } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 // Sessions management page (#966) — lazy-loaded.
 const SessionsPage = lazy(() =>
@@ -206,11 +207,14 @@ export function settingsRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Portal webhook delivery status — Real Estate Portal Webhooks (Gap 83-3) */}
+      {/* Portal webhook delivery status — Real Estate Portal Webhooks (Gap 83-3).
+          Manager-gated at the route level (not just the nav link): the dashboard
+          exposes org-wide syndication stats, per-listing inquiry counts and
+          last_error strings that residents must not read (issue #2322). */}
       <Route
         path="/settings/portal-webhooks"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PortalWebhooksPage />
           </ProtectedRoute>
         }

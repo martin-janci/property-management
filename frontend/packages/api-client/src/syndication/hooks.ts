@@ -2,7 +2,7 @@
  * Portal Syndication React Query hooks (Epic 105 — Real Estate Portal Webhooks).
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import * as api from './api';
 import type { SyndicationDashboardQuery } from './types';
 
@@ -17,10 +17,15 @@ export const syndicationKeys = {
 };
 
 /** Organization syndication dashboard (per-listing rows + aggregate stats). */
-export function useSyndicationDashboard(query: SyndicationDashboardQuery = {}) {
+export function useSyndicationDashboard(
+  query: SyndicationDashboardQuery = {},
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: syndicationKeys.dashboard(query),
     queryFn: () => api.getSyndicationDashboard(query),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 

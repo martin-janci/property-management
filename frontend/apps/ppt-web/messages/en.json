@@ -3421,6 +3421,12 @@
         "degraded": "Degraded",
         "unhealthy": "Unhealthy",
         "notConfigured": "Not configured"
+      },
+      "pager": {
+        "label": "Listings pagination",
+        "summary": "Showing {{from}}–{{to}} of {{total}} listings",
+        "prev": "Previous",
+        "next": "Next"
       }
     },
     "integrations": {

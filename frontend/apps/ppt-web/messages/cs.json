@@ -64,7 +64,8 @@
     "admin": "Administrace",
     "aiChat": "AI asistent",
     "iotAlerts": "Sensor Alerts",
-    "integrations": "Integrace"
+    "integrations": "Integrace",
+    "portalWebhooks": "Webhooky portálů"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -1097,6 +1098,46 @@
     }
   },
   "settings": {
+    "portalWebhooks": {
+      "title": "Webhooky portálů",
+      "subtitle": "Stav doručení a aktivita z webhooků realitních portálů — zobrazení, poptávky a stav synchronizace podle portálu.",
+      "noOrganization": "Pro váš účet není vybrána žádná organizace, proto nelze aktivitu webhooků portálů zobrazit.",
+      "loading": "Načítání aktivity portálů…",
+      "loadError": "Nepodařilo se načíst aktivitu webhooků portálů.",
+      "summary": {
+        "title": "Přehled",
+        "active": "Aktivní",
+        "pending": "Čekající",
+        "failed": "Neúspěšné",
+        "views": "Zobrazení",
+        "inquiries": "Poptávky"
+      },
+      "byPortal": {
+        "caption": "Aktivita synchronizace podle portálu",
+        "portal": "Portál",
+        "empty": "Zatím nebyla zaznamenána žádná aktivita portálu."
+      },
+      "listings": {
+        "title": "Nabídky",
+        "empty": "Zatím žádné synchronizované nabídky.",
+        "activity": "{{views}} zobrazení · {{inquiries}} poptávek",
+        "portalActivity": "{{views}} zobrazení · {{inquiries}} poptávek",
+        "lastActivity": "Poslední aktivita: {{when}}",
+        "lastError": "Poslední chyba: {{error}}"
+      },
+      "health": {
+        "healthy": "V pořádku",
+        "degraded": "Zhoršené",
+        "unhealthy": "Nefunkční",
+        "notConfigured": "Nenakonfigurováno"
+      },
+      "pager": {
+        "label": "Stránkování nabídek",
+        "summary": "Zobrazeno {{from}}–{{to}} z {{total}} nabídek",
+        "prev": "Předchozí",
+        "next": "Další"
+      }
+    },
     "integrations": {
       "title": "Integrace",
       "subtitle": "Připojte externí rezervační kanály pro synchronizaci nabídek a rezervací.",
