@@ -58,26 +58,6 @@
       }
     },
     {
-      "id": "gh-issue-2318",
-      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2318)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2318,
-        "url": "https://github.com/martin-janci/property-management/issues/2318",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2319",
       "action": "Follow-up: worker logs warn for benign no-device skips + PushNotConfigured overload, stale docs, dead trait param (PR #2310) (Closes #2319)",
       "owner_role": "pm-tech-lead",
@@ -91,46 +71,6 @@
       "issue_ref": {
         "number": 2319,
         "url": "https://github.com/martin-janci/property-management/issues/2319",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2320",
-      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2320)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2320,
-        "url": "https://github.com/martin-janci/property-management/issues/2320",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2322",
-      "action": "Follow-up: portal-webhooks screen — role gate, pagination, screen-map, i18n, OpenAPI swap (PR #2294) (Closes #2322)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-15T00:05:03Z (#2322)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-15T00:05:03Z",
-      "issue_ref": {
-        "number": 2322,
-        "url": "https://github.com/martin-janci/property-management/issues/2322",
         "labels": [
           "follow-up",
           "from-merged-review"
@@ -349,6 +289,20 @@
       "depends_on": [],
       "first_open_at": "2026-07-15T10:08:18Z",
       "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-analytics-stub-retry1",
+      "action": "[BLOCKED-DROP: backend endpoints missing — superseded by gap-realtor-listings-analytics-endpoints] gap: MyListings and ListingAnalytics routes (Navigation.kt:440,:458) are live in the nav graph but render hardcoded emptyList()/isLoading=false with no repository/ApiClient backing; realtor listing dashboard + analytics are permanent empty stubs in production. Wire to a listings/analytics API. [retry 1/2 of failed code-review-mobile-native-kmp-mylistings-analytics-stub]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-15T14:05:28Z (retry_of=code-review-mobile-native-kmp-mylistings-analytics-stub reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T12:21:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-15T14:05:28Z",
+      "retry_of": "code-review-mobile-native-kmp-mylistings-analytics-stub",
       "retry_round": 1
     }
   ],
