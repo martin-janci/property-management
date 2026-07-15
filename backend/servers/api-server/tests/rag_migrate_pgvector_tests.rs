@@ -76,6 +76,28 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, id: Uuid) 
     .expect("seed document");
 }
 
+/// Seed a legacy `document_embeddings` row for `org_id`: a 1536-dim JSONB
+/// array, NULL vector (column omitted so it also works without pgvector), and
+/// metadata WITHOUT an `embedding_model` key — i.e. a pre-provenance legacy row.
+/// Returns the new row id.
+async fn seed_legacy_embedding(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
+    let doc_id = Uuid::new_v4();
+    seed_document(pool, org_id, created_by, doc_id).await;
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO document_embeddings
+               (organization_id, document_id, chunk_index, chunk_text, embedding, metadata)
+           VALUES ($1, $2, 0, 'legacy chunk',
+                   to_jsonb(array_fill(0.1::float8, ARRAY[1536])),
+                   '{}'::jsonb)
+           RETURNING id"#,
+    )
+    .bind(org_id)
+    .bind(doc_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed legacy embedding row")
+}
+
 // POST /api/v1/ai/llm/rag/migrate as a platform admin → 200 with a numeric
 // `migrated` count. The route exists (this whole endpoint is what the gap adds)
 // and the migration is a no-op-or-more depending on pgvector availability.
@@ -206,16 +228,18 @@ async fn rag_migrate_stamps_provenance_on_legacy_row(pool: PgPool) {
         resp.json_value()
     );
 
-    let (vector_set, stamped_model): (bool, Option<String>) = sqlx::query_as(
-        r#"SELECT embedding_vector IS NOT NULL,
-                  metadata->>'embedding_model'
-           FROM document_embeddings
-           WHERE id = $1"#,
-    )
-    .bind(emb_id)
-    .fetch_one(&app.pool)
-    .await
-    .expect("re-read migrated embedding row");
+    let (vector_set, stamped_model, assumed_marker): (bool, Option<String>, Option<String>) =
+        sqlx::query_as(
+            r#"SELECT embedding_vector IS NOT NULL,
+                      metadata->>'embedding_model',
+                      metadata->>'embedding_model_assumed'
+               FROM document_embeddings
+               WHERE id = $1"#,
+        )
+        .bind(emb_id)
+        .fetch_one(&app.pool)
+        .await
+        .expect("re-read migrated embedding row");
 
     assert!(
         vector_set,
@@ -227,6 +251,97 @@ async fn rag_migrate_stamps_provenance_on_legacy_row(pool: PgPool) {
         "back-fill must stamp assumed embedding_model provenance so filtered \
          search can isolate the row's embedding space (was mixing before #2300)"
     );
+    // #2321: the assumed stamp must be distinguishable from genuinely recorded
+    // provenance (1536-dim also covers ada-002 — an incompatible space), so an
+    // `embedding_model_assumed` marker is set alongside it on untagged rows.
+    assert_eq!(
+        assumed_marker.as_deref(),
+        Some("true"),
+        "back-fill must mark inferred provenance with embedding_model_assumed=true \
+         so a later re-embedding pass can find assumed rows (#2321)"
+    );
+}
+
+// Cross-org back-fill (#2321): the endpoint is documented as converting legacy
+// rows across EVERY organization in one super-admin pass. `document_embeddings`
+// runs under FORCE RLS; migration 00216 adds the super-admin policy that makes
+// that bypass actually apply. This test seeds one legacy row in each of two
+// orgs, calls `/rag/migrate` with the platform admin's session bound to org A,
+// and asserts BOTH orgs' rows are converted and assumed-stamped.
+//
+// Caveat (called out in #2321): `#[sqlx::test]` connects as the Postgres
+// superuser, which bypasses RLS entirely — so this test passes with or without
+// the 00216 policy in this harness. It still pins the cross-org contract and,
+// once CI's Postgres carries pgvector (backend.yml → pgvector/pgvector:pg16),
+// exercises the real conversion across both orgs. Under a non-superuser app
+// role the 00216 policy is what keeps the count at 2 instead of 1.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rag_migrate_converts_legacy_rows_across_orgs(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+
+    // Platform-admin principal, session bound to org A only.
+    let (token, _refresh) = create_authenticated_user(&app, &user).await;
+    let user_id = resolve_user_id(&app, &user).await;
+    let org_a = seed_org(&app.pool, "rag-xorg-a").await;
+    let org_b = seed_org(&app.pool, "rag-xorg-b").await;
+    seed_membership(&app.pool, org_a, user_id, "platform_admin").await;
+
+    // One legacy row (1536-dim JSONB, NULL vector, no provenance) per org.
+    let emb_a = seed_legacy_embedding(&app.pool, org_a, user_id).await;
+    let emb_b = seed_legacy_embedding(&app.pool, org_b, user_id).await;
+
+    let session = app.session(token, org_a);
+    let resp = app
+        .execute(session.post("/api/v1/ai/llm/rag/migrate").build())
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "cross-org migrate must return 200; body={}",
+        resp.text()
+    );
+
+    if !pgvector_present(&app).await {
+        assert_eq!(
+            resp.json_value()["migrated"].as_i64(),
+            Some(0),
+            "without pgvector the back-fill must report 0 migrated"
+        );
+        return;
+    }
+
+    // pgvector present: both orgs' rows must convert even though the caller's
+    // session is bound to org A — this is the cross-org super-admin pass.
+    assert!(
+        resp.json_value()["migrated"]
+            .as_i64()
+            .is_some_and(|n| n >= 2),
+        "cross-org back-fill must convert the legacy row in BOTH orgs; body={}",
+        resp.json_value()
+    );
+
+    for emb_id in [emb_a, emb_b] {
+        let (vector_set, stamped_model): (bool, Option<String>) = sqlx::query_as(
+            r#"SELECT embedding_vector IS NOT NULL,
+                      metadata->>'embedding_model'
+               FROM document_embeddings
+               WHERE id = $1"#,
+        )
+        .bind(emb_id)
+        .fetch_one(&app.pool)
+        .await
+        .expect("re-read migrated embedding row");
+        assert!(
+            vector_set,
+            "cross-org back-fill must populate embedding_vector on {emb_id}"
+        );
+        assert_eq!(
+            stamped_model.as_deref(),
+            Some("text-embedding-3-small"),
+            "cross-org back-fill must stamp assumed provenance on {emb_id}"
+        );
+    }
 }
 
 // Unauthenticated request → 401 (RlsConnection extractor guards the route).
