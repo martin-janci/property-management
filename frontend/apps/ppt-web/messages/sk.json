@@ -1052,6 +1052,12 @@
       "errorTitle": "Nepodarilo sa načítať spustenia",
       "errorMessage": "Skúste to prosím neskôr."
     },
+    "schedule": {
+      "created": "Plán bol úspešne vytvorený.",
+      "createFailed": "Nepodarilo sa vytvoriť plán.",
+      "updated": "Plán bol úspešne aktualizovaný.",
+      "updateFailed": "Nepodarilo sa aktualizovať plán."
+    },
     "execution": {
       "downloadFailed": "Nepodarilo sa stiahnuť správu.",
       "retryQueued": "Spustenie bolo zaradené do frontu na opakovanie.",

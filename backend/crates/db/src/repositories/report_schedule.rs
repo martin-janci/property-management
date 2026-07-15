@@ -232,6 +232,45 @@ impl ReportScheduleRepository {
         Ok(ReportSchedule::from(row))
     }
 
+    /// List report schedules for an organisation (gap-81-1 follow-up / issue #2324).
+    ///
+    /// Backs `GET /api/v1/reports/schedules`. Scoped to `caller_org_id` so a
+    /// principal only ever sees their own tenant's schedules — the org comes
+    /// from the authenticated `RlsConnection`, never the request. Optional
+    /// `report_id` / `is_active` filters narrow the result. Ordered by
+    /// `created_at DESC` (newest schedule first).
+    pub async fn list_by_org(
+        &self,
+        caller_org_id: Uuid,
+        report_id: Option<Uuid>,
+        is_active: Option<bool>,
+    ) -> Result<Vec<ReportSchedule>, AppError> {
+        let rows = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "SELECT ",
+            report_schedule_columns!(),
+            " FROM report_schedules \
+             WHERE organization_id = $1 \
+               AND ($2::uuid IS NULL OR report_id = $2) \
+               AND ($3::boolean IS NULL OR is_active = $3) \
+             ORDER BY created_at DESC"
+        ))
+        .bind(caller_org_id)
+        .bind(report_id)
+        .bind(is_active)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                org_id = %caller_org_id,
+                "Failed to list report schedules"
+            );
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(rows.into_iter().map(ReportSchedule::from).collect())
+    }
+
     // ============================================================================
     // Execution history (Story 81.2)
     // ============================================================================

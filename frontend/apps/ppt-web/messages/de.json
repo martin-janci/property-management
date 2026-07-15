@@ -999,6 +999,12 @@
       "errorTitle": "Ausführungen konnten nicht geladen werden",
       "errorMessage": "Bitte versuchen Sie es später erneut."
     },
+    "schedule": {
+      "created": "Zeitplan erfolgreich erstellt.",
+      "createFailed": "Zeitplan konnte nicht erstellt werden.",
+      "updated": "Zeitplan erfolgreich aktualisiert.",
+      "updateFailed": "Zeitplan konnte nicht aktualisiert werden."
+    },
     "execution": {
       "downloadFailed": "Bericht konnte nicht heruntergeladen werden.",
       "retryQueued": "Ausführung zur Wiederholung in die Warteschlange gestellt.",
