@@ -154,11 +154,11 @@ async function signRequest<T>(url: string, options: RequestInit = {}): Promise<T
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as {
-      error?: string;
+      code?: string;
       message?: string;
     };
     throw new SignError(
-      body.error ?? `HTTP_${response.status}`,
+      body.code ?? `HTTP_${response.status}`,
       response.status,
       body.message ?? `HTTP ${response.status}`
     );
