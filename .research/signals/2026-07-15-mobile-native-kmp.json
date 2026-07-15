@@ -1,0 +1,78 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-15",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "note": "Tier-1d demand-driven run (action-list starved: claimable=17 < floor=36; run parity even -> dev-review). Segment mobile-native-kmp reviewed by the kotlin + tester experts. The parent generator subagent returned before its expert children finished, so the dispatcher orchestrator persisted these signals on its behalf (single-writer rule) and folded them into its Phase 6 commit. All 5 ids verified FRESH against .research/signals/*.json, backlog.json, and action-list.json (no re-emit of prior-run ids). Highest-value finding is the SSO restore-session token-drop on transient network error (offline cold launch forces sign-out).",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-sso-restore-drops-token",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:318 — restoreSession() calls getSession(); any getSession failure (onFailure) nulls sessionToken and sets Unauthenticated, but getSession catches transient network exceptions (line 107-109) the same as 401. A cold app launch while offline therefore discards the restored session and forces the user signed-out, instead of distinguishing an auth failure (401 -> logout) from a recoverable network error."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt — ApiClient has no test file (its only appearance in commonTest is a code comment in ListingDetailRepositoryTest.kt); it attaches the Authorization: Bearer token and X-Tenant-ID isolation header and has reachable, untested error-mapping branches (Unauthorized -> 'Please sign in', Conflict -> 'Already in favorites', NotFound) for getListings/getListing/getFavorites/addFavorite/removeFavorite/submitInquiry — an auth/tenant-carrying network core with untested Unauthorized handling."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nn-assert-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt:115 — onCallClick lambda re-reads `state.listing!!` (state is a collectAsState()-backed StateFlow value) at click time rather than capturing the render-time snapshot; if the VM state emits listing=null between render and the deferred click, the non-null assertion throws NPE. Same latent double-read pattern in FavoritesScreen.kt:164 and InquiriesScreen.kt:169 (`errorMessage!!`)."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-networkerror-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/NetworkError.kt — the isNetworkError() error-classification heuristic (exception-name matching, message-hint matching, and the cause-chain walk with its self-reference guard `it !== cause`) is referenced by no test in commonTest; the UI relies on it to swap technical exceptions for friendly copy, so every mapping branch is unverified."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiryrepo-err-branch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt — its only test (InquiryRepositoryPathEncodingTest.kt) asserts path percent-encoding only; the Unauthorized ('Please sign in...') and NotFound ('Inquiry not found') error-mapping branches across getInquiries/getRealtorInquiries/getInquiry/replyToInquiry/getViewings/cancelViewing are exercised by no test."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
