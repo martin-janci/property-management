@@ -23,6 +23,24 @@
 //! The explicit `organization_id = $N` SQL filters are retained as
 //! defense-in-depth; handlers pass `rls.tenant_id()` (the org the caller was
 //! validated against), so the SQL filter and the RLS context can never disagree.
+//!
+//! # Per-user isolation is enforced in application SQL (issue #2317)
+//!
+//! AI chat sessions/messages are **per-user private within an org** (#2279 /
+//! #2289): the by-id read/mutate paths (`find_session_by_id`,
+//! `list_session_messages`, `delete_session`) and the feedback write
+//! (`add_feedback_for_org`) all carry an explicit `s.user_id = $N` predicate.
+//! The RLS policies on `ai_chat_sessions` / `ai_chat_messages` (migration
+//! `00179`) remain **org-scoped only** (`organization_id = get_current_org_id()`),
+//! so the per-user predicate is enforced *solely at the application-SQL layer* —
+//! this repository is the single documented enforcement point for per-user
+//! privacy. A per-user RLS predicate was considered (issue #2317, low-severity
+//! defense-in-depth) but deferred: the sentiment/RAG blocks and any future
+//! admin/manager review path (e.g. `list_escalated_messages`, which is a
+//! deliberate org-manager cross-user read gated by role in the handler) must
+//! keep working, so a naive `user_id = current_user` RLS clause would break
+//! them. Any new query path added here MUST include the `user_id` predicate
+//! where per-user privacy applies; do not rely on RLS to supply it.
 
 use crate::models::{
     AiChatMessage, AiChatSession, AiTrainingFeedback, ChatSessionSummary, CreateChatSession,
@@ -261,68 +279,36 @@ impl AiChatRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    /// Update session title.
-    pub async fn update_session_title<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-        title: &str,
-    ) -> Result<AiChatSession, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            "UPDATE ai_chat_sessions SET title = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
-        )
-        .bind(id)
-        .bind(title)
-        .fetch_one(executor)
-        .await
-    }
+    // NOTE (#2317): two unscoped methods were removed here as latent IDOR
+    // footguns with zero non-test callers —
+    //   * `update_session_title(id, title)` ran an UPDATE by `id` alone with no
+    //     org/owner predicate, and
+    //   * the legacy `add_feedback(user_id, data)` (the pre-#766 method that
+    //     `add_feedback_for_org` superseded) inserted feedback with no
+    //     org/owner guard.
+    // Under FORCE-RLS a stray call would still be capped to the connection's
+    // org, but the within-tenant per-user IDOR would return. If a future
+    // handler needs to rename a session or record feedback, add a method with
+    // the full `(id, org_id, user_id)` signature + WHERE predicates so it is
+    // safe-by-construction (see `delete_session` / `add_feedback_for_org`).
 
-    /// Add training feedback for a message.
-    /// Record AI training feedback for a message.
-    ///
-    /// `user_id` is passed explicitly by the caller and must originate from the
-    /// verified request principal, never from client input in `data`.
-    pub async fn add_feedback<'e, E>(
-        &self,
-        executor: E,
-        user_id: Uuid,
-        data: ProvideFeedback,
-    ) -> Result<AiTrainingFeedback, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            INSERT INTO ai_training_feedback (message_id, user_id, rating, helpful, feedback_text)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (message_id, user_id) DO UPDATE SET
-                rating = EXCLUDED.rating,
-                helpful = EXCLUDED.helpful,
-                feedback_text = EXCLUDED.feedback_text
-            RETURNING *
-            "#,
-        )
-        .bind(data.message_id)
-        .bind(user_id)
-        .bind(data.rating)
-        .bind(data.helpful)
-        .bind(data.feedback_text)
-        .fetch_one(executor)
-        .await
-    }
-
-    /// Record AI training feedback for a message — tenant-scoped (issue
-    /// #766 / #816).
+    /// Record AI training feedback for a message — tenant- AND owner-scoped
+    /// (issue #766 / #816, owner predicate added for #2317).
     ///
     /// `user_id` and `org_id` both originate from the verified request
     /// principal. The `INSERT ... SELECT ... WHERE EXISTS` only writes when
-    /// the target message's parent session belongs to the caller's org, so a
-    /// caller in org B cannot attach feedback to a message in org A's chat
-    /// session (an IDOR write + training-data-poisoning vector). Returns
-    /// `Ok(None)` when the message does not exist or belongs to another org.
+    /// the target message's parent session belongs to the caller's org AND to
+    /// the caller themselves (`s.user_id = $2`), so:
+    ///
+    /// * a caller in org B cannot attach feedback to a message in org A's chat
+    ///   session (cross-tenant IDOR write + training-data poisoning), and
+    /// * a colleague in the SAME org cannot attach/overwrite feedback on
+    ///   another member's private message, nor use the 201-vs-404 response as
+    ///   an existence oracle for message UUIDs inside the org (#2317) — the
+    ///   same within-tenant per-user privacy model #2289 pinned for sessions.
+    ///
+    /// Returns `Ok(None)` when the message does not exist, belongs to another
+    /// org, or belongs to another user in the same org.
     pub async fn add_feedback_for_org<'e, E>(
         &self,
         executor: E,
@@ -340,7 +326,7 @@ impl AiChatRepository {
             WHERE EXISTS (
                 SELECT 1 FROM ai_chat_messages m
                 JOIN ai_chat_sessions s ON s.id = m.session_id
-                WHERE m.id = $1 AND s.organization_id = $6
+                WHERE m.id = $1 AND s.organization_id = $6 AND s.user_id = $2
             )
             ON CONFLICT (message_id, user_id) DO UPDATE SET
                 rating = EXCLUDED.rating,
@@ -359,7 +345,19 @@ impl AiChatRepository {
         .await
     }
 
-    /// Get escalated messages for review.
+    /// Get escalated messages for review — org-scoped, deliberately NOT
+    /// owner-scoped (issue #2317).
+    ///
+    /// Escalation review is a cross-user, org-management function: a
+    /// manager/admin triages every member's escalated AI answers. Unlike the
+    /// per-user-private session/transcript reads (which carry an `s.user_id`
+    /// predicate), this query intentionally spans all users in the org. Because
+    /// it exposes other members' escalated messages, the confidentiality gate
+    /// lives in the HANDLER (`list_escalated` in
+    /// `api-server/src/routes/ai/sessions.rs`), which requires a manager/admin
+    /// `TenantRole` before calling this method — a plain resident cannot reach
+    /// it. Keep that role gate in place: this method must never be wired to an
+    /// ungated route.
     pub async fn list_escalated_messages<'e, E>(
         &self,
         executor: E,
