@@ -5321,6 +5321,28 @@
       "merge_attempted_at": "2026-07-14T16:09:16Z"
     },
     {
+      "task_id": "gh-issue-2314",
+      "branch": "auto-impl/gh-issue-2314-2bfd7efe",
+      "status": "merged",
+      "claimed_at": "2026-07-14T16:06:35Z",
+      "last_updated": "2026-07-15T05:13:33Z",
+      "status_changed_at": "2026-07-15T05:13:33Z",
+      "pr_number": 2316,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2316",
+      "merged_at": "2026-07-15T01:03:09Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2316 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=news_articles org-scoped (repo predicate + EXISTS child guards + ensure_article_in_org); db+api-server cargo check green; sqlx regression test runs in CI",
+      "reviewer_summary": "verdict=approve head_oid=c7b7d858dc2caded3bb79dbefff4fedd7721b31b note=new-commits-sound; test-rest FAILURE was real (u.avatar_url 42703 in find_by_id_with_details) fixed by head c7b7d858; security IDOR fix unchanged/correct; one non-blocking residual (find_by_id_with_details selects raw a.status enum into String -> latent 500 on GET /news/{id}, masked by BIT-351 quarantine); posted as COMMENT (self-approve blocked) + needs-human-review",
+      "last_reviewed_oid": "c7b7d858dc2caded3bb79dbefff4fedd7721b31b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -6009,5 +6031,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T00:21:27Z"
+  "archived_at": "2026-07-15T05:17:11Z"
 }
