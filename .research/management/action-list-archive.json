@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-16T00:21:13Z",
+  "archived_at": "2026-07-16T08:09:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6817,6 +6817,87 @@
         "merged_pr": 2355,
         "merged_at": "2026-07-15T18:18:30Z",
         "at": "2026-07-15T20:07:26Z"
+      }
+    },
+    {
+      "id": "gh-issue-2357",
+      "action": "Follow-up: role gate on GET /ai/chat/escalated shipped without a deny-path regression test (PR #2356) (Closes #2357)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2357) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2357,
+        "url": "https://github.com/martin-janci/property-management/issues/2357",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2374,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2361",
+      "action": "Follow-up: login cache eviction is incomplete vs. logout — prior org&#39;s tenant-scoped data survives into the new session (PR #2352) (Closes #2361)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2361) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2361,
+        "url": "https://github.com/martin-janci/property-management/issues/2361",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2372,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2362",
+      "action": "Follow-up: consolidate reality-web listing-detail shape validation into one parseListingDetail() normalizer (PR #2351) (Closes #2362)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2362) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2362,
+        "url": "https://github.com/martin-janci/property-management/issues/2362",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2373,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
       }
     },
     {

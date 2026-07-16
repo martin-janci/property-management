@@ -2,26 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "gh-issue-2357",
-      "action": "Follow-up: role gate on GET /ai/chat/escalated shipped without a deny-path regression test (PR #2356) (Closes #2357)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2357)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2357,
-        "url": "https://github.com/martin-janci/property-management/issues/2357",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2358",
       "action": "Follow-up: inquiry retry-on-unmatched shipped ahead of its dedup net — retries insert duplicate leads + unbounded 5xx loop (PR #2353) (Closes #2358)",
       "owner_role": "pm-tech-lead",
@@ -75,46 +55,6 @@
       "issue_ref": {
         "number": 2360,
         "url": "https://github.com/martin-janci/property-management/issues/2360",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2361",
-      "action": "Follow-up: login cache eviction is incomplete vs. logout — prior org&#39;s tenant-scoped data survives into the new session (PR #2352) (Closes #2361)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2361)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2361,
-        "url": "https://github.com/martin-janci/property-management/issues/2361",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2362",
-      "action": "Follow-up: consolidate reality-web listing-detail shape validation into one parseListingDetail() normalizer (PR #2351) (Closes #2362)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2362)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2362,
-        "url": "https://github.com/martin-janci/property-management/issues/2362",
         "labels": [
           "follow-up",
           "from-merged-review"
@@ -328,6 +268,48 @@
       "first_open_at": "2026-07-16T06:05:04Z",
       "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
       "retry_round": 1
+    },
+    {
+      "id": "dx-stalled-review-pr-988-retry2",
+      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 2/2 of failed dx-stalled-review-pr-988]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "dx-stalled-review-pr-988",
+      "retry_round": 2
+    },
+    {
+      "id": "gap-83-2-rate-availability-push-integration-deferred-retry1",
+      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync) [retry 1/2 of failed gap-83-2-rate-availability-push-integration-deferred]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=gap-83-2-rate-availability-push-integration-deferred reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "gap-83-2-rate-availability-push-integration-deferred",
+      "retry_round": 1
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 2
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
