@@ -106,6 +106,12 @@ export function useRemoveFavorite() {
  *
  * Consumes `PATCH /api/v1/favorites/{listingId}`. The body is partial-merged
  * server-side, so passing only `price_alert_enabled` leaves notes untouched.
+ *
+ * Optimistically flips `price_alert_enabled` on the matching row in every
+ * cached `['favorites', …]` page so the toggle reflects the user's intent
+ * immediately, rolling the snapshot back if the PATCH fails. This removes the
+ * dependency on the page's `?? true` fallback masking a transiently-absent
+ * field after refetch (see #2365).
  */
 export function useUpdateFavorite() {
   const queryClient = useQueryClient();
@@ -126,7 +132,41 @@ export function useUpdateFavorite() {
       });
       if (!response.ok) throw new Error('Failed to update favorite');
     },
-    onSuccess: () => {
+    onMutate: async ({ listingId, data }) => {
+      // Only the price-alert toggle has a visible cached surface to update
+      // optimistically; a notes-only edit has nothing to reflect here.
+      if (data.price_alert_enabled == null) return { previous: [] };
+
+      await queryClient.cancelQueries({ queryKey: ['favorites'] });
+
+      // Snapshot every matching `['favorites', page, pageSize]` cache entry so
+      // we can roll back on error.
+      const previous = queryClient.getQueriesData<PaginatedFavorites>({
+        queryKey: ['favorites'],
+      });
+
+      queryClient.setQueriesData<PaginatedFavorites>({ queryKey: ['favorites'] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.map((favorite) =>
+            favorite.listingId === listingId
+              ? { ...favorite, price_alert_enabled: data.price_alert_enabled ?? undefined }
+              : favorite
+          ),
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      // Restore the pre-mutation snapshot so a failed toggle doesn't leave the
+      // checkbox showing an un-persisted state.
+      for (const [queryKey, data] of context?.previous ?? []) {
+        queryClient.setQueryData(queryKey, data);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
       queryClient.invalidateQueries({ queryKey: FAVORITE_ALERTS_KEY });
     },
