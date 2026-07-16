@@ -945,7 +945,7 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
 /// Classify the result of persisting an inbound inquiry lead.
 ///
 /// `record_webhook_event` now dedups via `ON CONFLICT ... DO NOTHING` on the
-/// partial unique index (migration 00218, #2358), so a duplicate delivery
+/// partial unique index (migration 00219, #2358), so a duplicate delivery
 /// surfaces as `Ok(None)` (insert suppressed) rather than a raw unique
 /// violation. Both are treated as an idempotent duplicate.
 ///
@@ -1262,7 +1262,7 @@ mod tests {
 
     #[test]
     fn inquiry_persist_conflict_none_is_idempotent_duplicate() {
-        // `record_webhook_event`'s `ON CONFLICT ... DO NOTHING` (migration 00218,
+        // `record_webhook_event`'s `ON CONFLICT ... DO NOTHING` (migration 00219,
         // #2358) suppresses the insert on a redelivery and returns `Ok(None)`.
         // This is the dedup net that makes #2353's retry escalation safe: it
         // must classify as an idempotent `Duplicate` (ack 200), never as a

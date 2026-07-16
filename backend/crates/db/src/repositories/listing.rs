@@ -946,7 +946,7 @@ impl ListingRepository {
     /// Record a portal webhook event.
     ///
     /// Idempotent on `(portal, event_type, external_id)` when `external_id` is
-    /// present (the dedup net from migration 00218, #2358): a redelivery of an
+    /// present (the dedup net from migration 00219, #2358): a redelivery of an
     /// already-recorded event hits the partial unique index and the
     /// `ON CONFLICT ... DO NOTHING` clause suppresses the insert.
     ///
