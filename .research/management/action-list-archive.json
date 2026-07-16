@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-16T08:09:50Z",
+  "archived_at": "2026-07-16T08:24:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6847,6 +6847,33 @@
       }
     },
     {
+      "id": "gh-issue-2359",
+      "action": "Follow-up: /agencies/me resolves left/inactive memberships + no backend test (PR #2355) (Closes #2359)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2359) | gc1-reconcile 2026-07-16T08:24:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2359,
+        "url": "https://github.com/martin-janci/property-management/issues/2359",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2375,
+        "merged_at": "2026-07-16T08:21:23Z",
+        "at": "2026-07-16T08:24:24Z"
+      }
+    },
+    {
       "id": "gh-issue-2361",
       "action": "Follow-up: login cache eviction is incomplete vs. logout — prior org&#39;s tenant-scoped data survives into the new session (PR #2352) (Closes #2361)",
       "owner_role": "pm-tech-lead",
@@ -6898,6 +6925,33 @@
         "merged_pr": 2373,
         "merged_at": "2026-07-16T06:17:25Z",
         "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2366",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2366) | gc1-reconcile 2026-07-16T08:24:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-16T08:24:24Z"
       }
     },
     {

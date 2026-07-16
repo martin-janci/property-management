@@ -22,26 +22,6 @@
       }
     },
     {
-      "id": "gh-issue-2359",
-      "action": "Follow-up: /agencies/me resolves left/inactive memberships + no backend test (PR #2355) (Closes #2359)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2359)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2359,
-        "url": "https://github.com/martin-janci/property-management/issues/2359",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2360",
       "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry — increment not gated on dedup (PR #2354) (Closes #2360)",
       "owner_role": "pm-tech-lead",
@@ -115,26 +95,6 @@
       "issue_ref": {
         "number": 2365,
         "url": "https://github.com/martin-janci/property-management/issues/2365",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2366",
-      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2366)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2366,
-        "url": "https://github.com/martin-janci/property-management/issues/2366",
         "labels": [
           "follow-up",
           "from-merged-review"
