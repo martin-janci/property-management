@@ -77,10 +77,15 @@ impl RealityPortalRepository {
 
     /// Get the agency the given portal user belongs to.
     ///
-    /// Resolves the agency via the caller's `reality_agency_members` row,
-    /// picking the earliest-joined membership when a user belongs to more
-    /// than one. Returns `None` when the user is not a member of any agency
-    /// so the caller can answer `404` (used by `GET /api/v1/agencies/me`).
+    /// Resolves the agency via the caller's **active** `reality_agency_members`
+    /// row (`is_active = TRUE`). Membership is soft-deactivated on leave
+    /// (`is_active = false`, `left_at` set) rather than row-deleted, so the
+    /// `is_active` filter is what keeps a departed member from resolving back
+    /// to a former agency's private data. When a user is an active member of
+    /// more than one agency, the earliest-joined active membership wins — the
+    /// same resolution `get_active_agency_for_user` (`imports.rs`) uses.
+    /// Returns `None` when the user has no active membership so the caller can
+    /// answer `404` (used by `GET /api/v1/agencies/me`).
     pub async fn get_agency_for_user(
         &self,
         user_id: Uuid,
@@ -90,7 +95,7 @@ impl RealityPortalRepository {
             SELECT a.*
             FROM reality_agencies a
             JOIN reality_agency_members m ON m.agency_id = a.id
-            WHERE m.user_id = $1
+            WHERE m.user_id = $1 AND m.is_active = TRUE
             ORDER BY m.joined_at ASC
             LIMIT 1
             "#,
