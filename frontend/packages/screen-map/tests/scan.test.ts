@@ -144,6 +144,45 @@ describe('scanCandidates', () => {
     expect(candidates[0].name).toBe('Faults assignment modal');
   });
 
+  it('synthesizes schema-valid ids for non-Latin / symbol-only names (#2367)', async () => {
+    // These names slugify to the empty string under the old boundary-less
+    // logic, yielding a bare `ppt/` that `screens init` writes and then
+    // `screens validate` rejects. The boundary guard must keep every id valid.
+    const names = ['🎉', '物件詳細', '→', '   ', '---'];
+    const candidates = await scanCandidates({
+      product: 'ppt',
+      repoRoot: '/',
+      sources: {
+        sitemap: false,
+        useCases: false,
+        epics: false,
+        designSource: undefined,
+        userAdd: names,
+      },
+    });
+    expect(candidates).toHaveLength(names.length);
+    for (const c of candidates) {
+      // No bare `ppt/` — the slug segment is always non-empty.
+      expect(c.id).not.toBe('ppt/');
+      expect(c.id.split('/')[1]).not.toBe('');
+      // Every synthesized id passes the schema `screens init` will re-check.
+      expect(IdSchema.safeParse(c.id).success).toBe(true);
+    }
+    // Fallback ids are deterministic for a given name.
+    const again = await scanCandidates({
+      product: 'ppt',
+      repoRoot: '/',
+      sources: {
+        sitemap: false,
+        useCases: false,
+        epics: false,
+        designSource: undefined,
+        userAdd: ['🎉'],
+      },
+    });
+    expect(again[0].id).toBe(candidates[0].id);
+  });
+
   it('extracts design frames from a DesignSource adapter', async () => {
     const { ZipAdapter } = await import('../src/design-source/zip-adapter.js');
     const fixturePath = path.join(fixturesDir, 'designs-2026-q2.zip');
