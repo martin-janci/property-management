@@ -8419,6 +8419,24 @@
         "by": "dispatcher-verify-noop",
         "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
       }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 2,
+      "dispatcher_closed": {
+        "at": "2026-07-16T12:13:26Z",
+        "reason": "reconciled-done ghost: RECONCILED-DONE marker + stem terminal in archive; retry row evades gc1/dev-reconcile (stem-only archive match). Closed to avoid no-op implementer spawn."
+      }
     }
   ]
 }

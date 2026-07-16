@@ -116,20 +116,6 @@
       }
     },
     {
-      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
-      "action": "[RECONCILED-DONE: implementer verified #482 deriveActiveRole+ProtectedRoute fix already on dev, 919 ppt-web tests green, zero diff] ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration) [retry 1/2 of failed gap-10a-2-protectedroute-role-fallback-fix-for-multi]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T06:05:04Z (retry_of=gap-10a-2-protectedroute-role-fallback-fix-for-multi reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T08:18:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T06:05:04Z",
-      "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
-      "retry_round": 1
-    },
-    {
       "id": "dx-stalled-review-pr-988-retry2",
       "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 2/2 of failed dx-stalled-review-pr-988]",
       "owner_role": "pm-frontend",
@@ -156,20 +142,6 @@
       "first_open_at": "2026-07-16T08:06:56Z",
       "retry_of": "gap-83-2-rate-availability-push-integration-deferred",
       "retry_round": 1
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T08:06:56Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
-      "retry_round": 2
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry2",

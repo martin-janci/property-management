@@ -5853,6 +5853,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2358",
+      "branch": "auto-impl/gh-issue-2358-364c7648",
+      "status": "merged",
+      "claimed_at": "2026-07-16T04:11:18Z",
+      "last_updated": "2026-07-16T12:20:25Z",
+      "status_changed_at": "2026-07-16T12:20:25Z",
+      "pr_number": 2376,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2376",
+      "merged_at": "2026-07-16T12:19:01Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=7710ecb038ba520b1a51221df934e9ad6ec751c0 note=green-CI-migration-renumbered-00219-unique-vs-dev-flag-2377-merge-order",
+      "last_reviewed_oid": "7710ecb038ba520b1a51221df934e9ad6ec751c0",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 3,
+      "merge_attempted_at": "2026-07-16T12:17:48Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2359",
       "branch": "auto-impl/gh-issue-2359-3b8f6daa",
       "status": "merged",
@@ -6805,5 +6829,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-16T10:25:12Z"
+  "archived_at": "2026-07-16T12:20:40Z"
 }
