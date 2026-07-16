@@ -1012,7 +1012,19 @@
       "created": "Harmonogram został utworzony.",
       "createFailed": "Nie udało się utworzyć harmonogramu.",
       "updated": "Harmonogram został zaktualizowany.",
-      "updateFailed": "Nie udało się zaktualizować harmonogramu."
+      "updateFailed": "Nie udało się zaktualizować harmonogramu.",
+      "createErrors": {
+        "emptyName": "Nazwa harmonogramu nie może być pusta.",
+        "invalidFrequency": "Wybrana częstotliwość nie jest obsługiwana.",
+        "invalidRecipientEmail": "Co najmniej jeden adres e-mail odbiorcy jest nieprawidłowy.",
+        "invalidTimezone": "Wybierz prawidłową strefę czasową."
+      }
+    },
+    "builtin": {
+      "faults": "Statystyka usterek",
+      "voting": "Frekwencja w głosowaniu",
+      "occupancy": "Obłożenie",
+      "consumption": "Zużycie"
     },
     "execution": {
       "downloadFailed": "Nie udało się pobrać raportu.",

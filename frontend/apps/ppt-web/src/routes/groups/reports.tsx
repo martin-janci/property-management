@@ -12,6 +12,7 @@ import type {
   TrendAnalysis,
 } from '@ppt/api-client';
 import {
+  ApiError,
   useCreateSchedule,
   useDownloadReport,
   useReportExecutionHistory,
@@ -25,6 +26,20 @@ import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import { ReportsPage, ScheduleDetailPage } from '../lazyRoutes';
+
+/**
+ * Map a backend `ErrorResponse.code` from the create-schedule endpoint to a
+ * localized message key (issue #2370). Piping the raw `error.message` into the
+ * toast leaked English into the 5 non-English locales, since the backend
+ * messages are English literals. Unknown codes fall back to the generic
+ * `reports.schedule.createFailed` copy.
+ */
+const CREATE_SCHEDULE_ERROR_KEYS: Record<string, string> = {
+  EMPTY_NAME: 'reports.schedule.createErrors.emptyName',
+  INVALID_FREQUENCY: 'reports.schedule.createErrors.invalidFrequency',
+  INVALID_RECIPIENT_EMAIL: 'reports.schedule.createErrors.invalidRecipientEmail',
+  INVALID_TIMEZONE: 'reports.schedule.createErrors.invalidTimezone',
+};
 
 /**
  * Reports page route — wires pause/resume/update schedule hooks (Story 81.1).
@@ -55,13 +70,17 @@ function ReportsPageRoute() {
         message: t('reports.schedule.created', 'Schedule created successfully.'),
       });
     } catch (e) {
-      // Surface the backend's specific error (e.g. INVALID_FREQUENCY) instead of
-      // a fixed string so the user sees why creation failed (issue #2324).
-      const detail = e instanceof Error && e.message ? e.message : undefined;
+      // Surface *why* creation failed (issue #2324) but via a localized message
+      // keyed on the backend error `code`, not the raw English `error.message`
+      // which leaked untranslated copy into non-English locales (issue #2370).
+      const code = e instanceof ApiError ? e.code : undefined;
+      const messageKey = code ? CREATE_SCHEDULE_ERROR_KEYS[code] : undefined;
       showToast({
         type: 'error',
         title: t('common.error'),
-        message: detail ?? t('reports.schedule.createFailed', 'Failed to create schedule.'),
+        message: messageKey
+          ? t(messageKey)
+          : t('reports.schedule.createFailed', 'Failed to create schedule.'),
       });
       throw e;
     }

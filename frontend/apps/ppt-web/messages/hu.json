@@ -1006,7 +1006,19 @@
       "created": "Ütemezés sikeresen létrehozva.",
       "createFailed": "Nem sikerült létrehozni az ütemezést.",
       "updated": "Ütemezés sikeresen frissítve.",
-      "updateFailed": "Nem sikerült frissíteni az ütemezést."
+      "updateFailed": "Nem sikerült frissíteni az ütemezést.",
+      "createErrors": {
+        "emptyName": "Az ütemezés neve nem lehet üres.",
+        "invalidFrequency": "A kiválasztott gyakoriság nem támogatott.",
+        "invalidRecipientEmail": "Egy vagy több címzett e-mail-címe érvénytelen.",
+        "invalidTimezone": "Kérjük, válasszon érvényes időzónát."
+      }
+    },
+    "builtin": {
+      "faults": "Hibastatisztika",
+      "voting": "Szavazási részvétel",
+      "occupancy": "Kihasználtság",
+      "consumption": "Fogyasztás"
     },
     "execution": {
       "downloadFailed": "Nem sikerült letölteni a jelentést.",

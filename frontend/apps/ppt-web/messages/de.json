@@ -1006,7 +1006,19 @@
       "created": "Zeitplan erfolgreich erstellt.",
       "createFailed": "Zeitplan konnte nicht erstellt werden.",
       "updated": "Zeitplan erfolgreich aktualisiert.",
-      "updateFailed": "Zeitplan konnte nicht aktualisiert werden."
+      "updateFailed": "Zeitplan konnte nicht aktualisiert werden.",
+      "createErrors": {
+        "emptyName": "Der Name des Zeitplans darf nicht leer sein.",
+        "invalidFrequency": "Die gewählte Häufigkeit wird nicht unterstützt.",
+        "invalidRecipientEmail": "Eine oder mehrere E-Mail-Adressen der Empfänger sind ungültig.",
+        "invalidTimezone": "Bitte wählen Sie eine gültige Zeitzone."
+      }
+    },
+    "builtin": {
+      "faults": "Störungsstatistik",
+      "voting": "Abstimmungsbeteiligung",
+      "occupancy": "Belegung",
+      "consumption": "Verbrauch"
     },
     "execution": {
       "downloadFailed": "Bericht konnte nicht heruntergeladen werden.",

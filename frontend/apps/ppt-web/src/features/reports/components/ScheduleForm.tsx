@@ -6,6 +6,7 @@
 
 import type { CreateReportSchedule, ReportFormat, ScheduleFrequency } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BUILTIN_REPORTS } from '../builtinReports';
 
 interface ScheduleFormProps {
@@ -79,6 +80,7 @@ interface FormErrors {
 }
 
 export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: ScheduleFormProps) {
+  const { t } = useTranslation();
   const [reportId, setReportId] = useState(initialData?.report_id || '');
   const [name, setName] = useState(initialData?.name || '');
   const [frequency, setFrequency] = useState<ScheduleFrequency>(initialData?.frequency || 'weekly');
@@ -123,7 +125,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -131,20 +133,28 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     const dow = frequency === 'weekly' ? dayOfWeek : undefined;
     const dom = frequency === 'monthly' ? dayOfMonth : undefined;
 
-    onSubmit({
-      report_id: reportId,
-      name,
-      frequency,
-      day_of_week: dow,
-      day_of_month: dom,
-      time,
-      timezone,
-      format,
-      recipients: recipients.split(',').map((e) => e.trim()),
-      // Cron-canonical from birth (issue #2324, finding 3): the backend prefers
-      // this over the legacy frequency/time fields when computing next_run_at.
-      cron_expression: deriveCron(frequency, time, dayOfWeek, dayOfMonth),
-    });
+    // Await + swallow: the parent's onSubmit rejects on a backend error (so it
+    // can keep this form open) and surfaces the reason via a toast. Firing it
+    // fire-and-forget left that rejection unhandled on every failed create
+    // (issue #2370); awaiting and catching here handles it at the form level.
+    try {
+      await onSubmit({
+        report_id: reportId,
+        name,
+        frequency,
+        day_of_week: dow,
+        day_of_month: dom,
+        time,
+        timezone,
+        format,
+        recipients: recipients.split(',').map((e) => e.trim()),
+        // Cron-canonical from birth (issue #2324, finding 3): the backend prefers
+        // this over the legacy frequency/time fields when computing next_run_at.
+        cron_expression: deriveCron(frequency, time, dayOfWeek, dayOfMonth),
+      });
+    } catch {
+      // Intentionally swallowed — the parent already reported the failure.
+    }
   };
 
   return (
@@ -168,7 +178,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           <option value="">Select a report</option>
           {BUILTIN_REPORTS.map((report) => (
             <option key={report.id} value={report.id}>
-              {report.name}
+              {t(report.labelKey, report.name)}
             </option>
           ))}
         </select>
