@@ -37,14 +37,21 @@ const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
 /**
  * Client-side upload guards — kept in sync with the backend's
- * `MAX_FILE_SIZE` / `ALLOWED_MIME_TYPES` on `POST /api/v1/documents/upload`
- * (`backend/crates/db/src/models/document.rs`). Enforcing them here rejects
- * an oversize / disallowed file *before* the multipart body is streamed over
- * cellular data, instead of letting the user find out via the server's 422.
+ * `MAX_FILE_SIZE` (`backend/crates/db/src/models/document.rs`) and
+ * `ALLOWED_UPLOAD_MIME_TYPES` (`backend/crates/common/src/media.rs`, the
+ * single source of truth the handler + storage layers re-export). Enforcing
+ * them here rejects an oversize / disallowed file *before* the multipart body
+ * is streamed over cellular data, instead of letting the user find out via the
+ * server's 422.
+ *
+ * These are a hand-maintained mirror of the Rust constants; the drift guard in
+ * `DocumentUploadScreen.parity.test.tsx` parses those Rust sources and fails CI
+ * if either list diverges (GitHub #2368), so a backend *widening* can't be
+ * silently rejected here.
  */
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MiB
+export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MiB
 
-const ALLOWED_MIME_TYPES: readonly string[] = [
+export const ALLOWED_MIME_TYPES: readonly string[] = [
   // Documents
   'application/pdf',
   'application/msword',
@@ -247,9 +254,20 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
       if (result.canceled) return;
 
       const asset = result.assets[0];
-      const extension = asset.uri.split('.').pop() ?? 'jpg';
-      const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
-      const fileName = `photo_${Date.now()}.${extension}`;
+      // Prefer the MIME the picker actually reports (e.g. `image/heic` for an
+      // iOS capture); only fall back to an extension guess when it's absent.
+      // The extension is lower-cased so a `.PNG`/`.HEIC` capture isn't
+      // mislabelled `image/jpeg`. The resolved `mimeType` then flows through
+      // the same `ALLOWED_MIME_TYPES` guard in `validate()` as the document
+      // picker, so a type the server would reject (e.g. HEIC) is caught here
+      // instead of after a full upload (GitHub #2368).
+      const extension = (
+        asset.fileName?.split('.').pop() ??
+        asset.uri.split('.').pop() ??
+        'jpg'
+      ).toLowerCase();
+      const mimeType = asset.mimeType ?? (extension === 'png' ? 'image/png' : 'image/jpeg');
+      const fileName = asset.fileName ?? `photo_${Date.now()}.${extension}`;
       setPickedFile({
         uri: asset.uri,
         name: fileName,

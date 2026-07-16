@@ -26,6 +26,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
 import {
@@ -54,6 +55,8 @@ jest.mock('expo-image-picker', () => ({
 
 const mockGetItemAsync = SecureStore.getItemAsync as jest.Mock;
 const mockGetDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
+const mockRequestMediaPerms = ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock;
+const mockLaunchImageLibrary = ImagePicker.launchImageLibraryAsync as jest.Mock;
 
 /** Build an unsigned JWT (`header.base64url(payload).sig`) for tenant decoding. */
 function makeJwt(payload: Record<string, unknown>): string {
@@ -354,5 +357,88 @@ describe('DocumentUploadScreen validate()', () => {
     resolveFetch({ ok: true, json: async () => ({ id: 'doc-1', message: 'ok' }) });
     await waitFor(() => expect(screen.queryByText('documents.upload.uploading')).toBeNull());
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── pickPhoto() MIME resolution (GitHub #2368) ───────────────────────────────
+
+describe('DocumentUploadScreen pickPhoto()', () => {
+  let alertSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'doc-1', message: 'ok' }),
+    }) as unknown as typeof fetch;
+    mockGetItemAsync.mockResolvedValue(makeJwt({ tenant_id: 'org-1' }));
+    mockRequestMediaPerms.mockResolvedValue({ status: 'granted' });
+    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    alertSpy.mockRestore();
+  });
+
+  /** Pick a photo through the image picker and wait for its preview card. */
+  async function pickPhoto(
+    asset: { uri: string; mimeType?: string; fileName?: string; fileSize?: number },
+    expectedName: string
+  ) {
+    mockLaunchImageLibrary.mockResolvedValue({ canceled: false, assets: [asset] });
+    fireEvent.press(screen.getByText('documents.upload.pickPhoto'));
+    await waitFor(() => expect(screen.getByText(expectedName)).toBeTruthy());
+  }
+
+  it('routes the picker-reported MIME through the same allow-list guard (HEIC rejected client-side)', async () => {
+    render(<DocumentUploadScreen />);
+
+    // An iOS capture the picker types as image/heic — not in the allow-list.
+    // The old code hard-coded image/jpeg here, so the guard was a no-op and the
+    // wrong type was uploaded; now validate() rejects it before any request.
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_0001.HEIC', mimeType: 'image/heic', fileName: 'IMG_0001.HEIC' },
+      'IMG_0001.HEIC'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('prefers the picker-reported filename + MIME for an allowed photo and uploads it', async () => {
+    render(<DocumentUploadScreen />);
+
+    await pickPhoto(
+      {
+        uri: 'file:///DCIM/vacation.jpg',
+        mimeType: 'image/jpeg',
+        fileName: 'vacation.jpg',
+        fileSize: 4096,
+      },
+      'vacation.jpg'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
+  });
+
+  it('falls back to a lower-cased extension when the picker reports no MIME (.PNG accepted)', async () => {
+    render(<DocumentUploadScreen />);
+
+    // No mimeType and an upper-cased extension: the old `=== 'png'` check
+    // mislabelled this image/jpeg; lower-casing resolves it to image/png, which
+    // is in the allow-list, so the upload proceeds.
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_1234.PNG', fileName: 'IMG_1234.PNG', fileSize: 2048 },
+      'IMG_1234.PNG'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
   });
 });
