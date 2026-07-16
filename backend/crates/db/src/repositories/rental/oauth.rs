@@ -591,4 +591,32 @@ impl RentalRepository {
 
         Ok(())
     }
+
+    /// Record a failed Booking.com rate/availability push (or reservation
+    /// sync) on the connection so operators see it in the platform-status
+    /// dashboard (which reads `sync_error`). This is the push-side counterpart
+    /// of [`Self::update_connection_last_sync`], mirroring
+    /// [`Self::mark_airbnb_token_error`] but scoped to `platform = 'booking'`.
+    /// Unlike `update_connection_last_sync` it leaves `last_sync_at` untouched,
+    /// because a failed push did not successfully sync anything.
+    pub async fn mark_booking_sync_error(
+        &self,
+        connection_id: Uuid,
+        error: &str,
+    ) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE rental_platform_connections SET
+                sync_error = $2,
+                updated_at = NOW()
+            WHERE id = $1 AND platform = 'booking'
+            "#,
+        )
+        .bind(connection_id)
+        .bind(error)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
 }
