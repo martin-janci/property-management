@@ -268,7 +268,81 @@
       "first_open_at": "2026-07-16T02:06:06Z",
       "retry_of": "code-review-mobile-native-kmp-mylistings-analytics-stub",
       "retry_round": 1
+    },
+    {
+      "id": "pm-security-agency-invite-membership-check",
+      "action": "Add check_agency_membership(&mut conn, agency_id, principal.user_id) call to POST /api/v1/agencies/{id}/invitations handler in backend/servers/reality-server/src/routes/agencies.rs:373 (mirroring update_agency@268 / update_branding@322) + deny-path regression test in agencies_authz_tests.rs. Closes the cross-tenant invitation-minting IDOR surfaced by rotating expert review 2026-07-16.",
+      "owner_role": "rust-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:20:00Z"
+    },
+    {
+      "id": "pm-security-agency-invite-role-enum-validation",
+      "action": "Validate CreateAgencyInvitation.role server-side against an allow-list enum before insert in backend/crates/db/src/repositories/reality_portal/agencies.rs:223 (currently COALESCEs to 'realtor' with no bound check — a caller may request 'owner'/'admin' and get privilege escalation on invitation acceptance). Reject unknown/privileged role strings with 400.",
+      "owner_role": "rust-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:20:00Z"
+    },
+    {
+      "id": "pm-security-reality-list-members-authz-audit",
+      "action": "Audit list_members handler at backend/servers/reality-server/src/routes/agencies.rs (~345) — currently has no RequestPrincipal/auth extractor. Confirm whether unauthenticated exposure of agency member list (incl. emails) is intended, or gate with membership check.",
+      "owner_role": "rust-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:20:00Z"
+    },
+    {
+      "id": "pm-security-agency-member-extractor",
+      "action": "Introduce a shared Axum extractor (e.g. AgencyMember) that enforces agency membership at the type level for all agency-scoped mutating routes in reality-server, replacing per-handler manual check_agency_membership calls. Retrofits update_agency, update_branding, create_invitation.",
+      "owner_role": "rust-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "pm-security-agency-invite-membership-check",
+      "depends_on": [
+        "pm-security-agency-invite-membership-check"
+      ],
+      "first_open_at": "2026-07-16T02:20:00Z"
+    },
+    {
+      "id": "pm-scrum-master-portal-webhooks-stabilization",
+      "action": "Stabilize backend/servers/api-server/src/routes/portal_webhooks.rs — top churn hotspot this run (3 edits: PRs #2286 replay-window, #2354 per-portal replay). Bundle open follow-ups #2358 (duplicate-lead retry loop) and #2360 (syndication-stat inflation) into one hardening PR; freeze further webhook feature work until it lands.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:20:00Z"
+    },
+    {
+      "id": "pm-scrum-master-coverage-rescan-epic-84",
+      "action": "Re-run scoped coverage.json scan against dev HEAD to confirm 84-1-s3-presigned-urls and 84-2-esignature-email flip partial→done now that #2345 (ppt-web direct-to-S3 wiring) and #2347 (signer-facing document-sign page) are merged. (This routine run marked them done via upkeep — a deep scan confirms.)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-07-16",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:20:00Z"
     }
   ],
-  "generated": "2026-07-15T01:55:00Z"
+  "generated": "2026-07-16T02:20:00Z"
 }

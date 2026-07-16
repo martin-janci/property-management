@@ -1,0 +1,217 @@
+{
+  "date": "2026-07-16",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-16",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-07-13T02:11:42Z; now=2026-07-16T02:15Z; lag=72h (3d 0h) \u2014 exceeds 36h threshold"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-07-16",
+      "type": "stale_routine_alert",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-07-13T02:11:42Z is 3d old; cloud routine may be paused. Dispatcher itself IS ticking on planning branch (see assignments.json)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-2351-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2351",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2351 (fix reality-web listing detail \u2014 type-guard features/photos + 404 malformed detail) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx and jsonLd.test.ts without updating docs/screens/reality/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2355-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2355",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2355 (agency /me + 404-vs-error distinction) touched frontend/apps/reality-web/src/app/[locale]/agency/error.tsx + AgencyDashboard/AgencyBranding/AgencyListings/RealtorManagement without updating docs/screens/reality/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/portal_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..2026-07-16",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched backend/servers/api-server/src/routes/portal_webhooks.rs in the window (PRs #2286 gap-83-3 replay-protection, #2354 gh-issue-2330 per-portal replay dedup + overflow edge). Still has 2 open follow-ups (#2358 duplicate-lead retry, #2360 syndication-stat inflation)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/main.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-13..2026-07-16",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits touched backend/servers/reality-server/src/main.rs in the window (PRs #2287 price-alert-subscription route mount, #2348 favorites AC-5 toggle, #2355 agency /me route). Router-wiring churn, not logic churn."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-agency-invite-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-16",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373 \u2014 POST /api/v1/agencies/{id}/invitations extracts RequestPrincipal but never calls check_agency_membership before invoking the repo; sister mutating handlers update_agency (line 268) and update_branding (line 322) do call it \u2014 this one is the outlier",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:223 \u2014 repo create_invitation is a bare INSERT into reality_agency_invitations with no auth predicate; nothing checks that invited_by is an active member of agency_id",
+        "backend/servers/reality-server/src/routes/agencies.rs:390 \u2014 the route's fallback error-string match on 'permission'/'unauthorized' is dead code because the DB layer never raises those strings; any authenticated portal user can mint a valid 7-day invitation token for any agency, enabling cross-tenant phishing / membership pollution",
+        "pm-security independently confirmed 2026-07-16 and extended: role field is also unvalidated \u2014 caller can request 'owner'/'admin' via CreateAgencyInvitation.role and gain privilege escalation on acceptance"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate (rotating expert finding is a Rust code change, not on Phase 5 allowlist [screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift, stalled-review])",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-16.md && head -1 briefs/2026-07-16.md | grep -q '^# 2026-07-16$'",
+      "observed": "passed",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ... (cursor advance check)",
+      "observed": "true (last_pr_seen 2271\u21922356, cursor advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-vs-seen-signals cross-check",
+      "observed": "no offenders (all 7 signal ids are new)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "backlog decay check",
+      "observed": "no open items with updated_at older than 14d (all pre-existing open items were terminal)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotation for new plans",
+      "observed": "1 new plan (security-agency-invite-idor); adversarial pass: passed",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan-structure gate",
+      "observed": "1 new plan; 4 metadata + 11 headings + 3 capability ticks + Mode: cloud-ok + all Files paths exist",
+      "expected": "compliant"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "passed",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff",
+      "observed": "passed",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical (regenerated this run)",
+      "expected": "0 diff"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases; cursors match",
+      "observed": "no phase failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plan removed this run; only new plan added",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count HEAD vs staged",
+      "observed": "unchanged",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical (regenerated this run)",
+      "expected": "0 diff"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions | length \u2264 3",
+      "observed": "0 (no candidate matched allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "action-list.json/risks.json parse; project-state.md non-empty; pm_cursor idx=6 in [0,7]; coverage_cursor idx=0 in [0,13); pm_cursor advanced 5\u21926 AND coverage_cursor advanced 12\u21920",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal grep on staged diff",
+      "observed": "passed",
+      "expected": "0"
+    }
+  ]
+}

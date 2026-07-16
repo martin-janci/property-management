@@ -1,23 +1,29 @@
-# PPT Roadmap — deep scan 2026-07-15
+# PPT Delivery Roadmap
+
+_Generated: 2026-07-16T02:20:00Z · scan_kind: upkeep · 49 stories · 13 epics_
 
 ## State of the project
 
-- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics)
-- Delta vs 2026-07-13 scan (40/9/0): +7 done — 80-2 (07-13 gap was a false positive), 81-1 (#2292/#2295/#2313), 83-2 (#2315/#2194), 83-3 (#2286/#2294), 84-3 (#2285/#2287/#2288), 84-4 (#2290/#2293/#2310), 84-5 (#2291/#2312).
-- Remaining gaps (the last 2 partial stories, both frontend slices on shipped APIs):
-  1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint (#2309) has no frontend consumer.
-  2. **84-2** — signer-facing document-sign page not built (screen-map planned, API complete); prior implementer attempt failed.
-- Screen coverage: 0 orphan screens · 0 validation errors (post-#2297) · 3 missing UC links (UC-33.x dispute sub-UCs).
-- Batch-verifier note: its 12 claimed regressions were disproved against sprint-status ground truth (#2298/#2307 reconciliation is in effect) — no downgrades applied.
+- Stories: done=49, partial=0, not-started=0
+- Epics fully done: 13/13
+- Per-platform status:
+  - **backend**: done=34, partial=0, not-started=0
+  - **frontend**: done=39, partial=0, not-started=0
+  - **mobile**: done=10, partial=0, not-started=0
+- Screen coverage: 25 stories without screen-map · 0 orphan epics · 0 orphan screens · 3 missing UC links
 
 ## Ranked plan
 
-### mvp
-- [medium] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (backend endpoint landed in #2309) (84-1 S3 Presigned URL Implementation) — owner: pm-frontend — why: mvp partial; finish-what's-started; backend ready
-- [medium] Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR — fresh scoped attempt (84-2 E-Signature Email Integration) — owner: pm-frontend — why: mvp partial; finish-what's-started; API complete, UI planned
-- [medium] Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter — owner: pm-frontend — why: screen-map UC coverage; small
-- [medium] Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus partial->complete (#2292/#2295/#2313 filled the last gaps) — owner: pm-backend — why: tracking accuracy; cheap
+_Backlog is fully drained (49/49 stories done in coverage.json). Active planning surface has moved to `.research/management/action-list.json` (20 open items) — this roadmap now tracks structural / cross-cutting work only._
 
-> Epic 86 gap-analysis doc remains superseded by this map.
+### Security hardening (rotating expert review + pm-security 2026-07-16)
+- [high] Fix POST /api/v1/agencies/{id}/invitations cross-tenant IDOR (missing check_agency_membership) — owner: rust-backend — why: any authenticated portal user can mint 7-day invitation tokens for any agency; live cross-tenant vuln
+- [high] Validate invitation.role against allow-list — owner: rust-backend — why: DB currently COALESCEs to 'realtor' but caller can request privileged roles; escalation path
+- [medium] Introduce shared AgencyMember Axum extractor — owner: rust-backend — why: 4 IDOR fixes in 72h indicate structural gap; type-level guard beats per-handler discipline
+- [medium] Audit list_members handler for auth — owner: rust-backend — why: no extractor at all; confirm intent
 
-Buffer: 4/36 open · project at 47/49 — backlog genuinely converging; treat underflow as success, not starvation
+### Delivery discipline (pm-scrum-master 2026-07-16)
+- [high] Stabilize portal_webhooks.rs — owner: pm-tech-lead — why: 3 edits in one run + 2 open follow-ups (#2358/#2360); freeze until hardened
+- [medium] Re-scan coverage for epic-84 confirmation — owner: pm-scrum-master — why: upkeep just marked 84-1/84-2 done from PR evidence; deep scan verifies
+
+Buffer: 20/36 open · candidates_remaining: 0 (backlog empty — refill from post-merge review issues #2318, #2320, #2369, #2370 next dispatcher tick)
