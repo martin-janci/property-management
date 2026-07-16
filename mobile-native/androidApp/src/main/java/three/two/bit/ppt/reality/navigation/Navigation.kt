@@ -38,6 +38,8 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.listing.ListingType
 import three.two.bit.ppt.reality.listing.PropertyCategory
+import three.two.bit.ppt.reality.realtor.PortalListing
+import three.two.bit.ppt.reality.realtor.PortalListingsRepository
 import three.two.bit.ppt.reality.ui.account.AccountScreen
 import three.two.bit.ppt.reality.ui.agency.AgencyHubScreen
 import three.two.bit.ppt.reality.ui.agency.AgencyInquiriesScreen
@@ -51,11 +53,14 @@ import three.two.bit.ppt.reality.ui.home.HomeScreen
 import three.two.bit.ppt.reality.ui.inquiries.InquiriesScreen
 import three.two.bit.ppt.reality.ui.listing.ListingDetailScreen
 import three.two.bit.ppt.reality.ui.profile.ProfileEditScreen
+import three.two.bit.ppt.reality.ui.realtor.AnalyticsMetric
 import three.two.bit.ppt.reality.ui.realtor.CreateListingScreen
 import three.two.bit.ppt.reality.ui.realtor.ListingAnalyticsScreen
 import three.two.bit.ppt.reality.ui.realtor.MyListingsScreen
+import three.two.bit.ppt.reality.ui.realtor.RealtorListing
 import three.two.bit.ppt.reality.ui.savedsearches.SavedSearchesScreen
 import three.two.bit.ppt.reality.ui.search.SearchScreen
+import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
  * Navigation routes for Reality Portal.
@@ -126,6 +131,7 @@ fun RealityNavHost(
     listingRepository: ListingRepository,
     favoritesRepository: FavoritesRepository,
     inquiryRepository: InquiryRepository,
+    portalListingsRepository: PortalListingsRepository,
     startDestination: String = Screen.Home.route,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -436,9 +442,27 @@ fun RealityNavHost(
                 )
             }
             composable(Screen.MyListings.route) {
+                // Load the caller's own listings via GET /api/v1/my/listings. The screen owns the
+                // client-side status-chip filter, so we fetch the full page (limit 100) unfiltered
+                // and let it slice locally. On failure (incl. 401 when signed out) we fall back to
+                // the empty state the screen already renders.
+                var listings by remember { mutableStateOf<List<RealtorListing>>(emptyList()) }
+                var isLoading by remember { mutableStateOf(true) }
+
+                LaunchedEffect(Unit) {
+                    isLoading = true
+                    portalListingsRepository
+                        .listMyListings(limit = 100)
+                        .onSuccess { resp ->
+                            listings = resp.listings.map { it.toRealtorListing() }
+                        }
+                        .onFailure { listings = emptyList() }
+                    isLoading = false
+                }
+
                 MyListingsScreen(
-                    listings = emptyList(),
-                    isLoading = false,
+                    listings = listings,
+                    isLoading = isLoading,
                     onBackClick = { navController.popBackStack() },
                     onCreateClick = { navController.navigate(Screen.CreateListing.route) },
                     onListingClick = { id ->
@@ -454,15 +478,89 @@ fun RealityNavHost(
                 )
             }
             composable(Screen.ListingAnalytics.route) {
+                // Realtor-wide analytics: the backend exposes analytics per listing, so the
+                // repository fans out one call per listing and folds them into portfolio totals +
+                // trends (see PortalListingsRepository.getPortfolioAnalytics).
+                val viewsLabel = stringResource(R.string.realtor_analytics_metric_views)
+                val inquiriesLabel = stringResource(R.string.realtor_analytics_metric_inquiries)
+                val favoritesLabel = stringResource(R.string.realtor_analytics_metric_favorites)
+                val listingsLabel = stringResource(R.string.realtor_analytics_metric_listings)
+                val activeLabel = stringResource(R.string.realtor_analytics_metric_active)
+
+                var metrics by remember { mutableStateOf<List<AnalyticsMetric>>(emptyList()) }
+                var isLoading by remember { mutableStateOf(true) }
+
+                LaunchedEffect(Unit) {
+                    isLoading = true
+                    portalListingsRepository
+                        .getPortfolioAnalytics()
+                        .onSuccess { p ->
+                            metrics =
+                                listOf(
+                                    AnalyticsMetric(
+                                        label = viewsLabel,
+                                        value = p.totalViews.toString(),
+                                        trend = p.viewsTrend,
+                                    ),
+                                    AnalyticsMetric(
+                                        label = inquiriesLabel,
+                                        value = p.totalInquiries.toString(),
+                                        trend = p.inquiriesTrend,
+                                    ),
+                                    AnalyticsMetric(
+                                        label = favoritesLabel,
+                                        value = p.totalFavorites.toString(),
+                                    ),
+                                    AnalyticsMetric(
+                                        label = listingsLabel,
+                                        value = p.totalListings.toString(),
+                                    ),
+                                    AnalyticsMetric(
+                                        label = activeLabel,
+                                        value = p.activeListings.toString(),
+                                    ),
+                                )
+                        }
+                        .onFailure { metrics = emptyList() }
+                    isLoading = false
+                }
+
                 ListingAnalyticsScreen(
-                    metrics = emptyList(),
-                    isLoading = false,
+                    metrics = metrics,
+                    isLoading = isLoading,
                     onBackClick = { navController.popBackStack() },
                 )
             }
         }
     }
 }
+
+/**
+ * Map a wire [PortalListing] into the [RealtorListing] the MyListings screen renders.
+ *
+ * The list endpoint (`GET /api/v1/my/listings`) is deliberately lightweight — it carries no per-row
+ * view/inquiry counters (those live behind the per-listing analytics endpoint) and no media, so
+ * [RealtorListing.views]/[RealtorListing.inquiries] stay 0 and [RealtorListing.imageUrl] stays null
+ * here rather than triggering an N+1 analytics fan-out just to fill two badges.
+ */
+private fun PortalListing.toRealtorListing(): RealtorListing =
+    RealtorListing(
+        id = id,
+        title = title,
+        formattedPrice = FormatUtils.formatPrice(price, currency),
+        transactionType = transactionType,
+        views = 0,
+        inquiries = 0,
+        status = status.replaceFirstChar { it.uppercase() },
+        meta =
+            listOfNotNull(
+                    city.takeIf { it.isNotBlank() },
+                    propertyType.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() },
+                    rooms?.let { "$it rooms" },
+                )
+                .joinToString(" · "),
+        imageUrl = null,
+    )
 
 /**
  * The five tab destinations that show the persistent bottom navigation bar. Any route outside this
