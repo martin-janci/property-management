@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-13T02:11:42Z",
+  "last_run_iso": "2026-07-16T03:04:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2271,
-  "last_issue_seen": 2272,
-  "last_commit_sha": "1691c9d",
+  "last_pr_seen": 2356,
+  "last_issue_seen": 2370,
+  "last_commit_sha": "1006a4c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -143,9 +143,9 @@
       "recent_churn": 75
     },
     "backend/servers/api-server/src/routes/reports.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 134
+      "runs_seen": 2,
+      "last_seen": "2026-07-16",
+      "recent_churn": 3333
     },
     "backend/servers/api-server/src/routes/auth.rs": {
       "runs_seen": 3,
@@ -346,6 +346,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-12",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/messages/en.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-16",
+      "recent_churn": 3926
+    },
+    "frontend/packages/sitemap/src/json/sitemap.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-16",
+      "recent_churn": 3727
     }
   },
   "seen_signals": [
@@ -592,7 +602,11 @@
     "lag-warning-2026-07-12",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs"
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "lag-warning-2026-07-16",
+    "stale-routine-alert-2026-07-16",
+    "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+    "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -606,8 +620,8 @@
     "mobile-native-kmp": "2026-07-12"
   },
   "stats": {
-    "runs": 44,
-    "vectors_created": 183,
+    "runs": 45,
+    "vectors_created": 185,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0
