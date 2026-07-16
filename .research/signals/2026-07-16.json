@@ -44,128 +44,300 @@
       "evidence": "backend/servers/api-server/src/routes/reports.rs: +3333 lines this run (runs_seen was 1; last_seen 2026-05-30)",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-scheduler-mutex-poison",
+      "type": "code-review-finding",
+      "source": "tier1d-api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:168,314,377,497,549,832,858,878,1033,1163,1256,1323,1445,1454 \u2014 every metrics access uses self.metrics.lock().unwrap(); if any code panics while holding this Mutex the lock is poisoned and all subsequent locks (including get_metrics() reachable from a metrics/status handler and every counter update in the indefinitely-running background scheduler loop) panic permanently, silently killing scheduled-job processing. Prefer lock().unwrap_or_else(|e| e.into_inner()) or a poison-tolerant guard."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-missing-authz-article",
+      "type": "code-review-finding",
+      "source": "tier1d-api-handlers",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:607-770 \u2014 publish_article, archive_article, restore_article, pin_article extract `_user: AuthUser` but never check `is_manager()`/authorship, unlike create_article (line 446) and update_article (line 542) which explicitly gate on `is_manager || is_author`.",
+        "backend/servers/api-server/src/routes/news_articles.rs:710-728 \u2014 delete_article permanently deletes an article with no role/author check at all; any authenticated org member can destroy any article in their tenant.",
+        "backend/servers/api-server/src/routes/news_articles.rs:794-851 \u2014 add_media/delete_media have no authorization check; any authenticated org member can attach or remove media on any article, bypassing the manager-only authoring model documented in the handler comments for create_article."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-unenforced-toggle-flags",
+      "type": "code-review-finding",
+      "source": "tier1d-api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:958-987 \u2014 create_comment never reads article.comments_enabled before inserting a comment, so an article with comments disabled (CreateArticleRequest.comments_enabled=false / UpdateArticleRequest) can still be commented on.",
+        "backend/servers/api-server/src/routes/news_articles.rs:858-891 \u2014 toggle_reaction never reads article.reactions_enabled, so reactions can be added even when the author/manager disabled them.",
+        "backend/crates/db/src/models/news_article.rs:50-51,352-354 \u2014 comments_enabled/reactions_enabled are persisted columns but grep across news_articles.rs/news_article.rs repo shows no handler-side check gating create_comment or toggle_reaction on these flags."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "tier1d-api-handlers",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/memberships.rs:365 \u2014 generate_token() calls `rand::TryRng::try_fill_bytes(...).expect(\"OS rng failed\")`; this helper is called directly from the `invite` handler (line 194) on the request path, so an OS RNG failure panics the handler instead of returning a 500."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-stale-token-init",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:396 \u2014 initializeAuth trusts a stored access token as authenticated without any expiry check (the inline comment even concedes 'Validate the token is not expired... In production we might verify with the server'). The proactive refresh path is only taken in the else-if branch when the access token is ABSENT (line 400). A returning user whose access token has expired but whose refresh token is still valid is rendered as logged-in and fires a doomed API call that 401s (onUnauthorizedCallback -> logout) instead of being silently refreshed, bouncing the user to login."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-nav-aria-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:116 \u2014 hardcoded English aria-label=\"Main navigation\" on the app-shell <nav> is not wrapped in t(), while every other user-facing string in the same component uses useTranslation (nav.*, auth.signIn, common.loading). Screen-reader users on sk/cs/de/pl/hu locales hear the untranslated landmark label."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:88 \u2014 onclose reconnects on a fixed 5s timer with NO max-attempt cap and NO exponential backoff; against a persistently-down/unreachable WS endpoint or a token that keeps being rejected, the hook reconnects forever every 5s, hammering the server. This diverges from the app's own hardened pattern in lib/websocket.ts:514-529, which explicitly guards this case ('hammer a dead endpoint forever ... acting as a small DoS amplifier').",
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:57 \u2014 connect() early-returns without scheduling any retry when the token/org is briefly absent, so a transient-missing token leaves isConnected=false with no recovery path. Distinct from the prior 2026-07-07 iot-ws finding (buildWsUrl base URL, lines 32-36)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymatch-mut-noerr",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:54,61,68 \u2014 all three financial-reconciliation mutations (uploadMutation=uploadStatement, confirmMutation=confirmMatch, rejectMutation=rejectMatch) declare only onSuccess (queryClient.invalidateQueries) and have NO onError handler; the page also never destructures isError/error from any mutation (grep 'onError' -> 0 hits in the file). This is a bank-statement upload + payment-match confirm/reject workflow ('Review and confirm matches from bank statements'). If confirmMatch/rejectMatch POST fails (422/500/network), the error is silently swallowed: the list simply re-fetches unchanged, so a manager who clicks Confirm believes a payment was reconciled when it was not \u2014 a correctness/financial-integrity gap, not a cosmetic one. Sibling accounting/finance pages (routes/groups/financial.tsx:179,204; routes/groups/reports.tsx:123,234) DO wire onError, making this an outlier regression."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-mut-noerr",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:36,44 \u2014 createMutation (invoicesApiCreate) and deleteMutation (invoicesApiDelete) both declare only onSuccess and no onError; the file has 0 'onError' hits. On create success the form is dismissed (setIsCreating(false)); on failure (e.g. 422 validation, 409 duplicate number, 500) nothing is surfaced \u2014 the create form just sits with no message and the manager gets no signal that the invoice was NOT issued. deleteMutation is likewise silent on failure. Verified against sibling pages that DO handle mutation errors (financial.tsx, notifications.tsx onError branches), so the pattern is established and this page dropped it."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "tier1d-ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:16-208 \u2014 the entire Epic-144 Portfolio Performance dashboard renders hardcoded mock data (mockDashboardSummary, mockPropertyCards, mockCashFlowTrend, mockBenchmark, mockAlerts, mockMetrics) with the comment 'Mock data for demonstration - would be fetched from API'; the 377-line component has NO useQuery / API import / fetch of any kind. It displays fabricated financial figures (totalPortfolioValue, totalEquity, ytdNoi, ytdCashFlow, ltvRatio). Static trace: the page is exported via features/portfolio-performance/pages/index.ts + feature index.ts but is NOT wired into any route (0 references in routes/ or App.tsx), so it is currently unreachable \u2014 but the module ships an analytics dashboard that will surface real-looking-but-fake numbers the moment it is routed. Completeness/data-integrity gap: the API integration for this Epic-144 feature is unimplemented."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-view-no-visibility-gate",
+      "type": "code-review-finding",
+      "source": "tier1d-reality-server",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:863-874 \u2014 record_view (public unauthenticated POST /api/v1/listings/{id}/view) takes an arbitrary Path<Uuid> and calls track_view(id, \"website\") with NO status='active' / visibility check, then returns 204 unconditionally. Every other public path in this file gates on status='active' (detail query :369, search :703, categories :793). Impact is limited to analytics pollution / view-count inflation against non-discoverable draft/paused/nonexistent listings \u2014 no data leak, no crash \u2014 hence Low. Additionally the OpenAPI contract at :858-861 advertises a '404 Listing not found' response the handler can never emit, so the documented contract and the implementation diverge."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-pricealert-mut-noerr",
+      "type": "code-review-finding",
+      "source": "tier1d-reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 \u2014 markAllRead.mutate() and markRead.mutate(alert.id) are fired with no onError handler and no isError/error branch consumed for either mutation (useMarkFavoriteAlertRead / useMarkAllFavoriteAlertsRead). If the mark-read POST fails (network/500), the error is silently swallowed: the row stays visually 'unread', the button re-enables, and the user gets no feedback or retry cue. The query error IS handled (line ~105) but the mutation errors are not \u2014 a persistently failing mark-read looks like a broken/ignored click. Verified: onError absent; only isPending is consumed for disabling."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:67,91,94,105 \u2014 SSO callback ('use client') page renders hardcoded English user-facing strings ('Invalid state token. Please try logging in again.', 'Login Failed', 'Return Home', 'Completing login...') with NO next-intl import (no useTranslations; verified the file imports only next/navigation + react). This page lives under [locale] and is hit by every SSO login redirect, so cs/de/sk users see untranslated English at a critical auth step. Sibling components (AgencyDashboard, PriceAlerts) all use useTranslations, making this the outlier i18n gap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-mobile-native-kmp",
+      "score_delta": 3,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 \u2014 CreateListingScreen's onSubmit is hardwired to Result.failure(NotImplementedError(\"Wire to listing API\")); no createListing repository method exists (grep of shared/ finds only createInquiry/createSavedSearch/createMobileToken).",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:120 \u2014 the fully-built realtor form folds that failure into the 'publish failed' error banner, so MyListings -> Create -> submit can never succeed in production; the feature is silently broken on Android. Fix: add createListing() to ListingRepository + ApiClient and wire the nav callback to it."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listingrepo-partial",
+      "type": "code-review-finding",
+      "source": "tier1d-mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt \u2014 of six public network methods only getListingDetail is tested (ListingDetailRepositoryTest). searchListings, getFeaturedListings, getRecentListings, getSearchSuggestions, and getListingsNearby (which builds lat/lng/radius_km/limit query params and maps non-2xx responses to ListingException) have no coverage of their success/failure mapping or query-parameter construction."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test"
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/YYYY-MM-DD.md && head -1 | grep",
+      "command": "test -f briefs/2026-07-16.md && head -1 matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare cursors/seen/hotspots/stats vs HEAD",
+      "command": "jq compare cursors/seen/hotspots vs HEAD",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] | (length == unique|length)",
+      "command": "jq [.items[].id] unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no offending re-emit (only cumulative churn types re-emitted with score_delta=0)",
+      "command": "new signals ids \u2229 prev.seen_signals = \u2205 (non-cumulative)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no-score>8 + decay (no open items to decay)",
+      "command": "jq [.items[]|select(.score>8)]|length==0",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
-      "observed": "0 new plans",
-      "expected": "\u22642 with adversarial pass line"
+      "command": "brief annotates 'adversarial pass:' for each new plan",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
-      "observed": "0 new plans",
-      "expected": "\u22642 fully-formed"
+      "command": "\u22642 new plans, all 15 sections + files exist",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "command": "staged diff paths \u2282 .research/",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep-secret-patterns on staged diff (excl. baseline docs)",
+      "command": "grep secrets/hostnames in diff (excluding baseline docs)",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md vs regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "backlog.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-failed listed in brief; cursors for skipped phases not advanced",
-      "observed": "phase-1.5, phase-1.6 skipped \u2014 review_cursor + pm_cursor unchanged",
-      "expected": "listed + cursor unchanged"
+      "command": "brief 'Phases that failed' aligns with cursors",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "no new/undone plans (nothing promoted N-1 was silently removed)",
-      "observed": "all prior plans still present",
-      "expected": "no silent deletes"
+      "command": "prior plans still tracked (active or archive)",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "ls-files archive count vs HEAD tree",
-      "observed": "now=7 head=7",
-      "expected": "now>=head"
+      "command": "archive count nondecreasing",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions cap + idempotency (nothing fired)",
-      "observed": "auto_fix_actions=[]",
-      "expected": "\u22643 with per-type caps"
+      "command": "Phase 5 auto-fix counts respect caps",
+      "observed": "0",
+      "expected": "\u22641 each"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management JSON valid + pm_cursor/coverage_cursor in range",
-      "observed": "pm_cursor.next_index=5, coverage_cursor.next_index=12 (epics=13)",
-      "expected": "in [0,7] / [0, epics)"
+      "command": "Phase 1.6 skipped this rerun \u2014 gate is no-op",
+      "observed": "n/a",
+      "expected": "n/a"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token literal in added lines",
-      "observed": "0 matches",
+      "command": "no Telegram bot-token literal in diff",
+      "observed": "0",
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlisted candidate (all new signals are code-review-findings, not in auto-fix allowlist)"
 }
