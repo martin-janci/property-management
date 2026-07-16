@@ -77,6 +77,8 @@ done
 #   roles                    : global role catalog
 #   email_verification_tokens, refresh_tokens, password_reset_tokens,
 #   login_attempts           : pre-authentication, no org context exists yet
+#   portal_webhook_events    : pre-auth portal webhook ingest log; unauthenticated path,
+#                              no org GUC; FK-scoped, RLS intentionally omitted — see migration
 # Keep this list in sync with validate_rls_coverage() in 00006.
 # -----------------------------------------------------------------------------
 EXEMPT_TABLES=(
@@ -88,6 +90,7 @@ EXEMPT_TABLES=(
     refresh_tokens
     password_reset_tokens
     login_attempts
+    portal_webhook_events
 )
 
 echo "🔍 RLS policy-coverage gate (tenant-data manifest)"
