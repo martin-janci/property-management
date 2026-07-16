@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-16T08:24:25Z",
+  "archived_at": "2026-07-16T10:25:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6928,6 +6928,33 @@
       }
     },
     {
+      "id": "gh-issue-2365",
+      "action": "Follow-up: AC-5 price-alert toggle shipped with no executing test + non-persisting OFF state (PR #2348) (Closes #2365)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2365) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2365,
+        "url": "https://github.com/martin-janci/property-management/issues/2365",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2382,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
       "id": "gh-issue-2366",
       "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366)",
       "owner_role": "pm-tech-lead",
@@ -6952,6 +6979,114 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-16T08:24:24Z"
+      }
+    },
+    {
+      "id": "gh-issue-2367",
+      "action": "Follow-up: validate every synthesized candidate id against IdSchema in scanCandidates (PR #2344) (Closes #2367)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2367) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2367,
+        "url": "https://github.com/martin-janci/property-management/issues/2367",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2380,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2368",
+      "action": "Follow-up: mobile upload allow-list duplicates backend constants with no drift guard; photo picker bypasses the MIME guard (PR #2346) (Closes #2368)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2368) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2368,
+        "url": "https://github.com/martin-janci/property-management/issues/2368",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2383,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2369",
+      "action": "Follow-up: optimistic trigger toggle desyncs the category &#34;X of Y enabled&#34; badge (PR #2337) (Closes #2369)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T04:03:56Z (#2369) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:03:56Z",
+      "issue_ref": {
+        "number": 2369,
+        "url": "https://github.com/martin-janci/property-management/issues/2369",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2381,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2370",
+      "action": "Follow-up: create-schedule UI leaks untranslated English into 5 non-English locales (report selector labels + backend error toast) (PR #2338) (Closes #2370)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T04:03:56Z (#2370) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:03:56Z",
+      "issue_ref": {
+        "number": 2370,
+        "url": "https://github.com/martin-janci/property-management/issues/2370",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2384,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
       }
     },
     {
