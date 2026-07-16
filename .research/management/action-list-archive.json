@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-16T10:25:34Z",
+  "archived_at": "2026-07-16T14:13:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3164,6 +3164,24 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-09T08:04:26Z"
+      }
+    },
+    {
+      "id": "gap-83-2-rate-availability-push-integration-deferred-retry1",
+      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync) [retry 1/2 of failed gap-83-2-rate-availability-push-integration-deferred]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=gap-83-2-rate-availability-push-integration-deferred reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "gap-83-2-rate-availability-push-integration-deferred",
+      "retry_round": 1,
+      "reconciled": {
+        "at": "2026-07-16T14:10:18Z",
+        "reason": "ghost-retry: coverage story 83-2-booking-integration=done; rate/availability push already shipped under PRs #607/#1421 (no code change); retry-remint coverage-join gap missed it"
       }
     },
     {
@@ -6847,6 +6865,33 @@
       }
     },
     {
+      "id": "gh-issue-2358",
+      "action": "Follow-up: inquiry retry-on-unmatched shipped ahead of its dedup net — retries insert duplicate leads + unbounded 5xx loop (PR #2353) (Closes #2358)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2358) | gc1-reconcile 2026-07-16T14:02:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2358,
+        "url": "https://github.com/martin-janci/property-management/issues/2358",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2376,
+        "merged_at": "2026-07-16T12:19:01Z",
+        "at": "2026-07-16T14:02:45Z"
+      }
+    },
+    {
       "id": "gh-issue-2359",
       "action": "Follow-up: /agencies/me resolves left/inactive memberships + no backend test (PR #2355) (Closes #2359)",
       "owner_role": "pm-tech-lead",
@@ -8175,6 +8220,24 @@
       "ghost_closed": "dispatcher 2026-07-08: ghost retry of already-shipped work — exact task_id already merged in assignments-archive (issue #1151 stale-buffer); closed to stop finish-first no-op loop (issue #2153 ghost-retry blind spot)"
     },
     {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 2,
+      "dispatcher_closed": {
+        "at": "2026-07-16T12:13:26Z",
+        "reason": "reconciled-done ghost: RECONCILED-DONE marker + stem terminal in archive; retry row evades gc1/dev-reconcile (stem-only archive match). Closed to avoid no-op implementer spawn."
+      }
+    },
+    {
       "id": "test-gap-screen-map-drift-pr-839-ppt",
       "action": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
       "owner_role": "pm-frontend",
@@ -8418,24 +8481,6 @@
         "at": "2026-06-18T00:28:55Z",
         "by": "dispatcher-verify-noop",
         "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
-      }
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T08:06:56Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
-      "retry_round": 2,
-      "dispatcher_closed": {
-        "at": "2026-07-16T12:13:26Z",
-        "reason": "reconciled-done ghost: RECONCILED-DONE marker + stem terminal in archive; retry row evades gc1/dev-reconcile (stem-only archive match). Closed to avoid no-op implementer spawn."
       }
     }
   ]
