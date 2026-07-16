@@ -10,12 +10,49 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEventTriggers, resetEventTriggers, updateEventTrigger } from './api';
-import type { EventTriggersResponse, UpdateTriggerRequest } from './types';
+import type { EventTriggerPreference, EventTriggersResponse, UpdateTriggerRequest } from './types';
 
 export const notificationTriggerKeys = {
   all: ['notification-triggers'] as const,
   events: () => [...notificationTriggerKeys.all, 'events'] as const,
 };
+
+/**
+ * A trigger counts as "enabled" when at least one channel is on — mirroring the
+ * backend rollup (`push_enabled || email_enabled || in_app_enabled`, see
+ * `api-server/src/routes/granular_notifications.rs::list_event_preferences`).
+ */
+function isTriggerEnabled(pref: EventTriggerPreference): boolean {
+  return pref.pushEnabled || pref.emailEnabled || pref.inAppEnabled;
+}
+
+/**
+ * Apply a single-trigger channel patch to a cached response, keeping the
+ * per-category `enabledEvents` rollups in sync with the patched preferences.
+ *
+ * Without recomputing `categories[].enabledEvents`, an optimistic patch that
+ * flips a trigger's *last channel off* (or its *first channel on*) leaves the
+ * "X of Y enabled" badge stale until the settle-invalidate refetch resolves —
+ * a visible flicker on slow networks (#2369). The predicate matches the backend
+ * exactly, so this stays consistent with the server rollup that replaces it on
+ * settle.
+ */
+export function applyTriggerOptimisticPatch(
+  previous: EventTriggersResponse,
+  eventType: string,
+  patch: UpdateTriggerRequest
+): EventTriggersResponse {
+  const preferences = previous.preferences.map((pref) =>
+    pref.eventType === eventType ? { ...pref, ...patch } : pref
+  );
+  const categories = previous.categories.map((category) => ({
+    ...category,
+    enabledEvents: preferences.filter(
+      (pref) => pref.category === category.category && isTriggerEnabled(pref)
+    ).length,
+  }));
+  return { ...previous, preferences, categories };
+}
 
 /** Fetch the full set of notification triggers (event types) and category rollups. */
 export function useNotificationTriggers() {
@@ -29,8 +66,9 @@ export function useNotificationTriggers() {
 /**
  * Toggle a single channel on one trigger, with an optimistic cache patch so the
  * checkbox flips immediately and rolls back on error (the `advanced-notifications`
- * pattern). The settle-invalidate keeps the category `enabledEvents` rollups in
- * sync with the server.
+ * pattern). The patch also recomputes the category `enabledEvents` rollups so the
+ * "X of Y enabled" badge tracks the toggle instantly (#2369); the settle-invalidate
+ * then reconciles both against the server.
  */
 export function useUpdateNotificationTrigger() {
   const queryClient = useQueryClient();
@@ -46,12 +84,10 @@ export function useUpdateNotificationTrigger() {
       );
 
       if (previous) {
-        queryClient.setQueryData<EventTriggersResponse>(notificationTriggerKeys.events(), {
-          ...previous,
-          preferences: previous.preferences.map((pref) =>
-            pref.eventType === eventType ? { ...pref, ...patch } : pref
-          ),
-        });
+        queryClient.setQueryData<EventTriggersResponse>(
+          notificationTriggerKeys.events(),
+          applyTriggerOptimisticPatch(previous, eventType, patch)
+        );
       }
 
       return { previous };
