@@ -6765,6 +6765,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
+      "branch": "auto-impl/test-gap-screen-map-drift-pr-1100-ppt-re-53f2bf61",
+      "status": "failed",
+      "claimed_at": "2026-07-16T18:07:10Z",
+      "last_updated": "2026-07-16T18:14:52Z",
+      "status_changed_at": "2026-07-16T18:14:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-reconciled-on-dev [ghost: drift already reconciled on dev; final retry round]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "test-gap-screen-map-drift-pr-922-ppt",
       "branch": "auto-impl/test-gap-screen-map-drift-pr-922-ppt-8b56e416",
       "status": "merged",
@@ -6853,5 +6875,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-16T16:15:58Z"
+  "archived_at": "2026-07-16T18:14:52Z"
 }
