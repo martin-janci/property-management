@@ -730,8 +730,18 @@ async fn process_view_webhook(
         }
     };
 
-    // Record the view event
-    let _ = state
+    // Record the view event, then gate the counter on a *fresh* insert.
+    //
+    // #2360: the counter increment must be idempotent under replay/retry. A
+    // captured valid delivery replayed inside the freshness window, or an
+    // honest portal's at-least-once retry, arrives with the same
+    // `(external_id, timestamp)` and hits the unique constraint on
+    // `portal_webhook_events`. Previously both calls were fire-and-forget
+    // (`let _ = ...`), so `increment_syndication_stats` ran unconditionally and
+    // every duplicate delivery re-added `views_count` — the exact view-count
+    // inflation PR #2354 set out to prevent. We now mirror the inquiry path's
+    // dedup: advance the counter only when the event was newly recorded.
+    let record_result = state
         .listing_repo
         .record_webhook_event(
             syndication.listing_id,
@@ -744,29 +754,48 @@ async fn process_view_webhook(
                 "timestamp": webhook.timestamp,
             }),
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    match classify_webhook_persist(record_result.as_ref().map(|_| ())) {
+        WebhookPersistOutcome::Recorded => {
+            // Fresh delivery — advance the syndication view counter exactly once.
+            let _ = state
+                .listing_repo
+                .increment_syndication_stats(syndication.id, webhook.views_count, 0)
+                .await;
+            tracing::info!(
+                portal = %portal,
+                external_id = %webhook.external_id,
+                listing_id = %syndication.listing_id,
+                views_count = webhook.views_count,
+                "Processed view webhook"
+            );
+        }
+        WebhookPersistOutcome::Duplicate => {
+            // Replay / at-least-once retry of an already-recorded delivery. Ack
+            // 200 so the portal stops retrying, but do NOT re-count — this is
+            // the no-view-count-inflation property (#2360).
+            tracing::info!(
+                portal = %portal,
+                external_id = %webhook.external_id,
+                listing_id = %syndication.listing_id,
+                "View webhook already recorded (duplicate delivery) — skipping stat increment (#2360)"
+            );
+        }
+        WebhookPersistOutcome::Retry => {
+            // Could not persist the event. View analytics are best-effort
+            // (unlike the lead-bearing inquiry path), so we still ack 200 — but
+            // we must not count an event we could not confirm was recorded, or
+            // we'd reintroduce inflation on a path with no idempotency anchor.
+            let err = record_result.expect_err("Retry outcome implies an Err result");
             tracing::error!(
                 portal = %portal,
                 external_id = %webhook.external_id,
-                error = %e,
-                "Failed to record view event"
+                error = %err,
+                "Failed to record view event — skipping stat increment"
             );
-        });
-
-    // Update stats
-    let _ = state
-        .listing_repo
-        .increment_syndication_stats(syndication.id, webhook.views_count, 0)
-        .await;
-
-    tracing::info!(
-        portal = %portal,
-        external_id = %webhook.external_id,
-        listing_id = %syndication.listing_id,
-        views_count = webhook.views_count,
-        "Processed view webhook"
-    );
+        }
+    }
 
     Ok(Json(WebhookAckResponse {
         success: true,
@@ -855,9 +884,9 @@ async fn process_inquiry_webhook(
         )
         .await;
 
-    match classify_inquiry_persist(record_result.as_ref().map(|_| ())) {
-        InquiryPersistOutcome::Recorded => {}
-        InquiryPersistOutcome::Duplicate => {
+    match classify_webhook_persist(record_result.as_ref().map(|_| ())) {
+        WebhookPersistOutcome::Recorded => {}
+        WebhookPersistOutcome::Duplicate => {
             // Already recorded on an earlier delivery — ack idempotently so the
             // portal stops retrying, but do not double-count stats.
             tracing::info!(
@@ -872,7 +901,7 @@ async fn process_inquiry_webhook(
                 acknowledged_at: Utc::now(),
             }));
         }
-        InquiryPersistOutcome::Retry => {
+        WebhookPersistOutcome::Retry => {
             // Genuine write failure — the lead is NOT persisted. Return 5xx so
             // the portal retries instead of silently dropping the lead (#2275).
             let err = record_result.expect_err("Retry outcome implies an Err result");
@@ -913,20 +942,30 @@ async fn process_inquiry_webhook(
     }))
 }
 
-/// Classification of a `record_webhook_event` result on the inquiry-lead path.
+/// Classification of a `record_webhook_event` result, shared by both the
+/// inquiry-lead path and the view-analytics path.
 ///
-/// The inquiry path carries a lead that must not be silently dropped (#2275),
-/// so unlike the analytics paths it distinguishes three outcomes rather than
-/// swallowing every error.
+/// Both paths need the same insert-vs-duplicate signal — the difference is only
+/// in what the caller *does* with each outcome:
+/// - the inquiry path carries a lead that must not be silently dropped (#2275),
+///   so a `Retry` becomes a 5xx to force re-delivery;
+/// - the view path (#2360) must not double-count a replayed / retried delivery,
+///   so it advances the syndication counter only on `Recorded`.
+///
+/// Sharing one classifier keeps the two receivers' dedup logic in lock-step so
+/// the view path can't silently drift back into unconditional counting.
 #[derive(Debug, PartialEq, Eq)]
-enum InquiryPersistOutcome {
-    /// The lead was written — ack the portal with 200.
+enum WebhookPersistOutcome {
+    /// The event was freshly written — the caller may act on it (ack the lead /
+    /// advance analytics counters) exactly once.
     Recorded,
-    /// A duplicate delivery of an already-recorded lead (unique violation).
-    /// Idempotent success — ack 200 so the portal stops retrying.
+    /// A duplicate delivery of an already-recorded event (unique violation).
+    /// Idempotent success — ack 200 so the portal stops retrying, and do NOT
+    /// re-apply any side effect (no double lead, no inflated view count).
     Duplicate,
-    /// A genuine write failure — the lead is NOT persisted. Return 5xx so the
-    /// portal retries instead of dropping the lead.
+    /// A genuine write failure — the event is NOT persisted. The caller decides
+    /// how to react: the lead-bearing inquiry path returns 5xx so the portal
+    /// retries; the best-effort view path acks 200 but skips the counter.
     Retry,
 }
 
@@ -940,16 +979,16 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
     )
 }
 
-/// Classify the result of persisting an inbound inquiry lead.
+/// Classify the result of persisting a portal webhook event.
 ///
-/// - `Ok(())` -> [`InquiryPersistOutcome::Recorded`] (ack 200)
-/// - unique violation -> [`InquiryPersistOutcome::Duplicate`] (idempotent ack 200)
-/// - any other error -> [`InquiryPersistOutcome::Retry`] (return 500, portal retries)
-fn classify_inquiry_persist(result: Result<(), &sqlx::Error>) -> InquiryPersistOutcome {
+/// - `Ok(())` -> [`WebhookPersistOutcome::Recorded`] (apply side effect once)
+/// - unique violation -> [`WebhookPersistOutcome::Duplicate`] (idempotent, skip side effect)
+/// - any other error -> [`WebhookPersistOutcome::Retry`] (persistence failed)
+fn classify_webhook_persist(result: Result<(), &sqlx::Error>) -> WebhookPersistOutcome {
     match result {
-        Ok(()) => InquiryPersistOutcome::Recorded,
-        Err(e) if is_unique_violation(e) => InquiryPersistOutcome::Duplicate,
-        Err(_) => InquiryPersistOutcome::Retry,
+        Ok(()) => WebhookPersistOutcome::Recorded,
+        Err(e) if is_unique_violation(e) => WebhookPersistOutcome::Duplicate,
+        Err(_) => WebhookPersistOutcome::Retry,
     }
 }
 
@@ -1225,8 +1264,8 @@ mod tests {
     #[test]
     fn inquiry_persist_success_is_recorded() {
         assert_eq!(
-            classify_inquiry_persist(Ok(())),
-            InquiryPersistOutcome::Recorded,
+            classify_webhook_persist(Ok(())),
+            WebhookPersistOutcome::Recorded,
             "a successful write must ack the portal"
         );
     }
@@ -1240,9 +1279,84 @@ mod tests {
         // handler returns 5xx and the portal re-delivers.
         let err = sqlx::Error::PoolClosed;
         assert_eq!(
-            classify_inquiry_persist(Err(&err)),
-            InquiryPersistOutcome::Retry,
+            classify_webhook_persist(Err(&err)),
+            WebhookPersistOutcome::Retry,
             "a genuine write failure must trigger a retry (5xx), never a silent 200 ack"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Regression for #2360: the view path double-counted on replay/retry.
+    // The counter increment must run ONLY on a fresh insert; a duplicate
+    // delivery (unique violation from the same external_id/timestamp) must
+    // classify as `Duplicate` so the handler skips `increment_syndication_stats`
+    // and does not inflate the syndication view count. This is the DB-free
+    // equivalent of a round-trip "second delivery does not advance the counter"
+    // check — the view path branches on exactly this classification, and a full
+    // `#[sqlx::test]` round-trip is not runnable here (the `portal_webhook_events`
+    // table has no migration in-tree and the CI/sandbox has no live DB).
+    // ------------------------------------------------------------------
+
+    /// Minimal `DatabaseError` that reports SQLSTATE `23505`
+    /// (`UniqueViolation`) — the error a replayed/retried delivery hits on its
+    /// second `INSERT`. sqlx exposes no public constructor for a Postgres error,
+    /// so we implement the trait to exercise the duplicate branch DB-free.
+    #[derive(Debug)]
+    struct MockUniqueViolation;
+
+    impl std::fmt::Display for MockUniqueViolation {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str("duplicate key value violates unique constraint")
+        }
+    }
+
+    impl std::error::Error for MockUniqueViolation {}
+
+    impl sqlx::error::DatabaseError for MockUniqueViolation {
+        fn message(&self) -> &str {
+            "duplicate key value violates unique constraint"
+        }
+        fn code(&self) -> Option<std::borrow::Cow<'_, str>> {
+            Some(std::borrow::Cow::Borrowed("23505"))
+        }
+        fn as_error(&self) -> &(dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn as_error_mut(&mut self) -> &mut (dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn into_error(self: Box<Self>) -> Box<dyn std::error::Error + Send + Sync + 'static> {
+            self
+        }
+        fn kind(&self) -> sqlx::error::ErrorKind {
+            sqlx::error::ErrorKind::UniqueViolation
+        }
+    }
+
+    #[test]
+    fn view_duplicate_delivery_classifies_as_duplicate_and_skips_increment() {
+        // A replayed / retried delivery hits the unique constraint on the second
+        // insert (SQLSTATE 23505). It must classify as `Duplicate` so the handler
+        // skips `increment_syndication_stats` — no view-count inflation (#2360).
+        let dup = sqlx::Error::Database(Box::new(MockUniqueViolation));
+        assert!(
+            is_unique_violation(&dup),
+            "the mock must present as a genuine 23505 unique violation"
+        );
+        assert_eq!(
+            classify_webhook_persist(Err(&dup)),
+            WebhookPersistOutcome::Duplicate,
+            "a duplicate view delivery must be classified as Duplicate so the \
+             counter is NOT advanced a second time (#2360)"
+        );
+    }
+
+    #[test]
+    fn view_fresh_delivery_classifies_as_recorded_and_counts_once() {
+        assert_eq!(
+            classify_webhook_persist(Ok(())),
+            WebhookPersistOutcome::Recorded,
+            "only a fresh insert may advance the syndication view counter (#2360)"
         );
     }
 
