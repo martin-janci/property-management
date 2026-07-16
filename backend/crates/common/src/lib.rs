@@ -12,7 +12,7 @@ pub mod types;
 pub use errors::*;
 pub use i18n::{I18nResolver, Locale, MessageKey};
 pub use log_hash::{email_log_hash, EMAIL_LOG_HASH_LEN};
-pub use media::supports_inline_preview;
+pub use media::{supports_inline_preview, ALLOWED_UPLOAD_MIME_TYPES};
 pub use notifications::*;
 pub use sitemap::Sitemap;
 pub use tenant::*;

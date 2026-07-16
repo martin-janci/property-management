@@ -161,6 +161,12 @@ async fn create_version(
         ));
     }
 
+    // SECURITY (#2320): the version's file_key must lie inside the caller's org
+    // namespace, same as document registration — otherwise a member could point
+    // a new version at another org's bucket object and exfiltrate it through the
+    // version download/preview presign.
+    validate_file_key_org_scope(&req.file_key, tenant.tenant_id)?;
+
     let data = CreateDocumentVersion {
         file_key: req.file_key,
         file_name: req.file_name,

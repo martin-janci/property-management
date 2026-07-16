@@ -14,21 +14,11 @@ use uuid::Uuid;
 pub const MAX_FILE_SIZE: i64 = 50 * 1024 * 1024;
 
 /// Allowed MIME types for document upload.
-pub const ALLOWED_MIME_TYPES: &[&str] = &[
-    // Documents
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/plain",
-    "text/csv",
-    // Images
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-];
+///
+/// Re-export of the single source of truth in `common` (GH #2320) — the same
+/// list the storage layer (`integrations::ALLOWED_MIME_TYPES`) enforces, so
+/// handler-side and storage-side validation can never drift.
+pub use common::ALLOWED_UPLOAD_MIME_TYPES as ALLOWED_MIME_TYPES;
 
 /// Document category enum values.
 pub mod document_category {
