@@ -1,9 +1,116 @@
 {
-  "generated": "2026-07-15T00:00:00Z",
-  "window": "3d",
+  "generated": "2026-07-16T00:33:04Z",
+  "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-16T00:33:04Z",
+      "prs_scanned": 15,
+      "clean": [
+        2349
+      ],
+      "with_issues": [
+        {
+          "pr": 2356,
+          "issue": 2357,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "role gate on GET /ai/chat/escalated shipped without a deny-path regression test"
+        },
+        {
+          "pr": 2355,
+          "issue": 2359,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "/agencies/me omits is_active=TRUE (resolves left memberships; earliest-joined shadows current agency); no backend test; dual 404-guard drift"
+        },
+        {
+          "pr": 2354,
+          "issue": 2360,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "view webhook increments syndication stats unconditionally (record_webhook_event dedup result discarded); replay-in-window + honest retries still inflate counts"
+        },
+        {
+          "pr": 2353,
+          "issue": 2358,
+          "findings": 3,
+          "specialist": "db-migration",
+          "note": "retry-on-unmatched shipped ahead of dedup index; Duplicate branch is dead code -> portal retries insert duplicate leads; genuinely-unmatched ids loop 5xx forever"
+        },
+        {
+          "pr": 2352,
+          "issue": 2361,
+          "findings": 1,
+          "specialist": "react-native",
+          "note": "login() evicts only auth/tenant-id while logout() clears all; non-tenant-scoped keys leak prior org's cached data on login-without-logout"
+        },
+        {
+          "pr": 2351,
+          "issue": 2362,
+          "findings": 1,
+          "specialist": "nextjs-web",
+          "note": "shipped fix correct + i18n-complete; deferred parseListingDetail normalizer consolidation (4 hand-rolled shape guards)"
+        },
+        {
+          "pr": 2350,
+          "issue": 2364,
+          "findings": 1,
+          "specialist": "kotlin-mp",
+          "note": "favorites fix correct/complete/CI-verified; low-sev regression-net for latent Decimal-string trap on unconsumed portal_listings + price-history DTOs"
+        },
+        {
+          "pr": 2348,
+          "issue": 2365,
+          "findings": 2,
+          "specialist": "nextjs-web",
+          "note": "Decimal-string fix correct+tested; AC-5 toggle has no executing test (backend authz tests #[ignore]-quarantined) + non-persist OFF-state risk from '?? true' fallback"
+        },
+        {
+          "pr": 2347,
+          "issue": 2363,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "solid page (error-branching, i18n parity, screen-map flipped); signer signs unseen document (PDF preview deferred, needs token-scoped public doc-fetch) + single-use token left in URL/history"
+        },
+        {
+          "pr": 2346,
+          "issue": 2368,
+          "findings": 2,
+          "specialist": "react-native",
+          "note": "core hardening solid (fail-fast auth + size/MIME); hand-copied allow-list has no drift guard + photo-picker path bypasses the MIME guard"
+        },
+        {
+          "pr": 2345,
+          "issue": 2366,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "uploadDocumentDirect drops building_id; building-scoped docs lose association (CreateDocumentRequest lacks field); distinct from #2320/#2318"
+        },
+        {
+          "pr": 2344,
+          "issue": 2367,
+          "findings": 1,
+          "specialist": "generic",
+          "note": "regex + epic-id lowercase fix correct; residual same-class gap: non-latin names in other scanCandidates slugify to empty -> ppt/ fails IdSchema at init/validate"
+        },
+        {
+          "pr": 2338,
+          "issue": 2370,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "endpoint wiring/cron/contract-test correct (#2318 finding-3 cron_expression client type now closed); i18n leak - hardcoded English report labels + raw English error toast across 5 non-EN locales"
+        },
+        {
+          "pr": 2337,
+          "issue": 2369,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "high-quality PR; optimistic toggle patches preferences[] not categories[].enabledEvents so 'X of Y enabled' badge desyncs until onSettled refetch"
+        }
+      ]
+    },
     {
       "run_at": "2026-07-15T00:30:00Z",
       "prs_scanned": 5,
