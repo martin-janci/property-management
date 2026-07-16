@@ -5,7 +5,7 @@
       "type": "lag_warning",
       "source": "routine-cursor",
       "score_delta": 0,
-      "evidence": "routine last ran 3d 0h ago (last_run_iso=2026-07-13T02:11:42Z); cloud cron may have paused",
+      "evidence": "routine last ran 3d 0h ago (last_run_iso=2026-07-13T02:11:42Z at the 03:04 UTC run); cloud cron may have paused — the 08:15 UTC same-day rerun does not re-fire this",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -14,7 +14,7 @@
       "type": "stale_routine_alert",
       "source": "routine-cursor",
       "score_delta": 0,
-      "evidence": "routine gap 3d \u2014 dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
+      "evidence": "routine gap 3d — dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron. Observation from 03:04 UTC run stands; 08:15 UTC same-day rerun does not re-fire.",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -41,24 +41,33 @@
       "type": "churn-hotspot",
       "source": "git-log-since-2026-07-13",
       "score_delta": 0,
-      "evidence": "backend/servers/api-server/src/routes/reports.rs: +3333 lines this run (runs_seen was 1; last_seen 2026-05-30)",
+      "evidence": "backend/servers/api-server/src/routes/reports.rs: +3333 lines this run (runs_seen was 1; last_seen 2026-05-30). Cumulative type — score_delta suppressed on re-emit.",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "buffer-low-observation-2026-07-16",
+      "type": "buffer_low_observation",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": "trigger payload: 'buffer-low: claimable=12/72 — refill planner'. Routine cannot promote — 0 items at score >= 3 (or 2 on security fast-track). Documented in brief. Not derived from repo activity — external observation from the dispatcher's buffer metric.",
+      "confidence": "high",
+      "candidate_vector": null
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/YYYY-MM-DD.md && head -1 | grep",
+      "command": "test -f briefs/2026-07-16.md && head -1 | grep '^# 2026-07-16$'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare cursors/seen/hotspots/stats vs HEAD",
-      "observed": "true",
+      "command": "jq compare cursors/seen/hotspots/stats vs HEAD (staged vs prior commit)",
+      "observed": "last_pr_seen 2356→2374, last_commit_sha 1006a4c→83bf81c, last_run_iso 03:04→08:15, stats.runs 45→46",
       "expected": "true"
     },
     {
@@ -72,29 +81,29 @@
       "goal": "G4",
       "passed": true,
       "command": "no offending re-emit (only cumulative churn types re-emitted with score_delta=0)",
-      "observed": "true",
+      "observed": "reports.rs score_delta=0 on re-emit; en.json and sitemap.json fresh; buffer_low_observation is a new signal id",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no-score>8 + decay (no open items to decay)",
+      "command": "jq no-score>8 + decay (no open items to decay — created today)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this run — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 with adversarial pass line"
+      "expected": "≤2 with adversarial pass line"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this run — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 fully-formed"
+      "expected": "≤2 fully-formed"
     },
     {
       "goal": "G8",
@@ -114,14 +123,14 @@
       "goal": "G10",
       "passed": true,
       "command": "diff backlog.md vs regenerated view",
-      "observed": "identical",
+      "observed": "identical (only timestamp header refreshed to 08:15 UTC; body unchanged since backlog.json is unchanged this delta)",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "phases-failed listed in brief; cursors for skipped phases not advanced",
-      "observed": "phase-1.5, phase-1.6 skipped \u2014 review_cursor + pm_cursor unchanged",
+      "observed": "phase-1.5, phase-1.6 skipped — review_cursor + pm_cursor unchanged",
       "expected": "listed + cursor unchanged"
     },
     {
@@ -142,7 +151,7 @@
       "goal": "G14",
       "passed": true,
       "command": "diff IDEAS_TRIAGE.md vs regenerated view",
-      "observed": "identical",
+      "observed": "identical (only timestamp header refreshed to 08:15 UTC; body unchanged since backlog.json is unchanged this delta)",
       "expected": "identical"
     },
     {
@@ -150,12 +159,12 @@
       "passed": true,
       "command": "auto_fix_actions cap + idempotency (nothing fired)",
       "observed": "auto_fix_actions=[]",
-      "expected": "\u22643 with per-type caps"
+      "expected": "≤3 with per-type caps"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management JSON valid + pm_cursor/coverage_cursor in range",
+      "command": "management JSON valid + pm_cursor/coverage_cursor in range (Phase 1.6 skipped this run, but cursors are still in valid ranges)",
       "observed": "pm_cursor.next_index=5, coverage_cursor.next_index=12 (epics=13)",
       "expected": "in [0,7] / [0, epics)"
     },
