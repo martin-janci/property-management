@@ -2111,6 +2111,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
+      "branch": "auto-impl/gap-10a-2-protectedroute-role-fallback-f-f0057f74",
+      "status": "failed",
+      "claimed_at": "2026-07-16T16:10:37Z",
+      "last_updated": "2026-07-16T16:15:58Z",
+      "status_changed_at": "2026-07-16T16:15:58Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-on-dev-no-diff",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gap-10a-2-protectedroute-unit-test-coverage-issue-482",
       "branch": "auto-impl/gap-10a-2-protectedroute-unit-test-cover-5a7fc874",
       "status": "merged",
@@ -6829,5 +6853,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-16T12:20:40Z"
+  "archived_at": "2026-07-16T16:15:58Z"
 }

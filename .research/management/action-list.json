@@ -124,20 +124,6 @@
       "retry_round": 2
     },
     {
-      "id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
-      "action": "[RECONCILED-DONE: implementer verified #482 deriveActiveRole+ProtectedRoute fix already on dev, 919 ppt-web tests green, zero diff] ProtectedRoute role fallback fix for multi-tenant users (issue #482) (10a-2-oauth-client-registration OAuth Client Registration) [retry 1/2 of failed gap-10a-2-protectedroute-role-fallback-fix-for-multi]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-07-16T16:06:51Z (retry_of=gap-10a-2-protectedroute-role-fallback-fix-for-multi reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T08:18:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T16:06:51Z",
-      "retry_of": "gap-10a-2-protectedroute-role-fallback-fix-for-multi",
-      "retry_round": 1
-    },
-    {
       "id": "gap-83-2-rate-availability-push-integration-deferred-retry1",
       "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync) [retry 1/2 of failed gap-83-2-rate-availability-push-integration-deferred]",
       "owner_role": "pm-backend",

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-16T14:12:40Z",
+  "generated": "2026-07-16T16:15:58Z",
   "assignments": [
     {
       "task_id": "gh-issue-2360",
@@ -24,30 +24,6 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-07-16T16:10:37Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes after 3 respawns"
-    },
-    {
-      "task_id": "gap-10a-2-protectedroute-role-fallback-fix-for-multi-retry1",
-      "branch": "auto-impl/gap-10a-2-protectedroute-role-fallback-f-f0057f74",
-      "status": "in-progress",
-      "claimed_at": "2026-07-16T16:10:37Z",
-      "last_updated": "2026-07-16T16:10:37Z",
-      "status_changed_at": "2026-07-16T16:10:37Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
     }
   ]
 }
