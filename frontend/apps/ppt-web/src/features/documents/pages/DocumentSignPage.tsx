@@ -77,7 +77,31 @@ function SignCard({ children }: { children: React.ReactNode }) {
 export function DocumentSignPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') ?? undefined;
+
+  // Lift the single-use HMAC signing token OUT of the URL on first mount. The
+  // `?token=…` value is the only credential for this public route, so leaving it
+  // in the address bar is a leak: on a shared/kiosk browser it stays recoverable
+  // from history after the signer walks away, and it rides the `Referer` header
+  // on any outbound navigation. We therefore:
+  //   1. capture it once into component state (survives the URL rewrite),
+  //   2. strip it from the visible URL + history via replaceState (no nav), and
+  //   3. hold a page-scoped `<meta name="referrer" content="no-referrer">` so
+  //      the token can never leak via `Referer` while this page is mounted.
+  const [token] = useState<string | undefined>(() => searchParams.get('token') ?? undefined);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).has('token')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    const meta = document.createElement('meta');
+    meta.name = 'referrer';
+    meta.content = 'no-referrer';
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, []);
 
   const { data: context, isLoading, isError, error: contextError } = useSignContext(token);
 
