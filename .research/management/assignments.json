@@ -1,4 +1,29 @@
 {
   "generated": "2026-07-16T00:21:13Z",
-  "assignments": []
+  "assignments": [
+    {
+      "task_id": "code-review-mobile-native-kmp-mylistings-analytics-stub-retry1",
+      "branch": "auto-impl/code-review-mobile-native-kmp-mylistings-4aa8337c",
+      "status": "in-progress",
+      "claimed_at": "2026-07-16T02:09:09Z",
+      "last_updated": "2026-07-16T02:09:09Z",
+      "status_changed_at": "2026-07-16T02:09:09Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    }
+  ]
 }
