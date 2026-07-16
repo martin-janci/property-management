@@ -735,12 +735,14 @@ async fn process_view_webhook(
     // #2360: the counter increment must be idempotent under replay/retry. A
     // captured valid delivery replayed inside the freshness window, or an
     // honest portal's at-least-once retry, arrives with the same
-    // `(external_id, timestamp)` and hits the unique constraint on
-    // `portal_webhook_events`. Previously both calls were fire-and-forget
+    // `(portal, event_type, external_id)` and hits the partial unique index on
+    // `portal_webhook_events` created by migration 00218 (#2358 — the dedup
+    // anchor this gate depends on). Previously both calls were fire-and-forget
     // (`let _ = ...`), so `increment_syndication_stats` ran unconditionally and
-    // every duplicate delivery re-added `views_count` — the exact view-count
-    // inflation PR #2354 set out to prevent. We now mirror the inquiry path's
-    // dedup: advance the counter only when the event was newly recorded.
+    // every duplicate delivery re-added `views_count` into the syndication's
+    // `total_views` counter (migration 00219) — the exact view-count inflation
+    // PR #2354 set out to prevent. We now mirror the inquiry path's dedup:
+    // advance the counter only when the event was newly recorded.
     let record_result = state
         .listing_repo
         .record_webhook_event(
@@ -984,6 +986,19 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
 /// - `Ok(())` -> [`WebhookPersistOutcome::Recorded`] (apply side effect once)
 /// - unique violation -> [`WebhookPersistOutcome::Duplicate`] (idempotent, skip side effect)
 /// - any other error -> [`WebhookPersistOutcome::Retry`] (persistence failed)
+///
+/// DEDUP ANCHOR DEPENDENCY (#2360 <- #2358): the `Duplicate` branch can only
+/// fire once the partial unique index on
+/// `portal_webhook_events (portal, event_type, external_id)` exists — that index
+/// is created by migration 00218 in the sibling change for #2358. Two mechanisms
+/// surface a duplicate depending on how `record_webhook_event` is written:
+///   * plain `INSERT ... RETURNING *` (current) -> the second delivery raises a
+///     `23505` unique violation, matched by [`is_unique_violation`] here;
+///   * `INSERT ... ON CONFLICT DO NOTHING` (#2358) -> the second delivery is
+///     suppressed and returns `Ok(None)` instead of erroring.
+/// When this branch is rebased onto #2358, the callers must map that `Ok(None)`
+/// to [`WebhookPersistOutcome::Duplicate`] (do not collapse it to `Ok(())`), or
+/// the view counter would inflate again. Both paths are covered by tests below.
 fn classify_webhook_persist(result: Result<(), &sqlx::Error>) -> WebhookPersistOutcome {
     match result {
         Ok(()) => WebhookPersistOutcome::Recorded,
@@ -1288,13 +1303,14 @@ mod tests {
     // ------------------------------------------------------------------
     // Regression for #2360: the view path double-counted on replay/retry.
     // The counter increment must run ONLY on a fresh insert; a duplicate
-    // delivery (unique violation from the same external_id/timestamp) must
-    // classify as `Duplicate` so the handler skips `increment_syndication_stats`
-    // and does not inflate the syndication view count. This is the DB-free
+    // delivery (same `(portal, event_type, external_id)`, caught by the partial
+    // unique index from migration 00218 / #2358) must classify as `Duplicate` so
+    // the handler skips `increment_syndication_stats` and does not inflate the
+    // syndication's `total_views` counter (migration 00219). This is the DB-free
     // equivalent of a round-trip "second delivery does not advance the counter"
     // check — the view path branches on exactly this classification, and a full
-    // `#[sqlx::test]` round-trip is not runnable here (the `portal_webhook_events`
-    // table has no migration in-tree and the CI/sandbox has no live DB).
+    // `#[sqlx::test]` round-trip is not runnable in this sandbox (no live DB, and
+    // the api-server test build needs the network-gated swagger-ui asset).
     // ------------------------------------------------------------------
 
     /// Minimal `DatabaseError` that reports SQLSTATE `23505`

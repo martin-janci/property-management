@@ -703,15 +703,16 @@ impl ListingRepository {
         let portal_statuses: Vec<PortalSyndicationStatus> = syndications
             .into_iter()
             .map(|s| {
-                // Get stats from webhook events (views/inquiries would be tracked there)
+                // Counters are maintained on the syndication row by
+                // `increment_syndication_stats` (once per non-duplicate webhook, #2360).
                 PortalSyndicationStatus {
                     portal: s.portal,
                     status: s.status,
                     external_id: s.external_id,
                     synced_at: s.synced_at,
                     last_error: s.last_error,
-                    views: 0,     // Would be populated from webhook events
-                    inquiries: 0, // Would be populated from webhook events
+                    views: s.total_views,
+                    inquiries: s.total_inquiries,
                     last_activity_at: s.synced_at,
                 }
             })
@@ -798,13 +799,15 @@ impl ListingRepository {
         .await?;
 
         // Get stats by portal
-        let by_portal = sqlx::query_as::<_, PortalStatsRow>(
+        let by_portal: Vec<PortalStats> = sqlx::query_as::<_, PortalStatsRow>(
             r#"
             SELECT
                 ls.portal,
                 COUNT(*) FILTER (WHERE ls.status = 'synced') as active_count,
                 COUNT(*) FILTER (WHERE ls.status = 'pending') as pending_count,
-                COUNT(*) FILTER (WHERE ls.status = 'failed') as failed_count
+                COUNT(*) FILTER (WHERE ls.status = 'failed') as failed_count,
+                COALESCE(SUM(ls.total_views), 0) as views,
+                COALESCE(SUM(ls.total_inquiries), 0) as inquiries
             FROM listing_syndications ls
             JOIN listings l ON l.id = ls.listing_id
             WHERE l.organization_id = $1
@@ -820,17 +823,22 @@ impl ListingRepository {
             active_count: r.active_count,
             pending_count: r.pending_count,
             failed_count: r.failed_count,
-            views: 0,     // Would come from webhook events
-            inquiries: 0, // Would come from webhook events
+            views: r.views,
+            inquiries: r.inquiries,
         })
         .collect();
+
+        // Roll the org-wide totals up from the per-portal aggregates so a single
+        // pass reflects the real counters (#2360) instead of hardcoded zeros.
+        let total_views: i64 = by_portal.iter().map(|p| p.views).sum();
+        let total_inquiries: i64 = by_portal.iter().map(|p| p.inquiries).sum();
 
         Ok(OrganizationSyndicationStats {
             total_active: total_active.0,
             total_pending: total_pending.0,
             total_failed: total_failed.0,
-            total_views: 0,     // Would come from aggregated webhook events
-            total_inquiries: 0, // Would come from aggregated webhook events
+            total_views,
+            total_inquiries,
             by_portal,
         })
     }
@@ -1015,29 +1023,34 @@ impl ListingRepository {
         Ok(events)
     }
 
-    /// Update syndication with views and inquiries count.
+    /// Advance a syndication's cumulative view / inquiry counters.
+    ///
+    /// The counters live on `listing_syndications` (`total_views` /
+    /// `total_inquiries`, migration 00219). Callers on the webhook path invoke
+    /// this only for a freshly-recorded (non-duplicate) delivery, so the stored
+    /// number is the count of distinct portal events, not the count of
+    /// deliveries -- that is the observable side of the #2360 dedup gate. Passing
+    /// a zero delta is a no-op for that counter.
     pub async fn increment_syndication_stats(
         &self,
         syndication_id: Uuid,
         views_delta: i64,
         inquiries_delta: i64,
     ) -> Result<(), SqlxError> {
-        // This would update a stats table if we had one, for now we just record the event
-        // The actual counting would be done by aggregating portal_webhook_events
         sqlx::query(
             r#"
             UPDATE listing_syndications
-            SET updated_at = NOW()
+            SET total_views = total_views + $2,
+                total_inquiries = total_inquiries + $3,
+                updated_at = NOW()
             WHERE id = $1
             "#,
         )
         .bind(syndication_id)
+        .bind(views_delta)
+        .bind(inquiries_delta)
         .execute(&self.pool)
         .await?;
-
-        // Log the stat update (views_delta and inquiries_delta are tracked via webhook events)
-        let _ = views_delta;
-        let _ = inquiries_delta;
 
         Ok(())
     }
@@ -1050,6 +1063,8 @@ struct PortalStatsRow {
     active_count: i64,
     pending_count: i64,
     failed_count: i64,
+    views: i64,
+    inquiries: i64,
 }
 
 /// Row for listing with syndication.
