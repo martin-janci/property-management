@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           components: rustfmt, clippy
 
@@ -161,7 +161,7 @@ jobs:
 
       - name: Install Rust
         if: needs.changes.outputs.backend == 'true'
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         if: needs.changes.outputs.backend == 'true'
@@ -345,7 +345,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       # Give each matrix leg its own cache namespace so parallel shards don't
       # clobber one another's `Swatinem/rust-cache` entry.
@@ -451,7 +451,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       # Own cache namespace so this leg doesn't clobber a shard's cache entry.
       - name: Cache Cargo
@@ -532,7 +532,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -590,7 +590,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -687,7 +687,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -807,7 +807,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
