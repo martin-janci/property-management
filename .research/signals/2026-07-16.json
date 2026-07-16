@@ -1,0 +1,207 @@
+{
+  "date": "2026-07-16",
+  "run_started": "2026-07-16T00:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-16",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-13T02:11:42Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Routine did not run for 3d ~22h (last run 2026-07-13 02:11 UTC; this run 2026-07-16 ~00:30 UTC). Cloud cron may be paused or backlogged; dispatcher (separate loop) has kept ticking on origin/dev through the gap."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/portal_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-13..2026-07-16 on origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/portal_webhooks.rs \u2014 3 commits in the window (PR #2286 replay-protection, PR #2278 retry-inquiry, PR #2354 per-portal receivers + dedup). First appearance in hotspot_history."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/main.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-07-13..2026-07-16 on origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/reality-server/src/main.rs \u2014 3 commits in the window (PR #2280 agency dashboards, PR #2311 letter-suffixed epics, PR #2355 agencies /me). First appearance in hotspot_history."
+    },
+    {
+      "id": "screen-map-drift-pr-2355-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2355",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #2355 touched frontend/apps/reality-web/src/app/[locale]/agency/error.tsx without any docs/screens/reality/*.md update. Heuristic match \u2014 error boundaries are not standalone screens; review may drop as false positive."
+    },
+    {
+      "id": "screen-map-drift-pr-2351-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2351",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #2351 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx (+ jsonLd.test.ts) without any docs/screens/reality/*.md update. Listing-detail screen doc likely exists; expected fix is a Notes-append rather than a new doc."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-service",
+      "type": "code-review-finding",
+      "source": "review-cursor.mobile-native-kmp=2026-07-12 (oldest unreviewed), review pass 2026-07-16",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt (348 LOC) \u2014 Epic 10A-SSO mobile deep-link flow, no matching *Test.kt under commonTest/ (grep-verified). Security-adjacent surface; sibling repos in the same package tree DO have tests."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-repository",
+      "type": "code-review-finding",
+      "source": "review-cursor.mobile-native-kmp=2026-07-12 (oldest unreviewed), review pass 2026-07-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt (146 LOC) \u2014 Epic 48-1 Portal Mobile Search, no matching *Test.kt under commonTest/ (grep-verified). Sibling repos (Favorites, Inquiry, Agency, Realtor) all covered."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-16.md && head -1 .research/briefs/2026-07-16.md | grep -q '^# 2026-07-16$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ... state.json \u2192 advance-check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no prior 'open' items to decay (all terminal at start-of-run)",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | wc -l",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep on staged diff (with baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md <(regen from backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
+      "expected": "no failures reported"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs all present in plans/ or plans/_archive/",
+      "observed": "11/11 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "7 >= 7",
+      "expected": "now >= before"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md <(regen)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + kill-switch obeyed",
+      "observed": "0 actions this run",
+      "expected": "<=3 actions with per-type <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 PM_NOW==PM_HEAD, gate is no-op",
+      "observed": "pm_cursor=5 unchanged",
+      "expected": "either unchanged OR advanced-with-coverage_cursor-also-advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal grep on added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_dev_review": "ok \u2014 segment mobile-native-kmp reviewed inline (lightweight, not via ppt-dev-review skill spawn) due to buffer-refill urgency",
+    "phase_1_6_pm_delivery": "skipped \u2014 pm_cursor + coverage_cursor untouched. Delivery snapshot from 2026-07-15 still current; next run resumes rotation. G16 no-op per PM_NOW==PM_HEAD clause.",
+    "phase_2_decide": "ok \u2014 7 signals, 6 new open backlog items",
+    "phase_3_promote": "n/a \u2014 no item met the promotion bar (all new items score <=2; no security fast-track candidates)",
+    "phase_5_auto_fix": "no candidate \u2014 see auto_fix_skipped_reason"
+  }
+}

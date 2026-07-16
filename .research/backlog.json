@@ -4390,6 +4390,150 @@
         "assignment_status": "merged",
         "pr_number": 2274
       }
+    },
+    {
+      "id": "refactor-churn-portal-webhooks-2026-07-16",
+      "title": "Churn hotspot: portal_webhooks.rs — 3 changes in 3d (replay-protect, retry-on-5xx, per-portal receivers)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2286",
+        "PR #2278",
+        "PR #2354"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs churned 3x in window 2026-07-13..2026-07-16 (PR #2286 replay-protection, PR #2278 retry-inquiry, PR #2354 per-portal receivers + dedup)",
+        "runs_seen=1 (first appearance in hotspot_history; watch for repeated-churn next run)",
+        "iteration on real correctness/security branches — not stylistic churn; module warrants light review for consolidation opportunity if churn continues"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-reality-server-main-2026-07-16",
+      "title": "Churn hotspot: reality-server/main.rs — 3 changes in 3d (route mount cadence, agencies /me, dashboards)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2280",
+        "PR #2311",
+        "PR #2355"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs churned 3x in window 2026-07-13..2026-07-16 (route registration cadence — likely a route-mount refactor candidate)",
+        "runs_seen=1 (first appearance in hotspot_history)",
+        "reality-server main is small; churn is likely benign route wiring — flag for review if repeated"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/main.rs"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2355-reality",
+      "title": "Screen-map drift: PR #2355 touched reality-web agency/error.tsx without docs/screens/reality/* update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2355",
+        "issue #2343"
+      ],
+      "evidence": [
+        "PR #2355 (gh-issue-2343 agency /me endpoint + 404-vs-error distinction) merged 2026-07-15 touched frontend/apps/reality-web/src/app/[locale]/agency/error.tsx with no docs/screens/reality/*.md update",
+        "heuristic: fires whenever a reality-web route path changes without a corresponding screen-doc — expect some false positives (error boundaries are not standalone screens)",
+        "review candidate — either update docs/screens/reality/agency*.md to reflect the 404-vs-error split, or drop with reason if the boundary doesn't warrant a doc"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/error.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2351-reality",
+      "title": "Screen-map drift: PR #2351 hardened reality-web listing-detail without docs/screens/reality/* update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2351",
+        "issue #2341"
+      ],
+      "evidence": [
+        "PR #2351 (gh-issue-2341 harden reality-web listing detail) merged 2026-07-15 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx (+jsonLd.test.ts) with no docs/screens/reality/*.md update",
+        "heuristic: fires on reality-web route changes without screen-doc update — the listing-detail screen doc likely already exists, so the update should be a Notes-append rather than a new file",
+        "review candidate — bump Agent Log on docs/screens/reality/listing-detail.md (or equivalent) to record type-guard + 404 hardening; then close this row"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-mobile-native-sso-service-no-tests",
+      "title": "SsoService.kt (mobile-native KMP, 348 LOC) has no test coverage — SSO deep-link flow untested",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-16",
+        "segment mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is 348 LOC and has NO matching SsoServiceTest.kt under commonTest/ (grep-verified)",
+        "Handles Epic 10A-SSO mobile deep-link flow: createMobileToken(pmAccessToken) + session-token propagation + AuthState transitions — security-adjacent surface",
+        "reachability: exposed via ApiClient / AuthGuard — used by SwiftUI iOS app and Compose Android app; not dead code"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/auth/"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-mobile-native-listing-repository-no-tests",
+      "title": "ListingRepository.kt (mobile-native KMP, 146 LOC) has no test coverage — searchListings + getListing fetch untested",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-16",
+        "segment mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt is 146 LOC and has NO matching ListingRepositoryTest.kt under commonTest/ (grep-verified)",
+        "Handles search + detail fetch for Portal Mobile Search (Epic 48-1) — powers the main product surface on iOS+Android",
+        "sibling repos (FavoritesRepository, InquiryRepository, AgencyRepository, RealtorRepository) all have test coverage — this is the odd one out"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/listing/"
+      ],
+      "created_at": "2026-07-16",
+      "updated_at": "2026-07-16",
+      "plan": null
     }
   ]
 }
