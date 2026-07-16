@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-07-16T16:20:35Z",
-  "generated_by": "cff7ea1996c0f321eae0c7c3356d9d470004f0a3",
+  "updated_at": "2026-07-16T18:20:36Z",
+  "generated_by": "6ea41b3b67069e5bbd70c6c0039fddea03c49ec7",
   "findings": [
     {
       "finding_id": "rebase-ours-takes-upstream-discards-state",
@@ -88,14 +88,13 @@
       "severity": "high",
       "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-07-16T16:20:35Z",
-      "recurrence": 7,
+      "last_seen": "2026-07-16T18:20:36Z",
+      "recurrence": 8,
       "evidence": [
-        "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)",
-        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier — a lock would have surfaced the completed state before claim",
         "4f877de50: lock skipped (gh unavailable); dev moved 70e5e9d->681ff5e mid-run (concurrent PR merges); no .research conflict but window real",
         "ce9a2cb6a: Phase 0.5 run-lock sanctioned-skipped - gh CLI unavailable this run; no run-level mutex held.",
-        "cff7ea1 (this run): Phase 0.5 run-lock skipped-gh-unavailable — gh CLI 403/unavailable, and the lock is gh-REST-dependent, so NO run-level mutex was held. git push + GitHub MCP both worked this env (PUSH_METHOD=git); the lock is inert precisely when gh is the thing that is down."
+        "cff7ea1: Phase 0.5 run-lock skipped-gh-unavailable — gh CLI 403/unavailable, and the lock is gh-REST-dependent, so NO run-level mutex was held. git push + GitHub MCP both worked this env (PUSH_METHOD=git); the lock is inert precisely when gh is the thing that is down.",
+        "6ea41b3b (this run): lock=skipped-gh-unavailable — gh CLI not installed, so the Phase 0.5 lock CAS (drafted as `gh api POST /git/refs`) cannot acquire in exactly the gh-absent condition. Yet GitHub MCP AND direct `git push origin dev` both worked this env — the drafted gh-CLI lock fix is defeated by its own dependency. Fix should CAS via mcp__github__* (or a git-ref push) which are available when gh CLI is not."
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
@@ -119,6 +118,28 @@
       "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
       "proposed_fix": "PROVEN WORKAROUND this run: push the dispatcher state commit to a NEW branch (new-branch push is NOT proxy-blocked), open a PR via mcp__github__create_pull_request, then land it with mcp__github__merge_pull_request (squash). The server-side merge carries files of ANY size, bypassing both the dev-push-403 and the MCP push_files 64KB inline limit — lands the full assignments-archive.json with archived terminal rows. Phase 6 should adopt this PR+API-merge path as the primary push mechanism in this env (replacing PUSH_METHOD=mcp push_files for the large archive). Landed PR #1163 (sha 08ab915) this way; T19 now green on dev.",
       "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
+      "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
+      "first_seen": "2026-07-16T18:20:36Z",
+      "last_seen": "2026-07-16T18:20:36Z",
+      "recurrence": 1,
+      "severity": "high",
+      "category": "infra",
+      "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
+      "evidence": [
+        "6ea41b3b (this run, operator observation): direct `git push origin dev` WORKED; the only blocker was GH007 (push declined until commit email = <user>@users.noreply.github.com). The MCP-primary contract + 64KiB size-guard were unnecessary here.",
+        "assignments-archive.json measured at 333782 bytes this run (>64KiB) — the exact file the mcp-push-size-guard would abort on, forcing the PR+API-merge workaround that direct git push makes moot.",
+        "Corroborating stale-premise datapoints already recorded under mcp-push-cannot-inline-large-archive: 9185040 'direct git push WORKED this env, proxy not blocking'; f093812 'direct git push to dev WORKED this env; proxy-403 assumption may be stale'.",
+        "no-run-level-lock finding this run: gh CLI absent yet GitHub MCP AND git push both worked — the push medium is available; only the specific gh-dependent paths are not."
+      ],
+      "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
+      "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 push-capability probe + Phase 6 push step / mcp-push-size-guard)",
       "status": "open",
       "operator_notes": ""
     },
@@ -361,17 +382,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-07-16T16:20:35Z",
-      "recurrence": 6,
+      "last_seen": "2026-07-16T18:20:36Z",
+      "recurrence": 7,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "061a790: GC3-buffer-bounds=FAIL 'claimable 22<floor 36' (record-only).",
         "2e622ad: B 14/44 GC3-buffer-bounds=FAIL (claimable 14 below floor).",
         "ae8e2e33: 'GC3=FAIL(record-only, buffer starved)' B 11/15.",
         "f093812: GC3-buffer-bounds=FAIL claimable 24<floor 36; Tier-1b avail=0, Tier-1c avail=0; Tier-1d fired but generator stalled -> folded nothing (record-only).",
-        "cff7ea1 (this run): B claimable=6/72 floor=36 GC3-buffer-bounds=FAIL (starved). Tier-1b backlog-refill avail=0 AND Tier-2 planner kick returned http=401 (auth rejected) → BOTH refill paths dead this run; buffer cannot recover."
+        "cff7ea1: B claimable=6/72 floor=36 GC3-buffer-bounds=FAIL (starved). Tier-1b backlog-refill avail=0 AND Tier-2 planner kick returned http=401 (auth rejected) → BOTH refill paths dead this run; buffer cannot recover.",
+        "6ea41b3b (this run): GC3-buffer-bounds=FAIL; claimable=1/open=1 vs floor=36 (deeply starved, coverage 47/49 done). Tier-1b avail=0 AND Tier-1c avail=0; only Tier-1d dev-review generator fired (produced 2 findings this run — unlike its prior stall) but that does not lift the claimable buffer. The buffer stays at floor's rock-bottom with no actuating refill."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -445,17 +466,17 @@
       "finding_id": "dev-truth-blind-to-non-id-prefixed-merge",
       "title": "Out-of-band fix landing on dev under a non-id-prefixed squash subject is invisible to dev-reconcile + retry-remint, so Tier-1c re-mints a GHOST retry that burns a full implementer claim confirming already-done work",
       "first_seen": "2026-07-12T02:17:50Z",
-      "last_seen": "2026-07-16T16:20:35Z",
-      "recurrence": 3,
+      "last_seen": "2026-07-16T18:20:36Z",
+      "recurrence": 4,
       "severity": "medium",
       "category": "infra",
       "symptom": "Phase 3 claimed a Tier-1c retry (code-review-mobile-native-kmp-search-stale-response-race-retry1) for a pr=null original; the implementer's verify-first found the SearchScreen stale-response race ALREADY FIXED on dev (SearchState.shouldApplyResponse guard + tests) and returned pr=none status=blocked note=already-fixed-no-change. A full implementer claim+spawn was spent to confirm no-op work. Same ghost pattern hit the prior run on a different task (deeplink retry, fix already on dev via #1155).",
       "evidence": [
-        "f093812 (this run): claimed retry code-review-mobile-native-kmp-search-stale-response-race-retry1; implementer returned pr=none status=blocked note=already-fixed-no-change (fix already on dev). Row -> failed, archived. Self-test T28 WARN flags it terminal-in-archive.",
         "061a790 (prior run, 02:15): 'claimed 1 (deeplink retry); implementer returned pr=none — fix already on dev via #1155 (ghost retry) -> failed + action-list item dropped.'",
         ".research/dev-reconcile.sh:72-73 anchored match `^[0-9a-f]+\\t${id}:` — a squash whose subject does NOT begin with `<id>:` (i.e. the real descriptive PR title) is never joined, so the action-list row is never closed.",
         ".research/retry-remint.sh:167 dev-truth guard uses the SAME `capture(\"^(?<p>[^:\\\\s]+):\")` subject-prefix join for $dev_landed_stems — so it too is blind to the non-id-prefixed landing and legitimately re-mints the drained pr=null original.",
-        "cff7ea1 (this run): the #482 landing (descriptive, non-id-prefixed squash subject) is invisible to retry-remint's `<id>:`-subject dev-truth guard, and its coverage-done exclusion did not cover story 10a-2 — so the drained pr=null gap-10a-2 original was re-minted as a ghost retry and no-op'd on claim (same blind-spot class as the #1155 deeplink ghost)."
+        "cff7ea1: the #482 landing (descriptive, non-id-prefixed squash subject) is invisible to retry-remint's `<id>:`-subject dev-truth guard, and its coverage-done exclusion did not cover story 10a-2 — so the drained pr=null gap-10a-2 original was re-minted as a ghost retry and no-op'd on claim (same blind-spot class as the #1155 deeplink ghost).",
+        "6ea41b3b (this run): failed=1 was the ghost test-gap-screen-map-drift-pr-1100-ppt-retry2 — a retry whose target was ALREADY reconciled on dev but whose landing was invisible to the `<id>:`-anchored dev-truth guard, so it survived as a claimable/failing ghost (T28 WARN) instead of being closed. Same non-id-prefixed-merge blind spot; a claim slot was again spent on already-done work."
       ],
       "root_cause": "The `<id>:`-anchored squash-subject prefix is the SOLE dev-truth signal shared by both dev-reconcile.sh (row-close) and retry-remint.sh (landed-stem guard). When a fix lands out-of-band under a descriptive (non-id-prefixed) subject, neither can see it: the original action-list row stays open with pr=null, retry-remint counts it as an eligible transient-fail retry, and the dispatcher spends a claim+spawn confirming already-done work. Distinct from retry-remint-mints-invalid-rows (that is malformed/missing-issue_ref rows; here the retry row is well-formed but targets silently-landed work).",
       "proposed_fix": "Close the dev-truth blind spot on BOTH readers. (a) Broaden the landed-work signal beyond the `<id>:` subject prefix: add a fuzzy fallback in dev-reconcile.sh + retry-remint.sh that also matches the task's descriptive title/slug stem against recent dev squash subjects (bounded window), not only the anchored id prefix. OR (b) add a cheap pre-claim verify-first gate in Phase 3 for retry_of rows only: run the implementer's already-fixed check as a lightweight probe BEFORE stamping in-progress + spawning, so a ghost retry fails fast without a full spawn. Also audit the misleading `[RECONCILED-DONE: … already merged]` action-list prefix (see reconciled-done-annotation-contradicts-archive). Files: .research/dev-reconcile.sh:72-73, .research/retry-remint.sh:167, .research/dispatcher-prompt.md (Phase 3 retry-claim gate).",
@@ -646,14 +667,15 @@
       "finding_id": "reconciled-done-annotation-contradicts-archive",
       "title": "A stale/false `[RECONCILED-DONE: … already merged]` prefix on an action-list row contradicted the archive record (which showed the same task failed), risking misleading future runs",
       "first_seen": "2026-07-12T06:16:49Z",
-      "last_seen": "2026-07-12T06:16:49Z",
-      "recurrence": 1,
+      "last_seen": "2026-07-16T18:20:36Z",
+      "recurrence": 2,
       "severity": "low",
       "category": "infra",
       "symptom": "The action-list row for the ghost retry carried a `[RECONCILED-DONE: … already merged]` prefix while the archive showed the task as `failed` (pr=none, already-fixed-no-change). Two dispatcher-owned records disagreed about the same task's terminal state.",
       "evidence": [
-        "f093812 (this run): action-list row prefixed `[RECONCILED-DONE: … already merged]` but archive row for code-review-mobile-native-kmp-search-stale-response-race-retry1 = failed.",
-        "Same run's self-test T28 WARN independently confirms the row is terminal-in-archive, i.e. the RECONCILED-DONE annotation was not driving a close either."
+        "f093812: action-list row prefixed `[RECONCILED-DONE: … already merged]` but archive row for code-review-mobile-native-kmp-search-stale-response-race-retry1 = failed.",
+        "Same run's self-test T28 WARN independently confirms the row is terminal-in-archive, i.e. the RECONCILED-DONE annotation was not driving a close either.",
+        "6ea41b3b (this run): test-gap-screen-map-drift-pr-1100-ppt-retry2 carried a stale RECONCILED-DONE marker (from a prior run) yet was ALREADY reconciled on dev and surfaced this run as failed=1 + T28 WARN (terminal-in-archive). The RECONCILED-DONE annotation again neither matched the live archive/dev state nor drove the row's close — the same two-records-disagree drift, second occurrence."
       ],
       "root_cause": "Unknown annotation source — some reconcile/close path stamps a `RECONCILED-DONE: … already merged` note without cross-checking (or without overriding) the archive's terminal status, so the two can drift. Needs an audit of which script emits the prefix and on what condition.",
       "proposed_fix": "Audit the emitter of the `[RECONCILED-DONE: …]` action-list prefix (grep the reconcile scripts for the literal) and make it (a) authoritative-consistent with the archive terminal status, or (b) removed once the row is archived, so no row can advertise 'already merged' while its archive twin says 'failed'. Add a self-test assertion: no open/closed action-list row's RECONCILED-DONE note may contradict its archive terminal status.",
@@ -685,5 +707,5 @@
     }
   ],
   "last_status_reconcile": "2026-05-30 — flipped 5 findings open->acknowledged after their drafted fixes were consolidated onto branch fix/dispatcher-postmerge-cadence-clone-mtime (commits 8b63235e, cdcd1ce3, 17463444, 9e61f4eb); still awaiting a live dispatcher run to confirm in practice.",
-  "generated_at": "2026-07-16T16:20:35Z"
+  "generated_at": "2026-07-16T18:20:36Z"
 }
