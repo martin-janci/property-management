@@ -140,11 +140,16 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
         await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 
-        // Drop the cached tenant id (issue #2329). `useTenantId` caches the
-        // JWT's `tenant_id` claim with `staleTime: Infinity`, so without this a
-        // login that follows a session which wasn't explicitly logged out would
-        // keep serving the previous org's tenant id.
-        queryClient.removeQueries({ queryKey: ['auth', 'tenant-id'] });
+        // A login always begins a fresh session, so no previous org's cached
+        // data may survive it (issue #2361). Removing only the ['auth',
+        // 'tenant-id'] key fixed tenant-id resolution (issue #2329) but left
+        // every other cached query from the prior org in place — the mobile
+        // read-query keys (['buildings','list'], ['documents','list',…],
+        // ['faults','list'], etc.) are NOT tenant-scoped, so after a login that
+        // follows a session which wasn't explicitly logged out, TanStack Query
+        // would serve user A's data to user B until a background refetch (or
+        // never, if offline). Clear the whole cache to mirror logout().
+        queryClient.clear();
 
         setState((prev) => ({
           ...prev,

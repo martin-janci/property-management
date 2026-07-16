@@ -195,6 +195,33 @@ describe('AuthContext integration', () => {
       expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
     });
 
+    it('clears non-tenant-scoped cached data on login so no prior org data survives (issue #2361)', async () => {
+      primeSecureStore();
+      // Mobile read-query keys are NOT tenant-scoped, so a login that follows a
+      // session which wasn't explicitly logged out must wipe the whole cache —
+      // otherwise the previous org's list/detail data is served under identical
+      // keys until a background refetch (or forever, if offline).
+      queryClient.setQueryData(['auth', 'tenant-id'], 'org-stale');
+      queryClient.setQueryData(['documents', 'list'], [{ id: 'doc-A' }]);
+      queryClient.setQueryData(['buildings', 'list'], [{ id: 'b-A' }]);
+      mockFetchOnce({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+        user: sampleUser,
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('jane@example.com', 'pw');
+      });
+
+      expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
+      expect(queryClient.getQueryData(['documents', 'list'])).toBeUndefined();
+      expect(queryClient.getQueryData(['buildings', 'list'])).toBeUndefined();
+    });
+
     it('throws on bad credentials and leaves the state unauthenticated', async () => {
       primeSecureStore();
       mockFetchOnce({ message: 'Invalid credentials' }, 401);
