@@ -1,10 +1,12 @@
 /**
  * ListingDetailContent Tests
  *
- * Regression guard for the SSR 500 where a partial/malformed 200 listing body
- * (truthy but missing nested fields) crashed rendering while dereferencing
- * `listing.address.city` or `Object.entries(listing.features)`. The component
- * must render such bodies without throwing (issue #2276).
+ * `ListingDetailContent` renders a guaranteed-shape `ListingDetail | null`:
+ * `getListing` runs every 200 body through `parseListingDetail`, which validates
+ * required fields and coerces `features` / `photos`. The malformed / wrong-typed
+ * body crash-class coverage (#2276 / #2281 / #2341) now lives at that single
+ * normalizer — see `listingSchema.test.ts`. These tests assert the happy path
+ * and the null (not-found) fallback.
  */
 
 import type { ListingDetail } from '@ppt/reality-api-client';
@@ -85,67 +87,9 @@ describe('ListingDetailContent', () => {
     expect(screen.getByText('notFound')).toBeInTheDocument();
   });
 
-  // Core regression: partial 200 bodies must NOT throw during (SSR) render.
-  it('does not throw when features is missing (Object.entries crash)', () => {
-    const partial = {
-      ...validListing,
-      features: undefined as unknown as ListingDetail['features'],
-    };
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
-    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
-  });
-
-  it('does not throw when photos is missing (PhotoGallery crash)', () => {
-    const partial = {
-      ...validListing,
-      photos: undefined as unknown as ListingDetail['photos'],
-    };
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
-    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
-  });
-
-  it('does not throw when address is missing (address.city crash)', () => {
-    const partial = {
-      ...validListing,
-      address: undefined as unknown as ListingDetail['address'],
-    };
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
-    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
-  });
-
-  it('does not throw on a near-empty body missing all nested fields', () => {
-    const partial = {
-      id: 'x',
-      slug: 'x',
-      title: 'Bare Listing',
-    } as unknown as ListingDetail;
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
-    expect(screen.getByText('Bare Listing')).toBeInTheDocument();
-  });
-
-  // #2341 (medium): a partial 200 can carry *wrong-typed* collection fields,
-  // not just null/undefined. `features: "x"` fed to `Object.entries` yields
-  // per-character garbage entries; nullish-coalescing (`?? {}`) does not catch
-  // it. The type-guard must reject a non-object `features`.
-  it('does not throw and renders no features when features is a string', () => {
-    const partial = {
-      ...validListing,
-      features: 'x' as unknown as ListingDetail['features'],
-    };
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
-    expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
-    // No per-character feature ("x", "0", …) leaked into the features section.
-    expect(screen.queryByText('features')).not.toBeInTheDocument();
-  });
-
-  // #2341 (medium): a non-array `photos` (e.g. `{}`) makes PhotoGallery throw
-  // on `.length` / `.map`. `?? []` does not catch a truthy non-array.
-  it('does not throw when photos is a non-array object', () => {
-    const partial = {
-      ...validListing,
-      photos: {} as unknown as ListingDetail['photos'],
-    };
-    expect(() => render(<ListingDetailContent listing={partial} />)).not.toThrow();
+  it('renders a normalized listing whose features/photos are empty', () => {
+    const empty: ListingDetail = { ...validListing, features: {}, photos: [] };
+    expect(() => render(<ListingDetailContent listing={empty} />)).not.toThrow();
     expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
   });
 });

@@ -1,10 +1,12 @@
 /**
  * buildListingMetadata Tests
  *
- * Regression guard for the SSR crash where a malformed/partial 200 body
- * (truthy but not a real ListingDetail) made generateMetadata throw while
- * reading nested fields (listing.address.city, listing.description.slice).
- * buildListingMetadata must degrade to safe fallback metadata instead.
+ * `buildListingMetadata` consumes a guaranteed-shape `ListingDetail | null`
+ * (normalized by `parseListingDetail` at the `getListing` boundary): a
+ * malformed / partial body has already become `null`, so the malformed-body
+ * crash-class coverage lives in `listingSchema.test.ts`. These tests assert it
+ * falls back for a null listing and still guards the genuinely optional
+ * `description` / `primaryPhoto` that the normalizer does not require.
  */
 
 import type { ListingDetail } from '@ppt/reality-api-client';
@@ -50,32 +52,8 @@ describe('buildListingMetadata', () => {
     expect(meta.openGraph?.images).toEqual(['https://cdn.example.com/p1.jpg']);
   });
 
-  it('falls back when the body is null/undefined (not-found / network failure)', () => {
+  it('falls back when the listing is null (not-found / network failure)', () => {
     expect(buildListingMetadata(null).title).toBe(FALLBACK_TITLE);
-    expect(buildListingMetadata(undefined).title).toBe(FALLBACK_TITLE);
-  });
-
-  // The core regression: malformed but truthy 200 bodies must NOT throw.
-  it('falls back on an empty object body without throwing', () => {
-    expect(() => buildListingMetadata({})).not.toThrow();
-    expect(buildListingMetadata({}).title).toBe(FALLBACK_TITLE);
-  });
-
-  it('falls back when address is missing (would have thrown on .city)', () => {
-    const malformed = { title: 'Has title but no address' };
-    expect(() => buildListingMetadata(malformed)).not.toThrow();
-    expect(buildListingMetadata(malformed).title).toBe(FALLBACK_TITLE);
-  });
-
-  it('falls back when title is missing', () => {
-    const malformed = { address: { city: 'Bratislava', country: 'SK' } };
-    expect(buildListingMetadata(malformed).title).toBe(FALLBACK_TITLE);
-  });
-
-  it('falls back on non-object bodies (string / number / array)', () => {
-    expect(buildListingMetadata('oops').title).toBe(FALLBACK_TITLE);
-    expect(buildListingMetadata(42).title).toBe(FALLBACK_TITLE);
-    expect(buildListingMetadata([]).title).toBe(FALLBACK_TITLE);
   });
 
   it('tolerates a missing/malformed description (would have thrown on .slice)', () => {

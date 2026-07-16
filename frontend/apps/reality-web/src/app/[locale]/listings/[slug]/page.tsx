@@ -13,7 +13,8 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ListingDetailContent } from '@/components/listings';
-import { buildListingJsonLd, isRenderableListing } from './jsonLd';
+import { buildListingJsonLd } from './jsonLd';
+import { parseListingDetail } from './listingSchema';
 import { buildListingMetadata } from './metadata';
 
 function inferApiBaseFromHost(host: string): string | null {
@@ -77,12 +78,14 @@ async function getListing(slug: string, host: string): Promise<ListingDetail | n
     if (!response.ok) return null;
     // A 200 does not guarantee a well-formed body: an upstream/proxy partial
     // response or a malformed listing is truthy but may be missing required
-    // nested fields (`address.city`, …). Rendering such a body crashes SSR
-    // with a 500. Validate the shape here — reusing the same required-field
-    // predicate as `buildListingJsonLd` — so a bad body falls back to
-    // `ListingNotFound` (404-style) instead of taking the request down.
+    // nested fields (`address.city`, …) or carry wrong-typed collection fields
+    // (`features: "x"`, `photos: {}`). Rendering such a body crashes SSR with a
+    // 500. `parseListingDetail` is the single normalizer that validates the
+    // required shape once and coerces `features`/`photos` — a bad body falls
+    // back to `ListingNotFound` (404-style), and a good one is guaranteed-shape
+    // for every consumer downstream (metadata, JSON-LD, ListingDetailContent).
     const body: unknown = await response.json();
-    return isRenderableListing(body) ? body : null;
+    return parseListingDetail(body);
   } catch {
     return null;
   }
@@ -110,11 +113,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // JSON-LD structured data, built defensively: a partial/malformed 200 body
-  // is truthy but may be missing nested fields (address/photos), which would
-  // crash SSR if dereferenced directly. buildListingJsonLd returns null in
-  // that case and ListingDetailContent skips the <script> tag.
-  const jsonLd = buildListingJsonLd(listing) ?? undefined;
+  // JSON-LD structured data. `listing` is a guaranteed-shape `ListingDetail`
+  // (normalized by `parseListingDetail` in `getListing`), so `buildListingJsonLd`
+  // can dereference required fields directly.
+  const jsonLd = buildListingJsonLd(listing);
 
   return <ListingDetailContent listing={listing} jsonLd={jsonLd} />;
 }

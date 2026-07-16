@@ -41,29 +41,23 @@ export function isRenderableListing(listing: unknown): listing is ListingDetail 
 }
 
 /**
- * Build the RealEstateListing JSON-LD object defensively.
+ * Build the RealEstateListing JSON-LD object.
  *
- * Reuses {@link isRenderableListing} for the required-field check, then emits
- * optional fields (`photos`, `price`, `rooms`, `area`, …) only when present.
- * Returns `null` whenever a required field is missing or has the wrong shape.
+ * Consumes a guaranteed-shape `ListingDetail` — `getListing` runs the raw 200
+ * body through `parseListingDetail`, which validates the required fields (via
+ * {@link isRenderableListing}) and coerces `photos` to an array — so the
+ * required-field / non-array-photos defenses live at that single boundary, not
+ * here. This helper still emits the genuinely optional fields (`price`, `rooms`,
+ * `area`, `description`) only when present.
  */
-export function buildListingJsonLd(listing: unknown): object | null {
-  if (!isRenderableListing(listing)) {
-    return null;
-  }
-
-  const l = listing as Partial<ListingDetail>;
-  const address = l.address;
-
-  if (!address) {
-    return null;
-  }
+export function buildListingJsonLd(listing: ListingDetail): object {
+  const { address } = listing;
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
-    name: l.title,
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/listings/${l.slug}`,
+    name: listing.title,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/listings/${listing.slug}`,
     address: {
       '@type': 'PostalAddress',
       streetAddress: address.street,
@@ -74,33 +68,36 @@ export function buildListingJsonLd(listing: unknown): object | null {
     },
   };
 
-  if (typeof l.description === 'string') {
-    jsonLd.description = l.description;
+  if (typeof listing.description === 'string') {
+    jsonLd.description = listing.description;
   }
 
-  if (Array.isArray(l.photos)) {
-    jsonLd.image = l.photos
-      .map((p) => (p && typeof p.url === 'string' ? p.url : undefined))
-      .filter((url): url is string => typeof url === 'string');
+  // `photos` is a guaranteed array (normalized upstream); still filter out any
+  // element whose `url` is not a string.
+  const imageUrls = listing.photos
+    .map((p) => (p && typeof p.url === 'string' ? p.url : undefined))
+    .filter((url): url is string => typeof url === 'string');
+  if (imageUrls.length > 0) {
+    jsonLd.image = imageUrls;
   }
 
-  if (typeof l.price === 'number') {
+  if (typeof listing.price === 'number') {
     jsonLd.offers = {
       '@type': 'Offer',
-      price: l.price,
-      priceCurrency: typeof l.currency === 'string' ? l.currency : undefined,
-      availability: l.status === 'active' ? 'InStock' : 'OutOfStock',
+      price: listing.price,
+      priceCurrency: typeof listing.currency === 'string' ? listing.currency : undefined,
+      availability: listing.status === 'active' ? 'InStock' : 'OutOfStock',
     };
   }
 
-  if (typeof l.rooms === 'number') {
-    jsonLd.numberOfRooms = l.rooms;
+  if (typeof listing.rooms === 'number') {
+    jsonLd.numberOfRooms = listing.rooms;
   }
 
-  if (typeof l.area === 'number') {
+  if (typeof listing.area === 'number') {
     jsonLd.floorSize = {
       '@type': 'QuantitativeValue',
-      value: l.area,
+      value: listing.area,
       unitCode: 'MTK',
     };
   }

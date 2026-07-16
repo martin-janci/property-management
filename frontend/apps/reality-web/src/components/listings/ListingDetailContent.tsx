@@ -97,22 +97,17 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
     return tFeatures(key);
   };
 
-  // `listing.features` / `listing.photos` are typed as present, but this
-  // component is exported and a partial/malformed 200 body (from getListing's
-  // upstream, or another caller) can carry *wrong-typed* values, not just
-  // null/undefined. `features: "x"` makes `Object.entries` emit per-character
-  // garbage entries, and a non-array `photos` (e.g. `{}`) makes `PhotoGallery`
-  // throw on `.length` / `.map` — the same SSR-500 this guard exists to
-  // prevent (#2276 / #2341). Type-guard both, not just nullish-coalesce.
-  const featuresObj =
-    listing.features && typeof listing.features === 'object' && !Array.isArray(listing.features)
-      ? listing.features
-      : {};
-  const activeFeatures = Object.entries(featuresObj)
+  // `listing` is a guaranteed-shape `ListingDetail`: `getListing` runs every
+  // 200 body through `parseListingDetail`, which coerces `features` to a plain
+  // object and `photos` to an array. That single normalizer is the source of
+  // truth for the wrong-typed-collection crash class (#2276 / #2341), so this
+  // component consumes both fields directly instead of re-deriving its own
+  // type-guards.
+  const activeFeatures = Object.entries(listing.features)
     .filter(([, value]) => value === true)
     .map(([key]) => key as keyof ListingFeatures);
 
-  const photos = Array.isArray(listing.photos) ? listing.photos : [];
+  const photos = listing.photos;
 
   return (
     <div className="page-container">
