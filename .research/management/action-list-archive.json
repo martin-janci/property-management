@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-15T20:29:25Z",
+  "archived_at": "2026-07-16T00:21:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3676,6 +3676,20 @@
         "merged_at": "2026-07-14T01:20:31Z",
         "at": "2026-07-14T22:05:43Z"
       }
+    },
+    {
+      "id": "gap-tracking-stale-status-flips-2026-07-15",
+      "action": "Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus partial->complete (#2292/#2295/#2313 filled the last gaps)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "first_open_at": "2026-07-15T01:55:00Z",
+      "source": "gap-scan 2026-07-15",
+      "reconciled": "dispatcher 2026-07-16T00:21:13Z: in-progress→done; assignment terminal (merged PR#2333). gc1/dev-reconcile only close open, not in-progress — see finding reconcilers-skip-inprogress-rows.",
+      "last_updated": "2026-07-16T00:21:13Z"
     },
     {
       "id": "gh-issue-1680",
