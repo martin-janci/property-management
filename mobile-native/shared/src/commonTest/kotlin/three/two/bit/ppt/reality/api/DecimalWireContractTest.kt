@@ -21,13 +21,13 @@ import kotlinx.serialization.json.Json
  * consumed by the KMP app, so the day a future model maps them the failure surfaces here at CI time
  * rather than at runtime on a device:
  *
- *  - `PortalListingResponse.price` / `sizeSqm` — `reality-server/src/routes/portal_listings.rs`
- *    (camelCase serde).
- *  - `ListingPriceHistory` and `PriceChangeAlert` `old_price`/`new_price`/`change_percentage`
- *    — `backend/crates/db/src/models/reality_portal.rs` (default snake_case serde).
+ * - `PortalListingResponse.price` / `sizeSqm` — `reality-server/src/routes/portal_listings.rs`
+ *   (camelCase serde).
+ * - `ListingPriceHistory` and `PriceChangeAlert` `old_price`/`new_price`/`change_percentage` —
+ *   `backend/crates/db/src/models/reality_portal.rs` (default snake_case serde).
  *
- * The fixture data classes below are deliberately minimal mirrors of those structs. They double as a
- * **copy-paste template**: any future model mapping a reality-server Decimal-backed column MUST
+ * The fixture data classes below are deliberately minimal mirrors of those structs. They double as
+ * a **copy-paste template**: any future model mapping a reality-server Decimal-backed column MUST
  * annotate the field with [DecimalAsLongSerializer] or [DecimalAsDoubleSerializer] — exactly as
  * shown here — and never a bare `Long`/`Double`.
  */
