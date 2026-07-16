@@ -19,7 +19,10 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user_with_org, TestApp, TestUser};
+use common::{
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, seed_org,
+    TestApp, TestUser,
+};
 
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 
@@ -246,6 +249,80 @@ async fn test_list_chat_escalated_returns_200(pool: PgPool) {
         ))
         .await;
     assert_eq!(resp.status, StatusCode::OK, "list escalated sessions");
+}
+
+/// Deny-path regression for the #2317 role gate on `GET /api/v1/ai/chat/escalated`.
+///
+/// `list_escalated_messages` is deliberately org-scoped and NOT owner-scoped, so
+/// the handler's `!is_super_admin() && !has_role(Manager)` check is the *only*
+/// thing preventing a plain resident from reading every colleague's escalated
+/// AI-chat messages. The positive `test_list_chat_escalated_returns_200` above
+/// only passes because `create_authenticated_user_with_org` seeds the caller as
+/// `org_admin` (which clears the Manager bar), so nothing there pins the refusal.
+/// This test seeds a below-Manager `resident` and asserts 403 — if the gate is
+/// ever removed or weakened, this fails where the admin-role positive test would
+/// keep sailing through at 200. (Follow-up #2357 to PR #2356 / #2317.)
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_chat_escalated_forbidden_for_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, _refresh) = create_authenticated_user(&app, &user).await;
+
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let org_id = seed_org(&app.pool, "ai-chat-4-resident").await;
+    seed_membership(&app.pool, org_id, user_id, "resident").await;
+
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/chat/escalated",
+            None,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a below-Manager resident must be refused escalated-message review"
+    );
+}
+
+/// Positive companion to the deny-path test: a `manager`-role member (the exact
+/// boundary the gate checks) must pass. Together these pin both sides of the
+/// `has_role(TenantRole::Manager)` boundary. (Follow-up #2357.)
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_chat_escalated_allowed_for_manager(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, _refresh) = create_authenticated_user(&app, &user).await;
+
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let org_id = seed_org(&app.pool, "ai-chat-4-manager").await;
+    seed_membership(&app.pool, org_id, user_id, "manager").await;
+
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/chat/escalated",
+            None,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "a Manager-role member must be allowed escalated-message review"
+    );
 }
 
 // ---------------------------------------------------------------------------
