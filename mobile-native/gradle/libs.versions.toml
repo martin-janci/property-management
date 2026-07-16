@@ -6,7 +6,7 @@ targetSdk = "37"
 
 # Build
 agp = "9.2.1"
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 ksp = "2.3.21-2.0.4"
 
 # Compose
