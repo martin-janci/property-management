@@ -14,30 +14,25 @@ export const FALLBACK_METADATA: Metadata = {
 };
 
 /**
- * Build listing metadata defensively.
+ * Build listing metadata.
  *
- * `getListing` returns the raw JSON body of any 200 response, so a malformed
- * or partial 200 (e.g. `{}`, or a body missing `title` / `address` /
- * `description`) is truthy but does not match `ListingDetail`. Reading nested
- * fields off such a body (`listing.address.city`, `listing.description.slice`)
- * would throw during SSR and crash the request. Treat the body as `unknown`
- * and fall back to safe default metadata whenever a required field is missing
- * or the wrong shape.
+ * `getListing` normalizes the raw 200 body through `parseListingDetail`, so a
+ * malformed / partial body has already become `null` here and the required
+ * fields (`title`, `address.city`) are guaranteed present on a non-null
+ * listing — the required-field / wrong-shape defense lives at that single
+ * boundary. Fall back to safe default metadata only when the listing is absent;
+ * still guard the genuinely optional `description` / `primaryPhoto`, which the
+ * normalizer does not require.
  */
-export function buildListingMetadata(listing: unknown): Metadata {
-  if (!listing || typeof listing !== 'object') {
+export function buildListingMetadata(listing: ListingDetail | null): Metadata {
+  if (!listing) {
     return FALLBACK_METADATA;
   }
 
-  const l = listing as Partial<ListingDetail>;
-  const city = l.address?.city;
-  if (typeof l.title !== 'string' || typeof city !== 'string') {
-    return FALLBACK_METADATA;
-  }
-
-  const title = `${l.title} - ${city} | Reality Portal`;
-  const description = typeof l.description === 'string' ? l.description.slice(0, 160) : undefined;
-  const images = typeof l.primaryPhoto?.url === 'string' ? [l.primaryPhoto.url] : [];
+  const title = `${listing.title} - ${listing.address.city} | Reality Portal`;
+  const description =
+    typeof listing.description === 'string' ? listing.description.slice(0, 160) : undefined;
+  const images = typeof listing.primaryPhoto?.url === 'string' ? [listing.primaryPhoto.url] : [];
 
   return {
     title,
