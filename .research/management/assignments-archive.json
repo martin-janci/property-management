@@ -1643,6 +1643,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-native-kmp-mylistings-analytics-stub-retry1",
+      "branch": "auto-impl/code-review-mobile-native-kmp-mylistings-4aa8337c",
+      "status": "merged",
+      "claimed_at": "2026-07-16T02:09:09Z",
+      "last_updated": "2026-07-16T04:24:19Z",
+      "status_changed_at": "2026-07-16T04:24:19Z",
+      "pr_number": 2371,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2371",
+      "merged_at": "2026-07-16T04:22:33Z",
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=2371 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=wired MyListings+ListingAnalytics to /api/v1/my/listings(+/{id}/analytics); portfolio analytics aggregated client-side since backend is per-listing; Gradle egress-blocked in sandbox so compile/test deferred to CI [followup r1: ktfmt spotlessApply pushed f64a5b4 (byte-exact, via Maven-Central ktfmt 0.63); CI re-running; sha change forces re-review next run]",
+      "reviewer_summary": "verdict=approve head_oid=f64a5b4b966d2e23f71e7d2d3779a304332dabf8 note=ci-green-on-new-sha-spotless-lint-now-passes-code-clean",
+      "last_reviewed_oid": "f64a5b4b966d2e23f71e7d2d3779a304332dabf8",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-16T04:20:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-mobile-native-kmp-notifrepo-no-test",
       "branch": "auto-impl/code-review-mobile-native-kmp-notifrepo-4feccd84",
       "status": "merged",
@@ -6493,5 +6517,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-15T22:13:43Z"
+  "archived_at": "2026-07-16T04:24:19Z"
 }
