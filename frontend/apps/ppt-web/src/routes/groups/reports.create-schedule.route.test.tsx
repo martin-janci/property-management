@@ -15,13 +15,16 @@
  * Only the api-client hooks + `useToast` + `useAuth` are mocked.
  */
 
+import { ApiError } from '@ppt/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import i18n from 'i18next';
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import sk from '../../../messages/sk.json';
 import { BUILTIN_REPORTS } from '../../features/reports/builtinReports';
 import { reportRoutes } from './reports';
 
@@ -107,6 +110,63 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
     );
     await waitFor(() => {
       expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+    });
+  });
+
+  // issue #2370: the create-failure toast must show a *localized* message keyed
+  // on the backend error `code`, not the raw English `ApiError.message`.
+  it('shows a localized error toast keyed on the backend error code (not raw English)', async () => {
+    const rawBackendMessage = 'Schedule name must not be empty';
+    mockCreateMutateAsync.mockRejectedValue(new ApiError(400, rawBackendMessage, 'EMPTY_NAME'));
+    const user = userEvent.setup();
+
+    renderReportsRoute();
+
+    await user.click(await screen.findByRole('button', { name: /schedules/i }, { timeout: 5000 }));
+    await user.click(await screen.findByRole('button', { name: /new schedule/i }));
+
+    const builtin = BUILTIN_REPORTS[0];
+    await user.selectOptions(screen.getByRole('combobox', { name: /report/i }), builtin.id);
+    await user.type(screen.getByLabelText(/schedule name/i), 'Weekly Revenue Summary');
+    await user.type(screen.getByLabelText(/recipients/i), 'owner@example.com');
+
+    await user.click(screen.getByRole('button', { name: /save schedule/i }));
+
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
+    const toastArg = mockShowToast.mock.calls.at(-1)?.[0] as { message: string };
+    // The localized copy for EMPTY_NAME, not the untranslated server literal.
+    expect(toastArg.message).toBe(i18n.t('reports.schedule.createErrors.emptyName'));
+    expect(toastArg.message).not.toBe(rawBackendMessage);
+  });
+
+  // issue #2370: the report selector labels must be translated per-locale, not
+  // rendered from the hardcoded English `name`.
+  describe('localized report selector labels', () => {
+    afterAll(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    it('renders the report options in the active (non-English) locale', async () => {
+      i18n.addResourceBundle('sk', 'translation', sk, true, true);
+      await i18n.changeLanguage('sk');
+      const user = userEvent.setup();
+
+      renderReportsRoute();
+
+      await user.click(
+        await screen.findByRole('button', { name: /schedules|naplánova/i }, { timeout: 5000 })
+      );
+      await user.click(await screen.findByRole('button', { name: /new schedule|naplánova/i }));
+
+      // The Slovak label for the "faults" built-in report — proves the option
+      // is resolved via i18n, not the English `BuiltinReport.name`.
+      const skFaults = sk.reports.builtin.faults;
+      expect(skFaults).not.toBe(BUILTIN_REPORTS[0].name);
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: skFaults })).toBeInTheDocument();
+      });
     });
   });
 });
