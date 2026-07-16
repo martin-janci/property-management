@@ -65,8 +65,8 @@ class PortalListingsRepository(
     }
 
     /**
-     * Analytics summary + daily series for one of the caller's listings
-     * (`GET /api/v1/my/listings/{id}/analytics`). A listing the caller does not own yields 404.
+     * Analytics summary + daily series for one of the caller's listings (`GET
+     * /api/v1/my/listings/{id}/analytics`). A listing the caller does not own yields 404.
      *
      * @param fromDate inclusive lower bound (ISO-8601 date, e.g. `2026-07-01`); omit for none.
      * @param toDate inclusive upper bound (ISO-8601 date); omit for none.
@@ -78,9 +78,7 @@ class PortalListingsRepository(
     ): Result<ListingAnalytics> {
         return try {
             val response =
-                client.get(
-                    "$baseUrl/api/v1/my/listings/${listingId.asPathSegment()}/analytics"
-                ) {
+                client.get("$baseUrl/api/v1/my/listings/${listingId.asPathSegment()}/analytics") {
                     configureRequest()
                     fromDate?.let { parameter("fromDate", it) }
                     toDate?.let { parameter("toDate", it) }
@@ -112,9 +110,11 @@ class PortalListingsRepository(
      */
     suspend fun getPortfolioAnalytics(): Result<PortfolioAnalytics> {
         val listings =
-            listMyListings(limit = 100).getOrElse {
-                return Result.failure(it)
-            }.listings
+            listMyListings(limit = 100)
+                .getOrElse {
+                    return Result.failure(it)
+                }
+                .listings
 
         val analytics: List<ListingAnalytics> = coroutineScope {
             listings

@@ -78,8 +78,8 @@ data class ListingAnalytics(
  * Realtor-wide analytics rolled up across all of the caller's listings.
  *
  * Derived client-side (the backend only exposes per-listing analytics); the realtor dashboard has
- * no listing id, so [PortalListingsRepository.getPortfolioAnalytics] fans out one analytics call per
- * listing and folds the daily series together into portfolio totals + trends.
+ * no listing id, so [PortalListingsRepository.getPortfolioAnalytics] fans out one analytics call
+ * per listing and folds the daily series together into portfolio totals + trends.
  */
 data class PortfolioAnalytics(
     val totalListings: Int = 0,

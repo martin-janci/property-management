@@ -40,8 +40,6 @@ import three.two.bit.ppt.reality.listing.ListingType
 import three.two.bit.ppt.reality.listing.PropertyCategory
 import three.two.bit.ppt.reality.realtor.PortalListing
 import three.two.bit.ppt.reality.realtor.PortalListingsRepository
-import three.two.bit.ppt.reality.ui.realtor.AnalyticsMetric
-import three.two.bit.ppt.reality.ui.realtor.RealtorListing
 import three.two.bit.ppt.reality.ui.account.AccountScreen
 import three.two.bit.ppt.reality.ui.agency.AgencyHubScreen
 import three.two.bit.ppt.reality.ui.agency.AgencyInquiriesScreen
@@ -55,9 +53,11 @@ import three.two.bit.ppt.reality.ui.home.HomeScreen
 import three.two.bit.ppt.reality.ui.inquiries.InquiriesScreen
 import three.two.bit.ppt.reality.ui.listing.ListingDetailScreen
 import three.two.bit.ppt.reality.ui.profile.ProfileEditScreen
+import three.two.bit.ppt.reality.ui.realtor.AnalyticsMetric
 import three.two.bit.ppt.reality.ui.realtor.CreateListingScreen
 import three.two.bit.ppt.reality.ui.realtor.ListingAnalyticsScreen
 import three.two.bit.ppt.reality.ui.realtor.MyListingsScreen
+import three.two.bit.ppt.reality.ui.realtor.RealtorListing
 import three.two.bit.ppt.reality.ui.savedsearches.SavedSearchesScreen
 import three.two.bit.ppt.reality.ui.search.SearchScreen
 import three.two.bit.ppt.reality.util.FormatUtils
@@ -453,7 +453,9 @@ fun RealityNavHost(
                     isLoading = true
                     portalListingsRepository
                         .listMyListings(limit = 100)
-                        .onSuccess { resp -> listings = resp.listings.map { it.toRealtorListing() } }
+                        .onSuccess { resp ->
+                            listings = resp.listings.map { it.toRealtorListing() }
+                        }
                         .onFailure { listings = emptyList() }
                     isLoading = false
                 }
@@ -536,10 +538,10 @@ fun RealityNavHost(
 /**
  * Map a wire [PortalListing] into the [RealtorListing] the MyListings screen renders.
  *
- * The list endpoint (`GET /api/v1/my/listings`) is deliberately lightweight — it carries no
- * per-row view/inquiry counters (those live behind the per-listing analytics endpoint) and no
- * media, so [RealtorListing.views]/[RealtorListing.inquiries] stay 0 and [RealtorListing.imageUrl]
- * stays null here rather than triggering an N+1 analytics fan-out just to fill two badges.
+ * The list endpoint (`GET /api/v1/my/listings`) is deliberately lightweight — it carries no per-row
+ * view/inquiry counters (those live behind the per-listing analytics endpoint) and no media, so
+ * [RealtorListing.views]/[RealtorListing.inquiries] stay 0 and [RealtorListing.imageUrl] stays null
+ * here rather than triggering an N+1 analytics fan-out just to fill two badges.
  */
 private fun PortalListing.toRealtorListing(): RealtorListing =
     RealtorListing(
