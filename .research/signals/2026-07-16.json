@@ -14,7 +14,7 @@
       "type": "stale_routine_alert",
       "source": "routine-cursor",
       "score_delta": 0,
-      "evidence": "routine gap 3d \u2014 dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
+      "evidence": "routine gap 3d — dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -85,16 +85,16 @@
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this run — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 with adversarial pass line"
+      "expected": "≤2 with adversarial pass line"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this run — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 fully-formed"
+      "expected": "≤2 fully-formed"
     },
     {
       "goal": "G8",
@@ -121,7 +121,7 @@
       "goal": "G11",
       "passed": true,
       "command": "phases-failed listed in brief; cursors for skipped phases not advanced",
-      "observed": "phase-1.5, phase-1.6 skipped \u2014 review_cursor + pm_cursor unchanged",
+      "observed": "phase-1.5, phase-1.6 skipped — review_cursor + pm_cursor unchanged",
       "expected": "listed + cursor unchanged"
     },
     {
@@ -150,7 +150,7 @@
       "passed": true,
       "command": "auto_fix_actions cap + idempotency (nothing fired)",
       "observed": "auto_fix_actions=[]",
-      "expected": "\u22643 with per-type caps"
+      "expected": "≤3 with per-type caps"
     },
     {
       "goal": "G16",
@@ -167,5 +167,10 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "rerun_addendum": {
+    "triggered_iso": "2026-07-16T20:13:35Z",
+    "trigger_text": "buffer-low: claimable=0/72 — refill planner",
+    "note": "Same-day incremental rerun. No new signals emitted — 13 additional merged PRs (#2371–#2384) are all gh-issue-* fixes closing already-tracked post-merge review issues; no new PR bodies contained -[ ] items; no reverts; no new hotspots; no new untriaged issues (all 4 open follow-up issues carry labels). State cursors advanced (last_pr_seen 2356→2384, last_commit_sha, last_run_iso, stats.runs 45→46). See briefs/2026-07-16.md Update section for the buffer-refill diagnosis (dispatcher signal-grammar gap for follow-up issues #2318/#2320/#2366)."
+  }
 }
