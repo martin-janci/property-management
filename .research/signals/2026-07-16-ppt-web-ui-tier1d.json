@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-16",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: 0 claimable < floor 36). Segments already covered today by earlier tier1d runs: api-core, reality-server, mobile-native-kmp. Among the remaining uncovered segments, state.review_cursor is tied at oldest 2026-07-13 for ppt-web-ui and reality-web; ppt-web-ui chosen because it is also churn-aligned — hotspot_history is dominated by ppt-web feature pages (disputes MediationWorkspacePage 666 / FileDisputePage 546 / MediationResolutionForm 185 / MediationChatThread 164, documents MoveFolderDialog 802) and today's churn signal names frontend/apps/ppt-web/messages/en.json. Segment roots: frontend/apps/ppt-web/src/{pages,components,features}. Not backlog-saturated (0 open code-review-finding items for ppt-web-ui). Frontend + Completeness experts (static-only) examined the churn-hot dispute/document files plus portfolio-performance, settings, and compliance feature pages. 5 candidate findings surfaced across the two experts; kept the 3 highest-severity (one +3, one +2, one +1). All three verified against actual source lines (PortfolioDashboardPage renders only mock* consts with TODO no-op handlers; SessionsPage.tsx:84 `as unknown as SessionRow[]` confirmed; FileDisputePage.tsx:224 `DISPUTE_TYPES.map((t) =>` confirmed shadowing the t() from useTranslation at :115).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-portfolio-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook is called, so every org sees the same fabricated portfolio value, equity, NOI, cash flow and LTV numbers (values wired at :278-316).",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:328-332,365-366 — the interactive controls are dead: alert onMarkRead (:328) and onResolve (:331) are empty `// TODO: wire to alerts API` no-ops and PropertyCard onClick (:365) is a `// TODO: navigate to property detail route` no-op. The page is shipped-looking but non-functional (data + actions both stubbed)."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-unknown-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[]` double-casts raw listSessions() API data straight to the local SessionRow[] type (defined :22), bypassing all type checking across the API boundary. If the response shape drifts (e.g. `isCurrent` renamed or absent) TypeScript cannot catch it and `sessions.some((s) => !s.isCurrent)` (:85) plus the per-card `session.isCurrent` guards (:141-180) that gate the revoke/logout controls silently misbehave."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedispute-t-shadow-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:224 — `DISPUTE_TYPES.map((t) => { ... })` names the map callback param `t`, shadowing the translation function `t` obtained from useTranslation() at :115; any t('...') call inside that block resolves to the dispute-type object, not the translator — a latent i18n/correctness footgun.",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:189-447 — despite importing useTranslation, nearly all visible copy is hardcoded English ('File a Dispute' :193, '← Back to Disputes' :189, 'Dispute type' :212, TYPE_META labels/descriptions, zod validation messages, 'What happens next?', 'File Dispute' :447) with only a single t() call in the file; app ships sk/cs/de/en so this screen is untranslatable for non-English locales."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

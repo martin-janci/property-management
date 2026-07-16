@@ -62,54 +62,6 @@
       }
     },
     {
-      "id": "refactor-churn-hotspots-en-json-2026-07-16",
-      "action": "Churn hotspot: frontend/apps/ppt-web/messages/en.json — frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-16T04:04:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T04:04:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "refactor-churn-hotspots-sitemap-json-2026-07-16",
-      "action": "Churn hotspot: frontend/packages/sitemap/src/json/sitemap.json — frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-16T04:04:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T04:04:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "dx-stalled-review-pr-988-retry2",
-      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 2/2 of failed dx-stalled-review-pr-988]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T08:06:56Z",
-      "retry_of": "dx-stalled-review-pr-988",
-      "retry_round": 2
-    },
-    {
       "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry2",
       "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 2/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
       "owner_role": "pm-backend",
@@ -121,34 +73,6 @@
       "depends_on": [],
       "first_open_at": "2026-07-16T10:09:46Z",
       "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "retry_round": 2
-    },
-    {
-      "id": "gap-83-2-rate-availability-push-integration-deferred-retry1",
-      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync) [retry 1/2 of failed gap-83-2-rate-availability-push-integration-deferred]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T16:06:51Z (retry_of=gap-83-2-rate-availability-push-integration-deferred reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T16:06:51Z",
-      "retry_of": "gap-83-2-rate-availability-push-integration-deferred",
-      "retry_round": 1
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T16:06:51Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T16:06:51Z",
-      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
       "retry_round": 2
     }
   ],
