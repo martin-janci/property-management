@@ -8,11 +8,13 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./json": {
       "types": "./src/json/sitemap.json",
-      "import": "./src/json/sitemap.json"
+      "import": "./src/json/sitemap.json",
+      "default": "./src/json/sitemap.json"
     }
   },
   "scripts": {

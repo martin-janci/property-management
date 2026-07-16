@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   getEndpoint,
@@ -13,7 +14,7 @@ import { buildUrl, SitemapTestHelper } from '../src/utils';
 describe('Sitemap Data', () => {
   describe('Routes', () => {
     it('should have ppt-web routes', () => {
-      expect(sitemap.routes['ppt-web'].length).toBe(19);
+      expect(sitemap.routes['ppt-web'].length).toBe(20);
     });
 
     it('should have reality-web routes', () => {
@@ -124,5 +125,32 @@ describe('Test Helpers', () => {
       expect(tabs[0]).toHaveProperty('name');
       expect(tabs[0]).toHaveProperty('screens');
     });
+  });
+});
+
+describe('Package exports (CJS resolvability)', () => {
+  // Regression guard for the @ppt/e2e framework rollout (PR #988): reality-web
+  // is a Next.js app with no `"type": "module"`, so Playwright loads its config
+  // via CommonJS `require()`. If @ppt/sitemap's `exports` map only offers
+  // `types` + `import`, a CJS `require()` cannot resolve the package
+  // ("No exports main defined"), which forced reality-web into a `.mts` config
+  // workaround. A `default` condition (mirroring @ppt/e2e) keeps the package
+  // resolvable under both ESM and CJS. Removing it re-breaks CJS consumers.
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+    exports: Record<string, Record<string, string>>;
+  };
+
+  it('every export entry exposes a `default` condition for CJS require()', () => {
+    for (const [subpath, conditions] of Object.entries(pkg.exports)) {
+      expect(conditions, `exports["${subpath}"] must define a default condition`).toHaveProperty(
+        'default'
+      );
+    }
+  });
+
+  it('the `default` condition matches the `import` target for each entry', () => {
+    for (const conditions of Object.values(pkg.exports)) {
+      expect(conditions.default).toBe(conditions.import);
+    }
   });
 });
