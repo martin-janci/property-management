@@ -1,171 +1,137 @@
 {
+  "date": "2026-07-16",
   "signals": [
     {
-      "id": "lag-warning-2026-07-16",
-      "type": "lag_warning",
-      "source": "routine-cursor",
-      "score_delta": 0,
-      "evidence": "routine last ran 3d 0h ago (last_run_iso=2026-07-13T02:11:42Z); cloud cron may have paused",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "stale-routine-alert-2026-07-16",
-      "type": "stale_routine_alert",
-      "source": "routine-cursor",
-      "score_delta": 0,
-      "evidence": "routine gap 3d \u2014 dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
-      "confidence": "high",
-      "candidate_vector": null
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
-      "type": "churn-hotspot",
-      "source": "git-log-since-2026-07-13",
-      "score_delta": 1,
-      "evidence": "frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
-      "type": "churn-hotspot",
-      "source": "git-log-since-2026-07-13",
-      "score_delta": 1,
-      "evidence": "frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
-      "type": "churn-hotspot",
-      "source": "git-log-since-2026-07-13",
-      "score_delta": 0,
-      "evidence": "backend/servers/api-server/src/routes/reports.rs: +3333 lines this run (runs_seen was 1; last_seen 2026-05-30)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "evidence": "PR #2373 (refactor: parseListingDetail normalizer) touched 7 files under frontend/apps/reality-web/src/app/[locale]/listings/[slug]/* + 2 files under components/listings/ListingDetailContent — no docs/screens/reality/*.md updated in same PR. Note: change is internal parse-helper extraction (getListing normalizer), not a route add/remove; heuristic likely false positive per screen-map-drift caveat.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "resulting_backlog_id": "test-gap-screen-map-drift-pr-2373-reality"
     }
   ],
+  "auto_fix_actions": [],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/YYYY-MM-DD.md && head -1 | grep",
+      "command": "test -f .research/briefs/2026-07-16.md && grep -q '^# 2026-07-16$'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare cursors/seen/hotspots/stats vs HEAD",
-      "observed": "true",
+      "command": "jq slurpfile HEAD vs staged state.json",
+      "observed": "true (5 fields changed: last_pr_seen 2356→2378, last_issue_seen 2370→2378, last_commit_sha 1006a4c→09fc2520, seen_signals +1, stats.runs 45→46)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] | (length == unique|length)",
-      "observed": "true",
+      "command": "jq unique-ids check",
+      "observed": "true (189 items, 189 unique)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no offending re-emit (only cumulative churn types re-emitted with score_delta=0)",
-      "observed": "true",
+      "command": "no non-cumulative signal re-emitted with score_delta!=0",
+      "observed": "1 new signal (screen-map-drift-pr-2373-reality) — not in prior seen_signals",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no-score>8 + decay (no open items to decay)",
-      "observed": "true",
+      "command": "jq score cap+decay",
+      "observed": "no score>8; 2 open items <14d old (no decay applies to items with updated_at ≤ 2026-07-02)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
-      "observed": "0 new plans",
-      "expected": "\u22642 with adversarial pass line"
+      "command": "N/A this run",
+      "observed": "no new plans this run",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
-      "observed": "0 new plans",
-      "expected": "\u22642 fully-formed"
+      "command": "N/A this run",
+      "observed": "no new plans this run (0 ≤ 2)",
+      "expected": "n/a"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep-secret-patterns on staged diff (excl. baseline docs)",
-      "observed": "0",
+      "command": "secret/private-hostname grep on staged diff",
+      "observed": "0 hits",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md vs regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-failed listed in brief; cursors for skipped phases not advanced",
-      "observed": "phase-1.5, phase-1.6 skipped \u2014 review_cursor + pm_cursor unchanged",
-      "expected": "listed + cursor unchanged"
+      "command": "Phase 1.5 + 1.6 skipped (not failed); cursors not advanced",
+      "observed": "review_cursor + pm_cursor + coverage_cursor unchanged",
+      "expected": "no cursor advance for skipped phases"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "no new/undone plans (nothing promoted N-1 was silently removed)",
-      "observed": "all prior plans still present",
-      "expected": "no silent deletes"
+      "command": "plan promotion convergence check",
+      "observed": "no plan promotions or archives this run",
+      "expected": "no thrashing"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "ls-files archive count vs HEAD tree",
-      "observed": "now=7 head=7",
-      "expected": "now>=head"
+      "command": "archive count >= HEAD",
+      "observed": "7 == 7",
+      "expected": ">=0 delta"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions cap + idempotency (nothing fired)",
-      "observed": "auto_fix_actions=[]",
-      "expected": "\u22643 with per-type caps"
+      "command": "auto-fix idempotency + cap",
+      "observed": "auto_fix_actions=[] (no candidate met the certainty bar)",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management JSON valid + pm_cursor/coverage_cursor in range",
-      "observed": "pm_cursor.next_index=5, coverage_cursor.next_index=12 (epics=13)",
-      "expected": "in [0,7] / [0, epics)"
+      "command": "no-op: Phase 1.6 skipped this run",
+      "observed": "pm_cursor unchanged (rotation stays at pm-security)",
+      "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token literal in added lines",
-      "observed": "0 matches",
+      "command": "Telegram token pattern scan",
+      "observed": "0 matches in added lines",
       "expected": "0"
     }
-  ],
-  "auto_fix_actions": []
+  ]
 }
