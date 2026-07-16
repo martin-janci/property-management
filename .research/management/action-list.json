@@ -60,20 +60,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry2",
-      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 2/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-16T10:09:46Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T08:22:31Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-16T10:09:46Z",
-      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
-      "retry_round": 2
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
