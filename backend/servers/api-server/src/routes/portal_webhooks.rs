@@ -22,8 +22,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::Utc;
 use common::errors::ErrorResponse;
 use db::models::{
-    listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook,
-    PortalWebhookEvent,
+    listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook, PortalWebhookEvent,
 };
 use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
