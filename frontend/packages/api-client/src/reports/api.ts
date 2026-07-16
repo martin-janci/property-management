@@ -5,6 +5,7 @@
  */
 
 import type { FaultCategoryCount, FaultPriorityCount, FaultStatusCount } from '../faults/types';
+import { ApiError } from '../lib/fetch';
 import type {
   AnalyticsParams,
   AnalyticsSummary,
@@ -40,8 +41,14 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+    const error = (await response.json().catch(() => ({ message: 'Request failed' }))) as {
+      code?: string;
+      message?: string;
+    };
+    // Preserve the backend `ErrorResponse.code` (e.g. EMPTY_NAME,
+    // INVALID_RECIPIENT_EMAIL) so callers can map it to a localized message
+    // instead of leaking the raw English `message` into a toast (issue #2370).
+    throw new ApiError(response.status, error.message || `HTTP ${response.status}`, error.code);
   }
 
   return response.json();

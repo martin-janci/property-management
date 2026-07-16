@@ -1059,7 +1059,19 @@
       "created": "Plán bol úspešne vytvorený.",
       "createFailed": "Nepodarilo sa vytvoriť plán.",
       "updated": "Plán bol úspešne aktualizovaný.",
-      "updateFailed": "Nepodarilo sa aktualizovať plán."
+      "updateFailed": "Nepodarilo sa aktualizovať plán.",
+      "createErrors": {
+        "emptyName": "Názov plánu nesmie byť prázdny.",
+        "invalidFrequency": "Zvolená frekvencia nie je podporovaná.",
+        "invalidRecipientEmail": "Jedna alebo viac e-mailových adries príjemcov je neplatná.",
+        "invalidTimezone": "Vyberte platné časové pásmo."
+      }
+    },
+    "builtin": {
+      "faults": "Štatistika porúch",
+      "voting": "Účasť na hlasovaní",
+      "occupancy": "Obsadenosť",
+      "consumption": "Spotreba"
     },
     "execution": {
       "downloadFailed": "Nepodarilo sa stiahnuť správu.",

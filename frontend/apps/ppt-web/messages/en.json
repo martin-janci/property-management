@@ -3375,7 +3375,19 @@
       "created": "Schedule created successfully.",
       "createFailed": "Failed to create schedule.",
       "updated": "Schedule updated successfully.",
-      "updateFailed": "Failed to update schedule."
+      "updateFailed": "Failed to update schedule.",
+      "createErrors": {
+        "emptyName": "The schedule name must not be empty.",
+        "invalidFrequency": "The selected frequency is not supported.",
+        "invalidRecipientEmail": "One or more recipient email addresses are invalid.",
+        "invalidTimezone": "Please select a valid timezone."
+      }
+    },
+    "builtin": {
+      "faults": "Fault statistics",
+      "voting": "Voting participation",
+      "occupancy": "Occupancy",
+      "consumption": "Consumption"
     },
     "execution": {
       "downloadFailed": "Failed to download report.",
