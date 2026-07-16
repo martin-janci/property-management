@@ -212,6 +212,11 @@
     <string name="realtor_create_field_price">Price</string>
     <string name="realtor_create_field_currency">Currency</string>
     <string name="realtor_analytics_title">Analytics</string>
+    <string name="realtor_analytics_metric_views">Total views</string>
+    <string name="realtor_analytics_metric_inquiries">Inquiries</string>
+    <string name="realtor_analytics_metric_favorites">Saved</string>
+    <string name="realtor_analytics_metric_listings">Listings</string>
+    <string name="realtor_analytics_metric_active">Active</string>
     <string name="realtor_create_validation_title_required">Title is required</string>
     <string name="realtor_create_validation_city_required">City is required</string>
     <string name="realtor_create_validation_price_invalid">Enter a positive price</string>
