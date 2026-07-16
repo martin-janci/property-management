@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { mobileScreens, pptWebRoutes, realityWebRoutes } from '@ppt/sitemap';
 import type { DesignSource } from './design-source/index.js';
+import { IdSchema } from './schema.js';
 import type { Platform, Product } from './types.js';
 
 export interface CandidateScreen {
@@ -59,6 +61,20 @@ export async function scanCandidates(opts: ScanOptions): Promise<CandidateScreen
       product,
       source: 'user',
     });
+  }
+
+  // Boundary guard: every synthesized id is written verbatim by `screens init`
+  // (and the filename is slugged from it), so an id that fails `IdSchema` here
+  // produces a screen-map that immediately fails `screens validate` (see #2367,
+  // follow-up to #2344). Per-source slugging can still emit an invalid id — a
+  // name with no Latin/alphanumeric characters (e.g. a non-Latin Figma frame
+  // name, or `--add ""`) slugifies to empty, yielding a bare `ppt/`. Validate
+  // each candidate's id at the boundary and fall back to a stable, non-empty,
+  // schema-valid slug rather than letting the invalid id escape.
+  for (const c of out) {
+    if (!IdSchema.safeParse(c.id).success) {
+      c.id = `${c.product}/${slugifyName(c.name)}`;
+    }
   }
   return out;
 }
@@ -167,12 +183,23 @@ async function scanDesignSource(
 }
 
 function slugifyName(s: string): string {
-  return s
+  const slug = s
     .toLowerCase()
     .normalize('NFKD')
     .replace(/\p{Mn}/gu, '')
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  // Never return an empty (or hyphen-only) slug: a name with no Latin
+  // alphanumerics (non-Latin script, pure emoji/symbols) would otherwise
+  // collapse to '' and yield a bare `<product>/`, which fails IdSchema. Fall
+  // back to a stable content hash so the id stays deterministic and unique.
+  return slug || `screen-${hashShort(s)}`;
+}
+
+/** Short, stable hex digest used as a deterministic slug fallback. */
+function hashShort(s: string): string {
+  return createHash('sha1').update(s).digest('hex').slice(0, 8);
 }
