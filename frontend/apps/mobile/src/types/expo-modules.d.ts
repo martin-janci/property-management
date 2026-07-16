@@ -303,6 +303,10 @@ declare module 'expo-image-picker' {
     type?: 'image' | 'video';
     fileName?: string;
     fileSize?: number;
+    // MIME type the picker reports for the selected asset (e.g. `image/heic`
+    // for an iOS capture), or `undefined` when it couldn't be determined.
+    // DocumentUploadScreen prefers this over an extension guess (GitHub #2368).
+    mimeType?: string;
     base64?: string;
     exif?: Record<string, unknown>;
     duration?: number;
