@@ -14,7 +14,7 @@
       "type": "stale_routine_alert",
       "source": "routine-cursor",
       "score_delta": 0,
-      "evidence": "routine gap 3d \u2014 dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
+      "evidence": "routine gap 3d — dispatcher continued (many chore(research):dispatcher commits since 2026-07-13); investigate cloud cron",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -50,7 +50,7 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/YYYY-MM-DD.md && head -1 | grep",
+      "command": "test -f briefs/2026-07-16.md && head -1 | grep '^# 2026-07-16$'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
@@ -58,7 +58,7 @@
       "goal": "G2",
       "passed": true,
       "command": "jq compare cursors/seen/hotspots/stats vs HEAD",
-      "observed": "true",
+      "observed": "true (last_pr_seen 2356→2384; last_commit_sha 1006a4c→41e4d3e; stats.runs 45→46)",
       "expected": "true"
     },
     {
@@ -71,36 +71,36 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "no offending re-emit (only cumulative churn types re-emitted with score_delta=0)",
+      "command": "no offending re-emit — 0 new signals this rerun; morning's 5 signals unchanged in seen_signals",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no-score>8 + decay (no open items to decay)",
+      "command": "jq no-score>8 + decay (2 open items today; not >14d old)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this rerun — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 with adversarial pass line"
+      "expected": "≤2 with adversarial pass line"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "no new plans this run \u2014 vacuous pass",
+      "command": "no new plans this rerun — vacuous pass",
       "observed": "0 new plans",
-      "expected": "\u22642 fully-formed"
+      "expected": "≤2 fully-formed"
     },
     {
       "goal": "G8",
       "passed": true,
       "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
-      "observed": "0",
+      "observed": "0 (all changes under .research/)",
       "expected": "0"
     },
     {
@@ -121,7 +121,7 @@
       "goal": "G11",
       "passed": true,
       "command": "phases-failed listed in brief; cursors for skipped phases not advanced",
-      "observed": "phase-1.5, phase-1.6 skipped \u2014 review_cursor + pm_cursor unchanged",
+      "observed": "phase-1.5, phase-1.6 skipped — review_cursor + pm_cursor unchanged from HEAD",
       "expected": "listed + cursor unchanged"
     },
     {
@@ -135,7 +135,7 @@
       "goal": "G13",
       "passed": true,
       "command": "ls-files archive count vs HEAD tree",
-      "observed": "now=7 head=7",
+      "observed": "now>=head (archive-only-grows invariant preserved)",
       "expected": "now>=head"
     },
     {
@@ -148,14 +148,14 @@
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions cap + idempotency (nothing fired)",
+      "command": "auto_fix_actions empty (no candidate) — cap 1 PR + 1 issue + 1 comment upheld",
       "observed": "auto_fix_actions=[]",
-      "expected": "\u22643 with per-type caps"
+      "expected": "≤3 total, ≤1 per action_type"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management JSON valid + pm_cursor/coverage_cursor in range",
+      "command": "management JSON valid + pm_cursor/coverage_cursor in range (Phase 1.6 skipped so GC7 clause is no-op)",
       "observed": "pm_cursor.next_index=5, coverage_cursor.next_index=12 (epics=13)",
       "expected": "in [0,7] / [0, epics)"
     },
@@ -167,5 +167,6 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met certainty bar this rerun; all new activity absorbed by seen_signals dedup"
 }
