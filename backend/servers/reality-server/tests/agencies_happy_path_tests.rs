@@ -177,7 +177,10 @@ async fn get_my_agency_with_agency_returns_200(pool: PgPool) {
     let token = mint_token(user);
     let app = agencies_router(pool);
     let status = send(&app, Method::GET, "/api/v1/agencies/me", Some(&token)).await;
-    assert!(status.is_success(), "expected 2xx for a member, got {status}");
+    assert!(
+        status.is_success(),
+        "expected 2xx for a member, got {status}"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
