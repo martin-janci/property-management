@@ -13,7 +13,7 @@ import { buildUrl, SitemapTestHelper } from '../src/utils';
 describe('Sitemap Data', () => {
   describe('Routes', () => {
     it('should have ppt-web routes', () => {
-      expect(sitemap.routes['ppt-web'].length).toBe(19);
+      expect(sitemap.routes['ppt-web'].length).toBe(20);
     });
 
     it('should have reality-web routes', () => {

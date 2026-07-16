@@ -24,7 +24,10 @@ function generateSitemapJson(): void {
     },
     flows: sitemap.flows,
     metadata: {
-      generated_at: new Date().toISOString(),
+      // NOTE: intentionally no wall-clock timestamp here. This file is
+      // committed and embedded into the Rust backend via include_str!, so the
+      // generator output must be deterministic — a `new Date()` value made
+      // every regeneration produce a spurious diff (churn hotspot).
       version: '1.0.0',
       stats: {
         ppt_web_routes: sitemap.routes['ppt-web'].length,
@@ -38,7 +41,9 @@ function generateSitemapJson(): void {
   };
 
   const outputPath = path.join(__dirname, 'sitemap.json');
-  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  // Trailing newline keeps the artifact POSIX-clean and matches how the file
+  // is committed; the output is otherwise a stable serialization of ../data.
+  fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`);
 
   console.log(`Generated sitemap.json at ${outputPath}`);
   console.log('Stats:', output.metadata.stats);

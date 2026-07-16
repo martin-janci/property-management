@@ -80,6 +80,7 @@
       "!**/.next",
       "!**/generated",
       "!**/*.gen.ts",
+      "!**/packages/sitemap/src/json/sitemap.json",
       "!**/pnpm-lock.yaml",
       "!**/public/mockServiceWorker.js",
       "!**/next-env.d.ts",
