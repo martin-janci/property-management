@@ -140,7 +140,9 @@ pub struct UserFlow {
 /// Sitemap metadata
 #[derive(Debug, Clone, Deserialize)]
 pub struct SitemapMetadata {
-    pub generated_at: String,
+    /// Optional: the generator intentionally omits a wall-clock timestamp so the
+    /// committed, `include_str!`-embedded artifact stays deterministic.
+    pub generated_at: Option<String>,
     pub version: String,
     pub stats: SitemapStats,
 }
