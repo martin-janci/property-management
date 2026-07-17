@@ -1,0 +1,365 @@
+{
+  "run_iso": "2026-07-17T03:12:35Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "commit-scan",
+      "score_delta": 0,
+      "evidence": "+676/-192 in PR #2397 (make sitemap.json determinism fix). One-time regeneration; not organic instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/packages/sitemap/src/json/sitemap.json"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "repeated-churn",
+      "source": "commit-scan",
+      "score_delta": 1,
+      "evidence": "seen in 2 runs (last 2026-07-16); current-run churn: 868 lines. +676/-192 in PR #2397 (make sitemap.json determinism fix). One-time regeneration; not organic instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/packages/sitemap/src/json/sitemap.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit-scan",
+      "score_delta": 1,
+      "evidence": "+225/-0 new RLS scheduler test suite in PR #2340.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt",
+      "type": "churn-hotspot",
+      "source": "commit-scan",
+      "score_delta": 1,
+      "evidence": "+203/-0 new KMP portal listings repo test in PR #2371 (test-only, first-time).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "evidence": "PR #2373 touched reality route files ['frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.test.ts', 'frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts', 'frontend/apps/reality-web/src/app/[locale]/listings/[slug]/listingSchema.test.ts'] but did not update docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.test.ts",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/listingSchema.test.ts"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2382-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2382",
+      "score_delta": 2,
+      "evidence": "PR #2382 touched reality route files ['frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx'] but did not update docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2384",
+      "score_delta": 2,
+      "evidence": "PR #2384 touched ppt route files ['frontend/apps/ppt-web/src/routes/groups/reports.create-schedule.route.test.tsx', 'frontend/apps/ppt-web/src/routes/groups/reports.tsx'] but did not update docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.create-schedule.route.test.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2409",
+      "score_delta": 2,
+      "evidence": "PR #2409 touched reality route files ['frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx'] but did not update docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2385",
+      "type": "dep-update-noise",
+      "source": "PR #2385",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-m",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2386",
+      "type": "dep-update-noise",
+      "source": "PR #2386",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump actions/setup-node from 6 to 7",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2387",
+      "type": "dep-update-noise",
+      "source": "PR #2387",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump the npm-minor-patch group in /frontend with 15 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2388",
+      "type": "dep-update-noise",
+      "source": "PR #2388",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump the cargo-minor-patch group in /backend with 7 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2389",
+      "type": "dep-update-noise",
+      "source": "PR #2389",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps-dev): bump @expo/config-plugins from 55.0.10 to 57.0.5 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2390",
+      "type": "dep-update-noise",
+      "source": "PR #2390",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump commander from 14.0.3 to 15.0.0 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2391",
+      "type": "dep-update-noise",
+      "source": "PR #2391",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump expo from 56.0.12 to 57.0.6 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2392",
+      "type": "dep-update-noise",
+      "source": "PR #2392",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump expo-notifications from 55.0.22 to 57.0.5 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2393",
+      "type": "dep-update-noise",
+      "source": "PR #2393",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump the kotlin group in /mobile-native with 4 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2394",
+      "type": "dep-update-noise",
+      "source": "PR #2394",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump the gradle-minor-patch group in /mobile-native with 3 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "code-review-api-core-scheduler-dup-exec",
+      "type": "code-review-finding",
+      "source": "static-review",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs:1451-1484 \u2014 record_execution() and advance_after_run() are not wrapped in a transaction; if record succeeds but advance fails, next_run_at is unchanged, so the next tick re-fires the schedule and inserts another `pending` report_executions row (unbounded duplicates while advance keeps erroring, e.g. any transient RLS/DB blip \u2014 the same failure mode class as #2318).",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs",
+        "backend/crates/db/src/repositories/report_schedule.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-unscoped-retry",
+      "type": "code-review-finding",
+      "source": "static-review",
+      "score_delta": 2,
+      "evidence": "backend/crates/db/src/repositories/report_schedule.rs:533-568 \u2014 pub unscoped `retry_execution(id: Uuid)` has zero callers in the servers (grep confirms only retry_execution_scoped is used), yet remains public alongside the scoped variant added for #647; a future handler wiring the wrong method silently reintroduces the closed cross-tenant IDOR. Same footgun applies to unscoped `get_by_id` (l.63) and `get_execution` (l.351).",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-list-exec-noscope",
+      "type": "code-review-finding",
+      "source": "static-review",
+      "score_delta": 2,
+      "evidence": "backend/crates/db/src/repositories/report_schedule.rs:283-345 \u2014 `list_executions` filters only by `schedule_id` and never joins to report_schedules.organization_id; today's tenant safety depends entirely on the caller in routes/reports.rs:1628 pre-checking with get_by_id_scoped. Any future handler skipping that pre-check leaks cross-tenant execution history. Push the org filter into the query itself (JOIN report_schedules like get_execution_scoped does at l.379-410).",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs",
+        "backend/servers/api-server/src/routes/reports.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal doublecount check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay checks",
+      "observed": "cap=true; no items need decay (all open items are today's)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation in brief",
+      "observed": "passed",
+      "expected": "passed | fixed-in-place | rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan structure",
+      "observed": "1 new plan, all 4 metadata + 11 headings + capability tick + Mode declared + 3 files exist",
+      "expected": "count<=2 + structure OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in diff --cached",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phase 1.6 marked skipped, pm_cursor unchanged",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "cur=7 prev=7",
+      "expected": "cur>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "Phase 1.6 skipped \u2192 no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_reason": "no candidate \u2014 all high-confidence signals were code-review-finding (not in Phase 5 allowlist); screen-map-drift signals are medium-confidence; dep-update-noise signals are open dependabot PRs, not lockfile-drift shape; no stalled-review or fixme-in-merged-code signals this run"
+}
