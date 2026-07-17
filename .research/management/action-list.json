@@ -186,7 +186,7 @@
       "action": "Follow-up: dead `packages` i18n namespace still orphaned in 5 non-en locales after PR #2395 removed it from en only (Closes #2405)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2405)",
       "deadline": null,
       "dependency": null,
@@ -199,14 +199,15 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-17T02:08:22Z"
     },
     {
       "id": "gh-issue-2406",
       "action": "Follow-up: screen-map init write boundary doesn't validate ids against IdSchema, so grouping rename/merge ids still slip through (PR #2380) (Closes #2406)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2406)",
       "deadline": null,
       "dependency": null,
@@ -219,7 +220,8 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-17T02:08:22Z"
     }
   ],
   "generated": "2026-07-15T01:55:00Z"

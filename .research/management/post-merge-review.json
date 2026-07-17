@@ -1,9 +1,31 @@
 {
-  "generated": "2026-07-16T00:33:04Z",
+  "generated": "2026-07-17T02:16:08Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-17T02:16:08Z",
+      "prs_scanned": 15,
+      "clean": [
+        2398,
+        2397,
+        2396,
+        2395,
+        2384,
+        2383,
+        2382,
+        2381,
+        2380,
+        2379,
+        2378,
+        2376,
+        2375,
+        2374,
+        2373
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-07-16T00:33:04Z",
       "prs_scanned": 15,
@@ -201,7 +223,7 @@
           "issue": 2324,
           "findings": 5,
           "specialist": "react-web",
-          "note": "list hooks call nonexistent backend endpoints \u2014 create flow still broken"
+          "note": "list hooks call nonexistent backend endpoints — create flow still broken"
         },
         {
           "pr": 2287,
@@ -513,7 +535,7 @@
           "issue": 2301,
           "findings": 1,
           "specialist": "pm-backend",
-          "note": "mobile OS push (FCM/APNs) transport merge review \u2014 follow-up filed as #2301"
+          "note": "mobile OS push (FCM/APNs) transport merge review — follow-up filed as #2301"
         },
         {
           "pr": 2297,
