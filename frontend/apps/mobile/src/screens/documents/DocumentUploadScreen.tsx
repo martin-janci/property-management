@@ -28,10 +28,11 @@ import {
   View,
 } from 'react-native';
 import { getApiBaseUrl } from '../../config/api';
+import { transcodeToJpeg } from '../../utils/imageCompression';
 import { extractTenantId } from '../../utils/jwt';
 import { colors } from '../shared/screenStyles';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
@@ -45,7 +46,7 @@ const ACCESS_TOKEN_KEY = 'ppt_access_token';
  * server's 422.
  *
  * These are a hand-maintained mirror of the Rust constants; the drift guard in
- * `DocumentUploadScreen.parity.test.tsx` parses those Rust sources and fails CI
+ * `DocumentUploadScreen.parity.test.ts` parses those Rust sources and fails CI
  * if either list diverges (GitHub #2368), so a backend *widening* can't be
  * silently rejected here.
  */
@@ -84,7 +85,7 @@ const DOCUMENT_CATEGORIES = [
 ] as const;
 type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────
 
 interface PickedFile {
   uri: string;
@@ -106,7 +107,7 @@ interface DocumentUploadScreenProps {
   onCancel?: () => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -202,7 +203,7 @@ export async function uploadDocumentMultipart(params: {
   return response.json() as Promise<{ id: string; message: string }>;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ───────────────────────────────────────────────
 
 export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScreenProps) {
   const { t } = useTranslation();
@@ -214,7 +215,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<UploadFormErrors>({});
 
-  // ── File picking ──────────────────────────────────────────────
+  // ── File picking ───────────────────────────────
 
   const pickDocument = useCallback(async () => {
     try {
@@ -259,17 +260,50 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
       // The extension is lower-cased so a `.PNG`/`.HEIC` capture isn't
       // mislabelled `image/jpeg`. The resolved `mimeType` then flows through
       // the same `ALLOWED_MIME_TYPES` guard in `validate()` as the document
-      // picker, so a type the server would reject (e.g. HEIC) is caught here
-      // instead of after a full upload (GitHub #2368).
+      // picker, so a type the server would reject is caught here instead of
+      // after a full upload (GitHub #2368).
       const extension = (
         asset.fileName?.split('.').pop() ??
         asset.uri.split('.').pop() ??
         'jpg'
       ).toLowerCase();
-      const mimeType = asset.mimeType ?? (extension === 'png' ? 'image/png' : 'image/jpeg');
-      const fileName = asset.fileName ?? `photo_${Date.now()}.${extension}`;
+      // Extension → MIME fallback for when the picker reports none. HEIC/HEIF are
+      // mapped honestly (NOT defaulted to image/jpeg) so a MIME-less iOS capture
+      // still routes through the transcode branch below instead of being uploaded
+      // as HEIF bytes mislabelled image/jpeg (GitHub #2400 / the #2383 corruption).
+      const extensionMime: Record<string, string> = {
+        png: 'image/png',
+        heic: 'image/heic',
+        heif: 'image/heif',
+      };
+      let mimeType = asset.mimeType ?? extensionMime[extension] ?? 'image/jpeg';
+      let fileName = asset.fileName ?? `photo_${Date.now()}.${extension}`;
+      let uri = asset.uri;
+
+      // iOS captures default to HEIC/HEIF, which the backend allow-list rejects —
+      // leaving the photo picker a dead-end for the most common iPhone format. The
+      // sibling faults flow (`ReportFaultScreen`) already re-encodes picked images
+      // to JPEG, so mirror that here: transcode HEIC/HEIF to JPEG before the
+      // allow-list guard instead of hard-rejecting it (GitHub #2400). Genuinely
+      // non-image types still fall through to the reject path in `validate()`.
+      const isHeic =
+        mimeType === 'image/heic' ||
+        mimeType === 'image/heif' ||
+        extension === 'heic' ||
+        extension === 'heif';
+      if (isHeic && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+        try {
+          uri = await transcodeToJpeg(asset.uri);
+          mimeType = 'image/jpeg';
+          fileName = `${fileName.replace(/\.[^/.]+$/, '')}.jpg`;
+        } catch {
+          // Transcode failed — keep the original HEIC so `validate()` rejects it
+          // with `fileTypeNotAllowed` rather than uploading a mislabelled file.
+        }
+      }
+
       setPickedFile({
-        uri: asset.uri,
+        uri,
         name: fileName,
         mimeType,
         size: asset.fileSize ?? 0,
@@ -281,7 +315,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
     }
   }, [title, t]);
 
-  // ── Validation ────────────────────────────────────────────────
+  // ── Validation ───────────────────────────────
 
   const validate = (): boolean => {
     const next: UploadFormErrors = {};
@@ -306,7 +340,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
     return Object.keys(next).length === 0;
   };
 
-  // ── Submit ────────────────────────────────────────────────────
+  // ── Submit ───────────────────────────────────
 
   const handleSubmit = async () => {
     if (!validate() || !pickedFile || !category) return;
@@ -336,7 +370,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────
 
   return (
     <KeyboardAvoidingView
@@ -474,7 +508,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
   );
 }
 
-// ─── Helper: file icon by MIME ─────────────────────────────────────────────────
+// ─── Helper: file icon by MIME ──────────────────────────────────
 
 export function getFileIcon(mimeType: string): string {
   if (mimeType.includes('pdf')) return '📄';
@@ -484,7 +518,7 @@ export function getFileIcon(mimeType: string): string {
   return '📎';
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
