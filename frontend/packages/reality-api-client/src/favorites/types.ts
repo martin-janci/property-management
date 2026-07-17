@@ -6,7 +6,52 @@
 
 import type { ListingFilters, ListingSummary } from '../listings/types';
 
-// Favorite Listing
+/**
+ * A favorite row exactly as it arrives **on the wire** from
+ * `GET /api/v1/favorites`.
+ *
+ * Field names mirror the reality-server `PortalFavoriteWithListing` DTO
+ * verbatim (`backend/crates/db/src/models/reality_portal.rs`): snake_case (that
+ * struct has no `#[serde(rename_all = "camelCase")]`), with the listing fields
+ * **flattened** onto the favorite — there is no nested `listing` object. The
+ * price fields are `rust_decimal::Decimal`, serialized as JSON **strings**
+ * (e.g. `"180000.00"`), so they arrive as strings, not numbers.
+ * `useFavorites` normalizes this raw shape into {@link FavoriteListing} at the
+ * client boundary — do not consume this interface directly in components.
+ */
+export interface PortalFavoriteWire {
+  id: string;
+  listing_id: string;
+  title: string;
+  current_price: string | number;
+  original_price?: string | number | null;
+  currency: string;
+  city: string;
+  property_type: string;
+  transaction_type: string;
+  photo_url?: string | null;
+  status: string;
+  price_changed: boolean;
+  price_change_percentage?: string | number | null;
+  price_alert_enabled: boolean;
+  created_at: string;
+}
+
+/**
+ * Raw response of `GET /api/v1/favorites` — the reality-server
+ * `FavoritesResponse { favorites: Vec<PortalFavoriteWithListing> }` envelope.
+ * Unpaginated: the route returns every favorite in one `favorites` array.
+ */
+export interface FavoritesWireResponse {
+  favorites: PortalFavoriteWire[];
+}
+
+/**
+ * A favorite normalized into the client view-model that the favorites UI
+ * consumes: the flattened wire listing fields (see {@link PortalFavoriteWire})
+ * are lifted into a nested {@link ListingSummary} and the Decimal price strings
+ * are coerced to numbers. This is the shape components read.
+ */
 export interface FavoriteListing {
   id: string;
   listingId: string;
@@ -49,7 +94,10 @@ export interface UpdateSavedSearchRequest {
   alertFrequency?: 'daily' | 'weekly' | 'instant';
 }
 
-// Paginated Response
+// Paginated Response.
+// NOTE: `GET /api/v1/favorites` is unpaginated on the wire (it returns the full
+// `{ favorites: [...] }` array); `useFavorites` derives this page envelope
+// client-side by slicing that array.
 export interface PaginatedFavorites {
   data: FavoriteListing[];
   total: number;
