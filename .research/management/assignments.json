@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-17T18:13:02Z",
+  "generated": "2026-07-17T22:08:32Z",
   "assignments": [
     {
       "task_id": "gh-issue-2360",
@@ -30,7 +30,7 @@
       "branch": "auto-impl/code-review-api-core-scheduler-rls-leak-8dbe94f2",
       "status": "in-progress",
       "claimed_at": "2026-07-17T20:08:00Z",
-      "last_updated": "2026-07-17T20:08:00Z",
+      "last_updated": "2026-07-17T22:08:32Z",
       "status_changed_at": "2026-07-17T20:08:00Z",
       "pr_number": null,
       "pr_url": null,
@@ -52,7 +52,7 @@
       "branch": "auto-impl/code-review-api-core-scheduler-mutex-poi-4d9e0747",
       "status": "in-progress",
       "claimed_at": "2026-07-17T20:08:00Z",
-      "last_updated": "2026-07-17T20:08:00Z",
+      "last_updated": "2026-07-17T22:08:32Z",
       "status_changed_at": "2026-07-17T20:08:00Z",
       "pr_number": null,
       "pr_url": null,
