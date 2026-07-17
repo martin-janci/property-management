@@ -60,6 +60,166 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "gh-issue-2399",
+      "action": "Follow-up: mobile login/logout clears only the in-memory query cache — AsyncStorage-persisted caches survive cross-tenant + app restart (PR #2372) (Closes #2399)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2399)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2399,
+        "url": "https://github.com/martin-janci/property-management/issues/2399",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2400",
+      "action": "Follow-up: DocumentUploadScreen photo path hard-rejects iOS HEIC instead of transcoding to JPEG like the faults flow (PR #2383) (Closes #2400)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2400)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2400,
+        "url": "https://github.com/martin-janci/property-management/issues/2400",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2401",
+      "action": "Follow-up: favorites optimistic toggle + test built on a client shape that diverges from the reality-server DTO — update no-ops in prod (PR #2382) (Closes #2401)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2401)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2401,
+        "url": "https://github.com/martin-janci/property-management/issues/2401",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2402",
+      "action": "Follow-up: /sign token still transported via query-string (access logs) + page reload breaks the signer flow after URL strip (PR #2378) (Closes #2402)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2402)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2402,
+        "url": "https://github.com/martin-janci/property-management/issues/2402",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2403",
+      "action": "Follow-up: create-schedule form still renders hardcoded English around the now-localized report selector (PR #2384) (Closes #2403)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2403)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2403,
+        "url": "https://github.com/martin-janci/property-management/issues/2403",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2404",
+      "action": "Follow-up: sitemap determinism has no CI/test guard against src/data <-> sitemap.json drift (PR #2397) (Closes #2404)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2404)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2404,
+        "url": "https://github.com/martin-janci/property-management/issues/2404",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2405",
+      "action": "Follow-up: dead `packages` i18n namespace still orphaned in 5 non-en locales after PR #2395 removed it from en only (Closes #2405)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2405)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2405,
+        "url": "https://github.com/martin-janci/property-management/issues/2405",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2406",
+      "action": "Follow-up: screen-map init write boundary doesn't validate ids against IdSchema, so grouping rename/merge ids still slip through (PR #2380) (Closes #2406)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2406)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2406,
+        "url": "https://github.com/martin-janci/property-management/issues/2406",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
