@@ -1,0 +1,219 @@
+{
+  "generated": "2026-07-17T20:11:00Z",
+  "trigger": "buffer-low: claimable=2/72 — refill planner",
+  "signals": [
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "evidence": "dependabot PR closed 2026-07-17T06:01:40Z without merge — dtolnay/rust-toolchain 1.94.1→1.10 is a downgrade (bad version), dependabot self-closed the rollback attempt",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2386",
+      "type": "dep-update-noise",
+      "source": "PR #2386",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump actions/setup-node 6→7",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2387",
+      "type": "dep-update-noise",
+      "source": "PR #2387",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump npm-minor-patch group in /frontend (15 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2388",
+      "type": "dep-update-noise",
+      "source": "PR #2388",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump cargo-minor-patch group in /backend (7 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2389",
+      "type": "dep-update-noise",
+      "source": "PR #2389",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump @expo/config-plugins 55.0.10→57.0.5 (frontend dev-deps)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2390",
+      "type": "dep-update-noise",
+      "source": "PR #2390",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump commander 14.0.3→15.0.0 (frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2391",
+      "type": "dep-update-noise",
+      "source": "PR #2391",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump expo 56.0.12→57.0.6 (frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2392",
+      "type": "dep-update-noise",
+      "source": "PR #2392",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump expo-notifications 55.0.22→57.0.5",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2393",
+      "type": "dep-update-noise",
+      "source": "PR #2393",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump kotlin group in /mobile-native (4 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2394",
+      "type": "dep-update-noise",
+      "source": "PR #2394",
+      "score_delta": 0,
+      "evidence": "open dependabot PR: bump gradle-minor-patch group in /mobile-native (3 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — backlog fully drained (0 open items pre-run); dep-update-noise not eligible for auto-fix; the single new closed-not-merged-pr-2385 row scored 1 (below the ≥3 auto-fix bar)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-17.md && head -1 .research/briefs/2026-07-17.md | grep -q '^# 2026-07-17$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq comparison of state.json vs HEAD",
+      "observed": "true — last_pr_seen 2356→2416, last_issue_seen 2370→2413, last_commit_sha updated, seen_signals grew by 10",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emit with score_delta != 0",
+      "observed": "true — all 10 signals have fresh ids not in prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "no open items with updated_at older than 14d (backlog was fully drained pre-run; the single new row is dated today)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "N/A — no new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans, each meets readiness gates",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff",
+      "observed": "0 matches (baseline docs untouched)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md against fresh regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "N/A — no phase failed; Phases 1.5 and 1.6 intentionally skipped (see brief)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotion convergence",
+      "observed": "no plans added or removed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "archive unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md against fresh regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions empty; kill switch not set; no signals met certainty bar (all score < 3 or off-allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts check (skipped when Phase 1.6 skipped)",
+      "observed": "N/A — Phase 1.6 skipped (buffer-low trigger; management upkeep deferred to next daily run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

@@ -4440,6 +4440,26 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "title": "PR #2385 (dependabot: bump dtolnay/rust-toolchain from 1.94.1 to 1.10) closed unmerged — bad version downgrade",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2385"
+      ],
+      "evidence": [
+        "dependabot PR closed 2026-07-17T06:01:40Z without merge — version 1.10 is a downgrade from 1.94.1, dependabot mistakenly filed a rollback"
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
     }
   ]
 }
