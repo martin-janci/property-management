@@ -97,7 +97,10 @@ async fn connection_by_id_is_scoped_to_owning_org(pool: PgPool) {
         .get_connection(conn.id, org_b)
         .await
         .expect("get_connection (owner) query ok");
-    assert!(owned.is_some(), "owner get_connection should return the row");
+    assert!(
+        owned.is_some(),
+        "owner get_connection should return the row"
+    );
 
     // --- update: org_a must NOT be able to overwrite org_b's connection ---
     let hijacked = repo
