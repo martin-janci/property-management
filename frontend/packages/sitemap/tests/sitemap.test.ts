@@ -9,6 +9,7 @@ import {
   getScreen,
   sitemap,
 } from '../src';
+import { SITEMAP_JSON_PATH, serializeSitemapJson } from '../src/json/generate';
 import { buildUrl, SitemapTestHelper } from '../src/utils';
 
 describe('Sitemap Data', () => {
@@ -152,5 +153,24 @@ describe('Package exports (CJS resolvability)', () => {
     for (const conditions of Object.values(pkg.exports)) {
       expect(conditions.default).toBe(conditions.import);
     }
+  });
+});
+
+describe('sitemap.json drift guard', () => {
+  // Anti-regression guard for the determinism fix (PR #2397, follow-up #2404).
+  // `frontend/biome.json` excludes the generated artifact from lint/format, so
+  // an author who edits `src/data` but forgets `pnpm generate-json` would ship a
+  // stale committed JSON that every other gate passes — the exact silent-drift
+  // class PR #2397 set out to kill. This case rebuilds the output from
+  // `src/data` via the same pure serializer the generator uses and byte-compares
+  // it against the committed file, covering both "regenerating yields identical
+  // bytes" (idempotence / IG3) and "committed JSON is not stale".
+  it('committed sitemap.json byte-matches a fresh build from src/data', () => {
+    const built = serializeSitemapJson();
+    const committed = readFileSync(SITEMAP_JSON_PATH, 'utf8');
+    expect(
+      built,
+      'src/json/sitemap.json is out of sync with src/data — run `pnpm --filter @ppt/sitemap generate-json` and commit the result'
+    ).toBe(committed);
   });
 });
