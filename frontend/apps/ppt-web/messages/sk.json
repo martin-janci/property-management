@@ -624,19 +624,6 @@
     "draftMinutesAgo": "pred {{count}}m",
     "draftRestored": "Obnovili sme váš uložený návrh."
   },
-  "packages": {
-    "title": "Správa zásielok",
-    "subtitle": "Sledovanie a správa zásielok v budove",
-    "loading": "Načítavajú sa zásielky...",
-    "loadError": "Nepodarilo sa načítať zásielky",
-    "registerPackage": "Zaregistrovať zásielku",
-    "filterAll": "Všetky",
-    "filterPickedUp": "Vyzdvihnuté",
-    "noPackages": "Žiadne zásielky",
-    "noPackagesFound": "Zásielky sa nenašli",
-    "receiveError": "Nepodarilo sa označiť zásielku ako prijatú.",
-    "pickupError": "Nepodarilo sa označiť zásielku ako vyzdvihnutú."
-  },
   "financial": {
     "title": "Financie",
     "invoices": "Faktúry",

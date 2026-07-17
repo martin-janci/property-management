@@ -575,19 +575,6 @@
     "draftMinutesAgo": "{{count}} perce",
     "draftRestored": "A mentett piszkozatot visszaállítottuk."
   },
-  "packages": {
-    "title": "Csomagkezelés",
-    "subtitle": "Épület csomagjainak nyomon követése és kezelése",
-    "loading": "Csomagok betöltése...",
-    "loadError": "Nem sikerült betölteni a csomagokat",
-    "registerPackage": "Csomag regisztrálása",
-    "filterAll": "Összes",
-    "filterPickedUp": "Átvett",
-    "noPackages": "Nincsenek csomagok",
-    "noPackagesFound": "Nem találhatók csomagok",
-    "receiveError": "Nem sikerült a csomagot átvettként megjelölni.",
-    "pickupError": "Nem sikerült a csomagot felvettként megjelölni."
-  },
   "financial": {
     "title": "Pénzügyek",
     "invoices": "Számlák",

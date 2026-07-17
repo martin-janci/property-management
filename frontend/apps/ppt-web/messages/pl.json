@@ -577,19 +577,6 @@
     "draftMinutesAgo": "{{count}}m temu",
     "draftRestored": "Przywrócono zapisany szkic."
   },
-  "packages": {
-    "title": "Zarządzanie przesyłkami",
-    "subtitle": "Śledzenie i zarządzanie przesyłkami w budynku",
-    "loading": "Ładowanie przesyłek...",
-    "loadError": "Nie udało się załadować przesyłek",
-    "registerPackage": "Zarejestruj przesyłkę",
-    "filterAll": "Wszystkie",
-    "filterPickedUp": "Odebrane",
-    "noPackages": "Brak przesyłek",
-    "noPackagesFound": "Nie znaleziono przesyłek",
-    "receiveError": "Nie udało się oznaczyć przesyłki jako odebranej.",
-    "pickupError": "Nie udało się oznaczyć przesyłki jako podjętej."
-  },
   "financial": {
     "title": "Finanse",
     "invoices": "Faktury",
