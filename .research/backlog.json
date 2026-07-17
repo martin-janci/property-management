@@ -4427,7 +4427,8 @@
         "git-log-since-2026-07-13"
       ],
       "evidence": [
-        "frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never)"
+        "frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never)",
+        "cumulative churn re-emit 2026-07-17: +868 lines this run (runs_seen: 1 → 2; score_delta not re-applied; already resolved by PR #2397 deterministic-output refactor)"
       ],
       "files": [
         "frontend/packages/sitemap/src/json/sitemap.json"
@@ -4440,6 +4441,73 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "refactor-churn-hotspots-report-schedule-rls-tests-2026-07-17",
+      "title": "Churn hotspot: backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs (+225 lines, first appearance) — new RLS test coverage for report scheduler",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "git-log-since-1006a4c",
+        "PR #2384",
+        "PR #2411"
+      ],
+      "evidence": [
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs: +225 lines this run (runs_seen was 0; last_seen never)",
+        "NEW test file added by PR #2384/#2411 (report schedule RLS coverage) — healthy test churn, not instability",
+        "dropped-on-create: analytical, not actionable"
+      ],
+      "files": [
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspots-portal-listings-repo-test-kt-2026-07-17",
+      "title": "Churn hotspot: mobile-native/shared/.../PortalListingsRepositoryTest.kt (+203 lines, first appearance) — new KMP test coverage for portal-listings repository",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "git-log-since-1006a4c"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt: +203 lines this run (runs_seen was 0; last_seen never)",
+        "NEW test file paired with new PortalListingsRepository.kt this run — healthy new-feature test coverage, not instability",
+        "dropped-on-create: analytical, not actionable"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "title": "PR #2385 (dependabot: bump dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — superseded/conflict",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "PR #2385"
+      ],
+      "evidence": [
+        "PR #2385 closed unmerged 2026-07-17T06:01:40Z with no merge",
+        "Grouped actions-minor-patch PRs landed the same day (#2386, #2394) — likely superseded by group promotion or dependency-graph conflict",
+        "dropped-on-create: dep-update-noise variant; no code action required"
+      ],
+      "files": [],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
     }
   ]
 }

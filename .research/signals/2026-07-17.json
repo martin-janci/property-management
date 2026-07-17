@@ -1,0 +1,163 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-1006a4c",
+      "score_delta": 0,
+      "evidence": "frontend/packages/sitemap/src/json/sitemap.json: +868 lines this run (runs_seen: 1 → 2 after this run; cumulative re-emit — score_delta not re-applied per Phase 1 cumulative-signal rule; already resolved by PR #2397 deterministic-output refactor)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-1006a4c",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs: +225 lines this run (runs_seen was 0; last_seen never); new test file added by PR #2384/#2411 area — healthy test churn, not instability",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt",
+      "type": "churn-hotspot",
+      "source": "git-log-since-1006a4c",
+      "score_delta": 1,
+      "evidence": "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt: +203 lines this run (runs_seen was 0; last_seen never); NEW test file paired with new PortalListingsRepository.kt — healthy new-feature test coverage",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "evidence": "PR #2385 (dependabot: bump dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged 2026-07-17T06:01:40Z — likely superseded by grouped `actions-minor-patch` update or version conflict",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "exit 0 and header match",
+      "expected": "exit 0 and header match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json cursors vs HEAD",
+      "observed": "true (last_pr_seen 2356→2416)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal id vs prior seen_signals + cumulative allowlist",
+      "observed": "true (only 4 signals; sitemap.json cumulative re-emit with score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0 && decay check",
+      "observed": "true (cap ok; decay no-op — 0 open items)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep for each new plan's adversarial-pass annotation",
+      "observed": "no new plans this run",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans ≤ 2",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/hostnames in staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen from backlog.json",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief's Phases that failed line matches actual advanced cursors",
+      "observed": "Phase 1.5/1.6 skipped and cursors unchanged",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "each prior plan slug still exists in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen from backlog.json triage rows",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "true (empty)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged this run (Phase 1.6 skipped) so gate is no-op",
+      "observed": "pm_cursor=5=5, coverage_cursor=12=12",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram bot-token in added staged lines (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

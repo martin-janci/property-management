@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-16 03:04 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-17 11:00 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -63,8 +63,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
-| 1 | refactor | `refactor-churn-hotspots-en-json-2026-07-16` | Churn hotspot: frontend/apps/ppt-web/messages/en.json — frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never) | open | 2026-07-16 |  |
-| 1 | refactor | `refactor-churn-hotspots-sitemap-json-2026-07-16` | Churn hotspot: frontend/packages/sitemap/src/json/sitemap.json — frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never) | open | 2026-07-16 |  |
+| 1 | refactor | `refactor-churn-hotspots-report-schedule-rls-tests-2026-07-17` | Churn hotspot: backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs (+225 lines, first appearance) — new RLS test coverage for report scheduler | dropped | 2026-07-17 |  |
+| 1 | refactor | `refactor-churn-hotspots-portal-listings-repo-test-kt-2026-07-17` | Churn hotspot: mobile-native/shared/.../PortalListingsRepositoryTest.kt (+203 lines, first appearance) — new KMP test coverage for portal-listings repository | dropped | 2026-07-17 |  |
+| 1 | dep-update | `closed-not-merged-pr-2385` | PR #2385 (dependabot: bump dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — superseded/conflict | dropped | 2026-07-17 |  |
+| 1 | refactor | `refactor-churn-hotspots-en-json-2026-07-16` | Churn hotspot: frontend/apps/ppt-web/messages/en.json — frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never) | done | 2026-07-16 |  |
+| 1 | refactor | `refactor-churn-hotspots-sitemap-json-2026-07-16` | Churn hotspot: frontend/packages/sitemap/src/json/sitemap.json — frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never) | done | 2026-07-16 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |
 | 1 | test-gap | `test-gap-repeated-churn-oauth-integration-tests` | oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving | dropped | 2026-07-09 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-routes-auth` | api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run | done | 2026-07-09 |  |
