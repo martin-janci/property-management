@@ -575,19 +575,6 @@
     "draftMinutesAgo": "vor {{count}}m",
     "draftRestored": "Ihr gespeicherter Entwurf wurde wiederhergestellt."
   },
-  "packages": {
-    "title": "Paketverwaltung",
-    "subtitle": "Pakete im Gebäude verfolgen und verwalten",
-    "loading": "Pakete werden geladen...",
-    "loadError": "Pakete konnten nicht geladen werden",
-    "registerPackage": "Paket registrieren",
-    "filterAll": "Alle",
-    "filterPickedUp": "Abgeholt",
-    "noPackages": "Keine Pakete",
-    "noPackagesFound": "Keine Pakete gefunden",
-    "receiveError": "Paket konnte nicht als empfangen markiert werden.",
-    "pickupError": "Paket konnte nicht als abgeholt markiert werden."
-  },
   "financial": {
     "title": "Finanzen",
     "invoices": "Rechnungen",
