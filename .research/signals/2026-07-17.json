@@ -1,0 +1,143 @@
+{
+  "date": "2026-07-17",
+  "run_iso": "2026-07-17T10:00:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "evidence": "en.json +3987/-119 lines this run (top-3 raw code churn). Re-emit: already in seen_signals from 2026-07-16; cumulative type — no score_delta re-applied.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "evidence": "sitemap.json +4399/-192 this run (top-2 raw code churn). Re-emit: already in seen_signals; cumulative. PR #2397 made it deterministic — future churn should stop.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "evidence": "reports.rs +3329/-0 this run (top-3 raw code churn). Re-emit: already in seen_signals; cumulative.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "en.json runs_seen was 1, becomes 2 this run — repeated-churn threshold met (first fire).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "sitemap.json runs_seen was 1, becomes 2 — repeated-churn threshold met (first fire). PR #2397 makes it deterministic going forward.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "reports.rs runs_seen was 2, becomes 3 — repeated-churn stacks. Report-schedules feature area still landing (#2384, #2411).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "evidence": "PR #2411 (gh-issue-2403: localize create-schedule form) touched ppt-web routes/reports.tsx + route.test.tsx without updating docs/screens/ppt/*.md. HEURISTIC — likely i18n-only, no visible surface change.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2409",
+      "score_delta": 2,
+      "evidence": "PR #2409 (gh-issue-2401: reconcile favorites client to real reality-server DTO) touched reality-web app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/*.md. HEURISTIC — client-side DTO reconciliation.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2384",
+      "score_delta": 2,
+      "evidence": "PR #2384 (gh-issue-2370: localize create-schedule report labels) touched ppt-web routes/reports.tsx + route.test.tsx without updating docs/screens/ppt/*.md. HEURISTIC — likely i18n-only.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2382-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2382",
+      "score_delta": 2,
+      "evidence": "PR #2382 (test(gap-84-3): cover AC-5 favorite price-alert toggle) touched reality-web app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/*.md. HEURISTIC — pure test file addition.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "evidence": "PR #2373 (refactor(reality-web): consolidate listing-detail shape validation) touched reality-web listings/[slug]/jsonLd + listingSchema without updating docs/screens/reality/*.md. HEURISTIC — internal refactor.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "evidence": "PR #2385 (chore(deps): bump dtolnay/rust-toolchain 1.94.1→1.100.0) opened by dependabot and closed unmerged 2026-07-17 — dep-update auto-supersede pattern; no action needed.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-2026-07-17",
+      "type": "dep-update-noise",
+      "source": "PRs #2386–#2394",
+      "score_delta": 0,
+      "evidence": "9 dependabot PRs opened yesterday: #2386 (actions/setup-node), #2387 (npm-minor-patch), #2388 (cargo-minor-patch), #2389 (@expo/config-plugins), #2390 (commander), #2391 (expo), #2392 (expo-notifications), #2393 (kotlin), #2394 (gradle-minor-patch). Informational only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-17.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json differs from HEAD", "observed": "cursors + seen_signals + hotspot_history changed", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "no duplicate ids in backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "seen re-emits have score_delta=0 for cumulative types", "observed": "3 cumulative re-emits (churn-hotspot en.json, sitemap.json, reports.rs) all with score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score >8; decay applied to open items >14d old", "observed": "no open items >14d old (all rows created today or terminal); no scores >8", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — vacuous pass", "observed": "0 new plans", "expected": "0 or all annotated" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; each meets metadata+headings+file resolution", "observed": "0 new plans (vacuous)", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private-hostnames in added lines", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regeneration", "observed": "regenerated in-place", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "Phase 1.5 and 1.6 skipped (not failed); cursors not advanced", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior plans still in plans/ or _archive/", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD", "observed": "no archive changes this run", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regeneration", "observed": "regenerated in-place", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix within caps + idempotency", "observed": "0 auto-fix actions (nothing met certainty bar)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — no-op", "observed": "Phase 1.6 skipped; gate no-op", "expected": "true" },
+    { "goal": "G17", "passed": true, "command": "no telegram token literal", "observed": "0", "expected": "0" }
+  ]
+}

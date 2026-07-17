@@ -4440,6 +4440,186 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "refactor-repeated-churn-en-json-2026-07-17",
+      "title": "Repeated churn hotspot: frontend/apps/ppt-web/messages/en.json (runs_seen 1→2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "en.json: +3987/-119 this run (runs_seen was 1, now 2 → repeated-churn fires); PR #2395 dropped orphaned namespaces yesterday — expect churn to normalize next run"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-sitemap-json-2026-07-17",
+      "title": "Repeated churn hotspot: frontend/packages/sitemap/src/json/sitemap.json (runs_seen 1→2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "sitemap.json: +4399/-192 this run (runs_seen was 1, now 2 → repeated-churn fires); PR #2397 made generated sitemap deterministic — future churn should stop after this window"
+      ],
+      "files": [
+        "frontend/packages/sitemap/src/json/sitemap.json"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-reports-rs-2026-07-17",
+      "title": "Repeated churn hotspot: backend/servers/api-server/src/routes/reports.rs (runs_seen 2→3)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "reports.rs: +3329/-0 this run (runs_seen was 2, now 3 → repeated-churn stacks); report-schedules feature area (PRs #2318/#2340/#2384/#2411) still landing; candidate for module split"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "title": "PR #2411 touched ppt-web routes/reports.tsx without updating docs/screens/ppt/* — heuristic, likely no visible surface change (i18n + error mapping)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2411"
+      ],
+      "evidence": [
+        "PR #2411 (gh-issue-2403: localize create-schedule form + map remaining error codes) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + its route.test.tsx without updating docs/screens/ppt/*.md. HEURISTIC — likely visual-surface-unchanged (i18n + toast copy)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "title": "PR #2409 touched reality-web app/[locale]/favorites without updating docs/screens/reality/* — heuristic, likely test-only",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2409"
+      ],
+      "evidence": [
+        "PR #2409 (gh-issue-2401: reconcile favorites client to real reality-server DTO) touched frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/*.md. HEURISTIC — the change is a client-side DTO reconciliation, no route surface change."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "title": "PR #2384 touched ppt-web routes/reports.tsx without updating docs/screens/ppt/* — heuristic",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2384"
+      ],
+      "evidence": [
+        "PR #2384 (gh-issue-2370: localize create-schedule report labels + backend error toast) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + route.test.tsx without updating docs/screens/ppt/*.md. HEURISTIC — likely i18n-only."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2382-reality",
+      "title": "PR #2382 touched reality-web app/[locale]/favorites without updating docs/screens/reality/* — heuristic, test-only",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2382"
+      ],
+      "evidence": [
+        "PR #2382 (test(gap-84-3): cover AC-5 favorite price-alert toggle + optimistic update) touched frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/*.md. HEURISTIC — pure test file addition."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "title": "PR #2373 touched reality-web listings/[slug]/jsonLd + listingSchema without updating docs/screens/reality/* — heuristic, refactor",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2373"
+      ],
+      "evidence": [
+        "PR #2373 (refactor(reality-web): consolidate listing-detail shape validation into parseListingDetail() normalizer) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts + listingSchema without updating docs/screens/reality/*.md. HEURISTIC — internal refactor, no visible surface change."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
+    },
+    {
+      "id": "dep-update-closed-superseded-pr-2385",
+      "title": "PR #2385 (dependabot rust-toolchain 1.94.1→1.100.0) closed unmerged — likely superseded",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2385"
+      ],
+      "evidence": [
+        "PR #2385 (chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-minor-patch group) opened by dependabot and closed unmerged 2026-07-17 — dependabot auto-supersede pattern, no action needed."
+      ],
+      "files": [
+        ".github/workflows/"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": null
     }
   ]
 }
