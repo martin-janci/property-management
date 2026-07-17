@@ -141,6 +141,37 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
     expect(toastArg.message).not.toBe(rawBackendMessage);
   });
 
+  // issue #2403: the backend emits create-schedule error codes beyond the
+  // original 4 (EMPTY_NAME/INVALID_FREQUENCY/INVALID_RECIPIENT_EMAIL/
+  // INVALID_TIMEZONE). Previously TOO_MANY_RECIPIENTS/INVALID_TIME/INVALID_FORMAT
+  // fell through to the generic "Failed to create schedule." — now they map to
+  // their own localized copy.
+  it('maps a newly-covered backend error code to its localized message', async () => {
+    mockCreateMutateAsync.mockRejectedValue(
+      new ApiError(400, 'Too many recipients', 'TOO_MANY_RECIPIENTS')
+    );
+    const user = userEvent.setup();
+
+    renderReportsRoute();
+
+    await user.click(await screen.findByRole('button', { name: /schedules/i }, { timeout: 5000 }));
+    await user.click(await screen.findByRole('button', { name: /new schedule/i }));
+
+    const builtin = BUILTIN_REPORTS[0];
+    await user.selectOptions(screen.getByRole('combobox', { name: /report/i }), builtin.id);
+    await user.type(screen.getByLabelText(/schedule name/i), 'Weekly Revenue Summary');
+    await user.type(screen.getByLabelText(/recipients/i), 'owner@example.com');
+
+    await user.click(screen.getByRole('button', { name: /save schedule/i }));
+
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
+    const toastArg = mockShowToast.mock.calls.at(-1)?.[0] as { message: string };
+    expect(toastArg.message).toBe(i18n.t('reports.schedule.createErrors.tooManyRecipients'));
+    expect(toastArg.message).not.toBe(i18n.t('reports.schedule.createFailed'));
+  });
+
   // issue #2370: the report selector labels must be translated per-locale, not
   // rendered from the hardcoded English `name`.
   describe('localized report selector labels', () => {
@@ -167,6 +198,34 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
       await waitFor(() => {
         expect(screen.getByRole('option', { name: skFaults })).toBeInTheDocument();
       });
+    });
+
+    // issue #2403: the static form chrome around the report selector (placeholder
+    // option, submit button, …) was hardcoded English — in a non-English locale
+    // it must now render translated copy too.
+    it('renders the static form chrome in the active (non-English) locale', async () => {
+      i18n.addResourceBundle('sk', 'translation', sk, true, true);
+      await i18n.changeLanguage('sk');
+      const user = userEvent.setup();
+
+      renderReportsRoute();
+
+      await user.click(
+        await screen.findByRole('button', { name: /schedules|naplánova/i }, { timeout: 5000 })
+      );
+      await user.click(await screen.findByRole('button', { name: /new schedule|naplánova/i }));
+
+      // The empty "Select a report" placeholder option — localized, not the
+      // hardcoded English literal.
+      const skSelect = sk.reports.schedule.form.selectReport;
+      expect(skSelect).not.toBe('Select a report');
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: skSelect })).toBeInTheDocument();
+      });
+      // The submit button is localized too.
+      expect(
+        screen.getByRole('button', { name: sk.reports.schedule.form.save })
+      ).toBeInTheDocument();
     });
   });
 });
