@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-17",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=0 < floor=36). No fresh CHURN_FILES were handed to this slice, so churn-alignment did not apply -> fell through to oldest-unreviewed via state.review_cursor. Cursor tied at oldest 2026-07-13 across api-core / reality-server / ppt-web-ui / reality-web. Tie broken by actual signal-file recency: api-core, reality-server and ppt-web-ui each already have a 2026-07-16 tier1d signal file, whereas reality-web's most recent review was 2026-07-15 (reality-web-tier1d), making it the genuinely least-recently-reviewed segment. Not backlog-saturated (0 open code-review-finding items for any segment; all backlog items are done/dropped/closed). Segment root: frontend/apps/reality-web/src/ (skill map path frontend/reality-web/src/ resolves to the apps/ workspace layout). Frontend expert, static-only, no secondary (reality-web has no secondary expert in the skill matrix).",
+  "experts_used": [
+    "frontend"
+  ],
+  "review_scope_notes": "191 ts/tsx files -> narrowed per token-budget rule. Grep hit-lists driven: console.log/error, `as any`/`as unknown as`, and Next.js server/data-fetch pages. Verified NOT reportable: all `as unknown as`/`as any` casts are test-only (*.test.ts[x]); the flagged console.error sites (ComparisonUrlHandler.tsx:60, RealtorManagement.tsx:572, and the two app/[locale]/error.tsx boundaries) are legitimate catch-block handlers with user-facing fallbacks. Expert traced the six server/data-fetch pages (listings, listings/[slug], realtor/[id], account/listings/[id]/edit, inquiries, sell) plus every @ppt/reality-api-client hook consumer under app/ and components/. Only the public listings search page lacks an error branch, and the QueryClient (lib/query-provider.tsx) sets no throwOnError so app/[locale]/error.tsx never rescues it -> silent empty-state on API failure. Two low-severity i18n gaps found on otherwise-localized authenticated/public pages. 3 findings = cap reached; no additional passes.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-listings-no-error-branch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/listings/page.tsx:145 — The primary public search-results page calls `const { data, isLoading } = useListings(filters, currentPage)` and never destructures `error`/`isError`; the file contains zero occurrences of `error`, `isError`, or `catch`. The QueryClient in lib/query-provider.tsx sets no `throwOnError`, so TanStack Query's default (do NOT throw) keeps failures in query state and app/[locale]/error.tsx never fires. On any listings API failure the grid receives `data?.data ?? []` (line 338) and silently renders the empty state — indistinguishable from a genuine zero-result search — on the app's main SEO/user path. Every sibling data page (favorites, inquiries, saved-searches, FeaturedListings, agency profile) DOES render an explicit error branch, making this a clear omission rather than a design choice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-saved-search-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/saved-searches/page.tsx:38,55 — User-facing labels are hardcoded English literals ('For Sale', 'For Rent', 'All listings', and the '€… - €…' summary) inside `getFilterSummary()` rather than next-intl `t('…')`. reality-web ships sk/cs/de/en, so Slovak/Czech/German users on this authenticated page see untranslated English copy. The rest of the file is otherwise localized, so these strays look like an oversight."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/agency/[slug]/page.tsx:36 and app/[locale]/realtor/[id]/page.tsx:114 — Public profile pages render hardcoded Slovak strings ('Načítavam…', '✓ Overený maklér') irrespective of the active `[locale]` segment; these components deliberately bypass next-intl (documented in the agency page header comment). Non-Slovak visitors reached via localized URLs get Slovak text on public, SEO-indexed profile pages."
+      ]
+    }
+  ]
+}

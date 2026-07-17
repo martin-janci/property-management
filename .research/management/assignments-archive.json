@@ -6363,6 +6363,50 @@
       "merge_attempted_at": "2026-07-17T02:17:40Z"
     },
     {
+      "task_id": "gh-issue-2405",
+      "branch": "auto-impl/gh-issue-2405-bf4d5adb",
+      "status": "merged",
+      "claimed_at": "2026-07-17T02:08:22Z",
+      "last_updated": "2026-07-17T08:15:43Z",
+      "status_changed_at": "2026-07-17T08:15:43Z",
+      "pr_number": 2415,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2415",
+      "merged_at": "2026-07-17T08:15:43Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2415 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=deleted packages ns from 5 locales + added failing-on-dev parity test; all 3 verify bands green; git push worked despite 403 warning",
+      "reviewer_summary": "verdict=approve head_oid=1b1ed0b54d81661248aaf3c3845cb808f4eaae64 note=clean-dead-i18n-removal-parity-restored-approved-via-comment-self-approval-blocked",
+      "last_reviewed_oid": "1b1ed0b54d81661248aaf3c3845cb808f4eaae64",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-17T08:13:53Z"
+    },
+    {
+      "task_id": "gh-issue-2406",
+      "branch": "auto-impl/gh-issue-2406-44177344",
+      "status": "merged",
+      "claimed_at": "2026-07-17T02:08:22Z",
+      "last_updated": "2026-07-17T08:15:37Z",
+      "status_changed_at": "2026-07-17T08:15:37Z",
+      "pr_number": 2414,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2414",
+      "merged_at": "2026-07-17T08:15:37Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2414 status=done specialist=generic scope_drift=false code_reuse_warn=none note=IdSchema/frontmatter validation at init-write serialize boundary; regression fails-on-dev; screen-map suite+typecheck+biome green",
+      "reviewer_summary": "verdict=approve head_oid=5b0550fda7cf06a46e33d3d693eff0a71ed167cb note=clean-idschema-write-boundary-fix; CI green; scope/reuse ok; APPROVE posted as comment (self-approval blocked)",
+      "last_reviewed_oid": "5b0550fda7cf06a46e33d3d693eff0a71ed167cb",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-17T08:13:53Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7117,5 +7161,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-17T04:20:51Z"
+  "archived_at": "2026-07-17T08:19:44Z"
 }
