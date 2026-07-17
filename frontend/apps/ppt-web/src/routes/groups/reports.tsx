@@ -39,6 +39,13 @@ const CREATE_SCHEDULE_ERROR_KEYS: Record<string, string> = {
   INVALID_FREQUENCY: 'reports.schedule.createErrors.invalidFrequency',
   INVALID_RECIPIENT_EMAIL: 'reports.schedule.createErrors.invalidRecipientEmail',
   INVALID_TIMEZONE: 'reports.schedule.createErrors.invalidTimezone',
+  // issue #2403: the backend `create_schedule` handler emits these codes too, but
+  // they were unmapped and fell back to the generic "Failed to create schedule".
+  TOO_MANY_RECIPIENTS: 'reports.schedule.createErrors.tooManyRecipients',
+  INVALID_TIME: 'reports.schedule.createErrors.invalidTime',
+  INVALID_FORMAT: 'reports.schedule.createErrors.invalidFormat',
+  INVALID_DAY_OF_WEEK: 'reports.schedule.createErrors.invalidDayOfWeek',
+  INVALID_DAY_OF_MONTH: 'reports.schedule.createErrors.invalidDayOfMonth',
 };
 
 /**

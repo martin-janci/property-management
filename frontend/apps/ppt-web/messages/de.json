@@ -1011,7 +1011,56 @@
         "emptyName": "Der Name des Zeitplans darf nicht leer sein.",
         "invalidFrequency": "Die gewählte Häufigkeit wird nicht unterstützt.",
         "invalidRecipientEmail": "Eine oder mehrere E-Mail-Adressen der Empfänger sind ungültig.",
-        "invalidTimezone": "Bitte wählen Sie eine gültige Zeitzone."
+        "invalidTimezone": "Bitte wählen Sie eine gültige Zeitzone.",
+        "tooManyRecipients": "Zu viele Empfänger. Bitte reduzieren Sie die Anzahl der E-Mail-Adressen.",
+        "invalidTime": "Bitte geben Sie eine gültige Uhrzeit ein.",
+        "invalidFormat": "Das gewählte Exportformat wird nicht unterstützt.",
+        "invalidDayOfWeek": "Bitte wählen Sie einen gültigen Wochentag.",
+        "invalidDayOfMonth": "Bitte wählen Sie einen gültigen Tag des Monats."
+      },
+      "form": {
+        "reportLabel": "Bericht",
+        "selectReport": "Bericht auswählen",
+        "nameLabel": "Name des Zeitplans",
+        "namePlaceholder": "Wöchentliche Umsatzübersicht",
+        "frequencyLabel": "Häufigkeit",
+        "frequencies": {
+          "daily": "Täglich",
+          "weekly": "Wöchentlich",
+          "monthly": "Monatlich"
+        },
+        "dayOfWeekLabel": "Wochentag",
+        "daysOfWeek": {
+          "sunday": "Sonntag",
+          "monday": "Montag",
+          "tuesday": "Dienstag",
+          "wednesday": "Mittwoch",
+          "thursday": "Donnerstag",
+          "friday": "Freitag",
+          "saturday": "Samstag"
+        },
+        "dayOfMonthLabel": "Tag des Monats",
+        "dayOfMonthHint": "Geben Sie einen Tag zwischen 1 und 31 ein. In Monaten mit weniger Tagen wird der Zeitplan am letzten Tag des Monats ausgeführt.",
+        "timeLabel": "Uhrzeit",
+        "timezoneLabel": "Zeitzone",
+        "formatLabel": "Exportformat",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Empfänger",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Mehrere E-Mails durch Kommas trennen",
+        "save": "Zeitplan speichern",
+        "saving": "Wird gespeichert...",
+        "validation": {
+          "selectReport": "Bitte wählen Sie einen Bericht aus",
+          "nameRequired": "Der Name des Zeitplans ist erforderlich",
+          "recipientsRequired": "Mindestens ein Empfänger ist erforderlich",
+          "invalidEmails": "Ungültige E-Mail(s): {{emails}}",
+          "timeRequired": "Uhrzeit ist erforderlich"
+        }
       }
     },
     "builtin": {

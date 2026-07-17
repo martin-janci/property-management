@@ -72,6 +72,7 @@ async function fetchJsonInner<T>(
     // Read the body once — a 401 mfa_required carries the marker we need and
     // we still want it for the error message in the fall-through case.
     const err = (await response.json().catch(() => ({}))) as {
+      code?: string;
       error?: string;
       message?: string;
     };
@@ -83,10 +84,15 @@ async function fetchJsonInner<T>(
       }
     }
 
+    // The backend `ErrorResponse` carries the machine-readable code in `code`
+    // (see backend/crates/common/src/errors.rs); `error` only ever holds the
+    // legacy `mfa_required` marker. Preferring `code` here (issue #2403) means
+    // callers migrated onto this shared helper still get a real `ApiError.code`
+    // to map to a localized message, instead of `undefined`.
     throw new ApiError(
       response.status,
-      err.message || err.error || `HTTP ${response.status}`,
-      err.error
+      err.message || err.code || err.error || `HTTP ${response.status}`,
+      err.code ?? err.error
     );
   }
   if (response.status === 204) return undefined as unknown as T;

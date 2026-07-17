@@ -3263,7 +3263,56 @@
         "emptyName": "The schedule name must not be empty.",
         "invalidFrequency": "The selected frequency is not supported.",
         "invalidRecipientEmail": "One or more recipient email addresses are invalid.",
-        "invalidTimezone": "Please select a valid timezone."
+        "invalidTimezone": "Please select a valid timezone.",
+        "tooManyRecipients": "Too many recipients. Please reduce the number of email addresses.",
+        "invalidTime": "Please enter a valid time.",
+        "invalidFormat": "The selected export format is not supported.",
+        "invalidDayOfWeek": "Please select a valid day of the week.",
+        "invalidDayOfMonth": "Please select a valid day of the month."
+      },
+      "form": {
+        "reportLabel": "Report",
+        "selectReport": "Select a report",
+        "nameLabel": "Schedule Name",
+        "namePlaceholder": "Weekly Revenue Summary",
+        "frequencyLabel": "Frequency",
+        "frequencies": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        },
+        "dayOfWeekLabel": "Day of Week",
+        "daysOfWeek": {
+          "sunday": "Sunday",
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday"
+        },
+        "dayOfMonthLabel": "Day of Month",
+        "dayOfMonthHint": "Enter a day between 1-31. For months with fewer days, the schedule will run on the last day of the month.",
+        "timeLabel": "Time",
+        "timezoneLabel": "Timezone",
+        "formatLabel": "Export Format",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Recipients",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Separate multiple emails with commas",
+        "save": "Save Schedule",
+        "saving": "Saving...",
+        "validation": {
+          "selectReport": "Please select a report",
+          "nameRequired": "Schedule name is required",
+          "recipientsRequired": "At least one recipient is required",
+          "invalidEmails": "Invalid email(s): {{emails}}",
+          "timeRequired": "Time is required"
+        }
       }
     },
     "builtin": {
