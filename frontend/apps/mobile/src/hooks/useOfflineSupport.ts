@@ -3,12 +3,13 @@ import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../config/api';
+import { CACHE_PREFIX, LAST_SYNC_KEY, QUEUE_KEY } from '../services/localCacheKeys';
 import { extractTenantId } from '../utils/jwt';
 
-// Storage keys
-const CACHE_PREFIX = 'ppt_cache_';
-const QUEUE_KEY = 'ppt_offline_queue';
-const LAST_SYNC_KEY = 'ppt_last_sync';
+// Storage keys. The AsyncStorage cache/queue namespaces live in
+// `services/localCacheKeys` (shared with `resetLocalData`, issue #2399). The
+// access token is a SecureStore key, not part of that purgeable namespace, so
+// it stays local here.
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
 export interface CacheOptions {

@@ -71,6 +71,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
+  // `getAllKeys` defaults to an empty list and `removeMany` to a no-op so
+  // `resetLocalData` (called from AuthContext login/logout, issue #2399) is a
+  // harmless no-op in suites that don't drive persisted-cache behavior.
+  getAllKeys: jest.fn(async () => []),
+  removeMany: jest.fn(async () => {}),
   clear: jest.fn(),
 }));
 
