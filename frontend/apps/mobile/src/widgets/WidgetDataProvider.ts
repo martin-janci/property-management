@@ -5,6 +5,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { WIDGET_CONFIG_KEY, WIDGET_DATA_KEY } from '../services/localCacheKeys';
 import type {
   ActiveFaultsWidgetData,
   AnnouncementWidgetData,
@@ -16,9 +17,6 @@ import type {
   WidgetData,
   WidgetType,
 } from './types';
-
-const WIDGET_CONFIG_KEY = '@ppt/widget_configs';
-const WIDGET_DATA_KEY = '@ppt/widget_data';
 
 /**
  * Provides data for home screen widgets.
