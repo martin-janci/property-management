@@ -6319,6 +6319,28 @@
       "merge_attempted_at": "2026-07-17T02:17:40Z"
     },
     {
+      "task_id": "gh-issue-2403",
+      "branch": "auto-impl/gh-issue-2403-4b3aa9ed",
+      "status": "merged",
+      "claimed_at": "2026-07-17T00:06:40Z",
+      "last_updated": "2026-07-17T04:20:25Z",
+      "status_changed_at": "2026-07-17T04:20:25Z",
+      "pr_number": 2411,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2411",
+      "merged_at": "2026-07-17T04:16:11Z",
+      "specialist": "react-web",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=c0eb111cb7a755db572e72d60fa3260ae11de91e note=clean-frontend-only; research-deletions-gone; i18n keys consistent across 6 locales; error-map+fetch.ts sound",
+      "last_reviewed_oid": "c0eb111cb7a755db572e72d60fa3260ae11de91e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-17T04:20:25Z"
+    },
+    {
       "task_id": "gh-issue-2404",
       "branch": "auto-impl/gh-issue-2404-8152bde8",
       "status": "merged",
@@ -7095,5 +7117,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-17T02:24:54Z"
+  "archived_at": "2026-07-17T04:20:51Z"
 }
