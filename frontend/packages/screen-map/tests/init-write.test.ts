@@ -78,6 +78,31 @@ describe('bulkWriteScreenMaps', () => {
     expect(result.skipped).toHaveLength(0);
   });
 
+  it('rejects a grouping-mutated invalid id at the write boundary (no file written)', async () => {
+    // Interactive grouping (grouping.ts rename/merge) can set an arbitrary
+    // user-supplied id after `scanCandidates` runs its IdSchema guard, so the
+    // write boundary must re-validate. These ids all have a non-empty slug —
+    // they pass the pre-existing `no slug` check — but fail IdSchema / the
+    // product-prefix superRefine, and must never be written (#2406).
+    const cases: CandidateScreen[] = [
+      // whitespace + uppercase in slug (rename to "Foo Bar")
+      { id: 'ppt/Foo Bar', name: 'Foo Bar', product: 'ppt', source: 'user' },
+      // uppercase slug
+      { id: 'ppt/UPPER', name: 'Upper', product: 'ppt', source: 'user' },
+      // product-prefix mismatch: id says reality, product says ppt
+      { id: 'reality/x', name: 'X', product: 'ppt', source: 'user' },
+    ];
+    for (const c of cases) {
+      await expect(bulkWriteScreenMaps([c], tmpRoot)).rejects.toThrow(
+        /invalid screen-map frontmatter/
+      );
+      // The guard must throw before writeFile — nothing lands on disk.
+      const slug = c.id.split('/')[1];
+      const leaked = path.join(tmpRoot, c.product, `${slug}.md`);
+      await expect(readFile(leaked, 'utf8')).rejects.toThrow();
+    }
+  });
+
   it('preserves user-edited screen-maps even when force=true', async () => {
     const c: CandidateScreen[] = [{ id: 'ppt/foo', name: 'Foo', product: 'ppt', source: 'user' }];
     await bulkWriteScreenMaps(c, tmpRoot);
