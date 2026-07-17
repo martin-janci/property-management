@@ -9,12 +9,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getApiBase } from '../config';
+import type { ListingSummary } from '../listings/types';
 import type {
   CreateSavedSearchRequest,
   FavoriteAlertsResponse,
   FavoriteAlertsWireResponse,
+  FavoriteListing,
+  FavoritesWireResponse,
   MarkAllFavoriteAlertsReadResponse,
   PaginatedFavorites,
+  PortalFavoriteWire,
   SavedSearch,
   UpdateFavoriteRequest,
   UpdateSavedSearchRequest,
@@ -22,19 +26,72 @@ import type {
 
 // Favorites Hooks
 
+/**
+ * Map a wire favorite (reality-server `PortalFavoriteWithListing` — snake_case,
+ * flattened listing fields, Decimal prices as strings) into the client
+ * {@link FavoriteListing} view-model the UI consumes. The list DTO carries only
+ * a subset of `ListingSummary`; fields it doesn't provide (`slug`, `area`, …)
+ * are defaulted so the card can render from what the favorites endpoint gives.
+ */
+function mapWireFavorite(w: PortalFavoriteWire): FavoriteListing {
+  const listing: ListingSummary = {
+    id: w.listing_id,
+    title: w.title,
+    // The favorites list DTO carries no slug; fall back to the listing id so
+    // the card link is at least a stable identifier rather than `undefined`.
+    slug: w.listing_id,
+    propertyType: w.property_type as ListingSummary['propertyType'],
+    transactionType: w.transaction_type as ListingSummary['transactionType'],
+    status: w.status as ListingSummary['status'],
+    price: toNumeric(w.current_price) ?? 0,
+    currency: w.currency,
+    // Not carried by the favorites list DTO.
+    area: 0,
+    address: { city: w.city, country: '' },
+    primaryPhoto: w.photo_url
+      ? {
+          id: w.listing_id,
+          url: w.photo_url,
+          thumbnailUrl: w.photo_url,
+          isPrimary: true,
+          order: 0,
+        }
+      : undefined,
+    isFeatured: false,
+    createdAt: w.created_at,
+    updatedAt: w.created_at,
+  };
+
+  return {
+    id: w.id,
+    listingId: w.listing_id,
+    listing,
+    addedAt: w.created_at,
+    price_alert_enabled: w.price_alert_enabled,
+  };
+}
+
 export function useFavorites(page = 1, pageSize = 20) {
   return useQuery({
     queryKey: ['favorites', page, pageSize],
     queryFn: async (): Promise<PaginatedFavorites> => {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pageSize', String(pageSize));
-
-      const response = await fetch(`${getApiBase()}/api/v1/favorites?${params}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorites');
-      return response.json();
+
+      // reality-server answers with the unpaginated `{ favorites: [...] }`
+      // envelope (`FavoritesResponse`), each row snake_case with flattened
+      // listing fields — NOT a `{ data: [{ listingId, listing }] }` shape.
+      // Normalize to the client view-model, then paginate client-side.
+      const wire: FavoritesWireResponse = await response.json();
+      const all = (wire.favorites ?? []).map(mapWireFavorite);
+      const total = all.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const start = (page - 1) * pageSize;
+      const data = all.slice(start, start + pageSize);
+
+      return { data, total, page, pageSize, totalPages };
     },
   });
 }
