@@ -4440,6 +4440,54 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "bug-scheduler-rls-guc-leak-on-error",
+      "title": "Scheduler RLS global-read GUC leaks to pooled connection when clear-flag call errors",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review api-core 2026-07-17",
+        "backend/servers/api-server/src/services/scheduler.rs:1416"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:1400-1426 — fire_due_report_schedules uses `?` on set_global_read_context(conn,false) after the cross-org SELECT; if that clear errors, the pooled connection is returned with SET app.global_read = true still active on the session.",
+        "backend/migrations/00218_global_read_policies.sql adds SELECT-only global_read RLS policy leg — a leaky connection borrowed later without tenant context can read cross-org rows.",
+        "workflow_executor.rs uses guard.release() RAII pattern for the same GUC cleanup — reference precedent (7+ call sites)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs",
+        "backend/crates/db/src/tenant_context.rs",
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": "plans/bug-scheduler-rls-guc-leak-on-error.md"
+    },
+    {
+      "id": "refactor-scheduler-metrics-mutex-unwrap-poison",
+      "title": "Scheduler std::sync::Mutex<SchedulerMetrics> — 14× .lock().unwrap() sites poison the mutex and kill scheduled work on any inner panic",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review api-core 2026-07-17",
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "evidence": [
+        "grep `metrics\\.lock\\(\\)\\.unwrap\\(\\)` in backend/servers/api-server/src/services/scheduler.rs → 14 hits (lines 168,314,377,497,549,832,858,878,1033,1163,1256,1323,1502,1511).",
+        "Any panic while a caller holds the guard poisons the Mutex; every subsequent .unwrap() panics, silently killing announcements/vote-activate/vote-close/vote-reminders/overdue-transitions/report-schedule ticks.",
+        "Fix: swap for lock().unwrap_or_else(|e| e.into_inner()) via a small private helper; no behavior change on happy path."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-17",
+      "plan": "plans/refactor-scheduler-metrics-mutex-unwrap-poison.md"
     }
   ]
 }

@@ -1,0 +1,62 @@
+{
+  "date": "2026-07-17",
+  "signals": [
+    {
+      "id": "code-review-api-core-scheduler-rls-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-dev-review 2026-07-17T18:17:03Z (api-core rotating-expert-review)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs:1416 — fire_due_report_schedules uses `?` on set_global_read_context(conn,false) after the cross-org SELECT; if that clear-flag call itself errors, the pooled connection is returned with session-level SET app.global_read = true still active. Subsequent tenant-less query passes RLS SELECT-only global_read policy leg (migration 00218). Guard-release pattern from workflow_executor.rs closes it."
+    },
+    {
+      "id": "code-review-api-core-scheduler-mutex-poison",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-dev-review 2026-07-17T18:17:03Z (api-core rotating-expert-review)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs — 14× metrics.lock().unwrap() sites (168,314,377,497,549,832,858,878,1033,1163,1256,1323,1502,1511). A panic under the guard poisons std::sync::Mutex; every subsequent tick .unwrap() panics, silently killing announcements/vote/overdue/report-schedule work. Fix: unwrap_or_else(|e| e.into_inner())."
+    },
+    {
+      "id": "lag-warning-2026-07-17",
+      "type": "lag_warning",
+      "source": "phase-1 lag check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine last_run_iso=2026-07-16T03:04:00Z is 43h (1d 19h) old — > 36h threshold. Cause: buffer-low trigger fired late in the day; routine catching up now."
+    },
+    {
+      "id": "dep-update-noise-2026-07-16-batch",
+      "type": "dep-update-noise",
+      "source": "phase-1 gh pr list open",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "9 open dependabot PRs (#2386-2394) — batches for actions/setup-node, npm-minor-patch (15 updates), cargo-minor-patch (7 updates), Expo 56→57, Kotlin group, Gradle group. Logged, not scored."
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-17.md && first line matches # 2026-07-17", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json cursors + seen_signals advanced vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no double-scored signal ids", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap (score<=8) and decay applied", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan has brief line with 'adversarial pass: passed|fixed-in-place|rolled-back'", "observed": "true", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans, all metadata + 11 headings + files-exist", "observed": "true", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached only .research/", "observed": "0 non-.research paths", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets or private hostnames in diff", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen from backlog.json", "observed": "diff exit 0", "expected": "diff exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases", "observed": "no failed phases", "expected": "match" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present or archived", "observed": "true", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD", "observed": "unchanged (6 == 6)", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "diff exit 0", "expected": "diff exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (Phase 5 skipped — no eligible signal + prioritizing plan promotion for buffer refill)", "observed": "0 actions", "expected": "≤3" },
+    { "goal": "G16", "passed": true, "command": "management artifacts unchanged (Phase 1.6 skipped this run to prioritize buffer-low plan refill)", "observed": "no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token in staged diff", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "prioritized plan promotion for buffer refill (dispatcher claimable=0/72); no allowlist signal fired this run"
+}
