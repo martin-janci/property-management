@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-17",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=0 < floor=36; coverage 47/49). No fresh CHURN_FILES handed to this slice, so churn-alignment did not apply -> fell through to oldest-unreviewed via state.review_cursor. Prior dispatcher run (08:21/10:01) already reviewed reality-web (now cursor 2026-07-17). Remaining oldest tied at 2026-07-13 across api-core / reality-server / ppt-web-ui; broken by segment map order -> api-core (also incidentally churn-aligned: services/push_fanout.rs carries recent_churn 689 in hotspot_history and lives under the api-core root). Not backlog-saturated (0 open code-review-finding items for any segment). Segment root: backend/servers/api-server/src/ excluding routes/ (skill map path backend/api-server/src/ resolves to the servers/ workspace layout; the 'handlers/' dir is named 'routes/' here). Rust expert, static-only, no secondary (api-core has no secondary expert in the skill matrix).",
+  "experts_used": [
+    "rust"
+  ],
+  "review_scope_notes": "19.7k LoC across 22 service files + main/state/lib/bin. Grep hit-lists driven: unwrap/expect (non-test), unsafe (0), todo!/unimplemented!/panic!, JWT verify path, secrets-in-logs, fail-open bool defaults, silent-error swallows, SystemTime unwraps. Verified NOT reportable: all totp.rs panics are startup-config fail-fast in new(); totp/jwt/stripe/notification unwraps are test-module or infallible-constant/OS-rng; scheduler.rs metrics.lock().unwrap() is the accepted std Mutex poison pattern on tiny critical sections; oauth.rs token/PKCE/family-reuse path is hardened (PKCE mandatory, principal_kind re-checked on refresh); quiet_hours.rs cross-midnight logic is correct; config from_env defaults (push_fanout, feature_service, FCM parse) are all sensible. Delegated the less-hardened services (workflow_executor, voice_commands, syndication, notification_pipeline, actions/api_call) to a focused Rust subagent; findings below verified by re-reading source + tracing reachability. notification_pipeline.rs reviewed clean. 3 findings = cap reached.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO-gated code. action_check_balance always answers 'balance is zero, no outstanding fees' (hardcoded data.balance=0.0) without querying any financial repo; action_report_fault mints a throwaway Uuid::new_v4() ticket, speaks it back to the resident ('The manager will be notified shortly'), and NEVER persists a fault row. Full call path traced reachable in production: routes/voice_webhooks.rs:146/162/265 -> VoiceCommandService::process_command -> match on intent (voice_commands.rs:143-144) -> these handlers. Failure scenario: a resident who owes fees is told they owe nothing (financial misinformation), and a spoken 'the elevator is broken' / 'gas smell' fault report is silently dropped with a confirmation number that maps to no ticket (data loss on a possibly safety-relevant path)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) — the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a private/link-local/metadata IP (e.g. 169.254.169.254, 10.x, fc00::/7) is not a literal IP, is not in the small blocked_hosts denylist, and does not end in .local/.internal, so it passes validation; reqwest then resolves it at send time (validate-then-resolve TOCTOU / DNS-rebinding SSRF). The URL is not admin-static: execute() (line ~240) runs context.substitute_template(&api_config.url) over trigger data before validation. Failure scenario: a workflow api_call action with url 'http://<attacker-host>/' where <attacker-host> resolves to the cloud metadata endpoint reaches internal infra; the IPv6/IPv4-literal hardening (P1-06 comment) never fires because no literal IP is present. Fix requires resolving the host and re-checking every resolved address (or pinning the connection) rather than parsing the host string as an IP."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:481-486 — evaluate_conditions() fails OPEN: a condition JSON value that deserializes as neither ConditionGroup nor Condition is logged and skipped, and the function ultimately returns Ok(true). The condition set is the gate that decides whether a workflow (which can send emails, mutate data, and make outbound api_call requests — see the SSRF finding) runs. Failure scenario: schema drift or a renamed/malformed condition object silently drops the intended guard, so the workflow fires when it should have been blocked. Likelihood is low (conditions are admin-authored) but it is a concrete fail-open on a gating decision; safer to fail closed (Ok(false) / propagate an error) on an unparseable condition."
+      ]
+    }
+  ]
+}

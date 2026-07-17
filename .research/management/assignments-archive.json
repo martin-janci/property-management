@@ -6407,6 +6407,30 @@
       "merge_attempted_at": "2026-07-17T08:13:53Z"
     },
     {
+      "task_id": "gh-issue-2413",
+      "branch": "auto-impl/gh-issue-2413-cd366d3b",
+      "status": "merged",
+      "claimed_at": "2026-07-17T06:09:39Z",
+      "last_updated": "2026-07-17T10:15:44Z",
+      "status_changed_at": "2026-07-17T10:15:44Z",
+      "pr_number": 2416,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2416",
+      "merged_at": "2026-07-17T10:13:59Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2416 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=app-level tenant scoping closes IDOR; db crate fmt/check/clippy green; api-server compile + sqlx test unrunnable in sandbox (swagger-ui egress 403 + no DB), will run on CI; RLS FORCE migration deferred (would deny-all on context-less owner pool)",
+      "reviewer_summary": "verdict=approve head_oid=c3f6b19acd256de383e893ea4088273e5527deff note=idor-fix-correct-ci-green-fmt-blocker-cleared",
+      "last_reviewed_oid": "c3f6b19acd256de383e893ea4088273e5527deff",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-17T10:15:44Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7161,5 +7185,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-17T08:19:44Z"
+  "archived_at": "2026-07-17T10:16:59Z"
 }
