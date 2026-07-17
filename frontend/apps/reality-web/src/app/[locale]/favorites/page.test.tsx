@@ -51,21 +51,32 @@ import FavoritesPage from './page';
 
 const LISTING_ID = 'listing-1';
 
+// The real reality-server `GET /api/v1/favorites` response: the
+// `{ favorites: [...] }` envelope (FavoritesResponse) with snake_case,
+// flattened listing fields (PortalFavoriteWithListing — no nested `listing`,
+// no `data` envelope) and Decimal prices as strings. Feeding this exact shape
+// makes the test fail if the client's casing/envelope mapping regresses.
 function favoritesPayload(priceAlertEnabled: boolean) {
   return {
-    data: [
+    favorites: [
       {
         id: 'fav-1',
-        listingId: LISTING_ID,
-        listing: { id: LISTING_ID, title: 'Sunny 2-bedroom apartment' },
-        addedAt: '2026-07-01T00:00:00Z',
+        listing_id: LISTING_ID,
+        title: 'Sunny 2-bedroom apartment',
+        current_price: '185000.00',
+        original_price: '199000.00',
+        currency: 'EUR',
+        city: 'Bratislava',
+        property_type: 'apartment',
+        transaction_type: 'sale',
+        photo_url: null,
+        status: 'active',
+        price_changed: true,
+        price_change_percentage: '-7.04',
         price_alert_enabled: priceAlertEnabled,
+        created_at: '2026-07-01T00:00:00Z',
       },
     ],
-    total: 1,
-    page: 1,
-    pageSize: 12,
-    totalPages: 1,
   };
 }
 
