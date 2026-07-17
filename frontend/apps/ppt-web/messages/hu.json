@@ -1011,7 +1011,56 @@
         "emptyName": "Az ütemezés neve nem lehet üres.",
         "invalidFrequency": "A kiválasztott gyakoriság nem támogatott.",
         "invalidRecipientEmail": "Egy vagy több címzett e-mail-címe érvénytelen.",
-        "invalidTimezone": "Kérjük, válasszon érvényes időzónát."
+        "invalidTimezone": "Kérjük, válasszon érvényes időzónát.",
+        "tooManyRecipients": "Túl sok címzett. Csökkentse az e-mail-címek számát.",
+        "invalidTime": "Adjon meg érvényes időpontot.",
+        "invalidFormat": "A kiválasztott exportformátum nem támogatott.",
+        "invalidDayOfWeek": "Válasszon érvényes napot a héten.",
+        "invalidDayOfMonth": "Válasszon érvényes napot a hónapban."
+      },
+      "form": {
+        "reportLabel": "Jelentés",
+        "selectReport": "Válasszon jelentést",
+        "nameLabel": "Ütemezés neve",
+        "namePlaceholder": "Heti bevételi összesítő",
+        "frequencyLabel": "Gyakoriság",
+        "frequencies": {
+          "daily": "Napi",
+          "weekly": "Heti",
+          "monthly": "Havi"
+        },
+        "dayOfWeekLabel": "A hét napja",
+        "daysOfWeek": {
+          "sunday": "Vasárnap",
+          "monday": "Hétfő",
+          "tuesday": "Kedd",
+          "wednesday": "Szerda",
+          "thursday": "Csütörtök",
+          "friday": "Péntek",
+          "saturday": "Szombat"
+        },
+        "dayOfMonthLabel": "A hónap napja",
+        "dayOfMonthHint": "Adjon meg egy napot 1 és 31 között. A kevesebb napból álló hónapokban az ütemezés a hónap utolsó napján fut le.",
+        "timeLabel": "Időpont",
+        "timezoneLabel": "Időzóna",
+        "formatLabel": "Exportformátum",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Címzettek",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Több e-mail-címet vesszővel válasszon el",
+        "save": "Ütemezés mentése",
+        "saving": "Mentés...",
+        "validation": {
+          "selectReport": "Válasszon jelentést",
+          "nameRequired": "Az ütemezés neve kötelező",
+          "recipientsRequired": "Legalább egy címzett szükséges",
+          "invalidEmails": "Érvénytelen e-mail-cím(ek): {{emails}}",
+          "timeRequired": "Az időpont megadása kötelező"
+        }
       }
     },
     "builtin": {

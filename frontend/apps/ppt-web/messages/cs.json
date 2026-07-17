@@ -1062,7 +1062,56 @@
         "emptyName": "Název plánu nesmí být prázdný.",
         "invalidFrequency": "Zvolená frekvence není podporována.",
         "invalidRecipientEmail": "Jedna nebo více e-mailových adres příjemců je neplatná.",
-        "invalidTimezone": "Vyberte platné časové pásmo."
+        "invalidTimezone": "Vyberte platné časové pásmo.",
+        "tooManyRecipients": "Příliš mnoho příjemců. Snižte počet e-mailových adres.",
+        "invalidTime": "Zadejte platný čas.",
+        "invalidFormat": "Zvolený formát exportu není podporován.",
+        "invalidDayOfWeek": "Vyberte platný den v týdnu.",
+        "invalidDayOfMonth": "Vyberte platný den v měsíci."
+      },
+      "form": {
+        "reportLabel": "Sestava",
+        "selectReport": "Vyberte sestavu",
+        "nameLabel": "Název plánu",
+        "namePlaceholder": "Týdenní přehled příjmů",
+        "frequencyLabel": "Frekvence",
+        "frequencies": {
+          "daily": "Denně",
+          "weekly": "Týdně",
+          "monthly": "Měsíčně"
+        },
+        "dayOfWeekLabel": "Den v týdnu",
+        "daysOfWeek": {
+          "sunday": "Neděle",
+          "monday": "Pondělí",
+          "tuesday": "Úterý",
+          "wednesday": "Středa",
+          "thursday": "Čtvrtek",
+          "friday": "Pátek",
+          "saturday": "Sobota"
+        },
+        "dayOfMonthLabel": "Den v měsíci",
+        "dayOfMonthHint": "Zadejte den v rozmezí 1–31. V měsících s menším počtem dní se plán spustí poslední den měsíce.",
+        "timeLabel": "Čas",
+        "timezoneLabel": "Časové pásmo",
+        "formatLabel": "Formát exportu",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Příjemci",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Více e-mailů oddělte čárkami",
+        "save": "Uložit plán",
+        "saving": "Ukládání...",
+        "validation": {
+          "selectReport": "Vyberte sestavu",
+          "nameRequired": "Název plánu je povinný",
+          "recipientsRequired": "Je vyžadován alespoň jeden příjemce",
+          "invalidEmails": "Neplatné e-maily: {{emails}}",
+          "timeRequired": "Čas je povinný"
+        }
       }
     },
     "builtin": {
