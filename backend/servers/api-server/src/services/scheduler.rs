@@ -165,7 +165,7 @@ impl Scheduler {
 
     /// Get current metrics.
     pub fn get_metrics(&self) -> SchedulerMetrics {
-        let guard = self.metrics.lock().unwrap();
+        let guard = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
         SchedulerMetrics {
             announcements_published: guard.announcements_published,
             announcements_unpinned: guard.announcements_unpinned,
@@ -311,7 +311,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.announcements_published += published.len() as u64;
             }
 
@@ -374,7 +374,7 @@ impl Scheduler {
                 unpinned
             );
 
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.announcements_unpinned += unpinned.len() as u64;
         }
 
@@ -494,7 +494,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.votes_activated += activated.len() as u64;
             }
 
@@ -546,7 +546,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.votes_closed += closed_ids.len() as u64;
             }
 
@@ -829,7 +829,7 @@ impl Scheduler {
         }
 
         if reminders_sent > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.vote_reminders_sent += reminders_sent;
         }
 
@@ -855,7 +855,7 @@ impl Scheduler {
                 "Session cleanup completed"
             );
 
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.sessions_cleaned += tokens_cleaned;
             metrics.login_attempts_cleaned += attempts_cleaned;
         }
@@ -875,7 +875,7 @@ impl Scheduler {
                 expired_count = expired_count,
                 "Expired overdue signature requests"
             );
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.signature_requests_expired += expired_count as u64;
         }
         Ok(())
@@ -1030,7 +1030,7 @@ impl Scheduler {
         }
 
         if total_reminders > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.signature_reminders_sent += total_reminders;
         }
 
@@ -1160,7 +1160,7 @@ impl Scheduler {
         }
 
         if total_reminders > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.meter_reminders_sent += total_reminders;
         }
 
@@ -1253,7 +1253,7 @@ impl Scheduler {
         }
 
         if total_sent > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.payment_reminders_sent += total_sent;
         }
 
@@ -1320,7 +1320,7 @@ impl Scheduler {
         }
 
         {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.invoices_transitioned_to_overdue += transitioned.len() as u64;
         }
 
@@ -1499,7 +1499,7 @@ impl Scheduler {
             .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
 
         if fired > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.report_schedules_fired += fired;
         }
 
@@ -1508,7 +1508,7 @@ impl Scheduler {
 
     /// Helper to increment error count in metrics.
     fn increment_errors(&self) {
-        let mut metrics = self.metrics.lock().unwrap();
+        let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
         metrics.errors += 1;
     }
 }
@@ -1634,6 +1634,40 @@ mod tests {
         assert_eq!(config.payment_reminder_days_before, 7);
         // Grace period defaults to 0: transition to overdue on the due date itself.
         assert_eq!(config.overdue_grace_period_days, 0);
+    }
+
+    #[test]
+    fn test_metrics_lock_recovers_from_poison() {
+        // Regression: the scheduler loop runs indefinitely and locks the
+        // metrics mutex on every tick. A previous `.lock().unwrap()` meant
+        // a single panic while the lock was held would poison it, so every
+        // subsequent tick panicked — silently killing all scheduled work.
+        // The fix locks with `.unwrap_or_else(|e| e.into_inner())`, which
+        // recovers the guarded value instead of propagating the poison.
+        use std::sync::{Arc, Mutex};
+
+        let metrics = Arc::new(Mutex::new(SchedulerMetrics::default()));
+
+        // Poison the mutex: panic while holding the guard.
+        let poisoner = Arc::clone(&metrics);
+        let _ = std::thread::spawn(move || {
+            let mut guard = poisoner.lock().unwrap_or_else(|e| e.into_inner());
+            guard.errors += 1;
+            panic!("intentional panic to poison the metrics mutex");
+        })
+        .join();
+
+        assert!(
+            metrics.is_poisoned(),
+            "mutex should be poisoned after panic"
+        );
+
+        // The recovery idiom must NOT panic and must observe the value
+        // written before the poisoning panic, then allow further mutation.
+        let mut guard = metrics.lock().unwrap_or_else(|e| e.into_inner());
+        assert_eq!(guard.errors, 1, "value written before poison is preserved");
+        guard.errors += 1;
+        assert_eq!(guard.errors, 2, "post-poison mutation still works");
     }
 
     #[test]
