@@ -1487,6 +1487,28 @@
       "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
+      "task_id": "code-review-api-core-scheduler-mutex-poison",
+      "branch": "auto-impl/code-review-api-core-scheduler-mutex-poi-4d9e0747",
+      "status": "merged",
+      "claimed_at": "2026-07-17T20:08:00Z",
+      "last_updated": "2026-07-18T02:18:55Z",
+      "status_changed_at": "2026-07-18T02:18:55Z",
+      "pr_number": 2420,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2420",
+      "merged_at": "2026-07-18T02:14:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2420 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=14 metrics.lock().unwrap()->unwrap_or_else(|e| e.into_inner()) + poison-recovery regression test; cargo check/test/clippy/fmt exit 0",
+      "reviewer_summary": "verdict=approve head_oid=749cea420244fdbfb0dce79dca61719c48d3b06d note=all-14-lock-sites-recovered-cleanly-ci-green",
+      "last_reviewed_oid": "749cea420244fdbfb0dce79dca61719c48d3b06d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-18T02:13:07Z"
+    },
+    {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "branch": "auto-impl/code-review-api-handlers-shares-revoke-d-658489f1",
       "status": "merged",
@@ -6431,6 +6453,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2417",
+      "branch": "auto-impl/gh-issue-2417-0f8ac533",
+      "status": "merged",
+      "claimed_at": "2026-07-18T00:06:00Z",
+      "last_updated": "2026-07-18T02:18:55Z",
+      "status_changed_at": "2026-07-18T02:18:55Z",
+      "pr_number": 2419,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2419",
+      "merged_at": "2026-07-18T02:14:26Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2419 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=docs-only 00216->00218 in 2 db comments (report_schedule.rs + rls_tests.rs); cargo check -p db --tests exit 0",
+      "reviewer_summary": "verdict=approve head_oid=3cee7df68de7fccc25472724fd2df4ffe002187f note=docs-only 00216->00218 fix verified against migrations dir; scope-drift justified; CI green",
+      "last_reviewed_oid": "3cee7df68de7fccc25472724fd2df4ffe002187f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-18T02:13:07Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7185,5 +7229,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-17T10:16:59Z"
+  "archived_at": "2026-07-18T02:19:20Z"
 }
