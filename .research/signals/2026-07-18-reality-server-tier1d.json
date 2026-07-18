@@ -1,0 +1,50 @@
+{
+  "segment": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "generated_by": "dispatcher-tier1d",
+  "generated_at": "2026-07-18T12:12:00Z",
+  "signals": [
+    {
+      "id": "code-review-reality-server-invite-authz",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373-401 — create_invitation (wired at line 38: POST /api/v1/agencies/{id}/invitations) performs NO membership/role check before calling the repo, unlike its siblings update_agency (line 268) and update_branding (line 322) which both call super::agency_imports::check_agency_membership. Verified in-file this run: create_invitation goes straight to reality_portal_repo.create_invitation(agency_id, principal.user_id, data). The repo method (backend/crates/db/src/repositories/reality_portal/agencies.rs:228-253) does an unconditional INSERT with no authorization, so the handler's 403 mapping for 'permission'/'unauthorized' (agencies.rs:390) is dead code.",
+        "Impact: any authenticated portal user (RequestPrincipal) can create an invitation for ANY agency id with an attacker-controlled email AND role (CreateAgencyInvitation.role: Option<String>, COALESCE default 'realtor' — so 'admin'/'owner' is accepted). Combined with accept_invitation (agencies.rs:421) the attacker invites their own email as 'owner', receives the token in the 201 response body, accepts it, and gains membership/control of an arbitrary agency — broken-access-control privilege escalation."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-invite-email-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:421-448 — accept_invitation adds the calling principal.user_id as an agency member based solely on a valid, unexpired token (repo accept_invitation at backend/crates/db/src/repositories/reality_portal/agencies.rs:256+ looks up the invitation by token then inserts the member) and never verifies that the authenticated user's email matches the invitation's target `email` column. Any authenticated user holding a token meant for someone else joins the agency with the invitation's role. Independently limited by token unguessability (UUIDv4), but directly compounds code-review-reality-server-invite-authz since the attacker mints and reads their own token."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-members-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:345-358 — list_members (GET /api/v1/agencies/{id}/members) has NO principal extractor (verified: signature is only State + Path<Uuid>) and calls get_agency_members(id) for any agency id, yet its OpenAPI doc advertises a 401 response (agencies.rs:342) that can never occur. Unauthenticated callers enumerate an agency's full membership roster (RealityAgencyMember: user_id, role, is_active, joined_at) for any agency UUID. Lower severity than the invitation issues since the DTO carries no name/email PII, but it is an unintended unauthenticated read that contradicts the documented contract."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
