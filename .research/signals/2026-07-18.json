@@ -1,0 +1,188 @@
+{
+  "generated_at": "2026-07-18",
+  "generated_by": "routine",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Routine last_run_iso=2026-07-16T03:04:00Z is 48h before now \u2014 routine missed a run yesterday.",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 \u2014 processQueue() permanently DROPS a terminally-failed offline mutation from the sync queue with only a `console.error('Action failed after max retries:', action)`. An action is terminal when it is `permanent` (a 4xx, reasonable to drop) OR `action.retries >= 3` (transient 5xx/network \u2014 NOT safe to drop). At line ~400 the queue is rebuilt keeping only `!succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`, so the failed action's PAYLOAD (e.g. an offline-created fault report from screens/faults/ReportFaultScreen.tsx, or a document action) is discarded with no dead-letter store and no per-item retry affordance.",
+        "Surfacing is aggregate-only: App.tsx:82 fires processQueue() fire-and-forget on reconnect; syncProgress.failed (App.tsx:334) feeds PendingSyncIndicator.tsx which renders a t('sync.failed') count. The user sees 'N failed' but cannot see WHICH items failed nor recover/re-submit them \u2014 after 3 transient-failure sync cycles genuine user work is silently lost even though the server may have only been temporarily unavailable.",
+        "Reachability traced: App.tsx onReconnect useEffect -> processQueue -> per-action executeQueuedAction catch -> retries++ -> retries>=3 terminal drop. Confidence medium (static; the 4xx branch is intentional and correct, the transient-exhaustion branch is the data-loss concern). Suggested fix: move retry-exhausted (non-permanent) actions to a persisted dead-letter list with an explicit user-visible 'retry / discard' surface rather than dropping them, and/or exempt idempotent CREATEs from the 3-cycle cap."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/generate.ts",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16T03:04:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "frontend/packages/sitemap/src/json/generate.ts: 3 commits this run (PR #2395 en-json refactor, #2397 sitemap.json determinism refactor, #2407 drift-guard). Runs_seen was 0; new hotspot.",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16T03:04:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "frontend/apps/ppt-web/messages/en.json: 3 commits this run (PR #2395 refactor, #2411 create-schedule localize + more). Runs_seen was 1 (last_seen 2026-07-16); cumulative re-emit \u2014 score_delta suppressed per dedup rule.",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16T03:04:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs: 2 commits this run (PR #2419 scheduler-RLS migration-number comment fix, #2420 mutex-poison recovery). Runs_seen was 0; new hotspot \u2014 cluster of related scheduler-metrics fixes.",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "dep-update-noise",
+      "source": "PR #2385",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "PR #2385 (chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0) closed not merged \u2014 dependabot supersede.",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advancement vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq idempotency check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no items over 8, no 14d-old open items to decay this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "0 new plans",
+      "expected": "trivially satisfied"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count + readiness gates",
+      "observed": "0 new plans this run",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cursor freeze on failed phase",
+      "observed": "no phase failed this run",
+      "expected": "trivially satisfied"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan-slug set at HEAD \u2286 plans/ \u222a plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-file-count now >= HEAD",
+      "observed": "now=7 head=7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency + kill-switch honor",
+      "observed": "0 auto-fix actions this run (no candidate)",
+      "expected": "all caps satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; Phase 1.6 skipped this run so GC7 no-op",
+      "observed": "action-list.json, risks.json parse; project-state.md non-empty; pm_cursor.next_index=5 in [0,7]; coverage_cursor.next_index=12 in [0,13)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token patterns in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
