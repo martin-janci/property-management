@@ -4440,6 +4440,118 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "title": "Screen-map drift: PR #2411 changed ppt-web reports.tsx without updating docs/screens/ppt/reports.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2411"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx changed (localize create-schedule form + map remaining error codes) but docs/screens/ppt/reports.md not updated in the same PR",
+        "heuristic-caveat: matching route file basename to screen doc slug is best-effort; localization-only change may not require doc update"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "title": "Screen-map drift: PR #2384 changed ppt-web reports.tsx without updating docs/screens/ppt/reports.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2384"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx changed (localize create-schedule report labels + backend error toast) but docs/screens/ppt/reports.md not updated in the same PR",
+        "heuristic-caveat: matching route file basename to screen doc slug is best-effort; localization-only change may not require doc update"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "title": "Screen-map drift: PR #2373 changed reality-web listing-detail helpers without updating docs/screens/reality/listing-detail.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2373"
+      ],
+      "evidence": [
+        "PR #2373 changed jsonLd.ts, listingSchema.ts, metadata.ts under frontend/apps/reality-web/src/app/[locale]/listings/[slug]/ (consolidate listing-detail shape validation into parseListingDetail() normalizer) but docs/screens/reality/listing-detail.md not updated in the same PR",
+        "heuristic-caveat: refactor of JSON-LD/shape helpers may not require doc update"
+      ],
+      "files": [
+        "docs/screens/reality/listing-detail.md",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "title": "Repeated-churn: backend/servers/api-server/src/routes/reports.rs (runs_seen=3 this run, +3361 lines from PR #2340 + follow-ups)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16",
+        "PR #2340"
+      ],
+      "evidence": [
+        "reports.rs was the churn hotspot in 2 prior runs (runs_seen=2 before this run); this run adds +3361 lines (mostly PR #2340 scheduler RLS context + create-schedule follow-ups)",
+        "instability proxy — module keeps getting patched around scheduling/RLS; consider structural split (routes/reports/{scheduling,run,list}.rs) to lower churn surface"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-ssrf-validator-drift",
+      "title": "Workflow ApiCallExecutor uses a local SSRF validator that drifts from common::url_validation — accepts http:// in prod, no multicast/redirect guard",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "manual-static-review-2026-07-18-api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:152 defines its own validate_external_url() parallel to the canonical common::url_validation::validate_external_url (backend/crates/common/src/url_validation.rs:89) whose doc explicitly says every handler/service accepting user-supplied URLs MUST call the shared version",
+        "api_call.rs:243 accepts plain http:// in all environments (only rejects non-http(s) schemes); shared url_validation.rs:95-101 blocks http:// unless RUST_ENV=development — workflow-defined API calls can force MITM-visible outbound",
+        "api_call.rs:212 is_blocked_v4 does NOT check ipv4.is_multicast() (224.0.0.0/4); shared check_ipv4 (url_validation.rs:198-200) blocks the range — internal multicast targets reachable from workflow API calls",
+        "api_call.rs:100 the reqwest::Client is built without a Redirect policy override, so a permitted external host can 302 to a blocked internal target (169.254.169.254, private range) and the initial-URL check is bypassed; the redirect chain is never revalidated"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": "plans/code-review-api-core-ssrf-validator-drift.md"
     }
   ]
 }

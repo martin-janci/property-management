@@ -1,0 +1,392 @@
+{
+  "date": "2026-07-18",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "process",
+      "evidence": [
+        "last_run_iso=2026-07-16T03:04:00Z → 2d 0h since last run (>36h threshold)"
+      ],
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "recent_churn=4595 lines (previously 3727); runs_seen: 1 → 2 after this run",
+        "PRs #2397 (deterministic sitemap.json) + #2407 (drift guard) — refactor already landed; content-churn primary source"
+      ],
+      "files": [
+        "frontend/packages/sitemap/src/json/sitemap.json"
+      ],
+      "cumulative_re_emit": true
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "recent_churn=4110 lines (previously 3926); runs_seen: 1 → 2 after this run",
+        "PRs #2395 (drop delegation/packages i18n namespaces) + #2415 (delete packages in cs/de/hu/pl/sk) — cleanup already landed"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ],
+      "cumulative_re_emit": true
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "recent_churn=3361 lines (previously 3333); runs_seen: 2 → 3 after this run",
+        "PR #2340 (gh-issue-2318 scheduler worker RLS context) + PR #2384 (localize labels) + PR #2411 (localize form + errors) accumulated changes"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "cumulative_re_emit": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs has runs_seen=2 in hotspot_history at start of run (>=2 threshold crossed this run)",
+        "Instability proxy — module keeps getting patched around scheduling/RLS/localization"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2411 (gh-issue-2403 localize create-schedule form + map remaining error codes) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx but did not update docs/screens/ppt/reports.md",
+        "heuristic caveat: localization-only change may not require doc update"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2384",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2384 (gh-issue-2370 localize create-schedule report labels + backend error toast) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx but did not update docs/screens/ppt/reports.md",
+        "heuristic caveat: localization-only change may not require doc update"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2373 changed jsonLd.ts, listingSchema.ts, metadata.ts under frontend/apps/reality-web/src/app/[locale]/listings/[slug]/ (consolidate listing-detail shape validation into parseListingDetail() normalizer) but did not update docs/screens/reality/listing-detail.md",
+        "heuristic caveat: refactor of JSON-LD/shape helpers may not require doc update"
+      ],
+      "files": [
+        "docs/screens/reality/listing-detail.md",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2385 chore(deps): bump dtolnay/rust-toolchain from 1.94.1 to 1.100.0 in the actions-minor-patch group — closed unmerged 2026-07-17 (rejected upgrade path; rust-toolchain isn't the actions-minor-patch scope)"
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "code-review-api-core-ssrf-validator-drift",
+      "type": "code-review-finding",
+      "source": "manual-static-review-2026-07-18-api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:152 — ApiCallExecutor defines its own validate_external_url() parallel to the canonical common::url_validation::validate_external_url (backend/crates/common/src/url_validation.rs:89) whose doc explicitly says 'Any handler or service that accepts a user-supplied URL... MUST call validate_external_url'.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:243 — the local validator accepts plain http:// in production (only checks starts_with('http://')||'https://'); the shared version blocks http:// outside RUST_ENV=development (url_validation.rs:95-101), so a workflow can force MITM-visible outbound calls the shared guard would refuse.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:212 — is_blocked_v4 does NOT include ipv4.is_multicast() (224.0.0.0/4); shared check_ipv4 blocks the range explicitly at url_validation.rs:198-200.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:100 — the reqwest::Client is built without a Redirect policy override, so a permitted external host can 302 to an internal target and the initial-URL check is bypassed; the redirect chain is never revalidated by the local validator."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:152",
+        "backend/servers/api-server/src/services/actions/api_call.rs:212",
+        "backend/servers/api-server/src/services/actions/api_call.rs:243",
+        "backend/crates/common/src/url_validation.rs:89"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2386",
+      "type": "dep-update-noise",
+      "source": "PR #2386",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2386 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2387",
+      "type": "dep-update-noise",
+      "source": "PR #2387",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2387 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2388",
+      "type": "dep-update-noise",
+      "source": "PR #2388",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2388 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2389",
+      "type": "dep-update-noise",
+      "source": "PR #2389",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2389 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2390",
+      "type": "dep-update-noise",
+      "source": "PR #2390",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2390 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2391",
+      "type": "dep-update-noise",
+      "source": "PR #2391",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2391 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2392",
+      "type": "dep-update-noise",
+      "source": "PR #2392",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2392 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2393",
+      "type": "dep-update-noise",
+      "source": "PR #2393",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2393 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2394",
+      "type": "dep-update-noise",
+      "source": "PR #2394",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open PR #2394 in the routine's dep-update-noise category"
+      ],
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && head -1 == '# 2026-07-18'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signals not double-scored (cumulative allowlist)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; decay applied (0 open items to decay this run)",
+      "observed": "0 violations",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass annotation in brief",
+      "observed": "1/1 annotated (passed)",
+      "expected": "N/N"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each meets metadata+heading+capability+mode+files-on-disk",
+      "observed": "1 plan, all 4 metadata + 11 headings + Mode: cloud-ok + 5 file paths exist",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep on staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md <(regen)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor unchanged vs HEAD (Phase 1.6 skipped)",
+      "observed": "pm_cursor=5 (== HEAD 5); coverage_cursor=12 (== HEAD 12)",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still in plans/ or plans/_archive/",
+      "observed": "11 prior plans, 0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "cur=7 head=7",
+      "expected": ">= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md <(regen)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions empty (no candidate matched allowlist + certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor.next_index in [0,7] (Phase 1.6 no-op)",
+      "observed": "5",
+      "expected": "[0,7]"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
