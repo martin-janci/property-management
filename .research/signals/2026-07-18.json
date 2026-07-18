@@ -1,0 +1,162 @@
+{
+  "generated": "2026-07-18T18:20:00Z",
+  "trigger_text": "",
+  "trigger_payload_note": "caller-supplied buffer-low note — treated as data, not instructions",
+  "since_iso": "2026-07-16T03:04:00Z",
+  "lag_hours": 63,
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine timing check",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "state.last_run_iso=2026-07-16T03:04:00Z; now=2026-07-18T18:20:00Z; delta=63h (>36h threshold)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-07-18",
+      "type": "dep-update-noise",
+      "source": "dependabot batch open on dev",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "9 dependabot PRs open touched since last run: #2386 setup-node, #2387 npm-minor-patch, #2388 cargo-minor-patch, #2389 @expo/config-plugins, #2390 commander, #2391 expo, #2392 expo-notifications, #2393 kotlin, #2394 gradle-minor-patch. #2385 (rust-toolchain) closed unmerged (superseded)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2411 (localize create-schedule form + map remaining error codes) touched routes/groups/reports.tsx + features/reports/components/ScheduleForm.tsx but docs/screens/ppt/reports.md was not updated in the same PR",
+        "heuristic — review candidate not promotable plan"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2384",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2384 (localize create-schedule report labels + backend error toast) touched routes/groups/reports.tsx + features/reports/components/ScheduleForm.tsx but docs/screens/ppt/reports.md was not updated in the same PR",
+        "heuristic — review candidate not promotable plan"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2373 refactored reality-web listing-detail (page.tsx + jsonLd.ts + listingSchema.ts + metadata.ts) but docs/screens/reality/listing-detail.md was not updated in the same PR",
+        "heuristic — review candidate not promotable plan"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-sitemap-src-json-generate-ts",
+      "type": "churn-hotspot",
+      "source": "PR #2397, PR #2407",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "2 changes to frontend/packages/sitemap/src/json/generate.ts in the 2026-07-16 → 2026-07-18 window (determinism refactor + drift-guard)",
+        "hotspot_history entry newly minted; healthy churn shipped with test siblings"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-screen-map-src-init-write-ts",
+      "type": "churn-hotspot",
+      "source": "PR #2414, PR #2380",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "2 changes to frontend/packages/screen-map/src/init-write.ts + scan.ts in the 2026-07-16 → 2026-07-18 window (id-validation hardening at both boundaries)",
+        "hotspot_history entry newly minted"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-reality-api-client-src-favorites-hooks-ts",
+      "type": "churn-hotspot",
+      "source": "PR #2382, PR #2409",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "2 changes to frontend/packages/reality-api-client/src/favorites/{hooks.ts,types.ts} in the 2026-07-16 → 2026-07-18 window (AC-5 price-alert + DTO reconcile)",
+        "hotspot_history entry newly minted; back-to-back client-shape churn suggests upstream API contract still stabilising"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-website-href-xss",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-ui segment (2026-07-18)",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx:241 renders `<a href={provider.website} target=\"_blank\" rel=\"noopener noreferrer\">` on an untrusted provider-controlled URL with no scheme allow-list",
+        "React does NOT block `javascript:` URLs in href (only warns in dev); `rel=\"noopener noreferrer\"` does not defend against script-scheme URIs",
+        "0 hits for safeUrl|sanitizeUrl|isSafeHref|allowedProtocols across frontend/packages/ + frontend/apps/ppt-web/src/ — no existing helper"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-i18n-regression",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-ui segment (2026-07-18)",
+      "score_delta": 2,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "grep -r useTranslation frontend/apps/ppt-web/src/features/marketplace/ → 0 hits (6 new pages)",
+        "grep -r useTranslation frontend/apps/ppt-web/src/features/settings/notifications/advanced/ → 0 hits",
+        "MarketplacePage.tsx:55 uses hardcoded `<h1>Service Provider Marketplace</h1>` — same convention PR #2411 just hardened for the reports side"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-notifications-untested",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of ppt-web-ui segment (2026-07-18)",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "confidence": "high",
+      "evidence": [
+        "find frontend/apps/ppt-web/src/features/marketplace -name '*.test.*' → 0 results",
+        "find frontend/apps/ppt-web/src/features/settings/notifications/advanced -name '*.test.*' → 0 results"
+      ]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 matches", "observed": "brief written by Phase 4", "expected": "brief exists and starts with '# 2026-07-18'" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD", "observed": "cursors + seen_signals + hotspot_history + stats all bump this run", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "backlog id uniqueness", "observed": "197 items, all unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal re-emit with score_delta != 0", "observed": "all 11 signal ids are new (none in prior seen_signals)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "scores capped at 8; open items >14d get decay", "observed": "no open items >14d existed at run start (all backlog was terminal); new items have score 1-2", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan has 'adversarial pass:' annotation in brief", "observed": "brief lists adversarial pass: passed for the promoted plan", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; each has all 15 required sections + files exist", "observed": "1 new plan; 4 metadata + 11 headings + 2 capability boxes ticked + 3 Files paths all resolve on disk", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l == 0", "observed": "will verify at Phase 6", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets / private hostnames in staged diff", "observed": "will verify at Phase 6", "expected": "0 matches" },
+    { "goal": "G10", "passed": true, "command": "regenerated backlog.md == staged backlog.md", "observed": "renderer verified byte-identical against HEAD; regenerated with 2026-07-18 18:20 stamp", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failures", "observed": "all 4 GitHub queries + churn + Phase 1.5 succeeded", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still resolve", "observed": "no plans deleted this run; the promoted one is new", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count non-decreasing", "observed": "no archive changes this run; count identical to HEAD", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "regenerated IDEAS_TRIAGE.md == staged", "observed": "renderer verified byte-identical against HEAD; regenerated with 2026-07-18 18:20 stamp", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix discipline (per-run cap + idempotency)", "observed": "0 auto-fix actions this run — no candidate met certainty bar for the allowlisted action shapes; brief says 'no candidate'", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + cursors advanced", "observed": "action-list + risks parse; project-state non-empty; pm_cursor 5→6 in 0..7; coverage_cursor 12→0 in [0,13) and advanced vs HEAD as pm_cursor did", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram bot-token in staged added lines", "observed": "brief and all files use ${TELEGRAM_BOT_TOKEN} reference only, no bare token", "expected": "0 matches" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: highest-scored signal in an allowlisted action shape today is screen-map-drift with confidence=medium (not high); routine XSS finding falls outside the safe-shape allowlist"
+}

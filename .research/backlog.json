@@ -4440,6 +4440,218 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "title": "PR #2411 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + features/reports/components/ScheduleForm.tsx without updating docs/screens/ppt/reports.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2411",
+        "screen-map heuristic"
+      ],
+      "evidence": [
+        "PR #2411 (localize create-schedule form + map remaining error codes) touched routes/groups/reports.tsx and features/reports/components/ScheduleForm.tsx but docs/screens/ppt/reports.md was not updated in the same PR",
+        "screen-map drift is a heuristic — review candidate, not promotable plan (see routine caveat)"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "frontend/apps/ppt-web/src/features/reports/components/ScheduleForm.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "title": "PR #2384 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx + features/reports/components/ScheduleForm.tsx without updating docs/screens/ppt/reports.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2384",
+        "screen-map heuristic"
+      ],
+      "evidence": [
+        "PR #2384 (localize create-schedule report labels + backend error toast) touched routes/groups/reports.tsx and features/reports/components/ScheduleForm.tsx but docs/screens/ppt/reports.md was not updated in the same PR",
+        "screen-map drift is a heuristic — review candidate, not promotable plan (see routine caveat)"
+      ],
+      "files": [
+        "docs/screens/ppt/reports.md",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "frontend/apps/ppt-web/src/features/reports/components/ScheduleForm.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "title": "PR #2373 refactored reality-web listing-detail page/schema/metadata without updating docs/screens/reality/listing-detail.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2373",
+        "screen-map heuristic"
+      ],
+      "evidence": [
+        "PR #2373 (consolidate reality-web listing-detail shape validation into parseListingDetail()) touched app/[locale]/listings/[slug]/{listingSchema.ts,page.tsx,jsonLd.ts,metadata.ts} but docs/screens/reality/listing-detail.md was not updated in the same PR",
+        "screen-map drift is a heuristic — review candidate, not promotable plan (see routine caveat)"
+      ],
+      "files": [
+        "docs/screens/reality/listing-detail.md",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/listingSchema.ts",
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-sitemap-src-json-generate-ts",
+      "title": "Churn hotspot: frontend/packages/sitemap/src/json/generate.ts — 2 touches this run (PR #2397 determinism, PR #2407 drift-guard)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2397",
+        "PR #2407"
+      ],
+      "evidence": [
+        "PR #2397 (make generated sitemap.json deterministic) and PR #2407 (guard against src/data ↔ sitemap.json drift) both touched frontend/packages/sitemap/src/json/generate.ts in the 2026-07-16 → 2026-07-18 window",
+        "runs_seen=1 (new hotspot); healthy churn — both changes shipped with regression tests in sitemap.test.ts"
+      ],
+      "files": [
+        "frontend/packages/sitemap/src/json/generate.ts",
+        "frontend/packages/sitemap/tests/sitemap.test.ts"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-screen-map-src-init-write-ts",
+      "title": "Churn hotspot: frontend/packages/screen-map/src/init-write.ts — 2 touches this run (validation hardening)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2414",
+        "PR #2380"
+      ],
+      "evidence": [
+        "PR #2414 (validate IdSchema at screen-map init write boundary) and PR #2380 (validate every synthesized candidate id in scanCandidates) touched frontend/packages/screen-map/src/{init-write.ts,scan.ts} in the 2026-07-16 → 2026-07-18 window",
+        "runs_seen=1 (new hotspot); coordinated hardening of id validation at both scan- and write-boundaries"
+      ],
+      "files": [
+        "frontend/packages/screen-map/src/init-write.ts",
+        "frontend/packages/screen-map/tests/init-write.test.ts"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-reality-api-client-src-favorites-hooks-ts",
+      "title": "Churn hotspot: frontend/packages/reality-api-client/src/favorites/hooks.ts — 2 touches this run (AC-5 price-alert + DTO reconcile)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2382",
+        "PR #2409"
+      ],
+      "evidence": [
+        "PR #2382 (AC-5 favorite price-alert toggle + optimistic OFF state) and PR #2409 (reconcile favorites client to real reality-server DTO) both touched frontend/packages/reality-api-client/src/favorites/{hooks.ts,types.ts} in the 2026-07-16 → 2026-07-18 window",
+        "runs_seen=1 (new hotspot); back-to-back client-shape churn suggests upstream API contract still stabilising"
+      ],
+      "files": [
+        "frontend/packages/reality-api-client/src/favorites/hooks.ts",
+        "frontend/packages/reality-api-client/src/favorites/types.ts",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-website-href-xss",
+      "title": "Provider-controlled website URL rendered as <a href={provider.website}> with no scheme allow-list — stored-XSS via javascript: URI on ProviderDetailPage",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 code-review-finding 2026-07-18 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx around line 241 renders `<a href={provider.website} target=\"_blank\" rel=\"noopener noreferrer\">` on an untrusted, provider-supplied URL with no protocol filter",
+        "React does NOT block `javascript:` URLs in href attributes (only warns in dev); `rel=\"noopener noreferrer\"` does not defend against script-scheme URIs",
+        "Grep-verified: ProviderProfileForm.tsx accepts `type=\"url\"` (browsers admit `javascript:`) — no server-side scheme filter observed on the marketplace provider write path"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": "plans/code-review-ppt-web-ui-marketplace-website-href-xss.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-i18n-regression",
+      "title": "Marketplace + advanced-notifications slices ship with 0 useTranslation calls — hardcoded English regressing PR #2411 localization convention",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review-finding 2026-07-18 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "grep -r useTranslation frontend/apps/ppt-web/src/features/marketplace/ returns 0 hits across 6 new pages",
+        "grep -r useTranslation frontend/apps/ppt-web/src/features/settings/notifications/advanced/ also returns 0 hits",
+        "MarketplacePage.tsx:55 uses literal `<h1>Service Provider Marketplace</h1>` — pattern the team just paid down for reports in PR #2411 (#2370/#2403)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderProfilePage.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-notifications-untested",
+      "title": "Marketplace + advanced-notifications slices ship without any sibling *.test.* files — 0 tests for non-trivial view-state / filter-reducer / mutation-error logic",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review-finding 2026-07-18 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "find frontend/apps/ppt-web/src/features/marketplace -name '*.test.*' → 0 results",
+        "find frontend/apps/ppt-web/src/features/settings/notifications/advanced -name '*.test.*' → 0 results",
+        "Missing coverage class is the same wiring-bug shape that #2324/#2411 caught for reports.create-schedule.route.test.tsx"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderProfilePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
     }
   ]
 }
