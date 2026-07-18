@@ -1,0 +1,196 @@
+{
+  "generated": "2026-07-18T08:10:00Z",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s no-double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans \u2264 2",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research/ files staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11-honesty",
+      "passed": true,
+      "command": "brief phase failures matched to cursors",
+      "observed": "phases skipped (not failed); cursors not advanced",
+      "expected": "OK"
+    },
+    {
+      "goal": "G11-placeholder",
+      "passed": true,
+      "command": "grep placeholder rot in brief",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "7 \u2265 7",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions",
+      "expected": "\u2264 caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm skipped \u2192 pm_cursor unchanged; coverage_cursor unchanged (allowed)",
+      "observed": "PM_NOW=5==PM_HEAD; CC_NOW=12<EPICS=13",
+      "expected": "OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "Routine has not run in 53h (2d 5h) \u2014 last_run_iso 2026-07-16T03:04:00Z, now 2026-07-18T08:10:00Z. >36h threshold hit; logged in brief Since last run."
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": "PR #2411 (gh-issue-2403: localize create-schedule form) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx and reports.create-schedule.route.test.tsx without updating docs/screens/ppt/reports.md. HEURISTIC CAVEAT \u2014 the change is i18n + form wiring, not a route surface change; review-candidate, not promotable."
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2409",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": "PR #2409 (gh-issue-2401: favorites optimistic toggle) touched frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/favorites.md. HEURISTIC CAVEAT \u2014 the change is a test-only fix to reconcile client DTO shape; review-candidate, not promotable."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "git log since 2026-07-16",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/reports.rs: +3329 lines this run (runs_seen 2 \u2192 3 after this run); cumulative re-emit \u2014 score_delta=0 per dedup rule (already in seen_signals from prior run 2026-07-16). Reports feature area actively evolving (PR #2384 localize labels, PR #2411 create-schedule form)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "git log since 2026-07-16",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/auth.rs: +2950 lines this run (runs_seen 3 \u2192 4 after this run); cumulative re-emit \u2014 score_delta=0 per dedup rule (already in seen_signals + prior repeated-churn item resolved at 2026-07-12). No fresh instability signal."
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-07-16",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "backend/crates/integrations/src/booking/mod.rs: +3185 lines this run (first hotspot appearance under slash-form id \u2014 dashed-form id in older seen_signals from an earlier convention). Driven by PR #2398 (gap-83-2-rate-availability-push-integration-deferred: persist Booking.com push sync state)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "phases_that_failed": []
+}

@@ -4440,6 +4440,75 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "refactor-churn-hotspots-booking-2026-07-18",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs (+3185 lines this run, first slash-form appearance)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16",
+        "PR #2398"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs: +3185 lines this run (first hotspot appearance under slash-form id; older dashed-form id existed in seen_signals from a legacy convention).",
+        "Driver: PR #2398 (gap-83-2-rate-availability-push-integration-deferred: persist Booking.com push sync state on connection). Analytical hotspot, not instability — the change was the deferred rate/availability push story, not a bug-triggered rewrite."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "title": "PR #2411 touched ppt-web routes/groups/reports.tsx without updating docs/screens/ppt/reports.md — heuristic, i18n change",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2411"
+      ],
+      "evidence": [
+        "PR #2411 (gh-issue-2403: localize create-schedule form + map remaining error codes) touched frontend/apps/ppt-web/src/routes/groups/reports.tsx and reports.create-schedule.route.test.tsx.",
+        "docs/screens/ppt/reports.md exists but was not touched in the PR.",
+        "HEURISTIC CAVEAT — the change is i18n + form wiring (adds error-code map + localized labels), not a route surface change. Review-candidate, not promotable — score capped at 2, below the 3-point promotion threshold."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/reports.create-schedule.route.test.tsx",
+        "docs/screens/ppt/reports.md"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "title": "PR #2409 touched reality-web app/[locale]/favorites/page.test.tsx without updating docs/screens/reality/favorites.md — heuristic, test-only fix",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2409"
+      ],
+      "evidence": [
+        "PR #2409 (gh-issue-2401: reconcile favorites client to real reality-server DTO) touched frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx.",
+        "docs/screens/reality/favorites.md exists but was not touched in the PR.",
+        "HEURISTIC CAVEAT — the change is a test-only DTO reconciliation (also touches reality-api-client/favorites hooks + types), not a route surface change. Review-candidate, not promotable."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx",
+        "docs/screens/reality/favorites.md"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
     }
   ]
 }
