@@ -1,0 +1,457 @@
+{
+  "generator": "routine",
+  "generated_at": "2026-07-18T04:20:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3329 lines changed in backend/servers/api-server/src/routes/reports.rs between last routine run (2026-07-16) and 2026-07-18"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "git-log-since-2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs was already a churn hotspot in 2 prior runs; runs_seen now 3"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3185 lines changed in backend/crates/integrations/src/booking/mod.rs between last routine run (2026-07-16) and 2026-07-18"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2950 lines changed in backend/servers/api-server/src/routes/auth.rs between last routine run (2026-07-16) and 2026-07-18"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "git-log-since-2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs was already a churn hotspot in 3 prior runs; runs_seen now 4"
+      ]
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106 \u2014 reqwest::Client is built (Client::builder().timeout(60s).user_agent(...).build()) without a redirect policy, so it follows up to 10 redirects by default. validate_external_url() (defined line ~151) only vets the INITIAL URL at the call site (~line 250), so a user-configured workflow api_call action pointing at an attacker-controlled host that returns 302 -> http://169.254.169.254/ or an internal service bypasses all SSRF/private-IP checks (cloud-metadata / internal-network exfiltration). Fix: .redirect(reqwest::redirect::Policy::none()) or re-validate every hop. Confirmed: grep for 'redirect' in api_call.rs returns nothing.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:151-159 \u2014 validate_external_url parses only the passed-in URL string; there is no per-hop revalidation, so redirect-based SSRF is unguarded. NOTE: same id previously emitted 2026-07-10 & 2026-07-13; still unresolved and not in backlog."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-sched-notify-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:322-324 \u2014 self.get_announcement_target_users(announcement).await.unwrap_or_default() collapses any DB/query error into an empty Vec, so on a transient failure the just-published announcement's target-user resolution silently yields [], the `if !target_user_ids.is_empty()` guard skips notification dispatch, and no warn/error is logged and no retry occurs \u2014 the published announcement reaches nobody while the scheduler reports success. Should log-and-continue or propagate rather than swallow to []. Fresh (2026-07-15 api-core run flagged a different scheduler issue, mutex-poison)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 \u2014 CreateListingScreen's onSubmit is hardwired to Result.failure(NotImplementedError(\"Wire to listing API\")); no createListing repository method exists (grep of shared/ finds only createInquiry/createSavedSearch/createMobileToken).",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:120 \u2014 the fully-built realtor form folds that failure into the 'publish failed' error banner, so MyListings -> Create -> submit can never succeed in production; the feature is silently broken on Android. Fix: add createListing() to ListingRepository + ApiClient and wire the nav callback to it."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listingrepo-partial",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt \u2014 of six public network methods only getListingDetail is tested (ListingDetailRepositoryTest). searchListings, getFeaturedListings, getRecentListings, getSearchSuggestions, and getListingsNearby (which builds lat/lng/radius_km/limit query params and maps non-2xx responses to ListingException) have no coverage of their success/failure mapping or query-parameter construction."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 \u2014 the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook is called, so every org sees the same fabricated portfolio value, equity, NOI, cash flow and LTV numbers (values wired at :278-316).",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:328-332,365-366 \u2014 the interactive controls are dead: alert onMarkRead (:328) and onResolve (:331) are empty `// TODO: wire to alerts API` no-ops and PropertyCard onClick (:365) is a `// TODO: navigate to property detail route` no-op. The page is shipped-looking but non-functional (data + actions both stubbed)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-unknown-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[]` double-casts raw listSessions() API data straight to the local SessionRow[] type (defined :22), bypassing all type checking across the API boundary. If the response shape drifts (e.g. `isCurrent` renamed or absent) TypeScript cannot catch it and `sessions.some((s) => !s.isCurrent)` (:85) plus the per-card `session.isCurrent` guards (:141-180) that gate the revoke/logout controls silently misbehave."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedispute-t-shadow-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:224 \u2014 `DISPUTE_TYPES.map((t) => { ... })` names the map callback param `t`, shadowing the translation function `t` obtained from useTranslation() at :115; any t('...') call inside that block resolves to the dispute-type object, not the translator \u2014 a latent i18n/correctness footgun.",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:189-447 \u2014 despite importing useTranslation, nearly all visible copy is hardcoded English ('File a Dispute' :193, '\u2190 Back to Disputes' :189, 'Dispute type' :212, TYPE_META labels/descriptions, zod validation messages, 'What happens next?', 'File Dispute' :447) with only a single t() call in the file; app ships sk/cs/de/en so this screen is untranslatable for non-English locales."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:149 (check_redirect_uri_allowed) \u2014 the same-origin relative-path fast-path `if raw.starts_with('/') && !raw.starts_with(\"//\") { return Ok(()) }` blocks protocol-relative `//evil.com` but NOT the backslash variant `/\\evil.com` (nor `/\\/evil.com`). A user-supplied redirect_uri of `/\\evil.com` passes the allowlist as a 'relative path', is stored, re-validated at callback (still passes), and handed straight to `Redirect::temporary(&redirect_uri)` at routes/sso.rs:338, emitting `Location: /\\evil.com`. Per the WHATWG URL spec browsers normalise backslashes to forward slashes for http(s) URLs, so `/\\evil.com` resolves to `//evil.com` = `https://evil.com` -> open redirect on the post-login SSO flow (phishing / OAuth-code interception vector). The regression test block at routes/sso.rs:1681-1686 covers `//evil.com` but has NO backslash case, so CI is green. Fix: reject any raw whose first two chars normalise to a leading `//` (e.g. also block `starts_with(\"/\\\\\")`), or parse-and-reject when url::Url::parse(raw) yields a host. Traced entry (login handler ~sso.rs:71 and callback ~sso.rs:204) -> validate -> Redirect; reachable in production."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-login-sso-account-enum",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:251 (UserHandler::login) \u2014 non-existent email and wrong password both correctly return the generic `\"Invalid email or password\"`, but a registered SSO-only account (user found, password_hash == None) returns a DISTINCT message via `.ok_or(\"Account uses SSO login\")?`. routes/users.rs:204 (login handler) forwards that raw message verbatim as the 401 body. An attacker can therefore enumerate which emails are registered SSO accounts (distinct response = SSO account exists) \u2014 an account-existence disclosure that the generic path was specifically written to prevent. It also short-circuits before the argon2 verify, adding a timing side-channel. Fix: return the same generic `\"Invalid email or password\"` (log the SSO-account distinction server-side only)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 \u2014 action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO-gated code. action_check_balance always answers 'balance is zero, no outstanding fees' (hardcoded data.balance=0.0) without querying any financial repo; action_report_fault mints a throwaway Uuid::new_v4() ticket, speaks it back to the resident ('The manager will be notified shortly'), and NEVER persists a fault row. Full call path traced reachable in production: routes/voice_webhooks.rs:146/162/265 -> VoiceCommandService::process_command -> match on intent (voice_commands.rs:143-144) -> these handlers. Failure scenario: a resident who owes fees is told they owe nothing (financial misinformation), and a spoken 'the elevator is broken' / 'gas smell' fault report is silently dropped with a confirmation number that maps to no ticket (data loss on a possibly safety-relevant path)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) \u2014 the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a private/link-local/metadata IP (e.g. 169.254.169.254, 10.x, fc00::/7) is not a literal IP, is not in the small blocked_hosts denylist, and does not end in .local/.internal, so it passes validation; reqwest then resolves it at send time (validate-then-resolve TOCTOU / DNS-rebinding SSRF). The URL is not admin-static: execute() (line ~240) runs context.substitute_template(&api_config.url) over trigger data before validation. Failure scenario: a workflow api_call action with url 'http://<attacker-host>/' where <attacker-host> resolves to the cloud metadata endpoint reaches internal infra; the IPv6/IPv4-literal hardening (P1-06 comment) never fires because no literal IP is present. Fix requires resolving the host and re-checking every resolved address (or pinning the connection) rather than parsing the host string as an IP."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:481-486 \u2014 evaluate_conditions() fails OPEN: a condition JSON value that deserializes as neither ConditionGroup nor Condition is logged and skipped, and the function ultimately returns Ok(true). The condition set is the gate that decides whether a workflow (which can send emails, mutate data, and make outbound api_call requests \u2014 see the SSRF finding) runs. Failure scenario: schema drift or a renamed/malformed condition object silently drops the intended guard, so the workflow fires when it should have been blocked. Likelihood is low (conditions are admin-authored) but it is a concrete fail-open on a gating decision; safer to fail closed (Ok(false) / propagate an error) on an unparseable condition."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoicelist-noop-view",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:83 \u2014 invoice rows render as cursor-pointer/hover-clickable (AccountingInvoiceList.tsx:71-72 onClick=onViewInvoice) but onViewInvoice is an empty no-op TODO(#1522), so clicking an invoice on this routed page does nothing"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsareports-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:80 \u2014 user-facing 'Please select both start and end dates' hardcoded, not wrapped in t(); file imports no useTranslation",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:98 \u2014 hardcoded English 'Failed to generate report. Please try again.' via setFormError, no i18n",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:108 \u2014 hardcoded 'Report published successfully.' via alert(); lines 112/124 similar; entire page leaks English to non-en locales"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-evidence-retry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx:78 \u2014 failedEvidence is threaded into router state but no retry UI consumes it on DisputeDetailPage (TODO #627); failed evidence uploads are surfaced only by a transient toast with no user-facing recovery path"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-branch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "app/[locale]/listings/page.tsx:145 \u2014 The primary public search-results page calls `const { data, isLoading } = useListings(filters, currentPage)` and never destructures `error`/`isError`; the file contains zero occurrences of `error`, `isError`, or `catch`. The QueryClient in lib/query-provider.tsx sets no `throwOnError`, so TanStack Query's default (do NOT throw) keeps failures in query state and app/[locale]/error.tsx never fires. On any listings API failure the grid receives `data?.data ?? []` (line 338) and silently renders the empty state \u2014 indistinguishable from a genuine zero-result search \u2014 on the app's main SEO/user path. Every sibling data page (favorites, inquiries, saved-searches, FeaturedListings, agency profile) DOES render an explicit error branch, making this a clear omission rather than a design choice."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-saved-search-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "app/[locale]/saved-searches/page.tsx:38,55 \u2014 User-facing labels are hardcoded English literals ('For Sale', 'For Rent', 'All listings', and the '\u20ac\u2026 - \u20ac\u2026' summary) inside `getFilterSummary()` rather than next-intl `t('\u2026')`. reality-web ships sk/cs/de/en, so Slovak/Czech/German users on this authenticated page see untranslated English copy. The rest of the file is otherwise localized, so these strays look like an oversight."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-profile-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "app/[locale]/agency/[slug]/page.tsx:36 and app/[locale]/realtor/[id]/page.tsx:114 \u2014 Public profile pages render hardcoded Slovak strings ('Na\u010d\u00edtavam\u2026', '\u2713 Overen\u00fd makl\u00e9r') irrespective of the active `[locale]` segment; these components deliberately bypass next-intl (documented in the agency page header comment). Non-Slovak visitors reached via localized URLs get Slovak text on public, SEO-indexed profile pages."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-idempotency-lock-cancel-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:93 \u2014 session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) between acquire and unlock the lock is never released and sqlx returns the connection to the pool still holding it, blocking all future requests with the same lock_id (tenant_scope+method+path+key). No RAII guard / no unlock-on-drop.",
+        "Reachable in production: mounted at backend/servers/api-server/src/routes/faults.rs:398 via from_fn(create_fault_idempotency) -> api_core::middleware::handle_idempotent_request (faults.rs:433)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-authz-require-perm-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:180 \u2014 require_permission() resolves the caller role with .unwrap_or(TenantRole::Guest): a request with no TenantRole in extensions is treated as authenticated Guest instead of being rejected. With permissions::AUTHENTICATED = min_level(1) (Guest.level()=10 satisfies it; asserted at authorization.rs:264), require_authenticated would admit a request that set no role upstream \u2014 a fail-open default for the any-authenticated gate.",
+        "Latent only: grep of backend/servers for api_core authorization::require_* / from_fn wiring returns no hits \u2014 the exported middleware is currently unused (route modules define their own same-named local helpers), so it is a dead-but-public footgun rather than an active bypass."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 \u2014 processQueue() permanently DROPS a terminally-failed offline mutation from the sync queue with only a `console.error('Action failed after max retries:', action)`. An action is terminal when it is `permanent` (a 4xx, reasonable to drop) OR `action.retries >= 3` (transient 5xx/network \u2014 NOT safe to drop). At line ~400 the queue is rebuilt keeping only `!succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`, so the failed action's PAYLOAD (e.g. an offline-created fault report from screens/faults/ReportFaultScreen.tsx, or a document action) is discarded with no dead-letter store and no per-item retry affordance.",
+        "Surfacing is aggregate-only: App.tsx:82 fires processQueue() fire-and-forget on reconnect; syncProgress.failed (App.tsx:334) feeds PendingSyncIndicator.tsx which renders a t('sync.failed') count. The user sees 'N failed' but cannot see WHICH items failed nor recover/re-submit them \u2014 after 3 transient-failure sync cycles genuine user work is silently lost even though the server may have only been temporarily unavailable.",
+        "Reachability traced: App.tsx onReconnect useEffect -> processQueue -> per-action executeQueuedAction catch -> retries++ -> retries>=3 terminal drop. Confidence medium (static; the 4xx branch is intentional and correct, the transient-exhaustion branch is the data-loss concern). Suggested fix: move retry-exhausted (non-permanent) actions to a persisted dead-letter list with an explicit user-visible 'retry / discard' surface rather than dropping them, and/or exempt idempotent CREATEs from the 3-cycle cap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-07-16T03:04:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-07-16T03:04:00Z; lag=49h (~2d) \u2014 flagged per >36h threshold"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 21 tier1d code-review-finding signals not in Phase-5 allowlist; no screen-map-drift/orphan/fixme-in-merged-code/lockfile-drift/stalled-review triggered",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && first line matches # 2026-07-18",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-check backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq dedup check on tier1d signals vs seen",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 and no stale open items to decay this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'adversarial pass:' in brief for each new plan",
+      "observed": "2 plans, 2 passed annotations",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans + template compliance + files exist",
+      "observed": "2 plans, 15 sections each, files on disk",
+      "expected": "<=2 + compliant"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "skipped phases 1.5/1.6 listed in brief and cursors not advanced",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now(7) >= head(7)",
+      "observed": "7>=7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions == [] (no candidate)",
+      "observed": "empty",
+      "expected": "cap not exceeded"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate no-op; pm_cursor.next_index=5 in bounds",
+      "observed": "pm_cursor=5",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token regex over staged +lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
