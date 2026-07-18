@@ -44,6 +44,46 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-17T18:17:03Z"
+    },
+    {
+      "id": "gh-issue-2417",
+      "action": "Follow-up: scheduler-RLS doc + test comments cite wrong migration number (00216 → should be 00218) (PR #2340) (Closes #2417)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-18T00:04:58Z (#2417)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-18T00:04:58Z",
+      "issue_ref": {
+        "number": 2417,
+        "url": "https://github.com/martin-janci/property-management/issues/2417",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2418",
+      "action": "Follow-up: cross-org /rag/migrate RLS test passes vacuously (runs as superuser) — switch to a NOBYPASSRLS role to actually guard the 00216 super-admin policy (PR #2335) (Closes #2418)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-18T00:04:58Z (#2418)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-18T00:04:58Z",
+      "issue_ref": {
+        "number": 2418,
+        "url": "https://github.com/martin-janci/property-management/issues/2418",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
