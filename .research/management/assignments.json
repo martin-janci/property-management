@@ -1,12 +1,12 @@
 {
-  "generated": "2026-07-18T02:18:55Z",
+  "generated": "2026-07-18T04:16:30Z",
   "assignments": [
     {
       "task_id": "gh-issue-2360",
       "branch": "auto-impl/gh-issue-2360-b8b7bd28",
       "status": "quarantined",
       "claimed_at": "2026-07-16T04:11:18Z",
-      "last_updated": "2026-07-16T22:09:59Z",
+      "last_updated": "2026-07-18T04:02:29Z",
       "status_changed_at": "2026-07-16T16:10:37Z",
       "pr_number": 2377,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2377",
@@ -24,50 +24,6 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-07-16T16:10:37Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes after 3 respawns"
-    },
-    {
-      "task_id": "code-review-api-core-scheduler-rls-leak",
-      "branch": "auto-impl/code-review-api-core-scheduler-rls-leak-8dbe94f2",
-      "status": "in-progress",
-      "claimed_at": "2026-07-17T20:08:00Z",
-      "last_updated": "2026-07-18T00:06:00Z",
-      "status_changed_at": "2026-07-18T00:06:00Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2418",
-      "branch": "auto-impl/gh-issue-2418-9f9835c4",
-      "status": "in-progress",
-      "claimed_at": "2026-07-18T00:06:00Z",
-      "last_updated": "2026-07-18T02:13:55Z",
-      "status_changed_at": "2026-07-18T02:13:55Z",
-      "pr_number": 2421,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2421",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2421 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=NOBYPASSRLS role-switch RLS guard (2 with policy/1 without); compile+fmt clean, DB tests run in CI",
-      "reviewer_summary": null,
-      "last_reviewed_oid": "eb78ca25ff7a53ead6c4e05a9b7c2c4af7465fc0",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
     }
   ]
 }

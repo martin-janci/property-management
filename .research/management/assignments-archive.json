@@ -1509,6 +1509,28 @@
       "merge_attempted_at": "2026-07-18T02:13:07Z"
     },
     {
+      "task_id": "code-review-api-core-scheduler-rls-leak",
+      "branch": "auto-impl/code-review-api-core-scheduler-rls-leak-8dbe94f2",
+      "status": "failed",
+      "claimed_at": "2026-07-17T20:08:00Z",
+      "last_updated": "2026-07-18T04:02:29Z",
+      "status_changed_at": "2026-07-18T04:02:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim [no branch pushed; failed after 1 reclaim]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "branch": "auto-impl/code-review-api-handlers-shares-revoke-d-658489f1",
       "status": "merged",
@@ -6475,6 +6497,28 @@
       "merge_attempted_at": "2026-07-18T02:13:07Z"
     },
     {
+      "task_id": "gh-issue-2418",
+      "branch": "auto-impl/gh-issue-2418-9f9835c4",
+      "status": "merged",
+      "claimed_at": "2026-07-18T00:06:00Z",
+      "last_updated": "2026-07-18T04:16:30Z",
+      "status_changed_at": "2026-07-18T04:16:30Z",
+      "pr_number": 2421,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2421",
+      "merged_at": "2026-07-18T04:15:57Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2421 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=NOBYPASSRLS role-switch RLS guard (2 with policy/1 without); compile+fmt clean, DB tests run in CI",
+      "reviewer_summary": "verdict=approve head_oid=f244fc83798187bef1d168d024e5c0f386c7f19a note=grant-fix-landed-ci-green",
+      "last_reviewed_oid": "f244fc83798187bef1d168d024e5c0f386c7f19a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-18T04:02:29Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7229,5 +7273,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-18T02:19:20Z"
+  "archived_at": "2026-07-18T04:17:41Z"
 }

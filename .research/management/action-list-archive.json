@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-18T02:19:44Z",
+  "archived_at": "2026-07-18T04:17:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1341,6 +1341,19 @@
         "merged_at": "2026-07-18T02:14:45Z",
         "at": "2026-07-18T02:19:32Z"
       }
+    },
+    {
+      "id": "code-review-api-core-scheduler-rls-leak",
+      "action": "Scheduler global-read RLS GUC leaks to pooled connection when set_global_read_context(conn,false) itself errors in fire_due_report_schedules (backend/servers/api-server/src/services/scheduler.rs:1416): the ? returns the connection with the session-level global-read GUC still set, so a later borrower without its own tenant context can read cross-org rows via the SELECT-only global-read policy leg (migration 00218). Clear the flag before the ? (mirror workflow_executor.rs guard.release() pattern) and add a regression test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1d-dev-review 2026-07-17T18:17:03Z (api-core rotating-expert-review)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T18:17:03Z",
+      "gc1_closed": "assignment failed (sandbox) 2026-07-18T04:16:30Z"
     },
     {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
@@ -7499,6 +7512,27 @@
         "merged_at": "2026-07-18T02:14:26Z",
         "at": "2026-07-18T02:19:32Z"
       }
+    },
+    {
+      "id": "gh-issue-2418",
+      "action": "Follow-up: cross-org /rag/migrate RLS test passes vacuously (runs as superuser) — switch to a NOBYPASSRLS role to actually guard the 00216 super-admin policy (PR #2335) (Closes #2418)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-18T00:04:58Z (#2418)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-18T00:04:58Z",
+      "issue_ref": {
+        "number": 2418,
+        "url": "https://github.com/martin-janci/property-management/issues/2418",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": "merged PR #2421 on dev 2026-07-18T04:16:30Z"
     },
     {
       "id": "pm-backend-fix-ai-equipment-idor",
