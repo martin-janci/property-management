@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-15T01:55:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-18T12:00:00Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
     "orphan_screens": [],
@@ -736,7 +736,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-18",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
@@ -1197,13 +1197,14 @@
       "evidence": [
         "PR #2309: POST /api/v1/documents/upload-url (SigV4 PUT presigner) wired backend",
         "StorageService::generate_upload_url confirmed",
-        "no frontend consumer of the endpoint found in frontend/apps"
+        "no frontend consumer of the endpoint found in frontend/apps",
+        "PR #2410 (2026-07-17): DocumentUploadScreen iOS HEIC/HEIF\u2192JPEG transcode \u2014 direct-to-S3 upload path exercised on mobile"
       ],
       "gaps": [
         "ppt-web upload flow still server-proxied \u2014 wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-18",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1227,13 +1228,15 @@
       "evidence": [
         "backend signing URL + invitation emails implemented (signatures.rs)",
         "PR #2306: docs/screens/ppt/document-sign.md added \u2014 buildStatus: planned, apiStatus: complete",
-        "no sign-page component in ppt-web"
+        "no sign-page component in ppt-web",
+        "PR #2378 (2026-07-16): strip signing token from /sign URL + suppress Referer \u2014 ppt-web signer page hardened",
+        "PR #2408 (2026-07-17): fix /sign reload regression + strip only token param"
       ],
       "gaps": [
         "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned\u2192shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR \u2014 fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-18",
       "screen_refs": [
         {
           "screen_id": "ppt/document-sign",

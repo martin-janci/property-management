@@ -1,0 +1,248 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last run was 2d 9h ago (last_run_iso=2026-07-16T03:04:00Z \u2192 now=2026-07-18T12:00:00Z)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16 (PRs [2397])",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/packages/sitemap/src/json/sitemap.json: +868 lines this run (runs_seen was 1; last_seen 2026-07-16)",
+        "cumulative re-emit \u2014 score_delta not re-applied"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16 (PRs [2421])",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs: +204 lines this run (runs_seen was 0; last_seen never)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16 (PRs [2371])",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt: +203 lines this run (runs_seen was 0; last_seen never)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2373-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2373",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2373 touched 4 reality-web route file(s) (frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx, frontend/apps/reality-web/src/app/[locale]/listings/[slug]/jsonLd.ts, frontend/apps/reality-web/src/app/[locale]/listings/[slug]/listingSchema.ts, frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts) without updating any docs/screens/reality/*.md \u2014 screen docs drifting from code"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2384-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2384",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2384 touched 1 ppt-web route file(s) (frontend/apps/ppt-web/src/routes/groups/reports.tsx) without updating any docs/screens/ppt/*.md \u2014 screen docs drifting from code"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2411 touched 1 ppt-web route file(s) (frontend/apps/ppt-web/src/routes/groups/reports.tsx) without updating any docs/screens/ppt/*.md \u2014 screen docs drifting from code"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-listings-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:289 \u2014 public search handler surfaces raw sqlx::Error via format!(\"Failed to search listings: {}\", e); same at :301 for count_listings. Inconsistent with the same file's get_listing (line 344-348) and get_categories (line 800-806) which explicitly hide DB error text with a generic 'Internal server error' and log the detail server-side. Publicly reachable (unauthenticated /api/v1/listings), so a query-provoked DB error can leak pool state / connection-string fragments / migration hints to arbitrary internet clients."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-reset-token-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:459-463 \u2014 request_password_reset logs the raw plaintext_token at tracing::info! level under #[cfg(debug_assertions)]. Release builds are safe, but any debug binary deployed to dev/staging (a common misconfiguration) writes a valid password-reset token into the log stream. Anyone with log-aggregator read access can then reset any account whose email hits the endpoint. Consider gating on an explicit env-var (DEV_LOG_RESET_TOKEN=1) or dropping the token from the message entirely and printing it only to stdout of the test harness."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-osrng-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:665 \u2014 generate_code_verifier uses .expect(\"OS rng failed\") on rand::rngs::SysRng.try_fill_bytes; same pattern at backend/servers/reality-server/src/handlers/users/mod.rs:551 in request_password_reset. Both sit on user-triggerable request paths (SSO login init, portal password reset). An OS RNG failure would panic the tokio task and return a bare 500 to the client instead of a mapped error. Preferred: map to StatusCode::INTERNAL_SERVER_ERROR with a tracing::error! so the failure is observable rather than an unwind through the axum handler."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && head -1 grep",
+      "observed": "pending",
+      "expected": "exit 0",
+      "note": "verified in Phase 6"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors advanced (last_pr_seen 2356\u21922421, last_issue_seen 2370\u21922418, last_commit_sha 1006a4c\u2192e84332a7, seen_signals +9)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored (only churn-hotspot sitemap.json re-emitted with score_delta=0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap \u2264 8 (max new score = 2); no open items >14d needed decay (0 open items existed pre-run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 G6 vacuously passes",
+      "observed": "0 new plans",
+      "expected": "annotated iff created"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans this run; readiness gate not applicable",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "pending",
+      "expected": "0",
+      "note": "verified in Phase 6 before commit"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan on staged diff",
+      "observed": "pending",
+      "expected": "0 matches",
+      "note": "verified in Phase 6 before commit"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen from backlog.json",
+      "observed": "regenerated from canonical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief 'Phases that failed'",
+      "observed": "none this run",
+      "expected": "cursors match failure map"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "true (no plans touched this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count HEAD vs staged",
+      "observed": "6/6 (no archive changes)",
+      "expected": "staged >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen from backlog.json (triage rows)",
+      "observed": "regenerated from canonical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length \u2264 3; no signal in state.auto_fix_history was re-processed",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor.next_index in [0,7]; coverage_cursor.next_index in [0,#epics); advanced when pm_cursor advanced",
+      "observed": "pm_cursor 5\u21926 (pm-security ran); coverage_cursor 12\u21920 (13 epics)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in staged diff",
+      "observed": "pending",
+      "expected": "0 matches",
+      "note": "verified in Phase 6"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run"
+}

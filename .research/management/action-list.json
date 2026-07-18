@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "gh-issue-2360",
-      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry — increment not gated on dedup (PR #2354) (Closes #2360)",
+      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry \u2014 increment not gated on dedup (PR #2354) (Closes #2360)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -20,7 +20,139 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-rebuild-action-list-json-backlog-json-from-the-10-ready-rese",
+      "action": "Rebuild action-list.json/backlog.json from the 10 ready .research/plans/*.md and coverage.json partials \u2014 the buffer is at 0/72 claimable and starving the implementer",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-scrum-master-seed-security-llm-doc-idor-routes-ai-rs-publish-description",
+      "action": "Seed security-llm-doc-idor (routes/ai.rs publish_description/list_listing_descriptions/get_photo_enhancement discard principal \u2014 state-mutating cross-tenant IDOR, score 3) into action-list",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-scrum-master-seed-security-realtors-mark-inquiry-read-idor-reality-server",
+      "action": "Seed security-realtors-mark-inquiry-read-idor (reality-server routes/realtors.rs:250 mark_inquiry_read has no realtor predicate \u2014 cross-account write IDOR, score 3) into action-list",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-scrum-master-close-84-1-s3-presigned-urls-gap-wire-ppt-web-upload-flow-to",
+      "action": "Close 84-1-s3-presigned-urls gap: wire ppt-web upload flow to POST /documents/upload-url (endpoint shipped in PR #2309, no frontend consumer yet)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-scrum-master-close-84-2-esignature-email-gap-build-the-ppt-document-sign",
+      "action": "Close 84-2-esignature-email gap: build the ppt/document-sign signer-facing page in ppt-web (backend + email complete, no UI component yet; prior attempt gap-84-2 landed no PR)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-scrum-master-manually-re-scope-gh-issue-2360-quarantined-fix-rounds-3-exh",
+      "action": "Manually re-scope gh-issue-2360 (quarantined: fix_rounds=3 exhausted, verdict still 'changes' \u2014 Ok(None) dup-collapse + clippy red + migration 00219 collision) rather than re-queue for another automated round",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-fix-cross-tenant-idor-in-routes-ai-rs-publish-description-ai",
+      "action": "Fix cross-tenant IDOR in routes/ai.rs publish_description (ai.rs:2620, state-mutating), list_listing_descriptions (ai.rs:2599), get_photo_enhancement (ai.rs:2847) per .research/plans/security-llm-doc-idor.md \u2014 bind principal, add organization_id predicate to llm_document.rs:397/358/977",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-verify-actual-dev-branch-state-of-realtors-rs-250-mark-inqui",
+      "action": "Verify actual dev-branch state of realtors.rs:250 mark_inquiry_read \u2014 backlog.json marks security-realtors-mark-inquiry-read-idor plan archived but the plan file is still in .research/plans/ (not _archive/), and no fixing PR appears in this window's merged list",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-replace-voice-commands-rs-action-check-balance-line-248-and",
+      "action": "Replace voice_commands.rs action_check_balance (line 248) and action_report_fault (line 278) fabricated-success stubs with real repo calls or fail-closed error on the live voice-webhook path (routes/voice_webhooks.rs -> process_command)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-harden-actions-api-call-rs-validate-external-url-line-179-to",
+      "action": "Harden actions/api_call.rs validate_external_url (line 179) to resolve DNS hostnames and re-check every resolved address against the private/link-local/metadata blocklist, not just literal-IP hosts",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-fix-authorization-rs-require-permission-line-180-fail-open-u",
+      "action": "Fix authorization.rs require_permission() (line 180) fail-open .unwrap_or(TenantRole::Guest) default, or delete the unused exported middleware so it can't be wired later as-is",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
+    },
+    {
+      "id": "pm-security-add-per-email-per-ip-rate-limiting-to-forgot-password-and-re",
+      "action": "Add per-email/per-IP rate limiting to /forgot-password and /resend-verification per .research/plans/security-forgot-password-no-rate-limit.md",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18"
     }
   ],
-  "generated": "2026-07-15T01:55:00Z"
+  "generated": "2026-07-18T12:00:00Z"
 }

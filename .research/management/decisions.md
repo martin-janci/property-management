@@ -85,3 +85,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## 2026-07-18 — decisions needed (from pm-scrum-master + pm-security)
+
+- Decide the seeding mechanism for promoting ready `.research/plans/*.md` into `action-list.json` (auto-promote vs manual gate) — owner: pm-tech-lead
+- Decide whether to trigger a fresh researcher `scan` now given 2d 9h lag and a fully-terminal backlog — owner: researcher
+- Decide disposition of gh-issue-2360 (manual fix vs re-split vs drop) — owner: pm-tech-lead
+- Prioritize `security-llm-doc-idor` and verification of the `realtors mark_inquiry_read` fix into this sprint vs. next — owner: eng-lead/pm-security
+- Decide fail-closed vs. implement-for-real for `voice_commands.rs` balance/fault-report stubs before any further voice-webhook rollout — owner: rust-backend lead
