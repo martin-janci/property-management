@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-18T14:17:31Z",
-  "generated_by": "8c5d49b985a03701b4613d7f66a3723cfc5706c7",
+  "generated_at": "2026-07-18T16:13:55Z",
+  "generated_by": "b21428a850c9797ccc2d2f64eca763cf3147e4e0",
   "findings": [
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
@@ -47,17 +47,17 @@
       "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
       "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
       "first_seen": "2026-07-16T18:20:36Z",
-      "last_seen": "2026-07-18T12:19:52Z",
-      "recurrence": 5,
+      "last_seen": "2026-07-18T16:13:55Z",
+      "recurrence": 6,
       "severity": "high",
       "category": "infra",
       "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
       "evidence": [
-        "no-run-level-lock finding this run: gh CLI absent yet GitHub MCP AND git push both worked — the push medium is available; only the specific gh-dependent paths are not.",
         "f3f1b79 (this run): pushed via PUSH_METHOD=git again because archive 330KB+ exceeds the 64KiB MCP ceiling; direct git push worked with gh CLI unavailable — confirms git-push is the reliable primary.",
         "211f416 (2026-07-17T10:16 run): dispatcher trailer push: PUSH_METHOD=git (git transport works here; sidesteps mcp-push-size-guard 348KB>64KB archive ceiling) -- direct git push is again the reliable primary; the MCP-primary default remains obsolete in this env.",
         "0daef09 (this run): git fetch AND push to origin/dev both SUCCEEDED — the git-push-blocked-by-proxy premise is stale in this env; MCP push_files was not viable only because the 350KB/366KB archives exceed the 64KiB inline ceiling, so direct git push is again the reliable primary and the MCP-primary default remains obsolete.",
-        "5531f24 (this run): git push to dev SUCCEEDED directly again; gh CLI unavailable so all GitHub I/O routed via MCP, yet the state commit still landed via direct git push — the MCP-primary push default remains obsolete in this env."
+        "5531f24 (this run): git push to dev SUCCEEDED directly again; gh CLI unavailable so all GitHub I/O routed via MCP, yet the state commit still landed via direct git push — the MCP-primary push default remains obsolete in this env.",
+        "b21428a (this run): Phase 6 committed + pushed via direct git to origin/dev SUCCEEDED (proxy allowed direct push this run); gh CLI unavailable so GitHub reads routed via MCP, yet the state commit landed via direct git push — the MCP-primary push default + 64KiB size-guard remain obsolete in this env."
       ],
       "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
       "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
@@ -147,23 +147,6 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "orphaned-prs-reconciliation-noise",
-      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
-      "severity": "high",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 2,
-      "evidence": [
-        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
-        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
-        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
-      ],
-      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
-      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
       "finding_id": "dup-suffix-variant-dodges-dedup",
       "title": "Suffix-variant task_ids (-impl/-fix/-v2) bypass the dedup gate and open a second PR for the same gap",
       "severity": "high",
@@ -178,6 +161,23 @@
       ],
       "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide. T20 already computes this stem for active rows — reuse the same stem function in the Phase 2/3 dedup gate.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2/3 dedup gate)",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "orphaned-prs-reconciliation-noise",
+      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
+      "severity": "high",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T12:28:33Z",
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
+      "evidence": [
+        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
+        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
+        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+      ],
+      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
+      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
@@ -222,28 +222,6 @@
       "operator_notes": "Fixed inline this run. Add T21 self-test: verify ALL_ARCHIVE_IDS includes failed rows."
     },
     {
-      "finding_id": "goal-check-gc3-buffer-overshoot",
-      "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
-      "severity": "high",
-      "category": "goal-check",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T15:22:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 1,
-      "symptom": "goal-check.sh GC3-buffer-bounds FAIL — observed claimable=117 (open=134, dep_blocked=17), expected 18<=claimable<=60. Buffer nearly double the ceiling.",
-      "evidence": [
-        "bash .research/goal-check.sh: 'FAIL GC3-buffer-bounds — observed=claimable=117 (open=134 dep_blocked=17) expected=18<=claimable<=60'",
-        "6bf8e883 Phase 2.6: 'Buffer refilled +30 items (coverage rubric 2026-05-28) | claimable=142/159' — refill ran with no upper-bound guard",
-        "b8bf30ad subject: 'B152/159 dep-blocked=7' — buffer continues to sit far above the 60 ceiling run-to-run",
-        "self-test T15 also reports open_claimable=117 — consistent with goal-check"
-      ],
-      "root_cause": "Phase 2.6 buffer refill targets a minimum (top-up to keep work flowing) but has no maximum cap, so a single large coverage-rubric refill (+30) pushed claimable well past the GC3 ceiling of 60. The refill step does not consult GC3 bounds before adding items.",
-      "proposed_fix": "Make Phase 2.6 refill bound-aware: stop refilling once claimable reaches the GC3 upper bound (60), and refill only up to that cap. Optionally drain excess by deferring lowest-score claimable items back to backlog rather than holding them claimable. Wire GC3 bounds as the single source of truth shared by refill and goal-check.",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
-      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
-    },
-    {
       "finding_id": "goal-check-gc1-orphan-action-list-items",
       "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
       "severity": "high",
@@ -264,6 +242,28 @@
       "effort": "medium",
       "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
       "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
+    },
+    {
+      "finding_id": "goal-check-gc3-buffer-overshoot",
+      "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
+      "severity": "high",
+      "category": "goal-check",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T15:22:00Z",
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 1,
+      "symptom": "goal-check.sh GC3-buffer-bounds FAIL — observed claimable=117 (open=134, dep_blocked=17), expected 18<=claimable<=60. Buffer nearly double the ceiling.",
+      "evidence": [
+        "bash .research/goal-check.sh: 'FAIL GC3-buffer-bounds — observed=claimable=117 (open=134 dep_blocked=17) expected=18<=claimable<=60'",
+        "6bf8e883 Phase 2.6: 'Buffer refilled +30 items (coverage rubric 2026-05-28) | claimable=142/159' — refill ran with no upper-bound guard",
+        "b8bf30ad subject: 'B152/159 dep-blocked=7' — buffer continues to sit far above the 60 ceiling run-to-run",
+        "self-test T15 also reports open_claimable=117 — consistent with goal-check"
+      ],
+      "root_cause": "Phase 2.6 buffer refill targets a minimum (top-up to keep work flowing) but has no maximum cap, so a single large coverage-rubric refill (+30) pushed claimable well past the GC3 ceiling of 60. The refill step does not consult GC3 bounds before adding items.",
+      "proposed_fix": "Make Phase 2.6 refill bound-aware: stop refilling once claimable reaches the GC3 upper bound (60), and refill only up to that cap. Optionally drain excess by deferring lowest-score claimable items back to backlog rather than holding them claimable. Wire GC3 bounds as the single source of truth shared by refill and goal-check.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
+      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
@@ -306,17 +306,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-07-18T14:17:31Z",
-      "recurrence": 12,
+      "last_seen": "2026-07-18T16:13:55Z",
+      "recurrence": 13,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved). backlog.json 100% consumed (0 open/ready; 127 done, 60 dropped); Tier-1b avail=0, Tier-1c retry-remint 0 eligible; only Tier-1d dev-review generator fired (ppt-web-ui, 3 findings) — does not lift the claimable buffer. coverage 47/49 done, structurally no new stories to mint.",
         "6ea41b3b (this run): GC3-buffer-bounds=FAIL; claimable=1/open=1 vs floor=36 (deeply starved, coverage 47/49 done). Tier-1b avail=0 AND Tier-1c avail=0; only Tier-1d dev-review generator fired (produced 2 findings this run — unlike its prior stall) but that does not lift the claimable buffer. The buffer stays at floor's rock-bottom with no actuating refill.",
         "f3f1b79 (this run): GC3-buffer-bounds=FAIL; claimable=0/open=72 vs floor=36 (fully starved, 0 claimable). Tier-1b avail=0, Tier-1c avail=0; Tier-1d dev-review generator fired (3 findings) + Tier-2 kick http=200 routine_fire — yet neither lifts the claimable buffer. coverage 47 done/2 partial with no new stories to mint, so refill paths structurally cannot recover.",
         "983107b (2026-07-17T22:08 cycle): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved). Tier-1 coverage all 49 stories done/partial; Tier-1b/1c/coverage refills avail=0; Tier-1d review-merged generator fired (2 issues #2417/#2418) + Tier-2 kick http=200 -- neither actuates the claimable buffer this cycle. Near-continuous 0-claimed runs across the whole 8-commit window.",
-        "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer."
+        "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer.",
+        "b21428a (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) across the whole day (10:13/12:15/14:08/16:09 all 0-claimed). Tier-1b avail=0, Tier-1c retry-remint cool-down (failures 2-3d old, 7d window); Tier-1d review-merged generator ran (scanned=3 clean=3 issues=0 — recent merges are clean fixes to prior findings) + Tier-2 kick http=200 routine_fire — neither lifts the claimable buffer. coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -430,6 +430,28 @@
       "operator_notes": ""
     },
     {
+      "finding_id": "review-cursor-not-advanced-by-tier1d-slices",
+      "title": "state.review_cursor is only advanced by routine-prompt.md, never by the dispatcher's Tier-1d review slices, so the rotation re-picks the same stale segment for multiple consecutive runs",
+      "first_seen": "2026-07-18T02:21:58Z",
+      "last_seen": "2026-07-18T14:17:31Z",
+      "recurrence": 2,
+      "severity": "medium",
+      "category": "infra",
+      "symptom": "state.review_cursor.api-core is frozen at 2026-07-13 despite a 2026-07-17-api-core-tier1d.json signal existing — the Tier-1d generator that ran api-core on 07-17 never wrote the cursor. Result: the last 3 runs re-picked the api-core segment off the frozen cursor; this run's generator had to reconstruct true last-review dates from dated signal filenames to break out (landed on mobile-rn).",
+      "evidence": [
+        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Tier-1d re-picked segment ppt-web-ui — signal files show ppt-web-ui reviewed 3 consecutive days (2026-07-16/-17/-18 -ppt-web-ui-tier1d.json). state.json has NO review_cursor field at all, so dispatcher Tier-1d slices leave no cursor and the rotation re-selects the same segment run after run.",
+        "0daef09 (this run): Tier1d generator worked around a frozen 2026-07-13 api-core cursor by reconstructing last-review dates from dated signal filenames; picked segment=mobile-rn (1 finding: offline-queue silent dataloss).",
+        "state.json review_cursor.api-core=2026-07-13 while .research/signals/2026-07-17-api-core-tier1d.json exists — the 07-17 review did not advance the cursor.",
+        "grep review_cursor: only .research/routine-prompt.md writes it (plus historical briefs); no dispatcher Tier-1d path updates it, so dispatcher-driven slices leave the cursor stale."
+      ],
+      "root_cause": "review_cursor is owned/written exclusively by the routine (routine-prompt.md Phase-6-style cursor write). The dispatcher's Tier-1d dev-review generator selects a segment but has no cursor-write step, so segments it reviews are never marked reviewed. When the routine is not the one running the slice, the cursor freezes and the oldest-unreviewed selection keeps returning the same segment run after run — rotation starvation.",
+      "proposed_fix": "Give the dispatcher Tier-1d generator a cursor-write step: after it reviews segment S, stamp state.review_cursor[S]=<utc-date> (the same field routine-prompt.md writes), so the next run's oldest-unreviewed pick rotates. Alternatively, make segment selection authoritative off the dated signal filenames (max date per segment) rather than the cursor, and treat review_cursor as a cache. Files: .research/dispatcher-prompt.md (Tier-1d slice — add cursor write) and/or the segment-selection helper. Add a self-test asserting a segment with a signal file dated after its review_cursor value is flagged (cursor-drift guard).",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Tier-1d generator segment-select + cursor write) + .research/management/state.json (review_cursor)",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "failed-task-dedup-blocks-reingest-of-still-open-issues",
       "title": "issue-ingest dedups against previously-FAILED task ids, so still-open GitHub issues that failed a prior attempt are permanently dead-ended and never re-minted — a hidden drain on the already-starved claim buffer",
       "first_seen": "2026-07-18T02:21:58Z",
@@ -490,28 +512,6 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "review-cursor-not-advanced-by-tier1d-slices",
-      "title": "state.review_cursor is only advanced by routine-prompt.md, never by the dispatcher's Tier-1d review slices, so the rotation re-picks the same stale segment for multiple consecutive runs",
-      "first_seen": "2026-07-18T02:21:58Z",
-      "last_seen": "2026-07-18T14:17:31Z",
-      "recurrence": 2,
-      "severity": "medium",
-      "category": "infra",
-      "symptom": "state.review_cursor.api-core is frozen at 2026-07-13 despite a 2026-07-17-api-core-tier1d.json signal existing — the Tier-1d generator that ran api-core on 07-17 never wrote the cursor. Result: the last 3 runs re-picked the api-core segment off the frozen cursor; this run's generator had to reconstruct true last-review dates from dated signal filenames to break out (landed on mobile-rn).",
-      "evidence": [
-        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Tier-1d re-picked segment ppt-web-ui — signal files show ppt-web-ui reviewed 3 consecutive days (2026-07-16/-17/-18 -ppt-web-ui-tier1d.json). state.json has NO review_cursor field at all, so dispatcher Tier-1d slices leave no cursor and the rotation re-selects the same segment run after run.",
-        "0daef09 (this run): Tier1d generator worked around a frozen 2026-07-13 api-core cursor by reconstructing last-review dates from dated signal filenames; picked segment=mobile-rn (1 finding: offline-queue silent dataloss).",
-        "state.json review_cursor.api-core=2026-07-13 while .research/signals/2026-07-17-api-core-tier1d.json exists — the 07-17 review did not advance the cursor.",
-        "grep review_cursor: only .research/routine-prompt.md writes it (plus historical briefs); no dispatcher Tier-1d path updates it, so dispatcher-driven slices leave the cursor stale."
-      ],
-      "root_cause": "review_cursor is owned/written exclusively by the routine (routine-prompt.md Phase-6-style cursor write). The dispatcher's Tier-1d dev-review generator selects a segment but has no cursor-write step, so segments it reviews are never marked reviewed. When the routine is not the one running the slice, the cursor freezes and the oldest-unreviewed selection keeps returning the same segment run after run — rotation starvation.",
-      "proposed_fix": "Give the dispatcher Tier-1d generator a cursor-write step: after it reviews segment S, stamp state.review_cursor[S]=<utc-date> (the same field routine-prompt.md writes), so the next run's oldest-unreviewed pick rotates. Alternatively, make segment selection authoritative off the dated signal filenames (max date per segment) rather than the cursor, and treat review_cursor as a cache. Files: .research/dispatcher-prompt.md (Tier-1d slice — add cursor write) and/or the segment-selection helper. Add a self-test asserting a segment with a signal file dated after its review_cursor value is flagged (cursor-drift guard).",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (Tier-1d generator segment-select + cursor write) + .research/management/state.json (review_cursor)",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
       "finding_id": "quarantined-assignment-blocks-action-list-twin-claim",
       "title": "An open action-list item whose stem matches a QUARANTINED assignment is permanently unclaimable for the quarantine's lifetime, so the buffer reports claimable=0 even when open>0 — self-inflicted starvation distinct from upstream supply exhaustion",
       "first_seen": "2026-07-18T12:19:52Z",
@@ -532,24 +532,6 @@
       "operator_notes": ""
     },
     {
-      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
-      "first_seen": "2026-07-16T20:30:08Z",
-      "last_seen": "2026-07-16T20:30:08Z",
-      "recurrence": 1,
-      "severity": "medium",
-      "category": "review",
-      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
-      "evidence": [
-        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
-        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
-      ],
-      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
-      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
-      "effort": "medium",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
       "finding_id": "action-list-cross-file-duplicate-stems",
       "first_seen": "2026-07-16T20:30:08Z",
       "last_seen": "2026-07-16T20:30:08Z",
@@ -563,6 +545,24 @@
       ],
       "root_cause": "The action-list.json / action-list-archive.json split does not enforce stem mutual-exclusion; retry re-mint (and archive append) can leave a stem in both files, and reconcile hard-aborts instead of self-healing, requiring manual cleanup each run.",
       "proposed_fix": "Make action-list-reconcile idempotent: when a stem is in both files, keep the archive (terminal) copy and drop the active one automatically instead of aborting. Add self-test T<N>: assert (stems in action-list.json) ∩ (stems in action-list-archive.json) == ∅.",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
+      "first_seen": "2026-07-16T20:30:08Z",
+      "last_seen": "2026-07-16T20:30:08Z",
+      "recurrence": 1,
+      "severity": "medium",
+      "category": "review",
+      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
+      "evidence": [
+        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
+        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
+      ],
+      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
+      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
@@ -672,6 +672,28 @@
       "operator_notes": ""
     },
     {
+      "finding_id": "temp-phase-8-past-documented-removal-deadline",
+      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
+      "first_seen": "2026-07-18T12:19:52Z",
+      "last_seen": "2026-07-18T16:13:55Z",
+      "recurrence": 3,
+      "severity": "low",
+      "category": "spec",
+      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
+      "evidence": [
+        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced findings; dispatcher-prompt.md:2382 \"REMOVE BY 2026-06-30\" and :2521 \"remove by 2026-06-30\" still present — currentDate 2026-07-18 = 18 days overdue. Deadline marker stale, phase de-facto permanent.",
+        "dispatcher-prompt.md:2382-2383 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'remove by 2026-06-30 (search TEMP_PHASE_8 to find every related artifact)'; currentDate 2026-07-18 = 18 days overdue.",
+        "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent.",
+        "b21428a (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced bumps; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present — currentDate 2026-07-18 = 18 days overdue; phase is de-facto permanent."
+      ],
+      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
+      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "reconciled-done-annotation-contradicts-archive",
       "title": "A stale/false `[RECONCILED-DONE: … already merged]` prefix on an action-list row contradicted the archive record (which showed the same task failed), risking misleading future runs",
       "first_seen": "2026-07-12T06:16:49Z",
@@ -708,27 +730,6 @@
       "proposed_fix": "Recompute the metrics trailer after Phase 5.5 (post-merge) and add a dup-skip count token so commit subjects match the Phase 7 summary.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 7 metrics trailer)",
       "operator_notes": "FIXED: the Phase 6 commit subject now carries a `DS dup-skipped` token, and the Phase 2.6 commit-message template adds the token + a note that the trailer is recomputed after Phase 5.5 (subject reflects this run's actual merges/skips) and every subject token must agree with its Phase 7 line. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "temp-phase-8-past-documented-removal-deadline",
-      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
-      "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-07-18T14:17:31Z",
-      "recurrence": 2,
-      "severity": "low",
-      "category": "spec",
-      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
-      "evidence": [
-        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced findings; dispatcher-prompt.md:2382 \"REMOVE BY 2026-06-30\" and :2521 \"remove by 2026-06-30\" still present — currentDate 2026-07-18 = 18 days overdue. Deadline marker stale, phase de-facto permanent.",
-        "dispatcher-prompt.md:2382-2383 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'remove by 2026-06-30 (search TEMP_PHASE_8 to find every related artifact)'; currentDate 2026-07-18 = 18 days overdue.",
-        "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent."
-      ],
-      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
-      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
-      "status": "open",
-      "operator_notes": ""
     },
     {
       "finding_id": "wip-over-cap-blocks-claims",
@@ -796,22 +797,6 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "subagent-race-on-dev-push",
-      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "evidence": [
-        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
-        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
-      ],
-      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
-    },
-    {
       "finding_id": "subagent-workspace-contamination",
       "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
       "severity": "critical",
@@ -828,6 +813,22 @@
       "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
       "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "subagent-race-on-dev-push",
+      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "evidence": [
+        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
+        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
+      ],
+      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     }
   ]
 }
