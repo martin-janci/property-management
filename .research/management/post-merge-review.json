@@ -1,9 +1,19 @@
 {
-  "generated": "2026-07-17T22:12:33Z",
+  "generated": "2026-07-18T16:08:31Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-18T16:08:31Z",
+      "prs_scanned": 3,
+      "clean": [
+        2421,
+        2420,
+        2419
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-07-17T22:12:33Z",
       "prs_scanned": 5,
