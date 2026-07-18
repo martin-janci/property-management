@@ -4440,6 +4440,236 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "title": "Voice-assistant handlers action_check_balance/action_report_fault ship as stubs — fabricated success on live webhook path",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-17",
+        "signals/2026-07-17-api-core-tier1d.json"
+      ],
+      "evidence": [
+        "voice_commands.rs:235-266 action_check_balance returns success:true with hardcoded balance=0.0 (comment: 'In a real implementation, this would query the financial repository')",
+        "voice_commands.rs:267-310 action_report_fault mints Uuid::new_v4() ticket and never persists to fault repo",
+        "voice_commands.rs:143-144 dispatch table wires both intents (no feature-flag)",
+        "routes/voice_webhooks.rs:146,162,265 three public entry points reach these stubs",
+        "phase-1 severity upgrade to High (score 3) — high confidence + safety-relevant path (mis-quoted balance + dropped fault reports)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/crates/db/src/repositories/fault.rs",
+        "backend/crates/db/src/repositories/financial.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": "plans/code-review-api-core-voice-cmd-fabricated-success.md"
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-branch",
+      "title": "reality-web /listings silently renders empty state on API failure (no error branch destructured from useListings)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-web 2026-07-17",
+        "signals/2026-07-17-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "app/[locale]/listings/page.tsx:145 destructures only { data, isLoading } from useListings — no error/isError",
+        "app/[locale]/listings/page.tsx:337-341 passes data?.data ?? [] to ListingGrid; error and zero-result render identically",
+        "lib/query-provider.tsx sets no throwOnError, so app/[locale]/error.tsx boundary never fires",
+        "sibling pages (favorites, inquiries) contain explicit error branches — omission not design",
+        "phase-1 severity upgrade to High (score 3) — high confidence + public SEO/user path"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx",
+        "frontend/apps/reality-web/src/lib/query-provider.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": "plans/code-review-reality-web-listings-no-error-branch.md"
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "title": "api_call action validate_external_url guards only literal IPs — hostname resolution bypass (SSRF)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-17",
+        "signals/2026-07-17-api-core-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 validate_external_url — private/internal-IP guard only runs when host is a LITERAL IP"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-fail-open",
+      "title": "workflow_executor evaluate_conditions() fails OPEN on unrecognised condition JSON",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-17",
+        "signals/2026-07-17-api-core-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:481-486 evaluate_conditions() — condition JSON that deserializes as neither ConditionGroup nor Condition returns Ok(true), fail-open"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoicelist-noop-view",
+      "title": "ppt-web AccountingInvoiceList rows appear clickable but do nothing — cursor-pointer with no handler",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-17",
+        "signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:83 invoice rows render as cursor-pointer/hover-clickable (AccountingInvoiceList.tsx:71-72) with no click handler"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceList.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsareports-i18n",
+      "title": "ppt-web DsaReportsPage hardcodes English error strings — bypasses i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-17",
+        "signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:80 'Please select both start and end dates' hardcoded, no t()",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:98 'Failed to generate report. Please try again.' hardcoded via setFormError"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-evidence-retry",
+      "title": "ppt-web FileDisputePageRoute threads failedEvidence into router state but no retry UI consumes it",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-07-17",
+        "signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx:78 failedEvidence is threaded into router state but no retry UI consumes it on DisputeDetailPage (TODO comment)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/DisputeDetailPage.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-saved-search-hardcoded-i18n",
+      "title": "reality-web saved-searches page hardcodes For Sale/For Rent/€…-€… — bypasses next-intl",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-07-17",
+        "signals/2026-07-17-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "app/[locale]/saved-searches/page.tsx:38,55 — hardcoded English labels ('For Sale', 'For Rent', 'All listings', '€… - €…') inside getFilterSummary()"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-hardcoded-locale",
+      "title": "reality-web agency/realtor public profile pages hardcode Slovak text — untranslated on other locales",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-07-17",
+        "signals/2026-07-17-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "app/[locale]/agency/[slug]/page.tsx:36 and app/[locale]/realtor/[id]/page.tsx:114 — public profile pages render hardcoded Slovak ('Načítavam…', '✓ Overený maklér') regardless of locale"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "title": "mobile RN offline queue drops terminally-failed mutations after 3 retries — silent data loss with no dead-letter store",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review mobile-rn 2026-07-18",
+        "signals/2026-07-18-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 processQueue() permanently DROPS a terminally-failed offline mutation via console.error only",
+        "Aggregate-only surfacing via PendingSyncIndicator — user sees 'N failed' but cannot see WHICH items failed nor recover them",
+        "Terminal on retries >= 3 (transient 5xx/network) or 4xx (permanent) — the 5xx path is unsafe"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/components/PendingSyncIndicator.tsx"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
     }
   ]
 }

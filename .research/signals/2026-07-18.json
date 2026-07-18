@@ -1,0 +1,231 @@
+{
+  "generated_at": "2026-07-18T04:19:47Z",
+  "generator": "routine",
+  "trigger_payload": "buffer-low: claimable=0/72 — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "routine last_run_iso=2026-07-16T03:04:00Z; now=2026-07-18T04:19:47Z; delta=~49h (>36h threshold). Cloud cron may have missed a fire; logged in brief."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:235-266 action_check_balance stub returns success:true with hardcoded balance=0.0 (verified by opening file — 'In a real implementation' comment present).",
+        "backend/servers/api-server/src/services/voice_commands.rs:267-310 action_report_fault mints Uuid::new_v4() ticket and never persists (verified).",
+        "voice_commands.rs:143-144 dispatch table wires both intents; voice_webhooks.rs:146,162,265 are reachable public webhook entry points.",
+        "Routine phase-1 severity upgrade: tier1d score_delta=2 (Medium) upgraded to High (score 3) after opening the file — user-quoted balances + dropped fault reports are safety-relevant.",
+        "Adopted from signals/2026-07-17-api-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-branch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/listings/page.tsx:145 destructures only { data, isLoading } from useListings — no error/isError (verified).",
+        "app/[locale]/listings/page.tsx:337-341 renders <ListingGrid listings={data?.data ?? []}> — error and zero-result render identically (verified).",
+        "Sibling favorites/inquiries pages contain 4+ 'error' tokens each — omission not design (verified via grep).",
+        "Routine phase-1 severity upgrade: tier1d score_delta=2 (Medium) upgraded to High (score 3) after opening the file — public SEO/user entry point silently fails.",
+        "Adopted from signals/2026-07-17-reality-web-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:179 validate_external_url — private/internal-IP guard only runs when the host is a LITERAL IP; hostnames resolving to internal addresses bypass.",
+        "Adopted from signals/2026-07-17-api-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:481-486 evaluate_conditions() — condition JSON that deserializes as neither ConditionGroup nor Condition returns Ok(true), fail-open.",
+        "Adopted from signals/2026-07-17-api-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoicelist-noop-view",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:83 + AccountingInvoiceList.tsx:71-72 — invoice rows render with cursor-pointer/hover styles but no onClick.",
+        "Adopted from signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsareports-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:80,98 — hardcoded English strings for form validation + form error; no t() call.",
+        "Adopted from signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-evidence-retry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx:78 — failedEvidence threaded into router state but no retry UI on DisputeDetailPage consumes it (TODO comment in source).",
+        "Adopted from signals/2026-07-17-ppt-web-ui-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-saved-search-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/saved-searches/page.tsx:38,55 — hardcoded English labels inside getFilterSummary().",
+        "Adopted from signals/2026-07-17-reality-web-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "app/[locale]/agency/[slug]/page.tsx:36 and realtor/[id]/page.tsx:114 — hardcoded Slovak text regardless of locale.",
+        "Adopted from signals/2026-07-17-reality-web-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 processQueue() DROPS a terminally-failed mutation with only console.error; no dead-letter, aggregate-only surfacing via PendingSyncIndicator.",
+        "Adopted from signals/2026-07-18-mobile-rn-tier1d.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "reports.rs: +3329 lines this run (runs_seen=2 previously; last_seen 2026-07-16). Recurrence traced to PR #2340 (scheduler-RLS migration) + PR #2411 (localise create-schedule form). Cumulative-type re-emit: no score_delta applied.",
+        "hotspot_history bumped to runs_seen=3"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "reports.rs has runs_seen=3 this run — repeated-churn threshold met. Cumulative-type re-emit: no score_delta applied; brief flags for possible refactor plan next quarter."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs: +3185 lines this run (was runs_seen=1, last_seen 2026-07-09). Recurrence traced to PR #2398 (gap-83-2 push sync state on Booking.com connection).",
+        "Cumulative-type re-emit: no score_delta applied; hotspot_history bumped to runs_seen=2."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "auth.rs: +2950 lines this run (runs_seen=3 previously; last_seen 2026-07-12). Cumulative-type re-emit: no score_delta applied; hotspot_history bumped to runs_seen=4."
+      ]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-07-18.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD (cursors + seen_signals grew)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique(ids) == length(ids)", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id in prior seen_signals with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + 14-day decay applied (no items exceed 8; 0 open items pre-run so decay trivially holds)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan has adversarial-pass line in brief", "observed": "passed x2", "expected": "passed" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; 15 required sections each; capability ticked; mode declared; files exist", "observed": "2 new plans, all sections + mode + files verified", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "staged diff only under .research/", "observed": "0 non-.research paths", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep for secrets/private hostnames in staged .research/ diff (excluding baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regeneration", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase reported failure this run", "observed": "no failed phases", "expected": "no failed phases" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still in plans/ or plans/_archive/", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive file count >= HEAD", "observed": "6 >= 6", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regeneration", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency", "observed": "0 actions this run (no eligible candidate)", "expected": "≤3" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — gate no-op", "observed": "no-op (skipped)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep for literal Telegram bot-token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlisted action type this run"
+}
