@@ -1,0 +1,491 @@
+{
+  "generated": "2026-07-18T16:07:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-idempotency-lock-cancel-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:93 \u2014 session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) between acquire and unlock the lock is never released and sqlx returns the connection to the pool still holding it, blocking all future requests with the same lock_id (tenant_scope+method+path+key). No RAII guard / no unlock-on-drop.",
+        "Reachable in production: mounted at backend/servers/api-server/src/routes/faults.rs:398 via from_fn(create_fault_idempotency) -> api_core::middleware::handle_idempotent_request (faults.rs:433)."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/crates/api-core/src/middleware/idempotency.rs",
+        "backend/servers/api-server/src/routes/faults.rs",
+        "faults.rs"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=api-core"
+      ]
+    },
+    {
+      "id": "code-review-api-core-authz-require-perm-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:180 \u2014 require_permission() resolves the caller role with .unwrap_or(TenantRole::Guest): a request with no TenantRole in extensions is treated as authenticated Guest instead of being rejected. With permissions::AUTHENTICATED = min_level(1) (Guest.level()=10 satisfies it; asserted at authorization.rs:264), require_authenticated would admit a request that set no role upstream \u2014 a fail-open default for the any-authenticated gate.",
+        "Latent only: grep of backend/servers for api_core authorization::require_* / from_fn wiring returns no hits \u2014 the exported middleware is currently unused (route modules define their own same-named local helpers), so it is a dead-but-public footgun rather than an active bypass."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs",
+        "authorization.rs"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=api-core"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 \u2014 processQueue() permanently DROPS a terminally-failed offline mutation from the sync queue with only a `console.error('Action failed after max retries:', action)`. An action is terminal when it is `permanent` (a 4xx, reasonable to drop) OR `action.retries >= 3` (transient 5xx/network \u2014 NOT safe to drop). At line ~400 the queue is rebuilt keeping only `!succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`, so the failed action's PAYLOAD (e.g. an offline-created fault report from screens/faults/ReportFaultScreen.tsx, or a document action) is discarded with no dead-letter store and no per-item retry affordance.",
+        "Surfacing is aggregate-only: App.tsx:82 fires processQueue() fire-and-forget on reconnect; syncProgress.failed (App.tsx:334) feeds PendingSyncIndicator.tsx which renders a t('sync.failed') count. The user sees 'N failed' but cannot see WHICH items failed nor recover/re-submit them \u2014 after 3 transient-failure sync cycles genuine user work is silently lost even though the server may have only been temporarily unavailable.",
+        "Reachability traced: App.tsx onReconnect useEffect -> processQueue -> per-action executeQueuedAction catch -> retries++ -> retries>=3 terminal drop. Confidence medium (static; the 4xx branch is intentional and correct, the transient-exhaustion branch is the data-loss concern). Suggested fix: move retry-exhausted (non-permanent) actions to a persisted dead-letter list with an explicit user-visible 'retry / discard' surface rather than dropping them, and/or exempt idempotent CREATEs from the 3-cycle cap."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "screens/faults/ReportFaultScreen.tsx",
+        "App.tsx",
+        "PendingSyncIndicator.tsx"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=mobile-rn"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-action-queue-mocked",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:240-300 \u2014 the dashboard Action Queue is entirely mock-backed on a shipped surface, not TODO-gated dead code. The useQuery queryFn returns generateMockData(role) after a setTimeout(300) 'simulate network delay' (the real fetch is commented out at :243-245), and the executeAction useMutation (:283) is a no-op setTimeout(500) that returns { success: true } with the real POST commented out (:284-288). dismissItem (:300) and handleAction (:308) both route through this stub mutation, whose onSuccess invalidates the query so the UI reports success and re-renders more fabricated items.",
+        "Reachable in production: consumed by frontend/apps/ppt-web/src/features/dashboard/components/ActionQueue.tsx:40 (useActionQueue(userRole, filters)) \u2014 a rendered dashboard component for both 'manager' and 'resident' roles. Failure scenario: managers/residents see a fabricated action list (fake urgent/high counts) and 'dismiss'/'execute' actions silently do nothing server-side while the UI confirms success \u2014 a fully stubbed primary-dashboard feature masquerading as live."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts",
+        "frontend/apps/ppt-web/src/features/dashboard/components/ActionQueue.tsx"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=ppt-web-ui"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:128-146 \u2014 handleTakeAction() collects the moderation action via window.prompt('Enter action type (remove, restrict, warn, approve):') and passes the free-text result straight into the mutation as `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'`. The `as` cast crosses the API boundary and lies to the type checker: any string the operator types (typo, 'REMOVE', 'delete') passes compile-time and is sent to takeAction against the compliance backend with no client-side enum validation. handleDecideAppeal (:167+) has the same shape ('uphold'/'overturn' via prompt). AmlDashboardPage.tsx:107/134 repeats the window.prompt pattern for EDD/review actions.",
+        "Compounding UX/completeness gap: handleViewContent (:160) uses window.location.href for in-app navigation (full page reload inside an SPA) instead of the router. All flagged in-code as TODO(Phase-2). Failure scenario: an invalid action_type reaches the compliance-moderation mutation (rejected server-side at best, mis-applied at worst) on a legally-sensitive DSA moderation surface, and the free-text-cast defeats the SDK's typed enum contract."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+        "AmlDashboardPage.tsx"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=ppt-web-ui"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-unknown-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 \u2014 `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` force-casts the auth API sessions response to the local SessionRow[] via the double `as unknown as` escape hatch, bypassing all structural checking between the generated SDK type and SessionRow. Immediately after, code reads `s.isCurrent` (:85, and current-session highlighting / revoke UI downstream). If the SDK field is snake_case (is_current) or the shape drifts, `s.isCurrent` is silently undefined, so 'this device' detection and the revoke-all-other-sessions affordance can mis-identify the current session on a security-sensitive session-management screen. The cast hides exactly the kind of API-contract drift the generated client exists to catch."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=ppt-web-ui"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-invite-authz",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373-401 \u2014 create_invitation (wired at line 38: POST /api/v1/agencies/{id}/invitations) performs NO membership/role check before calling the repo, unlike its siblings update_agency (line 268) and update_branding (line 322) which both call super::agency_imports::check_agency_membership. Verified in-file this run: create_invitation goes straight to reality_portal_repo.create_invitation(agency_id, principal.user_id, data). The repo method (backend/crates/db/src/repositories/reality_portal/agencies.rs:228-253) does an unconditional INSERT with no authorization, so the handler's 403 mapping for 'permission'/'unauthorized' (agencies.rs:390) is dead code.",
+        "Impact: any authenticated portal user (RequestPrincipal) can create an invitation for ANY agency id with an attacker-controlled email AND role (CreateAgencyInvitation.role: Option<String>, COALESCE default 'realtor' \u2014 so 'admin'/'owner' is accepted). Combined with accept_invitation (agencies.rs:421) the attacker invites their own email as 'owner', receives the token in the 201 response body, accepts it, and gains membership/control of an arbitrary agency \u2014 broken-access-control privilege escalation."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs",
+        "agencies.rs"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=reality-server"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-invite-email-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:421-448 \u2014 accept_invitation adds the calling principal.user_id as an agency member based solely on a valid, unexpired token (repo accept_invitation at backend/crates/db/src/repositories/reality_portal/agencies.rs:256+ looks up the invitation by token then inserts the member) and never verifies that the authenticated user's email matches the invitation's target `email` column. Any authenticated user holding a token meant for someone else joins the agency with the invitation's role. Independently limited by token unguessability (UUIDv4), but directly compounds code-review-reality-server-invite-authz since the attacker mints and reads their own token."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=reality-server"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-members-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:345-358 \u2014 list_members (GET /api/v1/agencies/{id}/members) has NO principal extractor (verified: signature is only State + Path<Uuid>) and calls get_agency_members(id) for any agency id, yet its OpenAPI doc advertises a 401 response (agencies.rs:342) that can never occur. Unauthenticated callers enumerate an agency's full membership roster (RealityAgencyMember: user_id, role, is_active, joined_at) for any agency UUID. Lower severity than the invitation issues since the DTO carries no name/email PII, but it is an unintended unauthenticated read that contradicts the documented contract."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "agencies.rs"
+      ],
+      "sources": [
+        "tier-1d review 2026-07-18 segment=reality-server"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine-clock",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "sources": [
+        "routine-clock 2026-07-18"
+      ],
+      "evidence": [
+        "routine last ran 2026-07-16T03:04:00Z \u2014 61h ago (>36h). Cloud cron may have missed a run. Not stale (<72h)."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [
+        ".github/workflows/"
+      ],
+      "sources": [
+        "PR #2385"
+      ],
+      "evidence": [
+        "PR #2385 (chore(deps): bump dtolnay/rust-toolchain 1.94.1\u21921.100.0) closed unmerged 2026-07-17T06:01:40Z \u2014 dependabot noise, likely superseded by a group bump; verify no exclusion is now stale."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2391",
+      "type": "dep-update-noise",
+      "source": "PR #2391",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2391"
+      ],
+      "evidence": [
+        "dependabot PR #2391 open: expo 56.0.12\u219257.0.6 in /frontend \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2394",
+      "type": "dep-update-noise",
+      "source": "PR #2394",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2394"
+      ],
+      "evidence": [
+        "dependabot PR #2394 open: gradle-minor-patch group /mobile-native 3 updates \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2393",
+      "type": "dep-update-noise",
+      "source": "PR #2393",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2393"
+      ],
+      "evidence": [
+        "dependabot PR #2393 open: kotlin group /mobile-native 4 updates \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2392",
+      "type": "dep-update-noise",
+      "source": "PR #2392",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2392"
+      ],
+      "evidence": [
+        "dependabot PR #2392 open: expo-notifications 55.0.22\u219257.0.5 /frontend \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2390",
+      "type": "dep-update-noise",
+      "source": "PR #2390",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2390"
+      ],
+      "evidence": [
+        "dependabot PR #2390 open: commander 14.0.3\u219215.0.0 /frontend \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2389",
+      "type": "dep-update-noise",
+      "source": "PR #2389",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2389"
+      ],
+      "evidence": [
+        "dependabot PR #2389 open: @expo/config-plugins 55.0.10\u219257.0.5 /frontend \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2388",
+      "type": "dep-update-noise",
+      "source": "PR #2388",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2388"
+      ],
+      "evidence": [
+        "dependabot PR #2388 open: cargo-minor-patch group /backend 7 updates \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2387",
+      "type": "dep-update-noise",
+      "source": "PR #2387",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2387"
+      ],
+      "evidence": [
+        "dependabot PR #2387 open: npm-minor-patch group /frontend 15 updates \u2014 log-only, no score."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2386",
+      "type": "dep-update-noise",
+      "source": "PR #2386",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #2386"
+      ],
+      "evidence": [
+        "dependabot PR #2386 open: actions/setup-node 6\u21927 \u2014 log-only, no score."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && head -1",
+      "observed": "# 2026-07-18",
+      "expected": "# 2026-07-18"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in prev seen_signals with non-zero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap \u22648",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items >14d needing decay (buffer was fully drained; all 10 new items today)",
+      "observed": "N/A (no pre-existing open items)",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'plans/<slug>.md' + 'adversarial pass:' in brief",
+      "observed": "1 promoted plan, matched",
+      "expected": "match per plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 plans + 4 metadata + 11 headings + \u22651 checked box + Mode + files exist",
+      "observed": "1 plan, all checks green, 3 files exist",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regeneration",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed reflected in brief; cursors not advanced for failed phases",
+      "observed": "none failed; all cursors advanced consistently",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present or archived",
+      "observed": "all present",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD archive count",
+      "observed": "7 >= 7",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regeneration",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill switch",
+      "observed": "auto_fix_actions=[] (no candidate this run)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped this run)",
+      "observed": "pm_cursor.next_index unchanged at 5 \u2192 gate is a no-op per spec",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
