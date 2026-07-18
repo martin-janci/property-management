@@ -1,86 +1,8 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-18T12:19:52Z",
-  "generated_by": "5531f2430c418e5c7f52472a936f0c042f543535",
+  "generated_at": "2026-07-18T14:17:31Z",
+  "generated_by": "8c5d49b985a03701b4613d7f66a3723cfc5706c7",
   "findings": [
-    {
-      "finding_id": "rebase-ours-takes-upstream-discards-state",
-      "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
-      "severity": "critical",
-      "category": "push-path",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T20:24:00Z",
-      "last_seen": "2026-05-28T20:24:00Z",
-      "recurrence": 1,
-      "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
-      "evidence": [
-        "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
-        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
-        "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
-      ],
-      "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
-      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
-      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector. FIXED in Phase 6 push step: (a) owned-state conflict-resolution rule — during a REBASE keep OUR side via `git checkout --theirs` for `.research/management/**`+`VERSION` (--ours is upstream in a rebase, the inverse of a merge); any non-owned conflict aborts+bails; (b) no-op-push detector greps push output for 'Everything up-to-date' after a state commit and refuses to mark the run successful; (c) post-push verification diffs the landed origin/dev tree against the intended tree. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "reclaim-of-already-merged-task-id",
-      "title": "Phase 3 claim re-claims a task_id that is already merged in the archive, scheduling already-shipped work and breaking self-test T4",
-      "severity": "critical",
-      "category": "self-test",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T15:22:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 1,
-      "related_issue": 9,
-      "symptom": "Self-test T4 FAIL — gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
-      "evidence": [
-        "b8bf30ad Phase 7 'Claimed: gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui' at 2026-05-28T15:17:09Z",
-        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) — work shipped ~12h before re-claim",
-        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive — Phase 6 move bug'",
-        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 — coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
-      ],
-      "root_cause": "The Phase 2.6 buffer / Phase 3 claim selection picks claimable gaps from the coverage/action-list pool without subtracting task_ids already terminal in assignments-archive.json. A merged-then-still-open coverage gap (done_with_open_gap) re-enters the claimable set, so the dispatcher claims a fresh in-progress row for an already-merged task_id.",
-      "proposed_fix": "In Phase 3 claim selection, exclude any candidate whose task_id (and its normalized stem) already appears with a terminal status in assignments-archive.json before stamping an in-progress row. Reconcile coverage 'done' state against archive merges in Phase 2.6 so a merged gap cannot remain claimable (fixes goal-check done_with_open_gap). Add self-test assertion that a newly-claimed task_id has no terminal archive twin.",
-      "effort": "medium",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill + Phase 3 claim selection) + .research/dispatcher-self-test.sh",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "subagent-race-on-dev-push",
-      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "evidence": [
-        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
-        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
-      ],
-      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "subagent-workspace-contamination",
-      "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "related_issue": 7,
-      "evidence": [
-        "Phase 5 reviewer for PR#661 ran git ops in /home/user/property-management, creating a local commit ahead of remote",
-        "PR#640 rebaser likely did the same",
-        "Recurring issue tracked as #7"
-      ],
-      "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
-      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
       "first_seen": "2026-06-03T15:48:48Z",
@@ -384,17 +306,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-07-18T12:19:52Z",
-      "recurrence": 11,
+      "last_seen": "2026-07-18T14:17:31Z",
+      "recurrence": 12,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
+        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved). backlog.json 100% consumed (0 open/ready; 127 done, 60 dropped); Tier-1b avail=0, Tier-1c retry-remint 0 eligible; only Tier-1d dev-review generator fired (ppt-web-ui, 3 findings) — does not lift the claimable buffer. coverage 47/49 done, structurally no new stories to mint.",
         "6ea41b3b (this run): GC3-buffer-bounds=FAIL; claimable=1/open=1 vs floor=36 (deeply starved, coverage 47/49 done). Tier-1b avail=0 AND Tier-1c avail=0; only Tier-1d dev-review generator fired (produced 2 findings this run — unlike its prior stall) but that does not lift the claimable buffer. The buffer stays at floor's rock-bottom with no actuating refill.",
         "f3f1b79 (this run): GC3-buffer-bounds=FAIL; claimable=0/open=72 vs floor=36 (fully starved, 0 claimable). Tier-1b avail=0, Tier-1c avail=0; Tier-1d dev-review generator fired (3 findings) + Tier-2 kick http=200 routine_fire — yet neither lifts the claimable buffer. coverage 47 done/2 partial with no new stories to mint, so refill paths structurally cannot recover.",
         "983107b (2026-07-17T22:08 cycle): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved). Tier-1 coverage all 49 stories done/partial; Tier-1b/1c/coverage refills avail=0; Tier-1d review-merged generator fired (2 issues #2417/#2418) + Tier-2 kick http=200 -- neither actuates the claimable buffer this cycle. Near-continuous 0-claimed runs across the whole 8-commit window.",
-        "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer.",
-        "5531f24 (this run): GC3-buffer-bounds=FAIL, claimable=0/72 (open=0 usable) vs floor=36 — fully starved. Tier-1b avail=0 (backlog fully terminal), Tier-1c retry-remint cool-down (none-eligible), Tier-1d dev-review generator fired (reality-server, 3 findings) + Tier-2 kick http=200 routine_fire — none actuate the claimable buffer."
+        "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -568,6 +490,28 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "review-cursor-not-advanced-by-tier1d-slices",
+      "title": "state.review_cursor is only advanced by routine-prompt.md, never by the dispatcher's Tier-1d review slices, so the rotation re-picks the same stale segment for multiple consecutive runs",
+      "first_seen": "2026-07-18T02:21:58Z",
+      "last_seen": "2026-07-18T14:17:31Z",
+      "recurrence": 2,
+      "severity": "medium",
+      "category": "infra",
+      "symptom": "state.review_cursor.api-core is frozen at 2026-07-13 despite a 2026-07-17-api-core-tier1d.json signal existing — the Tier-1d generator that ran api-core on 07-17 never wrote the cursor. Result: the last 3 runs re-picked the api-core segment off the frozen cursor; this run's generator had to reconstruct true last-review dates from dated signal filenames to break out (landed on mobile-rn).",
+      "evidence": [
+        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Tier-1d re-picked segment ppt-web-ui — signal files show ppt-web-ui reviewed 3 consecutive days (2026-07-16/-17/-18 -ppt-web-ui-tier1d.json). state.json has NO review_cursor field at all, so dispatcher Tier-1d slices leave no cursor and the rotation re-selects the same segment run after run.",
+        "0daef09 (this run): Tier1d generator worked around a frozen 2026-07-13 api-core cursor by reconstructing last-review dates from dated signal filenames; picked segment=mobile-rn (1 finding: offline-queue silent dataloss).",
+        "state.json review_cursor.api-core=2026-07-13 while .research/signals/2026-07-17-api-core-tier1d.json exists — the 07-17 review did not advance the cursor.",
+        "grep review_cursor: only .research/routine-prompt.md writes it (plus historical briefs); no dispatcher Tier-1d path updates it, so dispatcher-driven slices leave the cursor stale."
+      ],
+      "root_cause": "review_cursor is owned/written exclusively by the routine (routine-prompt.md Phase-6-style cursor write). The dispatcher's Tier-1d dev-review generator selects a segment but has no cursor-write step, so segments it reviews are never marked reviewed. When the routine is not the one running the slice, the cursor freezes and the oldest-unreviewed selection keeps returning the same segment run after run — rotation starvation.",
+      "proposed_fix": "Give the dispatcher Tier-1d generator a cursor-write step: after it reviews segment S, stamp state.review_cursor[S]=<utc-date> (the same field routine-prompt.md writes), so the next run's oldest-unreviewed pick rotates. Alternatively, make segment selection authoritative off the dated signal filenames (max date per segment) rather than the cursor, and treat review_cursor as a cache. Files: .research/dispatcher-prompt.md (Tier-1d slice — add cursor write) and/or the segment-selection helper. Add a self-test asserting a segment with a signal file dated after its review_cursor value is flagged (cursor-drift guard).",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Tier-1d generator segment-select + cursor write) + .research/management/state.json (review_cursor)",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "quarantined-assignment-blocks-action-list-twin-claim",
       "title": "An open action-list item whose stem matches a QUARANTINED assignment is permanently unclaimable for the quarantine's lifetime, so the buffer reports claimable=0 even when open>0 — self-inflicted starvation distinct from upstream supply exhaustion",
       "first_seen": "2026-07-18T12:19:52Z",
@@ -584,27 +528,6 @@
       "proposed_fix": "Disambiguate quarantine in the buffer math: either (a) when an action-list item's only claim-blocker is a QUARANTINED assignment twin, drop that item from the 'open' count so GC3 buffer-bounds and the claimable metric don't credit unusable work; or (b) surface a distinct 'blocked-by-quarantine' bucket in Phase 7 and escalate quarantine resolution faster (7d is the SLA ceiling, not a target). Add self-test T<N>: assert no action-list item is simultaneously OPEN and stem-twinned to a QUARANTINED assignment without being reported as unclaimable. Files: .research/dispatcher-prompt.md (Phase 2/3 buffer/claimable computation) + .research/goal-check.sh (GC3 open-vs-claimable) + .research/dispatcher-self-test.sh.",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (buffer/claimable math) + .research/goal-check.sh (GC3) + .research/dispatcher-self-test.sh",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "review-cursor-not-advanced-by-tier1d-slices",
-      "title": "state.review_cursor is only advanced by routine-prompt.md, never by the dispatcher's Tier-1d review slices, so the rotation re-picks the same stale segment for multiple consecutive runs",
-      "first_seen": "2026-07-18T02:21:58Z",
-      "last_seen": "2026-07-18T02:21:58Z",
-      "recurrence": 1,
-      "severity": "medium",
-      "category": "infra",
-      "symptom": "state.review_cursor.api-core is frozen at 2026-07-13 despite a 2026-07-17-api-core-tier1d.json signal existing — the Tier-1d generator that ran api-core on 07-17 never wrote the cursor. Result: the last 3 runs re-picked the api-core segment off the frozen cursor; this run's generator had to reconstruct true last-review dates from dated signal filenames to break out (landed on mobile-rn).",
-      "evidence": [
-        "0daef09 (this run): Tier1d generator worked around a frozen 2026-07-13 api-core cursor by reconstructing last-review dates from dated signal filenames; picked segment=mobile-rn (1 finding: offline-queue silent dataloss).",
-        "state.json review_cursor.api-core=2026-07-13 while .research/signals/2026-07-17-api-core-tier1d.json exists — the 07-17 review did not advance the cursor.",
-        "grep review_cursor: only .research/routine-prompt.md writes it (plus historical briefs); no dispatcher Tier-1d path updates it, so dispatcher-driven slices leave the cursor stale."
-      ],
-      "root_cause": "review_cursor is owned/written exclusively by the routine (routine-prompt.md Phase-6-style cursor write). The dispatcher's Tier-1d dev-review generator selects a segment but has no cursor-write step, so segments it reviews are never marked reviewed. When the routine is not the one running the slice, the cursor freezes and the oldest-unreviewed selection keeps returning the same segment run after run — rotation starvation.",
-      "proposed_fix": "Give the dispatcher Tier-1d generator a cursor-write step: after it reviews segment S, stamp state.review_cursor[S]=<utc-date> (the same field routine-prompt.md writes), so the next run's oldest-unreviewed pick rotates. Alternatively, make segment selection authoritative off the dated signal filenames (max date per segment) rather than the cursor, and treat review_cursor as a cache. Files: .research/dispatcher-prompt.md (Tier-1d slice — add cursor write) and/or the segment-selection helper. Add a self-test asserting a segment with a signal file dated after its review_cursor value is flagged (cursor-drift guard).",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (Tier-1d generator segment-select + cursor write) + .research/management/state.json (review_cursor)",
       "status": "open",
       "operator_notes": ""
     },
@@ -790,12 +713,13 @@
       "finding_id": "temp-phase-8-past-documented-removal-deadline",
       "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
       "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-07-18T12:19:52Z",
-      "recurrence": 1,
+      "last_seen": "2026-07-18T14:17:31Z",
+      "recurrence": 2,
       "severity": "low",
       "category": "spec",
       "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
       "evidence": [
+        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced findings; dispatcher-prompt.md:2382 \"REMOVE BY 2026-06-30\" and :2521 \"remove by 2026-06-30\" still present — currentDate 2026-07-18 = 18 days overdue. Deadline marker stale, phase de-facto permanent.",
         "dispatcher-prompt.md:2382-2383 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'remove by 2026-06-30 (search TEMP_PHASE_8 to find every related artifact)'; currentDate 2026-07-18 = 18 days overdue.",
         "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent."
       ],
@@ -826,6 +750,84 @@
       "effort": "trivial",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 WIP gate + Phase 7 summary)",
       "operator_notes": "Expected behavior; recorded as a throughput signal. WIP should be back under cap next run after X6 merges."
+    },
+    {
+      "finding_id": "rebase-ours-takes-upstream-discards-state",
+      "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
+      "severity": "critical",
+      "category": "push-path",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
+      "evidence": [
+        "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
+        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
+        "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
+      ],
+      "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
+      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
+      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector. FIXED in Phase 6 push step: (a) owned-state conflict-resolution rule — during a REBASE keep OUR side via `git checkout --theirs` for `.research/management/**`+`VERSION` (--ours is upstream in a rebase, the inverse of a merge); any non-owned conflict aborts+bails; (b) no-op-push detector greps push output for 'Everything up-to-date' after a state commit and refuses to mark the run successful; (c) post-push verification diffs the landed origin/dev tree against the intended tree. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "reclaim-of-already-merged-task-id",
+      "title": "Phase 3 claim re-claims a task_id that is already merged in the archive, scheduling already-shipped work and breaking self-test T4",
+      "severity": "critical",
+      "category": "self-test",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T15:22:00Z",
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 1,
+      "related_issue": 9,
+      "symptom": "Self-test T4 FAIL — gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
+      "evidence": [
+        "b8bf30ad Phase 7 'Claimed: gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui' at 2026-05-28T15:17:09Z",
+        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) — work shipped ~12h before re-claim",
+        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive — Phase 6 move bug'",
+        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 — coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
+      ],
+      "root_cause": "The Phase 2.6 buffer / Phase 3 claim selection picks claimable gaps from the coverage/action-list pool without subtracting task_ids already terminal in assignments-archive.json. A merged-then-still-open coverage gap (done_with_open_gap) re-enters the claimable set, so the dispatcher claims a fresh in-progress row for an already-merged task_id.",
+      "proposed_fix": "In Phase 3 claim selection, exclude any candidate whose task_id (and its normalized stem) already appears with a terminal status in assignments-archive.json before stamping an in-progress row. Reconcile coverage 'done' state against archive merges in Phase 2.6 so a merged gap cannot remain claimable (fixes goal-check done_with_open_gap). Add self-test assertion that a newly-claimed task_id has no terminal archive twin.",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill + Phase 3 claim selection) + .research/dispatcher-self-test.sh",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "subagent-race-on-dev-push",
+      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "evidence": [
+        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
+        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
+      ],
+      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "subagent-workspace-contamination",
+      "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "related_issue": 7,
+      "evidence": [
+        "Phase 5 reviewer for PR#661 ran git ops in /home/user/property-management, creating a local commit ahead of remote",
+        "PR#640 rebaser likely did the same",
+        "Recurring issue tracked as #7"
+      ],
+      "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
+      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     }
   ]
 }
