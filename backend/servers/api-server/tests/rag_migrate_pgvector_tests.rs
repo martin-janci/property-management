@@ -128,6 +128,15 @@ async fn migrate_as_nonsuperuser(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> 
              set_request_context(UUID, UUID, BOOLEAN), get_current_org_id(), \
              is_super_admin(), clear_request_context() TO \"{role}\""
         ),
+        // The `document_embeddings_org_isolation` policy (00179) is OR-combined
+        // with the super-admin policy for FOR ALL, so both the before/after
+        // `COUNT(*)` reads and the `migrate_jsonb_to_vector()` UPDATE evaluate
+        // its `get_current_org_not_deleted()` soft-delete guard, which (as a
+        // SECURITY INVOKER function) reads `organizations` under this role's
+        // privileges. Without this the back-fill fails with 42501 (#2418).
+        // Matches the pattern in budget_rls_repo_tests.rs /
+        // report_schedule_scheduler_rls_tests.rs.
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(pool)
