@@ -13,7 +13,7 @@
 //!   * `record_execution()`'s INSERT failed its WITH CHECK,
 //!   * `advance_after_run()`'s UPDATE matched 0 rows → RowNotFound.
 //!
-//! Migration 00216 adds an `is_global_read_context()` SELECT-only leg to both
+//! Migration 00218 adds an `is_global_read_context()` SELECT-only leg to both
 //! tables, and the scheduler now reads due work under the global-read context
 //! and writes under each schedule's own tenant context.
 //!

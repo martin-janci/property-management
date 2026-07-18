@@ -679,7 +679,7 @@ impl ReportScheduleRepository {
     /// silently returns 0 rows. The caller must supply an executor (a
     /// checked-out connection) with `set_global_read_context(TRUE)` applied so
     /// the cross-org `report_schedules_global_read` SELECT policy (migration
-    /// 00216) grants visibility. Follows the executor-passing shape of
+    /// 00218) grants visibility. Follows the executor-passing shape of
     /// `WorkflowRepository::list_due_schedules`.
     pub async fn get_due_schedules<'e, E>(
         &self,
