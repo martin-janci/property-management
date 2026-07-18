@@ -4440,6 +4440,99 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "security-rag-migrate-rls-vacuous-test",
+      "title": "rag/migrate cross-org RLS test passes vacuously (runs as superuser) — switch to NOBYPASSRLS role (Follow-up to PR #2335)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2418",
+        "PR #2335"
+      ],
+      "evidence": [
+        "rag_migrate_converts_legacy_rows_across_orgs uses #[sqlx::test] which connects as superuser → RLS FORCE bypassed",
+        "The 00216 super-admin policy this PR added is never the thing under test — test passes with or without it",
+        "Fix pattern: mirror PR #2340's NOSUPERUSER NOBYPASSRLS role setup in report_schedule_scheduler_rls_tests.rs",
+        "Dispatcher already claimed this as gh-issue-2418 — will resolve via issue-driven PR"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs",
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "bug-scheduler-rls-migration-doc-numbers",
+      "title": "scheduler-RLS doc + test comments cite wrong migration number 00216→00218 (Follow-up to PR #2340)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #2417",
+        "PR #2340"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/report_schedule.rs `get_due_schedules` cites migration 00216 (actually 00218)",
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs module header cites migration 00216 (actually 00218)",
+        "Root cause: parallel-branch collision — 2340 assumed 00216 was free; 2335 landed 00216/00217 first",
+        "Dispatcher already claimed this as gh-issue-2417 — will resolve via issue-driven PR"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs",
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspots-reports-rs-2026-07-18",
+      "title": "Churn hotspot: routes/reports.rs (3329 lines this run, runs_seen: 3) — instability proxy fires",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot in backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "runs_seen: 2 → 3 — instability proxy (repeated-churn) fires",
+        "3329 line churn this run — 5 PRs in window edited report scheduling/RLS: #2318, #2340, #2376, #2384, #2411",
+        "auth.rs analogue was refactored at score 2 (refactor-churn-hotspots-api-server-auth-2026-07-12)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspots-booking-mod-2026-07-18",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs (3185 lines this run, runs_seen: 2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot in backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "evidence": [
+        "runs_seen: 1 → 2 — hotspot repeats; repeated-churn will fire next time",
+        "3185 line churn this run — Booking.com integration work: #2398 (push sync state), rate-availability integration"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-18",
+      "updated_at": "2026-07-18",
+      "plan": null
     }
   ]
 }

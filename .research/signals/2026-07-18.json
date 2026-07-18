@@ -1,0 +1,231 @@
+{
+  "generated": "2026-07-18T04:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "routine-clock",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-07-16T03:04:00Z — 2d 0h ago (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/api-server/src/routes/reports.rs",
+      "score_delta": 0,
+      "evidence": [
+        "churn re-emission: 3329 lines this run (runs_seen: 2 → 3)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "backend/crates/integrations/src/booking/mod.rs",
+      "score_delta": 1,
+      "evidence": [
+        "first hotspot appearance: 3185 lines this run (runs_seen: 1)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "backend/servers/api-server/src/routes/auth.rs",
+      "score_delta": 0,
+      "evidence": [
+        "churn re-emission: 2950 lines this run (runs_seen: 3 → 4)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "backend/servers/api-server/src/routes/reports.rs",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen: 2 → 3 — instability proxy fires; auth.rs analogue was refactored (plan at score 2)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "backend/servers/api-server/src/routes/auth.rs",
+      "score_delta": 0,
+      "evidence": [
+        "runs_seen: 3 → 4 — cumulative re-emission, already tracked"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-follow-up-2418-rag-migrate-rls-vacuous-test",
+      "type": "code-review-finding",
+      "source": "Issue #2418",
+      "score_delta": 2,
+      "evidence": [
+        "Follow-up #2418 (from-merged-review, PR #2335): rag_migrate_converts_legacy_rows_across_orgs test passes vacuously",
+        "sqlx::test connects as Postgres superuser, which bypasses RLS FORCE — 00216 policy is never the thing under test",
+        "Proposed: mirror #2340's NOSUPERUSER NOBYPASSRLS pattern (report_schedule_scheduler_rls_tests.rs) — SET ROLE + assert count=2 with policy vs 1 without"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-follow-up-2417-scheduler-rls-migration-doc-numbers",
+      "type": "code-review-finding",
+      "source": "Issue #2417",
+      "score_delta": 1,
+      "evidence": [
+        "Follow-up #2417 (from-merged-review, PR #2340): in-tree comments cite migration 00216 instead of 00218",
+        "backend/crates/db/src/repositories/report_schedule.rs `get_due_schedules` doc → wrong migration",
+        "backend/crates/db/tests/report_schedule_scheduler_rls_tests.rs module header → wrong migration",
+        "Root cause: parallel-branch migration-number collision (2340 assumed 00216 free; 2335 landed first)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "dep-update-noise-2026-07-18",
+      "type": "dep-update-noise",
+      "source": "dependabot",
+      "score_delta": 0,
+      "evidence": [
+        "9 open dependabot PRs: #2391, #2394, #2393, #2392, #2390, #2389, #2388, #2387, #2386"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-18.md && head -1 == '# 2026-07-18'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors/seen_signals/hotspot_history/stats advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no open item skipped decay",
+      "observed": "cap=true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run (n/a — brief note only)",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans ≤2 with required sections",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff .research/ only",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — 1.5+1.6 skipped, cursors held",
+      "observed": "pm_cursor + review_cursor unchanged",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or plans/_archive/",
+      "observed": "none missing",
+      "expected": "none missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "7 ≥ 7",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (allowlist)",
+      "observed": "auto_fix_actions=[] — no candidate matched allowlist",
+      "expected": "caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor (skipped this run — no-op)",
+      "observed": "Phase 1.6 skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
