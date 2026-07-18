@@ -1,0 +1,297 @@
+{
+  "date": "2026-07-18",
+  "generated_at": "2026-07-18T09:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-16T03:04:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine has not run in 2d 2h (49h > 36h threshold) \u2014 surfaces in brief 'Since last run'"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agency-invitation-no-membership-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373 \u2014 create_invitation handler passes principal.user_id + Path(agency_id) straight to the repo with no membership check; any authenticated portal user can POST /api/v1/agencies/{arbitrary_agency_id}/invitations",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:228 \u2014 repo::create_invitation INSERTs without verifying invited_by \u2208 reality_agency_members(agency_id); route error mapping references 'permission'/'unauthorized' strings the repo never emits",
+        "backend/servers/reality-server/tests/agencies_authz_tests.rs:197 \u2014 only 401 vs non-401 coverage",
+        "verified via Read: findings confirmed on current dev tree",
+        "pm-security lens: confirmed live in production"
+      ],
+      "sources": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:228"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-accept-invitation-no-email-binding",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:256 \u2014 accept_invitation resolves the row by token alone; caller email is never compared to invitation.email",
+        "backend/servers/reality-server/src/routes/agencies.rs:421 \u2014 accept_invitation handler passes only principal.user_id + token",
+        "combined with finding #1 gives full self-service cross-agency membership escalation",
+        "folded into combined backlog item `security-reality-server-agency-invitation-escalation` (chain must be fixed together)"
+      ],
+      "sources": [
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:256",
+        "backend/servers/reality-server/src/routes/agencies.rs:421"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-total-as-page-length-regression",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:342 \u2014 `let total = reports.len();` returns page length, not the full filtered COUNT",
+        "backend/servers/reality-server/src/routes/imports.rs:141 & :347 \u2014 same regression in list_import_jobs and list_feeds",
+        "backend/servers/reality-server/src/routes/agency_imports.rs:183 \u2014 list_import_history plus hard LIMIT 100 with no offset",
+        "verified via grep: 4 sites confirmed present on origin/dev today"
+      ],
+      "sources": [
+        "backend/servers/reality-server/src/routes/reports.rs:342",
+        "backend/servers/reality-server/src/routes/imports.rs:141",
+        "backend/servers/reality-server/src/routes/imports.rs:347",
+        "backend/servers/reality-server/src/routes/agency_imports.rs:183"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs",
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2411 (gh-issue-2403 create-schedule form) modified frontend/apps/ppt-web/src/routes/groups/reports.tsx + reports.create-schedule.route.test.tsx; no docs/screens/ppt/*.md updates \u2014 heuristic caveat: best-effort basename match"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2409-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2409",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2409 (gh-issue-2401 favorites reconcile) modified frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx; no docs/screens/reality/*.md updates \u2014 heuristic caveat: best-effort basename match"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-16..2026-07-18",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "868 lines changed this run (down from 3727 last run); trend declining after PR #2397 determinism fix; cumulative re-emit, delta suppressed per dedup rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-16..2026-07-18",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "168 lines changed this run (down from 3926 last run); trend declining after PR #2395 orphan namespace cleanup; cumulative re-emit"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-16..2026-07-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "204 lines changed this run \u2014 single test file added by PR #2421 (RLS coverage); flagged for completeness, likely one-shot"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen=2 (last_seen 2026-07-16); churn is declining (3727\u2192868) after PR #2397 landed"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen=2 (last_seen 2026-07-16); churn is declining (3926\u2192168) after PR #2395 landed"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 = # <today>",
+      "observed": "pending brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ...state.json advanced?",
+      "observed": "cursors advanced (last_pr_seen 2356->2421; last_run_iso updated; seen_signals appended)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true (194 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen_signals dedup",
+      "observed": "cumulative re-emits carry score_delta=0; non-cumulative all fresh",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq scores <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated>14d -1 or dropped",
+      "observed": "no open items previously (all terminal); new items created today ineligible for decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan, brief annotation has 'adversarial pass:'",
+      "observed": "1 plan promoted with annotation in brief",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; each has 4 metadata + 11 headings + Mode declared + \u22651 file on disk",
+      "observed": "1 plan; template followed",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "will verify at commit time",
+      "expected": "0 non-.research/ paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames",
+      "observed": "no secrets in added lines",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "regenerated deterministically from backlog.json",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phase failures this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "no archive changes",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "regenerated deterministically",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "Phase 5 no-op \u2014 no allowlist candidates met high-conf + score>=3",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 0..7; coverage_cursor advanced",
+      "observed": "pm_cursor 5->6; coverage_cursor 12->0 (advanced); action-list.json/risks.json valid",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "no token in staged content",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met high-confidence + score>=3 + allowlist match this run"
+}

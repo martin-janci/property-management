@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-15T01:55:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-18T09:00:00Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
     "orphan_screens": [],
@@ -736,7 +736,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-18",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",

@@ -1,62 +1,30 @@
-# pm-security — 2026-05-27
-
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+# pm-security — 2026-07-18
 
 ## Summary
+Cross-agency invitation escalation is confirmed, live, and unauthenticated-authorization-check gap in reality-server (any logged-in portal user can mint invitation tokens for arbitrary agencies and self-accept them) — release blocker, not a later item. Recent RLS/IDOR fixes (PR #2416, #2421) and mobile session-cache fixes (#2412, #2372) narrowed the api-server/mobile attack surface this sprint.
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+## Next actions
+1. **[HIGH]** Add agency-membership check (invited_by must be an owner/admin member of agency_id) to reality-server `create_invitation` handler or `repo::create_invitation` before merge freeze. Dep: rust-backend. DoD: non-member POST /agencies/{id}/invitations returns 403; regression test added.
+2. **[HIGH]** Bind `accept_invitation` to the invited email (verify principal.email == invitation.email) not token possession alone. Dep: rust-backend. DoD: token holder with mismatched email rejected; test added.
+3. **[HIGH]** Audit reality_agency_invitations/reality_agency_members tables for rows created via this gap since deploy; revoke/expire any unexpected memberships. Dep: rust-backend/db-owner. DoD: audit query run, anomalous grants revoked, incident note filed.
+4. **[HIGH]** Add cross-agency rejection test case to `agencies_authz_tests.rs` (currently only checks 401). Dep: rust-backend. DoD: test asserts 403 for non-member inviter.
+5. **[MEDIUM]** Check `list_members` (agencies.rs:345) — also has no membership/principal check; confirm intended (public directory) or another IDOR. Dep: rust-backend. DoD: explicit decision documented, fixed if unintended.
+6. **[MEDIUM]** Close test-hardening batch items #480 / #483 / #484 (WS JWT-in-logs, voice device IDOR no tests, silent notification failures) before next release cut. Dep: rust-backend. DoD: issues closed or explicitly deferred with owner sign-off.
 
-## next_actions
+## Risks
+- **[H/H]** Cross-agency invitation escalation exploitable in current production code — confirmed no membership check anywhere. Mitigation: ship hotfix.
+- **[M/H]** Unknown scope of prior exploitation since deploy — no audit trail check yet. Mitigation: run DB audit query.
+- **[M/M]** `list_members` has no principal/authz extractor at all — possible unauthenticated member-list disclosure across agencies.
+- **[M/M]** Test-hardening batch items #480/#483/#484 remain open; residual gap alongside newly-fixed government_portal/RAG IDORs.
+- **[L/M]** No equivalent audit performed for reality-server session/membership resolution paths (parallel to the mobile/web fixes #2412/#2372/#2375).
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+## Open questions
+- Was `create_invitation` shipped with this gap from initial implementation, or introduced by a recent refactor — need git blame to scope exposure window.
+- Is `list_members` intentionally public/no-auth or an oversight?
+- Has any anomalous `reality_agency_members` row already been created in production?
+- Should #480 (JWT in WS query param, logged) be treated as a release blocker given 8a-3 is marked done despite the gate remaining open?
 
-## risks
-
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
-
-## open_questions
-
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
-
-## decisions_needed
-
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+## Decisions needed
+- Rotate/expire all outstanding `reality_agency_invitations` tokens after the fix ships — owner: rust-backend / db-owner.
+- Notify affected agencies if audit finds unauthorized membership grants — owner: pm-security + eng-lead.
+- Treat cross-agency invitation escalation as a hotfix (branch from `main` per hotfix workflow) vs. next dev merge — owner: release manager.

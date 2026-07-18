@@ -85,3 +85,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## 2026-07-18 — pm-security + pm-scrum-master
+
+- **Rotate/expire outstanding `reality_agency_invitations` tokens after cross-agency invitation fix ships.** Owner: rust-backend / db-owner. Trigger: security hotfix PR merged.
+- **Notify affected agencies if audit finds unauthorized membership grants** in `reality_agency_members`. Owner: pm-security + eng-lead.
+- **Treat cross-agency invitation escalation as a hotfix branch from `main`** (per hotfix workflow) vs. routine `dev` merge. Owner: release manager.
+- **Close or re-scope quarantined PR #2377** (3 failed fix rounds; GitHub issue #2360 already closed). Owner: pm-tech-lead.
+- **Priority/sequencing of the 2 HIGH-severity security findings** relative to unblocking buffer starvation. Owner: pm-security. (Recommendation: security-fast-track hotfix first, buffer refill in parallel.)

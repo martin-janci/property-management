@@ -1,23 +1,28 @@
-# PPT Roadmap — deep scan 2026-07-15
+# Roadmap
+
+<sub>Regenerated 2026-07-18 09:00 UTC from `coverage.json` + `action-list.json`</sub>
+
 
 ## State of the project
-
-- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics)
-- Delta vs 2026-07-13 scan (40/9/0): +7 done — 80-2 (07-13 gap was a false positive), 81-1 (#2292/#2295/#2313), 83-2 (#2315/#2194), 83-3 (#2286/#2294), 84-3 (#2285/#2287/#2288), 84-4 (#2290/#2293/#2310), 84-5 (#2291/#2312).
-- Remaining gaps (the last 2 partial stories, both frontend slices on shipped APIs):
-  1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint (#2309) has no frontend consumer.
-  2. **84-2** — signer-facing document-sign page not built (screen-map planned, API complete); prior implementer attempt failed.
-- Screen coverage: 0 orphan screens · 0 validation errors (post-#2297) · 3 missing UC links (UC-33.x dispute sub-UCs).
-- Batch-verifier note: its 12 claimed regressions were disproved against sprint-status ground truth (#2298/#2307 reconciliation is in effect) — no downgrades applied.
+- **Done:** 47 · **Partial:** 2 · **Not-started:** 0 · **Total:** 49
+- **Done by platform:** backend=32, frontend=37, mobile=10
+- **Partial by platform:** backend=2, frontend=2, mobile=0
+- **Top 3 gaps:**
+  - 84-1-s3-presigned-urls: ppt-web upload flow still server-proxied — wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)
+  - 84-2-esignature-email: build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR — fresh attempt, scope to the shipped API)
+- **Screen coverage:** 25 stories without screen-map · 0 orphan epics · 0 orphan screens · 3 missing UC links
 
 ## Ranked plan
 
-### mvp
-- [medium] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (backend endpoint landed in #2309) (84-1 S3 Presigned URL Implementation) — owner: pm-frontend — why: mvp partial; finish-what's-started; backend ready
-- [medium] Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR — fresh scoped attempt (84-2 E-Signature Email Integration) — owner: pm-frontend — why: mvp partial; finish-what's-started; API complete, UI planned
-- [medium] Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter — owner: pm-frontend — why: screen-map UC coverage; small
-- [medium] Reconcile stale statuses: sprint-status 80-2-dispute-filing-flow partial->done (AC-4 verified shipped); screen-map ppt/reports apiStatus partial->complete (#2292/#2295/#2313 filled the last gaps) — owner: pm-backend — why: tracking accuracy; cheap
+### Phase: mvp
 
-> Epic 86 gap-analysis doc remains superseded by this map.
+- [high] Bind accept_invitation to the invited email (verify principal.email == invitation.email) — closes the second half of the cross-agency escalation chain — owner: pm-security — id: `pm-security-accept-invitation-email-binding`
+- [high] Add agency-membership check to reality-server create_invitation handler (invited_by must be an owner/admin member of agency_id) before merge freeze — reality-server security-fast-track hotfix candidate — owner: pm-security — id: `pm-security-agency-invitation-membership-gate`
+- [high] Audit reality_agency_invitations/reality_agency_members tables for rows created via this gap since deploy; revoke/expire any unexpected memberships — owner: pm-security — id: `pm-security-reality-invitations-audit`
+- [medium] Wire ppt-web direct-to-S3 upload flow to already-shipped POST /documents/upload-url endpoint (story 84-1, mvp, partial) — owner: pm-frontend — id: `pm-scrum-84-1-ppt-web-s3-presigned-upload-consumer`
+- [medium] Build the signer-facing document-sign page in ppt-web (story 84-2, mvp, partial — scope tightly to already-shipped backend API) — owner: pm-frontend — id: `pm-scrum-84-2-ppt-web-document-sign-page`
+- [medium] Investigate reality-server list_members (agencies.rs:345) — no membership/principal check found; confirm if intended public directory or another IDOR — owner: pm-security — id: `pm-security-list-members-idor-audit`
+- [medium] Fix pagination `total = rows.len()` bug across reality-server (reports.rs:342, imports.rs:141+347, agency_imports.rs:183) — clients paginating via total/limit only see first page — owner: pm-tech-lead — id: `pm-tech-lead-reality-server-total-page-length-bug`
 
-Buffer: 4/36 open · project at 47/49 — backlog genuinely converging; treat underflow as success, not starvation
+⚠ Buffer below half — consider running scan to refresh coverage
+Buffer: 7/36 open · 2 candidates ranked but unqueued

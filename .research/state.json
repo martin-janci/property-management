@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-16T03:04:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2356,
-  "last_issue_seen": 2370,
-  "last_commit_sha": "1006a4c",
+  "last_run_iso": "2026-07-18T09:00:00Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 2421,
+  "last_issue_seen": 2418,
+  "last_commit_sha": "cd09011",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -348,14 +348,19 @@
       "recent_churn": 2
     },
     "frontend/apps/ppt-web/messages/en.json": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-16",
-      "recent_churn": 3926
+      "runs_seen": 2,
+      "last_seen": "2026-07-18",
+      "recent_churn": 168
     },
     "frontend/packages/sitemap/src/json/sitemap.json": {
+      "runs_seen": 2,
+      "last_seen": "2026-07-18",
+      "recent_churn": 868
+    },
+    "backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-07-16",
-      "recent_churn": 3727
+      "last_seen": "2026-07-18",
+      "recent_churn": 204
     }
   },
   "seen_signals": [
@@ -606,13 +611,22 @@
     "lag-warning-2026-07-16",
     "stale-routine-alert-2026-07-16",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
-    "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json"
+    "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+    "lag-warning-2026-07-18",
+    "code-review-reality-server-agency-invitation-no-membership-check",
+    "code-review-reality-server-accept-invitation-no-email-binding",
+    "code-review-reality-server-total-as-page-length-regression",
+    "screen-map-drift-pr-2411-ppt",
+    "screen-map-drift-pr-2409-reality",
+    "churn-hotspot-backend/servers/api-server/tests/rag_migrate_pgvector_tests.rs",
+    "repeated-churn-frontend/packages/sitemap/src/json/sitemap.json",
+    "repeated-churn-frontend/apps/ppt-web/messages/en.json"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-07-14",
     "api-core": "2026-07-13",
-    "reality-server": "2026-07-13",
+    "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-13",
     "ppt-web-core": "2026-07-15",
     "reality-web": "2026-07-17",
@@ -620,9 +634,9 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 45,
-    "vectors_created": 185,
-    "plans_created": 14,
+    "runs": 46,
+    "vectors_created": 191,
+    "plans_created": 15,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -637,19 +651,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-07-18",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

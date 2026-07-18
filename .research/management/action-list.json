@@ -3,10 +3,10 @@
   "items": [
     {
       "id": "gh-issue-2360",
-      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry — increment not gated on dedup (PR #2354) (Closes #2360)",
+      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry \u2014 increment not gated on dedup (PR #2354) (Closes #2360)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2360)",
       "deadline": null,
       "dependency": null,
@@ -19,8 +19,98 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "closed_at": "2026-07-18T09:00:00Z",
+      "resolution": "GitHub issue #2360 already closed; quarantined PR #2377 rolled off after 3 failed fix rounds \u2014 task orphaned, resolved by administrative close per scrum-master 2026-07-18"
+    },
+    {
+      "id": "pm-security-agency-invitation-membership-gate",
+      "action": "Add agency-membership check to reality-server create_invitation handler (invited_by must be an owner/admin member of agency_id) before merge freeze \u2014 reality-server security-fast-track hotfix candidate",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-security-accept-invitation-email-binding",
+      "action": "Bind accept_invitation to the invited email (verify principal.email == invitation.email) \u2014 closes the second half of the cross-agency escalation chain",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "pm-security-agency-invitation-membership-gate",
+      "depends_on": [
+        "pm-security-agency-invitation-membership-gate"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-security-reality-invitations-audit",
+      "action": "Audit reality_agency_invitations/reality_agency_members tables for rows created via this gap since deploy; revoke/expire any unexpected memberships",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "pm-security-agency-invitation-membership-gate",
+      "depends_on": [
+        "pm-security-agency-invitation-membership-gate"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-security-list-members-idor-audit",
+      "action": "Investigate reality-server list_members (agencies.rs:345) \u2014 no membership/principal check found; confirm if intended public directory or another IDOR",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-tech-lead-reality-server-total-page-length-bug",
+      "action": "Fix pagination `total = rows.len()` bug across reality-server (reports.rs:342, imports.rs:141+347, agency_imports.rs:183) \u2014 clients paginating via total/limit only see first page",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-scrum-84-1-ppt-web-s3-presigned-upload-consumer",
+      "action": "Wire ppt-web direct-to-S3 upload flow to already-shipped POST /documents/upload-url endpoint (story 84-1, mvp, partial)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
+    },
+    {
+      "id": "pm-scrum-84-2-ppt-web-document-sign-page",
+      "action": "Build the signer-facing document-sign page in ppt-web (story 84-2, mvp, partial \u2014 scope tightly to already-shipped backend API)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-18",
+      "first_open_at": "2026-07-18T09:00:00Z"
     }
   ],
-  "generated": "2026-07-15T01:55:00Z"
+  "generated": "2026-07-18T09:00:00Z"
 }
