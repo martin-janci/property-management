@@ -72,6 +72,7 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)
 - 2026-07-09 — agent: gap-screens-link-uc-29 — created the Short-Term Rentals
   Dashboard screen-map and linked UC-29 (+ UC-30) to it, giving the
   Short-Term Rental Management use case a canonical screen-map home beyond the

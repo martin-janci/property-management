@@ -34,4 +34,5 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:395`.
 
 ## Agent Log
+- 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)
 - 2026-05-18 — agent: created stub for unmapped route.

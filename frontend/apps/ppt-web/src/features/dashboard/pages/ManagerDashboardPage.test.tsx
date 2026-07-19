@@ -47,7 +47,7 @@ function renderPage() {
       <MemoryRouter>
         <ManagerDashboardPage />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 

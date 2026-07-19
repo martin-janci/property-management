@@ -45,9 +45,7 @@ export function AdditionalInfo({ listing }: ListingSectionProps) {
         )}
         <div className="info-item">
           <span className="info-label">{t('listed')}</span>
-          <span className="info-value">
-            {new Date(listing.createdAt).toLocaleDateString()}
-          </span>
+          <span className="info-value">{new Date(listing.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
       <style jsx>{`

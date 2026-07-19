@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import type { ResolvedScreen } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import type { SectionRegistry } from './registry';
 import './LayoutRenderer.css';

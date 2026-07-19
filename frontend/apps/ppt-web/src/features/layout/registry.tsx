@@ -1,5 +1,5 @@
-import type { ComponentType } from 'react';
 import type { ResolvedScreen } from '@ppt/api-client';
+import type { ComponentType } from 'react';
 import { ActionQueue } from '../dashboard/components/ActionQueue';
 import { DashboardStats } from '../dashboard/components/DashboardStats';
 
@@ -51,7 +51,7 @@ export function registryManifest(registry: SectionRegistry) {
             ? { supported_modes: def.supportedModes, default_mode: def.supportedModes[0] }
             : {}),
         },
-      ]),
+      ])
     ),
   };
 }

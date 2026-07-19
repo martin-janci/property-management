@@ -1,6 +1,6 @@
+import type { ResolvedScreen } from '@ppt/api-client';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ResolvedScreen } from '@ppt/api-client';
 import { LayoutRenderer } from './LayoutRenderer';
 import type { SectionRegistry } from './registry';
 
@@ -37,7 +37,7 @@ describe('LayoutRenderer', () => {
           { type: 'beta.v1', mode: 'grid', presentation: 'visible' },
           { type: 'alpha.v1', presentation: 'visible' },
         ])}
-      />,
+      />
     );
     const texts = screen.getAllByText(/ALPHA|BETA/).map((n) => n.textContent);
     expect(texts).toEqual(['BETA:grid', 'ALPHA']);
@@ -48,7 +48,7 @@ describe('LayoutRenderer', () => {
       <LayoutRenderer
         registry={registry}
         layout={layoutOf([{ type: 'alpha.v1', presentation: 'placeholder' }])}
-      />,
+      />
     );
     expect(screen.queryByText('ALPHA')).toBeNull();
     expect(screen.getByRole('status')).toHaveTextContent('layout.placeholderTitle');
@@ -64,7 +64,7 @@ describe('LayoutRenderer', () => {
           { type: 'ghost.v9', presentation: 'visible' },
           { type: 'alpha.v1', presentation: 'visible' },
         ])}
-      />,
+      />
     );
     expect(screen.getByText('ALPHA')).toBeInTheDocument();
     expect(warn.mock.calls.filter((c) => String(c[0]).includes('ghost.v9'))).toHaveLength(1);
@@ -80,7 +80,7 @@ describe('LayoutRenderer', () => {
           { type: 'boom.v1', presentation: 'visible' },
           { type: 'alpha.v1', presentation: 'visible' },
         ])}
-      />,
+      />
     );
     expect(screen.getByText('ALPHA')).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeInTheDocument();

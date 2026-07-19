@@ -12,8 +12,8 @@
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ListingDetailContent } from './ListingDetailContent';
 import type { ResolvedScreen } from '../../lib/layout';
+import { ListingDetailContent } from './ListingDetailContent';
 
 // ContactForm (rendered in the sidebar) uses a TanStack Query mutation hook.
 // Stub the API client so the component tree renders without a QueryClient.

@@ -13,10 +13,10 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ListingDetailContent } from '@/components/listings';
+import { getResolvedLayout } from '@/lib/layout';
 import { buildListingJsonLd } from './jsonLd';
 import { parseListingDetail } from './listingSchema';
 import { buildListingMetadata } from './metadata';
-import { getResolvedLayout } from '@/lib/layout';
 
 function inferApiBaseFromHost(host: string): string | null {
   const bareHost = host.split(':')[0]?.toLowerCase();

@@ -38,4 +38,5 @@ already built but unrouted; this screen is now reachable on web.
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).

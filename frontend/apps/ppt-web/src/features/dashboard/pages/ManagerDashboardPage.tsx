@@ -7,10 +7,10 @@
  * @module features/dashboard/pages/ManagerDashboardPage
  */
 
-import { useTranslation } from 'react-i18next';
 import { useResolvedLayout } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { LayoutRenderer } from '../../layout/LayoutRenderer';
-import { dashboardRegistry, DEFAULT_DASHBOARD_LAYOUT } from '../../layout/registry';
+import { DEFAULT_DASHBOARD_LAYOUT, dashboardRegistry } from '../../layout/registry';
 import './ManagerDashboardPage.css';
 
 export function ManagerDashboardPage() {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import layoutManifest from './layout-manifest.json';
 import { DEFAULT_LISTING_DETAIL_LAYOUT, getResolvedLayout } from './layout';
+import layoutManifest from './layout-manifest.json';
 
 describe('getResolvedLayout', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -11,9 +11,10 @@ describe('getResolvedLayout', () => {
       version: 3,
       sections: [{ type: 'gallery.v1', presentation: 'visible' }],
     };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(payload), { status: 200 }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    );
     await expect(getResolvedLayout(null)).resolves.toEqual(payload);
   });
 
@@ -28,9 +29,10 @@ describe('getResolvedLayout', () => {
   });
 
   it('falls back on malformed payload', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ nope: true }), { status: 200 }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ nope: true }), { status: 200 }))
+    );
     await expect(getResolvedLayout(null)).resolves.toEqual(DEFAULT_LISTING_DETAIL_LAYOUT);
   });
 

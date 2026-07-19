@@ -9,8 +9,8 @@
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
-import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import type { ResolvedScreen } from '@/lib/layout';
+import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import { ContactForm } from './ContactForm';
 import { LayoutSections } from './LayoutSections';
 import { listingRegistry } from './sections/registry';
@@ -84,9 +84,7 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
   const resolvedLayout = layout ?? DEFAULT_LISTING_DETAIL_LAYOUT;
 
   // Determine agent-contact section presentation from layout
-  const agentContactSection = resolvedLayout.sections.find(
-    (s) => s.type === 'agent-contact.v1',
-  );
+  const agentContactSection = resolvedLayout.sections.find((s) => s.type === 'agent-contact.v1');
 
   // Main layout excludes agent-contact (sidebar handles it)
   const mainLayout: ResolvedScreen = {
