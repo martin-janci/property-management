@@ -11,9 +11,10 @@ pub fn resolve(
     killed: &BTreeSet<SectionType>,
     registry: &RegistryManifest,
 ) -> ResolvedScreen {
-    let _ = (tenant, killed); // applied in later layers of this function
+    let _ = killed; // applied in later layers of this function
     let mut sections = Vec::with_capacity(base.sections.len());
-    for cfg in &base.sections {
+    let ordered = order_sections(&base.sections, tenant.and_then(|t| t.order.as_deref()));
+    for cfg in ordered {
         let Some(def) = registry.components.get(&cfg.section_type) else {
             // Unknown type handling lands in Task 5.
             continue;
@@ -23,6 +24,11 @@ pub fn resolve(
         let mut props = cfg.props.clone();
         if let Some(patch) = cfg.overrides.get(&platform) {
             apply_patch(&mut visible, &mut mode, &mut props, patch);
+        }
+        if let Some(t) = tenant {
+            if let Some(patch) = t.sections.get(&cfg.section_type) {
+                apply_patch(&mut visible, &mut mode, &mut props, patch);
+            }
         }
         // Defensive mode clamp: never emit a mode the component doesn't support.
         if let Some(m) = &mode {
@@ -60,6 +66,29 @@ fn apply_patch(
     for (k, v) in &patch.props {
         props.insert(k.clone(), v.clone());
     }
+}
+
+/// Listed types first (in override order), unlisted types after, keeping base
+/// relative order. Types in `order` that don't exist in base are ignored.
+fn order_sections<'a>(
+    base: &'a [SectionConfig],
+    order: Option<&[SectionType]>,
+) -> Vec<&'a SectionConfig> {
+    let Some(order) = order else {
+        return base.iter().collect();
+    };
+    let mut out: Vec<&SectionConfig> = Vec::with_capacity(base.len());
+    for t in order {
+        if let Some(cfg) = base.iter().find(|c| &c.section_type == t) {
+            out.push(cfg);
+        }
+    }
+    for cfg in base {
+        if !order.contains(&cfg.section_type) {
+            out.push(cfg);
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -138,5 +167,65 @@ mod tests {
         let out = resolve(&base, Platform::Web, None, &BTreeSet::new(), &reg);
         // defensive rendering: never emit a mode the client can't render
         assert_eq!(out.sections[0].mode.as_deref(), Some("list"));
+    }
+
+    #[test]
+    fn tenant_override_reorders_and_patches_after_platform_layer() {
+        let mut a = section("a.v1");
+        a.overrides.insert(
+            Platform::Web,
+            SectionPatch { mode: Some("grid".into()), ..Default::default() },
+        );
+        let base = ScreenConfig {
+            screen: "ppt/dashboard".into(),
+            version: 3,
+            sections: vec![a, section("b.v1"), section("c.v1")],
+        };
+        let reg = registry(&[
+            ("a.v1", false, &["list", "grid", "map"]),
+            ("b.v1", false, &[]),
+            ("c.v1", false, &[]),
+        ]);
+        let tenant = TenantOverride {
+            order: Some(vec![
+                SectionType::from("c.v1"),
+                SectionType::from("a.v1"),
+                SectionType::from("b.v1"),
+            ]),
+            sections: BTreeMap::from([(
+                SectionType::from("a.v1"),
+                SectionPatch {
+                    mode: Some("map".into()),
+                    props: BTreeMap::from([("limit".to_string(), serde_json::json!(6))]),
+                    ..Default::default()
+                },
+            )]),
+        };
+        let out = resolve(&base, Platform::Web, Some(&tenant), &BTreeSet::new(), &reg);
+        let types: Vec<&str> =
+            out.sections.iter().map(|s| s.section_type.0.as_str()).collect();
+        assert_eq!(types, vec!["c.v1", "a.v1", "b.v1"]);
+        // tenant mode beats platform mode (precedence §3.2)
+        assert_eq!(out.sections[1].mode.as_deref(), Some("map"));
+        assert_eq!(out.sections[1].props["limit"], serde_json::json!(6));
+    }
+
+    #[test]
+    fn tenant_order_omitting_a_type_keeps_it_after_listed_ones() {
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("a.v1"), section("b.v1"), section("c.v1")],
+        };
+        let reg = registry(&[("a.v1", false, &[]), ("b.v1", false, &[]), ("c.v1", false, &[])]);
+        let tenant = TenantOverride {
+            order: Some(vec![SectionType::from("b.v1")]),
+            sections: BTreeMap::new(),
+        };
+        let out = resolve(&base, Platform::Web, Some(&tenant), &BTreeSet::new(), &reg);
+        let types: Vec<&str> =
+            out.sections.iter().map(|s| s.section_type.0.as_str()).collect();
+        // listed first, unlisted keep base relative order
+        assert_eq!(types, vec!["b.v1", "a.v1", "c.v1"]);
     }
 }
