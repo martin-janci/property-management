@@ -69,11 +69,11 @@ pub async fn get_config(
     let versions = repo
         .list_versions(&state.db, &q.screen)
         .await
-        .unwrap_or_default();
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let kills = repo
         .list_kills(&state.db, &q.screen)
         .await
-        .unwrap_or_default();
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(
         serde_json::json!({ "config": cfg, "versions": versions, "kills": kills }),
     ))
