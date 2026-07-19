@@ -656,5 +656,9 @@
     "emptyTitle": "Brak alertów cenowych",
     "emptyText": "Powiadomimy Cię tutaj, gdy zmienią się ceny Twoich ulubionych ofert.",
     "goToFavorites": "Przejdź do ulubionych"
+  },
+  "layout": {
+    "placeholderTitle": "Ładowanie sekcji",
+    "placeholderBody": "Ta sekcja jest chwilowo niedostępna."
   }
 }

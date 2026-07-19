@@ -663,5 +663,9 @@
     "emptyTitle": "Zatiaľ žiadne cenové upozornenia",
     "emptyText": "Upozorníme vás tu, keď sa zmenia ceny vašich obľúbených ponúk.",
     "goToFavorites": "Prejsť na obľúbené"
+  },
+  "layout": {
+    "placeholderTitle": "Načítanie sekcie",
+    "placeholderBody": "Táto sekcia momentálne nie je dostupná."
   }
 }

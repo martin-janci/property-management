@@ -656,5 +656,9 @@
     "emptyTitle": "Még nincsenek árriasztások",
     "emptyText": "Értesítjük, ha megváltozik a kedvenc hirdetései ára.",
     "goToFavorites": "Ugrás a kedvencekhez"
+  },
+  "layout": {
+    "placeholderTitle": "Szakasz betöltése",
+    "placeholderBody": "Ez a szakasz jelenleg nem érhető el."
   }
 }
