@@ -48,6 +48,9 @@ over `grep -r <noun> backend/`.
 
 **Crates** (`backend/crates/`):
 - `common` — `TenantContext`, `TenantRole` (11 roles), core errors/types. Used everywhere.
+- `layout-core` — Layout & Content Manager contract: screen configs, merge resolver
+  (base → platform → tenant → kill), publish/rails validation. Pure logic, no DB.
+  Spec: `docs/superpowers/specs/2026-07-19-layout-content-manager-design.md`.
 - `api-core` — Axum extractors, auth middleware, OpenAPI (utoipa), CORS/tracing.
 - `db` — SQLx pool, models, **~101 repositories** in `src/repositories/`, migrations (~177 sql files).
 - `integrations` — external API clients (Airbnb, Booking.com, portals).
