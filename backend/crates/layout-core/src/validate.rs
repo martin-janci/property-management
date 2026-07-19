@@ -13,6 +13,16 @@ pub enum ValidationError {
     RequiredMissing { section: SectionType },
     #[error("section {section:?} uses mode {mode:?}, unsupported on {platform:?}")]
     UnsupportedMode { section: SectionType, mode: String, platform: Platform },
+    #[error("tenant override references section {section:?} not present in the base config")]
+    NotInBase { section: SectionType },
+    #[error("section {section:?} is not tenant-hideable")]
+    NotHideable { section: SectionType },
+    #[error("section {section:?} is not tenant-mode-editable")]
+    NotModeEditable { section: SectionType },
+    #[error("prop {prop:?} on section {section:?} is not whitelisted for tenants")]
+    PropNotWhitelisted { section: SectionType, prop: String },
+    #[error("this screen is not tenant-reorderable")]
+    NotReorderable,
 }
 
 /// Publish gate (spec §6.3): empty result = publishable. Errors block publish.
@@ -66,6 +76,46 @@ pub fn validate_publish(
                 if !errs.contains(&err) {
                     errs.push(err);
                 }
+            }
+        }
+    }
+    errs
+}
+
+/// Server-side rails enforcement for tenant saves (spec §3.4). The UI hides
+/// out-of-rails controls, but this is the actual gate.
+pub fn validate_tenant_override(
+    ov: &TenantOverride,
+    base: &ScreenConfig,
+    rails: &Rails,
+) -> Vec<ValidationError> {
+    let mut errs = Vec::new();
+    if ov.order.is_some() && !rails.reorderable {
+        errs.push(ValidationError::NotReorderable);
+    }
+    static EMPTY: std::sync::OnceLock<std::collections::BTreeSet<String>> =
+        std::sync::OnceLock::new();
+    for (t, patch) in &ov.sections {
+        if !base.sections.iter().any(|s| &s.section_type == t) {
+            errs.push(ValidationError::NotInBase { section: t.clone() });
+            continue;
+        }
+        if patch.visible.is_some() && !rails.hideable.contains(t) {
+            errs.push(ValidationError::NotHideable { section: t.clone() });
+        }
+        if patch.mode.is_some() && !rails.mode_editable.contains(t) {
+            errs.push(ValidationError::NotModeEditable { section: t.clone() });
+        }
+        let whitelist = rails
+            .prop_whitelist
+            .get(t)
+            .unwrap_or_else(|| EMPTY.get_or_init(Default::default));
+        for prop in patch.props.keys() {
+            if !whitelist.contains(prop) {
+                errs.push(ValidationError::PropNotWhitelisted {
+                    section: t.clone(),
+                    prop: prop.clone(),
+                });
             }
         }
     }
@@ -194,5 +244,84 @@ mod tests {
             errs,
             vec![ValidationError::RequiredHidden { section: SectionType::from("gallery.v1") }]
         );
+    }
+
+    #[test]
+    fn rails_enforcement_rejects_out_of_rails_edits() {
+        use std::collections::BTreeSet;
+        let base = ScreenConfig {
+            screen: "ppt/dashboard".into(),
+            version: 1,
+            sections: vec![section("news.v1"), section("faults.v1"), section("kpi.v1")],
+        };
+        let rails = Rails {
+            hideable: BTreeSet::from([SectionType::from("news.v1")]),
+            mode_editable: BTreeSet::from([SectionType::from("faults.v1")]),
+            reorderable: false,
+            prop_whitelist: BTreeMap::from([(
+                SectionType::from("news.v1"),
+                BTreeSet::from(["limit".to_string()]),
+            )]),
+        };
+        let ov = TenantOverride {
+            order: Some(vec![SectionType::from("kpi.v1")]), // reorder forbidden
+            sections: BTreeMap::from([
+                (
+                    SectionType::from("news.v1"),
+                    SectionPatch {
+                        visible: Some(false),                    // ok: hideable
+                        props: BTreeMap::from([
+                            ("limit".to_string(), serde_json::json!(5)), // ok: whitelisted
+                            ("theme".to_string(), serde_json::json!("dark")), // not whitelisted
+                        ]),
+                        ..Default::default()
+                    },
+                ),
+                (
+                    SectionType::from("kpi.v1"),
+                    SectionPatch { visible: Some(false), ..Default::default() }, // not hideable
+                ),
+                (
+                    SectionType::from("news.v1-typo"),
+                    SectionPatch::default(), // not in base
+                ),
+                (
+                    SectionType::from("faults.v1"),
+                    SectionPatch { mode: Some("compact".into()), ..Default::default() }, // ok
+                ),
+            ]),
+        };
+        let errs = validate_tenant_override(&ov, &base, &rails);
+        assert!(errs.iter().any(|e| matches!(e,
+            ValidationError::NotReorderable)));
+        assert!(errs.iter().any(|e| matches!(e,
+            ValidationError::PropNotWhitelisted { section, prop }
+                if section.0 == "news.v1" && prop == "theme")));
+        assert!(errs.iter().any(|e| matches!(e,
+            ValidationError::NotHideable { section } if section.0 == "kpi.v1")));
+        assert!(errs.iter().any(|e| matches!(e,
+            ValidationError::NotInBase { section } if section.0 == "news.v1-typo")));
+        // exactly the four violations above — the allowed edits pass
+        assert_eq!(errs.len(), 4);
+    }
+
+    #[test]
+    fn mode_edit_on_non_editable_section_is_rejected() {
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("news.v1")],
+        };
+        let rails = Rails::default();
+        let ov = TenantOverride {
+            order: None,
+            sections: BTreeMap::from([(
+                SectionType::from("news.v1"),
+                SectionPatch { mode: Some("grid".into()), ..Default::default() },
+            )]),
+        };
+        let errs = validate_tenant_override(&ov, &base, &rails);
+        assert!(errs.iter().any(|e| matches!(e,
+            ValidationError::NotModeEditable { section } if section.0 == "news.v1")));
     }
 }
