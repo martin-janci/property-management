@@ -205,5 +205,7 @@ mod tests {
         assert!(rails.reorderable);
         assert!(rails.hideable.contains(&SectionType::from("a.v1")));
         assert!(rails.mode_editable.is_empty()); // defaults empty
+                                                 // empty JSON deserializes to default Rails (all fields have serde defaults)
+        assert!(serde_json::from_str::<Rails>("{}").is_ok());
     }
 }

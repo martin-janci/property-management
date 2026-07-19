@@ -30,9 +30,17 @@ pub enum ValidationError {
     PropNotWhitelisted { section: SectionType, prop: String },
     #[error("this screen is not tenant-reorderable")]
     NotReorderable,
+    #[error("component {section:?} declares default_mode {mode:?} not in its supported_modes on {platform:?}")]
+    InvalidDefaultMode {
+        section: SectionType,
+        mode: String,
+        platform: Platform,
+    },
 }
 
 /// Publish gate (spec §6.3): empty result = publishable. Errors block publish.
+///
+/// Error ordering follows section iteration order (the order sections appear in the config).
 pub fn validate_publish(
     config: &ScreenConfig,
     manifests: &[RegistryManifest],
@@ -88,6 +96,16 @@ pub fn validate_publish(
                     errs.push(err);
                 }
             }
+            // gate inconsistent default_mode: if declared, it must be in supported_modes
+            if let Some(dm) = &def.default_mode {
+                if !def.supported_modes.contains(dm) {
+                    errs.push(ValidationError::InvalidDefaultMode {
+                        section: t.clone(),
+                        mode: dm.clone(),
+                        platform: m.platform,
+                    });
+                }
+            }
         }
     }
     errs
@@ -95,6 +113,9 @@ pub fn validate_publish(
 
 /// Server-side rails enforcement for tenant saves (spec §3.4). The UI hides
 /// out-of-rails controls, but this is the actual gate.
+///
+/// Error ordering follows alphabetical BTreeMap order (the order sections appear in the
+/// tenant override's BTreeMap).
 pub fn validate_tenant_override(
     ov: &TenantOverride,
     base: &ScreenConfig,
@@ -365,5 +386,37 @@ mod tests {
         let errs = validate_tenant_override(&ov, &base, &rails);
         assert!(errs.iter().any(|e| matches!(e,
             ValidationError::NotModeEditable { section } if section.0 == "news.v1")));
+    }
+    #[test]
+    fn invalid_default_mode_blocked_at_publish() {
+        // Component declares default_mode 'grid' which is NOT in supported_modes ['list'].
+        // validate_publish must reject this with InvalidDefaultMode.
+        let cfg = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("listing-grid.v1")],
+        };
+        let manifests = vec![RegistryManifest {
+            platform: Platform::Web,
+            components: std::collections::BTreeMap::from([(
+                SectionType::from("listing-grid.v1"),
+                ComponentDef {
+                    required: false,
+                    supported_modes: vec!["list".to_string()],
+                    default_mode: Some("grid".to_string()), // inconsistent: not in supported_modes
+                },
+            )]),
+        }];
+        let errs = validate_publish(&cfg, &manifests);
+        assert!(
+            errs.iter().any(|e| matches!(e,
+                ValidationError::InvalidDefaultMode { section, mode, platform }
+                    if section.0 == "listing-grid.v1"
+                    && mode == "grid"
+                    && *platform == Platform::Web
+            )),
+            "expected InvalidDefaultMode error, got: {:?}",
+            errs
+        );
     }
 }

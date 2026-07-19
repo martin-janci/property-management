@@ -4,6 +4,10 @@ use std::collections::BTreeSet;
 /// Resolve a screen for one platform + optional tenant, against the platform's
 /// registry manifest. Precedence: base → platform override → tenant override →
 /// kill flags (spec §3.2). Tenant and kill layers are applied in Tasks 4–5.
+///
+/// Note: the signature will grow an /client-capabilities parameter when
+/// server-side stale-client filtering (spec §4.1) lands in the control-plane plan —
+/// do not treat the current arity as frozen.
 pub fn resolve(
     base: &ScreenConfig,
     platform: Platform,
@@ -30,9 +34,12 @@ pub fn resolve(
             }
         }
         // Defensive mode clamp: never emit a mode the component doesn't support.
+        // If the fallback default_mode is itself not in supported_modes (inconsistent
+        // manifest), clamp to None rather than emitting a mode the component never declared.
         if let Some(m) = &mode {
             if !def.supported_modes.iter().any(|s| s == m) {
-                mode = def.default_mode.clone();
+                let fallback = def.default_mode.clone();
+                mode = fallback.filter(|dm| def.supported_modes.iter().any(|s| s == dm));
             }
         }
         let alive = visible && !killed.contains(&cfg.section_type);
@@ -258,6 +265,37 @@ mod tests {
             .collect();
         // listed first, unlisted keep base relative order
         assert_eq!(types, vec!["b.v1", "a.v1", "c.v1"]);
+    }
+
+    /// Finding 1a: if default_mode itself is not in supported_modes, clamp to None.
+    #[test]
+    fn inconsistent_default_mode_clamps_to_none() {
+        // Component declares supported_modes: ["list"] but default_mode: Some("grid").
+        // Section requests mode "hologram" -> not in supported_modes -> falls back to
+        // default_mode "grid" -> but "grid" is also not in supported_modes -> must be None.
+        let mut s = section("listing-grid.v1");
+        s.mode = Some("hologram".into());
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![s],
+        };
+        let reg = RegistryManifest {
+            platform: Platform::Web,
+            components: std::collections::BTreeMap::from([(
+                SectionType::from("listing-grid.v1"),
+                ComponentDef {
+                    required: false,
+                    supported_modes: vec!["list".to_string()],
+                    default_mode: Some("grid".to_string()), // inconsistent: not in supported_modes
+                },
+            )]),
+        };
+        let out = resolve(&base, Platform::Web, None, &BTreeSet::new(), &reg);
+        assert_eq!(
+            out.sections[0].mode, None,
+            "inconsistent default_mode must clamp to None, not emit an unsupported mode"
+        );
     }
 
     #[test]
