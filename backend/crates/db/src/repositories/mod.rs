@@ -30,8 +30,8 @@ pub mod financial;
 pub mod granular_notification;
 pub mod granular_notification_test;
 pub mod health_monitoring;
-pub mod layout;
 pub mod help;
+pub mod layout;
 pub mod membership;
 pub mod messaging;
 pub mod meter;
@@ -123,8 +123,8 @@ pub use health_monitoring::{
     CurrentMetric, HealthDashboard, HealthMonitoringRepository, MetricDataPoint, MetricHistory,
     MetricStats, MetricStatus,
 };
-pub use layout::LayoutRepository;
 pub use help::{FaqEntry, HelpArticle, HelpCategory, HelpRepository, Tooltip};
+pub use layout::LayoutRepository;
 pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;
