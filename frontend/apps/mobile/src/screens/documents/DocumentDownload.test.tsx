@@ -105,13 +105,12 @@ describe('utiFromDocType', () => {
     expect(utiFromDocType('image')).toBe('public.image');
   });
 
-  it.each([
-    'folder',
-    'document',
-    'spreadsheet',
-  ] as const)('falls back to public.data for %s', (type) => {
-    expect(utiFromDocType(type)).toBe('public.data');
-  });
+  it.each(['folder', 'document', 'spreadsheet'] as const)(
+    'falls back to public.data for %s',
+    (type) => {
+      expect(utiFromDocType(type)).toBe('public.data');
+    }
+  );
 });
 
 describe('formatBytes', () => {

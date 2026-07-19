@@ -66,11 +66,12 @@ describe('PPT-Web Route Definitions', () => {
       expect(login?.auth.required).toBe(false);
     });
 
-    it.each(
-      publicRoutes.map((r) => [r.name, r])
-    )('%s should not require authentication', (_: string, route: FrontendRoute) => {
-      expect(route.auth.required).toBe(false);
-    });
+    it.each(publicRoutes.map((r) => [r.name, r]))(
+      '%s should not require authentication',
+      (_: string, route: FrontendRoute) => {
+        expect(route.auth.required).toBe(false);
+      }
+    );
   });
 
   describe('Protected Routes', () => {
@@ -90,11 +91,12 @@ describe('PPT-Web Route Definitions', () => {
       expect(disputes?.auth.required).toBe(true);
     });
 
-    it.each(
-      protectedRoutes.map((r) => [r.name, r])
-    )('%s should require authentication', (_: string, route: FrontendRoute) => {
-      expect(route.auth.required).toBe(true);
-    });
+    it.each(protectedRoutes.map((r) => [r.name, r]))(
+      '%s should require authentication',
+      (_: string, route: FrontendRoute) => {
+        expect(route.auth.required).toBe(true);
+      }
+    );
   });
 
   describe('Route Parameters', () => {
