@@ -1,4 +1,7 @@
-use crate::models::layout::{LayoutConfigRow, LayoutConfigVersionRow};
+use crate::models::layout::{
+    LayoutConfigRow, LayoutConfigVersionRow, LayoutKillFlagRow, LayoutRegistryManifestRow,
+    LayoutTenantOverrideRow,
+};
 use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
@@ -201,6 +204,171 @@ impl LayoutRepository {
         )
         .bind(screen)
         .fetch_all(executor)
+        .await
+    }
+
+    pub async fn kill<'e, E>(
+        &self,
+        executor: E,
+        screen: &str,
+        section_type: &str,
+        killed_by: Option<Uuid>,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            "INSERT INTO layout_kill_flags (screen, section_type, killed_by)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (screen, section_type) DO NOTHING",
+        )
+        .bind(screen)
+        .bind(section_type)
+        .bind(killed_by)
+        .execute(executor)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn unkill<'e, E>(
+        &self,
+        executor: E,
+        screen: &str,
+        section_type: &str,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let res = sqlx::query(
+            "DELETE FROM layout_kill_flags WHERE screen = $1 AND section_type = $2",
+        )
+        .bind(screen)
+        .bind(section_type)
+        .execute(executor)
+        .await?;
+        Ok(res.rows_affected() > 0)
+    }
+
+    pub async fn list_kills<'e, E>(
+        &self,
+        executor: E,
+        screen: &str,
+    ) -> Result<Vec<LayoutKillFlagRow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutKillFlagRow>(
+            "SELECT screen, section_type, killed_by, killed_at
+             FROM layout_kill_flags WHERE screen = $1 ORDER BY section_type",
+        )
+        .bind(screen)
+        .fetch_all(executor)
+        .await
+    }
+
+    pub async fn upsert_manifest<'e, E>(
+        &self,
+        executor: E,
+        platform: &str,
+        manifest: &serde_json::Value,
+        updated_by: Option<Uuid>,
+    ) -> Result<LayoutRegistryManifestRow, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutRegistryManifestRow>(
+            "INSERT INTO layout_registry_manifests (platform, manifest, updated_by)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (platform)
+             DO UPDATE SET manifest = EXCLUDED.manifest, updated_by = EXCLUDED.updated_by,
+                           updated_at = now()
+             RETURNING platform, manifest, updated_by, updated_at",
+        )
+        .bind(platform)
+        .bind(manifest)
+        .bind(updated_by)
+        .fetch_one(executor)
+        .await
+    }
+
+    pub async fn get_manifest<'e, E>(
+        &self,
+        executor: E,
+        platform: &str,
+    ) -> Result<Option<LayoutRegistryManifestRow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutRegistryManifestRow>(
+            "SELECT platform, manifest, updated_by, updated_at
+             FROM layout_registry_manifests WHERE platform = $1",
+        )
+        .bind(platform)
+        .fetch_optional(executor)
+        .await
+    }
+
+    pub async fn list_manifests<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<LayoutRegistryManifestRow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutRegistryManifestRow>(
+            "SELECT platform, manifest, updated_by, updated_at
+             FROM layout_registry_manifests ORDER BY platform",
+        )
+        .fetch_all(executor)
+        .await
+    }
+
+    pub async fn get_tenant_override<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        screen: &str,
+    ) -> Result<Option<LayoutTenantOverrideRow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutTenantOverrideRow>(
+            "SELECT id, organization_id, screen, override_config, updated_by,
+                    created_at, updated_at
+             FROM layout_tenant_overrides
+             WHERE organization_id = $1 AND screen = $2",
+        )
+        .bind(organization_id)
+        .bind(screen)
+        .fetch_optional(executor)
+        .await
+    }
+
+    pub async fn upsert_tenant_override<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        screen: &str,
+        override_config: &serde_json::Value,
+        updated_by: Option<Uuid>,
+    ) -> Result<LayoutTenantOverrideRow, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutTenantOverrideRow>(
+            "INSERT INTO layout_tenant_overrides (organization_id, screen, override_config, updated_by)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (organization_id, screen)
+             DO UPDATE SET override_config = EXCLUDED.override_config,
+                           updated_by = EXCLUDED.updated_by, updated_at = now()
+             RETURNING id, organization_id, screen, override_config, updated_by,
+                       created_at, updated_at",
+        )
+        .bind(organization_id)
+        .bind(screen)
+        .bind(override_config)
+        .bind(updated_by)
+        .fetch_one(executor)
         .await
     }
 }
