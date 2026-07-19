@@ -1,5 +1,5 @@
-use crate::models::layout::LayoutConfigRow;
-use sqlx::{Error as SqlxError, Executor, Postgres};
+use crate::models::layout::{LayoutConfigRow, LayoutConfigVersionRow};
+use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 /// Stateless repository for the layout control plane. Global tables
@@ -94,6 +94,113 @@ impl LayoutRepository {
         .bind(rails)
         .bind(updated_by)
         .fetch_one(executor)
+        .await
+    }
+
+    /// Publish the current draft: draft → published, version += 1, snapshot the
+    /// version row. Runs in a transaction on the given connection.
+    /// Kill flags are intentionally untouched (spec §5).
+    pub async fn publish(
+        &self,
+        conn: &mut PgConnection,
+        screen: &str,
+        published_by: Option<Uuid>,
+    ) -> Result<LayoutConfigRow, SqlxError> {
+        let mut tx = sqlx::Connection::begin(conn).await?;
+        let row = sqlx::query_as::<_, LayoutConfigRow>(
+            "UPDATE layout_configs
+             SET published = draft,
+                 published_version = published_version + 1,
+                 updated_by = $2,
+                 updated_at = now()
+             WHERE screen = $1
+             RETURNING id, screen, draft, published, published_version, rails, updated_by,
+                       created_at, updated_at",
+        )
+        .bind(screen)
+        .bind(published_by)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(SqlxError::RowNotFound)?;
+        sqlx::query(
+            "INSERT INTO layout_config_versions (screen, version, config, published_by)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(screen)
+        .bind(row.published_version)
+        .bind(row.published.as_ref())
+        .bind(published_by)
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(row)
+    }
+
+    /// Roll back to a prior version: that version's config becomes both the
+    /// published config and the draft, recorded as a NEW version (immutable,
+    /// monotonically increasing history). Kill flags untouched (spec §5).
+    pub async fn rollback(
+        &self,
+        conn: &mut PgConnection,
+        screen: &str,
+        to_version: i32,
+        published_by: Option<Uuid>,
+    ) -> Result<LayoutConfigRow, SqlxError> {
+        let mut tx = sqlx::Connection::begin(conn).await?;
+        let target = sqlx::query_as::<_, LayoutConfigVersionRow>(
+            "SELECT id, screen, version, config, published_by, published_at
+             FROM layout_config_versions WHERE screen = $1 AND version = $2",
+        )
+        .bind(screen)
+        .bind(to_version)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(SqlxError::RowNotFound)?;
+        let row = sqlx::query_as::<_, LayoutConfigRow>(
+            "UPDATE layout_configs
+             SET published = $2,
+                 draft = $2,
+                 published_version = published_version + 1,
+                 updated_by = $3,
+                 updated_at = now()
+             WHERE screen = $1
+             RETURNING id, screen, draft, published, published_version, rails, updated_by,
+                       created_at, updated_at",
+        )
+        .bind(screen)
+        .bind(&target.config)
+        .bind(published_by)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(SqlxError::RowNotFound)?;
+        sqlx::query(
+            "INSERT INTO layout_config_versions (screen, version, config, published_by)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(screen)
+        .bind(row.published_version)
+        .bind(&target.config)
+        .bind(published_by)
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(row)
+    }
+
+    pub async fn list_versions<'e, E>(
+        &self,
+        executor: E,
+        screen: &str,
+    ) -> Result<Vec<LayoutConfigVersionRow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, LayoutConfigVersionRow>(
+            "SELECT id, screen, version, config, published_by, published_at
+             FROM layout_config_versions WHERE screen = $1 ORDER BY version DESC",
+        )
+        .bind(screen)
+        .fetch_all(executor)
         .await
     }
 }
