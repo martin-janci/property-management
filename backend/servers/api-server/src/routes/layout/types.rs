@@ -49,3 +49,16 @@ pub struct KillRequest {
     pub screen: String,
     pub section_type: String,
 }
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PutTenantOverrideRequest {
+    pub screen: String,
+    /// Must deserialize as layout_core::TenantOverride and pass rails validation.
+    pub override_config: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ResolvedQuery {
+    /// "web" | "mobile" (default "web")
+    pub platform: Option<String>,
+}

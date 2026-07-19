@@ -1,9 +1,18 @@
 pub mod admin;
+pub mod resolved;
+pub mod tenant;
 pub mod types;
 
 use crate::state::AppState;
 use axum::routing::{get, post, put};
 use axum::Router;
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .route("/tenant-override",
+               get(tenant::get_tenant_override).put(tenant::put_tenant_override))
+        .route("/resolved/{*screen}", get(resolved::get_resolved))
+}
 
 pub fn admin_router() -> Router<AppState> {
     Router::new()
