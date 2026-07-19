@@ -169,4 +169,30 @@ mod tests {
         assert!(errs.iter().any(|e| matches!(e,
             ValidationError::RequiredMissing { section } if section.0 == "gallery.v1")));
     }
+
+    #[test]
+    fn platform_override_changes_effective_visibility() {
+        // required section hidden in base but re-shown on web via override:
+        // no error on web; still an error on mobile (no override there).
+        let mut s = section("gallery.v1");
+        s.visible = false;
+        s.overrides.insert(
+            Platform::Web,
+            SectionPatch { visible: Some(true), ..Default::default() },
+        );
+        let cfg = ScreenConfig { screen: "s".into(), version: 1, sections: vec![s] };
+
+        let web_only = vec![manifest(Platform::Web, &[("gallery.v1", true, &[])])];
+        assert!(validate_publish(&cfg, &web_only).is_empty());
+
+        let both = vec![
+            manifest(Platform::Web, &[("gallery.v1", true, &[])]),
+            manifest(Platform::Mobile, &[("gallery.v1", true, &[])]),
+        ];
+        let errs = validate_publish(&cfg, &both);
+        assert_eq!(
+            errs,
+            vec![ValidationError::RequiredHidden { section: SectionType::from("gallery.v1") }]
+        );
+    }
 }
