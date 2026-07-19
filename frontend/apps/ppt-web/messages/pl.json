@@ -1554,5 +1554,9 @@
       "notOpen": "Ta prośba o podpis nie jest już otwarta do podpisania.",
       "generic": "Podczas wczytywania tej prośby o podpis wystąpił błąd. Spróbuj ponownie."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Sekcja niedostępna",
+    "placeholderBody": "Ta sekcja jest tymczasowo niedostępna."
   }
 }

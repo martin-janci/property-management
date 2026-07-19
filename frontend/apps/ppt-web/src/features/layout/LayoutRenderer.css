@@ -1,0 +1,27 @@
+.layout-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-8);
+}
+
+.layout-placeholder {
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ppt-space-2);
+  border: 1px dashed var(--ppt-color-border, #d0d0d0);
+  border-radius: 8px;
+  color: var(--ppt-color-text-secondary, #666);
+}
+
+.layout-placeholder__title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.layout-placeholder__body {
+  margin: 0;
+  font-size: var(--ppt-font-size-sm, 0.875rem);
+}

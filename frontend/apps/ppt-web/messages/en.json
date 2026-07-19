@@ -3864,5 +3864,9 @@
       "notOpen": "This signature request is no longer open for signing.",
       "generic": "Something went wrong while loading this signing request. Please try again."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Section unavailable",
+    "placeholderBody": "This section is temporarily unavailable."
   }
 }
