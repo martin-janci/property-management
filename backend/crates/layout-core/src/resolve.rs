@@ -11,7 +11,6 @@ pub fn resolve(
     killed: &BTreeSet<SectionType>,
     registry: &RegistryManifest,
 ) -> ResolvedScreen {
-    let _ = killed; // applied in later layers of this function
     let mut sections = Vec::with_capacity(base.sections.len());
     let ordered = order_sections(&base.sections, tenant.and_then(|t| t.order.as_deref()));
     for cfg in ordered {
