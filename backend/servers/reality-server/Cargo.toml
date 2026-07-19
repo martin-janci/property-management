@@ -17,6 +17,7 @@ path = "src/main.rs"
 common = { workspace = true }
 api-core = { workspace = true }
 db = { workspace = true }
+layout-core = { workspace = true }
 
 axum = { workspace = true }
 tokio = { workspace = true }
