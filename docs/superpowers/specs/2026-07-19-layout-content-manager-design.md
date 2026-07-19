@@ -1,27 +1,35 @@
 # Layout & Content Manager — System Design
 
-**Date:** 2026-07-19
-**Status:** Brainstorm / design proposal (not yet scheduled)
-**Scope:** All four apps (ppt-web, reality-web, accounting-web, mobile RN) + KMP mobile-native, controlled from admin-web
+**Date:** 2026-07-19 (revised same day after brainstorming session)
+**Status:** Design approved in brainstorm; awaiting implementation plan
+**Scope:** All four apps (ppt-web, reality-web, accounting-web, mobile RN) + KMP mobile-native; superadmin editor in admin-web; tenant-scoped editor in ppt-web
 
 ## 1. Problem statement
 
 We want a universal framework to control **which components appear on which
 pages, in what order, and in what display mode** — across the Reality portal,
 the Property Management app, the Accounting app, and their mobile
-counterparts — from a single superadmin surface in admin-web.
+counterparts.
 
-Requirements distilled:
+V1 must do three jobs (decided in brainstorm):
 
-- Show/hide natural page components (landing-page sections, listing-detail
-  blocks, list-page widgets) without a code deploy.
-- Reorder sections and switch **display modes** (e.g. list vs grid vs map),
-  where the set of valid modes is defined by the frontend component itself.
+1. **Operator tuning** — superadmin adjusts what each site shows (hide a
+   section, reorder, switch a list page to grid) without a deploy.
+2. **Per-tenant customization** — organizations get customized layouts,
+   edited both by the superadmin *and* self-service by tenant org admins
+   within superadmin-defined rails.
+3. **Kill-switch** — a broken or problematic section can be pulled from
+   production in one action, propagating on next load.
+
+Out of scope for v1: A/B testing / experimentation (a section may later
+reference a feature flag, but no flag system ships in v1).
+
+Cross-cutting requirements:
+
 - **Never break a page.** Hiding an optional component collapses cleanly;
-  hiding/removing a mandatory component renders a placeholder instead.
+  hiding/killing a mandatory component renders a placeholder instead.
 - Per-platform customization (web vs mobile) without forking page configs.
-- Superadmin editor with live preview, draft → publish workflow, versions,
-  rollback, audit.
+- Draft → publish workflow, immutable versions, rollback, audit.
 
 ## 2. Prior art & the core lesson
 
@@ -86,17 +94,33 @@ Decisions baked into this shape:
 - **Semantic, versioned type names** (`price-box.v1`). Breaking changes mint
   `price-box.v2`; published contracts are never mutated. Otherwise evolution
   is additive-only (clients ignore unknown fields).
-- **One base config + sparse per-platform overrides**, not forked configs.
-  The server resolves `base + platform (+ later: audience/flag)` at request
-  time. Screen IDs should reuse the existing `docs/screens/<product>/<id>`
-  catalog.
+- **One base config + sparse overrides**, not forked configs. Screen IDs
+  reuse the existing `docs/screens/<product>/<id>` catalog.
 - **Display modes are constrained enums declared by the component**, not free
   CSS. The frontend registry is the source of truth for which modes each
-  component supports; the admin can only pick from those.
+  component supports; editors can only pick from those.
 - **`required` is a property of the component (registry), not the config** —
-  an operator cannot make a component optional by editing config.
+  no editor can make a required component optional.
 
-### 3.2 Component registry
+### 3.2 Resolution model
+
+Resolution is a layered merge, computed server-side per request in a shared
+`layout-core` backend crate (consumed by api-server and reality-server,
+mirroring the existing `api-core` pattern):
+
+```
+platform default → superadmin base config → platform override
+                → tenant (org) override   → kill flags
+```
+
+- Tenant override rows carry `org_id` and hold only the delta (visibility,
+  order, mode, whitelisted props) — never a full forked config.
+- The resolved endpoint is cacheable per `(screen, platform, org_id,
+  config_version)`.
+- Reality-portal public screens have no org dimension unless an agency
+  context applies; the tenant layer simply doesn't contribute there.
+
+### 3.3 Component registry
 
 Each frontend ships a registry:
 
@@ -105,9 +129,25 @@ type string → { renderer, supportedModes, required, propSchema, fallback }
 ```
 
 Each platform also **publishes its registry manifest** (types + modes + prop
-schemas + minimum app version) to the backend — ideally generated through the
-existing TypeSpec → client pipeline — so the superadmin editor knows exactly
-what every platform supports without hardcoding.
+schemas + minimum app version) to the backend — generated through the
+existing TypeSpec pipeline for TS apps; for KMP, a checked-in generated file
+updated by the SDK-generation step. The editors read these manifests, so
+nothing about platform capabilities is hardcoded in admin UI.
+
+### 3.4 Editing rails (two-role model)
+
+- **Superadmin (rail author)** — defines, per screen: the section set,
+  defaults, per-platform overrides, which optional sections tenants may
+  toggle, and a **per-prop editability whitelist** (which props tenant
+  admins may set, with allowed ranges where relevant).
+- **Tenant org admin (operator)** — customizes their org's screens within
+  those rails: show/hide allowed optional sections, reorder, pick display
+  modes, and edit whitelisted props. Cannot add unknown sections, touch
+  required sections, or edit non-whitelisted props — enforced server-side at
+  save time, not just hidden in the UI.
+
+This follows Contentful's editable-patterns model: the pattern author
+explicitly whitelists what instance editors may change.
 
 ## 4. Resilience rules ("hiding never breaks the page")
 
@@ -117,8 +157,8 @@ what every platform supports without hardcoding.
    advertises supported components/versions in a request header and the
    server omits what it can't render (Yelp's Register model). Critical for
    RN/KMP binaries that may be months stale.
-2. **Hidden required component → placeholder.** A neutral "section
-   unavailable" block reserving sensible space. In the editor, required
+2. **Hidden or killed required component → placeholder.** A neutral "section
+   unavailable" block reserving sensible space. In the editors, required
    sections carry a lock badge and simply have **no hide/delete affordance**
    (Gutenberg lesson: no disabled buttons, no hidden unlock flows).
 3. **Hidden optional component → absent from the tree** (not
@@ -136,14 +176,45 @@ what every platform supports without hardcoding.
    (Firebase Remote Config's hard-won rule). Ship a compiled-in default
    config as the final offline/first-run fallback.
 
-## 5. Superadmin editor (admin-web)
+## 5. Kill-switch
 
-Model: **inline live preview + tree panel + constrained slots** —
-Storyblok/Puck-style, not free-form Webflow-style. [Puck](https://puckeditor.com)
-(MIT, React) is the best open reference and a candidate to embed rather than
-build from scratch.
+Built into the layout system, not delegated to a feature-flag service
+(decided in brainstorm — no external flag infra in v1):
 
-### 5.1 Preview bridge
+- Every section instance has a `killed` flag settable by superadmin in one
+  action, **bypassing the draft → publish gate** (it is an operational
+  control, not an editorial change). Killing a required section makes it
+  render its placeholder everywhere.
+- Kill state is stored alongside (not inside) published config versions, so
+  publishing or rolling back a config does not accidentally resurrect a
+  killed section; un-kill is an equally explicit action, and both are
+  audit-logged.
+- Propagation: next navigation / ISR revalidation on web (≤ ~1 min), next
+  launch or screen entry on mobile. No real-time push channel and no
+  mid-session layout swaps in v1.
+
+## 6. Editors
+
+One shared **`@ppt/layout-editor`** React package (in `frontend/packages/`),
+mounted in two places with different capability sets:
+
+- **admin-web — full superadmin editor:** rail authoring (section set,
+  required flags via registry, tenant-editable whitelists, per-prop
+  whitelists), base config editing, per-platform overrides, per-tenant
+  override editing, kill-switch, publish/rollback/audit.
+- **ppt-web — scoped tenant editor:** the same tree-panel component
+  restricted to the tenant's rails (visibility, order, modes, whitelisted
+  props on their org's screens). Server-side enforcement of the rails at
+  save time.
+
+Model: **tree panel + live iframe preview** (Storyblok/Puck-style, decided
+over embedding Puck — our section-list model is simpler than Puck's
+free-form target, and the two-role rails model needs custom permission
+logic either way). **No canvas drag-and-drop in v1** — tree reorder with
+drag handle + up/down arrows covers it (arrows double as the accessible
+path).
+
+### 6.1 Preview bridge
 
 - Iframe the **real site in draft mode**; postMessage bridge with origin
   validation + handshake.
@@ -153,89 +224,117 @@ build from scratch.
   the site re-renders optimistically (Storyblok's protocol — simplest robust
   option). Persisted only on save/publish.
 - Draft-mode cookie/flag so the framed site fetches draft config.
+- Canvas overlays + tree panel synced both ways: click a section on canvas →
+  tree row highlights + config panel opens; hover a tree row → outline on
+  canvas.
 
-### 5.2 Editing surface
+### 6.2 Editing surface
 
-- **Canvas overlays + labeled tree panel, synced both ways**: click a section
-  on canvas → tree row highlights + config panel opens; hover a tree row →
-  outline on canvas.
 - Tree rows carry the direct controls: **eye toggle** (visibility), **drag
-  handle + up/down arrows** (reorder; arrows double as the accessible
-  non-drag path), **mode dropdown** (populated from the registry manifest),
-  **lock badge** on required sections.
-- **Platform switcher** in the toolbar (web / mobile), like a breakpoint
-  switcher. Sections hidden on the current platform render **dimmed on
-  canvas**, not removed. Overridden sections get a badge + "reset to base".
+  handle + arrows** (reorder), **mode dropdown** (populated from the
+  registry manifest), **prop form** (from the component's prop schema,
+  filtered by whitelist in the tenant editor), **lock badge** on required
+  sections, **kill badge** on killed sections (superadmin only).
+- **Platform switcher** in the toolbar (web / mobile). Sections hidden on
+  the current platform render **dimmed on canvas**, not removed. Overridden
+  sections get a badge + "reset to base"; in superadmin's per-tenant view,
+  tenant-overridden sections badge the same way.
 
-### 5.3 Workflow & governance
+### 6.3 Workflow & governance
 
 - State machine: **Draft → (preview link) → Published**; optional scheduled
-  publish later.
+  publish later. Kill-switch bypasses this (§5).
 - Every publish creates an **immutable version**; one-click rollback; audit
-  log (who/what/when + diff).
+  log (who/what/when + diff) covering superadmin edits, tenant edits, and
+  kill/un-kill actions.
 - **Publish is gated by server-side validation** — hard guarantee, not a
   lint: schema-valid; every referenced type exists in every target platform's
   registry; required sections present and visible; modes ∈ supported set;
-  props validate against the component's prop schema. Errors block publish;
-  warnings don't (Sanity model).
-- Roles: **schema/registry authors** (developers, via code) vs **content
-  operators** (superadmin, arrange within the rails).
+  props validate against the component's prop schema; tenant saves
+  additionally validate against the rails. Errors block publish; warnings
+  don't (Sanity model).
 
-## 6. Placement in the PPT architecture
+## 7. Placement in the PPT architecture
 
 | Piece | Where | Notes |
 |---|---|---|
-| Control plane (CRUD, draft/publish, versions, audit, validation) | **api-server** | `layout_configs` + `layout_config_versions` tables; superadmin-scoped routes behind existing admin auth |
-| Resolved read endpoint | **api-server** (ppt/acc screens) + **reality-server** (reality screens) | `GET /layout/{screen}?platform=…&app_version=…` → resolved section list; aggressively cacheable, version-bumped on publish |
-| Editor UI | **admin-web** | iframe bridge + tree panel (§5) |
-| reality-web delivery | Next.js ISR | publish webhook → `revalidateTag('layout:{screen}')`; keep a long time-based revalidate as safety net |
+| Resolution logic (merge, filtering, validation) | **`layout-core` crate** (backend workspace) | shared by api-server + reality-server (+ accounting-server later), mirroring `api-core` |
+| Control plane (CRUD, rails, tenant overrides, kill, versions, audit) | **api-server** | `layout_configs`, `layout_config_versions`, `layout_tenant_overrides` (org_id-scoped), `layout_kill_flags`; superadmin routes behind admin auth, tenant routes behind org admin auth |
+| Resolved read endpoint | **api-server** (ppt/acc screens) + **reality-server** (reality screens) | `GET /layout/{screen}?platform=…&app_version=…` (+ org from tenant context) → resolved section list; cacheable per (screen, platform, org, version) |
+| Superadmin editor | **admin-web** | full `@ppt/layout-editor` |
+| Tenant editor | **ppt-web** | scoped `@ppt/layout-editor` |
+| reality-web delivery | Next.js ISR | publish/kill webhook → `revalidateTag('layout:{screen}')`; long time-based revalidate as safety net |
 | ppt-web / accounting-web delivery | TanStack Query | fetch on navigation, cache last-known-good |
 | Mobile delivery (RN + KMP) | local cache | background fetch, activate next launch/screen; compiled-in default config |
-| Registry manifests | TypeSpec pipeline | generated alongside `@ppt/api-client`; mobile-native via openapi-generator |
+| Registry manifests | TypeSpec pipeline (TS apps); checked-in generated file (KMP) | editors read manifests, nothing hardcoded |
 | Screen catalog | `docs/screens/` | share screen IDs with the existing screen-map system |
-| Feature flags | separate layer | flags gate *whether* (kill switch, rollout %); layout config defines *what/how*. A section may reference a `flagId`; the resolver applies it. Do not merge the two systems |
+| Feature flags / A/B | **not in v1** | schema reserves an optional `flagId` per section for later; no flag service shipped |
 
-## 7. Known costs & pitfalls
+## 8. Known costs & pitfalls
 
-- **Complexity moves server-side; it doesn't disappear.** Resolvers absorb
-  override merging, version filtering, flag substitution, fallback logic.
+- **Complexity moves server-side; it doesn't disappear.** The resolver
+  absorbs override merging, rails enforcement, version filtering, kill
+  application, fallback logic. `layout-core` needs thorough unit tests over
+  the merge precedence.
 - **Testing surface multiplies** (screens × platforms × client versions ×
-  configs). Mitigation: log every section render with config + client
-  version; dashboard failure rates per (component, client-version) cell.
+  orgs). Mitigation: log every section render with config + client version;
+  dashboard failure rates per (component, client-version) cell.
 - **Editor last, contract first.** DoorDash's ordering: harden the config
-  contract on one surface for a long time *before* building the GUI composer.
+  contract on the pilot screens before investing in editor polish.
 - **Out of scope surfaces:** deep-native views (map), auth flows, low-churn
   screens (settings) — no velocity to gain, real downside risk.
 - **Skeletons vs collapse:** skeletons are for *loading* with predictable
   dimensions; a *hidden* section must collapse entirely — a skeleton implies
   content is coming.
+- **Two editors, one package:** the tenant editor must be a capability-
+  restricted mount of the same component, not a fork — divergence between
+  the two editing surfaces is the maintenance trap here.
 
-## 8. Rollout plan
+## 9. Rollout plan
 
-1. **Contract first** — section-list schema + registry pattern on **one**
-   high-churn pilot screen: `reality/listing-detail` (exists on web + KMP).
-2. Resolved-layout endpoint + defensive rendering (gap spacing, error
-   boundaries, unknown-type fallback, required-placeholder) in reality-web.
-3. **Minimal superadmin** — tree panel, eye toggles, reorder,
-   publish/rollback. No iframe preview yet.
-4. Live iframe preview bridge; platform switcher + overrides; display modes.
-5. Extend to reality landing + list pages; then ppt-web and accounting-web
-   screens; then mobile registry manifests + KMP renderer wiring.
+Pilot = **two screens, one per architectural risk** (decided in brainstorm):
+`ppt/dashboard` (tenant overrides + both editors) and
+`reality/listing-detail` (public SSR/ISR + KMP delivery).
 
-## 9. Open questions
+1. **Contract first** — section-list schema, `layout-core` merge resolver
+   with full precedence tests, registry pattern + manifests for ppt-web and
+   reality-web.
+2. **Defensive rendering** on both pilot screens (gap spacing, error
+   boundaries, unknown-type fallback, required-placeholder), resolved-layout
+   endpoints, ISR revalidation hook.
+3. **Superadmin editor MVP** in admin-web — tree panel, visibility, reorder,
+   modes, props, publish/rollback, kill-switch. No iframe preview yet.
+4. **Tenant editor** in ppt-web — scoped mount + server-side rails
+   enforcement + rails authoring UI in admin-web.
+5. **Live iframe preview bridge** + platform switcher/overrides.
+6. Expand: reality landing + list pages → remaining ppt-web screens →
+   accounting-web → mobile registry manifests + RN/KMP renderer wiring.
 
-- Embed Puck for the editor vs build the tree-panel editor natively in
-  admin-web? (Puck saves DnD/slot plumbing but adds a dependency and its
-  config model would need mapping onto ours.)
-- Should the resolved-layout endpoint live in each server, or in a single
-  shared crate consumed by api-server + reality-server (+ accounting-server
-  later)?
-- Audience targeting (per-org / per-segment layouts) — in scope for v2, and
-  does it interact with RLS/tenant context?
-- How registry manifests for KMP are published — build-time upload step vs
-  checked-in generated file.
+## 10. Resolved & open questions
 
-## 10. Further reading
+Resolved in the 2026-07-19 brainstorm:
+
+- **Drivers:** operator tuning + per-tenant customization + kill-switch;
+  A/B out of v1.
+- **Tenant editing:** self-service from day one, two-role rails model.
+- **Tenant powers:** visibility + order + modes + per-prop-whitelisted props.
+- **Pilot:** `ppt/dashboard` + `reality/listing-detail`.
+- **Editor:** custom shared `@ppt/layout-editor`; Puck not embedded; no
+  canvas DnD in v1.
+- **Kill-switch:** built-in, next-load propagation, publish-gate bypass.
+- **Resolver placement:** shared `layout-core` crate.
+- **KMP manifests:** checked-in generated file.
+
+Still open (fine to settle during implementation planning):
+
+- Whether accounting-web joins the pilot expansion before or after mobile.
+- Whether tenant overrides live under RLS like other org data or in
+  admin-owned tables with explicit org_id filtering (leaning RLS for
+  consistency with the rest of the schema).
+- Draft-preview auth for the iframe (signed preview token vs admin session
+  cookie pass-through).
+
+## 11. Further reading
 
 - [Airbnb Ghost Platform deep dive](https://medium.com/airbnb-engineering/a-deep-dive-into-airbnbs-server-driven-ui-system-842244c5f5)
 - [Yelp CHAOS (2024)](https://engineeringblog.yelp.com/2024/03/chaos-yelps-unified-framework-for-server-driven-ui.html) · [backend (2025)](https://engineeringblog.yelp.com/2025/07/chaos-inside-yelps-sdui-framework.html)
