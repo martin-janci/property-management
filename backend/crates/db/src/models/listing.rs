@@ -340,6 +340,13 @@ pub struct ListingSyndication {
     pub status: String,
     pub last_error: Option<String>,
     pub synced_at: Option<DateTime<Utc>>,
+    /// Cumulative portal view count (monotonic; advanced once per non-duplicate
+    /// view webhook -- see `increment_syndication_stats` and #2360).
+    #[serde(default)]
+    pub total_views: i64,
+    /// Cumulative portal inquiry count (monotonic).
+    #[serde(default)]
+    pub total_inquiries: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

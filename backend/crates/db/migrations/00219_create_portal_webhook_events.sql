@@ -14,7 +14,7 @@
 -- inquiry path now escalates an unmatched syndication to a retriable 500 so the
 -- portal **re-delivers** the lead. Re-delivery is only safe if a duplicate
 -- delivery is idempotent, but the idempotency net
--- (`InquiryPersistOutcome::Duplicate`, api-server portal_webhooks.rs) can only
+-- (`WebhookPersistOutcome::Duplicate`, api-server portal_webhooks.rs) can only
 -- fire when a duplicate INSERT is rejected — which requires a unique index that
 -- did not exist. Without it, every retry / at-least-once redelivery inserted a
 -- **duplicate lead row**. This migration lands the dedup net that PR #2353
