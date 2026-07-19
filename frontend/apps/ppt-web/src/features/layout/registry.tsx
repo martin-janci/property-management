@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 import type { ResolvedScreen } from '@ppt/api-client';
+import { ActionQueue } from '../dashboard/components/ActionQueue';
+import { DashboardStats } from '../dashboard/components/DashboardStats';
 
 export interface SectionProps {
   mode?: string;
@@ -14,15 +16,25 @@ export interface SectionDef {
 
 export type SectionRegistry = Record<string, SectionDef>;
 
-/** ppt-web dashboard sections — populated by the dashboard feature (Task 3). */
-export const dashboardRegistry: SectionRegistry = {};
+/** ppt-web dashboard sections. */
+export const dashboardRegistry: SectionRegistry = {
+  'dashboard-stats.v1': { component: DashboardStats, required: true, supportedModes: [] },
+  'action-queue.v1': {
+    component: () => <ActionQueue userRole="manager" />,
+    required: true,
+    supportedModes: [],
+  },
+};
 
 /** Rendered when the layout endpoint is unavailable (spec §4: never gate the
- *  page on layout). Task 3 fills the real section list. */
+ *  page on layout). */
 export const DEFAULT_DASHBOARD_LAYOUT: ResolvedScreen = {
   screen: 'ppt/dashboard',
   version: 0,
-  sections: [],
+  sections: [
+    { type: 'dashboard-stats.v1', presentation: 'visible' },
+    { type: 'action-queue.v1', presentation: 'visible' },
+  ],
 };
 
 /** The registry manifest for upload to PUT /platform-admin/layout/manifests.

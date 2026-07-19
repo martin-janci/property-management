@@ -1,4 +1,7 @@
 {
   "platform": "web",
-  "components": {}
+  "components": {
+    "action-queue.v1": { "required": true },
+    "dashboard-stats.v1": { "required": true }
+  }
 }
