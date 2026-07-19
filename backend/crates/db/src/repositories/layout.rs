@@ -239,13 +239,12 @@ impl LayoutRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let res = sqlx::query(
-            "DELETE FROM layout_kill_flags WHERE screen = $1 AND section_type = $2",
-        )
-        .bind(screen)
-        .bind(section_type)
-        .execute(executor)
-        .await?;
+        let res =
+            sqlx::query("DELETE FROM layout_kill_flags WHERE screen = $1 AND section_type = $2")
+                .bind(screen)
+                .bind(section_type)
+                .execute(executor)
+                .await?;
         Ok(res.rows_affected() > 0)
     }
 

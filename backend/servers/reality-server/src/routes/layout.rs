@@ -36,7 +36,12 @@ pub async fn get_resolved(
     let platform = match q.platform.as_deref().unwrap_or("web") {
         "web" => layout_core::Platform::Web,
         "mobile" => layout_core::Platform::Mobile,
-        other => return Err((StatusCode::BAD_REQUEST, format!("unknown platform {other:?}"))),
+        other => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                format!("unknown platform {other:?}"),
+            ))
+        }
     };
     let mut conn = state
         .acquire_public_conn()
@@ -49,11 +54,16 @@ pub async fn get_resolved(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?
         .ok_or((StatusCode::NOT_FOUND, "unknown screen".to_string()))?;
-    let published = cfg
-        .published
-        .ok_or((StatusCode::NOT_FOUND, "screen has no published config".to_string()))?;
-    let base: layout_core::ScreenConfig = serde_json::from_value(published)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("stored config invalid: {e}")))?;
+    let published = cfg.published.ok_or((
+        StatusCode::NOT_FOUND,
+        "screen has no published config".to_string(),
+    ))?;
+    let base: layout_core::ScreenConfig = serde_json::from_value(published).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("stored config invalid: {e}"),
+        )
+    })?;
 
     let platform_key = match platform {
         layout_core::Platform::Web => "web",
@@ -63,9 +73,17 @@ pub async fn get_resolved(
         .get_manifest(&mut *conn, platform_key)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?
-        .ok_or((StatusCode::NOT_FOUND, "no registry manifest for platform".to_string()))?;
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            "no registry manifest for platform".to_string(),
+        ))?;
     let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("stored manifest invalid: {e}")))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("stored manifest invalid: {e}"),
+            )
+        })?;
 
     let kills: BTreeSet<layout_core::SectionType> = repo
         .list_kills(&mut *conn, &screen)

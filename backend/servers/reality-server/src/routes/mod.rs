@@ -3,7 +3,6 @@
 //! Each module handles a specific domain for the public portal.
 
 pub mod agencies;
-pub mod layout;
 pub mod agency_branding;
 pub mod agency_imports;
 pub mod agent_reviews;
@@ -13,6 +12,7 @@ pub mod favorites;
 pub mod health;
 pub mod imports;
 pub mod inquiries;
+pub mod layout;
 pub mod listings;
 pub mod portal_listings;
 pub mod price_map;
