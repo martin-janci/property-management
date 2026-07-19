@@ -36,13 +36,25 @@ pub fn resolve(
                 mode = def.default_mode.clone();
             }
         }
-        let _ = visible;
-        sections.push(ResolvedSection {
-            section_type: cfg.section_type.clone(),
-            mode,
-            props,
-            presentation: Presentation::Visible,
-        });
+        let alive = visible && !killed.contains(&cfg.section_type);
+        if alive {
+            sections.push(ResolvedSection {
+                section_type: cfg.section_type.clone(),
+                mode,
+                props,
+                presentation: Presentation::Visible,
+            });
+        } else if def.required {
+            // Spec §4.2 / §5: required sections never disappear — placeholder,
+            // with no mode/props (the section may be killed over bad data).
+            sections.push(ResolvedSection {
+                section_type: cfg.section_type.clone(),
+                mode: None,
+                props: Props::new(),
+                presentation: Presentation::Placeholder,
+            });
+        }
+        // optional + not alive → omitted entirely (containers own spacing, §4.3)
     }
     ResolvedScreen {
         screen: base.screen.clone(),
@@ -227,5 +239,51 @@ mod tests {
             out.sections.iter().map(|s| s.section_type.0.as_str()).collect();
         // listed first, unlisted keep base relative order
         assert_eq!(types, vec!["b.v1", "a.v1", "c.v1"]);
+    }
+
+    #[test]
+    fn hidden_and_killed_sections_collapse_or_placeholder() {
+        let mut hidden_opt = section("similar-listings.v1");
+        hidden_opt.visible = false;
+        let mut hidden_req = section("price-box.v1");
+        hidden_req.visible = false;
+        hidden_req.props =
+            BTreeMap::from([("currency".to_string(), serde_json::json!("EUR"))]);
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![
+                section("gallery.v1"),      // required, visible, killed below
+                hidden_req,                 // required, hidden → placeholder
+                hidden_opt,                 // optional, hidden → gone
+                section("mortgage-calc.v1"),// optional, killed below → gone
+                section("unknown.v9"),      // not in registry → gone
+            ],
+        };
+        let reg = registry(&[
+            ("gallery.v1", true, &[]),
+            ("price-box.v1", true, &[]),
+            ("similar-listings.v1", false, &[]),
+            ("mortgage-calc.v1", false, &[]),
+        ]);
+        let killed = BTreeSet::from([
+            SectionType::from("gallery.v1"),
+            SectionType::from("mortgage-calc.v1"),
+        ]);
+        let out = resolve(&base, Platform::Web, None, &killed, &reg);
+        let rendered: Vec<(&str, Presentation)> = out
+            .sections
+            .iter()
+            .map(|s| (s.section_type.0.as_str(), s.presentation))
+            .collect();
+        assert_eq!(
+            rendered,
+            vec![
+                ("gallery.v1", Presentation::Placeholder),   // killed required
+                ("price-box.v1", Presentation::Placeholder), // hidden required
+            ]
+        );
+        // placeholders leak no props (section may be killed for a data bug)
+        assert!(out.sections.iter().all(|s| s.props.is_empty()));
     }
 }
