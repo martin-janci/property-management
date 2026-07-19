@@ -232,6 +232,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::articles::get_article,
         routes::articles::list_comments,
         routes::articles::create_comment,
+        // Layout (public resolved)
+        routes::layout::get_resolved,
     ),
     components(schemas(
         routes::health::HealthResponse,
@@ -370,7 +372,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (name = "AgencyBranding", description = "Agency branding settings (UC-49)"),
         (name = "AgencyImport", description = "Per-agency import management (UC-50)"),
         (name = "PriceMap", description = "District price aggregations (UC-31)"),
-        (name = "Articles", description = "Journal and news articles (UC-13)")
+        (name = "Articles", description = "Journal and news articles (UC-13)"),
+        (name = "Layout", description = "Public resolved layout endpoint (no auth)")
     )
 )]
 struct ApiDoc;
@@ -512,6 +515,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/price-map", routes::price_map::router())
         // Journal / News articles (UC-13)
         .nest("/api/v1/articles", routes::articles::router())
+        // Public resolved layout endpoint (no auth, no tenant layer)
+        .nest("/api/v1/layout", routes::layout::router())
         // Swagger UI
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Add state

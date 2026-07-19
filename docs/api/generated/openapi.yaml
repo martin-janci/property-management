@@ -15,6 +15,7 @@ tags:
   - name: Real Estate Listings
   - name: Compliance & GDPR
   - name: Accounting
+  - name: Layout
 paths:
   /api/v1/accounting/contacts:
     get:
@@ -3251,6 +3252,94 @@ paths:
                   $ref: '#/components/schemas/Shared.Money'
               required:
                 - resolution
+  /api/v1/layout/resolved/{screen}:
+    get:
+      operationId: LayoutApi_getResolved
+      description: Resolve a screen's layout for the caller's organization and platform.
+      parameters:
+        - name: screen
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Layout.LayoutPlatform'
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Layout.ResolvedScreen'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '422':
+          description: Unprocessable Entity - Business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Layout
+  /api/v1/layout/tenant-override:
+    get:
+      operationId: LayoutApi_getTenantOverride
+      description: Read the caller organization's override plus the rails and published base.
+      parameters:
+        - name: screen
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Layout.TenantOverrideEnvelope'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Layout
+    put:
+      operationId: LayoutApi_putTenantOverride
+      description: Save the caller organization's override. Rejected with 422 when it exceeds the rails.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Layout.TenantOverrideEnvelope'
+        '422':
+          description: Unprocessable Entity - Business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Layout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Layout.PutTenantOverrideRequest'
   /api/v1/listings:
     get:
       operationId: ListingsApi_list
@@ -7541,6 +7630,97 @@ components:
         - resolved
         - closed
         - rejected
+    Layout.LayoutPlatform:
+      type: string
+      enum:
+        - web
+        - mobile
+      description: Which platform's component registry to resolve against.
+    Layout.PutTenantOverrideRequest:
+      type: object
+      required:
+        - screen
+        - override_config
+      properties:
+        screen:
+          type: string
+        override_config:
+          $ref: '#/components/schemas/Layout.TenantLayoutOverride'
+    Layout.ResolvedScreen:
+      type: object
+      required:
+        - screen
+        - version
+        - sections
+      properties:
+        screen:
+          type: string
+          description: Screen id, e.g. ppt/dashboard
+        version:
+          type: integer
+          format: int32
+          description: Published config version this resolution was computed from.
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Layout.ResolvedSection'
+      description: 'A fully resolved screen layout: base config merged with platform, tenant and kill layers.'
+    Layout.ResolvedSection:
+      type: object
+      required:
+        - type
+        - presentation
+      properties:
+        type:
+          type: string
+          description: Versioned semantic component type, e.g. price-box.v1
+        mode:
+          type: string
+          description: Display mode, guaranteed to be within the component's supported modes.
+        props:
+          type: object
+          additionalProperties: {}
+          description: Component props (empty for placeholders).
+        presentation:
+          $ref: '#/components/schemas/Layout.SectionPresentation'
+      description: One resolved section, ready to render.
+    Layout.SectionPresentation:
+      type: string
+      enum:
+        - visible
+        - placeholder
+      description: How a resolved section renders. Required sections that are hidden or killed degrade to placeholder; optional ones are omitted entirely.
+    Layout.TenantLayoutOverride:
+      type: object
+      properties:
+        order:
+          type: array
+          items:
+            type: string
+          description: Full desired section order by type; omitted = keep base order.
+        sections:
+          type: object
+          additionalProperties: {}
+          description: 'Per-section patches: visible / mode / whitelisted props.'
+      description: Sparse per-organization layout override (validated against superadmin-authored rails).
+    Layout.TenantOverrideEnvelope:
+      type: object
+      required:
+        - override
+        - rails
+        - published
+      properties:
+        override:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        rails:
+          type: object
+          additionalProperties: {}
+        published:
+          type: object
+          additionalProperties: {}
+          nullable: true
     Listings.Inquiry:
       type: object
       required:
@@ -8730,14 +8910,6 @@ components:
         - real_estate_agent
         - guest
       description: User role within tenant
-    Shared.UnprocessableEntityError:
-      type: object
-      required:
-        - body
-      properties:
-        body:
-          $ref: '#/components/schemas/Shared.ErrorResponse'
-      description: Unprocessable Entity - Business rule violation
     Shared.ValidationError:
       type: object
       required:

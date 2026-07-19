@@ -12,6 +12,7 @@ pub mod favorites;
 pub mod health;
 pub mod imports;
 pub mod inquiries;
+pub mod layout;
 pub mod listings;
 pub mod portal_listings;
 pub mod price_map;

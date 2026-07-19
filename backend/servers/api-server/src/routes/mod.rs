@@ -184,3 +184,6 @@ pub mod data_residency;
 
 // Epic 150: API Ecosystem Expansion
 pub mod api_ecosystem;
+
+// Layout Control-Plane (Task 4)
+pub mod layout;

@@ -21,6 +21,7 @@ import "./domains/rentals.tsp";
 import "./domains/listings.tsp";
 import "./domains/compliance.tsp";
 import "./domains/accounting.tsp";
+import "./domains/layout.tsp";
 
 using TypeSpec.Http;
 using TypeSpec.OpenAPI;
