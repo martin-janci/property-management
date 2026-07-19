@@ -2,7 +2,7 @@ pub mod admin;
 pub mod types;
 
 use crate::state::AppState;
-use axum::routing::{get, put};
+use axum::routing::{get, post, put};
 use axum::Router;
 
 pub fn admin_router() -> Router<AppState> {
@@ -12,4 +12,8 @@ pub fn admin_router() -> Router<AppState> {
         .route("/draft", put(admin::put_draft))
         .route("/rails", put(admin::put_rails))
         .route("/manifests", get(admin::list_manifests).put(admin::put_manifest))
+        .route("/publish", post(admin::publish))
+        .route("/rollback", post(admin::rollback))
+        .route("/kill", post(admin::kill))
+        .route("/unkill", post(admin::unkill))
 }

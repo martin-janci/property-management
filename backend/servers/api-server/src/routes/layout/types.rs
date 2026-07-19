@@ -32,3 +32,20 @@ pub struct PutManifestRequest {
 pub struct ValidationErrorsResponse {
     pub errors: Vec<String>,
 }
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PublishRequest {
+    pub screen: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RollbackRequest {
+    pub screen: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct KillRequest {
+    pub screen: String,
+    pub section_type: String,
+}
