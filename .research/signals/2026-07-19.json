@@ -1,0 +1,214 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "brief exists with correct header",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup check (cumulative types allow re-emit with score_delta=0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no plans this run \u2014 skipped",
+      "observed": "0 new plans",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "grep new plans under plans/",
+      "observed": "0 new plans (<= 2)",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secret patterns in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "check brief 'Phases that failed' vs cursor advancement",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "check prior-run plans still exist or archived",
+      "observed": "no plan promotions this run \u2014 invariant holds trivially",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "compare _archive count now vs HEAD",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions this run",
+      "expected": "<=1 pr/issue/comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors sanity",
+      "observed": "action-list/risks/state OK; Phase 1.6 skipped (pm_cursor unchanged, coverage_cursor also unchanged \u2014 OK per gate)",
+      "expected": "exit 0 or Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-19",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "Routine has not run in 71h (2d 23h) \u2014 last_run_iso=2026-07-16T03:04:00Z, now=2026-07-19T03:12Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-16 origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "3329 add+del lines in backend/servers/api-server/src/routes/reports.rs since 2026-07-16 (re-emit of cumulative signal; ID already in seen_signals, score not re-applied)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-16 origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3185 add+del lines in backend/crates/integrations/src/booking/mod.rs since 2026-07-16"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-07-16 origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "2950 add+del lines in backend/servers/api-server/src/routes/auth.rs since 2026-07-16 (re-emit of cumulative signal; ID already in seen_signals, score not re-applied)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "evidence": [
+        "reports.rs runs_seen=2 (last_seen 2026-07-16) \u2192 repeated churn; instability proxy"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 0,
+      "evidence": [
+        "auth.rs runs_seen=3 (already recurring; re-emit of cumulative signal, score not re-applied)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2411-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2411",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2411 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx (localize create-schedule form) without updating docs/screens/ppt/*.md \u2014 heuristic best-effort review candidate"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-2026-07-19",
+      "type": "dep-update-noise",
+      "source": "gh pr list dependabot",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot PRs open: #2386, #2387, #2388, #2389, #2390, #2391, #2392, #2393, #2394 (batched dep bumps \u2014 dependencies/npm-minor, cargo-minor, gradle-minor, kotlin, expo). Logged for visibility only."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": []
+}

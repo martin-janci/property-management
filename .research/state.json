@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-16T03:04:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2356,
-  "last_issue_seen": 2370,
-  "last_commit_sha": "1006a4c",
+  "last_run_iso": "2026-07-19T03:12:37Z",
+  "last_run_ms": 15000,
+  "last_pr_seen": 2421,
+  "last_issue_seen": 2422,
+  "last_commit_sha": "7621b86",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -143,14 +143,14 @@
       "recent_churn": 75
     },
     "backend/servers/api-server/src/routes/reports.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-07-16",
-      "recent_churn": 3333
+      "runs_seen": 3,
+      "last_seen": "2026-07-19",
+      "recent_churn": 3329
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-12",
-      "recent_churn": 4
+      "runs_seen": 4,
+      "last_seen": "2026-07-19",
+      "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
       "runs_seen": 1,
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-09",
-      "recent_churn": 2818
+      "runs_seen": 2,
+      "last_seen": "2026-07-19",
+      "recent_churn": 3185
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -382,6 +382,7 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
@@ -397,12 +398,14 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
+    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
     "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
     "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
@@ -417,6 +420,7 @@
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
+    "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
@@ -425,6 +429,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
+    "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
     "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
@@ -484,6 +489,7 @@
     "dep-update-noise-2026-05-28",
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
+    "dep-update-noise-2026-07-19",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -517,12 +523,17 @@
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
     "lag-warning-2026-07-09",
+    "lag-warning-2026-07-12",
+    "lag-warning-2026-07-16",
+    "lag-warning-2026-07-19",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
     "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
     "risky-churn-pr-963-main-rs",
     "risky-churn-pr-992-app-tsx",
@@ -530,12 +541,14 @@
     "screen-map-drift-pr-1085-reality",
     "screen-map-drift-pr-1100-ppt",
     "screen-map-drift-pr-1418-ppt",
+    "screen-map-drift-pr-2411-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
     "screen-map-drift-pr-549-ppt",
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
+    "stale-routine-alert-2026-07-16",
     "stalled-review-pr-1179",
     "stalled-review-pr-988",
     "triage-issue-1151",
@@ -598,19 +611,11 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-07-12",
-    "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
-    "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
-    "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
-    "lag-warning-2026-07-16",
-    "stale-routine-alert-2026-07-16",
-    "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
-    "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-14",
+    "api-handlers": "2026-07-19",
     "api-core": "2026-07-13",
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-13",
@@ -620,8 +625,8 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 45,
-    "vectors_created": 185,
+    "runs": 46,
+    "vectors_created": 186,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0

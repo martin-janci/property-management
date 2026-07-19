@@ -4440,6 +4440,28 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2411-ppt",
+      "title": "screen-map drift: PR #2411 changed frontend/apps/ppt-web/src/routes/groups/reports.tsx (create-schedule form localization) without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2411"
+      ],
+      "evidence": [
+        "PR #2411 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx (route file) — no docs/screens/ppt/ update in same PR",
+        "Heuristic-based signal (route-touch trigger); flagged for review under screen-map drift protocol"
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-07-19",
+      "updated_at": "2026-07-19",
+      "plan": null
     }
   ]
 }
