@@ -4,6 +4,7 @@ use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use db::repositories::LayoutRepository;
+use db::RlsPool;
 
 use super::types::{
     KillRequest, PublishRequest, PutDraftRequest, PutManifestRequest, PutRailsRequest,
@@ -32,8 +33,13 @@ pub async fn list_screens(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let rows = LayoutRepository::new()
-        .list_configs(&state.db)
+        .list_configs(&mut **conn)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
@@ -55,9 +61,14 @@ pub async fn get_config(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let repo = LayoutRepository::new();
     let cfg = repo
-        .get_config(&state.db, &q.screen)
+        .get_config(&mut **conn, &q.screen)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
         .ok_or((
@@ -67,11 +78,11 @@ pub async fn get_config(
             }),
         ))?;
     let versions = repo
-        .list_versions(&state.db, &q.screen)
+        .list_versions(&mut **conn, &q.screen)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let kills = repo
-        .list_kills(&state.db, &q.screen)
+        .list_kills(&mut **conn, &q.screen)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(
@@ -99,8 +110,13 @@ pub async fn put_draft(
     if let Err(e) = serde_json::from_value::<layout_core::ScreenConfig>(req.config.clone()) {
         return Err(bad_request(vec![format!("invalid ScreenConfig: {e}")]));
     }
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let row = LayoutRepository::new()
-        .upsert_draft(&state.db, &req.screen, &req.config, Some(admin_id))
+        .upsert_draft(&mut **conn, &req.screen, &req.config, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
@@ -125,8 +141,13 @@ pub async fn put_rails(
     if let Err(e) = serde_json::from_value::<layout_core::Rails>(req.rails.clone()) {
         return Err(bad_request(vec![format!("invalid Rails: {e}")]));
     }
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let row = LayoutRepository::new()
-        .set_rails(&state.db, &req.screen, &req.rails, Some(admin_id))
+        .set_rails(&mut **conn, &req.screen, &req.rails, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
@@ -147,8 +168,13 @@ pub async fn list_manifests(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let rows = LayoutRepository::new()
-        .list_manifests(&state.db)
+        .list_manifests(&mut **conn)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
@@ -182,8 +208,13 @@ pub async fn put_manifest(
             req.platform
         )]));
     }
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let row = LayoutRepository::new()
-        .upsert_manifest(&state.db, &req.platform, &req.manifest, Some(admin_id))
+        .upsert_manifest(&mut **conn, &req.platform, &req.manifest, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
@@ -208,10 +239,15 @@ pub async fn publish(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let repo = LayoutRepository::new();
 
     let cfg_row = repo
-        .get_config(&state.db, &req.screen)
+        .get_config(&mut **conn, &req.screen)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
         .ok_or((
@@ -229,7 +265,7 @@ pub async fn publish(
         })?;
 
     let manifest_rows = repo
-        .list_manifests(&state.db)
+        .list_manifests(&mut **conn)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     if manifest_rows.is_empty() {
@@ -251,11 +287,6 @@ pub async fn publish(
         return Err(bad_request(errors.iter().map(|e| e.to_string()).collect()));
     }
 
-    let mut conn = state
-        .db
-        .acquire()
-        .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let row = repo
         .publish(&mut conn, &req.screen, Some(admin_id))
         .await
@@ -279,9 +310,9 @@ pub async fn rollback(
             }),
         )
     })?;
-    let mut conn = state
-        .db
-        .acquire()
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let row = LayoutRepository::new()
@@ -315,8 +346,13 @@ pub async fn kill(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     LayoutRepository::new()
-        .kill(&state.db, &req.screen, &req.section_type, Some(admin_id))
+        .kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(StatusCode::NO_CONTENT)
@@ -338,8 +374,13 @@ pub async fn unkill(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     let removed = LayoutRepository::new()
-        .unkill(&state.db, &req.screen, &req.section_type)
+        .unkill(&mut **conn, &req.screen, &req.section_type)
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     if removed {

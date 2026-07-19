@@ -5,6 +5,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use db::repositories::LayoutRepository;
+use db::RlsPool;
 use std::collections::BTreeSet;
 
 use super::types::{ResolvedQuery, ValidationErrorsResponse};
@@ -68,8 +69,13 @@ pub async fn get_resolved(
     rls.release().await;
     let tenant_ov_row = tenant_ov_row.map_err(|e| err500(format!("db error: {e}")))?;
 
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut pub_conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| err500(format!("db error: {e}")))?;
     let cfg = repo
-        .get_config(&state.db, &screen)
+        .get_config(&mut **pub_conn, &screen)
         .await
         .map_err(|e| err500(format!("db error: {e}")))?
         .ok_or_else(|| err404("unknown screen"))?;
@@ -84,7 +90,7 @@ pub async fn get_resolved(
         layout_core::Platform::Mobile => "mobile",
     };
     let manifest_row = repo
-        .get_manifest(&state.db, platform_key)
+        .get_manifest(&mut **pub_conn, platform_key)
         .await
         .map_err(|e| err500(format!("db error: {e}")))?
         .ok_or_else(|| err404("no registry manifest for platform"))?;
@@ -92,7 +98,7 @@ pub async fn get_resolved(
         .map_err(|e| err500(format!("stored manifest invalid: {e}")))?;
 
     let kills: BTreeSet<layout_core::SectionType> = repo
-        .list_kills(&state.db, &screen)
+        .list_kills(&mut **pub_conn, &screen)
         .await
         .map_err(|e| err500(format!("db error: {e}")))?
         .into_iter()

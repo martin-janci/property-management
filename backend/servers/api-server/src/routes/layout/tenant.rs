@@ -5,6 +5,7 @@ use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use db::repositories::LayoutRepository;
+use db::RlsPool;
 
 use super::types::{PutTenantOverrideRequest, ScreenQuery, ValidationErrorsResponse};
 
@@ -32,8 +33,20 @@ pub async fn get_tenant_override(
             }),
         )
     })?;
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut pub_conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ValidationErrorsResponse {
+                    errors: vec![format!("db error: {e}")],
+                }),
+            )
+        })?;
     let cfg = repo
-        .get_config(&state.db, &q.screen)
+        .get_config(&mut **pub_conn, &q.screen)
         .await
         .map_err(|e| {
             (
@@ -99,7 +112,20 @@ pub async fn put_tenant_override(
         }
     };
 
-    let cfg = match repo.get_config(&state.db, &req.screen).await {
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut pub_conn = match RlsPool::new(state.db.clone()).acquire_public().await {
+        Ok(c) => c,
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ValidationErrorsResponse {
+                    errors: vec![format!("db error: {e}")],
+                }),
+            ));
+        }
+    };
+    let cfg = match repo.get_config(&mut **pub_conn, &req.screen).await {
         Ok(Some(c)) => c,
         Ok(None) => {
             rls.release().await;
