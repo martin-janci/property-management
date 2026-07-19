@@ -154,6 +154,7 @@ db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
 tenant-ops = { path = "crates/tenant-ops" }
 accounting-core = { path = "crates/accounting-core" }
+layout-core = { path = "crates/layout-core" }
 
 # Phase 1: deploy-server
 bollard = "0.16"
