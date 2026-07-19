@@ -3,5 +3,7 @@
 //! Spec: docs/superpowers/specs/2026-07-19-layout-content-manager-design.md
 
 pub mod types;
+pub mod resolve;
 
 pub use types::*;
+pub use resolve::resolve;
