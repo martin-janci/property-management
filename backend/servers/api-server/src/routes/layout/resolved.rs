@@ -57,6 +57,9 @@ pub async fn get_resolved(
         }
     };
     let repo = LayoutRepository::new();
+    // org_id comes from TenantExtractor while the override read runs on the
+    // RLS connection whose context was bound by ValidatedTenantExtractor —
+    // if the two ever disagreed, RLS returns no row (fails safe, no leak).
     let org_id = tenant.tenant_id;
 
     let tenant_ov_row = repo
