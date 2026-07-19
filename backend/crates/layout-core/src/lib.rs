@@ -4,6 +4,8 @@
 
 pub mod types;
 pub mod resolve;
+pub mod validate;
 
 pub use types::*;
 pub use resolve::resolve;
+pub use validate::{validate_publish, ValidationError};
