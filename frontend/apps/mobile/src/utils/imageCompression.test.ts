@@ -17,7 +17,12 @@ jest.mock('expo-image-manipulator', () => ({
   SaveFormat: { JPEG: 'jpeg', PNG: 'png', WEBP: 'webp' },
 }));
 
-import { bytesToMb, compressImagesIfNeeded, MAX_TOTAL_BYTES } from './imageCompression';
+import {
+  bytesToMb,
+  compressImagesIfNeeded,
+  MAX_TOTAL_BYTES,
+  transcodeToJpeg,
+} from './imageCompression';
 
 const MB = 1024 * 1024;
 
@@ -151,6 +156,30 @@ describe('compressImagesIfNeeded', () => {
 
     expect(result.compressed).toBe(true);
     expect(result.stillOverLimit).toBe(false);
+  });
+});
+
+describe('transcodeToJpeg (GitHub #2400)', () => {
+  it('re-encodes to JPEG with a format-only pass (no resize) and returns the new uri', async () => {
+    mockManipulateAsync.mockResolvedValue({
+      uri: 'file:///cache/out.jpg',
+      width: 4032,
+      height: 3024,
+    });
+
+    const uri = await transcodeToJpeg('file:///DCIM/IMG_0001.HEIC');
+
+    expect(uri).toBe('file:///cache/out.jpg');
+    // Format-only normalize pass — no resize op, unlike compressImagesIfNeeded.
+    expect(mockManipulateAsync).toHaveBeenCalledWith('file:///DCIM/IMG_0001.HEIC', [], {
+      format: 'jpeg',
+    });
+  });
+
+  it('propagates the manipulator error so the caller can keep its reject backstop', async () => {
+    mockManipulateAsync.mockRejectedValue(new Error('decode failed'));
+
+    await expect(transcodeToJpeg('file:///DCIM/broken.HEIC')).rejects.toThrow('decode failed');
   });
 });
 

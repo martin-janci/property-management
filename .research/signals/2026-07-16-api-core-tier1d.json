@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-16",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: claimable=7 < floor=36; deterministic refill sources drained). state.review_cursor tied at oldest 2026-07-13 across api-core/reality-server/ppt-web-ui/reality-web; api-core chosen as it is also churn-aligned (services/push_fanout.rs churn 689 + backend api-server dominates hotspot_history). Segment root: backend/servers/api-server/src/ excluding routes/. Not backlog-saturated (0 open code-review-finding items for api-core). Rust expert (static-only) examined services/actions/api_call.rs, services/scheduler.rs, oauth.rs, jwt.rs, totp.rs, stripe.rs, notification_pipeline.rs, workflow_executor.rs, state.rs. Two findings survived verification against source. NOTE: code-review-api-core-apicall-ssrf-redirect is a RE-CONFIRMATION of the same id previously emitted on 2026-07-10 and 2026-07-13 signal files (idempotent by id) — it is a genuine unresolved high-severity SSRF that never reached the backlog, so it is re-surfaced, not counted as net-new. code-review-api-core-sched-notify-swallow is genuinely fresh (2026-07-15 api-core run emitted a different scheduler finding, scheduler-mutex-poison). Both verified against actual source lines (api_call.rs has NO redirect policy anywhere; scheduler.rs:322-324 confirmed unwrap_or_default).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "fresh_findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106 — reqwest::Client is built (Client::builder().timeout(60s).user_agent(...).build()) without a redirect policy, so it follows up to 10 redirects by default. validate_external_url() (defined line ~151) only vets the INITIAL URL at the call site (~line 250), so a user-configured workflow api_call action pointing at an attacker-controlled host that returns 302 -> http://169.254.169.254/ or an internal service bypasses all SSRF/private-IP checks (cloud-metadata / internal-network exfiltration). Fix: .redirect(reqwest::redirect::Policy::none()) or re-validate every hop. Confirmed: grep for 'redirect' in api_call.rs returns nothing.",
+        "backend/servers/api-server/src/services/actions/api_call.rs:151-159 — validate_external_url parses only the passed-in URL string; there is no per-hop revalidation, so redirect-based SSRF is unguarded. NOTE: same id previously emitted 2026-07-10 & 2026-07-13; still unresolved and not in backlog."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-sched-notify-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:322-324 — self.get_announcement_target_users(announcement).await.unwrap_or_default() collapses any DB/query error into an empty Vec, so on a transient failure the just-published announcement's target-user resolution silently yields [], the `if !target_user_ids.is_empty()` guard skips notification dispatch, and no warn/error is logged and no retry occurs — the published announcement reaches nobody while the scheduler reports success. Should log-and-continue or propagate rather than swallow to []. Fresh (2026-07-15 api-core run flagged a different scheduler issue, mutex-poison)."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

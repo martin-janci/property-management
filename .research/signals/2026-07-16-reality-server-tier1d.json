@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-16",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=6 < floor=36; deterministic refills drained). CHURN_FILES (frontend/apps/ppt-web/messages/en.json, frontend/packages/sitemap/src/json/sitemap.json) map to no code-segment root -> fell through to oldest-unreviewed via review_cursor. state.review_cursor tied at oldest 2026-07-13 across api-core / reality-server / ppt-web-ui / reality-web. api-core was ALREADY consumed earlier this same run by 2026-07-16-api-core-tier1d.json (cursor left at 2026-07-13, not advanced), which re-surfaced the api_call.rs SSRF-redirect finding + a scheduler notify-swallow finding. To avoid emitting duplicate ids and to produce genuinely net-new work signal, advanced to the next oldest-unreviewed segment in priority order that was NOT touched today -> reality-server (Rust). Segment root: backend/servers/reality-server/src/ (skill map path backend/reality-server/src/ resolves to servers/ layout). Not backlog-saturated (0 open code-review-finding items for reality-server). Rust expert, static-only.",
+  "experts_used": [
+    "rust"
+  ],
+  "review_scope_notes": "Examined routes/sso.rs (open-redirect allowlist + SSO callback redirect), routes/users.rs (login/password-reset/update_me), routes/favorites.rs, routes/inquiries.rs, routes/agent_reviews.rs, routes/reports.rs, routes/agency_imports.rs, util/url_validator.rs, extractors/auth.rs, handlers/inquiries/mod.rs. Several superficially-suspicious unwraps were verified SAFE and NOT reported: handlers/inquiries/mod.rs:179 chars().next().unwrap() is guarded by a preceding cleaned.is_empty() early-return; extractors/auth.rs:63 strip_prefix(\"portal_session=\").unwrap() is guarded by the find() predicate that already matched the prefix; state.rs / users.rs startup panics are fail-fast config validation. favorites/users/inquiries mutations are all correctly scoped by principal.user_id (no IDOR). Password-reset has correct enumeration parity (collapses UserNotFound into a generic 200). validate_image_or_link_url in reports.rs/users.rs correctly blocks non-http(s) schemes. url_validator.rs documents (and the caller cannot be confirmed within this segment) the DNS-rebinding re-validation requirement, so no unverifiable worker finding was emitted.",
+  "findings_count": 2,
+  "fresh_findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:149 (check_redirect_uri_allowed) — the same-origin relative-path fast-path `if raw.starts_with('/') && !raw.starts_with(\"//\") { return Ok(()) }` blocks protocol-relative `//evil.com` but NOT the backslash variant `/\\evil.com` (nor `/\\/evil.com`). A user-supplied redirect_uri of `/\\evil.com` passes the allowlist as a 'relative path', is stored, re-validated at callback (still passes), and handed straight to `Redirect::temporary(&redirect_uri)` at routes/sso.rs:338, emitting `Location: /\\evil.com`. Per the WHATWG URL spec browsers normalise backslashes to forward slashes for http(s) URLs, so `/\\evil.com` resolves to `//evil.com` = `https://evil.com` -> open redirect on the post-login SSO flow (phishing / OAuth-code interception vector). The regression test block at routes/sso.rs:1681-1686 covers `//evil.com` but has NO backslash case, so CI is green. Fix: reject any raw whose first two chars normalise to a leading `//` (e.g. also block `starts_with(\"/\\\\\")`), or parse-and-reject when url::Url::parse(raw) yields a host. Traced entry (login handler ~sso.rs:71 and callback ~sso.rs:204) -> validate -> Redirect; reachable in production."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-login-sso-account-enum",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:251 (UserHandler::login) — non-existent email and wrong password both correctly return the generic `\"Invalid email or password\"`, but a registered SSO-only account (user found, password_hash == None) returns a DISTINCT message via `.ok_or(\"Account uses SSO login\")?`. routes/users.rs:204 (login handler) forwards that raw message verbatim as the 401 body. An attacker can therefore enumerate which emails are registered SSO accounts (distinct response = SSO account exists) — an account-existence disclosure that the generic path was specifically written to prevent. It also short-circuits before the argon2 verify, adding a timing side-channel. Fix: return the same generic `\"Invalid email or password\"` (log the SSO-account distinction server-side only)."
+      ]
+    }
+  ]
+}

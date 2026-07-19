@@ -577,19 +577,6 @@
     "draftMinutesAgo": "{{count}}m temu",
     "draftRestored": "Przywrócono zapisany szkic."
   },
-  "packages": {
-    "title": "Zarządzanie przesyłkami",
-    "subtitle": "Śledzenie i zarządzanie przesyłkami w budynku",
-    "loading": "Ładowanie przesyłek...",
-    "loadError": "Nie udało się załadować przesyłek",
-    "registerPackage": "Zarejestruj przesyłkę",
-    "filterAll": "Wszystkie",
-    "filterPickedUp": "Odebrane",
-    "noPackages": "Brak przesyłek",
-    "noPackagesFound": "Nie znaleziono przesyłek",
-    "receiveError": "Nie udało się oznaczyć przesyłki jako odebranej.",
-    "pickupError": "Nie udało się oznaczyć przesyłki jako podjętej."
-  },
   "financial": {
     "title": "Finanse",
     "invoices": "Faktury",
@@ -1012,7 +999,68 @@
       "created": "Harmonogram został utworzony.",
       "createFailed": "Nie udało się utworzyć harmonogramu.",
       "updated": "Harmonogram został zaktualizowany.",
-      "updateFailed": "Nie udało się zaktualizować harmonogramu."
+      "updateFailed": "Nie udało się zaktualizować harmonogramu.",
+      "createErrors": {
+        "emptyName": "Nazwa harmonogramu nie może być pusta.",
+        "invalidFrequency": "Wybrana częstotliwość nie jest obsługiwana.",
+        "invalidRecipientEmail": "Co najmniej jeden adres e-mail odbiorcy jest nieprawidłowy.",
+        "invalidTimezone": "Wybierz prawidłową strefę czasową.",
+        "tooManyRecipients": "Zbyt wielu odbiorców. Zmniejsz liczbę adresów e-mail.",
+        "invalidTime": "Wprowadź prawidłową godzinę.",
+        "invalidFormat": "Wybrany format eksportu nie jest obsługiwany.",
+        "invalidDayOfWeek": "Wybierz prawidłowy dzień tygodnia.",
+        "invalidDayOfMonth": "Wybierz prawidłowy dzień miesiąca."
+      },
+      "form": {
+        "reportLabel": "Raport",
+        "selectReport": "Wybierz raport",
+        "nameLabel": "Nazwa harmonogramu",
+        "namePlaceholder": "Tygodniowe podsumowanie przychodów",
+        "frequencyLabel": "Częstotliwość",
+        "frequencies": {
+          "daily": "Codziennie",
+          "weekly": "Co tydzień",
+          "monthly": "Co miesiąc"
+        },
+        "dayOfWeekLabel": "Dzień tygodnia",
+        "daysOfWeek": {
+          "sunday": "Niedziela",
+          "monday": "Poniedziałek",
+          "tuesday": "Wtorek",
+          "wednesday": "Środa",
+          "thursday": "Czwartek",
+          "friday": "Piątek",
+          "saturday": "Sobota"
+        },
+        "dayOfMonthLabel": "Dzień miesiąca",
+        "dayOfMonthHint": "Wprowadź dzień z zakresu 1–31. W miesiącach z mniejszą liczbą dni harmonogram uruchomi się ostatniego dnia miesiąca.",
+        "timeLabel": "Godzina",
+        "timezoneLabel": "Strefa czasowa",
+        "formatLabel": "Format eksportu",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Odbiorcy",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Oddziel wiele adresów e-mail przecinkami",
+        "save": "Zapisz harmonogram",
+        "saving": "Zapisywanie...",
+        "validation": {
+          "selectReport": "Wybierz raport",
+          "nameRequired": "Nazwa harmonogramu jest wymagana",
+          "recipientsRequired": "Wymagany jest co najmniej jeden odbiorca",
+          "invalidEmails": "Nieprawidłowe adresy e-mail: {{emails}}",
+          "timeRequired": "Godzina jest wymagana"
+        }
+      }
+    },
+    "builtin": {
+      "faults": "Statystyka usterek",
+      "voting": "Frekwencja w głosowaniu",
+      "occupancy": "Obłożenie",
+      "consumption": "Zużycie"
     },
     "execution": {
       "downloadFailed": "Nie udało się pobrać raportu.",

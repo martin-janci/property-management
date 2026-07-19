@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-18",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (with saturation-skip). No fresh CHURN_FILES handed to this Tier-1d slice; the 30-day git churn concentrates in frontend/packages/* tooling and frontend/apps/ppt-web/messages/* i18n, none of which fall under a reviewable segment src root, so churn-alignment did not apply -> fell through to oldest-unreviewed via state.review_cursor. Oldest was a tie at 2026-07-13 between api-core and ppt-web-ui. api-core was ALREADY reviewed earlier today (.research/signals/2026-07-18-api-core-tier1d.json exists, dispatcher-tier1d 04:16Z) so it is effectively saturated for this run-day; skipped to the co-oldest untouched segment -> ppt-web-ui. Not backlog-saturated (0 open code-review-finding items for any segment in backlog.json). Segment roots: frontend/apps/ppt-web/src/pages/ + src/components/ (skill map). The app uses a feature-based layout so the actual page/component surface also lives under src/features/**/{pages,components}; the review swept all three (623 UI files). Frontend primary + Completeness secondary per the skill matrix; done directly (single-segment, no re-delegation).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "review_scope_notes": "Grep-driven hit-lists across src/pages + src/components + src/features (excl. *.test/*.spec/__tests__/mocks): console.* (mostly legitimate catch-block logging -> skipped as nits), `as any` / `as unknown as` (API-boundary casts), TODO/FIXME/@ts-ignore, window.prompt/window.location in action handlers, and mock-backed queryFn/mutationFn. Verified NOT reportable: ErrorBoundary.tsx console.error is intentional; the compliance/emergency console.error hits are inside catch blocks with user-facing alert() fallbacks; useIotWebSocket.ts window cast is a guarded SSR-safe access. Reachability traced from source to a rendered consumer for each finding below. 3 findings = cap reached.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-action-queue-mocked",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:240-300 — the dashboard Action Queue is entirely mock-backed on a shipped surface, not TODO-gated dead code. The useQuery queryFn returns generateMockData(role) after a setTimeout(300) 'simulate network delay' (the real fetch is commented out at :243-245), and the executeAction useMutation (:283) is a no-op setTimeout(500) that returns { success: true } with the real POST commented out (:284-288). dismissItem (:300) and handleAction (:308) both route through this stub mutation, whose onSuccess invalidates the query so the UI reports success and re-renders more fabricated items.",
+        "Reachable in production: consumed by frontend/apps/ppt-web/src/features/dashboard/components/ActionQueue.tsx:40 (useActionQueue(userRole, filters)) — a rendered dashboard component for both 'manager' and 'resident' roles. Failure scenario: managers/residents see a fabricated action list (fake urgent/high counts) and 'dismiss'/'execute' actions silently do nothing server-side while the UI confirms success — a fully stubbed primary-dashboard feature masquerading as live."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:128-146 — handleTakeAction() collects the moderation action via window.prompt('Enter action type (remove, restrict, warn, approve):') and passes the free-text result straight into the mutation as `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'`. The `as` cast crosses the API boundary and lies to the type checker: any string the operator types (typo, 'REMOVE', 'delete') passes compile-time and is sent to takeAction against the compliance backend with no client-side enum validation. handleDecideAppeal (:167+) has the same shape ('uphold'/'overturn' via prompt). AmlDashboardPage.tsx:107/134 repeats the window.prompt pattern for EDD/review actions.",
+        "Compounding UX/completeness gap: handleViewContent (:160) uses window.location.href for in-app navigation (full page reload inside an SPA) instead of the router. All flagged in-code as TODO(Phase-2). Failure scenario: an invalid action_type reaches the compliance-moderation mutation (rejected server-side at best, mis-applied at worst) on a legally-sensitive DSA moderation surface, and the free-text-cast defeats the SDK's typed enum contract."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-unknown-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` force-casts the auth API sessions response to the local SessionRow[] via the double `as unknown as` escape hatch, bypassing all structural checking between the generated SDK type and SessionRow. Immediately after, code reads `s.isCurrent` (:85, and current-session highlighting / revoke UI downstream). If the SDK field is snake_case (is_current) or the shape drifts, `s.isCurrent` is silently undefined, so 'this device' detection and the revoke-all-other-sessions affordance can mis-identify the current session on a security-sensitive session-management screen. The cast hides exactly the kind of API-contract drift the generated client exists to catch."
+      ]
+    }
+  ]
+}

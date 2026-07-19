@@ -58,6 +58,16 @@ Quote exit code. If you touched shared code that affects iOS:
 - Forgetting to add the BuildConfig field across ALL flavors → prod build picks up default.
 - Hard-coding API URLs → use `BuildConfig.API_BASE_URL`.
 - Modifying `VERSION` directly → versioning is auto-bumped by CI, leave it alone.
+- **reality-server Decimal fields are JSON _strings_, not numbers.** reality-server builds
+  `rust_decimal` with the `serde-str` feature, so any `rust_decimal::Decimal` a route serializes
+  **directly** from a DB model arrives on the wire as a scaled string (`"200000.00"`, `"-7.50"`) —
+  a bare `Long`/`Double` throws `JsonDecodingException` on the first fractional value (see #2331 /
+  #2364). Any KMP model mapping a Decimal-backed column MUST annotate the field with
+  `three.two.bit.ppt.reality.api.DecimalAsLongSerializer` (whole-currency amounts) or
+  `DecimalAsDoubleSerializer` (percentages/fractions), never a bare `Long`/`Double`. When you add
+  such a model, extend `shared/src/commonTest/.../api/DecimalWireContractTest.kt` with a
+  real `serde-str` fixture for the new field. Numeric routes (e.g. `/api/v1/listings/*`, which cast
+  `l.price::bigint`) are the exception and stay numeric.
 
 ## Return-line examples
 - `pr=516 status=done specialist=kotlin-mp note=added FavoritesViewModel + Compose screen; assembleDebug clean`

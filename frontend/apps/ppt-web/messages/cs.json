@@ -622,19 +622,6 @@
     "draftMinutesAgo": "před {{count}}m",
     "draftRestored": "Obnovili jsme váš uložený návrh."
   },
-  "packages": {
-    "title": "Správa zásilek",
-    "subtitle": "Sledování a správa zásilek v budově",
-    "loading": "Načítají se zásilky...",
-    "loadError": "Nepodařilo se načíst zásilky",
-    "registerPackage": "Zaregistrovat zásilku",
-    "filterAll": "Vše",
-    "filterPickedUp": "Vyzvednuté",
-    "noPackages": "Žádné zásilky",
-    "noPackagesFound": "Zásilky nebyly nalezeny",
-    "receiveError": "Nepodařilo se označit zásilku jako přijatou.",
-    "pickupError": "Nepodařilo se označit zásilku jako vyzvednutou."
-  },
   "financial": {
     "title": "Finance",
     "invoices": "Faktury",
@@ -1057,7 +1044,68 @@
       "created": "Plán byl úspěšně vytvořen.",
       "createFailed": "Plán se nepodařilo vytvořit.",
       "updated": "Plán byl úspěšně aktualizován.",
-      "updateFailed": "Plán se nepodařilo aktualizovat."
+      "updateFailed": "Plán se nepodařilo aktualizovat.",
+      "createErrors": {
+        "emptyName": "Název plánu nesmí být prázdný.",
+        "invalidFrequency": "Zvolená frekvence není podporována.",
+        "invalidRecipientEmail": "Jedna nebo více e-mailových adres příjemců je neplatná.",
+        "invalidTimezone": "Vyberte platné časové pásmo.",
+        "tooManyRecipients": "Příliš mnoho příjemců. Snižte počet e-mailových adres.",
+        "invalidTime": "Zadejte platný čas.",
+        "invalidFormat": "Zvolený formát exportu není podporován.",
+        "invalidDayOfWeek": "Vyberte platný den v týdnu.",
+        "invalidDayOfMonth": "Vyberte platný den v měsíci."
+      },
+      "form": {
+        "reportLabel": "Sestava",
+        "selectReport": "Vyberte sestavu",
+        "nameLabel": "Název plánu",
+        "namePlaceholder": "Týdenní přehled příjmů",
+        "frequencyLabel": "Frekvence",
+        "frequencies": {
+          "daily": "Denně",
+          "weekly": "Týdně",
+          "monthly": "Měsíčně"
+        },
+        "dayOfWeekLabel": "Den v týdnu",
+        "daysOfWeek": {
+          "sunday": "Neděle",
+          "monday": "Pondělí",
+          "tuesday": "Úterý",
+          "wednesday": "Středa",
+          "thursday": "Čtvrtek",
+          "friday": "Pátek",
+          "saturday": "Sobota"
+        },
+        "dayOfMonthLabel": "Den v měsíci",
+        "dayOfMonthHint": "Zadejte den v rozmezí 1–31. V měsících s menším počtem dní se plán spustí poslední den měsíce.",
+        "timeLabel": "Čas",
+        "timezoneLabel": "Časové pásmo",
+        "formatLabel": "Formát exportu",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Příjemci",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Více e-mailů oddělte čárkami",
+        "save": "Uložit plán",
+        "saving": "Ukládání...",
+        "validation": {
+          "selectReport": "Vyberte sestavu",
+          "nameRequired": "Název plánu je povinný",
+          "recipientsRequired": "Je vyžadován alespoň jeden příjemce",
+          "invalidEmails": "Neplatné e-maily: {{emails}}",
+          "timeRequired": "Čas je povinný"
+        }
+      }
+    },
+    "builtin": {
+      "faults": "Statistika závad",
+      "voting": "Účast na hlasování",
+      "occupancy": "Obsazenost",
+      "consumption": "Spotřeba"
     },
     "execution": {
       "downloadFailed": "Nepodařilo se stáhnout zprávu.",

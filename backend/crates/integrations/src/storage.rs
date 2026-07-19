@@ -414,6 +414,10 @@ impl StorageService {
     ///
     /// * `key` - The S3 object key where the file will be stored
     /// * `content_type` - Expected MIME type of the upload
+    /// * `content_length` - Exact byte count of the upload. Signed into the
+    ///   URL (GH #2320), so S3 rejects a PUT whose `Content-Length` differs —
+    ///   this is what actually enforces the 50 MiB cap on the direct PUT path
+    ///   (presigned PUT has no `content-length-range` policy like POST does).
     /// * `expires_in_secs` - URL validity duration in seconds (default: 5 minutes)
     ///
     /// # Returns
@@ -423,6 +427,7 @@ impl StorageService {
         &self,
         key: &str,
         content_type: &str,
+        content_length: i64,
         expires_in_secs: Option<i64>,
     ) -> Result<PresignedUrl, StorageError> {
         // Validate content type
@@ -430,11 +435,25 @@ impl StorageService {
             return Err(StorageError::InvalidContentType(content_type.to_string()));
         }
 
+        // Validate size before touching the S3 client so callers get a typed
+        // error (and unit tests can pin this without a live client).
+        if content_length < 0 {
+            return Err(StorageError::UploadError(format!(
+                "content_length must be non-negative, got {content_length}"
+            )));
+        }
+        if content_length > MAX_UPLOAD_SIZE_BYTES {
+            return Err(StorageError::FileTooLarge(
+                content_length,
+                MAX_UPLOAD_SIZE_BYTES,
+            ));
+        }
+
         let expires_in = expires_in_secs.unwrap_or(DEFAULT_UPLOAD_EXPIRATION_SECS);
         let expires_at = Utc::now() + Duration::seconds(expires_in);
 
         let url = self
-            .build_presigned_put_url(key, content_type, expires_in)
+            .build_presigned_put_url(key, content_type, content_length, expires_in)
             .await?;
 
         Ok(PresignedUrl { url, expires_at })
@@ -518,10 +537,17 @@ impl StorageService {
     ///
     /// P0-05 (see build_presigned_get_url comment): real SigV4 via
     /// aws_sdk_s3 instead of the previous unsigned-URL placeholder.
+    ///
+    /// GH #2320: `Content-Length` is included as a signed header alongside
+    /// `Content-Type`, so a PUT whose body length differs from
+    /// `content_length` fails S3 signature validation. Without this the 50 MiB
+    /// cap was purely advisory — a presigned PUT accepts any body size when
+    /// only Content-Type is signed.
     async fn build_presigned_put_url(
         &self,
         key: &str,
         content_type: &str,
+        content_length: i64,
         expires_in: i64,
     ) -> Result<String, StorageError> {
         let client = self.get_s3_client()?;
@@ -534,6 +560,7 @@ impl StorageService {
             .bucket(&self.config.bucket)
             .key(key)
             .content_type(content_type)
+            .content_length(content_length)
             .presigned(presign_cfg)
             .await
             .map_err(|e| StorageError::PresignError(e.to_string()))?;
@@ -541,6 +568,7 @@ impl StorageService {
         tracing::debug!(
             key = %key,
             content_type = %content_type,
+            content_length = %content_length,
             expires_in = %expires_in,
             "Generated presigned upload URL"
         );
@@ -904,21 +932,12 @@ impl StorageService {
 // ============================================================================
 
 /// Allowed MIME types for upload.
-pub const ALLOWED_MIME_TYPES: &[&str] = &[
-    // Documents
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/plain",
-    "text/csv",
-    // Images
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-];
+///
+/// Re-export of the single source of truth in `common` (GH #2320) — the same
+/// list the document handlers (`db::models::ALLOWED_MIME_TYPES`) enforce, so
+/// handler-side and storage-side validation can never drift. Same pattern as
+/// [`supports_inline_preview`] (GH #1413).
+pub use common::ALLOWED_UPLOAD_MIME_TYPES as ALLOWED_MIME_TYPES;
 
 /// Check if a content type is allowed for upload.
 pub fn is_allowed_content_type(content_type: &str) -> bool {
@@ -1286,6 +1305,102 @@ mod tests {
             amz_expires_secs(&presigned.url),
             Some(120),
             "explicit preview TTL must be honoured in the signed URL"
+        );
+    }
+
+    // ========================================================================
+    // GH #2320 — presigned PUT must sign Content-Length.
+    //
+    // A presigned PUT that signs only Content-Type accepts a body of any size
+    // (up to S3's 5 GB single-PUT limit) — the 50 MiB cap was advisory. These
+    // pin that `generate_upload_url` (a) signs the exact byte count so S3
+    // rejects a mismatched PUT, and (b) rejects oversize/negative sizes before
+    // ever building a URL.
+    // ========================================================================
+
+    #[tokio::test]
+    async fn test_generate_upload_url_signs_content_length() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let presigned = service
+            .generate_upload_url("org/2026/07/file.pdf", "application/pdf", 1024, None)
+            .await
+            .expect("upload URL should mint");
+
+        assert!(
+            presigned.url.contains("X-Amz-Signature="),
+            "minted upload URL must be SigV4-signed, got {}",
+            presigned.url
+        );
+        // Content-Length (and Content-Type) must be *signed* headers — that is
+        // what makes S3 reject a PUT whose body length differs from the
+        // declared size. The `;` separator is percent-encoded in the URL.
+        let signed_headers = presigned
+            .url
+            .split(['?', '&'])
+            .find_map(|kv| kv.strip_prefix("X-Amz-SignedHeaders="))
+            .expect("presigned URL must carry X-Amz-SignedHeaders")
+            .to_lowercase()
+            .replace("%3b", ";");
+        assert!(
+            signed_headers.contains("content-length"),
+            "content-length must be a signed header, got {signed_headers}"
+        );
+        assert!(
+            signed_headers.contains("content-type"),
+            "content-type must be a signed header, got {signed_headers}"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_upload_url_allows_exactly_max_size() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        assert!(service
+            .generate_upload_url("org/k.pdf", "application/pdf", MAX_UPLOAD_SIZE_BYTES, None)
+            .await
+            .is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_generate_upload_url_rejects_oversize_content_length() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let err = service
+            .generate_upload_url(
+                "org/k.pdf",
+                "application/pdf",
+                MAX_UPLOAD_SIZE_BYTES + 1,
+                None,
+            )
+            .await
+            .expect_err("oversize content_length must be rejected");
+        assert!(
+            matches!(err, StorageError::FileTooLarge(..)),
+            "expected FileTooLarge, got {err:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_upload_url_rejects_negative_content_length() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let err = service
+            .generate_upload_url("org/k.pdf", "application/pdf", -1, None)
+            .await
+            .expect_err("negative content_length must be rejected");
+        assert!(
+            matches!(err, StorageError::UploadError(_)),
+            "expected UploadError, got {err:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_upload_url_rejects_disallowed_content_type() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let err = service
+            .generate_upload_url("org/k.html", "text/html", 10, None)
+            .await
+            .expect_err("disallowed content type must be rejected");
+        assert!(
+            matches!(err, StorageError::InvalidContentType(_)),
+            "expected InvalidContentType, got {err:?}"
         );
     }
 

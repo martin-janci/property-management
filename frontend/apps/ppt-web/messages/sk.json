@@ -624,19 +624,6 @@
     "draftMinutesAgo": "pred {{count}}m",
     "draftRestored": "Obnovili sme váš uložený návrh."
   },
-  "packages": {
-    "title": "Správa zásielok",
-    "subtitle": "Sledovanie a správa zásielok v budove",
-    "loading": "Načítavajú sa zásielky...",
-    "loadError": "Nepodarilo sa načítať zásielky",
-    "registerPackage": "Zaregistrovať zásielku",
-    "filterAll": "Všetky",
-    "filterPickedUp": "Vyzdvihnuté",
-    "noPackages": "Žiadne zásielky",
-    "noPackagesFound": "Zásielky sa nenašli",
-    "receiveError": "Nepodarilo sa označiť zásielku ako prijatú.",
-    "pickupError": "Nepodarilo sa označiť zásielku ako vyzdvihnutú."
-  },
   "financial": {
     "title": "Financie",
     "invoices": "Faktúry",
@@ -1059,7 +1046,68 @@
       "created": "Plán bol úspešne vytvorený.",
       "createFailed": "Nepodarilo sa vytvoriť plán.",
       "updated": "Plán bol úspešne aktualizovaný.",
-      "updateFailed": "Nepodarilo sa aktualizovať plán."
+      "updateFailed": "Nepodarilo sa aktualizovať plán.",
+      "createErrors": {
+        "emptyName": "Názov plánu nesmie byť prázdny.",
+        "invalidFrequency": "Zvolená frekvencia nie je podporovaná.",
+        "invalidRecipientEmail": "Jedna alebo viac e-mailových adries príjemcov je neplatná.",
+        "invalidTimezone": "Vyberte platné časové pásmo.",
+        "tooManyRecipients": "Príliš veľa príjemcov. Znížte počet e-mailových adries.",
+        "invalidTime": "Zadajte platný čas.",
+        "invalidFormat": "Zvolený formát exportu nie je podporovaný.",
+        "invalidDayOfWeek": "Vyberte platný deň v týždni.",
+        "invalidDayOfMonth": "Vyberte platný deň v mesiaci."
+      },
+      "form": {
+        "reportLabel": "Zostava",
+        "selectReport": "Vyberte zostavu",
+        "nameLabel": "Názov plánu",
+        "namePlaceholder": "Týždenný prehľad príjmov",
+        "frequencyLabel": "Frekvencia",
+        "frequencies": {
+          "daily": "Denne",
+          "weekly": "Týždenne",
+          "monthly": "Mesačne"
+        },
+        "dayOfWeekLabel": "Deň v týždni",
+        "daysOfWeek": {
+          "sunday": "Nedeľa",
+          "monday": "Pondelok",
+          "tuesday": "Utorok",
+          "wednesday": "Streda",
+          "thursday": "Štvrtok",
+          "friday": "Piatok",
+          "saturday": "Sobota"
+        },
+        "dayOfMonthLabel": "Deň v mesiaci",
+        "dayOfMonthHint": "Zadajte deň v rozmedzí 1 – 31. V mesiacoch s menším počtom dní sa plán spustí v posledný deň mesiaca.",
+        "timeLabel": "Čas",
+        "timezoneLabel": "Časové pásmo",
+        "formatLabel": "Formát exportu",
+        "formats": {
+          "pdf": "PDF",
+          "excel": "Excel",
+          "csv": "CSV"
+        },
+        "recipientsLabel": "Príjemcovia",
+        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsHint": "Viac e-mailov oddeľte čiarkami",
+        "save": "Uložiť plán",
+        "saving": "Ukladá sa...",
+        "validation": {
+          "selectReport": "Vyberte zostavu",
+          "nameRequired": "Názov plánu je povinný",
+          "recipientsRequired": "Vyžaduje sa aspoň jeden príjemca",
+          "invalidEmails": "Neplatné e-maily: {{emails}}",
+          "timeRequired": "Čas je povinný"
+        }
+      }
+    },
+    "builtin": {
+      "faults": "Štatistika porúch",
+      "voting": "Účasť na hlasovaní",
+      "occupancy": "Obsadenosť",
+      "consumption": "Spotreba"
     },
     "execution": {
       "downloadFailed": "Nepodarilo sa stiahnuť správu.",

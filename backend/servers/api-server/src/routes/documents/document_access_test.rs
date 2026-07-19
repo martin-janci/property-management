@@ -1,4 +1,7 @@
-use super::{document_access_allowed, scope_membership_allows, validate_upload_url_request};
+use super::{
+    document_access_allowed, scope_membership_allows, validate_file_key_org_scope,
+    validate_upload_url_request,
+};
 use axum::http::StatusCode;
 use chrono::Utc;
 use db::models::Document;
@@ -227,12 +230,23 @@ fn membership_never_grants_non_building_unit_scopes() {
 
 #[test]
 fn upload_url_request_accepts_allowed_type_and_size() {
-    // Allowed MIME with a within-limit size hint.
-    assert!(validate_upload_url_request("application/pdf", Some(1024)).is_ok());
-    // Size hint omitted is fine — S3 still enforces the real byte count.
-    assert!(validate_upload_url_request("image/png", None).is_ok());
+    // Allowed MIME with a within-limit size; the validated size is echoed back.
+    assert_eq!(
+        validate_upload_url_request("application/pdf", Some(1024)).expect("valid request"),
+        1024
+    );
     // Exactly at the cap is allowed.
     assert!(validate_upload_url_request("image/jpeg", Some(db::models::MAX_FILE_SIZE)).is_ok());
+}
+
+#[test]
+fn upload_url_request_rejects_missing_size() {
+    // GH #2320: size_bytes is required — it is signed into the presigned PUT
+    // URL as Content-Length, which is what actually enforces the 50 MiB cap
+    // on the direct-to-S3 path.
+    let err = validate_upload_url_request("image/png", None)
+        .expect_err("missing size_bytes must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
 }
 
 #[test]
@@ -255,4 +269,63 @@ fn upload_url_request_rejects_negative_size() {
     let err = validate_upload_url_request("application/pdf", Some(-1))
         .expect_err("negative size must be rejected");
     assert_eq!(err.0, StatusCode::BAD_REQUEST);
+}
+
+// ----------------------------------------------------------------------------
+// GH #2320 — org-scoped file_key guard at document registration.
+//
+// `validate_file_key_org_scope` is the pure guard `create_document` applies to
+// the client-supplied `file_key` before persisting it. Without it, any org
+// member could register a "document" pointing at an arbitrary bucket object
+// (another org's files, `messages/{thread_id}/…` attachments) and exfiltrate
+// it via the presigned download/preview handlers — a bucket-wide IDOR
+// (mirrors the messaging guard from #1791/#1770).
+// ----------------------------------------------------------------------------
+
+#[test]
+fn file_key_own_org_prefix_accepted() {
+    let org_id = Uuid::new_v4();
+    // Shape emitted by integrations::generate_storage_key.
+    let key = format!("{org_id}/2026/07/{}_report.pdf", Uuid::new_v4());
+    assert!(validate_file_key_org_scope(&key, org_id).is_ok());
+}
+
+#[test]
+fn file_key_foreign_org_prefix_rejected() {
+    let org_id = Uuid::new_v4();
+    let other_org = Uuid::new_v4();
+    let key = format!("{other_org}/2026/07/{}_secret.pdf", Uuid::new_v4());
+    let err = validate_file_key_org_scope(&key, org_id)
+        .expect_err("foreign-org file_key must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
+}
+
+#[test]
+fn file_key_messages_prefix_rejected() {
+    let org_id = Uuid::new_v4();
+    let key = format!("messages/{}/{}", Uuid::new_v4(), Uuid::new_v4());
+    let err = validate_file_key_org_scope(&key, org_id)
+        .expect_err("message-attachment file_key must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
+}
+
+#[test]
+fn file_key_with_dot_dot_rejected_even_under_own_prefix() {
+    let org_id = Uuid::new_v4();
+    let key = format!("{org_id}/../{}/2026/07/escape.pdf", Uuid::new_v4());
+    let err =
+        validate_file_key_org_scope(&key, org_id).expect_err("path traversal must be rejected");
+    assert_eq!(err.0, StatusCode::BAD_REQUEST);
+}
+
+#[test]
+fn file_key_empty_and_bare_prefix_variants_rejected() {
+    let org_id = Uuid::new_v4();
+    // Empty key.
+    assert!(validate_file_key_org_scope("", org_id).is_err());
+    // Org id without the trailing slash separator.
+    assert!(validate_file_key_org_scope(&org_id.to_string(), org_id).is_err());
+    // Prefix-substring trick: `{org_id}abc/...` must not match `{org_id}/`.
+    let tricky = format!("{org_id}abc/2026/07/file.pdf");
+    assert!(validate_file_key_org_scope(&tricky, org_id).is_err());
 }

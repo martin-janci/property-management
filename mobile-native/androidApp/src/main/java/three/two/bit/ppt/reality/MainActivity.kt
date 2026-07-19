@@ -128,6 +128,13 @@ fun RealityPortalApp(
                 sessionToken = sessionToken,
             )
         }
+    val portalListingsRepository =
+        remember(sessionToken) {
+            three.two.bit.ppt.reality.realtor.PortalListingsRepository(
+                baseUrl = baseUrl,
+                sessionToken = sessionToken,
+            )
+        }
 
     // Handle pending deep link navigation (Epic 122)
     LaunchedEffect(pendingDeepLink) {
@@ -143,6 +150,7 @@ fun RealityPortalApp(
         listingRepository = listingRepository,
         favoritesRepository = favoritesRepository,
         inquiryRepository = inquiryRepository,
+        portalListingsRepository = portalListingsRepository,
     )
 }
 

@@ -1,0 +1,30 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-18",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved: claimable=0 < floor=36; backlog-refill + retry-remint yielded nothing). No fresh CHURN_FILES handed to this slice, so churn-alignment did not apply. IMPORTANT correction to naive cursor use: state.review_cursor is STALE — it is only rewritten by routine-prompt.md and is NOT advanced by tier1d dispatcher slices, so it still reads api-core=2026-07-13 even though dated signal files show api-core was reviewed on 07-15, 07-16 AND 07-17 (three consecutive tier1d runs all re-picked api-core off the frozen cursor = rotation starvation). Reconstructed the TRUE last-review date per segment from the dated signal filenames instead: oldest = mobile-rn @ 2026-07-14 (next: api-handlers & ppt-web-core @ 07-15). Picked mobile-rn. Not backlog-saturated (0 open code-review-finding items for any segment). Segment root: frontend/apps/mobile/src/ (skill map path frontend/mobile/src/ resolves to the apps/ workspace layout). Frontend expert primary, Tester secondary per skill matrix; static-only, no compile/test.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "review_scope_notes": "~19 feature/dir tree under src/. Grep-driven hit-lists: console.* (non-test), as any / as unknown as (API-boundary casts), useQuery/useMutation error handling, NFC/QR/voice access-control flows, offline sync queue. Verified NOT reportable (deliberately handled with explanatory comments): VotingScreen parseVoteSummaries validates unknown API shape + drops malformed rows (past blind-cast crash already fixed); DocumentUploadScreen `as unknown as Blob` is the documented RN FormData file pattern; usePushNotifications console.log is __DEV__-gated and never logs the raw token (explicit SECURITY comments); NFCCredentialManager corrupt-blob discard is intentional startup-crash avoidance; NFCAccessController.validateAccess status/expiry/access-point/time checks are correct; useApi.ts apiRequest throws on !response.ok so errors propagate to TanStack Query error state; all reviewed useMutation sites route through the useApi wrapper. 1 substantiated finding (segment is well-maintained; padding with nits was declined per skill 'skip nits').",
+  "findings_count": 1,
+  "fresh_findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-offline-queue-silent-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:352-357 — processQueue() permanently DROPS a terminally-failed offline mutation from the sync queue with only a `console.error('Action failed after max retries:', action)`. An action is terminal when it is `permanent` (a 4xx, reasonable to drop) OR `action.retries >= 3` (transient 5xx/network — NOT safe to drop). At line ~400 the queue is rebuilt keeping only `!succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`, so the failed action's PAYLOAD (e.g. an offline-created fault report from screens/faults/ReportFaultScreen.tsx, or a document action) is discarded with no dead-letter store and no per-item retry affordance.",
+        "Surfacing is aggregate-only: App.tsx:82 fires processQueue() fire-and-forget on reconnect; syncProgress.failed (App.tsx:334) feeds PendingSyncIndicator.tsx which renders a t('sync.failed') count. The user sees 'N failed' but cannot see WHICH items failed nor recover/re-submit them — after 3 transient-failure sync cycles genuine user work is silently lost even though the server may have only been temporarily unavailable.",
+        "Reachability traced: App.tsx onReconnect useEffect -> processQueue -> per-action executeQueuedAction catch -> retries++ -> retries>=3 terminal drop. Confidence medium (static; the 4xx branch is intentional and correct, the transient-exhaustion branch is the data-loss concern). Suggested fix: move retry-exhausted (non-permanent) actions to a persisted dead-letter list with an explicit user-visible 'retry / discard' surface rather than dropping them, and/or exempt idempotent CREATEs from the 3-cycle cap."
+      ]
+    }
+  ]
+}

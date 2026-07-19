@@ -28,6 +28,7 @@
 mod common;
 
 use axum::http::StatusCode;
+use db::repositories::LlmDocumentRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -96,6 +97,100 @@ async fn seed_legacy_embedding(pool: &PgPool, org_id: Uuid, created_by: Uuid) ->
     .fetch_one(pool)
     .await
     .expect("seed legacy embedding row")
+}
+
+/// Drive `migrate_embeddings_to_pgvector` on a connection bound to a freshly
+/// created `NOSUPERUSER NOBYPASSRLS` role, with a super-admin request context
+/// bound to `org_id`. Returns the migrated count the repo reports.
+///
+/// Why the role switch: `#[sqlx::test]` connects as the Postgres superuser,
+/// which bypasses FORCE RLS entirely — so any cross-org visibility assertion
+/// driven on the raw pool passes vacuously whether or not migration 00216's
+/// `document_embeddings_super_admin` policy exists (#2418). Under a plain
+/// non-superuser role FORCE actually binds, so 00216 is what OR-widens
+/// visibility for `is_super_admin()` sessions from the caller's own org to
+/// every org — exactly the production owner-role experience. Mirrors the
+/// role-switch discipline in `crates/db/tests/report_schedule_scheduler_rls_tests.rs`
+/// and `budget_rls_repo_tests.rs`.
+///
+/// The context is set to `(org_id, user_id, is_super_admin = TRUE)`: the
+/// org-isolation policy alone would pin the back-fill to `org_id`; the 00216
+/// super-admin policy is what lets it reach the other orgs' rows.
+async fn migrate_as_nonsuperuser(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> i64 {
+    let role = format!("ppt_rls_ragmig_{}", Uuid::new_v4().simple());
+    for stmt in [
+        format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
+        format!("GRANT SELECT, UPDATE ON document_embeddings TO \"{role}\""),
+        // The back-fill function + the functions the RLS policies evaluate
+        // (`is_super_admin`, `get_current_org_id`) plus context setters.
+        format!(
+            "GRANT EXECUTE ON FUNCTION migrate_jsonb_to_vector(), \
+             set_request_context(UUID, UUID, BOOLEAN), get_current_org_id(), \
+             is_super_admin(), clear_request_context() TO \"{role}\""
+        ),
+        // The `document_embeddings_org_isolation` policy (00179) is OR-combined
+        // with the super-admin policy for FOR ALL, so both the before/after
+        // `COUNT(*)` reads and the `migrate_jsonb_to_vector()` UPDATE evaluate
+        // its `get_current_org_not_deleted()` soft-delete guard, which (as a
+        // SECURITY INVOKER function) reads `organizations` under this role's
+        // privileges. Without this the back-fill fails with 42501 (#2418).
+        // Matches the pattern in budget_rls_repo_tests.rs /
+        // report_schedule_scheduler_rls_tests.rs.
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(pool)
+            .await
+            .expect("grant setup");
+    }
+
+    let mut conn = pool.acquire().await.expect("acquire");
+    sqlx::query("SELECT clear_request_context()")
+        .execute(&mut *conn)
+        .await
+        .expect("clear ctx");
+    sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+        .execute(&mut *conn)
+        .await
+        .expect("set role");
+    sqlx::query("SELECT set_request_context($1, $2, TRUE)")
+        .bind(org_id)
+        .bind(user_id)
+        .execute(&mut *conn)
+        .await
+        .expect("set super-admin context bound to org A");
+
+    let migrated = LlmDocumentRepository::new(pool.clone())
+        .migrate_embeddings_to_pgvector(&mut conn)
+        .await
+        .expect("migrate under non-superuser role");
+
+    // Reset the session before this connection returns to the pool: sqlx does
+    // not run DISCARD on release, so without this the still-SET-ROLE + still-
+    // context-bound connection could be handed back for the superuser
+    // verification reads below and silently apply RLS to them.
+    sqlx::query("RESET ROLE")
+        .execute(&mut *conn)
+        .await
+        .expect("reset role");
+    sqlx::query("SELECT clear_request_context()")
+        .execute(&mut *conn)
+        .await
+        .expect("clear ctx after migrate");
+
+    migrated
+}
+
+/// True when `id`'s `embedding_vector` column is populated (read as superuser,
+/// RLS-exempt, so both orgs' rows are visible for verification).
+async fn embedding_vector_set(pool: &PgPool, id: Uuid) -> bool {
+    sqlx::query_scalar::<_, bool>(
+        "SELECT embedding_vector IS NOT NULL FROM document_embeddings WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await
+    .expect("re-read migrated embedding row")
 }
 
 // POST /api/v1/ai/llm/rag/migrate as a platform admin → 200 with a numeric
@@ -271,10 +366,11 @@ async fn rag_migrate_stamps_provenance_on_legacy_row(pool: PgPool) {
 //
 // Caveat (called out in #2321): `#[sqlx::test]` connects as the Postgres
 // superuser, which bypasses RLS entirely — so this test passes with or without
-// the 00216 policy in this harness. It still pins the cross-org contract and,
-// once CI's Postgres carries pgvector (backend.yml → pgvector/pgvector:pg16),
-// exercises the real conversion across both orgs. Under a non-superuser app
-// role the 00216 policy is what keeps the count at 2 instead of 1.
+// the 00216 policy in this harness. It stays a pgvector-conversion smoke test
+// pinning the cross-org contract shape, but it is NOT the RLS regression guard:
+// the two `*_nonsuperuser_role_*` / `*_without_super_admin_policy_*` tests below
+// (#2418) drive the same back-fill under a NOBYPASSRLS role so FORCE actually
+// binds and the 00216 policy is the thing under test (2 rows with it, 1 without).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn rag_migrate_converts_legacy_rows_across_orgs(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -342,6 +438,106 @@ async fn rag_migrate_converts_legacy_rows_across_orgs(pool: PgPool) {
             "cross-org back-fill must stamp assumed provenance on {emb_id}"
         );
     }
+}
+
+// #2418 — REAL cross-org RLS regression guard (positive direction).
+//
+// The superuser test above cannot fail if migration 00216 regresses (a
+// superuser bypasses FORCE RLS). This test drives the same back-fill under a
+// `NOSUPERUSER NOBYPASSRLS` role with a super-admin session bound to org A, so
+// FORCE binds and `document_embeddings_super_admin` is genuinely load-bearing.
+// With the policy present the back-fill must see and convert BOTH orgs' legacy
+// rows → migrated count == 2. The sibling negative test proves it would be 1
+// without the policy — together they pin the count at exactly the policy's
+// contribution.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rag_migrate_cross_org_under_nonsuperuser_role_converts_both(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+
+    // A real user row (FK target for the seeded documents) and two orgs, one
+    // legacy row each. Seeding runs as the RLS-exempt superuser.
+    let (_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let user_id = resolve_user_id(&app, &user).await;
+    let org_a = seed_org(&app.pool, "rag-xorg-role-a").await;
+    let org_b = seed_org(&app.pool, "rag-xorg-role-b").await;
+    let emb_a = seed_legacy_embedding(&app.pool, org_a, user_id).await;
+    let emb_b = seed_legacy_embedding(&app.pool, org_b, user_id).await;
+
+    if !pgvector_present(&app).await {
+        // No pgvector → `migrate_jsonb_to_vector()` is absent and the back-fill
+        // is a deterministic 0 no-op; the RLS contract can't be exercised. The
+        // superuser smoke test already covers the pgvector-independent shape.
+        return;
+    }
+
+    let migrated = migrate_as_nonsuperuser(&app.pool, org_a, user_id).await;
+    assert_eq!(
+        migrated, 2,
+        "under a NOBYPASSRLS super-admin session bound to org A, migration 00216's \
+         document_embeddings_super_admin policy must let the back-fill convert BOTH orgs' \
+         legacy rows (would be 1 without the policy — see the negative test below)"
+    );
+
+    assert!(
+        embedding_vector_set(&app.pool, emb_a).await,
+        "own-org (A) legacy row must be converted"
+    );
+    assert!(
+        embedding_vector_set(&app.pool, emb_b).await,
+        "cross-org (B) legacy row must be converted via the super-admin bypass"
+    );
+}
+
+// #2418 — REAL cross-org RLS regression guard (negative direction).
+//
+// Same setup and same non-superuser super-admin session as the positive test,
+// but with migration 00216's `document_embeddings_super_admin` policy DROPPED.
+// Only `document_embeddings_org_isolation` then remains, so the back-fill can
+// see/convert org A's row ONLY → migrated count == 1, and org B's row stays
+// unconverted. This proves the policy is the load-bearing element (not the
+// harness): if a future edit drops or narrows it, the positive test's count
+// falls from 2 to 1 and fails — the exact #2321 cross-org regression, now
+// actually guarded.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rag_migrate_cross_org_without_super_admin_policy_converts_only_own_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+
+    let (_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let user_id = resolve_user_id(&app, &user).await;
+    let org_a = seed_org(&app.pool, "rag-noxorg-a").await;
+    let org_b = seed_org(&app.pool, "rag-noxorg-b").await;
+    let emb_a = seed_legacy_embedding(&app.pool, org_a, user_id).await;
+    let emb_b = seed_legacy_embedding(&app.pool, org_b, user_id).await;
+
+    if !pgvector_present(&app).await {
+        return;
+    }
+
+    // Remove the super-admin bypass (as the RLS-exempt superuser) to isolate its
+    // effect. Without it, FORCE RLS + the org-isolation policy confine the
+    // back-fill to the caller's own org.
+    sqlx::query("DROP POLICY document_embeddings_super_admin ON document_embeddings")
+        .execute(&app.pool)
+        .await
+        .expect("drop super-admin policy");
+
+    let migrated = migrate_as_nonsuperuser(&app.pool, org_a, user_id).await;
+    assert_eq!(
+        migrated, 1,
+        "without migration 00216's super-admin policy, a non-superuser session bound to org A \
+         must convert ONLY its own org's row — the exact #2321 cross-org back-fill regression"
+    );
+
+    assert!(
+        embedding_vector_set(&app.pool, emb_a).await,
+        "own-org (A) row must still convert without the policy"
+    );
+    assert!(
+        !embedding_vector_set(&app.pool, emb_b).await,
+        "cross-org (B) row must remain unconverted once the super-admin policy is gone"
+    );
 }
 
 // Unauthenticated request → 401 (RlsConnection extractor guards the route).

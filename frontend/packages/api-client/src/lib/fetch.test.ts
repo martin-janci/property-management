@@ -113,6 +113,21 @@ describe('authenticatedFetchJson', () => {
     expect(err.message).toBe('Forbidden');
   });
 
+  // issue #2403: the backend `ErrorResponse` carries its machine-readable code
+  // in `code` (not `error`, which only holds the `mfa_required` marker). The
+  // helper must expose that `code` on `ApiError.code` so callers can map it to a
+  // localized message — before the fix it read `err.error` and lost the code.
+  it('exposes the ErrorResponse `code` field on ApiError.code', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockErrResponse(400, { code: 'TOO_MANY_RECIPIENTS', message: 'Too many recipients' })
+    );
+    const err = (await authenticatedFetchJson('/api/v1/test').catch((e) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(400);
+    expect(err.code).toBe('TOO_MANY_RECIPIENTS');
+    expect(err.message).toBe('Too many recipients');
+  });
+
   it('propagates a 401 status on ApiError (session expired, non-mfa)', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       mockErrResponse(401, { error: 'unauthorized', message: 'Unauthorized' })

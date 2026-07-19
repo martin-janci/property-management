@@ -42,6 +42,8 @@ mod realtors;
 mod searches;
 
 #[cfg(test)]
+mod agencies_test;
+#[cfg(test)]
 mod tests;
 
 pub use searches::FavoriteAlertReadOutcome;

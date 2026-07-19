@@ -165,7 +165,7 @@ impl Scheduler {
 
     /// Get current metrics.
     pub fn get_metrics(&self) -> SchedulerMetrics {
-        let guard = self.metrics.lock().unwrap();
+        let guard = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
         SchedulerMetrics {
             announcements_published: guard.announcements_published,
             announcements_unpinned: guard.announcements_unpinned,
@@ -311,7 +311,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.announcements_published += published.len() as u64;
             }
 
@@ -374,7 +374,7 @@ impl Scheduler {
                 unpinned
             );
 
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.announcements_unpinned += unpinned.len() as u64;
         }
 
@@ -494,7 +494,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.votes_activated += activated.len() as u64;
             }
 
@@ -546,7 +546,7 @@ impl Scheduler {
 
             // Update metrics
             {
-                let mut metrics = self.metrics.lock().unwrap();
+                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.votes_closed += closed_ids.len() as u64;
             }
 
@@ -829,7 +829,7 @@ impl Scheduler {
         }
 
         if reminders_sent > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.vote_reminders_sent += reminders_sent;
         }
 
@@ -855,7 +855,7 @@ impl Scheduler {
                 "Session cleanup completed"
             );
 
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.sessions_cleaned += tokens_cleaned;
             metrics.login_attempts_cleaned += attempts_cleaned;
         }
@@ -875,7 +875,7 @@ impl Scheduler {
                 expired_count = expired_count,
                 "Expired overdue signature requests"
             );
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.signature_requests_expired += expired_count as u64;
         }
         Ok(())
@@ -1030,7 +1030,7 @@ impl Scheduler {
         }
 
         if total_reminders > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.signature_reminders_sent += total_reminders;
         }
 
@@ -1160,7 +1160,7 @@ impl Scheduler {
         }
 
         if total_reminders > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.meter_reminders_sent += total_reminders;
         }
 
@@ -1253,7 +1253,7 @@ impl Scheduler {
         }
 
         if total_sent > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.payment_reminders_sent += total_sent;
         }
 
@@ -1320,7 +1320,7 @@ impl Scheduler {
         }
 
         {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.invoices_transitioned_to_overdue += transitioned.len() as u64;
         }
 
@@ -1382,9 +1382,46 @@ impl Scheduler {
     /// concern — a future generator worker consumes the `pending` executions
     /// recorded here and transitions them to completed/failed. This method owns
     /// only the select-fire-advance loop.
+    ///
+    /// RLS (issue #2318): both tables carry FORCE RLS, and the production
+    /// api-server connects as the table owner (bound by FORCE, no BYPASSRLS —
+    /// see migration 00179). Running on the bare pool therefore made this loop
+    /// a silent no-op: no GUC set → `get_current_org_id()` NULL → the due-work
+    /// SELECT returned 0 rows. The loop now checks out a dedicated connection,
+    /// reads due work under the global-read context (SELECT-only policy leg,
+    /// migration 00218), and performs each schedule's writes under that
+    /// schedule's own tenant context. The context is cleared before the
+    /// connection returns to the pool.
     async fn fire_due_report_schedules(&self) -> Result<(), common::errors::AppError> {
-        let due = self.report_schedule_repo.get_due_schedules().await?;
+        // Dedicated connection: RLS context GUCs are session-local, so the
+        // whole select-fire-advance loop must run on one connection.
+        let mut conn = self
+            .pool
+            .acquire()
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        // Global-read context for the cross-org due-work SELECT.
+        db::tenant_context::set_global_read_context(&mut *conn, true)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        let due = self
+            .report_schedule_repo
+            .get_due_schedules(&mut *conn)
+            .await;
+
+        // Drop the global-read flag before any writes; the per-schedule writes
+        // below run under each schedule's own tenant context.
+        db::tenant_context::set_global_read_context(&mut *conn, false)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
+        let due = due?;
         if due.is_empty() {
+            db::tenant_context::clear_request_context(&mut *conn)
+                .await
+                .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
             return Ok(());
         }
 
@@ -1394,12 +1431,26 @@ impl Scheduler {
         let mut fired = 0u64;
 
         for schedule in &due {
+            // Each due row carries its organization_id: scope the connection to
+            // that tenant so the org-scoped write policies pass.
+            if let Err(e) =
+                db::tenant_context::set_tenant_context(&mut *conn, schedule.organization_id).await
+            {
+                tracing::error!(
+                    schedule_id = %schedule.id,
+                    organization_id = %schedule.organization_id,
+                    error = %e,
+                    "Failed to set tenant context — leaving schedule due for retry"
+                );
+                continue;
+            }
+
             // Record the fire in execution history (Story 81.2). If this fails,
             // skip the advance so the schedule stays due and retries next tick
             // instead of silently losing the run.
             if let Err(e) = self
                 .report_schedule_repo
-                .record_execution(schedule.id)
+                .record_execution(&mut *conn, schedule.id)
                 .await
             {
                 tracing::error!(
@@ -1421,7 +1472,7 @@ impl Scheduler {
 
             if let Err(e) = self
                 .report_schedule_repo
-                .advance_after_run(schedule.id, next)
+                .advance_after_run(&mut *conn, schedule.id, next)
                 .await
             {
                 tracing::error!(
@@ -1441,8 +1492,14 @@ impl Scheduler {
             );
         }
 
+        // Defensive: reset every RLS-relevant GUC before the connection goes
+        // back to the pool so tenant context cannot bleed onto the next user.
+        db::tenant_context::clear_request_context(&mut *conn)
+            .await
+            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+
         if fired > 0 {
-            let mut metrics = self.metrics.lock().unwrap();
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.report_schedules_fired += fired;
         }
 
@@ -1451,7 +1508,7 @@ impl Scheduler {
 
     /// Helper to increment error count in metrics.
     fn increment_errors(&self) {
-        let mut metrics = self.metrics.lock().unwrap();
+        let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
         metrics.errors += 1;
     }
 }
@@ -1577,6 +1634,40 @@ mod tests {
         assert_eq!(config.payment_reminder_days_before, 7);
         // Grace period defaults to 0: transition to overdue on the due date itself.
         assert_eq!(config.overdue_grace_period_days, 0);
+    }
+
+    #[test]
+    fn test_metrics_lock_recovers_from_poison() {
+        // Regression: the scheduler loop runs indefinitely and locks the
+        // metrics mutex on every tick. A previous `.lock().unwrap()` meant
+        // a single panic while the lock was held would poison it, so every
+        // subsequent tick panicked — silently killing all scheduled work.
+        // The fix locks with `.unwrap_or_else(|e| e.into_inner())`, which
+        // recovers the guarded value instead of propagating the poison.
+        use std::sync::{Arc, Mutex};
+
+        let metrics = Arc::new(Mutex::new(SchedulerMetrics::default()));
+
+        // Poison the mutex: panic while holding the guard.
+        let poisoner = Arc::clone(&metrics);
+        let _ = std::thread::spawn(move || {
+            let mut guard = poisoner.lock().unwrap_or_else(|e| e.into_inner());
+            guard.errors += 1;
+            panic!("intentional panic to poison the metrics mutex");
+        })
+        .join();
+
+        assert!(
+            metrics.is_poisoned(),
+            "mutex should be poisoned after panic"
+        );
+
+        // The recovery idiom must NOT panic and must observe the value
+        // written before the poisoning panic, then allow further mutation.
+        let mut guard = metrics.lock().unwrap_or_else(|e| e.into_inner());
+        assert_eq!(guard.errors, 1, "value written before poison is preserved");
+        guard.errors += 1;
+        assert_eq!(guard.errors, 2, "post-poison mutation still works");
     }
 
     #[test]

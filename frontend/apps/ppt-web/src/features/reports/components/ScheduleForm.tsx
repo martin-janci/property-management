@@ -6,6 +6,7 @@
 
 import type { CreateReportSchedule, ReportFormat, ScheduleFrequency } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BUILTIN_REPORTS } from '../builtinReports';
 
 interface ScheduleFormProps {
@@ -19,10 +20,12 @@ interface ScheduleFormProps {
 // yearly used to be offered here but the backend rejects them with 400
 // INVALID_FREQUENCY (issue #2324, finding 2), so they are removed to keep the
 // form in sync with the contract.
-const FREQUENCIES: { value: ScheduleFrequency; label: string }[] = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
+// Labels are resolved with `t()` at render time (issue #2403) — before this the
+// dialog leaked hardcoded English around the (already localized) report selector.
+const FREQUENCIES: { value: ScheduleFrequency; labelKey: string }[] = [
+  { value: 'daily', labelKey: 'reports.schedule.form.frequencies.daily' },
+  { value: 'weekly', labelKey: 'reports.schedule.form.frequencies.weekly' },
+  { value: 'monthly', labelKey: 'reports.schedule.form.frequencies.monthly' },
 ];
 
 /**
@@ -55,20 +58,20 @@ function deriveCron(
   }
 }
 
-const FORMATS: { value: ReportFormat; label: string }[] = [
-  { value: 'pdf', label: 'PDF' },
-  { value: 'excel', label: 'Excel' },
-  { value: 'csv', label: 'CSV' },
+const FORMATS: { value: ReportFormat; labelKey: string }[] = [
+  { value: 'pdf', labelKey: 'reports.schedule.form.formats.pdf' },
+  { value: 'excel', labelKey: 'reports.schedule.form.formats.excel' },
+  { value: 'csv', labelKey: 'reports.schedule.form.formats.csv' },
 ];
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
+  { value: 0, labelKey: 'reports.schedule.form.daysOfWeek.sunday' },
+  { value: 1, labelKey: 'reports.schedule.form.daysOfWeek.monday' },
+  { value: 2, labelKey: 'reports.schedule.form.daysOfWeek.tuesday' },
+  { value: 3, labelKey: 'reports.schedule.form.daysOfWeek.wednesday' },
+  { value: 4, labelKey: 'reports.schedule.form.daysOfWeek.thursday' },
+  { value: 5, labelKey: 'reports.schedule.form.daysOfWeek.friday' },
+  { value: 6, labelKey: 'reports.schedule.form.daysOfWeek.saturday' },
 ];
 
 interface FormErrors {
@@ -79,6 +82,7 @@ interface FormErrors {
 }
 
 export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: ScheduleFormProps) {
+  const { t } = useTranslation();
   const [reportId, setReportId] = useState(initialData?.report_id || '');
   const [name, setName] = useState(initialData?.name || '');
   const [frequency, setFrequency] = useState<ScheduleFrequency>(initialData?.frequency || 'weekly');
@@ -96,34 +100,36 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     const newErrors: FormErrors = {};
 
     if (!reportId) {
-      newErrors.report_id = 'Please select a report';
+      newErrors.report_id = t('reports.schedule.form.validation.selectReport');
     }
 
     if (!name.trim()) {
-      newErrors.name = 'Schedule name is required';
+      newErrors.name = t('reports.schedule.form.validation.nameRequired');
     }
 
     if (!recipients.trim()) {
-      newErrors.recipients = 'At least one recipient is required';
+      newErrors.recipients = t('reports.schedule.form.validation.recipientsRequired');
     } else {
       const emails = recipients.split(',').map((e) => e.trim());
       const invalidEmails = emails.filter(
         (e) => !e.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
       );
       if (invalidEmails.length > 0) {
-        newErrors.recipients = `Invalid email(s): ${invalidEmails.join(', ')}`;
+        newErrors.recipients = t('reports.schedule.form.validation.invalidEmails', {
+          emails: invalidEmails.join(', '),
+        });
       }
     }
 
     if (!time) {
-      newErrors.time = 'Time is required';
+      newErrors.time = t('reports.schedule.form.validation.timeRequired');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -131,20 +137,28 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     const dow = frequency === 'weekly' ? dayOfWeek : undefined;
     const dom = frequency === 'monthly' ? dayOfMonth : undefined;
 
-    onSubmit({
-      report_id: reportId,
-      name,
-      frequency,
-      day_of_week: dow,
-      day_of_month: dom,
-      time,
-      timezone,
-      format,
-      recipients: recipients.split(',').map((e) => e.trim()),
-      // Cron-canonical from birth (issue #2324, finding 3): the backend prefers
-      // this over the legacy frequency/time fields when computing next_run_at.
-      cron_expression: deriveCron(frequency, time, dayOfWeek, dayOfMonth),
-    });
+    // Await + swallow: the parent's onSubmit rejects on a backend error (so it
+    // can keep this form open) and surfaces the reason via a toast. Firing it
+    // fire-and-forget left that rejection unhandled on every failed create
+    // (issue #2370); awaiting and catching here handles it at the form level.
+    try {
+      await onSubmit({
+        report_id: reportId,
+        name,
+        frequency,
+        day_of_week: dow,
+        day_of_month: dom,
+        time,
+        timezone,
+        format,
+        recipients: recipients.split(',').map((e) => e.trim()),
+        // Cron-canonical from birth (issue #2324, finding 3): the backend prefers
+        // this over the legacy frequency/time fields when computing next_run_at.
+        cron_expression: deriveCron(frequency, time, dayOfWeek, dayOfMonth),
+      });
+    } catch {
+      // Intentionally swallowed — the parent already reported the failure.
+    }
   };
 
   return (
@@ -152,7 +166,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {/* Report Selection */}
       <div>
         <label htmlFor="report" className="block text-sm font-medium text-gray-700">
-          Report *
+          {t('reports.schedule.form.reportLabel')} *
         </label>
         <select
           id="report"
@@ -165,10 +179,10 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
             errors.report_id ? 'border-red-300' : 'border-gray-300'
           }`}
         >
-          <option value="">Select a report</option>
+          <option value="">{t('reports.schedule.form.selectReport')}</option>
           {BUILTIN_REPORTS.map((report) => (
             <option key={report.id} value={report.id}>
-              {report.name}
+              {t(report.labelKey, report.name)}
             </option>
           ))}
         </select>
@@ -178,7 +192,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {/* Schedule Name */}
       <div>
         <label htmlFor="schedule-name" className="block text-sm font-medium text-gray-700">
-          Schedule Name *
+          {t('reports.schedule.form.nameLabel')} *
         </label>
         <input
           type="text"
@@ -191,7 +205,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
             errors.name ? 'border-red-300' : 'border-gray-300'
           }`}
-          placeholder="Weekly Revenue Summary"
+          placeholder={t('reports.schedule.form.namePlaceholder')}
         />
         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
       </div>
@@ -199,7 +213,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {/* Frequency */}
       <div>
         <label htmlFor="frequency" className="block text-sm font-medium text-gray-700">
-          Frequency
+          {t('reports.schedule.form.frequencyLabel')}
         </label>
         <select
           id="frequency"
@@ -209,7 +223,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
         >
           {FREQUENCIES.map((freq) => (
             <option key={freq.value} value={freq.value}>
-              {freq.label}
+              {t(freq.labelKey)}
             </option>
           ))}
         </select>
@@ -219,7 +233,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {frequency === 'weekly' && (
         <div>
           <label htmlFor="day-of-week" className="block text-sm font-medium text-gray-700">
-            Day of Week
+            {t('reports.schedule.form.dayOfWeekLabel')}
           </label>
           <select
             id="day-of-week"
@@ -229,7 +243,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           >
             {DAYS_OF_WEEK.map((day) => (
               <option key={day.value} value={day.value}>
-                {day.label}
+                {t(day.labelKey)}
               </option>
             ))}
           </select>
@@ -239,7 +253,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {frequency === 'monthly' && (
         <div>
           <label htmlFor="day-of-month" className="block text-sm font-medium text-gray-700">
-            Day of Month
+            {t('reports.schedule.form.dayOfMonthLabel')}
           </label>
           <input
             type="number"
@@ -255,10 +269,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
             }}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Enter a day between 1-31. For months with fewer days, the schedule will run on the last
-            day of the month.
-          </p>
+          <p className="mt-1 text-xs text-gray-500">{t('reports.schedule.form.dayOfMonthHint')}</p>
         </div>
       )}
 
@@ -266,7 +277,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="time" className="block text-sm font-medium text-gray-700">
-            Time *
+            {t('reports.schedule.form.timeLabel')} *
           </label>
           <input
             type="time"
@@ -284,7 +295,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
         </div>
         <div>
           <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">
-            Timezone
+            {t('reports.schedule.form.timezoneLabel')}
           </label>
           <select
             id="timezone"
@@ -305,7 +316,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {/* Format */}
       <div>
         <label htmlFor="format" className="block text-sm font-medium text-gray-700">
-          Export Format
+          {t('reports.schedule.form.formatLabel')}
         </label>
         <div className="mt-2 flex gap-4">
           {FORMATS.map((fmt) => (
@@ -318,7 +329,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
                 onChange={() => setFormat(fmt.value)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
               />
-              <span className="text-sm text-gray-700">{fmt.label}</span>
+              <span className="text-sm text-gray-700">{t(fmt.labelKey)}</span>
             </label>
           ))}
         </div>
@@ -327,7 +338,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       {/* Recipients */}
       <div>
         <label htmlFor="recipients" className="block text-sm font-medium text-gray-700">
-          Recipients *
+          {t('reports.schedule.form.recipientsLabel')} *
         </label>
         <textarea
           id="recipients"
@@ -340,9 +351,9 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
             errors.recipients ? 'border-red-300' : 'border-gray-300'
           }`}
-          placeholder="email1@example.com, email2@example.com"
+          placeholder={t('reports.schedule.form.recipientsPlaceholder')}
         />
-        <p className="mt-1 text-xs text-gray-500">Separate multiple emails with commas</p>
+        <p className="mt-1 text-xs text-gray-500">{t('reports.schedule.form.recipientsHint')}</p>
         {errors.recipients && <p className="mt-1 text-sm text-red-600">{errors.recipients}</p>}
       </div>
 
@@ -354,14 +365,14 @@ export function ScheduleForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : 'Save Schedule'}
+          {isSubmitting ? t('reports.schedule.form.saving') : t('reports.schedule.form.save')}
         </button>
       </div>
     </form>

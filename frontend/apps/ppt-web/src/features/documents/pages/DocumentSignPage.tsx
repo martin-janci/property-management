@@ -57,6 +57,45 @@ function isTerminalSignerStatus(status: string): boolean {
   return status === 'signed' || status === 'declined';
 }
 
+/**
+ * sessionStorage key holding the captured signing token.
+ *
+ * We strip `?token=…` from the URL on mount for hygiene, but the token then
+ * lives only in component state — a full page reload (F5, session restore,
+ * back-then-forward) re-requests `/sign` with no token and the signer would hit
+ * "invalid link" even though the link is still valid (GET does not consume the
+ * nonce). Persisting to sessionStorage lets an in-tab reload re-seed the token;
+ * it survives reloads, is cleared when the tab closes, and we clear it
+ * ourselves after a successful submit.
+ */
+const SIGN_TOKEN_STORAGE_KEY = 'signToken';
+
+/** sessionStorage access can throw (private mode / disabled) — degrade gracefully. */
+function readStoredToken(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    return window.sessionStorage.getItem(SIGN_TOKEN_STORAGE_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+function storeToken(value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(SIGN_TOKEN_STORAGE_KEY, value);
+  } catch {
+    /* storage unavailable — fall back to state-only (reload will fail, as before) */
+  }
+}
+function clearStoredToken(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(SIGN_TOKEN_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Card shell so every state (loading / error / form / done) shares one frame. */
 function SignCard({ children }: { children: React.ReactNode }) {
   return (
@@ -77,11 +116,59 @@ function SignCard({ children }: { children: React.ReactNode }) {
 export function DocumentSignPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') ?? undefined;
+
+  // Lift the single-use HMAC signing token OUT of the URL on first mount. The
+  // `?token=…` value is the only credential for this public route, so leaving it
+  // in the address bar is a leak: on a shared/kiosk browser it stays recoverable
+  // from history after the signer walks away, and it rides the `Referer` header
+  // on any outbound navigation. We therefore:
+  //   1. capture it once into component state (survives the URL rewrite),
+  //      seeding from sessionStorage so an in-tab reload still finds it,
+  //   2. strip ONLY the `token` key from the visible URL + history via
+  //      replaceState (no nav), preserving any other query params + fragment, and
+  //   3. hold a page-scoped `<meta name="referrer" content="no-referrer">` so
+  //      the token can never leak via `Referer` while this page is mounted.
+  const [token] = useState<string | undefined>(
+    () => searchParams.get('token') ?? readStoredToken()
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      // Persist before stripping so a full page reload can re-seed the token.
+      storeToken(urlToken);
+      // Strip only the token key — keep other params (locale/lang, tracking id)
+      // and the URL fragment intact instead of discarding the whole query string.
+      params.delete('token');
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        '',
+        window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash
+      );
+    }
+    const meta = document.createElement('meta');
+    meta.name = 'referrer';
+    meta.content = 'no-referrer';
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, []);
 
   const { data: context, isLoading, isError, error: contextError } = useSignContext(token);
 
   const submit = useSubmitSignature(token ?? '');
+
+  // Once the signature is recorded the token is spent — drop the persisted copy
+  // so a later reload doesn't replay a now-consumed nonce into an error state.
+  useEffect(() => {
+    if (submit.isSuccess) {
+      clearStoredToken();
+    }
+  }, [submit.isSuccess]);
 
   const [typedName, setTypedName] = useState('');
   const [nameError, setNameError] = useState<string>();

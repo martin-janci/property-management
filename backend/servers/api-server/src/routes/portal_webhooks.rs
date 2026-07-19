@@ -21,7 +21,9 @@ use axum::{
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::Utc;
 use common::errors::ErrorResponse;
-use db::models::{listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook};
+use db::models::{
+    listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook, PortalWebhookEvent,
+};
 use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
@@ -758,7 +760,7 @@ async fn process_view_webhook(
         )
         .await;
 
-    match classify_webhook_persist(record_result.as_ref().map(|_| ())) {
+    match classify_webhook_persist(record_result.as_ref()) {
         WebhookPersistOutcome::Recorded => {
             // Fresh delivery — advance the syndication view counter exactly once.
             let _ = state
@@ -886,7 +888,7 @@ async fn process_inquiry_webhook(
         )
         .await;
 
-    match classify_webhook_persist(record_result.as_ref().map(|_| ())) {
+    match classify_webhook_persist(record_result.as_ref()) {
         WebhookPersistOutcome::Recorded => {}
         WebhookPersistOutcome::Duplicate => {
             // Already recorded on an earlier delivery — ack idempotently so the
@@ -981,27 +983,28 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
     )
 }
 
-/// Classify the result of persisting a portal webhook event.
+/// Classify the result of persisting a portal webhook event. Shared by both the
+/// inquiry-lead path and the view-analytics path (#2360).
 ///
-/// - `Ok(())` -> [`WebhookPersistOutcome::Recorded`] (apply side effect once)
+/// DEDUP ANCHOR (#2360 + #2358, resolved): `record_webhook_event` now dedups via
+/// `ON CONFLICT (portal, event_type, external_id) DO NOTHING` on the partial
+/// unique index (migration 00219, #2358 — now landed), so a duplicate delivery
+/// surfaces as `Ok(None)` (insert suppressed) rather than a raw unique violation.
+/// We still map an explicit `23505` unique violation to `Duplicate` too, so the
+/// classifier is correct regardless of which mechanism reports the conflict.
+///
+/// - `Ok(Some(_))` -> [`WebhookPersistOutcome::Recorded`] (apply side effect once)
+/// - `Ok(None)` (conflict, insert suppressed) -> [`WebhookPersistOutcome::Duplicate`] (idempotent, skip side effect)
 /// - unique violation -> [`WebhookPersistOutcome::Duplicate`] (idempotent, skip side effect)
 /// - any other error -> [`WebhookPersistOutcome::Retry`] (persistence failed)
 ///
-/// DEDUP ANCHOR DEPENDENCY (#2360 <- #2358): the `Duplicate` branch can only
-/// fire once the partial unique index on
-/// `portal_webhook_events (portal, event_type, external_id)` exists — that index
-/// is created by migration 00218 in the sibling change for #2358. Two mechanisms
-/// surface a duplicate depending on how `record_webhook_event` is written:
-///   * plain `INSERT ... RETURNING *` (current) -> the second delivery raises a
-///     `23505` unique violation, matched by [`is_unique_violation`] here;
-///   * `INSERT ... ON CONFLICT DO NOTHING` (#2358) -> the second delivery is
-///     suppressed and returns `Ok(None)` instead of erroring.
-/// When this branch is rebased onto #2358, the callers must map that `Ok(None)`
-/// to [`WebhookPersistOutcome::Duplicate`] (do not collapse it to `Ok(())`), or
-/// the view counter would inflate again. Both paths are covered by tests below.
-fn classify_webhook_persist(result: Result<(), &sqlx::Error>) -> WebhookPersistOutcome {
+/// Both paths are covered by tests below.
+fn classify_webhook_persist(
+    result: Result<&Option<PortalWebhookEvent>, &sqlx::Error>,
+) -> WebhookPersistOutcome {
     match result {
-        Ok(()) => WebhookPersistOutcome::Recorded,
+        Ok(Some(_)) => WebhookPersistOutcome::Recorded,
+        Ok(None) => WebhookPersistOutcome::Duplicate,
         Err(e) if is_unique_violation(e) => WebhookPersistOutcome::Duplicate,
         Err(_) => WebhookPersistOutcome::Retry,
     }
@@ -1013,7 +1016,7 @@ fn classify_webhook_persist(result: Result<(), &sqlx::Error>) -> WebhookPersistO
 /// must escalate to a retriable `500` rather than a silent `success:false` / 200
 /// ack, so the portal re-delivers the lead instead of dropping it. Extracted as
 /// a pure fn so the contract is unit-testable without a DB/pool (mirroring
-/// `classify_inquiry_persist`).
+/// `classify_webhook_persist`).
 fn inquiry_unmatched_syndication_response(
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
     Err((
@@ -1276,12 +1279,45 @@ mod tests {
         );
     }
 
+    /// A minimal `PortalWebhookEvent` for classifier tests (the classifier only
+    /// inspects `Some` vs `None`, not the field values).
+    fn sample_webhook_event() -> PortalWebhookEvent {
+        PortalWebhookEvent {
+            id: uuid::Uuid::nil(),
+            listing_id: uuid::Uuid::nil(),
+            syndication_id: uuid::Uuid::nil(),
+            portal: "reality_portal".to_string(),
+            event_type: webhook_event_type::INQUIRY.to_string(),
+            external_id: Some("ext-1".to_string()),
+            payload: serde_json::json!({}),
+            processed: false,
+            processed_at: None,
+            created_at: Utc::now(),
+        }
+    }
+
     #[test]
     fn inquiry_persist_success_is_recorded() {
+        let event = Some(sample_webhook_event());
         assert_eq!(
-            classify_webhook_persist(Ok(())),
+            classify_webhook_persist(Ok(&event)),
             WebhookPersistOutcome::Recorded,
-            "a successful write must ack the portal"
+            "a successful write (a row was inserted) must ack the portal"
+        );
+    }
+
+    #[test]
+    fn inquiry_persist_conflict_none_is_idempotent_duplicate() {
+        // `record_webhook_event`'s `ON CONFLICT ... DO NOTHING` (migration 00219,
+        // #2358) suppresses the insert on a redelivery and returns `Ok(None)`.
+        // This is the dedup net that makes #2353's retry escalation safe: it
+        // must classify as an idempotent `Duplicate` (ack 200), never as a
+        // fresh `Recorded` row (which would double-count) nor a `Retry` loop.
+        let none: Option<PortalWebhookEvent> = None;
+        assert_eq!(
+            classify_webhook_persist(Ok(&none)),
+            WebhookPersistOutcome::Duplicate,
+            "a suppressed insert (ON CONFLICT DO NOTHING) is a duplicate delivery, not a new lead"
         );
     }
 
@@ -1369,8 +1405,9 @@ mod tests {
 
     #[test]
     fn view_fresh_delivery_classifies_as_recorded_and_counts_once() {
+        let event = Some(sample_webhook_event());
         assert_eq!(
-            classify_webhook_persist(Ok(())),
+            classify_webhook_persist(Ok(&event)),
             WebhookPersistOutcome::Recorded,
             "only a fresh insert may advance the syndication view counter (#2360)"
         );

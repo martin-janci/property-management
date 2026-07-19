@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-16",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable backlog starved: only churn-hotspot / max-round-retry rows left). No CHURN_FILES passed to this standalone slice, so selection fell to oldest-unreviewed. state.review_cursor oldest entry was mobile-native-kmp (2026-07-12); backlog has 0 open code-review-finding items for the segment (no saturation-skip). Kotlin (primary) + Tester (secondary) experts ran static-only over mobile-native/. Findings capped at 3; one Tester finding (ssoservice-no-test) was DROPPED as an exact re-emit of the 2026-07-07 id (SsoService still has no test, but re-emitting an unchanged id is noise), leaving 2 FRESH ids verified against signals/*.json + backlog.json + management/.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 — CreateListingScreen's onSubmit is hardwired to Result.failure(NotImplementedError(\"Wire to listing API\")); no createListing repository method exists (grep of shared/ finds only createInquiry/createSavedSearch/createMobileToken).",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:120 — the fully-built realtor form folds that failure into the 'publish failed' error banner, so MyListings -> Create -> submit can never succeed in production; the feature is silently broken on Android. Fix: add createListing() to ListingRepository + ApiClient and wire the nav callback to it."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listingrepo-partial",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt — of six public network methods only getListingDetail is tested (ListingDetailRepositoryTest). searchListings, getFeaturedListings, getRecentListings, getSearchSuggestions, and getListingsNearby (which builds lat/lng/radius_km/limit query params and maps non-2xx responses to ListingException) have no coverage of their success/failure mapping or query-parameter construction."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

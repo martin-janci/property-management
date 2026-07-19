@@ -115,6 +115,27 @@ export function bytesToMb(bytes: number): string {
 }
 
 /**
+ * Re-encode a single image to JPEG, unconditionally.
+ *
+ * Unlike {@link compressImagesIfNeeded} (which only re-encodes a selection that
+ * blows past the 10 MB limit), this always runs a format-normalizing pass. It
+ * exists for the document-upload photo picker, where an iOS HEIC/HEIF capture —
+ * the default iPhone camera format — is absent from the backend allow-list and
+ * would be hard-rejected client-side with no upload path at all. Transcoding to
+ * JPEG (the same `SaveFormat.JPEG` recipe `ReportFaultScreen` already uses via
+ * {@link compressImagesIfNeeded}) turns that iOS dead-end into a successful
+ * upload (GitHub #2400).
+ *
+ * Resolves to the transcoded file's uri. Rejects if the manipulator pass fails,
+ * so the caller can keep the original reject path as the backstop rather than
+ * mislabelling an unconvertible file as JPEG.
+ */
+export async function transcodeToJpeg(uri: string): Promise<string> {
+  const result = await manipulateAsync(uri, [], { format: SaveFormat.JPEG });
+  return result.uri;
+}
+
+/**
  * Compress `uris` only when their combined size exceeds the limit.
  *
  * When under the limit the originals are returned untouched (`compressed:

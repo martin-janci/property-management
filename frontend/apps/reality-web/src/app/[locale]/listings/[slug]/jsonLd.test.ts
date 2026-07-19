@@ -1,10 +1,14 @@
 /**
  * buildListingJsonLd Tests
  *
- * Regression guard for the SSR crash where a malformed/partial 200 body
- * (truthy but not a real ListingDetail) made the listing page throw while
- * dereferencing nested fields (listing.photos.map, listing.address.street).
- * buildListingJsonLd must return null instead of throwing.
+ * `buildListingJsonLd` consumes a guaranteed-shape `ListingDetail` (normalized
+ * by `parseListingDetail` at the `getListing` boundary), so it no longer
+ * defends against malformed / wrong-typed bodies — that crash-class coverage
+ * lives in `listingSchema.test.ts`. These tests assert it emits correct
+ * structured data and omits genuinely optional fields when absent.
+ *
+ * `isRenderableListing` (still defined here, consumed by the normalizer) keeps
+ * its own required-field describe block below.
  */
 
 import type { ListingDetail } from '@ppt/reality-api-client';
@@ -69,67 +73,22 @@ describe('buildListingJsonLd', () => {
     expect((jsonLd.floorSize as Record<string, unknown>).value).toBe(75);
   });
 
-  it('returns null when the body is null/undefined (not-found / network failure)', () => {
-    expect(buildListingJsonLd(null)).toBeNull();
-    expect(buildListingJsonLd(undefined)).toBeNull();
-  });
-
-  // The core regression: malformed but truthy 200 bodies must NOT throw.
-  it('returns null on an empty object body without throwing', () => {
-    expect(() => buildListingJsonLd({})).not.toThrow();
-    expect(buildListingJsonLd({})).toBeNull();
-  });
-
-  it('returns null when address is missing (would have thrown on .street)', () => {
-    const malformed = { title: 'Has title but no address', slug: 'x' };
-    expect(() => buildListingJsonLd(malformed)).not.toThrow();
-    expect(buildListingJsonLd(malformed)).toBeNull();
-  });
-
-  it('returns null when title is missing', () => {
-    const malformed = { slug: 'x', address: { city: 'Bratislava', country: 'SK' } };
-    expect(buildListingJsonLd(malformed)).toBeNull();
-  });
-
-  it('returns null on non-object bodies (string / number / array)', () => {
-    expect(buildListingJsonLd('oops')).toBeNull();
-    expect(buildListingJsonLd(42)).toBeNull();
-    expect(buildListingJsonLd([])).toBeNull();
-  });
-
-  it('builds JSON-LD without an image field when photos are missing (would have thrown on .map)', () => {
-    const noPhotos = { ...validListing, photos: undefined as unknown as ListingDetail['photos'] };
-    expect(() => buildListingJsonLd(noPhotos)).not.toThrow();
+  it('omits the image field for an empty photos array', () => {
+    const noPhotos: ListingDetail = { ...validListing, photos: [] };
     const jsonLd = buildListingJsonLd(noPhotos) as Record<string, unknown>;
-    expect(jsonLd).not.toBeNull();
     expect(jsonLd.name).toBe('Beautiful Apartment');
     expect('image' in jsonLd).toBe(false);
   });
 
-  // #2341: a partial 200 can carry wrong-typed (not just missing) collection
-  // fields. buildListingJsonLd must tolerate a non-array `photos` (skip image)
-  // and a non-object `features` (ignored — never emitted) without throwing.
-  it('tolerates wrong-typed photos/features (non-array photos, string features)', () => {
-    const malformed = {
-      ...validListing,
-      photos: {} as unknown as ListingDetail['photos'],
-      features: 'x' as unknown as ListingDetail['features'],
-    };
-    expect(() => buildListingJsonLd(malformed)).not.toThrow();
-    const jsonLd = buildListingJsonLd(malformed) as Record<string, unknown>;
-    expect(jsonLd).not.toBeNull();
-    expect(jsonLd.name).toBe('Beautiful Apartment');
-    expect('image' in jsonLd).toBe(false);
-  });
-
-  it('omits optional price/rooms/area blocks when missing', () => {
+  it('omits optional price/rooms/area blocks when those fields are absent', () => {
     const minimal = {
-      title: 'Minimal',
-      slug: 'minimal',
-      address: { city: 'Bratislava', country: 'SK' },
-    };
+      ...validListing,
+      price: undefined,
+      rooms: undefined,
+      area: undefined,
+    } as unknown as ListingDetail;
     const jsonLd = buildListingJsonLd(minimal) as Record<string, unknown>;
-    expect(jsonLd).not.toBeNull();
+    expect((jsonLd.address as Record<string, unknown>).addressLocality).toBe('Bratislava');
     expect('offers' in jsonLd).toBe(false);
     expect('numberOfRooms' in jsonLd).toBe(false);
     expect('floorSize' in jsonLd).toBe(false);

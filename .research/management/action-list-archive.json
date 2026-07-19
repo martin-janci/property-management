@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-16T00:21:13Z",
+  "archived_at": "2026-07-18T04:17:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1136,6 +1136,27 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs-retry2",
+      "action": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) [retry 2/2 of failed churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-16T10:09:46Z (retry_of=churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T08:22:31Z) | gc1-reconcile 2026-07-16T22:12:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T10:09:46Z",
+      "retry_of": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-16T22:12:34Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
       "action": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
       "owner_role": "pm-frontend",
@@ -1301,6 +1322,38 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-api-core-scheduler-mutex-poison",
+      "action": "Scheduler metrics std::sync::Mutex<SchedulerMetrics> is locked with .lock().unwrap() on every tick of the indefinitely-running loop (backend/servers/api-server/src/services/scheduler.rs:168,314,377,497,549,832,858,878,1033,1163,1256,1323,1502,1511). A single panic while holding the lock poisons it and every subsequent tick panics, silently killing all scheduled work (announcements, votes, reminders, overdue transitions, report schedules). Replace with lock().unwrap_or_else(|e| e.into_inner()).",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1d-dev-review 2026-07-17T18:17:03Z (api-core rotating-expert-review) | gc1-reconcile 2026-07-18T02:19:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T18:17:03Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2420,
+        "merged_at": "2026-07-18T02:14:45Z",
+        "at": "2026-07-18T02:19:32Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-scheduler-rls-leak",
+      "action": "Scheduler global-read RLS GUC leaks to pooled connection when set_global_read_context(conn,false) itself errors in fire_due_report_schedules (backend/servers/api-server/src/services/scheduler.rs:1416): the ? returns the connection with the session-level global-read GUC still set, so a later borrower without its own tenant context can read cross-org rows via the SELECT-only global-read policy leg (migration 00218). Clear the flag before the ? (mirror workflow_executor.rs guard.release() pattern) and add a regression test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1d-dev-review 2026-07-17T18:17:03Z (api-core rotating-expert-review)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T18:17:03Z",
+      "gc1_closed": "assignment failed (sandbox) 2026-07-18T04:16:30Z"
     },
     {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
@@ -1711,6 +1764,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-09T08:04:26Z"
+      }
+    },
+    {
+      "id": "dx-stalled-review-pr-988-retry2",
+      "action": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision [retry 2/2 of failed dx-stalled-review-pr-988]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=dx-stalled-review-pr-988 reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z) | gc1-reconcile 2026-07-16T20:22:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "dx-stalled-review-pr-988",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2396,
+        "merged_at": "2026-07-16T20:16:49Z",
+        "at": "2026-07-16T20:22:46Z"
       }
     },
     {
@@ -3164,6 +3238,24 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-09T08:04:26Z"
+      }
+    },
+    {
+      "id": "gap-83-2-rate-availability-push-integration-deferred-retry1",
+      "action": "rate/availability push integration deferred (83-2-booking-integration Booking.com OAuth and Sync) [retry 1/2 of failed gap-83-2-rate-availability-push-integration-deferred]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=gap-83-2-rate-availability-push-integration-deferred reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "gap-83-2-rate-availability-push-integration-deferred",
+      "retry_round": 1,
+      "reconciled": {
+        "at": "2026-07-16T14:10:18Z",
+        "reason": "ghost-retry: coverage story 83-2-booking-integration=done; rate/availability push already shipped under PRs #607/#1421 (no code change); retry-remint coverage-join gap missed it"
       }
     },
     {
@@ -6820,6 +6912,629 @@
       }
     },
     {
+      "id": "gh-issue-2357",
+      "action": "Follow-up: role gate on GET /ai/chat/escalated shipped without a deny-path regression test (PR #2356) (Closes #2357)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2357) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2357,
+        "url": "https://github.com/martin-janci/property-management/issues/2357",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2374,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2358",
+      "action": "Follow-up: inquiry retry-on-unmatched shipped ahead of its dedup net — retries insert duplicate leads + unbounded 5xx loop (PR #2353) (Closes #2358)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2358) | gc1-reconcile 2026-07-16T14:02:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2358,
+        "url": "https://github.com/martin-janci/property-management/issues/2358",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2376,
+        "merged_at": "2026-07-16T12:19:01Z",
+        "at": "2026-07-16T14:02:45Z"
+      }
+    },
+    {
+      "id": "gh-issue-2359",
+      "action": "Follow-up: /agencies/me resolves left/inactive memberships + no backend test (PR #2355) (Closes #2359)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2359) | gc1-reconcile 2026-07-16T08:24:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2359,
+        "url": "https://github.com/martin-janci/property-management/issues/2359",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2375,
+        "merged_at": "2026-07-16T08:21:23Z",
+        "at": "2026-07-16T08:24:24Z"
+      }
+    },
+    {
+      "id": "gh-issue-2361",
+      "action": "Follow-up: login cache eviction is incomplete vs. logout — prior org&#39;s tenant-scoped data survives into the new session (PR #2352) (Closes #2361)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2361) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2361,
+        "url": "https://github.com/martin-janci/property-management/issues/2361",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2372,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2362",
+      "action": "Follow-up: consolidate reality-web listing-detail shape validation into one parseListingDetail() normalizer (PR #2351) (Closes #2362)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2362) | gc1-reconcile 2026-07-16T08:05:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2362,
+        "url": "https://github.com/martin-janci/property-management/issues/2362",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2373,
+        "merged_at": "2026-07-16T06:17:25Z",
+        "at": "2026-07-16T08:05:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2363",
+      "action": "Follow-up: signer adopts an e-signature without ever seeing the document; signing token left in the URL/history (PR #2347) (Closes #2363)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2363)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2363,
+        "url": "https://github.com/martin-janci/property-management/issues/2363",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2364",
+      "action": "Follow-up: guard against the Decimal-as-string decode trap recurring on sibling reality-server surfaces (PR #2350) (Closes #2364)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2364)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2364,
+        "url": "https://github.com/martin-janci/property-management/issues/2364",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2365",
+      "action": "Follow-up: AC-5 price-alert toggle shipped with no executing test + non-persisting OFF state (PR #2348) (Closes #2365)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2365) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2365,
+        "url": "https://github.com/martin-janci/property-management/issues/2365",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2382,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2366",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2366) | gc1-reconcile 2026-07-16T08:24:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-16T08:24:24Z"
+      }
+    },
+    {
+      "id": "gh-issue-2367",
+      "action": "Follow-up: validate every synthesized candidate id against IdSchema in scanCandidates (PR #2344) (Closes #2367)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2367) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2367,
+        "url": "https://github.com/martin-janci/property-management/issues/2367",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2380,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2368",
+      "action": "Follow-up: mobile upload allow-list duplicates backend constants with no drift guard; photo picker bypasses the MIME guard (PR #2346) (Closes #2368)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2368) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2368,
+        "url": "https://github.com/martin-janci/property-management/issues/2368",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2383,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2369",
+      "action": "Follow-up: optimistic trigger toggle desyncs the category &#34;X of Y enabled&#34; badge (PR #2337) (Closes #2369)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T04:03:56Z (#2369) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:03:56Z",
+      "issue_ref": {
+        "number": 2369,
+        "url": "https://github.com/martin-janci/property-management/issues/2369",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2381,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2370",
+      "action": "Follow-up: create-schedule UI leaks untranslated English into 5 non-English locales (report selector labels + backend error toast) (PR #2338) (Closes #2370)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T04:03:56Z (#2370) | gc1-reconcile 2026-07-16T10:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:03:56Z",
+      "issue_ref": {
+        "number": 2370,
+        "url": "https://github.com/martin-janci/property-management/issues/2370",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2384,
+        "merged_at": "2026-07-16T10:21:00Z",
+        "at": "2026-07-16T10:25:12Z"
+      }
+    },
+    {
+      "id": "gh-issue-2399",
+      "action": "Follow-up: mobile login/logout clears only the in-memory query cache — AsyncStorage-persisted caches survive cross-tenant + app restart (PR #2372) (Closes #2399)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2399)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2399,
+        "url": "https://github.com/martin-janci/property-management/issues/2399",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2400",
+      "action": "Follow-up: DocumentUploadScreen photo path hard-rejects iOS HEIC instead of transcoding to JPEG like the faults flow (PR #2383) (Closes #2400)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2400)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2400,
+        "url": "https://github.com/martin-janci/property-management/issues/2400",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2401",
+      "action": "Follow-up: favorites optimistic toggle + test built on a client shape that diverges from the reality-server DTO — update no-ops in prod (PR #2382) (Closes #2401)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2401)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2401,
+        "url": "https://github.com/martin-janci/property-management/issues/2401",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2402",
+      "action": "Follow-up: /sign token still transported via query-string (access logs) + page reload breaks the signer flow after URL strip (PR #2378) (Closes #2402)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2402)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2402,
+        "url": "https://github.com/martin-janci/property-management/issues/2402",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2403",
+      "action": "Follow-up: create-schedule form still renders hardcoded English around the now-localized report selector (PR #2384) (Closes #2403)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2403)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2403,
+        "url": "https://github.com/martin-janci/property-management/issues/2403",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2404",
+      "action": "Follow-up: sitemap determinism has no CI/test guard against src/data <-> sitemap.json drift (PR #2397) (Closes #2404)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2404)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2404,
+        "url": "https://github.com/martin-janci/property-management/issues/2404",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2405",
+      "action": "Follow-up: dead `packages` i18n namespace still orphaned in 5 non-en locales after PR #2395 removed it from en only (Closes #2405)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2405)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2405,
+        "url": "https://github.com/martin-janci/property-management/issues/2405",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-17T02:08:22Z",
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2406",
+      "action": "Follow-up: screen-map init write boundary doesn't validate ids against IdSchema, so grouping rename/merge ids still slip through (PR #2380) (Closes #2406)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T00:04:14Z (#2406)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T00:04:14Z",
+      "issue_ref": {
+        "number": 2406,
+        "url": "https://github.com/martin-janci/property-management/issues/2406",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-17T02:08:22Z",
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2413",
+      "action": "Cross-tenant IDOR: government_portal connection get/update/delete/test are unscoped (owner-bypassed RLS + missing org filter) (Closes #2413)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-17T06:06:27Z (#2413)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-17T06:06:27Z",
+      "issue_ref": {
+        "number": 2413,
+        "url": "https://github.com/martin-janci/property-management/issues/2413",
+        "labels": [
+          "security",
+          "follow-up"
+        ]
+      },
+      "last_updated": "2026-07-17T06:09:39Z",
+      "reconciled": {
+        "by": "dispatcher-in-progress-reconcile",
+        "at": "2026-07-17T16:04:56Z",
+        "evidence": "exact task_id merged in assignments-archive"
+      }
+    },
+    {
+      "id": "gh-issue-2417",
+      "action": "Follow-up: scheduler-RLS doc + test comments cite wrong migration number (00216 → should be 00218) (PR #2340) (Closes #2417)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-18T00:04:58Z (#2417) | gc1-reconcile 2026-07-18T02:19:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-18T00:04:58Z",
+      "issue_ref": {
+        "number": 2417,
+        "url": "https://github.com/martin-janci/property-management/issues/2417",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2419,
+        "merged_at": "2026-07-18T02:14:26Z",
+        "at": "2026-07-18T02:19:32Z"
+      }
+    },
+    {
+      "id": "gh-issue-2418",
+      "action": "Follow-up: cross-org /rag/migrate RLS test passes vacuously (runs as superuser) — switch to a NOBYPASSRLS role to actually guard the 00216 super-admin policy (PR #2335) (Closes #2418)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-18T00:04:58Z (#2418)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-18T00:04:58Z",
+      "issue_ref": {
+        "number": 2418,
+        "url": "https://github.com/martin-janci/property-management/issues/2418",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": "merged PR #2421 on dev 2026-07-18T04:16:30Z"
+    },
+    {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
       "owner_role": "pm-backend",
@@ -7530,6 +8245,54 @@
       "note": "dedup: same stem already in review as PR #2274; closed by manual dispatcher run 2026-07-13"
     },
     {
+      "id": "refactor-churn-hotspots-en-json-2026-07-16",
+      "action": "Churn hotspot: frontend/apps/ppt-web/messages/en.json — frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-16T04:04:09Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-16T20:22:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:04:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2395,
+        "merged_at": "2026-07-16T20:14:07Z",
+        "at": "2026-07-16T20:22:46Z"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspots-sitemap-json-2026-07-16",
+      "action": "Churn hotspot: frontend/packages/sitemap/src/json/sitemap.json — frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-16T04:04:09Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-16T20:22:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T04:04:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2397,
+        "merged_at": "2026-07-16T20:19:42Z",
+        "at": "2026-07-16T20:22:46Z"
+      }
+    },
+    {
       "id": "refactor-mediation-duplicated-spinner",
       "action": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner) (files: frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx) [src: PR #555, code-review 2026-05-27]",
       "owner_role": "pm-frontend",
@@ -7903,6 +8666,24 @@
       "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
       "retry_round": 1,
       "ghost_closed": "dispatcher 2026-07-08: ghost retry of already-shipped work — exact task_id already merged in assignments-archive (issue #1151 stale-buffer); closed to stop finish-first no-op loop (issue #2153 ghost-retry blind spot)"
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update [retry 2/2 of failed test-gap-screen-map-drift-pr-1100-ppt]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-16T08:06:56Z (retry_of=test-gap-screen-map-drift-pr-1100-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-07-09T06:26:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T08:06:56Z",
+      "retry_of": "test-gap-screen-map-drift-pr-1100-ppt",
+      "retry_round": 2,
+      "dispatcher_closed": {
+        "at": "2026-07-16T12:13:26Z",
+        "reason": "reconciled-done ghost: RECONCILED-DONE marker + stem terminal in archive; retry row evades gc1/dev-reconcile (stem-only archive match). Closed to avoid no-op implementer spawn."
+      }
     },
     {
       "id": "test-gap-screen-map-drift-pr-839-ppt",

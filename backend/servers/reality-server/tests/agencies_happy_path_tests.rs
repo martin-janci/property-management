@@ -160,3 +160,44 @@ async fn update_agency_returns_2xx(pool: PgPool) {
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
+
+// ── get_my_agency (GET /me) — Issue #2359 ─────────────────────────────────────
+//
+// Pins the exact contract `useMyAgency()` depends on: 200 for an
+// authenticated caller with an (active) agency, 404 for an authenticated
+// caller with no agency, 401 for an unauthenticated caller. The 404 case is
+// what lets the frontend show the "Create Agency" onboarding CTA instead of a
+// generic retry/error screen.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_my_agency_with_agency_returns_200(pool: PgPool) {
+    let user = seed_user(&pool, "me-200").await;
+    let agency_id = seed_agency(&pool, "me-200").await;
+    seed_membership(&pool, agency_id, user).await;
+    let token = mint_token(user);
+    let app = agencies_router(pool);
+    let status = send(&app, Method::GET, "/api/v1/agencies/me", Some(&token)).await;
+    assert!(
+        status.is_success(),
+        "expected 2xx for a member, got {status}"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_my_agency_without_agency_returns_404(pool: PgPool) {
+    let user = seed_user(&pool, "me-404").await;
+    let token = mint_token(user);
+    let app = agencies_router(pool);
+    let status = send(&app, Method::GET, "/api/v1/agencies/me", Some(&token)).await;
+    assert_eq!(
+        status, 404,
+        "a caller with no agency must get 404 (drives the onboarding CTA), got {status}"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_my_agency_unauthenticated_returns_401(pool: PgPool) {
+    let app = agencies_router(pool);
+    let status = send(&app, Method::GET, "/api/v1/agencies/me", None).await;
+    assert_eq!(status, 401, "GET /me must require auth, got {status}");
+}

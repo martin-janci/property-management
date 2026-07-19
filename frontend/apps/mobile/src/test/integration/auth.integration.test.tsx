@@ -18,12 +18,36 @@
  * payload contract.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
+
+// AuthProvider now purges the AsyncStorage-backed tenant caches on
+// login/logout (issue #2399), so swap the shared jest stub for a real
+// in-memory store we can seed and assert against.
+jest.mock('@react-native-async-storage/async-storage', () => {
+  const store = new Map<string, string>();
+  return {
+    __store: store,
+    getItem: jest.fn(async (k: string) => store.get(k) ?? null),
+    setItem: jest.fn(async (k: string, v: string) => {
+      store.set(k, v);
+    }),
+    removeItem: jest.fn(async (k: string) => {
+      store.delete(k);
+    }),
+    getAllKeys: jest.fn(async () => Array.from(store.keys())),
+    removeMany: jest.fn(async (keys: string[]) => {
+      for (const k of keys) store.delete(k);
+    }),
+  };
+});
+
+const asyncStore = (AsyncStorage as unknown as { __store: Map<string, string> }).__store;
 
 const API_BASE = 'http://test.local';
 
@@ -89,6 +113,7 @@ function mockFetchOnce(body: unknown, status = 200) {
 describe('AuthContext integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    asyncStore.clear();
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     globalThis.fetch = jest.fn() as jest.Mock;
     primeSecureStore();
@@ -195,6 +220,33 @@ describe('AuthContext integration', () => {
       expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
     });
 
+    it('clears non-tenant-scoped cached data on login so no prior org data survives (issue #2361)', async () => {
+      primeSecureStore();
+      // Mobile read-query keys are NOT tenant-scoped, so a login that follows a
+      // session which wasn't explicitly logged out must wipe the whole cache —
+      // otherwise the previous org's list/detail data is served under identical
+      // keys until a background refetch (or forever, if offline).
+      queryClient.setQueryData(['auth', 'tenant-id'], 'org-stale');
+      queryClient.setQueryData(['documents', 'list'], [{ id: 'doc-A' }]);
+      queryClient.setQueryData(['buildings', 'list'], [{ id: 'b-A' }]);
+      mockFetchOnce({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+        user: sampleUser,
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('jane@example.com', 'pw');
+      });
+
+      expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
+      expect(queryClient.getQueryData(['documents', 'list'])).toBeUndefined();
+      expect(queryClient.getQueryData(['buildings', 'list'])).toBeUndefined();
+    });
+
     it('throws on bad credentials and leaves the state unauthenticated', async () => {
       primeSecureStore();
       mockFetchOnce({ message: 'Invalid credentials' }, 401);
@@ -262,6 +314,74 @@ describe('AuthContext integration', () => {
 
       expect(queryClient.getQueryData(['auth', 'tenant-id'])).toBeUndefined();
       expect(queryClient.getQueryData(['buildings', 'org-old'])).toBeUndefined();
+    });
+  });
+
+  describe('cross-user session reset (issue #2399)', () => {
+    // Seed the persisted, tenant-scoped AsyncStorage namespaces the way a live
+    // session would (offline responses/queue + home-screen widget data).
+    function seedPersistedTenantCaches(tag: string) {
+      asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: `f-${tag}` }]));
+      asyncStore.set('ppt_offline_queue', JSON.stringify([{ id: `q-${tag}` }]));
+      asyncStore.set('ppt_last_sync', '111');
+      asyncStore.set('@ppt/widget_data', JSON.stringify({ w1: { data: {} } }));
+      asyncStore.set('@ppt/widget_configs', JSON.stringify([{ id: 'w1', buildingId: `b-${tag}` }]));
+    }
+
+    const persistedKeys = [
+      'ppt_cache_faults_list',
+      'ppt_offline_queue',
+      'ppt_last_sync',
+      '@ppt/widget_data',
+      '@ppt/widget_configs',
+    ];
+
+    it('purges in-memory AND persisted caches across login A -> logout -> login B', async () => {
+      const store = primeSecureStore();
+
+      // --- login as user A ---
+      mockFetchOnce({ access_token: 'a-access', refresh_token: 'a-refresh', user: sampleUser });
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      await act(async () => {
+        await result.current.login('jane@example.com', 'pw');
+      });
+
+      // Populate A's in-memory + persisted caches during the session.
+      queryClient.setQueryData(['buildings', 'list'], [{ id: 'b-A' }]);
+      seedPersistedTenantCaches('A');
+
+      // --- logout ---
+      await act(async () => {
+        await result.current.logout();
+      });
+
+      // Both cache layers are wiped by logout.
+      expect(queryClient.getQueryData(['buildings', 'list'])).toBeUndefined();
+      for (const key of persistedKeys) {
+        expect(asyncStore.has(key)).toBe(false);
+      }
+
+      // Belt-and-braces: even if data leaks back in before the next login (or
+      // the previous session was never explicitly logged out), login must purge.
+      queryClient.setQueryData(['documents', 'list'], [{ id: 'doc-A' }]);
+      seedPersistedTenantCaches('A2');
+
+      // --- login as a DIFFERENT user B ---
+      const userB = { ...sampleUser, id: 'u-2', email: 'bob@example.com' };
+      mockFetchOnce({ access_token: 'b-access', refresh_token: 'b-refresh', user: userB });
+      await act(async () => {
+        await result.current.login('bob@example.com', 'pw');
+      });
+
+      // B sees no trace of A in either layer.
+      expect(result.current.user).toEqual(userB);
+      expect(queryClient.getQueryData(['documents', 'list'])).toBeUndefined();
+      for (const key of persistedKeys) {
+        expect(asyncStore.has(key)).toBe(false);
+      }
+      // B's own freshly-issued token is persisted.
+      expect(store.get('ppt_access_token')).toBe('b-access');
     });
   });
 
@@ -429,6 +549,29 @@ describe('AuthContext integration', () => {
       expect(ok).toBe(true);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.user).toEqual(sampleUser);
+    });
+
+    it('authenticateWithBiometric deliberately preserves persisted caches (issue #2399)', async () => {
+      primeSecureStore({
+        ppt_access_token: 'stored',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+      // A persisted cache entry belonging to the SAME stored user.
+      asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: 'f-1' }]));
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await act(async () => {
+        await result.current.authenticateWithBiometric();
+      });
+
+      // Biometric unlock restores the same session, so — unlike login/logout —
+      // it must NOT purge the cache (resetLocalData is intentionally not called).
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(asyncStore.has('ppt_cache_faults_list')).toBe(true);
     });
 
     it('authenticateWithBiometric is a no-op when biometric is not enabled', async () => {
