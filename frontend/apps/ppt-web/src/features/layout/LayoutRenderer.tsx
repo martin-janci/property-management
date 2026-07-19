@@ -27,7 +27,7 @@ export interface LayoutRendererProps {
 export function LayoutRenderer({ layout, registry }: LayoutRendererProps) {
   return (
     <div className="layout-sections">
-      {layout.sections.map((section, i) => {
+      {layout.sections.map((section) => {
         const def = registry[section.type];
         if (!def) {
           if (!warnedTypes.has(section.type)) {
@@ -37,11 +37,11 @@ export function LayoutRenderer({ layout, registry }: LayoutRendererProps) {
           return null;
         }
         if (section.presentation === 'placeholder') {
-          return <Placeholder key={`${section.type}-${i}`} />;
+          return <Placeholder key={section.type} />;
         }
         const Component = def.component;
         return (
-          <ErrorBoundary key={`${section.type}-${i}`} fallback={<Placeholder />}>
+          <ErrorBoundary key={section.type} fallback={<Placeholder />}>
             <Component mode={section.mode} props={section.props} />
           </ErrorBoundary>
         );

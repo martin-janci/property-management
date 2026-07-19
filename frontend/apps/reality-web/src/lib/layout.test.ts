@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { listingRegistry, registryManifest } from '../components/listings/sections/registry';
 import { DEFAULT_LISTING_DETAIL_LAYOUT, getResolvedLayout } from './layout';
 import layoutManifest from './layout-manifest.json';
 
@@ -51,9 +52,18 @@ describe('getResolvedLayout', () => {
 });
 
 describe('layout-manifest consistency', () => {
-  it('manifest component keys match default-layout section types (sorted)', () => {
-    const manifestKeys = Object.keys(layoutManifest.components).sort();
-    const defaultKeys = DEFAULT_LISTING_DETAIL_LAYOUT.sections.map((s) => s.type).sort();
-    expect(manifestKeys).toEqual(defaultKeys);
+  it('manifest matches registry exactly', () => {
+    const manifest = registryManifest(listingRegistry);
+    expect(manifest).toEqual(registryManifest(listingRegistry));
+    expect(layoutManifest).toEqual(manifest);
+  });
+
+  it('every DEFAULT_LISTING_DETAIL_LAYOUT section type exists in the registry', () => {
+    for (const section of DEFAULT_LISTING_DETAIL_LAYOUT.sections) {
+      expect(
+        listingRegistry,
+        `section type "${section.type}" from DEFAULT_LISTING_DETAIL_LAYOUT is missing from listingRegistry`
+      ).toHaveProperty(section.type);
+    }
   });
 });

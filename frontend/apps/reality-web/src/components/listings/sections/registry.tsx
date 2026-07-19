@@ -33,3 +33,25 @@ export const listingRegistry: ListingRegistry = {
   'resources.v1': { component: Resources, required: false, supportedModes: [] },
   'agent-contact.v1': { component: AgentContact, required: false, supportedModes: [] },
 };
+
+/** The registry manifest for upload to PUT /platform-admin/layout/manifests.
+ *  Kept in layout-manifest.json; layout.test.ts asserts it mirrors the registry. */
+export function registryManifest(registry: ListingRegistry) {
+  return {
+    platform: 'web',
+    components: Object.fromEntries(
+      Object.entries(registry).map(([type, def]) => {
+        const supportedModes = def.supportedModes ?? [];
+        return [
+          type,
+          {
+            required: def.required,
+            ...(supportedModes.length > 0
+              ? { supported_modes: supportedModes, default_mode: supportedModes[0] }
+              : {}),
+          },
+        ];
+      })
+    ),
+  };
+}

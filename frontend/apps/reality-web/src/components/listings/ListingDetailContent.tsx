@@ -12,7 +12,7 @@ import { Footer, Header } from '@/components/ui';
 import type { ResolvedScreen } from '@/lib/layout';
 import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import { ContactForm } from './ContactForm';
-import { LayoutSections } from './LayoutSections';
+import { LayoutSections, Placeholder } from './LayoutSections';
 import { listingRegistry } from './sections/registry';
 
 interface ListingDetailContentProps {
@@ -123,7 +123,7 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
             {/* Sidebar */}
             <div className="sidebar">
               {agentContactSection?.presentation === 'placeholder' ? (
-                <div role="status" />
+                <Placeholder />
               ) : agentContactSection?.presentation === 'visible' && listing.agent ? (
                 <ContactForm listingId={listing.id} agent={listing.agent} />
               ) : null}

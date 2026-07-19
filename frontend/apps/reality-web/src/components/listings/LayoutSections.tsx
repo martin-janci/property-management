@@ -16,7 +16,7 @@ const warnedTypes = new Set<string>();
 // Placeholder
 // ---------------------------------------------------------------------------
 
-function Placeholder() {
+export function Placeholder() {
   const t = useTranslations('layout');
   return (
     <div className="layout-placeholder" role="status">
@@ -96,7 +96,7 @@ export interface LayoutSectionsProps {
 export function LayoutSections({ layout, listing, registry }: LayoutSectionsProps) {
   return (
     <div className="layout-sections">
-      {layout.sections.map((section, i) => {
+      {layout.sections.map((section) => {
         const def = registry[section.type];
         if (!def) {
           if (!warnedTypes.has(section.type)) {
@@ -106,11 +106,11 @@ export function LayoutSections({ layout, listing, registry }: LayoutSectionsProp
           return null;
         }
         if (section.presentation === 'placeholder') {
-          return <Placeholder key={`${section.type}-${i}`} />;
+          return <Placeholder key={section.type} />;
         }
         const Component = def.component;
         return (
-          <SectionBoundary key={`${section.type}-${i}`}>
+          <SectionBoundary key={section.type}>
             <Component listing={listing} mode={section.mode} props={section.props} />
           </SectionBoundary>
         );
