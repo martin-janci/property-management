@@ -1,0 +1,38 @@
+{
+  "segment": "api-core",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "generated_by": "dispatcher-tier1d",
+  "generated_at": "2026-07-18T04:16:30Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-idempotency-lock-cancel-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:93 — session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) between acquire and unlock the lock is never released and sqlx returns the connection to the pool still holding it, blocking all future requests with the same lock_id (tenant_scope+method+path+key). No RAII guard / no unlock-on-drop.",
+        "Reachable in production: mounted at backend/servers/api-server/src/routes/faults.rs:398 via from_fn(create_fault_idempotency) -> api_core::middleware::handle_idempotent_request (faults.rs:433)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-authz-require-perm-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:180 — require_permission() resolves the caller role with .unwrap_or(TenantRole::Guest): a request with no TenantRole in extensions is treated as authenticated Guest instead of being rejected. With permissions::AUTHENTICATED = min_level(1) (Guest.level()=10 satisfies it; asserted at authorization.rs:264), require_authenticated would admit a request that set no role upstream — a fail-open default for the any-authenticated gate.",
+        "Latent only: grep of backend/servers for api_core authorization::require_* / from_fn wiring returns no hits — the exported middleware is currently unused (route modules define their own same-named local helpers), so it is a dead-but-public footgun rather than an active bypass."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

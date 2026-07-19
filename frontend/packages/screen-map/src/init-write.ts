@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { CandidateScreen } from './scan.js';
+import { ScreenMapFrontmatterSchema } from './schema.js';
 import type { Platform, Product, ScreenMapFrontmatter } from './types.js';
 import { writeScreenMapString } from './write.js';
 
@@ -43,9 +44,26 @@ export async function bulkWriteScreenMaps(
         continue;
       }
     }
+    const frontmatter = buildFrontmatter(concept);
+    // Final serialization boundary: ids can be mutated after `scanCandidates`
+    // by interactive grouping (rename/merge in grouping.ts) with no re-check,
+    // so the scan-side IdSchema guard is not the sole line of defense. Validate
+    // the full frontmatter here — this covers the id kebab-case regex AND the
+    // product-prefix `superRefine` — so a grouping-supplied id like
+    // `ppt/Foo Bar`, `ppt/UPPER`, or a product-mismatched `reality/x` can never
+    // write a screen-map that immediately fails `screens validate` (see #2406,
+    // follow-up to #2367/#2380).
+    const parsed = ScreenMapFrontmatterSchema.safeParse(frontmatter);
+    if (!parsed.success) {
+      throw new Error(
+        `invalid screen-map frontmatter for "${concept.id}": ${parsed.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join('; ')}`
+      );
+    }
     const screen = {
       filePath: file,
-      frontmatter: buildFrontmatter(concept),
+      frontmatter,
       body: buildBody(concept),
     };
     const serialized = writeScreenMapString(screen);

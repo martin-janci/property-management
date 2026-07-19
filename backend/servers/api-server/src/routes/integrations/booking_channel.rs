@@ -414,7 +414,37 @@ pub async fn push_booking_listing(
     let avail_pushed = outcome.availability_pushed as i32;
     let rates_pushed = outcome.rates_pushed as i32;
 
-    match classify_listing_push(&outcome) {
+    let result = classify_listing_push(&outcome);
+
+    // Persist the push outcome on the connection so the platform-status
+    // dashboard reflects the latest push and surfaces failures. This was the
+    // piece deferred from the gap-83-2 push story — the pull flow in
+    // `install.rs` already stamps `last_sync_at`, but the push flow did not.
+    // Best-effort (`let _ =`): a bookkeeping-write hiccup must not turn a push
+    // that already reached Booking.com into an error response (mirrors the
+    // `let _ =` pattern in the pull flow).
+    match sync_persistence(&result) {
+        SyncPersistence::Synced => {
+            let _ = rental_repo
+                .update_connection_last_sync(connection.id, chrono::Utc::now())
+                .await;
+        }
+        SyncPersistence::SyncedWithError(message) => {
+            let _ = rental_repo
+                .update_connection_last_sync(connection.id, chrono::Utc::now())
+                .await;
+            let _ = rental_repo
+                .mark_booking_sync_error(connection.id, &message)
+                .await;
+        }
+        SyncPersistence::Errored(message) => {
+            let _ = rental_repo
+                .mark_booking_sync_error(connection.id, &message)
+                .await;
+        }
+    }
+
+    match result {
         ListingPushResult::Success => {
             tracing::info!(
                 org_id = %path.org_id,
@@ -554,6 +584,35 @@ fn classify_listing_push(outcome: &PushOutcome) -> ListingPushResult {
         ListingPushResult::TotalFailure(message)
     } else {
         ListingPushResult::Partial(message)
+    }
+}
+
+/// What to persist on the Booking.com connection after a listing push.
+///
+/// The gap-83-2 push flow deferred the connection-state bookkeeping that the
+/// reservation *pull* flow (`install.rs`) already does — stamping
+/// `last_sync_at` on success and surfacing a `sync_error` on failure so the
+/// platform-status dashboard (`statistics::MAX(last_sync_at)` / `sync_error`)
+/// reflects the latest push. Deriving the persistence action from the
+/// [`ListingPushResult`] in a pure function keeps that decision unit-testable
+/// without a live Postgres (the DB write itself is best-effort in the handler).
+#[derive(Debug, PartialEq, Eq)]
+enum SyncPersistence {
+    /// Fully applied — stamp `last_sync_at`, clear any prior error.
+    Synced,
+    /// Half-applied — stamp `last_sync_at` *and* record the partial error so
+    /// the half-synced channel is visible to operators.
+    SyncedWithError(String),
+    /// Nothing applied — record the error, leave `last_sync_at` untouched.
+    Errored(String),
+}
+
+/// Map a [`ListingPushResult`] to the connection-state write it implies.
+fn sync_persistence(result: &ListingPushResult) -> SyncPersistence {
+    match result {
+        ListingPushResult::Success => SyncPersistence::Synced,
+        ListingPushResult::Partial(msg) => SyncPersistence::SyncedWithError(msg.clone()),
+        ListingPushResult::TotalFailure(msg) => SyncPersistence::Errored(msg.clone()),
     }
 }
 
@@ -809,6 +868,38 @@ mod tests {
                 assert!(msg.contains("availability:") && msg.contains("rates:"));
             }
             other => panic!("expected TotalFailure, got {other:?}"),
+        }
+    }
+
+    // ---- sync_persistence (ListingPushResult → connection-state write) ----
+
+    #[test]
+    fn sync_persistence_records_last_sync_on_success() {
+        assert_eq!(
+            sync_persistence(&ListingPushResult::Success),
+            SyncPersistence::Synced
+        );
+    }
+
+    #[test]
+    fn sync_persistence_records_last_sync_and_error_on_partial() {
+        // A half-synced channel must stamp last_sync_at AND surface the error,
+        // so operators can see something applied but reconciliation is needed.
+        let result = ListingPushResult::Partial("rates: rate plan not found".to_string());
+        match sync_persistence(&result) {
+            SyncPersistence::SyncedWithError(msg) => assert!(msg.contains("rates:")),
+            other => panic!("expected SyncedWithError, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn sync_persistence_records_only_error_on_total_failure() {
+        // Nothing applied → record the error but leave last_sync_at untouched
+        // (Errored variant), so the dashboard does not falsely report a sync.
+        let result = ListingPushResult::TotalFailure("availability: auth rejected".to_string());
+        match sync_persistence(&result) {
+            SyncPersistence::Errored(msg) => assert!(msg.contains("availability:")),
+            other => panic!("expected Errored, got {other:?}"),
         }
     }
 

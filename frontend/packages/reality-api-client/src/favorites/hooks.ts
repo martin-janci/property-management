@@ -9,12 +9,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getApiBase } from '../config';
+import type { ListingSummary } from '../listings/types';
 import type {
   CreateSavedSearchRequest,
   FavoriteAlertsResponse,
   FavoriteAlertsWireResponse,
+  FavoriteListing,
+  FavoritesWireResponse,
   MarkAllFavoriteAlertsReadResponse,
   PaginatedFavorites,
+  PortalFavoriteWire,
   SavedSearch,
   UpdateFavoriteRequest,
   UpdateSavedSearchRequest,
@@ -22,19 +26,72 @@ import type {
 
 // Favorites Hooks
 
+/**
+ * Map a wire favorite (reality-server `PortalFavoriteWithListing` — snake_case,
+ * flattened listing fields, Decimal prices as strings) into the client
+ * {@link FavoriteListing} view-model the UI consumes. The list DTO carries only
+ * a subset of `ListingSummary`; fields it doesn't provide (`slug`, `area`, …)
+ * are defaulted so the card can render from what the favorites endpoint gives.
+ */
+function mapWireFavorite(w: PortalFavoriteWire): FavoriteListing {
+  const listing: ListingSummary = {
+    id: w.listing_id,
+    title: w.title,
+    // The favorites list DTO carries no slug; fall back to the listing id so
+    // the card link is at least a stable identifier rather than `undefined`.
+    slug: w.listing_id,
+    propertyType: w.property_type as ListingSummary['propertyType'],
+    transactionType: w.transaction_type as ListingSummary['transactionType'],
+    status: w.status as ListingSummary['status'],
+    price: toNumeric(w.current_price) ?? 0,
+    currency: w.currency,
+    // Not carried by the favorites list DTO.
+    area: 0,
+    address: { city: w.city, country: '' },
+    primaryPhoto: w.photo_url
+      ? {
+          id: w.listing_id,
+          url: w.photo_url,
+          thumbnailUrl: w.photo_url,
+          isPrimary: true,
+          order: 0,
+        }
+      : undefined,
+    isFeatured: false,
+    createdAt: w.created_at,
+    updatedAt: w.created_at,
+  };
+
+  return {
+    id: w.id,
+    listingId: w.listing_id,
+    listing,
+    addedAt: w.created_at,
+    price_alert_enabled: w.price_alert_enabled,
+  };
+}
+
 export function useFavorites(page = 1, pageSize = 20) {
   return useQuery({
     queryKey: ['favorites', page, pageSize],
     queryFn: async (): Promise<PaginatedFavorites> => {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pageSize', String(pageSize));
-
-      const response = await fetch(`${getApiBase()}/api/v1/favorites?${params}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorites');
-      return response.json();
+
+      // reality-server answers with the unpaginated `{ favorites: [...] }`
+      // envelope (`FavoritesResponse`), each row snake_case with flattened
+      // listing fields — NOT a `{ data: [{ listingId, listing }] }` shape.
+      // Normalize to the client view-model, then paginate client-side.
+      const wire: FavoritesWireResponse = await response.json();
+      const all = (wire.favorites ?? []).map(mapWireFavorite);
+      const total = all.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const start = (page - 1) * pageSize;
+      const data = all.slice(start, start + pageSize);
+
+      return { data, total, page, pageSize, totalPages };
     },
   });
 }
@@ -106,6 +163,12 @@ export function useRemoveFavorite() {
  *
  * Consumes `PATCH /api/v1/favorites/{listingId}`. The body is partial-merged
  * server-side, so passing only `price_alert_enabled` leaves notes untouched.
+ *
+ * Optimistically flips `price_alert_enabled` on the matching row in every
+ * cached `['favorites', …]` page so the toggle reflects the user's intent
+ * immediately, rolling the snapshot back if the PATCH fails. This removes the
+ * dependency on the page's `?? true` fallback masking a transiently-absent
+ * field after refetch (see #2365).
  */
 export function useUpdateFavorite() {
   const queryClient = useQueryClient();
@@ -126,7 +189,41 @@ export function useUpdateFavorite() {
       });
       if (!response.ok) throw new Error('Failed to update favorite');
     },
-    onSuccess: () => {
+    onMutate: async ({ listingId, data }) => {
+      // Only the price-alert toggle has a visible cached surface to update
+      // optimistically; a notes-only edit has nothing to reflect here.
+      if (data.price_alert_enabled == null) return { previous: [] };
+
+      await queryClient.cancelQueries({ queryKey: ['favorites'] });
+
+      // Snapshot every matching `['favorites', page, pageSize]` cache entry so
+      // we can roll back on error.
+      const previous = queryClient.getQueriesData<PaginatedFavorites>({
+        queryKey: ['favorites'],
+      });
+
+      queryClient.setQueriesData<PaginatedFavorites>({ queryKey: ['favorites'] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.map((favorite) =>
+            favorite.listingId === listingId
+              ? { ...favorite, price_alert_enabled: data.price_alert_enabled ?? undefined }
+              : favorite
+          ),
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      // Restore the pre-mutation snapshot so a failed toggle doesn't leave the
+      // checkbox showing an un-persisted state.
+      for (const [queryKey, data] of context?.previous ?? []) {
+        queryClient.setQueryData(queryKey, data);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
       queryClient.invalidateQueries({ queryKey: FAVORITE_ALERTS_KEY });
     },

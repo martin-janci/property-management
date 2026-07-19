@@ -1,9 +1,84 @@
 {
-  "generated": "2026-07-16T00:33:04Z",
+  "generated": "2026-07-18T16:08:31Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-18T16:08:31Z",
+      "prs_scanned": 3,
+      "clean": [
+        2421,
+        2420,
+        2419
+      ],
+      "with_issues": []
+    },
+    {
+      "run_at": "2026-07-17T22:12:33Z",
+      "prs_scanned": 5,
+      "clean": [
+        2339,
+        2336,
+        2334
+      ],
+      "with_issues": [
+        {
+          "pr": 2340,
+          "issue": 2417,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
+        },
+        {
+          "pr": 2335,
+          "issue": 2418,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "cross-org /rag/migrate RLS test runs as #[sqlx::test] superuser -> passes vacuously w.r.t. the 00216 super-admin policy; adopt #2340's NOBYPASSRLS role-switch to make it a real regression guard"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-07-17T16:12:50Z",
+      "prs_scanned": 11,
+      "clean": [
+        2416,
+        2415,
+        2414,
+        2412,
+        2411,
+        2410,
+        2409,
+        2408,
+        2407,
+        2372,
+        2371
+      ],
+      "with_issues": []
+    },
+    {
+      "run_at": "2026-07-17T02:16:08Z",
+      "prs_scanned": 15,
+      "clean": [
+        2398,
+        2397,
+        2396,
+        2395,
+        2384,
+        2383,
+        2382,
+        2381,
+        2380,
+        2379,
+        2378,
+        2376,
+        2375,
+        2374,
+        2373
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-07-16T00:33:04Z",
       "prs_scanned": 15,

@@ -26,6 +26,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
 import {
@@ -35,7 +36,7 @@ import {
   uploadDocumentMultipart,
 } from './DocumentUploadScreen';
 
-// ─── Mocks ──────────────────────────────────────────────────────────────────
+// ─── Mocks ────────────────────────────────────────────────
 
 const BASE_URL = 'https://api.test';
 jest.mock('../../config/api', () => ({
@@ -52,8 +53,19 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(),
 }));
 
+// The screen re-encodes HEIC/HEIF captures to JPEG via `transcodeToJpeg`
+// (`src/utils/imageCompression.ts`), which calls `manipulateAsync`. Mock the
+// native manipulator so the transcode branch is exercised without a runtime.
+const mockManipulateAsync = jest.fn();
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: (...args: unknown[]) => mockManipulateAsync(...args),
+  SaveFormat: { JPEG: 'jpeg', PNG: 'png', WEBP: 'webp' },
+}));
+
 const mockGetItemAsync = SecureStore.getItemAsync as jest.Mock;
 const mockGetDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
+const mockRequestMediaPerms = ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock;
+const mockLaunchImageLibrary = ImagePicker.launchImageLibraryAsync as jest.Mock;
 
 /** Build an unsigned JWT (`header.base64url(payload).sig`) for tenant decoding. */
 function makeJwt(payload: Record<string, unknown>): string {
@@ -69,7 +81,7 @@ beforeEach(() => {
   mockGetItemAsync.mockResolvedValue(null);
 });
 
-// ─── getFileIcon ────────────────────────────────────────────────────────────
+// ─── getFileIcon ───────────────────────────────────────────
 
 describe('getFileIcon', () => {
   it.each([
@@ -92,7 +104,7 @@ describe('getFileIcon', () => {
   });
 });
 
-// ─── uploadDocumentMultipart ────────────────────────────────────────────────
+// ─── uploadDocumentMultipart ───────────────────────────────────
 
 describe('uploadDocumentMultipart', () => {
   const file = {
@@ -184,7 +196,7 @@ describe('uploadDocumentMultipart', () => {
   });
 });
 
-// ─── validate() via the render tree ─────────────────────────────────────────
+// ─── validate() via the render tree ───────────────────────────────
 
 describe('DocumentUploadScreen validate()', () => {
   let alertSpy: jest.SpyInstance;
@@ -354,5 +366,155 @@ describe('DocumentUploadScreen validate()', () => {
     resolveFetch({ ok: true, json: async () => ({ id: 'doc-1', message: 'ok' }) });
     await waitFor(() => expect(screen.queryByText('documents.upload.uploading')).toBeNull());
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── pickPhoto() MIME resolution (GitHub #2368, #2400) ────────────────────
+
+describe('DocumentUploadScreen pickPhoto()', () => {
+  let alertSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'doc-1', message: 'ok' }),
+    }) as unknown as typeof fetch;
+    mockGetItemAsync.mockResolvedValue(makeJwt({ tenant_id: 'org-1' }));
+    mockRequestMediaPerms.mockResolvedValue({ status: 'granted' });
+    mockManipulateAsync.mockReset();
+    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    alertSpy.mockRestore();
+  });
+
+  /** Pick a photo through the image picker and wait for its preview card. */
+  async function pickPhoto(
+    asset: { uri: string; mimeType?: string; fileName?: string; fileSize?: number },
+    expectedName: string
+  ) {
+    mockLaunchImageLibrary.mockResolvedValue({ canceled: false, assets: [asset] });
+    fireEvent.press(screen.getByText('documents.upload.pickPhoto'));
+    await waitFor(() => expect(screen.getByText(expectedName)).toBeTruthy());
+  }
+
+  it('transcodes an iOS HEIC capture to JPEG and uploads it instead of rejecting (GitHub #2400)', async () => {
+    // An iOS capture the picker types as image/heic — the default iPhone camera
+    // format, absent from the backend allow-list. Rather than a client-side
+    // dead-end, the screen re-encodes it to JPEG (as ReportFaultScreen does) and
+    // the upload proceeds under the transcoded .jpg name / MIME.
+    mockManipulateAsync.mockResolvedValue({ uri: 'file:///cache/IMG_0001.jpg' });
+
+    render(<DocumentUploadScreen />);
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_0001.HEIC', mimeType: 'image/heic', fileName: 'IMG_0001.HEIC' },
+      'IMG_0001.jpg'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    // Transcode ran once (format-only JPEG pass) and the guard did NOT reject.
+    expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
+    const [uri, actions, options] = mockManipulateAsync.mock.calls[0];
+    expect(uri).toBe('file:///DCIM/IMG_0001.HEIC');
+    expect(actions).toEqual([]);
+    expect(options).toEqual({ format: 'jpeg' });
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    const [, fetchOptions] = (globalThis.fetch as jest.Mock).mock.calls[0];
+    // The transcoded JPEG (not the original HEIC) is what gets streamed.
+    expect(fetchOptions.body).toBeInstanceOf(FormData);
+  });
+
+  it('transcodes a HEIF capture detected only by its .heif extension (no picker MIME)', async () => {
+    mockManipulateAsync.mockResolvedValue({ uri: 'file:///cache/IMG_9.jpg' });
+
+    render(<DocumentUploadScreen />);
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_9.HEIF', fileName: 'IMG_9.HEIF', fileSize: 3000 },
+      'IMG_9.jpg'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+  });
+
+  it('falls back to the reject path when the HEIC transcode fails (no mislabelled upload)', async () => {
+    // If the manipulator pass throws, we must NOT upload the file mislabelled as
+    // JPEG — the original HEIC stays and validate() rejects it as before.
+    mockManipulateAsync.mockRejectedValue(new Error('decode failed'));
+
+    render(<DocumentUploadScreen />);
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_0002.HEIC', mimeType: 'image/heic', fileName: 'IMG_0002.HEIC' },
+      'IMG_0002.HEIC'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('leaves a genuinely non-image type on the reject path (no transcode attempted)', async () => {
+    // A picked asset the picker types as something the allow-list rejects but
+    // that isn't HEIC/HEIF must not be run through the JPEG transcode — it stays
+    // rejected client-side.
+    render(<DocumentUploadScreen />);
+    await pickPhoto(
+      {
+        uri: 'file:///DCIM/clip.gifx',
+        mimeType: 'application/octet-stream',
+        fileName: 'clip.gifx',
+      },
+      'clip.gifx'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    expect(mockManipulateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('prefers the picker-reported filename + MIME for an allowed photo and uploads it', async () => {
+    render(<DocumentUploadScreen />);
+
+    await pickPhoto(
+      {
+        uri: 'file:///DCIM/vacation.jpg',
+        mimeType: 'image/jpeg',
+        fileName: 'vacation.jpg',
+        fileSize: 4096,
+      },
+      'vacation.jpg'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
+  });
+
+  it('falls back to a lower-cased extension when the picker reports no MIME (.PNG accepted)', async () => {
+    render(<DocumentUploadScreen />);
+
+    // No mimeType and an upper-cased extension: the old `=== 'png'` check
+    // mislabelled this image/jpeg; lower-casing resolves it to image/png, which
+    // is in the allow-list, so the upload proceeds.
+    await pickPhoto(
+      { uri: 'file:///DCIM/IMG_1234.PNG', fileName: 'IMG_1234.PNG', fileSize: 2048 },
+      'IMG_1234.PNG'
+    );
+    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
   });
 });

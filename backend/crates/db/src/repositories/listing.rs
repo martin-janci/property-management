@@ -944,6 +944,18 @@ impl ListingRepository {
     }
 
     /// Record a portal webhook event.
+    ///
+    /// Idempotent on `(portal, event_type, external_id)` when `external_id` is
+    /// present (the dedup net from migration 00219, #2358): a redelivery of an
+    /// already-recorded event hits the partial unique index and the
+    /// `ON CONFLICT ... DO NOTHING` clause suppresses the insert.
+    ///
+    /// Returns:
+    /// - `Ok(Some(event))` — a new row was inserted.
+    /// - `Ok(None)` — the event already existed (duplicate delivery); no row
+    ///   was written. Callers on the lead-bearing inquiry path treat this as an
+    ///   idempotent success so retries of an already-recorded lead don't loop.
+    /// - `Err(_)` — a genuine write failure; the caller must not ack.
     pub async fn record_webhook_event(
         &self,
         listing_id: Uuid,
@@ -952,12 +964,14 @@ impl ListingRepository {
         event_type: &str,
         external_id: Option<&str>,
         payload: serde_json::Value,
-    ) -> Result<PortalWebhookEvent, SqlxError> {
+    ) -> Result<Option<PortalWebhookEvent>, SqlxError> {
         let event = sqlx::query_as::<_, PortalWebhookEvent>(
             r#"
             INSERT INTO portal_webhook_events
                 (listing_id, syndication_id, portal, event_type, external_id, payload)
             VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (portal, event_type, external_id) WHERE external_id IS NOT NULL
+            DO NOTHING
             RETURNING *
             "#,
         )
@@ -967,7 +981,7 @@ impl ListingRepository {
         .bind(event_type)
         .bind(external_id)
         .bind(payload)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(event)

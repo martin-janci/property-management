@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-10a",
-  "selected_at": "2026-07-16T04:05:23Z",
+  "epic_prefix": "gh-issue-2360",
+  "selected_at": "2026-07-16T18:05:23Z",
   "last_action": "keep",
   "reason": "current target still has claimable work",
   "stats_at_selection": {

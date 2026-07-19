@@ -47,15 +47,21 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Get a specific portal connection.
+    /// Get a specific portal connection scoped to its owning organization.
+    ///
+    /// Tenant scoping is enforced at the query level (`organization_id = $2`) so
+    /// that a connection `id` belonging to another org is treated as
+    /// non-existent rather than leaking its credentials (cross-tenant IDOR, #2413).
     pub async fn get_connection(
         &self,
         id: Uuid,
+        organization_id: Uuid,
     ) -> Result<Option<GovernmentPortalConnection>, SqlxError> {
         sqlx::query_as::<_, GovernmentPortalConnection>(
-            "SELECT * FROM government_portal_connections WHERE id = $1",
+            "SELECT * FROM government_portal_connections WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
+        .bind(organization_id)
         .fetch_optional(&self.pool)
         .await
     }
@@ -93,11 +99,16 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Update a portal connection.
+    /// Update a portal connection scoped to its owning organization.
+    ///
+    /// Returns `Ok(None)` when no connection with `id` exists **for the given
+    /// organization**, so a cross-org `id` cannot overwrite another tenant's
+    /// credentials (cross-tenant IDOR, #2413).
     #[allow(clippy::too_many_arguments)]
     pub async fn update_connection(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         portal_name: Option<&str>,
         api_endpoint: Option<&str>,
         portal_username: Option<&str>,
@@ -105,23 +116,24 @@ impl GovernmentPortalRepository {
         is_active: Option<bool>,
         auto_submit: Option<bool>,
         test_mode: Option<bool>,
-    ) -> Result<GovernmentPortalConnection, SqlxError> {
+    ) -> Result<Option<GovernmentPortalConnection>, SqlxError> {
         sqlx::query_as::<_, GovernmentPortalConnection>(
             r#"
             UPDATE government_portal_connections SET
-                portal_name = COALESCE($2, portal_name),
-                api_endpoint = COALESCE($3, api_endpoint),
-                portal_username = COALESCE($4, portal_username),
-                oauth_client_id = COALESCE($5, oauth_client_id),
-                is_active = COALESCE($6, is_active),
-                auto_submit = COALESCE($7, auto_submit),
-                test_mode = COALESCE($8, test_mode),
+                portal_name = COALESCE($3, portal_name),
+                api_endpoint = COALESCE($4, api_endpoint),
+                portal_username = COALESCE($5, portal_username),
+                oauth_client_id = COALESCE($6, oauth_client_id),
+                is_active = COALESCE($7, is_active),
+                auto_submit = COALESCE($8, auto_submit),
+                test_mode = COALESCE($9, test_mode),
                 updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .bind(portal_name)
         .bind(api_endpoint)
         .bind(portal_username)
@@ -129,47 +141,72 @@ impl GovernmentPortalRepository {
         .bind(is_active)
         .bind(auto_submit)
         .bind(test_mode)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Delete a portal connection.
-    pub async fn delete_connection(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM government_portal_connections WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a portal connection scoped to its owning organization.
+    ///
+    /// Returns `false` when no connection with `id` exists for the given
+    /// organization (cross-tenant IDOR guard, #2413).
+    pub async fn delete_connection(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "DELETE FROM government_portal_connections WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Test connection to a portal (updates last_connection_test).
-    pub async fn record_connection_test(&self, id: Uuid, success: bool) -> Result<(), SqlxError> {
-        sqlx::query(
+    ///
+    /// Scoped to the owning organization; returns `false` when no matching
+    /// connection exists for `organization_id`, so a cross-org `id` cannot be
+    /// probed/mutated (cross-tenant IDOR guard, #2413).
+    pub async fn record_connection_test(
+        &self,
+        id: Uuid,
+        success: bool,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
             r#"
             UPDATE government_portal_connections
             SET last_connection_test = now()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .execute(&self.pool)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(false);
+        }
 
         if success {
             sqlx::query(
                 r#"
                 UPDATE government_portal_connections
                 SET last_successful_submission = now()
-                WHERE id = $1
+                WHERE id = $1 AND organization_id = $2
                 "#,
             )
             .bind(id)
+            .bind(organization_id)
             .execute(&self.pool)
             .await?;
         }
 
-        Ok(())
+        Ok(true)
     }
 
     // ========================================================================

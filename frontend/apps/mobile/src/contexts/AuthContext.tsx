@@ -5,6 +5,7 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { resetLocalData } from '../services/resetLocalData';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
@@ -149,6 +150,12 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         // follows a session which wasn't explicitly logged out, TanStack Query
         // would serve user A's data to user B until a background refetch (or
         // never, if offline). Clear the whole cache to mirror logout().
+        //
+        // queryClient.clear() only wipes the in-memory cache; the AsyncStorage
+        // caches (offline queue/responses, home-screen widget data) outlive the
+        // process, so purge those first or a prior org's data survives the
+        // login (issue #2399, follow-up to #2361).
+        await resetLocalData();
         queryClient.clear();
 
         setState((prev) => ({
@@ -179,6 +186,12 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       // its consumers kept serving the previous org's tenant id until an app
       // restart — producing persistent cross-tenant 403s / wrong cache keys.
       // Clearing everything also ensures no other org's data survives logout.
+      //
+      // Purge the AsyncStorage-backed caches too (offline queue/responses,
+      // widget data) — they persist across restarts, so clearing only the
+      // in-memory query cache would leave a prior org's data (and a prior
+      // user's queued writes) behind (issue #2399, follow-up to #2361).
+      await resetLocalData();
       queryClient.clear();
 
       setState((prev) => ({
@@ -275,6 +288,11 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       });
 
       if (result.success) {
+        // Biometric unlock restores the SAME stored user's session, so unlike
+        // login()/logout() it deliberately does NOT call resetLocalData() /
+        // queryClient.clear() — the existing cache still belongs to this user
+        // and re-fetching it on every unlock would be wasteful and drop
+        // offline data (issue #2399).
         // Check if we have stored credentials
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         const userJson = await SecureStore.getItemAsync(USER_KEY);

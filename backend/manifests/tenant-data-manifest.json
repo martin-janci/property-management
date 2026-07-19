@@ -12,7 +12,8 @@
     "email_verification_tokens",
     "refresh_tokens",
     "password_reset_tokens",
-    "login_attempts"
+    "login_attempts",
+    "portal_webhook_events"
   ],
   "tables": [
     { "table": "agency_branding", "kind": "own_org", "org_column": "organization_id" },

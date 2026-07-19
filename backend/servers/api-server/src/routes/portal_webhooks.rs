@@ -21,7 +21,9 @@ use axum::{
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::Utc;
 use common::errors::ErrorResponse;
-use db::models::{listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook};
+use db::models::{
+    listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook, PortalWebhookEvent,
+};
 use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
@@ -855,7 +857,7 @@ async fn process_inquiry_webhook(
         )
         .await;
 
-    match classify_inquiry_persist(record_result.as_ref().map(|_| ())) {
+    match classify_inquiry_persist(record_result.as_ref()) {
         InquiryPersistOutcome::Recorded => {}
         InquiryPersistOutcome::Duplicate => {
             // Already recorded on an earlier delivery — ack idempotently so the
@@ -942,12 +944,21 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
 
 /// Classify the result of persisting an inbound inquiry lead.
 ///
-/// - `Ok(())` -> [`InquiryPersistOutcome::Recorded`] (ack 200)
+/// `record_webhook_event` now dedups via `ON CONFLICT ... DO NOTHING` on the
+/// partial unique index (migration 00219, #2358), so a duplicate delivery
+/// surfaces as `Ok(None)` (insert suppressed) rather than a raw unique
+/// violation. Both are treated as an idempotent duplicate.
+///
+/// - `Ok(Some(_))` -> [`InquiryPersistOutcome::Recorded`] (ack 200)
+/// - `Ok(None)` (conflict, insert suppressed) -> [`InquiryPersistOutcome::Duplicate`] (idempotent ack 200)
 /// - unique violation -> [`InquiryPersistOutcome::Duplicate`] (idempotent ack 200)
 /// - any other error -> [`InquiryPersistOutcome::Retry`] (return 500, portal retries)
-fn classify_inquiry_persist(result: Result<(), &sqlx::Error>) -> InquiryPersistOutcome {
+fn classify_inquiry_persist(
+    result: Result<&Option<PortalWebhookEvent>, &sqlx::Error>,
+) -> InquiryPersistOutcome {
     match result {
-        Ok(()) => InquiryPersistOutcome::Recorded,
+        Ok(Some(_)) => InquiryPersistOutcome::Recorded,
+        Ok(None) => InquiryPersistOutcome::Duplicate,
         Err(e) if is_unique_violation(e) => InquiryPersistOutcome::Duplicate,
         Err(_) => InquiryPersistOutcome::Retry,
     }
@@ -1222,12 +1233,45 @@ mod tests {
         );
     }
 
+    /// A minimal `PortalWebhookEvent` for classifier tests (the classifier only
+    /// inspects `Some` vs `None`, not the field values).
+    fn sample_webhook_event() -> PortalWebhookEvent {
+        PortalWebhookEvent {
+            id: uuid::Uuid::nil(),
+            listing_id: uuid::Uuid::nil(),
+            syndication_id: uuid::Uuid::nil(),
+            portal: "reality_portal".to_string(),
+            event_type: webhook_event_type::INQUIRY.to_string(),
+            external_id: Some("ext-1".to_string()),
+            payload: serde_json::json!({}),
+            processed: false,
+            processed_at: None,
+            created_at: Utc::now(),
+        }
+    }
+
     #[test]
     fn inquiry_persist_success_is_recorded() {
+        let event = Some(sample_webhook_event());
         assert_eq!(
-            classify_inquiry_persist(Ok(())),
+            classify_inquiry_persist(Ok(&event)),
             InquiryPersistOutcome::Recorded,
-            "a successful write must ack the portal"
+            "a successful write (a row was inserted) must ack the portal"
+        );
+    }
+
+    #[test]
+    fn inquiry_persist_conflict_none_is_idempotent_duplicate() {
+        // `record_webhook_event`'s `ON CONFLICT ... DO NOTHING` (migration 00219,
+        // #2358) suppresses the insert on a redelivery and returns `Ok(None)`.
+        // This is the dedup net that makes #2353's retry escalation safe: it
+        // must classify as an idempotent `Duplicate` (ack 200), never as a
+        // fresh `Recorded` row (which would double-count) nor a `Retry` loop.
+        let none: Option<PortalWebhookEvent> = None;
+        assert_eq!(
+            classify_inquiry_persist(Ok(&none)),
+            InquiryPersistOutcome::Duplicate,
+            "a suppressed insert (ON CONFLICT DO NOTHING) is a duplicate delivery, not a new lead"
         );
     }
 

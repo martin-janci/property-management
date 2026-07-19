@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-17",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=0 < floor=36; coverage 47/49, backlog drained, Tier1b/1c avail=0, Tier2 planner 401-misconfig). No fresh CHURN_FILES handed to this slice -> fell through to oldest-unreviewed via state.review_cursor. Oldest tied at 2026-07-13 across api-core / reality-server / ppt-web-ui; earlier runs today already took api-core + reality-web tier1d slices, so this slice took ppt-web-ui. Frontend + completeness experts, static-only. Generator subagent returned before assembling its signals file; the dispatcher orchestrator assembled the experts' returned findings into this file (single-writer).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "review_scope_notes": "Static analysis of ppt-web feature pages. 4 findings surfaced across frontend + completeness experts; capped to top-3 by severity per skill (combined max 3). Dropped: code-review-ppt-web-ui-sessions-cast (SessionsPage.tsx:84 unsafe `as unknown as SessionRow[]` double-cast defeating type checking; score 1, latent type-safety hygiene, lowest user impact of the four).",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-invoicelist-noop-view",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:83 — invoice rows render as cursor-pointer/hover-clickable (AccountingInvoiceList.tsx:71-72 onClick=onViewInvoice) but onViewInvoice is an empty no-op TODO(#1522), so clicking an invoice on this routed page does nothing"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsareports-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:80 — user-facing 'Please select both start and end dates' hardcoded, not wrapped in t(); file imports no useTranslation",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:98 — hardcoded English 'Failed to generate report. Please try again.' via setFormError, no i18n",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:108 — hardcoded 'Report published successfully.' via alert(); lines 112/124 similar; entire page leaks English to non-en locales"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-evidence-retry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx:78 — failedEvidence is threaded into router state but no retry UI consumes it on DisputeDetailPage (TODO #627); failed evidence uploads are surfaced only by a transient toast with no user-facing recovery path"
+      ]
+    }
+  ]
+}

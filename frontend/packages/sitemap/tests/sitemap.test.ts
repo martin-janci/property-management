@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   getEndpoint,
@@ -8,12 +9,13 @@ import {
   getScreen,
   sitemap,
 } from '../src';
+import { SITEMAP_JSON_PATH, serializeSitemapJson } from '../src/json/generate';
 import { buildUrl, SitemapTestHelper } from '../src/utils';
 
 describe('Sitemap Data', () => {
   describe('Routes', () => {
     it('should have ppt-web routes', () => {
-      expect(sitemap.routes['ppt-web'].length).toBe(19);
+      expect(sitemap.routes['ppt-web'].length).toBe(20);
     });
 
     it('should have reality-web routes', () => {
@@ -124,5 +126,51 @@ describe('Test Helpers', () => {
       expect(tabs[0]).toHaveProperty('name');
       expect(tabs[0]).toHaveProperty('screens');
     });
+  });
+});
+
+describe('Package exports (CJS resolvability)', () => {
+  // Regression guard for the @ppt/e2e framework rollout (PR #988): reality-web
+  // is a Next.js app with no `"type": "module"`, so Playwright loads its config
+  // via CommonJS `require()`. If @ppt/sitemap's `exports` map only offers
+  // `types` + `import`, a CJS `require()` cannot resolve the package
+  // ("No exports main defined"), which forced reality-web into a `.mts` config
+  // workaround. A `default` condition (mirroring @ppt/e2e) keeps the package
+  // resolvable under both ESM and CJS. Removing it re-breaks CJS consumers.
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+    exports: Record<string, Record<string, string>>;
+  };
+
+  it('every export entry exposes a `default` condition for CJS require()', () => {
+    for (const [subpath, conditions] of Object.entries(pkg.exports)) {
+      expect(conditions, `exports["${subpath}"] must define a default condition`).toHaveProperty(
+        'default'
+      );
+    }
+  });
+
+  it('the `default` condition matches the `import` target for each entry', () => {
+    for (const conditions of Object.values(pkg.exports)) {
+      expect(conditions.default).toBe(conditions.import);
+    }
+  });
+});
+
+describe('sitemap.json drift guard', () => {
+  // Anti-regression guard for the determinism fix (PR #2397, follow-up #2404).
+  // `frontend/biome.json` excludes the generated artifact from lint/format, so
+  // an author who edits `src/data` but forgets `pnpm generate-json` would ship a
+  // stale committed JSON that every other gate passes — the exact silent-drift
+  // class PR #2397 set out to kill. This case rebuilds the output from
+  // `src/data` via the same pure serializer the generator uses and byte-compares
+  // it against the committed file, covering both "regenerating yields identical
+  // bytes" (idempotence / IG3) and "committed JSON is not stale".
+  it('committed sitemap.json byte-matches a fresh build from src/data', () => {
+    const built = serializeSitemapJson();
+    const committed = readFileSync(SITEMAP_JSON_PATH, 'utf8');
+    expect(
+      built,
+      'src/json/sitemap.json is out of sync with src/data — run `pnpm --filter @ppt/sitemap generate-json` and commit the result'
+    ).toBe(committed);
   });
 });

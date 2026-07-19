@@ -104,11 +104,12 @@ async fn list_connections(
 async fn get_connection(
     State(state): State<AppState>,
     _auth: AuthUser,
+    tenant: TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<GovernmentPortalConnection>, (StatusCode, Json<ErrorResponse>)> {
     let connection = state
         .government_portal_repo
-        .get_connection(id)
+        .get_connection(id, tenant.tenant_id)
         .await
         .map_err(|e| {
             (
@@ -161,6 +162,7 @@ async fn create_connection(
 async fn update_connection(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: TenantExtractor,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdatePortalConnection>,
 ) -> Result<Json<GovernmentPortalConnection>, (StatusCode, Json<ErrorResponse>)> {
@@ -168,6 +170,7 @@ async fn update_connection(
         .government_portal_repo
         .update_connection(
             id,
+            tenant.tenant_id,
             request.portal_name.as_deref(),
             request.api_endpoint.as_deref(),
             request.portal_username.as_deref(),
@@ -181,6 +184,15 @@ async fn update_connection(
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "CONNECTION_NOT_FOUND",
+                    "Portal connection not found",
+                )),
             )
         })?;
 
@@ -197,11 +209,12 @@ async fn update_connection(
 async fn delete_connection(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let deleted = state
         .government_portal_repo
-        .delete_connection(id)
+        .delete_connection(id, tenant.tenant_id)
         .await
         .map_err(|e| {
             (
@@ -233,14 +246,15 @@ async fn delete_connection(
 async fn test_connection(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TestConnectionResponse>, (StatusCode, Json<ErrorResponse>)> {
     // In a real implementation, this would actually test the connection
     // For now, we just record the test and return success
 
-    state
+    let exists = state
         .government_portal_repo
-        .record_connection_test(id, true)
+        .record_connection_test(id, true, tenant.tenant_id)
         .await
         .map_err(|e| {
             (
@@ -248,6 +262,16 @@ async fn test_connection(
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             )
         })?;
+
+    if !exists {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "CONNECTION_NOT_FOUND",
+                "Portal connection not found",
+            )),
+        ));
+    }
 
     info!(
         user_id = %auth.user_id,
