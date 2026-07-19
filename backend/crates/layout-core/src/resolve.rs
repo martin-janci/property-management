@@ -163,7 +163,10 @@ mod tests {
         let mobile = resolve(&base, Platform::Mobile, None, &BTreeSet::new(), &reg);
         assert_eq!(mobile.sections[1].mode.as_deref(), Some("bottom-bar"));
         // untouched fields carry through; order preserved
-        assert_eq!(mobile.sections[0].section_type, SectionType::from("gallery.v1"));
+        assert_eq!(
+            mobile.sections[0].section_type,
+            SectionType::from("gallery.v1")
+        );
         assert_eq!(mobile.sections[0].presentation, Presentation::Visible);
         assert_eq!(mobile.screen, "reality/listing-detail");
         assert_eq!(mobile.version, 1);
@@ -173,7 +176,11 @@ mod tests {
     fn unsupported_mode_falls_back_to_default_mode() {
         let mut s = section("listing-grid.v1");
         s.mode = Some("hologram".into()); // not supported by the component
-        let base = ScreenConfig { screen: "s".into(), version: 1, sections: vec![s] };
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![s],
+        };
         let reg = registry(&[("listing-grid.v1", false, &["list", "grid"])]);
         let out = resolve(&base, Platform::Web, None, &BTreeSet::new(), &reg);
         // defensive rendering: never emit a mode the client can't render
@@ -185,7 +192,10 @@ mod tests {
         let mut a = section("a.v1");
         a.overrides.insert(
             Platform::Web,
-            SectionPatch { mode: Some("grid".into()), ..Default::default() },
+            SectionPatch {
+                mode: Some("grid".into()),
+                ..Default::default()
+            },
         );
         let base = ScreenConfig {
             screen: "ppt/dashboard".into(),
@@ -213,8 +223,11 @@ mod tests {
             )]),
         };
         let out = resolve(&base, Platform::Web, Some(&tenant), &BTreeSet::new(), &reg);
-        let types: Vec<&str> =
-            out.sections.iter().map(|s| s.section_type.0.as_str()).collect();
+        let types: Vec<&str> = out
+            .sections
+            .iter()
+            .map(|s| s.section_type.0.as_str())
+            .collect();
         assert_eq!(types, vec!["c.v1", "a.v1", "b.v1"]);
         // tenant mode beats platform mode (precedence §3.2)
         assert_eq!(out.sections[1].mode.as_deref(), Some("map"));
@@ -228,14 +241,21 @@ mod tests {
             version: 1,
             sections: vec![section("a.v1"), section("b.v1"), section("c.v1")],
         };
-        let reg = registry(&[("a.v1", false, &[]), ("b.v1", false, &[]), ("c.v1", false, &[])]);
+        let reg = registry(&[
+            ("a.v1", false, &[]),
+            ("b.v1", false, &[]),
+            ("c.v1", false, &[]),
+        ]);
         let tenant = TenantOverride {
             order: Some(vec![SectionType::from("b.v1")]),
             sections: BTreeMap::new(),
         };
         let out = resolve(&base, Platform::Web, Some(&tenant), &BTreeSet::new(), &reg);
-        let types: Vec<&str> =
-            out.sections.iter().map(|s| s.section_type.0.as_str()).collect();
+        let types: Vec<&str> = out
+            .sections
+            .iter()
+            .map(|s| s.section_type.0.as_str())
+            .collect();
         // listed first, unlisted keep base relative order
         assert_eq!(types, vec!["b.v1", "a.v1", "c.v1"]);
     }
@@ -246,17 +266,16 @@ mod tests {
         hidden_opt.visible = false;
         let mut hidden_req = section("price-box.v1");
         hidden_req.visible = false;
-        hidden_req.props =
-            BTreeMap::from([("currency".to_string(), serde_json::json!("EUR"))]);
+        hidden_req.props = BTreeMap::from([("currency".to_string(), serde_json::json!("EUR"))]);
         let base = ScreenConfig {
             screen: "s".into(),
             version: 1,
             sections: vec![
-                section("gallery.v1"),      // required, visible, killed below
-                hidden_req,                 // required, hidden → placeholder
-                hidden_opt,                 // optional, hidden → gone
-                section("mortgage-calc.v1"),// optional, killed below → gone
-                section("unknown.v9"),      // not in registry → gone
+                section("gallery.v1"),       // required, visible, killed below
+                hidden_req,                  // required, hidden → placeholder
+                hidden_opt,                  // optional, hidden → gone
+                section("mortgage-calc.v1"), // optional, killed below → gone
+                section("unknown.v9"),       // not in registry → gone
             ],
         };
         let reg = registry(&[
@@ -278,7 +297,7 @@ mod tests {
         assert_eq!(
             rendered,
             vec![
-                ("gallery.v1", Presentation::Placeholder),   // killed required
+                ("gallery.v1", Presentation::Placeholder), // killed required
                 ("price-box.v1", Presentation::Placeholder), // hidden required
             ]
         );

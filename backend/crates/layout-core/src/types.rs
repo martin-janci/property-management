@@ -163,8 +163,12 @@ mod tests {
         // round-trip
         let back: ScreenConfig =
             serde_json::from_str(&serde_json::to_string(&cfg).unwrap()).unwrap();
-        assert_eq!(back.sections[1].overrides[&Platform::Mobile].mode.as_deref(),
-                   Some("bottom-bar"));
+        assert_eq!(
+            back.sections[1].overrides[&Platform::Mobile]
+                .mode
+                .as_deref(),
+            Some("bottom-bar")
+        );
     }
 
     #[test]

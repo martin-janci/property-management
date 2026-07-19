@@ -6,13 +6,20 @@ pub enum ValidationError {
     #[error("section {section:?} appears more than once")]
     DuplicateSection { section: SectionType },
     #[error("section {section:?} is not in the {platform:?} registry")]
-    UnknownType { section: SectionType, platform: Platform },
+    UnknownType {
+        section: SectionType,
+        platform: Platform,
+    },
     #[error("required section {section:?} is hidden in the base config")]
     RequiredHidden { section: SectionType },
     #[error("required component {section:?} is missing from the config")]
     RequiredMissing { section: SectionType },
     #[error("section {section:?} uses mode {mode:?}, unsupported on {platform:?}")]
-    UnsupportedMode { section: SectionType, mode: String, platform: Platform },
+    UnsupportedMode {
+        section: SectionType,
+        mode: String,
+        platform: Platform,
+    },
     #[error("tenant override references section {section:?} not present in the base config")]
     NotInBase { section: SectionType },
     #[error("section {section:?} is not tenant-hideable")]
@@ -35,7 +42,9 @@ pub fn validate_publish(
     let mut seen = std::collections::BTreeSet::new();
     for s in &config.sections {
         if !seen.insert(&s.section_type) {
-            errs.push(ValidationError::DuplicateSection { section: s.section_type.clone() });
+            errs.push(ValidationError::DuplicateSection {
+                section: s.section_type.clone(),
+            });
         }
     }
     for m in manifests {
@@ -54,7 +63,9 @@ pub fn validate_publish(
                 .and_then(|p| p.mode.clone())
                 .or_else(|| s.mode.clone());
             if def.required && !visible {
-                let err = ValidationError::RequiredHidden { section: s.section_type.clone() };
+                let err = ValidationError::RequiredHidden {
+                    section: s.section_type.clone(),
+                };
                 if !errs.contains(&err) {
                     errs.push(err);
                 }
@@ -164,8 +175,14 @@ mod tests {
             sections: vec![section("gallery.v1"), section("faq.v1")],
         };
         let manifests = vec![
-            manifest(Platform::Web, &[("gallery.v1", true, &[]), ("faq.v1", false, &[])]),
-            manifest(Platform::Mobile, &[("gallery.v1", true, &[]), ("faq.v1", false, &[])]),
+            manifest(
+                Platform::Web,
+                &[("gallery.v1", true, &[]), ("faq.v1", false, &[])],
+            ),
+            manifest(
+                Platform::Mobile,
+                &[("gallery.v1", true, &[]), ("faq.v1", false, &[])],
+            ),
         ];
         assert!(validate_publish(&cfg, &manifests).is_empty());
     }
@@ -180,17 +197,20 @@ mod tests {
             screen: "s".into(),
             version: 1,
             sections: vec![
-                hidden_required,          // required hidden in base → error
-                bad_mode,                 // mode unsupported on web → error
-                section("faq.v1"),        // duplicate type → error
-                section("only-web.v1"),   // missing from mobile manifest → error
+                hidden_required,        // required hidden in base → error
+                bad_mode,               // mode unsupported on web → error
+                section("faq.v1"),      // duplicate type → error
+                section("only-web.v1"), // missing from mobile manifest → error
             ],
         };
         let manifests = vec![
             manifest(
                 Platform::Web,
-                &[("gallery.v1", true, &[]), ("faq.v1", false, &["accordion"]),
-                  ("only-web.v1", false, &[])],
+                &[
+                    ("gallery.v1", true, &[]),
+                    ("faq.v1", false, &["accordion"]),
+                    ("only-web.v1", false, &[]),
+                ],
             ),
             manifest(
                 Platform::Mobile,
@@ -212,9 +232,12 @@ mod tests {
     #[test]
     fn missing_required_component_is_an_error() {
         // manifest declares a required component the config omits entirely
-        let cfg = ScreenConfig { screen: "s".into(), version: 1, sections: vec![] };
-        let manifests =
-            vec![manifest(Platform::Web, &[("gallery.v1", true, &[])])];
+        let cfg = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![],
+        };
+        let manifests = vec![manifest(Platform::Web, &[("gallery.v1", true, &[])])];
         let errs = validate_publish(&cfg, &manifests);
         assert!(errs.iter().any(|e| matches!(e,
             ValidationError::RequiredMissing { section } if section.0 == "gallery.v1")));
@@ -228,9 +251,16 @@ mod tests {
         s.visible = false;
         s.overrides.insert(
             Platform::Web,
-            SectionPatch { visible: Some(true), ..Default::default() },
+            SectionPatch {
+                visible: Some(true),
+                ..Default::default()
+            },
         );
-        let cfg = ScreenConfig { screen: "s".into(), version: 1, sections: vec![s] };
+        let cfg = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![s],
+        };
 
         let web_only = vec![manifest(Platform::Web, &[("gallery.v1", true, &[])])];
         assert!(validate_publish(&cfg, &web_only).is_empty());
@@ -242,7 +272,9 @@ mod tests {
         let errs = validate_publish(&cfg, &both);
         assert_eq!(
             errs,
-            vec![ValidationError::RequiredHidden { section: SectionType::from("gallery.v1") }]
+            vec![ValidationError::RequiredHidden {
+                section: SectionType::from("gallery.v1")
+            }]
         );
     }
 
@@ -269,7 +301,7 @@ mod tests {
                 (
                     SectionType::from("news.v1"),
                     SectionPatch {
-                        visible: Some(false),                    // ok: hideable
+                        visible: Some(false), // ok: hideable
                         props: BTreeMap::from([
                             ("limit".to_string(), serde_json::json!(5)), // ok: whitelisted
                             ("theme".to_string(), serde_json::json!("dark")), // not whitelisted
@@ -279,7 +311,10 @@ mod tests {
                 ),
                 (
                     SectionType::from("kpi.v1"),
-                    SectionPatch { visible: Some(false), ..Default::default() }, // not hideable
+                    SectionPatch {
+                        visible: Some(false),
+                        ..Default::default()
+                    }, // not hideable
                 ),
                 (
                     SectionType::from("news.v1-typo"),
@@ -287,13 +322,17 @@ mod tests {
                 ),
                 (
                     SectionType::from("faults.v1"),
-                    SectionPatch { mode: Some("compact".into()), ..Default::default() }, // ok
+                    SectionPatch {
+                        mode: Some("compact".into()),
+                        ..Default::default()
+                    }, // ok
                 ),
             ]),
         };
         let errs = validate_tenant_override(&ov, &base, &rails);
-        assert!(errs.iter().any(|e| matches!(e,
-            ValidationError::NotReorderable)));
+        assert!(errs
+            .iter()
+            .any(|e| matches!(e, ValidationError::NotReorderable)));
         assert!(errs.iter().any(|e| matches!(e,
             ValidationError::PropNotWhitelisted { section, prop }
                 if section.0 == "news.v1" && prop == "theme")));
@@ -317,7 +356,10 @@ mod tests {
             order: None,
             sections: BTreeMap::from([(
                 SectionType::from("news.v1"),
-                SectionPatch { mode: Some("grid".into()), ..Default::default() },
+                SectionPatch {
+                    mode: Some("grid".into()),
+                    ..Default::default()
+                },
             )]),
         };
         let errs = validate_tenant_override(&ov, &base, &rails);
