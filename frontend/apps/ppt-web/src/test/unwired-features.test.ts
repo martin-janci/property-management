@@ -66,22 +66,23 @@ describe('Unwired feature registry (PAP-55)', () => {
 describe('Unwired features stay out of the routing/nav surface (PAP-55)', () => {
   const sources = routingSurfaceSources();
 
-  it.each(
-    UNWIRED_FEATURES.map((slug) => [slug])
-  )('feature "%s" is not wired into any router/nav file', (slug) => {
-    // Match an import/dynamic-import that ends at the feature dir, e.g.
-    //   import('../features/insurance')  or  from '../features/insurance'
-    // regardless of quote style. A trailing quote/backtick after the slug
-    // means the import targets the dir itself (not a deeper, unrelated path).
-    const importRe = new RegExp(`features/${slug}["'\`]`);
-    const offenders = sources
-      .filter(({ content }) => importRe.test(content))
-      .map(({ file }) => file);
-    expect(
-      offenders,
-      `Unwired feature "${slug}" is referenced by routing surface file(s): ${offenders.join(
-        ', '
-      )}. Per PAP-55 it must stay hidden from nav; if you intentionally wired it, remove "${slug}" from UNWIRED_FEATURES.`
-    ).toEqual([]);
-  });
+  it.each(UNWIRED_FEATURES.map((slug) => [slug]))(
+    'feature "%s" is not wired into any router/nav file',
+    (slug) => {
+      // Match an import/dynamic-import that ends at the feature dir, e.g.
+      //   import('../features/insurance')  or  from '../features/insurance'
+      // regardless of quote style. A trailing quote/backtick after the slug
+      // means the import targets the dir itself (not a deeper, unrelated path).
+      const importRe = new RegExp(`features/${slug}["'\`]`);
+      const offenders = sources
+        .filter(({ content }) => importRe.test(content))
+        .map(({ file }) => file);
+      expect(
+        offenders,
+        `Unwired feature "${slug}" is referenced by routing surface file(s): ${offenders.join(
+          ', '
+        )}. Per PAP-55 it must stay hidden from nav; if you intentionally wired it, remove "${slug}" from UNWIRED_FEATURES.`
+      ).toEqual([]);
+    }
+  );
 });

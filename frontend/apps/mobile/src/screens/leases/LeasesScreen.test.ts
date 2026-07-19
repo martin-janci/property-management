@@ -68,13 +68,12 @@ describe('toUiLeaseStatus', () => {
     expect(toUiLeaseStatus(status)).toBe('expired');
   });
 
-  it.each([
-    ['unknown'],
-    [''],
-    ['whatever'],
-  ])('maps unrecognised status %s to "pending"', (status) => {
-    expect(toUiLeaseStatus(status)).toBe('pending');
-  });
+  it.each([['unknown'], [''], ['whatever']])(
+    'maps unrecognised status %s to "pending"',
+    (status) => {
+      expect(toUiLeaseStatus(status)).toBe('pending');
+    }
+  );
 });
 
 describe('toUiLease', () => {
