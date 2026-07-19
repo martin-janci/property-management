@@ -27,6 +27,7 @@ common = { workspace = true }
 api-core = { workspace = true }
 admin-core = { workspace = true }
 db = { workspace = true }
+layout-core = { workspace = true }
 genpdf = { workspace = true }
 rust_xlsxwriter = { workspace = true }
 integrations = { workspace = true }
