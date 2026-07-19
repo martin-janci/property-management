@@ -59,7 +59,10 @@ async fn publish_snapshots_versions_and_rollback_restores(pool: PgPool) {
         .await
         .unwrap();
 
-    let published = repo.publish(&mut conn, "ppt/dashboard", None).await.unwrap();
+    let published = repo
+        .publish(&mut conn, "ppt/dashboard", None)
+        .await
+        .unwrap();
     assert_eq!(published.published_version, 1);
     assert_eq!(published.published, Some(v1.clone()));
 
@@ -68,22 +71,34 @@ async fn publish_snapshots_versions_and_rollback_restores(pool: PgPool) {
     repo.upsert_draft(&mut *conn, "ppt/dashboard", &v2, None)
         .await
         .unwrap();
-    let published2 = repo.publish(&mut conn, "ppt/dashboard", None).await.unwrap();
+    let published2 = repo
+        .publish(&mut conn, "ppt/dashboard", None)
+        .await
+        .unwrap();
     assert_eq!(published2.published_version, 2);
     assert_eq!(published2.published, Some(v2.clone()));
 
-    let versions = repo.list_versions(&mut *conn, "ppt/dashboard").await.unwrap();
+    let versions = repo
+        .list_versions(&mut *conn, "ppt/dashboard")
+        .await
+        .unwrap();
     assert_eq!(
         versions.iter().map(|v| v.version).collect::<Vec<_>>(),
         vec![2, 1]
     );
 
     // rollback to v1: published AND draft become v1's config, history grows to 3
-    let rolled = repo.rollback(&mut conn, "ppt/dashboard", 1, None).await.unwrap();
+    let rolled = repo
+        .rollback(&mut conn, "ppt/dashboard", 1, None)
+        .await
+        .unwrap();
     assert_eq!(rolled.published_version, 3);
     assert_eq!(rolled.published, Some(v1.clone()));
     assert_eq!(rolled.draft, v1);
-    let versions = repo.list_versions(&mut *conn, "ppt/dashboard").await.unwrap();
+    let versions = repo
+        .list_versions(&mut *conn, "ppt/dashboard")
+        .await
+        .unwrap();
     assert_eq!(versions.len(), 3);
 
     // unknown screen / version → RowNotFound
@@ -113,9 +128,19 @@ async fn kills_and_manifests_round_trip(pool: PgPool) {
     assert_eq!(kills.len(), 1);
     assert_eq!(kills[0].section_type, "news.v1");
 
-    assert!(repo.unkill(&mut *conn, "ppt/dashboard", "news.v1").await.unwrap());
-    assert!(!repo.unkill(&mut *conn, "ppt/dashboard", "news.v1").await.unwrap());
-    assert!(repo.list_kills(&mut *conn, "ppt/dashboard").await.unwrap().is_empty());
+    assert!(repo
+        .unkill(&mut *conn, "ppt/dashboard", "news.v1")
+        .await
+        .unwrap());
+    assert!(!repo
+        .unkill(&mut *conn, "ppt/dashboard", "news.v1")
+        .await
+        .unwrap());
+    assert!(repo
+        .list_kills(&mut *conn, "ppt/dashboard")
+        .await
+        .unwrap()
+        .is_empty());
 
     let manifest = json!({"platform": "web", "components": {"kpi.v1": {"required": true}}});
     let row = repo
@@ -123,7 +148,11 @@ async fn kills_and_manifests_round_trip(pool: PgPool) {
         .await
         .unwrap();
     assert_eq!(row.manifest, manifest);
-    assert!(repo.get_manifest(&mut *conn, "mobile").await.unwrap().is_none());
+    assert!(repo
+        .get_manifest(&mut *conn, "mobile")
+        .await
+        .unwrap()
+        .is_none());
     assert_eq!(repo.list_manifests(&mut *conn).await.unwrap().len(), 1);
 }
 
@@ -155,12 +184,8 @@ async fn tenant_overrides_are_org_isolated(pool: PgPool) {
     let role = format!("ppt_rls_layout_{}", Uuid::new_v4().simple());
     for stmt in [
         format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
-        format!(
-            "GRANT SELECT, INSERT, UPDATE ON layout_tenant_overrides TO \"{role}\""
-        ),
-        format!(
-            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin() TO \"{role}\""
-        ),
+        format!("GRANT SELECT, INSERT, UPDATE ON layout_tenant_overrides TO \"{role}\""),
+        format!("GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin() TO \"{role}\""),
         format!("GRANT SELECT ON organizations TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))

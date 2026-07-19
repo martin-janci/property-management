@@ -9,8 +9,10 @@ use axum::Router;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/tenant-override",
-               get(tenant::get_tenant_override).put(tenant::put_tenant_override))
+        .route(
+            "/tenant-override",
+            get(tenant::get_tenant_override).put(tenant::put_tenant_override),
+        )
         .route("/resolved/{*screen}", get(resolved::get_resolved))
 }
 
@@ -20,7 +22,10 @@ pub fn admin_router() -> Router<AppState> {
         .route("/config", get(admin::get_config))
         .route("/draft", put(admin::put_draft))
         .route("/rails", put(admin::put_rails))
-        .route("/manifests", get(admin::list_manifests).put(admin::put_manifest))
+        .route(
+            "/manifests",
+            get(admin::list_manifests).put(admin::put_manifest),
+        )
         .route("/publish", post(admin::publish))
         .route("/rollback", post(admin::rollback))
         .route("/kill", post(admin::kill))

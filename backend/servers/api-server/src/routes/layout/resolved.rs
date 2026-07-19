@@ -31,15 +31,30 @@ pub async fn get_resolved(
     Path(screen): Path<String>,
     Query(q): Query<ResolvedQuery>,
 ) -> Result<Json<layout_core::ResolvedScreen>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let err500 = |msg: String| (StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ValidationErrorsResponse { errors: vec![msg] }));
-    let err404 = |msg: &str| (StatusCode::NOT_FOUND,
-        Json(ValidationErrorsResponse { errors: vec![msg.to_string()] }));
+    let err500 = |msg: String| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ValidationErrorsResponse { errors: vec![msg] }),
+        )
+    };
+    let err404 = |msg: &str| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ValidationErrorsResponse {
+                errors: vec![msg.to_string()],
+            }),
+        )
+    };
 
     let platform = match parse_platform(q.platform.as_deref()) {
         Ok(p) => p,
-        Err(e) => { rls.release().await; return Err((StatusCode::BAD_REQUEST,
-            Json(ValidationErrorsResponse { errors: vec![e] }))); }
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ValidationErrorsResponse { errors: vec![e] }),
+            ));
+        }
     };
     let repo = LayoutRepository::new();
     let org_id = tenant.tenant_id;
@@ -82,8 +97,10 @@ pub async fn get_resolved(
         .collect();
 
     let tenant_ov: Option<layout_core::TenantOverride> = match tenant_ov_row {
-        Some(row) => Some(serde_json::from_value(row.override_config)
-            .map_err(|e| err500(format!("stored tenant override invalid: {e}")))?),
+        Some(row) => Some(
+            serde_json::from_value(row.override_config)
+                .map_err(|e| err500(format!("stored tenant override invalid: {e}")))?,
+        ),
         None => None,
     };
 

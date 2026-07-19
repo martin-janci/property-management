@@ -215,7 +215,10 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/admin/oauth", routes::oauth::admin_router())
         // Platform Admin routes
         .nest("/api/v1/platform-admin", routes::platform_admin::router())
-        .nest("/api/v1/platform-admin/layout", routes::layout::admin_router())
+        .nest(
+            "/api/v1/platform-admin/layout",
+            routes::layout::admin_router(),
+        )
         .nest("/api/v1/layout", routes::layout::router())
         .nest(
             "/api/v1/feature-flags",
