@@ -62,7 +62,7 @@ jobs:
 
       - name: Setup Node (for package.json sync)
         if: steps.detect.outputs.skip != 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 

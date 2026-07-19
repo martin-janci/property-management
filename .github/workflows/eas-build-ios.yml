@@ -7,7 +7,7 @@ name: EAS iOS Build
 #   `@v6`. Re-verified against upstream tag listings: all pins resolve to real
 #   major-version tags and the workflow YAML parses cleanly.
 #     - actions/checkout@v7        -> v6.0.3 (v6 major tag exists)
-#     - actions/setup-node@v6      -> v6.4.0 (v6 major tag exists)
+#     - actions/setup-node@v7      -> v6.4.0 (v6 major tag exists)
 #     - pnpm/action-setup@v6       -> v6.0.9 (v6 major tag exists)
 #     - actions/cache@v6           -> v5.0.5 (v5 major tag exists)
 #     - expo/expo-github-action@v9 -> 9.0.0  (v9 major tag exists)
@@ -75,7 +75,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 
