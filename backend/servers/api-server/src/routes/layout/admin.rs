@@ -5,8 +5,8 @@ use axum::http::StatusCode;
 use axum::Json;
 use db::repositories::LayoutRepository;
 
-use super::types::{PutDraftRequest, PutManifestRequest, PutRailsRequest, ScreenQuery,
-                   ValidationErrorsResponse};
+use super::types::{KillRequest, PublishRequest, PutDraftRequest, PutManifestRequest,
+                   PutRailsRequest, RollbackRequest, ScreenQuery, ValidationErrorsResponse};
 
 fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsResponse>) {
     (StatusCode::UNPROCESSABLE_ENTITY, Json(ValidationErrorsResponse { errors }))
@@ -132,4 +132,118 @@ pub async fn put_manifest(
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+}
+
+#[utoipa::path(post, path = "/api/v1/platform-admin/layout/publish", tag = "Layout Admin",
+    security(("bearer_auth" = [])), request_body = PublishRequest,
+    responses((status = 200, description = "Published"),
+              (status = 404, description = "Unknown screen"),
+              (status = 409, description = "No registry manifests uploaded yet"),
+              (status = 422, description = "Validation errors — publish blocked")))]
+pub async fn publish(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<PublishRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
+    let (admin_id, _) = extract_super_admin_token(&headers, &state)
+        .map_err(|_| (StatusCode::FORBIDDEN, Json(ValidationErrorsResponse { errors: vec!["forbidden".into()] })))?;
+    let repo = LayoutRepository::new();
+
+    let cfg_row = repo
+        .get_config(&state.db, &req.screen)
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .ok_or((StatusCode::NOT_FOUND, Json(ValidationErrorsResponse { errors: vec!["unknown screen".into()] })))?;
+
+    let draft: layout_core::ScreenConfig = serde_json::from_value(cfg_row.draft.clone())
+        .map_err(|e| bad_request(vec![format!("stored draft is not a valid ScreenConfig: {e}")]))?;
+
+    let manifest_rows = repo
+        .list_manifests(&state.db)
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    if manifest_rows.is_empty() {
+        return Err((StatusCode::CONFLICT, Json(ValidationErrorsResponse {
+            errors: vec!["no registry manifests uploaded; cannot validate publish".into()],
+        })));
+    }
+    let manifests: Vec<layout_core::RegistryManifest> = manifest_rows
+        .iter()
+        .map(|r| serde_json::from_value(r.manifest.clone()))
+        .collect::<Result<_, _>>()
+        .map_err(|e| bad_request(vec![format!("stored manifest is invalid: {e}")]))?;
+
+    let errors = layout_core::validate_publish(&draft, &manifests);
+    if !errors.is_empty() {
+        return Err(bad_request(errors.iter().map(|e| e.to_string()).collect()));
+    }
+
+    let mut conn = state.db.acquire().await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    let row = repo
+        .publish(&mut conn, &req.screen, Some(admin_id))
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+}
+
+#[utoipa::path(post, path = "/api/v1/platform-admin/layout/rollback", tag = "Layout Admin",
+    security(("bearer_auth" = [])), request_body = RollbackRequest,
+    responses((status = 200, description = "Rolled back"), (status = 404, description = "Unknown screen or version")))]
+pub async fn rollback(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<RollbackRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
+    let (admin_id, _) = extract_super_admin_token(&headers, &state)
+        .map_err(|_| (StatusCode::FORBIDDEN, Json(ValidationErrorsResponse { errors: vec!["forbidden".into()] })))?;
+    let mut conn = state.db.acquire().await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    let row = LayoutRepository::new()
+        .rollback(&mut conn, &req.screen, req.version, Some(admin_id))
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND,
+                Json(ValidationErrorsResponse { errors: vec!["unknown screen or version".into()] })),
+            other => bad_request(vec![format!("db error: {other}")]),
+        })?;
+    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+}
+
+#[utoipa::path(post, path = "/api/v1/platform-admin/layout/kill", tag = "Layout Admin",
+    security(("bearer_auth" = [])), request_body = KillRequest,
+    responses((status = 204, description = "Section killed — bypasses the publish gate (spec §5)")))]
+pub async fn kill(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<KillRequest>,
+) -> Result<StatusCode, (StatusCode, Json<ValidationErrorsResponse>)> {
+    let (admin_id, _) = extract_super_admin_token(&headers, &state)
+        .map_err(|_| (StatusCode::FORBIDDEN, Json(ValidationErrorsResponse { errors: vec!["forbidden".into()] })))?;
+    LayoutRepository::new()
+        .kill(&state.db, &req.screen, &req.section_type, Some(admin_id))
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(post, path = "/api/v1/platform-admin/layout/unkill", tag = "Layout Admin",
+    security(("bearer_auth" = [])), request_body = KillRequest,
+    responses((status = 204, description = "Kill flag removed"), (status = 404, description = "No such kill flag")))]
+pub async fn unkill(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<KillRequest>,
+) -> Result<StatusCode, (StatusCode, Json<ValidationErrorsResponse>)> {
+    let _admin = extract_super_admin_token(&headers, &state)
+        .map_err(|_| (StatusCode::FORBIDDEN, Json(ValidationErrorsResponse { errors: vec!["forbidden".into()] })))?;
+    let removed = LayoutRepository::new()
+        .unkill(&state.db, &req.screen, &req.section_type)
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    if removed {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((StatusCode::NOT_FOUND, Json(ValidationErrorsResponse { errors: vec!["no such kill flag".into()] })))
+    }
 }
