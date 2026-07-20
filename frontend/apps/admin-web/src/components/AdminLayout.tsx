@@ -187,6 +187,13 @@ export function AdminLayout() {
                 label={t('admin.onboarding.navLabel', 'Onboarding')}
               />
             ) : null}
+            {/* Layout editor — un-gated; platform-principal gate only
+                (no capability registered yet — follow-up) */}
+            <NavItem to="/platform/layout" label={t('admin.layout.navLabel', 'Layout editor')} />
+            <NavItem
+              to="/platform/layout/manifests"
+              label={t('admin.layout.manifestsNavLabel', 'Layout manifests')}
+            />
           </SidebarGroup>
 
           <SidebarGroup label="DEVELOPER">

@@ -10,6 +10,8 @@ import { MfaWindowProvider } from './components/MfaWindowChip';
 import { MfaWrapper } from './components/MfaWrapper';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
+import LayoutEditorPage from './features/layout-editor/LayoutEditorPage';
+import LayoutManifestsPage from './features/layout-editor/LayoutManifestsPage';
 import AgencyDetailPage from './pages/AgencyDetailPage';
 import AgenciesPage from './pages/agencies';
 import AuditPage from './pages/audit';
@@ -225,6 +227,24 @@ export function App() {
                   element={
                     <ProtectedRoute requiredCapability="site_settings_write">
                       <OnboardingToursPage />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* LAYOUT — platform-principal gate; no capability registered yet
+                    (layout_editor_* capability is a backend follow-up) */}
+                <Route
+                  path="platform/layout"
+                  element={
+                    <ProtectedRoute>
+                      <LayoutEditorPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/layout/manifests"
+                  element={
+                    <ProtectedRoute>
+                      <LayoutManifestsPage />
                     </ProtectedRoute>
                   }
                 />
