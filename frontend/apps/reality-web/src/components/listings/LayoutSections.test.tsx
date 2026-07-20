@@ -1,5 +1,6 @@
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { ResolvedScreen } from '../../lib/layout';
 import { LayoutSections } from './LayoutSections';
@@ -90,5 +91,97 @@ describe('LayoutSections', () => {
     expect(screen.getByText('ALPHA')).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeInTheDocument();
     err.mockRestore();
+  });
+
+  // -------------------------------------------------------------------------
+  // data-layout-section tagging
+  // -------------------------------------------------------------------------
+  describe('data-layout-section tagging', () => {
+    it('wraps every visible section in a div with data-layout-section={type}', () => {
+      const { container } = render(
+        <LayoutSections
+          registry={registry}
+          layout={layoutOf([
+            { type: 'alpha.v1', presentation: 'visible' },
+            { type: 'beta.v1', mode: 'grid', presentation: 'visible' },
+          ])}
+          listing={dummyListing}
+        />
+      );
+      expect(container.querySelector('[data-layout-section="alpha.v1"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-layout-section="beta.v1"]')).toBeInTheDocument();
+    });
+
+    it('wraps placeholder presentation rows in a div with data-layout-section={type}', () => {
+      const { container } = render(
+        <LayoutSections
+          registry={registry}
+          layout={layoutOf([{ type: 'alpha.v1', presentation: 'placeholder' }])}
+          listing={dummyListing}
+        />
+      );
+      expect(container.querySelector('[data-layout-section="alpha.v1"]')).toBeInTheDocument();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // onSectionClick prop
+  // -------------------------------------------------------------------------
+  describe('onSectionClick prop', () => {
+    it('fires onSectionClick with the section type when clicking inside a section', async () => {
+      const onSectionClick = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <LayoutSections
+          registry={registry}
+          layout={layoutOf([
+            { type: 'alpha.v1', presentation: 'visible' },
+            { type: 'beta.v1', mode: 'grid', presentation: 'visible' },
+          ])}
+          listing={dummyListing}
+          onSectionClick={onSectionClick}
+        />
+      );
+      await user.click(screen.getByText('ALPHA'));
+      expect(onSectionClick).toHaveBeenCalledWith('alpha.v1');
+    });
+
+    it('prevents default and stops propagation when onSectionClick is set', async () => {
+      const onSectionClick = vi.fn();
+      const outerClick = vi.fn();
+      const user = userEvent.setup();
+      const { container } = render(
+        <div onClick={outerClick}>
+          <LayoutSections
+            registry={registry}
+            layout={layoutOf([{ type: 'alpha.v1', presentation: 'visible' }])}
+            listing={dummyListing}
+            onSectionClick={onSectionClick}
+          />
+        </div>
+      );
+      const wrapper = container.querySelector('[data-layout-section="alpha.v1"]');
+      await user.click(wrapper!);
+      expect(onSectionClick).toHaveBeenCalledWith('alpha.v1');
+      // stopPropagation prevents the outer click handler from firing
+      expect(outerClick).not.toHaveBeenCalled();
+    });
+
+    it('passes clicks through normally when onSectionClick is not set', async () => {
+      const outerClick = vi.fn();
+      const user = userEvent.setup();
+      const { container } = render(
+        <div onClick={outerClick}>
+          <LayoutSections
+            registry={registry}
+            layout={layoutOf([{ type: 'alpha.v1', presentation: 'visible' }])}
+            listing={dummyListing}
+          />
+        </div>
+      );
+      const wrapper = container.querySelector('[data-layout-section="alpha.v1"]');
+      await user.click(wrapper!);
+      expect(outerClick).toHaveBeenCalled();
+    });
   });
 });

@@ -30,4 +30,5 @@ pub fn admin_router() -> Router<AppState> {
         .route("/rollback", post(admin::rollback))
         .route("/kill", post(admin::kill))
         .route("/unkill", post(admin::unkill))
+        .route("/preview-resolve", post(admin::preview_resolve))
 }

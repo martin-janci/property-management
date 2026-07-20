@@ -62,3 +62,11 @@ pub struct ResolvedQuery {
     /// "web" | "mobile" (default "web")
     pub platform: Option<String>,
 }
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PreviewResolveRequest {
+    /// Must deserialize as layout_core::ScreenConfig.
+    pub config: serde_json::Value,
+    /// "web" | "mobile"
+    pub platform: String,
+}

@@ -27,6 +27,7 @@ import {
   type ScreenConfig,
   unkill,
 } from './api';
+import { PreviewPanel } from './PreviewPanel';
 import { RailsEditor } from './RailsEditor';
 import { SectionTreeEditor } from './SectionTreeEditor';
 
@@ -190,6 +191,9 @@ export default function LayoutEditorPage() {
 
   // Platform toggle: which manifest to feed the tree
   const [platform, setPlatform] = useState<'web' | 'mobile'>('web');
+
+  // Highlighted section — set via PreviewPanel section-click
+  const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
 
   // -------------------------------------------------------------------------
   // Publish error list (persistent, 422 only)
@@ -719,6 +723,7 @@ export default function LayoutEditorPage() {
               onChange={handleDraftChange}
               onKill={handleKill}
               onUnkill={handleUnkill}
+              highlightType={highlightedSection ?? undefined}
             />
           </div>
 
@@ -865,6 +870,22 @@ export default function LayoutEditorPage() {
               </ul>
             </div>
           )}
+
+          {/* --------------------------------------------------------------- */}
+          {/* Live Preview card                                                  */}
+          {/* --------------------------------------------------------------- */}
+          <div style={CARD_STYLE}>
+            <h2 style={CARD_TITLE_STYLE}>
+              {t('admin.layout.preview.title', { defaultValue: 'Live Preview' })}
+            </h2>
+            <PreviewPanel
+              screen={selectedScreen}
+              platform={platform}
+              draft={localDraft}
+              token={token}
+              onSectionSelected={setHighlightedSection}
+            />
+          </div>
         </>
       )}
 

@@ -2,7 +2,7 @@
 
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type MouseEvent, type ReactNode } from 'react';
 import type { ResolvedScreen } from '../../lib/layout';
 import type { ListingRegistry } from './sections/registry';
 
@@ -84,6 +84,10 @@ export interface LayoutSectionsProps {
   layout: ResolvedScreen;
   listing: ListingDetail;
   registry: ListingRegistry;
+  /** When set, every section wrapper intercepts clicks (capture phase),
+   *  calls preventDefault + stopPropagation, and invokes this callback
+   *  with the section type. When unset: no listener, clicks pass through. */
+  onSectionClick?: (type: string) => void;
 }
 
 /**
@@ -92,8 +96,9 @@ export interface LayoutSectionsProps {
  * - placeholder presentation → <Placeholder />
  * - crashing section → <Placeholder /> via SectionBoundary; siblings unaffected
  * - listing forwarded to every section component
+ * - every row wrapped in <div data-layout-section={type}> for preview-bridge targeting
  */
-export function LayoutSections({ layout, listing, registry }: LayoutSectionsProps) {
+export function LayoutSections({ layout, listing, registry, onSectionClick }: LayoutSectionsProps) {
   return (
     <div className="layout-sections">
       {layout.sections.map((section) => {
@@ -105,14 +110,37 @@ export function LayoutSections({ layout, listing, registry }: LayoutSectionsProp
           }
           return null;
         }
+
+        const handleClickCapture = onSectionClick
+          ? (e: MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSectionClick(section.type);
+            }
+          : undefined;
+
         if (section.presentation === 'placeholder') {
-          return <Placeholder key={section.type} />;
+          return (
+            <div
+              key={section.type}
+              data-layout-section={section.type}
+              onClickCapture={handleClickCapture}
+            >
+              <Placeholder />
+            </div>
+          );
         }
         const Component = def.component;
         return (
-          <SectionBoundary key={section.type}>
-            <Component listing={listing} mode={section.mode} props={section.props} />
-          </SectionBoundary>
+          <div
+            key={section.type}
+            data-layout-section={section.type}
+            onClickCapture={handleClickCapture}
+          >
+            <SectionBoundary>
+              <Component listing={listing} mode={section.mode} props={section.props} />
+            </SectionBoundary>
+          </div>
         );
       })}
       <style jsx>{`

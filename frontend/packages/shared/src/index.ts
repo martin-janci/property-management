@@ -101,6 +101,25 @@ export {
   type NumberFormatOptions,
 } from './formatting';
 // ============================================
+// Layout Preview Bridge Protocol
+// ============================================
+export {
+  // Functions
+  connectPreviewChild,
+  connectPreviewParent,
+  // Guards
+  isPreviewChildMessage,
+  isPreviewParentMessage,
+  LAYOUT_PREVIEW_KIND,
+  LAYOUT_PREVIEW_PROTOCOL,
+  // Types
+  type PreviewChildMessage,
+  type PreviewParentMessage,
+  type ResolvedScreenLike,
+  type ResolvedSectionLike,
+  readPreviewParams,
+} from './layout-preview';
+// ============================================
 // Validation Utilities
 // ============================================
 export {

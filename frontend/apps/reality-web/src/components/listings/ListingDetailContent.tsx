@@ -14,6 +14,7 @@ import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import { ContactForm } from './ContactForm';
 import { LayoutSections, Placeholder } from './LayoutSections';
 import { listingRegistry } from './sections/registry';
+import { useListingPreviewLayout } from './useListingPreviewLayout';
 
 interface ListingDetailContentProps {
   listing: ListingDetail | null;
@@ -77,19 +78,23 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
   const t = useTranslations('listing');
   const tNav = useTranslations('nav');
 
+  const { previewLayout, inPreview, sendSectionClick } =
+    useListingPreviewLayout('reality/listing-detail');
+
   if (!listing) {
     return <ListingNotFound />;
   }
 
-  const resolvedLayout = layout ?? DEFAULT_LISTING_DETAIL_LAYOUT;
+  // Pushed preview layout takes precedence over the layout prop (which comes from SSR/ISR)
+  const effectiveLayout = previewLayout ?? layout ?? DEFAULT_LISTING_DETAIL_LAYOUT;
 
-  // Determine agent-contact section presentation from layout
-  const agentContactSection = resolvedLayout.sections.find((s) => s.type === 'agent-contact.v1');
+  // Determine agent-contact section presentation from effective layout
+  const agentContactSection = effectiveLayout.sections.find((s) => s.type === 'agent-contact.v1');
 
   // Main layout excludes agent-contact (sidebar handles it)
   const mainLayout: ResolvedScreen = {
-    ...resolvedLayout,
-    sections: resolvedLayout.sections.filter((s) => s.type !== 'agent-contact.v1'),
+    ...effectiveLayout,
+    sections: effectiveLayout.sections.filter((s) => s.type !== 'agent-contact.v1'),
   };
 
   return (
@@ -117,7 +122,12 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
           <div className="content-grid">
             {/* Main Content */}
             <div className="main-content">
-              <LayoutSections layout={mainLayout} listing={listing} registry={listingRegistry} />
+              <LayoutSections
+                layout={mainLayout}
+                listing={listing}
+                registry={listingRegistry}
+                onSectionClick={inPreview ? sendSectionClick : undefined}
+              />
             </div>
 
             {/* Sidebar */}

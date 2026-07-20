@@ -7,8 +7,8 @@ use db::repositories::LayoutRepository;
 use db::RlsPool;
 
 use super::types::{
-    KillRequest, PublishRequest, PutDraftRequest, PutManifestRequest, PutRailsRequest,
-    RollbackRequest, ScreenQuery, ValidationErrorsResponse,
+    KillRequest, PreviewResolveRequest, PublishRequest, PutDraftRequest, PutManifestRequest,
+    PutRailsRequest, RollbackRequest, ScreenQuery, ValidationErrorsResponse,
 };
 
 fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsResponse>) {
@@ -356,6 +356,70 @@ pub async fn kill(
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(post, path = "/api/v1/platform-admin/layout/preview-resolve", tag = "Layout Admin",
+    security(("bearer_auth" = [])), request_body = PreviewResolveRequest,
+    responses((status = 200, description = "Resolved section list for the given config"),
+              (status = 404, description = "No manifest stored for the platform"),
+              (status = 422, description = "Invalid config, unknown platform, or stored manifest unparseable")))]
+pub async fn preview_resolve(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<PreviewResolveRequest>,
+) -> Result<Json<layout_core::ResolvedScreen>, (StatusCode, Json<ValidationErrorsResponse>)> {
+    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ValidationErrorsResponse {
+                errors: vec!["forbidden".into()],
+            }),
+        )
+    })?;
+
+    // Parse and validate the submitted config.
+    let config: layout_core::ScreenConfig = serde_json::from_value(req.config.clone())
+        .map_err(|e| bad_request(vec![format!("invalid ScreenConfig: {e}")]))?;
+
+    // Parse platform string — mirror resolved.rs's parse_platform exactly.
+    let platform = super::resolved::parse_platform(Some(req.platform.as_str()))
+        .map_err(|e| bad_request(vec![e]))?;
+
+    let platform_key = match platform {
+        layout_core::Platform::Web => "web",
+        layout_core::Platform::Mobile => "mobile",
+    };
+
+    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
+    let mut conn = RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    let repo = LayoutRepository::new();
+
+    let manifest_row = repo
+        .get_manifest(&mut **conn, platform_key)
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            Json(ValidationErrorsResponse {
+                errors: vec!["no registry manifest for platform".into()],
+            }),
+        ))?;
+    let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
+        .map_err(|e| bad_request(vec![format!("stored manifest invalid: {e}")]))?;
+
+    let kills: std::collections::BTreeSet<layout_core::SectionType> = repo
+        .list_kills(&mut **conn, &config.screen)
+        .await
+        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .into_iter()
+        .map(|k| layout_core::SectionType(k.section_type))
+        .collect();
+
+    let resolved = layout_core::resolve(&config, platform, None, &kills, &manifest);
+    Ok(Json(resolved))
 }
 
 #[utoipa::path(post, path = "/api/v1/platform-admin/layout/unkill", tag = "Layout Admin",

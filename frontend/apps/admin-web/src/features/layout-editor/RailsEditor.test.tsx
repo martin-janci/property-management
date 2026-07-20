@@ -172,7 +172,7 @@ describe('Scenario 3: prop_whitelist text input', () => {
 
     expect(onChange).toHaveBeenCalledOnce();
     const next: Rails = onChange.mock.calls[0][0];
-    expect(Object.prototype.hasOwnProperty.call(next.prop_whitelist, 'faq.v1')).toBe(false);
+    expect('faq.v1' in next.prop_whitelist).toBe(false);
   });
 });
 

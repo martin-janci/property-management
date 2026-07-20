@@ -7,12 +7,13 @@
  * @module features/dashboard/pages/ManagerDashboardPage
  */
 
-import { useResolvedLayout } from '@ppt/api-client';
+import { type ResolvedScreen, useResolvedLayout } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { LayoutRenderer } from '../../layout/LayoutRenderer';
 import { DEFAULT_DASHBOARD_LAYOUT, dashboardRegistry } from '../../layout/registry';
+import { usePreviewLayout } from '../../layout/usePreviewLayout';
 import './ManagerDashboardPage.css';
 
 const CUSTOMIZE_ROLES = ['org_admin', 'super_admin'] as const;
@@ -21,6 +22,7 @@ export function ManagerDashboardPage() {
   const { t } = useTranslation();
   const { data: layout } = useResolvedLayout('ppt/dashboard');
   const { user } = useAuth();
+  const { previewLayout, inPreview, sendSectionClick } = usePreviewLayout('ppt/dashboard');
 
   const canCustomize =
     user?.role != null && (CUSTOMIZE_ROLES as readonly string[]).includes(user.role);
@@ -37,7 +39,11 @@ export function ManagerDashboardPage() {
         )}
       </header>
 
-      <LayoutRenderer layout={layout ?? DEFAULT_DASHBOARD_LAYOUT} registry={dashboardRegistry} />
+      <LayoutRenderer
+        layout={(previewLayout as ResolvedScreen | null) ?? layout ?? DEFAULT_DASHBOARD_LAYOUT}
+        registry={dashboardRegistry}
+        onSectionClick={inPreview ? sendSectionClick : undefined}
+      />
     </div>
   );
 }

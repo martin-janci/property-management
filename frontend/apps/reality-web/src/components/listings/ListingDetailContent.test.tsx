@@ -11,9 +11,18 @@
 
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResolvedScreen } from '../../lib/layout';
 import { ListingDetailContent } from './ListingDetailContent';
+
+// ---------------------------------------------------------------------------
+// Mock useListingPreviewLayout so we can inject a pushed layout in tests
+// ---------------------------------------------------------------------------
+const mockPreviewHook = vi.fn();
+
+vi.mock('./useListingPreviewLayout', () => ({
+  useListingPreviewLayout: (...args: unknown[]) => mockPreviewHook(...args),
+}));
 
 // ContactForm (rendered in the sidebar) uses a TanStack Query mutation hook.
 // Stub the API client so the component tree renders without a QueryClient.
@@ -77,6 +86,15 @@ const validListing: ListingDetail = {
 };
 
 describe('ListingDetailContent', () => {
+  beforeEach(() => {
+    // Default: not in preview mode
+    mockPreviewHook.mockReturnValue({
+      previewLayout: null,
+      inPreview: false,
+      sendSectionClick: vi.fn(),
+    });
+  });
+
   it('renders a valid listing', () => {
     render(<ListingDetailContent listing={validListing} />);
     expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
@@ -113,6 +131,35 @@ describe('ListingDetailContent', () => {
     // features section is absent
     expect(screen.queryByText('features')).not.toBeInTheDocument();
     // placeholder renders (role="status")
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('pushed preview layout overrides the layout prop', () => {
+    // The prop has agent-contact visible; the pushed layout makes gallery a placeholder.
+    // This proves previewLayout ?? layout prop is used for both mainLayout and sidebar.
+    const propLayout: ResolvedScreen = {
+      screen: 'reality/listing-detail',
+      version: 1,
+      sections: [
+        { type: 'gallery.v1', presentation: 'visible' },
+        { type: 'agent-contact.v1', presentation: 'visible' },
+      ],
+    };
+    const pushedLayout: ResolvedScreen = {
+      screen: 'reality/listing-detail',
+      version: 1,
+      sections: [
+        { type: 'gallery.v1', presentation: 'placeholder' },
+        // agent-contact omitted → sidebar shows nothing
+      ],
+    };
+    mockPreviewHook.mockReturnValue({
+      previewLayout: pushedLayout,
+      inPreview: true,
+      sendSectionClick: vi.fn(),
+    });
+    render(<ListingDetailContent listing={validListing} layout={propLayout} />);
+    // gallery is now a placeholder — the pushed layout took effect
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 });

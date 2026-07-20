@@ -2,6 +2,8 @@
 // Consumes: /api/v1/platform-admin/layout/*
 // Token is passed as a parameter — pages own the useAdminAuth() call.
 
+import type { ResolvedScreenLike } from '@ppt/shared';
+
 const BASE = '/api/v1/platform-admin/layout';
 
 // ---------------------------------------------------------------------------
@@ -180,5 +182,20 @@ export function putManifest(token: string | null, platform: string, manifest: Ma
   return request(token, '/manifests', {
     method: 'PUT',
     body: JSON.stringify({ platform, manifest }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Preview resolve
+// ---------------------------------------------------------------------------
+
+export function previewResolve(
+  token: string | null,
+  config: ScreenConfig,
+  platform: 'web' | 'mobile'
+): Promise<ResolvedScreenLike> {
+  return request(token, '/preview-resolve', {
+    method: 'POST',
+    body: JSON.stringify({ config, platform }),
   });
 }
