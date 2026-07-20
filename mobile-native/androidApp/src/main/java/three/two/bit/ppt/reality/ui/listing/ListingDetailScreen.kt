@@ -3,7 +3,6 @@ package three.two.bit.ppt.reality.ui.listing
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,6 +17,9 @@ import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.layout.DEFAULT_LISTING_DETAIL_LAYOUT
+import three.two.bit.ppt.reality.layout.LayoutRepository
+import three.two.bit.ppt.reality.layout.ResolvedLayoutScreen
 import three.two.bit.ppt.reality.listing.*
 import three.two.bit.ppt.reality.util.isNetworkError
 
@@ -47,6 +49,12 @@ import three.two.bit.ppt.reality.util.isNetworkError
  * as flows (E2 / F2) that live in screens-extension.jsx and aren't fully re-mocked here.
  *
  * Epic 48 - Story 48.2: Portal Mobile Listing View.
+ *
+ * Task 3 (layout dispatch): screen state now starts at [DEFAULT_LISTING_DETAIL_LAYOUT] and fetches
+ * the server-resolved layout once on entry via [LayoutRepository]. Section rendering is delegated
+ * to [ListingSectionRegistry]. The layout fetch is kept in this composable (not in the ViewModel)
+ * because it is screen-level infrastructure orthogonal to listing data / favorites / inquiry state
+ * already owned by [ListingDetailViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -95,6 +103,14 @@ fun ListingDetailScreen(
         }
     }
 
+    // Layout state — starts at the compiled default and settles once on entry after the
+    // server responds. LayoutRepository.getListingDetailLayout() never throws (see Task 2).
+    // Keyed on listingId so navigating to a different listing triggers a fresh fetch.
+    var layout by
+        remember(listingId) { mutableStateOf<ResolvedLayoutScreen>(DEFAULT_LISTING_DETAIL_LAYOUT) }
+    val layoutRepository = remember { LayoutRepository() }
+    LaunchedEffect(listingId) { layout = layoutRepository.getListingDetailLayout() }
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
             state.isLoading ->
@@ -107,6 +123,7 @@ fun ListingDetailScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     ListingContent(
                         listing = state.listing!!,
+                        layout = layout,
                         isFavorite = state.isFavorite,
                         onBackClick = onBackClick,
                         onShareClick = viewModel::onShowShareSheet,
