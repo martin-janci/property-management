@@ -1578,6 +1578,23 @@
   },
   "layout": {
     "placeholderTitle": "Abschnitt nicht verfügbar",
-    "placeholderBody": "Dieser Abschnitt ist vorübergehend nicht verfügbar."
+    "placeholderBody": "Dieser Abschnitt ist vorübergehend nicht verfügbar.",
+    "customize": {
+      "title": "Dashboard anpassen",
+      "back": "Zurück zum Dashboard",
+      "save": "Speichern",
+      "reset": "Standard wiederherstellen",
+      "resetConfirm": "Alle Anpassungen auf das Standardlayout zurücksetzen? Änderungen gehen verloren, bis Sie sie speichern.",
+      "notPublished": "Es wurde noch kein Layout veröffentlicht. Veröffentlichen Sie ein Layout, um Anpassungen zu ermöglichen.",
+      "saveSuccess": "Layout erfolgreich gespeichert.",
+      "saveError": "Layout konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+      "loadError": "Layout-Einstellungen konnten nicht geladen werden.",
+      "hidden": "Ausgeblendet",
+      "hide": "Abschnitt ausblenden",
+      "show": "Abschnitt anzeigen",
+      "moveUp": "Nach oben verschieben",
+      "moveDown": "Nach unten verschieben",
+      "mode": "Anzeigemodus"
+    }
   }
 }

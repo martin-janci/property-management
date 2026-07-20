@@ -1557,6 +1557,23 @@
   },
   "layout": {
     "placeholderTitle": "Sekcja niedostępna",
-    "placeholderBody": "Ta sekcja jest tymczasowo niedostępna."
+    "placeholderBody": "Ta sekcja jest tymczasowo niedostępna.",
+    "customize": {
+      "title": "Dostosuj pulpit",
+      "back": "Wróć do pulpitu",
+      "save": "Zapisz",
+      "reset": "Przywróć domyślne",
+      "resetConfirm": "Przywrócić wszystkie dostosowania do domyślnego układu? Zmiany zostaną utracone do momentu zapisania.",
+      "notPublished": "Nie opublikowano jeszcze żadnego układu. Opublikuj układ, aby umożliwić dostosowanie.",
+      "saveSuccess": "Układ został pomyślnie zapisany.",
+      "saveError": "Nie udało się zapisać układu. Spróbuj ponownie.",
+      "loadError": "Nie udało się załadować ustawień układu.",
+      "hidden": "Ukryte",
+      "hide": "Ukryj sekcję",
+      "show": "Pokaż sekcję",
+      "moveUp": "Przesuń w górę",
+      "moveDown": "Przesuń w dół",
+      "mode": "Tryb wyświetlania"
+    }
   }
 }

@@ -45,6 +45,13 @@ const SessionsPage = lazy(() =>
   import('../../features/settings/pages/SessionsPage').then((m) => ({ default: m.SessionsPage }))
 );
 
+// Dashboard customize page (layout tenant-editor, Task 4) — lazy-loaded.
+const DashboardCustomizePage = lazy(() =>
+  import('../../features/layout/DashboardCustomizePage').then((m) => ({
+    default: m.DashboardCustomizePage,
+  }))
+);
+
 // Integrations settings page (Gap 83-1 — Airbnb OAuth & Sync) — lazy-loaded.
 const IntegrationsPage = lazy(() =>
   import('../../features/settings').then((m) => ({ default: m.IntegrationsPage }))
@@ -159,6 +166,16 @@ export function dashboardRoutes() {
       <Route path="/dashboard" element={<Navigate to="/dashboard/manager" replace />} />
       <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
       <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
+      {/* Dashboard layout customisation (Task 4, layout tenant-editor plan).
+          Org-admin / super-admin only. */}
+      <Route
+        path="/dashboard/customize"
+        element={
+          <ProtectedRoute requiredRoles={['org_admin', 'super_admin']}>
+            <DashboardCustomizePage />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

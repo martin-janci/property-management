@@ -1687,6 +1687,23 @@
   },
   "layout": {
     "placeholderTitle": "Sekcia nedostupná",
-    "placeholderBody": "Táto sekcia je dočasne nedostupná."
+    "placeholderBody": "Táto sekcia je dočasne nedostupná.",
+    "customize": {
+      "title": "Prispôsobiť nástenkú",
+      "back": "Späť na nástenku",
+      "save": "Uložiť",
+      "reset": "Obnoviť predvolené",
+      "resetConfirm": "Obnoviť všetky úpravy na predvolené rozloženie? Zmeny budú stratené, kým ich neuložíte.",
+      "notPublished": "Zatiaľ nebolo zverejnené žiadne rozloženie. Zverejnite rozloženie, aby ste mohli upravovať.",
+      "saveSuccess": "Rozloženie bolo úspešne uložené.",
+      "saveError": "Uloženie rozloženia zlyhalo. Skúste to znova.",
+      "loadError": "Načítanie nastavení rozloženia zlyhalo.",
+      "hidden": "Skryté",
+      "hide": "Skryť sekciu",
+      "show": "Zobraziť sekciu",
+      "moveUp": "Presunúť nahor",
+      "moveDown": "Presunúť nadol",
+      "mode": "Režim zobrazenia"
+    }
   }
 }

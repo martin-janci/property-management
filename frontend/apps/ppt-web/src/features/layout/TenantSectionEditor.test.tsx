@@ -285,6 +285,43 @@ describe('Scenario 5: whitelisted prop input', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Scenario 5b: external override reset remounts PropInput (carried finding)
+// ---------------------------------------------------------------------------
+
+describe('Scenario 5b: external reset clears PropInput value', () => {
+  it('shows empty input after override is reset to {} via rerender', () => {
+    const { rerender } = render(
+      <TenantSectionEditor
+        baseSections={[{ type: 'hero' }]}
+        rails={propRails}
+        manifest={null}
+        override={{ sections: { hero: { props: { limit: 42 } } } }}
+        onChange={vi.fn()}
+      />
+    );
+
+    // Confirm initial value shown
+    const inputBefore = screen.getByRole('textbox', { name: 'limit' }) as HTMLInputElement;
+    expect(inputBefore.value).toBe('42');
+
+    // External reset: override → {}
+    rerender(
+      <TenantSectionEditor
+        baseSections={[{ type: 'hero' }]}
+        rails={propRails}
+        manifest={null}
+        override={{}}
+        onChange={vi.fn()}
+      />
+    );
+
+    // After remount the input should show placeholder/empty (no override value)
+    const inputAfter = screen.getByRole('textbox', { name: 'limit' }) as HTMLInputElement;
+    expect(inputAfter.value).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Scenario 6: override.order drives row order
 // ---------------------------------------------------------------------------
 

@@ -9,19 +9,32 @@
 
 import { useResolvedLayout } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { LayoutRenderer } from '../../layout/LayoutRenderer';
 import { DEFAULT_DASHBOARD_LAYOUT, dashboardRegistry } from '../../layout/registry';
 import './ManagerDashboardPage.css';
 
+const CUSTOMIZE_ROLES = ['org_admin', 'super_admin'] as const;
+
 export function ManagerDashboardPage() {
   const { t } = useTranslation();
   const { data: layout } = useResolvedLayout('ppt/dashboard');
+  const { user } = useAuth();
+
+  const canCustomize =
+    user?.role != null && (CUSTOMIZE_ROLES as readonly string[]).includes(user.role);
 
   return (
     <div className="dashboard-page">
       <header className="dashboard-page__header">
         <h1 className="dashboard-page__title">{t('dashboard.managerDashboard')}</h1>
         <p className="dashboard-page__subtitle">{t('dashboard.managerWelcome')}</p>
+        {canCustomize && (
+          <Link to="/dashboard/customize" className="dashboard-page__customize-link">
+            {t('layout.customize.title')}
+          </Link>
+        )}
       </header>
 
       <LayoutRenderer layout={layout ?? DEFAULT_DASHBOARD_LAYOUT} registry={dashboardRegistry} />

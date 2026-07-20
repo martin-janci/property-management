@@ -232,17 +232,26 @@ export function TenantSectionEditor({
                   </select>
                 )}
 
-                {/* Whitelisted prop inputs */}
-                {propWhitelist.map((propName) => (
-                  <PropInput
-                    key={propName}
-                    type={type}
-                    propName={propName}
-                    currentValue={(override.sections?.[type]?.props ?? base.props ?? {})[propName]}
-                    override={override}
-                    onChange={onChange}
-                  />
-                ))}
+                {/* Whitelisted prop inputs.
+                    Key includes the serialized current external value so that
+                    an external reset (override → {}) causes remount and
+                    PropInput reflects the new (empty) value rather than
+                    keeping stale internal state from useState. */}
+                {propWhitelist.map((propName) => {
+                  const currentValue = (override.sections?.[type]?.props ?? base.props ?? {})[
+                    propName
+                  ];
+                  return (
+                    <PropInput
+                      key={`${type}:${propName}:${JSON.stringify(currentValue) ?? ''}`}
+                      type={type}
+                      propName={propName}
+                      currentValue={currentValue}
+                      override={override}
+                      onChange={onChange}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
