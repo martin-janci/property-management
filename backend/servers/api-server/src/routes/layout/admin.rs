@@ -378,9 +378,8 @@ pub async fn preview_resolve(
     })?;
 
     // Parse and validate the submitted config.
-    let config: layout_core::ScreenConfig =
-        serde_json::from_value(req.config.clone())
-            .map_err(|e| bad_request(vec![format!("invalid ScreenConfig: {e}")]))?;
+    let config: layout_core::ScreenConfig = serde_json::from_value(req.config.clone())
+        .map_err(|e| bad_request(vec![format!("invalid ScreenConfig: {e}")]))?;
 
     // Parse platform string — mirror resolved.rs's parse_platform exactly.
     let platform = super::resolved::parse_platform(Some(req.platform.as_str()))
@@ -408,9 +407,8 @@ pub async fn preview_resolve(
                 errors: vec!["no registry manifest for platform".into()],
             }),
         ))?;
-    let manifest: layout_core::RegistryManifest =
-        serde_json::from_value(manifest_row.manifest)
-            .map_err(|e| bad_request(vec![format!("stored manifest invalid: {e}")]))?;
+    let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
+        .map_err(|e| bad_request(vec![format!("stored manifest invalid: {e}")]))?;
 
     let kills: std::collections::BTreeSet<layout_core::SectionType> = repo
         .list_kills(&mut **conn, &config.screen)
