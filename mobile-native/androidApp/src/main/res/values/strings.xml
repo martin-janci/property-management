@@ -412,6 +412,7 @@
     <string name="send_feedback">Send Feedback</string>
 
     <!-- Listing Detail Screen -->
+    <string name="detail_section_unavailable">Sekcia nie je dostupná</string>
     <string name="detail_stat_area">Area</string>
     <string name="detail_stat_built">Built</string>
     <string name="detail_stat_energy">Energy</string>

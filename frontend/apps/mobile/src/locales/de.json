@@ -450,5 +450,9 @@
     "errorRoleRequired": "Bitte geben Sie einen Rollennamen ein.",
     "errorPasswordTooShort": "Das Passwort muss mindestens 4 Zeichen lang sein.",
     "errorInvalidDays": "Bitte geben Sie eine gultige Anzahl von Tagen ein."
+  },
+  "layout": {
+    "placeholderTitle": "Abschnitt nicht verfügbar",
+    "placeholderBody": "Dieser Abschnitt ist derzeit nicht verfügbar."
   }
 }
