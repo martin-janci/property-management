@@ -30,6 +30,9 @@ export function layoutTagsFor(screen: string): string[] | null {
 /** Max accepted clock skew (seconds) between the signed timestamp and now. */
 const TOLERANCE_SECS = 300;
 
+/** Maximum accepted body size, in bytes (16 KiB). */
+const MAX_BODY_BYTES = 16 * 1024;
+
 /** Parse a strict base-10 integer unix-seconds timestamp, or null if malformed. */
 export function parseWebhookTimestamp(raw: string | null): number | null {
   if (raw === null) return null;
@@ -61,8 +64,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'disabled' }, { status: 503 });
   }
 
-  // 2. Read raw body FIRST — signature is over the raw bytes
+  // 2. Read raw body FIRST — signature is over the raw bytes. Cap the size
+  // BEFORE any verification work so an oversized body cannot force an
+  // unbounded HMAC/JSON pass on an unauthenticated request.
   const rawBody = await request.text();
+  if (Buffer.byteLength(rawBody, 'utf8') > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'body too large' }, { status: 413 });
+  }
 
   // 3. Replay protection (issue #2485): require a fresh signed timestamp.
   // Reject a missing/malformed timestamp, or one outside the ±TOLERANCE_SECS

@@ -36,7 +36,7 @@ describe('getResolvedLayout', () => {
     expect(options.next?.tags).toEqual(['layout:listing-detail']);
   });
 
-  it('passes both host-scoped and global tags when host is provided', async () => {
+  it('passes only the global tag when host is provided (host tag family was never revalidated)', async () => {
     const host = 'example.rlt.sk';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -51,9 +51,46 @@ describe('getResolvedLayout', () => {
     vi.stubGlobal('fetch', fetchMock);
     await getResolvedLayout(host);
     const [, options] = fetchMock.mock.calls[0] as [string, { next?: { tags?: string[] } }];
-    expect(options.next?.tags).toContain(`host:${host}:layout:listing-detail`);
-    expect(options.next?.tags).toContain('layout:listing-detail');
-    expect(options.next?.tags).toHaveLength(2);
+    expect(options.next?.tags).toEqual(['layout:listing-detail']);
+  });
+
+  it('drops malformed elements (null / non-object / missing string type) instead of crashing', async () => {
+    const payload = {
+      screen: 'reality/listing-detail',
+      version: 3,
+      sections: [
+        null,
+        42,
+        'string',
+        { presentation: 'visible' },
+        { type: 7, presentation: 'visible' },
+        { type: 'gallery.v1', presentation: 'visible' },
+      ],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    );
+    const result = await getResolvedLayout(null);
+    expect(result.sections).toEqual([{ type: 'gallery.v1', presentation: 'visible' }]);
+  });
+
+  it('clamps sections to 100 entries', async () => {
+    const payload = {
+      screen: 'reality/listing-detail',
+      version: 3,
+      sections: Array.from({ length: 150 }, (_, i) => ({
+        type: `s${i}`,
+        presentation: 'visible',
+      })),
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    );
+    const result = await getResolvedLayout(null);
+    expect(result.sections).toHaveLength(100);
+    expect(result.sections[99]?.type).toBe('s99');
   });
 
   it('falls back to the default layout on non-2xx', async () => {

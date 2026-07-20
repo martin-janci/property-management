@@ -113,8 +113,12 @@ describe('buildHeaderEntries — with layout preview origins', () => {
 
   it('carve-out entry (second) has layoutPreview query condition', () => {
     const carveOut = entries[1];
-    expect(carveOut.source).toBe('/:path*');
     expect(carveOut.has).toEqual([{ type: 'query', key: 'layoutPreview', value: '1' }]);
+  });
+
+  it('carve-out entry is scoped to listing-detail routes only', () => {
+    const carveOut = entries[1];
+    expect(carveOut.source).toBe('/:locale/listings/:slug');
   });
 
   it('carve-out CSP uses configured frame-ancestors', () => {
