@@ -49,7 +49,7 @@ export interface Props {
 // ---------------------------------------------------------------------------
 
 function buildSrc(rawUrl: string): string {
-  const url = new URL(rawUrl);
+  const url = new URL(rawUrl, window.location.href);
   url.searchParams.set('layoutPreview', '1');
   url.searchParams.set('parentOrigin', window.location.origin);
   return url.toString();
@@ -82,8 +82,11 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
   const [urlError, setUrlError] = useState<string | null>(null);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
-  // Whether we have received a "ready" from the child
-  const [isReady, setIsReady] = useState(false);
+  // Bumped on EVERY "ready" from the child (0 = no ready received yet).
+  // A boolean would no-op on a repeated ready (iframe reload) and leave the
+  // reloaded frame without a config push (stale preview); the nonce makes the
+  // resolve effect re-run for each ready.
+  const [readyNonce, setReadyNonce] = useState(0);
 
   // Refs
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -106,7 +109,7 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
     }
     // When screen changes, drop the loaded URL and bridge
     setPreviewUrl(null);
-    setIsReady(false);
+    setReadyNonce(0);
     setUrlError(null);
     setResolveError(null);
   }, [screen]);
@@ -128,14 +131,14 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
     // Dispose any existing bridge
     bridgeRef.current?.dispose();
     bridgeRef.current = null;
-    setIsReady(false);
+    setReadyNonce(0);
     setResolveError(null);
 
     const bridge = connectPreviewParent({
       childWindow: () => iframeRef.current?.contentWindow ?? null,
       childOrigin,
       onReady: () => {
-        setIsReady(true);
+        setReadyNonce((n) => n + 1);
       },
       onSectionClick: (sectionType: string) => {
         onSectionSelectedRef.current(sectionType);
@@ -151,11 +154,12 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
   }, [previewUrl]);
 
   // -------------------------------------------------------------------------
-  // Debounced resolve: fires on ready + draft/platform changes
+  // Debounced resolve: fires on ready (every ready — readyNonce covers iframe
+  // reloads) + draft/platform changes
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    if (!isReady || !previewUrl) return;
+    if (readyNonce === 0 || !previewUrl) return;
 
     if (debounceRef.current !== null) {
       clearTimeout(debounceRef.current);
@@ -183,7 +187,7 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
         debounceRef.current = null;
       }
     };
-  }, [isReady, draft, platform, token, previewUrl, t]);
+  }, [readyNonce, draft, platform, token, previewUrl, t]);
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -204,12 +208,24 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
     // Validate URL
     let parsed: URL;
     try {
-      parsed = new URL(urlInput.trim());
-      void parsed; // ensure it doesn't throw
+      parsed = new URL(urlInput.trim(), window.location.href);
     } catch {
       setUrlError(
         t('admin.layout.preview.invalidUrl', {
           defaultValue: 'Please enter a valid URL (e.g. http://localhost:3001)',
+        })
+      );
+      setPreviewUrl(null);
+      return;
+    }
+
+    // Reject same-origin preview URLs — the iframe sandbox combines
+    // allow-same-origin + allow-scripts, which would let a same-origin frame
+    // reach into this document and escape the sandbox entirely.
+    if (parsed.origin === window.location.origin) {
+      setUrlError(
+        t('admin.layout.preview.sameOriginUrl', {
+          defaultValue: 'Preview URL must be a different origin than the admin app.',
         })
       );
       setPreviewUrl(null);

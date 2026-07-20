@@ -364,6 +364,66 @@ describe('Scenario 8: props textarea resyncs on external sections change', () =>
 });
 
 // ---------------------------------------------------------------------------
+// Scenario 9 — duplicate section types (possible via rollback/server data)
+// ---------------------------------------------------------------------------
+
+describe('Scenario 9: duplicate section types are addressed per-row (by index)', () => {
+  const DUP_SECTIONS: SectionConfig[] = [
+    { type: 'faq.v1', visible: true, props: { slot: 'first' } },
+    { type: 'faq.v1', visible: true, props: { slot: 'second' } },
+  ];
+
+  it('renders one row per entry even when types collide', () => {
+    render(<SectionTreeEditor {...buildProps({ sections: DUP_SECTIONS })} />);
+    expect(screen.getAllByTestId('props-textarea-faq.v1')).toHaveLength(2);
+  });
+
+  it('toggling visibility on the second copy only affects that copy', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<SectionTreeEditor {...buildProps({ sections: DUP_SECTIONS, onChange })} />);
+
+    const eyeButtons = screen.getAllByTestId('hide-btn-faq.v1');
+    expect(eyeButtons).toHaveLength(2);
+    await user.click(eyeButtons[1]);
+
+    expect(onChange).toHaveBeenCalledOnce();
+    const next: SectionConfig[] = onChange.mock.calls[0][0];
+    expect(next[0].visible).toBe(true);
+    expect(next[1].visible).toBe(false);
+  });
+
+  it('editing props on the first copy only affects that copy', () => {
+    const onChange = vi.fn();
+    render(<SectionTreeEditor {...buildProps({ sections: DUP_SECTIONS, onChange })} />);
+
+    const textareas = screen.getAllByTestId('props-textarea-faq.v1');
+    fireEvent.focus(textareas[0]);
+    fireEvent.change(textareas[0], { target: { value: '{"slot":"edited"}' } });
+    fireEvent.blur(textareas[0]);
+
+    expect(onChange).toHaveBeenCalledOnce();
+    const next: SectionConfig[] = onChange.mock.calls[0][0];
+    expect(next[0].props).toEqual({ slot: 'edited' });
+    expect(next[1].props).toEqual({ slot: 'second' });
+  });
+
+  it('removing the first copy keeps the second', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<SectionTreeEditor {...buildProps({ sections: DUP_SECTIONS, onChange })} />);
+
+    const removeButtons = screen.getAllByTestId('remove-btn-faq.v1');
+    await user.click(removeButtons[0]);
+
+    expect(onChange).toHaveBeenCalledOnce();
+    const next: SectionConfig[] = onChange.mock.calls[0][0];
+    expect(next).toHaveLength(1);
+    expect(next[0].props).toEqual({ slot: 'second' });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Scenario 7 — unknown-type warning badge
 // ---------------------------------------------------------------------------
 

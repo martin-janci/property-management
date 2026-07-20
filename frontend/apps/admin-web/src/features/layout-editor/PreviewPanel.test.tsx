@@ -301,6 +301,78 @@ describe('PreviewPanel', () => {
   });
 
   /**
+   * Test 5b: Repeated ready (iframe reload) re-pushes the config.
+   */
+  it('Test 5b: a repeated ready re-pushes the config to the reloaded frame', async () => {
+    vi.mocked(previewResolve).mockResolvedValue(RESOLVED);
+
+    const user = userEvent.setup();
+    renderPanel();
+
+    const urlInput = screen.getByTestId('preview-url-input') as HTMLInputElement;
+    await user.clear(urlInput);
+    await user.type(urlInput, VALID_URL);
+    await user.click(screen.getByTestId('preview-load-btn'));
+
+    expect(capturedOpts).toBeTruthy();
+    await act(async () => {
+      capturedOpts!.onReady();
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+    await waitFor(() => {
+      expect(mockSendConfig).toHaveBeenCalledTimes(1);
+    });
+
+    // The child reloads and sends ready again — the config must be re-pushed
+    // (previously this no-oped because isReady was already true).
+    await act(async () => {
+      capturedOpts!.onReady();
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+    await waitFor(() => {
+      expect(mockSendConfig).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  /**
+   * Test 5c: Same-origin preview URL is rejected with an inline error.
+   */
+  it('Test 5c: same-origin preview URL shows inline error and does not load', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const urlInput = screen.getByTestId('preview-url-input') as HTMLInputElement;
+    await user.clear(urlInput);
+    await user.type(urlInput, `${window.location.origin}/dashboard`);
+    await user.click(screen.getByTestId('preview-load-btn'));
+
+    const errorEl = screen.queryByTestId('preview-url-error');
+    expect(errorEl).toBeTruthy();
+    expect(errorEl?.textContent).toContain('different origin');
+    expect(screen.queryByTestId('preview-iframe')).toBeNull();
+  });
+
+  /**
+   * Test 5d: Relative preview URL resolves same-origin and is rejected too.
+   */
+  it('Test 5d: relative preview URL is rejected as same-origin', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const urlInput = screen.getByTestId('preview-url-input') as HTMLInputElement;
+    await user.clear(urlInput);
+    await user.type(urlInput, '/dashboard');
+    await user.click(screen.getByTestId('preview-load-btn'));
+
+    expect(screen.queryByTestId('preview-url-error')).toBeTruthy();
+    expect(screen.queryByTestId('preview-iframe')).toBeNull();
+  });
+
+  /**
    * Test 6: Invalid URL shows inline error, no iframe rendered.
    */
   it('Test 6: invalid URL shows inline error, no iframe', async () => {

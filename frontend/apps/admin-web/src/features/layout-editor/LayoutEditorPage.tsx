@@ -107,6 +107,7 @@ export default function LayoutEditorPage() {
     queryKey: ['admin', 'platform', 'layout', 'screens'],
     queryFn: () => listScreens(token),
     staleTime: 30_000,
+    enabled: Boolean(token),
   });
 
   const configQuery = useQuery({
@@ -132,7 +133,7 @@ export default function LayoutEditorPage() {
         throw err;
       }
     },
-    enabled: Boolean(selectedScreen),
+    enabled: Boolean(selectedScreen) && Boolean(token),
     staleTime: 0,
   });
 
@@ -140,6 +141,7 @@ export default function LayoutEditorPage() {
     queryKey: ['admin', 'platform', 'layout', 'manifests'],
     queryFn: () => listManifests(token),
     staleTime: 60_000,
+    enabled: Boolean(token),
   });
 
   // -------------------------------------------------------------------------
@@ -614,7 +616,12 @@ export default function LayoutEditorPage() {
               </button>
             </div>
 
+            {/* Key on screen + reseedEpoch: a rollback (epoch bump) or screen
+                switch remounts the editor, clearing any in-flight editing slot
+                so a focused textarea's onBlur can't commit stale text onto the
+                reseeded data. */}
             <SectionTreeEditor
+              key={`${selectedScreen}:${reseedEpoch}`}
               sections={localDraft.sections}
               manifest={activeManifest}
               kills={kills}
@@ -650,7 +657,9 @@ export default function LayoutEditorPage() {
               </button>
             </div>
 
+            {/* Same reseed-remount discipline as SectionTreeEditor above. */}
             <RailsEditor
+              key={`${selectedScreen}:${reseedEpoch}`}
               rails={localRails}
               sectionTypes={sectionTypes}
               onChange={handleRailsChange}
@@ -682,14 +691,30 @@ export default function LayoutEditorPage() {
             )}
 
             <div style={ROW_STYLE}>
+              {/* Publish also stays disabled while a draft/rails save is in
+                  flight — publishing mid-save would race the server state. */}
               <button
                 type="button"
                 style={{
                   ...BTN_PRIMARY,
-                  opacity: publishMutation.isPending ? 0.6 : 1,
-                  cursor: publishMutation.isPending ? 'not-allowed' : 'pointer',
+                  opacity:
+                    publishMutation.isPending ||
+                    saveDraftMutation.isPending ||
+                    saveRailsMutation.isPending
+                      ? 0.6
+                      : 1,
+                  cursor:
+                    publishMutation.isPending ||
+                    saveDraftMutation.isPending ||
+                    saveRailsMutation.isPending
+                      ? 'not-allowed'
+                      : 'pointer',
                 }}
-                disabled={publishMutation.isPending}
+                disabled={
+                  publishMutation.isPending ||
+                  saveDraftMutation.isPending ||
+                  saveRailsMutation.isPending
+                }
                 onClick={() => publishMutation.mutate()}
                 data-testid="publish-btn"
               >

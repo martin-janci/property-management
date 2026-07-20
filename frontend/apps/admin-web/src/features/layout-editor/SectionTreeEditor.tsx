@@ -58,10 +58,12 @@ export function SectionTreeEditor({
   const { t } = useTranslation();
 
   // Local state: in-flight props edit for the one section currently being edited.
-  // When null (or type doesn't match), the textarea derives its value from the
+  // Addressed by INDEX (not type): duplicate types — possible via rollback or
+  // server data — would otherwise make edits hit all copies at once.
+  // When null (or index doesn't match), the textarea derives its value from the
   // sections prop — so external updates (draft reload, rollback) always win.
   const [editingProps, setEditingProps] = useState<{
-    type: string;
+    index: number;
     text: string;
     error: boolean;
   } | null>(null);
@@ -110,36 +112,40 @@ export function SectionTreeEditor({
     onChange(next);
   }
 
-  function toggleVisible(type: string) {
-    onChange(sections.map((s) => (s.type === type ? { ...s, visible: !(s.visible ?? true) } : s)));
+  function toggleVisible(index: number) {
+    onChange(sections.map((s, i) => (i === index ? { ...s, visible: !(s.visible ?? true) } : s)));
   }
 
-  function changeMode(type: string, mode: string) {
-    onChange(sections.map((s) => (s.type === type ? { ...s, mode } : s)));
+  function changeMode(index: number, mode: string) {
+    onChange(sections.map((s, i) => (i === index ? { ...s, mode } : s)));
   }
 
-  function handlePropsFocus(type: string, section: SectionConfig) {
-    // Start editing: seed text from prop (or current in-flight text if already editing this type)
-    if (editingProps?.type !== type) {
-      setEditingProps({ type, text: JSON.stringify(section.props ?? {}, null, 2), error: false });
+  function removeAt(index: number) {
+    onChange(sections.filter((_, i) => i !== index));
+  }
+
+  function handlePropsFocus(index: number, section: SectionConfig) {
+    // Start editing: seed text from prop (or current in-flight text if already editing this row)
+    if (editingProps?.index !== index) {
+      setEditingProps({ index, text: JSON.stringify(section.props ?? {}, null, 2), error: false });
     }
   }
 
-  function handlePropsChange(type: string, text: string) {
-    setEditingProps({ type, text, error: false });
+  function handlePropsChange(index: number, text: string) {
+    setEditingProps({ index, text, error: false });
   }
 
-  function commitProps(type: string) {
+  function commitProps(index: number) {
     const raw =
-      editingProps?.type === type
+      editingProps?.index === index
         ? editingProps.text
-        : JSON.stringify(sections.find((s) => s.type === type)?.props ?? {}, null, 2);
+        : JSON.stringify(sections[index]?.props ?? {}, null, 2);
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       setEditingProps(null);
-      onChange(sections.map((s) => (s.type === type ? { ...s, props: parsed } : s)));
+      onChange(sections.map((s, i) => (i === index ? { ...s, props: parsed } : s)));
     } catch {
-      setEditingProps((prev) => (prev?.type === type ? { ...prev, error: true } : prev));
+      setEditingProps((prev) => (prev?.index === index ? { ...prev, error: true } : prev));
     }
   }
 
@@ -195,7 +201,7 @@ export function SectionTreeEditor({
         const killed = isKilled(type);
         const unknown = isUnknown(type);
         const supportedModes = component?.supported_modes;
-        const isEditingThis = editingProps?.type === type;
+        const isEditingThis = editingProps?.index === idx;
         const hasPropsError = isEditingThis && editingProps.error;
         const currentPropsText = isEditingThis
           ? editingProps.text
@@ -205,7 +211,9 @@ export function SectionTreeEditor({
 
         return (
           <div
-            key={type}
+            // Keyed by index: duplicate types (possible via rollback/server
+            // data) would otherwise produce duplicate React keys.
+            key={idx}
             ref={(el) => {
               rowRefs.current[type] = el;
             }}
@@ -249,7 +257,7 @@ export function SectionTreeEditor({
                   type="button"
                   style={btnStyle('ghost')}
                   data-testid={`hide-btn-${type}`}
-                  onClick={() => toggleVisible(type)}
+                  onClick={() => toggleVisible(idx)}
                   title={
                     (section.visible ?? true)
                       ? t('admin.layout.hideSection', { defaultValue: 'Hide section' })
@@ -287,7 +295,7 @@ export function SectionTreeEditor({
                   type="button"
                   style={btnStyle('secondary')}
                   data-testid={`remove-btn-${type}`}
-                  onClick={() => onChange(sections.filter((s) => s.type !== type))}
+                  onClick={() => removeAt(idx)}
                 >
                   {t('admin.layout.removeBtn', { defaultValue: 'Remove' })}
                 </button>
@@ -324,7 +332,7 @@ export function SectionTreeEditor({
                   <select
                     data-testid={`mode-select-${type}`}
                     value={section.mode ?? component?.default_mode ?? supportedModes[0]}
-                    onChange={(e) => changeMode(type, e.target.value)}
+                    onChange={(e) => changeMode(idx, e.target.value)}
                     style={{ ...SELECT_STYLE, marginLeft: 6 }}
                   >
                     {supportedModes.map((m) => (
@@ -345,9 +353,9 @@ export function SectionTreeEditor({
               <textarea
                 data-testid={`props-textarea-${type}`}
                 value={currentPropsText}
-                onFocus={() => handlePropsFocus(type, section)}
-                onChange={(e) => handlePropsChange(type, e.target.value)}
-                onBlur={() => commitProps(type)}
+                onFocus={() => handlePropsFocus(idx, section)}
+                onChange={(e) => handlePropsChange(idx, e.target.value)}
+                onBlur={() => commitProps(idx)}
                 style={{
                   ...TEXTAREA_STYLE,
                   borderColor: hasPropsError
