@@ -19,6 +19,43 @@ describe('getResolvedLayout', () => {
     await expect(getResolvedLayout(null)).resolves.toEqual(payload);
   });
 
+  it('passes only global tag when host is null', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          screen: 'reality/listing-detail',
+          version: 1,
+          sections: [],
+        }),
+        { status: 200 }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await getResolvedLayout(null);
+    const [, options] = fetchMock.mock.calls[0] as [string, { next?: { tags?: string[] } }];
+    expect(options.next?.tags).toEqual(['layout:listing-detail']);
+  });
+
+  it('passes both host-scoped and global tags when host is provided', async () => {
+    const host = 'example.rlt.sk';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          screen: 'reality/listing-detail',
+          version: 1,
+          sections: [],
+        }),
+        { status: 200 }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await getResolvedLayout(host);
+    const [, options] = fetchMock.mock.calls[0] as [string, { next?: { tags?: string[] } }];
+    expect(options.next?.tags).toContain(`host:${host}:layout:listing-detail`);
+    expect(options.next?.tags).toContain('layout:listing-detail');
+    expect(options.next?.tags).toHaveLength(2);
+  });
+
   it('falls back to the default layout on non-2xx', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 404 })));
     await expect(getResolvedLayout(null)).resolves.toEqual(DEFAULT_LISTING_DETAIL_LAYOUT);
