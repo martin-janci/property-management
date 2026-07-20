@@ -54,6 +54,9 @@ over `grep -r <noun> backend/`.
   `api-server/src/routes/layout/` (admin + tenant + resolved) and
   `reality-server/src/routes/layout.rs` (public resolved).
   Spec: `docs/superpowers/specs/2026-07-19-layout-content-manager-design.md`.
+  Frontend: `ppt-web/src/features/layout/` + `reality-web/src/lib/layout.ts` +
+  `reality-web/src/components/listings/LayoutSections.tsx` (registries, defensive
+  renderers, checked-in web manifests for PUT /platform-admin/layout/manifests).
 - `api-core` — Axum extractors, auth middleware, OpenAPI (utoipa), CORS/tracing.
 - `db` — SQLx pool, models, **~101 repositories** in `src/repositories/`, migrations (~177 sql files).
 - `integrations` — external API clients (Airbnb, Booking.com, portals).

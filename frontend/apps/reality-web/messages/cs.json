@@ -663,5 +663,9 @@
     "emptyTitle": "Zatím žádná cenová upozornění",
     "emptyText": "Upozorníme vás zde, když se změní ceny vašich oblíbených nabídek.",
     "goToFavorites": "Přejít na oblíbené"
+  },
+  "layout": {
+    "placeholderTitle": "Načítání sekce",
+    "placeholderBody": "Tato sekce momentálně není dostupná."
   }
 }

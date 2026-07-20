@@ -1575,5 +1575,9 @@
       "notOpen": "Diese Signaturanfrage ist nicht mehr zur Unterschrift geöffnet.",
       "generic": "Beim Laden dieser Signaturanfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Abschnitt nicht verfügbar",
+    "placeholderBody": "Dieser Abschnitt ist vorübergehend nicht verfügbar."
   }
 }

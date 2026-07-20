@@ -12,6 +12,7 @@
 import type { ListingDetail } from '@ppt/reality-api-client';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { ResolvedScreen } from '../../lib/layout';
 import { ListingDetailContent } from './ListingDetailContent';
 
 // ContactForm (rendered in the sidebar) uses a TanStack Query mutation hook.
@@ -91,5 +92,27 @@ describe('ListingDetailContent', () => {
     const empty: ListingDetail = { ...validListing, features: {}, photos: [] };
     expect(() => render(<ListingDetailContent listing={empty} />)).not.toThrow();
     expect(screen.getByText('Beautiful Apartment')).toBeInTheDocument();
+  });
+
+  it('hides features.v1 and shows placeholder for gallery.v1 when layout says so', () => {
+    const layout: ResolvedScreen = {
+      screen: 'reality/listing-detail',
+      version: 1,
+      sections: [
+        { type: 'gallery.v1', presentation: 'placeholder' },
+        { type: 'listing-header.v1', presentation: 'visible' },
+        { type: 'key-details.v1', presentation: 'visible' },
+        { type: 'description.v1', presentation: 'visible' },
+        // features.v1 omitted entirely
+        { type: 'additional-info.v1', presentation: 'visible' },
+        { type: 'resources.v1', presentation: 'visible' },
+        { type: 'agent-contact.v1', presentation: 'visible' },
+      ],
+    };
+    render(<ListingDetailContent listing={validListing} layout={layout} />);
+    // features section is absent
+    expect(screen.queryByText('features')).not.toBeInTheDocument();
+    // placeholder renders (role="status")
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 });

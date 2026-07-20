@@ -663,5 +663,9 @@
     "emptyTitle": "Noch keine Preisbenachrichtigungen",
     "emptyText": "Wir benachrichtigen Sie hier, wenn sich die Preise Ihrer Favoriten ändern.",
     "goToFavorites": "Favoriten ansehen"
+  },
+  "layout": {
+    "placeholderTitle": "Abschnitt wird geladen",
+    "placeholderBody": "Dieser Abschnitt ist gerade nicht verfügbar."
   }
 }

@@ -1548,5 +1548,9 @@
       "notOpen": "Ez az aláírási kérelem már nem nyitott aláírásra.",
       "generic": "Hiba történt az aláírási kérelem betöltése közben. Kérjük, próbálja újra."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Szakasz nem elérhető",
+    "placeholderBody": "Ez a szakasz ideiglenesen nem elérhető."
   }
 }

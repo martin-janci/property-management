@@ -1684,5 +1684,9 @@
       "notOpen": "Táto žiadosť o podpis už nie je otvorená na podpisovanie.",
       "generic": "Pri načítavaní tejto žiadosti o podpis sa vyskytla chyba. Skúste to znova."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Sekcia nedostupná",
+    "placeholderBody": "Táto sekcia je dočasne nedostupná."
   }
 }

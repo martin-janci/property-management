@@ -13,6 +13,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ListingDetailContent } from '@/components/listings';
+import { getResolvedLayout } from '@/lib/layout';
 import { buildListingJsonLd } from './jsonLd';
 import { parseListingDetail } from './listingSchema';
 import { buildListingMetadata } from './metadata';
@@ -102,7 +103,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const host = await resolveHost();
-  const listing = await getListing(slug, host);
+  const [listing, layout] = await Promise.all([getListing(slug, host), getResolvedLayout(host)]);
 
   // A missing / malformed listing must emit a real HTTP 404, not a 200 with
   // "not found" markup: this is a public, SEO-indexed portal, and a soft-404
@@ -118,5 +119,5 @@ export default async function ListingDetailPage({ params }: PageProps) {
   // can dereference required fields directly.
   const jsonLd = buildListingJsonLd(listing);
 
-  return <ListingDetailContent listing={listing} jsonLd={jsonLd} />;
+  return <ListingDetailContent listing={listing} jsonLd={jsonLd} layout={layout} />;
 }

@@ -1682,5 +1682,9 @@
       "notOpen": "Tento požadavek na podpis již není otevřen k podpisu.",
       "generic": "Při načítání tohoto požadavku na podpis došlo k chybě. Zkuste to prosím znovu."
     }
+  },
+  "layout": {
+    "placeholderTitle": "Sekce nedostupná",
+    "placeholderBody": "Tato sekce je dočasně nedostupná."
   }
 }

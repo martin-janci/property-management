@@ -1,0 +1,13 @@
+{
+  "platform": "web",
+  "components": {
+    "additional-info.v1": { "required": false },
+    "agent-contact.v1": { "required": false },
+    "description.v1": { "required": false },
+    "features.v1": { "required": false },
+    "gallery.v1": { "required": true },
+    "key-details.v1": { "required": false },
+    "listing-header.v1": { "required": true },
+    "resources.v1": { "required": false }
+  }
+}

@@ -663,5 +663,9 @@
     "emptyTitle": "No price alerts yet",
     "emptyText": "We'll notify you here when prices change on your favorite listings.",
     "goToFavorites": "Browse favorites"
+  },
+  "layout": {
+    "placeholderTitle": "Section loading",
+    "placeholderBody": "This section is not available right now."
   }
 }

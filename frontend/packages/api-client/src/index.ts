@@ -41,6 +41,7 @@ export * from './government-portal';
 export * from './granular-notifications';
 export * from './integrations';
 export * from './iot';
+export * from './layout';
 export * from './leases';
 // Shared authenticated-fetch error type — carries HTTP `status` so callers can
 // branch on 401/403 (see `./lib/fetch`).
