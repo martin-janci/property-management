@@ -1,5 +1,5 @@
 /**
- * next-config-headers.ts
+ * next-config-headers.js
  *
  * Extracted header-building logic from next.config.js so it can be unit-tested
  * without importing Next.js plugins or workspace packages.
@@ -7,22 +7,19 @@
  * Called by next.config.js; exported for tests.
  */
 
-export interface HeaderEntry {
-  key: string;
-  value: string;
-}
+'use strict';
 
-export interface RouteHeaderEntry {
-  source: string;
-  has?: Array<{ type: string; key: string; value: string }>;
-  headers: HeaderEntry[];
-}
+/**
+ * @typedef {{ key: string; value: string }} HeaderEntry
+ */
 
-export interface BuildHeaderEntriesOptions {
-  isDev: boolean;
-  connectSrcOrigins: Set<string>;
-  layoutPreviewOrigins: string;
-}
+/**
+ * @typedef {{ source: string; has?: Array<{ type: string; key: string; value: string }>; headers: HeaderEntry[] }} RouteHeaderEntry
+ */
+
+/**
+ * @typedef {{ isDev: boolean; connectSrcOrigins: Set<string>; layoutPreviewOrigins: string }} BuildHeaderEntriesOptions
+ */
 
 /**
  * Build the Next.js `headers()` return value.
@@ -34,12 +31,11 @@ export interface BuildHeaderEntriesOptions {
  *   XFO cannot express allowlists). Next.js applies all matching entries cumulatively with
  *   last-wins for duplicate header keys, so placing the carve-out entry AFTER the blanket
  *   causes its CSP value to win.
+ *
+ * @param {BuildHeaderEntriesOptions} options
+ * @returns {RouteHeaderEntry[]}
  */
-export function buildHeaderEntries({
-  isDev,
-  connectSrcOrigins,
-  layoutPreviewOrigins,
-}: BuildHeaderEntriesOptions): RouteHeaderEntry[] {
+function buildHeaderEntries({ isDev, connectSrcOrigins, layoutPreviewOrigins }) {
   const scriptSrc = ["'self'", "'unsafe-inline'"];
   if (isDev) {
     scriptSrc.push("'unsafe-eval'");
@@ -60,7 +56,8 @@ export function buildHeaderEntries({
     "object-src 'none'",
   ].join('; ');
 
-  const blanketHeaders: HeaderEntry[] = [
+  /** @type {HeaderEntry[]} */
+  const blanketHeaders = [
     { key: 'Content-Security-Policy', value: blanketCsp },
     { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
     { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -72,7 +69,8 @@ export function buildHeaderEntries({
     { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   ];
 
-  const entries: RouteHeaderEntry[] = [
+  /** @type {RouteHeaderEntry[]} */
+  const entries = [
     {
       source: '/:path*',
       headers: blanketHeaders,
@@ -116,3 +114,5 @@ export function buildHeaderEntries({
 
   return entries;
 }
+
+module.exports = { buildHeaderEntries };

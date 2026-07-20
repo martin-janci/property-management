@@ -1,5 +1,6 @@
 const createNextIntlPlugin = require('next-intl/plugin');
 const { detectWorktree } = require('@ppt/vite-plugin-worktree/detect');
+const { buildHeaderEntries } = require('./next-config-headers');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -40,60 +41,12 @@ if (isDev) {
   connectSrcOrigins.add('ws://127.0.0.1:*');
 }
 
-// Security headers applied to every route.
-//
-// `script-src 'unsafe-inline'`: Next.js 14 injects a small inline
-// bootstrapper (NEXT_DATA, React hydration stubs) that is not nonced by
-// default in the App Router. Removing `'unsafe-inline'` breaks hydration.
-// Follow-up is to introduce a middleware-generated per-request nonce and
-// attach it via `<Script nonce={...}>` for every first-party script, then
-// drop `'unsafe-inline'`. Tracked as a deferred item on PR #176.
-//
-// `style-src 'unsafe-inline'`: Next.js CSS-in-JS + next-intl inject inline
-// `<style>` blocks; same nonce migration will cover them.
-//
-// `'unsafe-eval'` (dev only): Next.js 14 Fast Refresh runtime
-// (`@next/react-refresh-utils/runtime`) evaluates hot-updated module code via
-// `eval()`. Without it, the dev bundle throws EvalError on first paint, the
-// client never hydrates, and styled-jsx never injects component CSS — the
-// page is left with only globals.css and looks completely unstyled. Production
-// builds don't ship react-refresh, so the prod CSP is unaffected.
-const scriptSrc = ["'self'", "'unsafe-inline'"];
-if (isDev) {
-  scriptSrc.push("'unsafe-eval'");
-}
-const securityHeaders = [
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      `script-src ${scriptSrc.join(' ')}`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      `connect-src ${Array.from(connectSrcOrigins).join(' ')}`,
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "object-src 'none'",
-    ].join('; '),
-  },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  {
-    key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
-  },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-];
-
 // ---------------------------------------------------------------------------
 // Layout Preview Bridge — env-gated frame-ancestors carve-out
 //
 // The admin layout editor embeds reality-web pages in an iframe to provide a
-// live preview of layout changes. By default the security headers above deny
-// all framing (`frame-ancestors 'none'` / `X-Frame-Options: DENY`).
+// live preview of layout changes. By default the security headers deny all
+// framing (`frame-ancestors 'none'` / `X-Frame-Options: DENY`).
 //
 // To allow the admin panel to embed specific pages, set:
 //
@@ -119,6 +72,8 @@ const securityHeaders = [
 // browsers that support CSP frame-ancestors ignore XFO when CSP is present.
 // Omitting XFO from the override lets the blanket entry's `DENY` be
 // superseded solely by the CSP frame-ancestors value from the carve-out.
+//
+// Header-building logic lives in ./next-config-headers.js (tested separately).
 // ---------------------------------------------------------------------------
 
 const layoutPreviewOrigins = (process.env.LAYOUT_PREVIEW_FRAME_ANCESTORS || '').trim();
@@ -167,56 +122,7 @@ const nextConfig = {
   },
 
   async headers() {
-    const entries = [
-      // Blanket entry — applied to every route. Listed FIRST so that the
-      // carve-out entry (when present) can overwrite same-key headers via
-      // Next.js last-wins semantics.
-      {
-        source: '/:path*',
-        headers: securityHeaders,
-      },
-    ];
-
-    if (layoutPreviewOrigins) {
-      // Carve-out entry — only matched when ?layoutPreview=1 is present.
-      // Applied AFTER the blanket entry so its CSP frame-ancestors value
-      // overwrites the blanket `frame-ancestors 'none'`. X-Frame-Options is
-      // deliberately excluded (see comment block above).
-      const previewCsp = [
-        "default-src 'self'",
-        `script-src ${scriptSrc.join(' ')}`,
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob: https:",
-        "font-src 'self' data:",
-        `connect-src ${Array.from(connectSrcOrigins).join(' ')}`,
-        `frame-ancestors ${layoutPreviewOrigins}`,
-        "base-uri 'self'",
-        "form-action 'self'",
-        "object-src 'none'",
-      ].join('; ');
-
-      entries.push({
-        source: '/:path*',
-        has: [{ type: 'query', key: 'layoutPreview', value: '1' }],
-        headers: [
-          { key: 'Content-Security-Policy', value: previewCsp },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          // X-Frame-Options intentionally omitted — cannot express allowlists;
-          // CSP frame-ancestors supersedes it in all modern browsers.
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-        ],
-      });
-    }
-
-    return entries;
+    return buildHeaderEntries({ isDev, connectSrcOrigins, layoutPreviewOrigins });
   },
 
   // Rewrite /api/* to the prod reality-server when running on a *.dev.rlt.sk

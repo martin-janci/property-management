@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { buildHeaderEntries } from './next-config-headers';
+import { buildHeaderEntries } from '../../next-config-headers.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
