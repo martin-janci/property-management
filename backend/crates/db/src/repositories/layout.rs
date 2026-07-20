@@ -5,6 +5,22 @@ use crate::models::layout::{
 use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
+/// Failure modes of [`LayoutRepository::publish`].
+///
+/// `DraftChanged` is the optimistic-concurrency signal: the draft the caller
+/// validated no longer matches the stored draft (a concurrent draft PUT won
+/// the race), so publishing it would ship an unvalidated config. Callers
+/// should surface this as a retryable conflict (HTTP 409).
+#[derive(Debug, thiserror::Error)]
+pub enum LayoutPublishError {
+    #[error("unknown screen")]
+    ScreenNotFound,
+    #[error("draft changed during publish")]
+    DraftChanged,
+    #[error(transparent)]
+    Sqlx(#[from] SqlxError),
+}
+
 /// Stateless repository for the layout control plane. Global tables
 /// (configs/versions/kills/manifests) are platform-admin-owned and carry no
 /// RLS — call them with the unscoped pool. `layout_tenant_overrides` is
@@ -103,12 +119,18 @@ impl LayoutRepository {
     /// Publish the current draft: draft → published, version += 1, snapshot the
     /// version row. Runs in a transaction on the given connection.
     /// Kill flags are intentionally untouched (spec §5).
+    ///
+    /// TOCTOU guard: `expected_draft` is the draft value the caller validated.
+    /// The UPDATE only fires when the stored draft still equals it (jsonb
+    /// equality); if the screen exists but the draft changed concurrently, the
+    /// caller gets [`LayoutPublishError::DraftChanged`] and must re-validate.
     pub async fn publish(
         &self,
         conn: &mut PgConnection,
         screen: &str,
+        expected_draft: &serde_json::Value,
         published_by: Option<Uuid>,
-    ) -> Result<LayoutConfigRow, SqlxError> {
+    ) -> Result<LayoutConfigRow, LayoutPublishError> {
         let mut tx = sqlx::Connection::begin(conn).await?;
         let row = sqlx::query_as::<_, LayoutConfigRow>(
             "UPDATE layout_configs
@@ -116,15 +138,30 @@ impl LayoutRepository {
                  published_version = published_version + 1,
                  updated_by = $2,
                  updated_at = now()
-             WHERE screen = $1
+             WHERE screen = $1 AND draft = $3
              RETURNING id, screen, draft, published, published_version, rails, updated_by,
                        created_at, updated_at",
         )
         .bind(screen)
         .bind(published_by)
+        .bind(expected_draft)
         .fetch_optional(&mut *tx)
-        .await?
-        .ok_or(SqlxError::RowNotFound)?;
+        .await?;
+        let Some(row) = row else {
+            // 0 rows: either the screen doesn't exist (404) or the draft
+            // changed under us (409). Disambiguate inside the same tx.
+            let exists =
+                sqlx::query_scalar::<_, i32>("SELECT 1 FROM layout_configs WHERE screen = $1")
+                    .bind(screen)
+                    .fetch_optional(&mut *tx)
+                    .await?
+                    .is_some();
+            return Err(if exists {
+                LayoutPublishError::DraftChanged
+            } else {
+                LayoutPublishError::ScreenNotFound
+            });
+        };
         sqlx::query(
             "INSERT INTO layout_config_versions (screen, version, config, published_by)
              VALUES ($1, $2, $3, $4)",

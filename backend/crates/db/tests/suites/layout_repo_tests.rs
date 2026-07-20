@@ -58,7 +58,7 @@ async fn publish_snapshots_versions_and_rollback_restores(pool: PgPool) {
         .unwrap();
 
     let published = repo
-        .publish(&mut conn, "ppt/dashboard", None)
+        .publish(&mut conn, "ppt/dashboard", &v1, None)
         .await
         .unwrap();
     assert_eq!(published.published_version, 1);
@@ -70,7 +70,7 @@ async fn publish_snapshots_versions_and_rollback_restores(pool: PgPool) {
         .await
         .unwrap();
     let published2 = repo
-        .publish(&mut conn, "ppt/dashboard", None)
+        .publish(&mut conn, "ppt/dashboard", &v2, None)
         .await
         .unwrap();
     assert_eq!(published2.published_version, 2);
@@ -99,15 +99,66 @@ async fn publish_snapshots_versions_and_rollback_restores(pool: PgPool) {
         .unwrap();
     assert_eq!(versions.len(), 3);
 
-    // unknown screen / version → RowNotFound
+    // unknown screen / version → not-found errors
     assert!(matches!(
-        repo.publish(&mut conn, "no/such-screen", None).await,
-        Err(sqlx::Error::RowNotFound)
+        repo.publish(&mut conn, "no/such-screen", &v1, None).await,
+        Err(db::repositories::LayoutPublishError::ScreenNotFound)
     ));
     assert!(matches!(
         repo.rollback(&mut conn, "ppt/dashboard", 99, None).await,
         Err(sqlx::Error::RowNotFound)
     ));
+}
+
+/// TOCTOU guard: publishing with a stale expected draft (a concurrent draft
+/// PUT changed it after validation) must fail with `DraftChanged` and leave
+/// published state and version history untouched.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn publish_with_stale_draft_is_rejected(pool: PgPool) {
+    let repo = LayoutRepository::new();
+    let mut conn = pool.acquire().await.unwrap();
+
+    let validated = json!({"screen": "ppt/dashboard", "version": 0,
+                           "sections": [{"type": "kpi.v1"}]});
+    repo.upsert_draft(&mut *conn, "ppt/dashboard", &validated, None)
+        .await
+        .unwrap();
+
+    // Concurrent editor swaps the draft between validation and publish.
+    let sneaky = json!({"screen": "ppt/dashboard", "version": 0,
+                        "sections": [{"type": "evil.v1"}]});
+    repo.upsert_draft(&mut *conn, "ppt/dashboard", &sneaky, None)
+        .await
+        .unwrap();
+
+    // Publish guarded by the previously validated draft → DraftChanged.
+    assert!(matches!(
+        repo.publish(&mut conn, "ppt/dashboard", &validated, None)
+            .await,
+        Err(db::repositories::LayoutPublishError::DraftChanged)
+    ));
+
+    // Nothing was published, no version snapshot recorded.
+    let cfg = repo
+        .get_config(&mut *conn, "ppt/dashboard")
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(cfg.published, None);
+    assert_eq!(cfg.published_version, 0);
+    assert!(repo
+        .list_versions(&mut *conn, "ppt/dashboard")
+        .await
+        .unwrap()
+        .is_empty());
+
+    // Publishing the CURRENT draft still works.
+    let ok = repo
+        .publish(&mut conn, "ppt/dashboard", &sneaky, None)
+        .await
+        .unwrap();
+    assert_eq!(ok.published_version, 1);
+    assert_eq!(ok.published, Some(sneaky));
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
