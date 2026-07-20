@@ -308,7 +308,7 @@ describe('LayoutEditorPage', () => {
 
     // Save Draft should be enabled (dirty flag set)
     const saveDraftBtn = screen.getByTestId('save-draft-btn');
-    expect(saveDraftBtn).not.toBeDisabled();
+    expect((saveDraftBtn as HTMLButtonElement).disabled).toBe(false);
 
     // Simulate background refetch — invalidation triggers a new network fetch,
     // but since epoch and screen haven't changed, the seed effect must NOT fire.
@@ -317,7 +317,7 @@ describe('LayoutEditorPage', () => {
     });
 
     // Dirty flag must still be set and Save Draft still enabled
-    expect(screen.getByTestId('save-draft-btn')).not.toBeDisabled();
+    expect((screen.getByTestId('save-draft-btn') as HTMLButtonElement).disabled).toBe(false);
 
     // The Hero toggle button still has the 'Show section' title (visible=false after toggle)
     // — the seed effect must NOT have fired and reset it to visible=true.

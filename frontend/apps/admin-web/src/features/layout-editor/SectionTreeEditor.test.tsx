@@ -66,10 +66,10 @@ describe('Scenario 1: required vs optional sections', () => {
     render(<SectionTreeEditor {...buildProps()} />);
 
     // gallery.v1 is required → lock badge present
-    expect(screen.getByTestId('lock-badge-gallery.v1')).toBeInTheDocument();
+    expect(screen.getByTestId('lock-badge-gallery.v1')).toBeTruthy();
 
     // no hide/eye control at all for the required section row
-    expect(screen.queryByTestId('hide-btn-gallery.v1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('hide-btn-gallery.v1')).toBeNull();
   });
 
   it('shows eye toggle for optional section; clicking calls onChange with visible:false', async () => {
@@ -109,8 +109,8 @@ describe('Scenario 2: reorder via ↑/↓ buttons', () => {
   it('↑ is disabled on first section, ↓ is disabled on last section', () => {
     render(<SectionTreeEditor {...buildProps()} />);
 
-    expect(screen.getByTestId('move-up-gallery.v1')).toBeDisabled();
-    expect(screen.getByTestId('move-down-faq.v1')).toBeDisabled();
+    expect((screen.getByTestId('move-up-gallery.v1') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId('move-down-faq.v1') as HTMLButtonElement).disabled).toBe(true);
   });
 });
 
@@ -123,11 +123,11 @@ describe('Scenario 3: mode select', () => {
     render(<SectionTreeEditor {...buildProps()} />);
 
     // gallery.v1 has no supported_modes → no select
-    expect(screen.queryByTestId('mode-select-gallery.v1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mode-select-gallery.v1')).toBeNull();
 
     // faq.v1 has supported_modes → select present with the manifest options
     const select = screen.getByTestId('mode-select-faq.v1') as HTMLSelectElement;
-    expect(select).toBeInTheDocument();
+    expect(select).toBeTruthy();
     const options = Array.from(select.options).map((o) => o.value);
     expect(options).toContain('accordion');
     expect(options).toContain('list');
@@ -162,7 +162,7 @@ describe('Scenario 4: props textarea', () => {
     fireEvent.change(textarea, { target: { value: 'NOT JSON {{{' } });
     fireEvent.blur(textarea);
 
-    expect(screen.getByTestId('props-error-faq.v1')).toBeInTheDocument();
+    expect(screen.getByTestId('props-error-faq.v1')).toBeTruthy();
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -174,7 +174,7 @@ describe('Scenario 4: props textarea', () => {
     fireEvent.change(textarea, { target: { value: '{"foo":"bar"}' } });
     fireEvent.blur(textarea);
 
-    expect(screen.queryByTestId('props-error-faq.v1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('props-error-faq.v1')).toBeNull();
     expect(onChange).toHaveBeenCalledOnce();
     const next: SectionConfig[] = onChange.mock.calls[0][0];
     const faqRow = next.find((s) => s.type === 'faq.v1');
@@ -190,16 +190,16 @@ describe('Scenario 5: killed badge and kill/unkill', () => {
   it('killed section shows killed badge and Unkill button', () => {
     render(<SectionTreeEditor {...buildProps({ kills: ['faq.v1'] })} />);
 
-    expect(screen.getByTestId('killed-badge-faq.v1')).toBeInTheDocument();
-    expect(screen.getByTestId('unkill-btn-faq.v1')).toBeInTheDocument();
-    expect(screen.queryByTestId('kill-btn-faq.v1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('killed-badge-faq.v1')).toBeTruthy();
+    expect(screen.getByTestId('unkill-btn-faq.v1')).toBeTruthy();
+    expect(screen.queryByTestId('kill-btn-faq.v1')).toBeNull();
   });
 
   it('un-killed section shows Kill button (not killed badge)', () => {
     render(<SectionTreeEditor {...buildProps({ kills: [] })} />);
 
-    expect(screen.queryByTestId('killed-badge-faq.v1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kill-btn-faq.v1')).toBeInTheDocument();
+    expect(screen.queryByTestId('killed-badge-faq.v1')).toBeNull();
+    expect(screen.getByTestId('kill-btn-faq.v1')).toBeTruthy();
   });
 
   it('clicking Kill (confirm mocked true) calls onKill with the type', async () => {
@@ -354,7 +354,7 @@ describe('Scenario 8: props textarea resyncs on external sections change', () =>
     fireEvent.blur(textarea);
 
     // No error shown
-    expect(screen.queryByTestId('props-error-promo.v1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('props-error-promo.v1')).toBeNull();
     // onChange called with valid empty props ({}), not suppressed
     expect(onChange).toHaveBeenCalledOnce();
     const next: SectionConfig[] = onChange.mock.calls[0][0];
@@ -375,13 +375,13 @@ describe('Scenario 7: unknown-type warning badge', () => {
     ];
     render(<SectionTreeEditor {...buildProps({ sections: sectionsWithUnknown })} />);
 
-    expect(screen.getByTestId('unknown-badge-mystery.v9')).toBeInTheDocument();
+    expect(screen.getByTestId('unknown-badge-mystery.v9')).toBeTruthy();
   });
 
   it('does NOT show warning badge for known types', () => {
     render(<SectionTreeEditor {...buildProps()} />);
 
-    expect(screen.queryByTestId('unknown-badge-gallery.v1')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('unknown-badge-faq.v1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('unknown-badge-gallery.v1')).toBeNull();
+    expect(screen.queryByTestId('unknown-badge-faq.v1')).toBeNull();
   });
 });
