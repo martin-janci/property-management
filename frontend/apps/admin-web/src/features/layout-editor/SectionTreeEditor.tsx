@@ -14,7 +14,7 @@
  */
 
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Manifest, SectionConfig } from './api';
 
@@ -29,6 +29,7 @@ interface Props {
   onChange: (next: SectionConfig[]) => void;
   onKill: (type: string) => void;
   onUnkill: (type: string) => void;
+  highlightType?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,6 +173,7 @@ export function SectionTreeEditor({
   onChange,
   onKill,
   onUnkill,
+  highlightType,
 }: Props) {
   const { t } = useTranslation();
 
@@ -186,6 +188,16 @@ export function SectionTreeEditor({
 
   // Add-section select state
   const [addType, setAddType] = useState('');
+
+  // Refs for each row — used to scroll to the highlighted row
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Scroll highlighted row into view when highlightType changes
+  useEffect(() => {
+    if (!highlightType) return;
+    const el = rowRefs.current[highlightType];
+    el?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+  }, [highlightType]);
 
   // -------------------------------------------------------------------------
   // Helpers
@@ -309,8 +321,22 @@ export function SectionTreeEditor({
           ? editingProps.text
           : JSON.stringify(section.props ?? {}, null, 2);
 
+        const isHighlighted = highlightType === type;
+
         return (
-          <div key={type} style={ROW_STYLE}>
+          <div
+            key={type}
+            ref={(el) => {
+              rowRefs.current[type] = el;
+            }}
+            data-testid={`section-row-${type}`}
+            style={{
+              ...ROW_STYLE,
+              ...(isHighlighted
+                ? { outline: '2px solid var(--ppt-primary-600, #2563eb)', outlineOffset: 2 }
+                : {}),
+            }}
+          >
             {/* Header row */}
             <div style={ROW_HEADER_STYLE}>
               {/* Type label */}

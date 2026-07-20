@@ -182,3 +182,20 @@ export function putManifest(token: string | null, platform: string, manifest: Ma
     body: JSON.stringify({ platform, manifest }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Preview resolve
+// ---------------------------------------------------------------------------
+
+import type { ResolvedScreenLike } from '@ppt/shared';
+
+export function previewResolve(
+  token: string | null,
+  config: ScreenConfig,
+  platform: 'web' | 'mobile'
+): Promise<ResolvedScreenLike> {
+  return request(token, '/preview-resolve', {
+    method: 'POST',
+    body: JSON.stringify({ config, platform }),
+  });
+}
