@@ -108,8 +108,10 @@ struct ListingDetailView: View {
 
                     // locationSection (map) is UNMANAGED — always rendered after
                     // all managed sections, regardless of layout order.
-                    // A divider precedes it when at least one managed section rendered.
-                    Divider()
+                    // A divider precedes it only when a managed section rendered.
+                    if !buildRenderPlan().isEmpty {
+                        Divider()
+                    }
                     locationSection(listing)
                 }
                 .padding()
@@ -134,7 +136,10 @@ struct ListingDetailView: View {
     /// Builds the ordered render plan from the resolved layout, skipping no-ops
     /// and computing `needsDivider` for each slot up-front.
     private func buildRenderPlan() -> [(slot: LayoutSlot, needsDivider: Bool)] {
-        let sections = layout.sections as? [ResolvedLayoutSection] ?? (LayoutDefaults.shared.listingDetail.sections as? [ResolvedLayoutSection] ?? [])
+        // Kotlin List<ResolvedLayoutSection> bridges as a typed Swift array —
+        // no cast needed (see DependencyContainer's KMP consumers). The @State
+        // seed guarantees this is never empty-by-accident.
+        let sections = layout.sections
         var plan: [(slot: LayoutSlot, needsDivider: Bool)] = []
         var didRenderManaged = false
 
