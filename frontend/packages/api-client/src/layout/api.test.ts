@@ -167,16 +167,9 @@ describe('saveTenantLayoutOverride', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    const promise = saveTenantLayoutOverride('ppt/dashboard', {});
-    await expect(promise).rejects.toThrow(TenantLayoutError);
-
-    try {
-      await saveTenantLayoutOverride('ppt/dashboard', {});
-    } catch (e) {
-      expect(e).toBeInstanceOf(TenantLayoutError);
-      const err = e as TenantLayoutError;
-      expect(err.status).toBe(422);
-      expect(err.errors).toEqual(['field x is required', 'invalid mode']);
-    }
+    const err = await saveTenantLayoutOverride('ppt/dashboard', {}).catch((e) => e);
+    expect(err).toBeInstanceOf(TenantLayoutError);
+    expect((err as TenantLayoutError).status).toBe(422);
+    expect((err as TenantLayoutError).errors).toEqual(['field x is required', 'invalid mode']);
   });
 });
