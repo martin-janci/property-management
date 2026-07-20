@@ -24,3 +24,17 @@ val DEFAULT_LISTING_DETAIL_LAYOUT =
                 ResolvedLayoutSection(type = "agent-contact.v1"),
             ),
     )
+
+/**
+ * Stable Swift-accessible accessor for compiled default layouts.
+ *
+ * Kotlin `object` declarations surface to Swift as `LayoutDefaults.shared`, providing a stable
+ * idiom (`LayoutDefaults.shared.listingDetail`) that survives Kotlin compiler renames of top-level
+ * `val` bindings (which surface as `DefaultLayoutKt.DEFAULT_LISTING_DETAIL_LAYOUT` — an
+ * implementation-detail name that breaks on refactor).
+ */
+object LayoutDefaults {
+    /** Default resolved layout for the listing-detail screen. */
+    val listingDetail: ResolvedLayoutScreen
+        get() = DEFAULT_LISTING_DETAIL_LAYOUT
+}

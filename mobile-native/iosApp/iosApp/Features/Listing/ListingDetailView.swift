@@ -12,7 +12,7 @@ import shared
 ///
 /// Section order and visibility are driven by the shared resolved layout
 /// (`ResolvedLayoutScreen`). The layout is seeded from the compiled default
-/// (`DefaultLayoutKt.DEFAULT_LISTING_DETAIL_LAYOUT`) and replaced at most once
+/// (`LayoutDefaults.shared.listingDetail`) and replaced at most once
 /// during the initial load — no mid-view swaps after content renders.
 ///
 /// Epic 82 - Story 82.4: Listing Detail and Favorites
@@ -32,7 +32,7 @@ struct ListingDetailView: View {
 
     /// Resolved layout seeded from the compiled default. Replaced at most once
     /// during `loadListing()` before `isLoading` flips to false.
-    @State private var layout: ResolvedLayoutScreen = DefaultLayoutKt.DEFAULT_LISTING_DETAIL_LAYOUT
+    @State private var layout: ResolvedLayoutScreen = LayoutDefaults.shared.listingDetail
 
     /// Derived from `FavoritesService` — always in sync with `FavoritesView`.
     private var isFavorite: Bool {
@@ -134,7 +134,7 @@ struct ListingDetailView: View {
     /// Builds the ordered render plan from the resolved layout, skipping no-ops
     /// and computing `needsDivider` for each slot up-front.
     private func buildRenderPlan() -> [(slot: LayoutSlot, needsDivider: Bool)] {
-        let sections = layout.sections as? [ResolvedLayoutSection] ?? []
+        let sections = layout.sections as? [ResolvedLayoutSection] ?? (LayoutDefaults.shared.listingDetail.sections as? [ResolvedLayoutSection] ?? [])
         var plan: [(slot: LayoutSlot, needsDivider: Bool)] = []
         var didRenderManaged = false
 
