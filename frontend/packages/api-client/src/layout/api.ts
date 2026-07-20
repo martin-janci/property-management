@@ -6,6 +6,7 @@
  * to their own DEFAULT_LAYOUT when this throws.
  */
 
+import { getOrg, getToken } from '../auth';
 import { authenticatedFetchJson } from '../lib/fetch';
 
 export interface ResolvedSection {
@@ -37,4 +38,116 @@ export async function fetchResolvedLayout(
     throw new Error('layout: malformed ResolvedScreen payload');
   }
   return data;
+}
+
+// ---------------------------------------------------------------------------
+// Tenant-override domain
+// ---------------------------------------------------------------------------
+
+export interface TenantSectionPatch {
+  visible?: boolean;
+  mode?: string;
+  props?: Record<string, unknown>;
+}
+
+export interface TenantOverride {
+  order?: string[];
+  sections?: Record<string, TenantSectionPatch>;
+}
+
+export interface LayoutRails {
+  hideable: string[];
+  mode_editable: string[];
+  reorderable: boolean;
+  prop_whitelist: Record<string, string[]>;
+}
+
+export interface ManifestComponent {
+  required?: boolean;
+  supported_modes?: string[];
+  default_mode?: string;
+}
+
+export interface LayoutManifest {
+  platform: string;
+  components: Record<string, ManifestComponent>;
+}
+
+export interface BaseSection {
+  type: string;
+  visible?: boolean;
+  mode?: string;
+  props?: Record<string, unknown>;
+}
+
+export interface TenantLayoutEnvelope {
+  override: { override_config: TenantOverride } | null;
+  rails: LayoutRails | Record<string, never>;
+  published: { sections: BaseSection[] } | null;
+  manifest: LayoutManifest | null;
+}
+
+export class TenantLayoutError extends Error {
+  status: number;
+  errors: string[];
+
+  constructor(status: number, errors: string[]) {
+    super(`TenantLayoutError: HTTP ${status}`);
+    this.name = 'TenantLayoutError';
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+/**
+ * Raw fetch helper for tenant-override endpoints.
+ * Adds Authorization + X-Tenant-ID headers; parses {errors} on non-2xx
+ * into TenantLayoutError. Must NOT use authenticatedFetchJson — it lacks
+ * the org header and swallows error bodies.
+ */
+async function tenantRequest<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
+  const org = getOrg();
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(org ? { 'X-Tenant-ID': org } : {}),
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    let errors: string[] = [];
+    try {
+      const body = await response.json();
+      if (Array.isArray(body?.errors)) {
+        errors = body.errors as string[];
+      }
+    } catch {
+      // body unparseable — leave errors as empty array
+    }
+    throw new TenantLayoutError(response.status, errors);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+/** Fetch the tenant layout envelope for a screen (GET). */
+export async function fetchTenantLayout(screen: string): Promise<TenantLayoutEnvelope> {
+  const params = new URLSearchParams({ screen });
+  return tenantRequest<TenantLayoutEnvelope>(`${API_BASE}/tenant-override?${params}`);
+}
+
+/** Save (PUT) a tenant layout override for a screen. Throws TenantLayoutError on non-2xx. */
+export async function saveTenantLayoutOverride(
+  screen: string,
+  override: TenantOverride
+): Promise<unknown> {
+  return tenantRequest<unknown>(`${API_BASE}/tenant-override`, {
+    method: 'PUT',
+    body: JSON.stringify({ screen, override_config: override }),
+  });
 }
