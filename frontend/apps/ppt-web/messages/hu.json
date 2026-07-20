@@ -1551,6 +1551,23 @@
   },
   "layout": {
     "placeholderTitle": "Szakasz nem elérhető",
-    "placeholderBody": "Ez a szakasz ideiglenesen nem elérhető."
+    "placeholderBody": "Ez a szakasz ideiglenesen nem elérhető.",
+    "customize": {
+      "title": "Műszerfal testreszabása",
+      "back": "Vissza a műszerfalhoz",
+      "save": "Mentés",
+      "reset": "Alapértelmezett visszaállítása",
+      "resetConfirm": "Visszaállítja az összes testreszabást az alapértelmezett elrendezésre? A változtatások elvesznek, amíg el nem menti őket.",
+      "notPublished": "Még nem lett közzétéve elrendezés. Tegyen közzé egy elrendezést a testreszabás engedélyezéséhez.",
+      "saveSuccess": "Az elrendezés sikeresen mentve.",
+      "saveError": "Az elrendezés mentése sikertelen. Kérjük, próbálja újra.",
+      "loadError": "Nem sikerült betölteni az elrendezés beállításait.",
+      "hidden": "Rejtett",
+      "hide": "Szakasz elrejtése",
+      "show": "Szakasz megjelenítése",
+      "moveUp": "Felfelé mozgatás",
+      "moveDown": "Lefelé mozgatás",
+      "mode": "Megjelenítési mód"
+    }
   }
 }

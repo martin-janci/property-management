@@ -11,7 +11,7 @@ use super::types::{PutTenantOverrideRequest, ScreenQuery, ValidationErrorsRespon
 
 #[utoipa::path(get, path = "/api/v1/layout/tenant-override", tag = "Layout",
     security(("bearer_auth" = [])), params(("screen" = String, Query, description = "Screen id")),
-    responses((status = 200, description = "Override + rails + published base for the org")))]
+    responses((status = 200, description = "Override + rails + published base + web manifest for the org")))]
 pub async fn get_tenant_override(
     State(state): State<AppState>,
     _auth: AuthUser,
@@ -62,10 +62,22 @@ pub async fn get_tenant_override(
                 errors: vec!["unknown screen".into()],
             }),
         ))?;
+    let manifest_row = repo
+        .get_manifest(&mut **pub_conn, "web")
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ValidationErrorsResponse {
+                    errors: vec![format!("db error: {e}")],
+                }),
+            )
+        })?;
     Ok(Json(serde_json::json!({
         "override": ov,
         "rails": cfg.rails,
         "published": cfg.published,
+        "manifest": manifest_row.map(|r| r.manifest),
     })))
 }
 

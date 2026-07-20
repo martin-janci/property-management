@@ -1,0 +1,298 @@
+/// <reference types="vitest/globals" />
+/**
+ * DashboardCustomizePage — TDD tests (Task 4).
+ *
+ * Five scenarios per the task brief:
+ *  1. Renders editor rows from the envelope's published sections.
+ *  2. Not-published envelope shows info panel, no editor.
+ *  3. Toggle → Save calls saveTenantLayoutOverride('ppt/dashboard', patch).
+ *  4. 422 errors render verbatim.
+ *  5. ManagerDashboardPage shows Customize link for org_admin, hides for resident.
+ */
+import type { TenantLayoutEnvelope } from '@ppt/api-client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ManagerDashboardPage } from '../dashboard/pages/ManagerDashboardPage';
+import { DashboardCustomizePage } from './DashboardCustomizePage';
+
+// ---------------------------------------------------------------------------
+// Shared mutable state — mutated per test, read by the mocks
+// ---------------------------------------------------------------------------
+
+let mockEnvelope: TenantLayoutEnvelope = {
+  override: null,
+  rails: { hideable: ['hero'], mode_editable: [], reorderable: false, prop_whitelist: {} },
+  published: {
+    sections: [
+      { type: 'hero', visible: true },
+      { type: 'stats', visible: true },
+    ],
+  },
+  manifest: null,
+};
+
+// mutateAsync is replaced per test
+let mockSaveImpl: ReturnType<typeof vi.fn> = vi.fn().mockResolvedValue({});
+
+let mockAuthRole = 'org_admin';
+
+// ---------------------------------------------------------------------------
+// Module mocks
+// ---------------------------------------------------------------------------
+
+vi.mock('@ppt/api-client', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useTenantLayout: vi.fn(() => ({
+      data: mockEnvelope,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    })),
+    useSaveTenantLayoutOverride: vi.fn(() => ({
+      mutateAsync: (...args: unknown[]) => mockSaveImpl(...args),
+      isPending: false,
+    })),
+    useResolvedLayout: vi.fn(() => ({ data: null, isLoading: false, isError: false })),
+    TenantLayoutError: class TenantLayoutError extends Error {
+      status: number;
+      errors: string[];
+      constructor(status: number, errors: string[]) {
+        super(`TenantLayoutError: HTTP ${status}`);
+        this.name = 'TenantLayoutError';
+        this.status = status;
+        this.errors = errors;
+      }
+    },
+  };
+});
+
+vi.mock('react-i18next', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useTranslation: () => ({ t: (key: string) => key }),
+  };
+});
+
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { role: mockAuthRole }, isAuthenticated: true })),
+}));
+
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { role: mockAuthRole }, isAuthenticated: true })),
+}));
+
+// Stub useActionQueue for ManagerDashboardPage
+vi.mock('../dashboard/hooks/useActionQueue', () => ({
+  useActionQueue: vi.fn(() => ({
+    items: [],
+    total: 0,
+    stats: { total: 0, urgent: 0, high: 0, medium: 0, low: 0 },
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+    dismissItem: vi.fn(),
+    handleAction: vi.fn(),
+    isExecuting: false,
+  })),
+}));
+
+// Stub ToastProvider
+vi.mock('../../components', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({ showToast: vi.fn() })),
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+afterEach(() => {
+  vi.clearAllMocks();
+  mockSaveImpl = vi.fn().mockResolvedValue({});
+  mockAuthRole = 'org_admin';
+});
+
+function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>
+        <DashboardCustomizePage />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
+function renderManagerDashboard() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Test 1: renders editor rows from the envelope's published sections
+// ---------------------------------------------------------------------------
+describe('Test 1: renders editor rows from published sections', () => {
+  it('shows a row for each published section type', async () => {
+    mockEnvelope = {
+      override: null,
+      rails: { hideable: ['hero'], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      published: {
+        sections: [
+          { type: 'hero', visible: true },
+          { type: 'stats', visible: true },
+        ],
+      },
+      manifest: null,
+    };
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('hero')).toBeInTheDocument();
+      expect(screen.getByText('stats')).toBeInTheDocument();
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 2: not-published envelope shows info panel and no editor
+// ---------------------------------------------------------------------------
+describe('Test 2: not-published envelope shows info panel, no editor', () => {
+  it('renders the not-published info panel when published is null', async () => {
+    mockEnvelope = {
+      override: null,
+      rails: { hideable: [], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      published: null,
+      manifest: null,
+    };
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('layout.customize.notPublished')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('hero')).toBeNull();
+  });
+
+  it('renders read-only rows when rails is empty object without crashing', async () => {
+    mockEnvelope = {
+      override: null,
+      rails: Object.create(null),
+      published: {
+        sections: [
+          { type: 'hero', visible: true },
+          { type: 'stats', visible: true },
+        ],
+      },
+      manifest: null,
+    };
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('hero')).toBeInTheDocument();
+      expect(screen.getByText('stats')).toBeInTheDocument();
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 3: toggle → Save calls saveTenantLayoutOverride
+// ---------------------------------------------------------------------------
+describe('Test 3: toggle → Save calls mutation', () => {
+  it('calls mutateAsync with patched override when Save is clicked after toggling', async () => {
+    const user = userEvent.setup();
+    mockSaveImpl = vi.fn().mockResolvedValue({});
+    mockEnvelope = {
+      override: null,
+      rails: { hideable: ['hero'], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      published: { sections: [{ type: 'hero', visible: true }] },
+      manifest: null,
+    };
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('hero')).toBeInTheDocument());
+
+    const toggle = screen.getByRole('button', { name: /layout\.customize\.(hide|show)/ });
+    await user.click(toggle);
+
+    const saveBtn = screen.getByRole('button', { name: 'layout.customize.save' });
+    expect(saveBtn).not.toBeDisabled();
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockSaveImpl).toHaveBeenCalledOnce();
+    });
+    const [calledWith] = mockSaveImpl.mock.calls[0] as [unknown];
+    expect(calledWith).toMatchObject({ sections: { hero: { visible: false } } });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 4: 422 errors render verbatim in role=alert list
+// ---------------------------------------------------------------------------
+describe('Test 4: 422 errors render verbatim', () => {
+  it('shows error list when mutateAsync rejects with TenantLayoutError', async () => {
+    const user = userEvent.setup();
+    const { TenantLayoutError } = await import('@ppt/api-client');
+    mockSaveImpl = vi
+      .fn()
+      .mockRejectedValue(new TenantLayoutError(422, ['Field X is invalid', 'Field Y missing']));
+    mockEnvelope = {
+      override: null,
+      rails: { hideable: ['hero'], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      published: { sections: [{ type: 'hero', visible: true }] },
+      manifest: null,
+    };
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('hero')).toBeInTheDocument());
+
+    const toggle = screen.getByRole('button', { name: /layout\.customize\.(hide|show)/ });
+    await user.click(toggle);
+    const saveBtn = screen.getByRole('button', { name: 'layout.customize.save' });
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      const alert = document.querySelector('[role="alert"]');
+      expect(alert).toBeInTheDocument();
+      expect(alert?.textContent).toContain('Field X is invalid');
+      expect(alert?.textContent).toContain('Field Y missing');
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 5: ManagerDashboardPage shows Customize link for org_admin, hides for resident
+// ---------------------------------------------------------------------------
+describe('Test 5: Customize link role-gated on ManagerDashboardPage', () => {
+  it('shows Customize link for org_admin', async () => {
+    mockAuthRole = 'org_admin';
+    renderManagerDashboard();
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'layout.customize.title' })).toBeInTheDocument();
+    });
+  });
+
+  it('hides Customize link for resident', async () => {
+    mockAuthRole = 'resident';
+    renderManagerDashboard();
+    // Give it a moment then assert absent
+    await waitFor(() => {
+      // Dashboard title should be visible (page rendered)
+      expect(screen.getByText('dashboard.managerDashboard')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('link', { name: 'layout.customize.title' })).toBeNull();
+  });
+});

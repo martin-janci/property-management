@@ -1685,6 +1685,23 @@
   },
   "layout": {
     "placeholderTitle": "Sekce nedostupná",
-    "placeholderBody": "Tato sekce je dočasně nedostupná."
+    "placeholderBody": "Tato sekce je dočasně nedostupná.",
+    "customize": {
+      "title": "Přizpůsobit nástěnku",
+      "back": "Zpět na nástěnku",
+      "save": "Uložit",
+      "reset": "Obnovit výchozí",
+      "resetConfirm": "Obnovit všechna přizpůsobení na výchozí rozložení? Změny budou ztraceny, dokud je neuložíte.",
+      "notPublished": "Zatím nebylo publikováno žádné rozložení. Publikujte rozložení, abyste mohli přizpůsobit.",
+      "saveSuccess": "Rozložení bylo úspěšně uloženo.",
+      "saveError": "Uložení rozložení se nezdařilo. Zkuste to znovu.",
+      "loadError": "Nepodařilo se načíst nastavení rozložení.",
+      "hidden": "Skryté",
+      "hide": "Skrýt sekci",
+      "show": "Zobrazit sekci",
+      "moveUp": "Přesunout nahoru",
+      "moveDown": "Přesunout dolů",
+      "mode": "Režim zobrazení"
+    }
   }
 }

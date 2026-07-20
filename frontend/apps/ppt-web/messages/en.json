@@ -3867,6 +3867,23 @@
   },
   "layout": {
     "placeholderTitle": "Section unavailable",
-    "placeholderBody": "This section is temporarily unavailable."
+    "placeholderBody": "This section is temporarily unavailable.",
+    "customize": {
+      "title": "Customize Dashboard",
+      "back": "Back to Dashboard",
+      "save": "Save",
+      "reset": "Reset to Default",
+      "resetConfirm": "Reset all customisations to the default layout? This cannot be undone until you save.",
+      "notPublished": "No layout has been published yet. Publish a layout to enable customisation.",
+      "saveSuccess": "Layout saved successfully.",
+      "saveError": "Failed to save layout. Please try again.",
+      "loadError": "Failed to load layout settings.",
+      "hidden": "Hidden",
+      "hide": "Hide section",
+      "show": "Show section",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "mode": "Display mode"
+    }
   }
 }

@@ -23,6 +23,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// Stub useAuth so the page doesn't throw outside an AuthProvider.
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { role: 'manager' }, isAuthenticated: true })),
+}));
+
 // Stub useActionQueue so the ActionQueue section renders without a QueryClient
 // hitting real network calls that would cascade errors.
 vi.mock('../../hooks/useActionQueue', () => ({
