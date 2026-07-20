@@ -143,6 +143,26 @@ export {
 } from './validation';
 
 // ============================================
+// Layout Preview Bridge Protocol
+// ============================================
+export {
+  LAYOUT_PREVIEW_KIND,
+  LAYOUT_PREVIEW_PROTOCOL,
+  // Functions
+  connectPreviewChild,
+  connectPreviewParent,
+  // Guards
+  isPreviewChildMessage,
+  isPreviewParentMessage,
+  // Types
+  type PreviewChildMessage,
+  type PreviewParentMessage,
+  readPreviewParams,
+  type ResolvedScreenLike,
+  type ResolvedSectionLike,
+} from './layout-preview';
+
+// ============================================
 // Shared Types
 // ============================================
 
