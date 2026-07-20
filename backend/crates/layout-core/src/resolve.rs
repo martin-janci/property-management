@@ -88,6 +88,10 @@ fn apply_patch(
 
 /// Listed types first (in override order), unlisted types after, keeping base
 /// relative order. Types in `order` that don't exist in base are ignored.
+/// Defensive: duplicate `order` entries are emitted only once (first
+/// occurrence wins), so stored-bad data can never duplicate sections in the
+/// resolved output — `validate_tenant_override` rejects duplicates at save
+/// time, this guards data that bypassed it.
 fn order_sections<'a>(
     base: &'a [SectionConfig],
     order: Option<&[SectionType]>,
@@ -96,13 +100,17 @@ fn order_sections<'a>(
         return base.iter().collect();
     };
     let mut out: Vec<&SectionConfig> = Vec::with_capacity(base.len());
+    let mut emitted = BTreeSet::new();
     for t in order {
+        if !emitted.insert(t) {
+            continue; // duplicate order entry — already emitted
+        }
         if let Some(cfg) = base.iter().find(|c| &c.section_type == t) {
             out.push(cfg);
         }
     }
     for cfg in base {
-        if !order.contains(&cfg.section_type) {
+        if !emitted.contains(&cfg.section_type) {
             out.push(cfg);
         }
     }
@@ -265,6 +273,29 @@ mod tests {
             .collect();
         // listed first, unlisted keep base relative order
         assert_eq!(types, vec!["b.v1", "a.v1", "c.v1"]);
+    }
+
+    #[test]
+    fn duplicate_order_entries_emit_each_section_once() {
+        // Stored-bad data: order repeats "a.v1" many times. Resolve must emit
+        // each section exactly once (first occurrence wins).
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("a.v1"), section("b.v1")],
+        };
+        let reg = registry(&[("a.v1", false, &[]), ("b.v1", false, &[])]);
+        let tenant = TenantOverride {
+            order: Some(vec![SectionType::from("a.v1"); 10]),
+            sections: BTreeMap::new(),
+        };
+        let out = resolve(&base, Platform::Web, Some(&tenant), &BTreeSet::new(), &reg);
+        let types: Vec<&str> = out
+            .sections
+            .iter()
+            .map(|s| s.section_type.0.as_str())
+            .collect();
+        assert_eq!(types, vec!["a.v1", "b.v1"]);
     }
 
     /// Finding 1a: if default_mode itself is not in supported_modes, clamp to None.
