@@ -416,20 +416,43 @@ describe('DashboardStatsSection stat arithmetic', () => {
 
 // ─── 4. manifest consistency ──────────────────────────────────────────────────
 
+// Drift guard: these keys must exactly match the supportedTypes list in
+// mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/listing/ListingSectionRegistry.kt
+// — documented duplication because KMP tests cannot read this JSON.
+const LISTING_DETAIL_COMPONENTS = [
+  'additional-info.v1',
+  'agent-contact.v1',
+  'description.v1',
+  'features.v1',
+  'gallery.v1',
+  'key-details.v1',
+  'listing-header.v1',
+  'resources.v1',
+].sort();
+
 describe('mobile-manifest consistency', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const manifest = require('./mobile-manifest.json') as {
+    platform: string;
+    components: Record<string, { required: boolean }>;
+  };
+
   it('dashboard types in manifest are all registered in dashboardRegistry', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const manifest = require('./mobile-manifest.json') as {
-      components: Array<{ type: string; required: boolean }>;
-    };
     const registryKeys = Object.keys(dashboardRegistry);
-    const dashboardManifestTypes = manifest.components
-      .filter((c) => c.type.startsWith('dashboard-') || c.type.startsWith('action-'))
-      .map((c) => c.type);
+    const dashboardManifestTypes = Object.keys(manifest.components).filter(
+      (k) => k.startsWith('dashboard-') || k.startsWith('action-')
+    );
 
     for (const type of dashboardManifestTypes) {
       expect(registryKeys).toContain(type);
     }
+  });
+
+  it('listing-detail component keys match KMP ListingSectionRegistry.supportedTypes', () => {
+    const listingDetailKeys = Object.keys(manifest.components)
+      .filter((k) => !['dashboard-stats.v1', 'action-queue.v1'].includes(k))
+      .sort();
+    expect(listingDetailKeys).toEqual(LISTING_DETAIL_COMPONENTS);
   });
 });
 

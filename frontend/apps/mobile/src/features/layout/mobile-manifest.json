@@ -1,15 +1,15 @@
 {
   "platform": "mobile",
-  "components": [
-    { "type": "dashboard-stats.v1", "required": true },
-    { "type": "action-queue.v1", "required": true },
-    { "type": "gallery.v1", "required": true },
-    { "type": "listing-header.v1", "required": true },
-    { "type": "key-details.v1", "required": false },
-    { "type": "description.v1", "required": false },
-    { "type": "agent-contact.v1", "required": false },
-    { "type": "features.v1", "required": false },
-    { "type": "additional-info.v1", "required": false },
-    { "type": "resources.v1", "required": false }
-  ]
+  "components": {
+    "dashboard-stats.v1": { "required": true },
+    "action-queue.v1": { "required": true },
+    "gallery.v1": { "required": true },
+    "listing-header.v1": { "required": true },
+    "key-details.v1": { "required": false },
+    "description.v1": { "required": false },
+    "features.v1": { "required": false },
+    "additional-info.v1": { "required": false },
+    "resources.v1": { "required": false },
+    "agent-contact.v1": { "required": false }
+  }
 }

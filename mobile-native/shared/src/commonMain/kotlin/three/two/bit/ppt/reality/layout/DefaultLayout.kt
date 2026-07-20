@@ -4,8 +4,9 @@ package three.two.bit.ppt.reality.layout
  * Compiled default layout for the Reality Portal listing-detail screen.
  *
  * Used as a fallback when the server is unreachable, returns a non-2xx status, returns a malformed
- * body, or echoes back a different screen identifier than expected. The section order mirrors the
- * web base order defined in the design spec.
+ * body, or echoes back a different screen identifier than expected. The section order mirrors
+ * reality-web's DEFAULT_LISTING_DETAIL_LAYOUT (frontend/apps/reality-web/src/lib/layout.ts);
+ * agent-contact.v1 is last in both.
  */
 val DEFAULT_LISTING_DETAIL_LAYOUT =
     ResolvedLayoutScreen(
