@@ -24,7 +24,7 @@ export interface LayoutSectionsProps {
 export function LayoutSections({ layout, registry }: LayoutSectionsProps) {
   return (
     <View style={styles.container}>
-      {layout.sections.map((section) => {
+      {layout.sections.map((section, index) => {
         const def = registry[section.type];
         if (!def) {
           if (!warnedTypes.has(section.type)) {
@@ -36,7 +36,7 @@ export function LayoutSections({ layout, registry }: LayoutSectionsProps) {
 
         if (section.presentation === 'placeholder') {
           return (
-            <View key={section.type} style={styles.sectionWrapper}>
+            <View key={`${section.type}-${index}`} style={styles.sectionWrapper}>
               <PlaceholderSection />
             </View>
           );
@@ -44,7 +44,7 @@ export function LayoutSections({ layout, registry }: LayoutSectionsProps) {
 
         const Component = def.component;
         return (
-          <View key={section.type} style={styles.sectionWrapper}>
+          <View key={`${section.type}-${index}`} style={styles.sectionWrapper}>
             <Component mode={section.mode} props={section.props} />
           </View>
         );

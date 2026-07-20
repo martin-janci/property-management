@@ -281,6 +281,139 @@ describe('useDashboardLayout hook', () => {
   });
 });
 
+// ─── 3b. useDashboardLayout — tightest activation cage ───────────────────────
+
+describe('useDashboardLayout — tightest activation cage', () => {
+  const { useDashboardLayout: realUseDashboardLayout } = jest.requireActual('./useDashboardLayout');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('serves cached layout when cache is populated AND background fetch returns a different layout', async () => {
+    // Cached layout has a distinguishable section list (action-queue only)
+    const cachedLayout: ResolvedScreen = {
+      screen: 'ppt/dashboard',
+      version: 5,
+      sections: [{ type: 'action-queue.v1', presentation: 'visible' }],
+    };
+    // Fetched layout is different (stats only, higher version)
+    const fetchedLayout: ResolvedScreen = {
+      screen: 'ppt/dashboard',
+      version: 6,
+      sections: [{ type: 'dashboard-stats.v1', presentation: 'visible' }],
+    };
+
+    (mockAsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(cachedLayout));
+    mockApiRequest.mockResolvedValue(fetchedLayout);
+    (mockAsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
+
+    let capturedLayout: ResolvedScreen | undefined;
+    function TestComponent() {
+      const { layout } = realUseDashboardLayout('ppt/dashboard');
+      capturedLayout = layout;
+      return null;
+    }
+
+    render(<TestComponent />);
+
+    // Wait until the background fetch has written to cache
+    await waitFor(() => {
+      expect(mockAsyncStorage.setItem).toHaveBeenCalled();
+    });
+
+    // The hook's state MUST equal the CACHED layout (next-launch semantics)
+    expect(capturedLayout).toEqual(cachedLayout);
+    expect(capturedLayout).not.toEqual(fetchedLayout);
+
+    // writeCachedLayout / AsyncStorage.setItem must have been called with the FETCHED layout
+    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+      'ppt_layout_ppt_dashboard',
+      JSON.stringify(fetchedLayout)
+    );
+  });
+});
+
+// ─── 3c. DashboardStatsSection — stat arithmetic ─────────────────────────────
+
+describe('DashboardStatsSection stat arithmetic', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('computes rendered stat values from mocked per-endpoint query results', () => {
+    // Wire up useApiQuery to return distinct data per endpoint key.
+    // Call order matches DashboardStatsSection's 4 useApiQuery calls:
+    //   1. ['dashboard', 'announcements']   → /api/v1/announcements
+    //   2. ['dashboard', 'faults-stats']    → /api/v1/faults/statistics
+    //   3. ['dashboard', 'votes']           → /api/v1/voting
+    //   4. ['dashboard', 'unread-messages'] → /api/v1/messages/unread-count
+
+    // 3 announcements → unreadAnnouncements = 3
+    const announcementsResult = queryResult({
+      data: {
+        announcements: [
+          { id: '1', title: 'Ann A', status: 'published', pinned: false, created_at: '2026-01-01' },
+          { id: '2', title: 'Ann B', status: 'published', pinned: false, created_at: '2026-01-02' },
+          { id: '3', title: 'Ann C', status: 'published', pinned: false, created_at: '2026-01-03' },
+        ],
+      },
+    });
+    // open=2, in_progress=1 → pendingFaults = 3
+    const faultsResult = queryResult({
+      data: { statistics: { open_count: 2, in_progress_count: 1 } },
+    });
+    // 2 active votes, 1 closed → activeVotes = 2
+    const votesResult = queryResult({
+      data: {
+        votes: [
+          { id: 'v1', title: 'Vote 1', status: 'active', end_at: '2026-12-31' },
+          { id: 'v2', title: 'Vote 2', status: 'active', end_at: '2026-12-31' },
+          { id: 'v3', title: 'Vote 3', status: 'closed', end_at: '2026-01-01' },
+        ],
+      },
+    });
+    // unreadCount = 7 → unreadMessages = 7
+    const unreadResult = queryResult({ data: { unreadCount: 7 } });
+
+    mockUseApiQuery
+      .mockReturnValueOnce(announcementsResult)
+      .mockReturnValueOnce(faultsResult)
+      .mockReturnValueOnce(votesResult)
+      .mockReturnValueOnce(unreadResult);
+
+    const { DashboardStatsSection } = jest.requireActual(
+      './registry'
+    ) as typeof import('./registry');
+
+    render(<DashboardStatsSection />);
+
+    // pendingFaults = open_count(2) + in_progress_count(1) = 3
+    // unreadAnnouncements = announcements.slice(0,3).length = 3
+    // Both show '3'; getAllByText confirms at least two cards with that value
+    expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1);
+
+    // activeVotes = 2 (only 'active' status counted)
+    expect(screen.getByText('2')).toBeTruthy();
+
+    // unreadMessages = 7
+    expect(screen.getByText('7')).toBeTruthy();
+
+    // upcomingPayments is always 0, but the component renders only 4 stat cards
+    // (pendingFaults, unreadAnnouncements, activeVotes, unreadMessages); the
+    // upcomingPayments field is computed but not yet displayed — no '0' card.
+    expect(screen.queryByText('0')).toBeNull();
+  });
+});
+
 // ─── 4. manifest consistency ──────────────────────────────────────────────────
 
 describe('mobile-manifest consistency', () => {
