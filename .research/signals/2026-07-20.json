@@ -1,0 +1,326 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-core-scheduler-target-ids-silent-parse",
+      "type": "code-review-finding",
+      "source": "code-review api-core 2026-07-20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs:391 `serde_json::from_value(announcement.target_ids.clone()).unwrap_or_default()` — malformed target_ids becomes empty Vec, buildings/units/roles branches then run `unit_id = ANY('{}')` and notify nobody; no warn/error log emitted.",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-scheduler-units-target-cross-tenant",
+      "type": "code-review-finding",
+      "source": "code-review api-core 2026-07-20",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs:437-449 (units) `SELECT DISTINCT user_id FROM unit_residents WHERE unit_id = ANY($1)` has no organization_id filter; buildings branch at :424-434 same. Defense-in-depth AND-scope via units/unit_residents.organization_id would fail-closed regardless of handler validation.",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/package.json",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/mobile/package.json touched 5x (Expo 56→57, expo-notifications 55→57, expo-config-plugins 55→57, commander 14→15, plus the multi-package rollup) — dep-bump noise.",
+      "files": [
+        "frontend/apps/mobile/package.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs/repo-map.md",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "docs/repo-map.md touched 4x (layout-core / control-plane / defensive-rendering / MyListings-KMP PRs) — per-PR refresh.",
+      "files": [
+        "docs/repo-map.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/Cargo.toml",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-16",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/Cargo.toml touched 3x — layout-core workspace add + cargo-minor-patch rollup + Rust toolchain bumps.",
+      "files": [
+        "backend/Cargo.toml"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-20",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "routine last_run_iso=2026-07-16T03:04:00Z; today=2026-07-20; lag=96h/4d. Also fires stale_routine_alert (≥3d). Cloud routine cron may be paused/rate-limited.",
+      "files": [
+        ".research/state.json"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2385",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2385",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1→1.100.0, actions-minor-patch group) closed 2026-07-17T06:01:40Z unmerged — no #2385 reference in any merged commit in window.",
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2387",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2387",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed 2026-07-19T12:54:03Z unmerged — superseded by the 19-update superset (#2423) which merged same day.",
+      "files": [
+        "frontend/pnpm-lock.yaml"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2386",
+      "type": "dep-update-noise",
+      "source": "PR #2386",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2386: actions/setup-node from 6 to 7 — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2388",
+      "type": "dep-update-noise",
+      "source": "PR #2388",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2388: cargo-minor-patch group in /backend with 7 updates — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2389",
+      "type": "dep-update-noise",
+      "source": "PR #2389",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2389: @expo/config-plugins from 55.0.10 to 57.0.5 in /frontend — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2390",
+      "type": "dep-update-noise",
+      "source": "PR #2390",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2390: commander from 14.0.3 to 15.0.0 in /frontend — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2391",
+      "type": "dep-update-noise",
+      "source": "PR #2391",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2391: expo from 56.0.12 to 57.0.7 in /frontend — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2392",
+      "type": "dep-update-noise",
+      "source": "PR #2392",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2392: expo-notifications from 55.0.22 to 57.0.5 in /frontend — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2393",
+      "type": "dep-update-noise",
+      "source": "PR #2393",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2393: kotlin group in /mobile-native with 4 updates — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2394",
+      "type": "dep-update-noise",
+      "source": "PR #2394",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2394: gradle-minor-patch group in /mobile-native with 3 updates — merged/closed by dependabot. Logged only.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2423",
+      "type": "dep-update-noise",
+      "source": "PR #2423",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "PR #2423: npm-minor-patch group across 1 directory with 19 updates — merged/closed by dependabot. Logged only.",
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score≥3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-20.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "remediation": null
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal re-emitted with score_delta > 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "true",
+      "expected": "true",
+      "note": "no open items pre-run; decay N/A"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "annotated iff created"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files under .research/ only",
+      "observed": "checked pre-commit",
+      "expected": "0 non-.research paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "checked pre-commit",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed cursor honesty",
+      "observed": "no failed phases",
+      "expected": "all match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plan drift",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive count non-decreasing",
+      "observed": "unchanged",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch / caps / idempotency)",
+      "observed": "no candidate this run",
+      "expected": "≤1 pr, ≤1 issue, ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped)",
+      "observed": "no-op — Phase 1.6 skipped in catch-up mode",
+      "expected": "no-op when pm_cursor unchanged"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "checked pre-commit",
+      "expected": "0 matches"
+    }
+  ],
+  "meta": {
+    "run_iso": "2026-07-20T03:12:00Z",
+    "since_iso": "2026-07-16T03:04:00Z",
+    "merged_prs_count": 42,
+    "open_prs_touched": 1,
+    "new_issues_count": 12,
+    "commits_count": 50,
+    "phase_1_5_segment": "api-core",
+    "phase_1_6_skipped": true,
+    "phase_1_6_skip_reason": "catch-up mode after 4-day gap; management artifacts already refreshed by dispatcher"
+  }
+}
