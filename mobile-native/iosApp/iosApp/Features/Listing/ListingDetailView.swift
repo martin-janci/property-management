@@ -96,20 +96,35 @@ struct ListingDetailView: View {
     }
 
     private func listingContent(_ listing: ListingDetailModel) -> some View {
-        ScrollView {
+        // Compute the render plan once per body evaluation and pass it down —
+        // it feeds both the divider gate and the managed section list.
+        // Kotlin List<ResolvedLayoutSection> bridges as a typed Swift array —
+        // no cast needed (see DependencyContainer's KMP consumers).
+        let plan = buildRenderPlan()
+        let gallerySection = layout.sections.first(where: { $0.type == "gallery.v1" })
+        return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Photo header is rendered outside the padded content area so
-                // it bleeds edge-to-edge. It is always rendered (it corresponds
-                // to gallery.v1 but its position is structural, not dispatched).
-                photoHeader(listing)
+                // Photo header slot is structural (edge-to-edge, outside the
+                // padded content area) but its VISIBILITY is gated on the
+                // resolved gallery.v1 section, matching Android:
+                //   visible     → photoHeader
+                //   placeholder → LayoutPlaceholderSection in its place
+                //   absent      → nothing
+                if let gallery = gallerySection {
+                    if gallery.isPlaceholder {
+                        LayoutPlaceholderSection()
+                    } else {
+                        photoHeader(listing)
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 20) {
-                    managedSections(listing)
+                    managedSections(listing, plan: plan)
 
                     // locationSection (map) is UNMANAGED — always rendered after
                     // all managed sections, regardless of layout order.
                     // A divider precedes it only when a managed section rendered.
-                    if !buildRenderPlan().isEmpty {
+                    if !plan.isEmpty {
                         Divider()
                     }
                     locationSection(listing)
@@ -133,6 +148,19 @@ struct ListingDetailView: View {
         case placeholder
     }
 
+    /// Section types this view actually maps to content in the managed list.
+    /// Placeholder presentation only renders a placeholder card for these —
+    /// no-op types (additional-info.v1, resources.v1) and unknown types render
+    /// nothing even as placeholders, matching Android/RN. gallery.v1 is
+    /// handled structurally in `listingContent` (photo header slot).
+    private static let mappedSectionTypes: Set<String> = [
+        "listing-header.v1",
+        "key-details.v1",
+        "description.v1",
+        "features.v1",
+        "agent-contact.v1",
+    ]
+
     /// Builds the ordered render plan from the resolved layout, skipping no-ops
     /// and computing `needsDivider` for each slot up-front.
     private func buildRenderPlan() -> [(slot: LayoutSlot, needsDivider: Bool)] {
@@ -144,12 +172,14 @@ struct ListingDetailView: View {
         var didRenderManaged = false
 
         for section in sections {
-            // gallery.v1 is structural (rendered as photoHeader); skip.
+            // gallery.v1 is structural (photo header slot in listingContent); skip.
             if section.type == "gallery.v1" { continue }
 
             let slot: LayoutSlot?
             if section.isPlaceholder {
-                slot = .placeholder
+                // Placeholder cards only for types iOS actually maps — no-op
+                // and unknown types stay invisible, matching Android/RN.
+                slot = Self.mappedSectionTypes.contains(section.type) ? .placeholder : nil
             } else if section.isVisible {
                 switch section.type {
                 case "listing-header.v1": slot = .priceSection
@@ -184,13 +214,16 @@ struct ListingDetailView: View {
     ///   additional-info.v1  → no-op
     ///   resources.v1        → no-op
     ///   unknown             → no-op
-    ///   placeholder         → LayoutPlaceholderSection (one block)
-    private func managedSections(_ listing: ListingDetailModel) -> some View {
-        // Build the render plan outside the ViewBuilder closure so we can use
-        // imperative logic (var, for-loop) without conflicting with the result
-        // builder's expression-based syntax.
-        let plan = buildRenderPlan()
-        return ForEach(0..<plan.count, id: \.self) { index in
+    ///   placeholder         → LayoutPlaceholderSection (mapped types only; no-op otherwise)
+    ///
+    /// The render plan is built once in `listingContent` (outside the
+    /// ViewBuilder closure, so imperative logic is allowed) and passed in —
+    /// avoiding a second `buildRenderPlan()` walk per body evaluation.
+    private func managedSections(
+        _ listing: ListingDetailModel,
+        plan: [(slot: LayoutSlot, needsDivider: Bool)]
+    ) -> some View {
+        ForEach(0..<plan.count, id: \.self) { index in
             let entry = plan[index]
             if entry.needsDivider {
                 Divider()
