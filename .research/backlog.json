@@ -4440,6 +4440,147 @@
         "assignment_status": "merged",
         "pr_number": 2397
       }
+    },
+    {
+      "id": "code-review-api-core-scheduler-target-ids-silent-parse",
+      "title": "scheduler.rs get_announcement_target_users() silently swallows target_ids JSON parse errors — malformed payload publishes zero notifications with no log",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review api-core 2026-07-20"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:391 does `serde_json::from_value(announcement.target_ids.clone()).unwrap_or_default()` — malformed target_ids becomes empty Vec, buildings/units/roles branches run `unit_id = ANY('{}')` and notify nobody, no warn/error emitted."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-units-target-cross-tenant",
+      "title": "scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review api-core 2026-07-20"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:437-449 (units) runs `SELECT DISTINCT user_id FROM unit_residents WHERE unit_id = ANY($1)` with no organization_id filter; buildings branch at :424-434 similarly unfiltered. Defense-in-depth via join to units.organization_id (or unit_residents.organization_id) would fail-closed regardless of handler validation."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-package-json-2026-07-20",
+      "title": "Churn hotspot: frontend/apps/mobile/package.json — 5 touches this window (Expo/expo-notifications/expo-config-plugins dependabot cascade)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/package.json touched 5x in window (Expo 56→57, expo-notifications 55→57, @expo/config-plugins 55→57, commander 14→15, plus the multi-package rollup) — churn is dep-bump noise, not code drift."
+      ],
+      "files": [
+        "frontend/apps/mobile/package.json"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
+      "title": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "docs/repo-map.md touched 4x this window across the layout-core / control-plane / defensive-rendering / MyListings-KMP PRs — per-PR refresh, low code-signal."
+      ],
+      "files": [
+        "docs/repo-map.md"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
+      "title": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-16"
+      ],
+      "evidence": [
+        "backend/Cargo.toml touched 3x — layout-core member add + cargo-minor-patch rollup + Rust toolchain bumps; workspace surface, not core code drift."
+      ],
+      "files": [
+        "backend/Cargo.toml"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2385",
+      "title": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2385"
+      ],
+      "evidence": [
+        "PR #2385 (dependabot minor-patch: dtolnay/rust-toolchain 1.94.1→1.100.0) closed 2026-07-17T06:01:40Z without merge — no #2385 reference in any merged commit in window."
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2387",
+      "title": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2387",
+        "PR #2423"
+      ],
+      "evidence": [
+        "PR #2387 (dependabot: bump the npm-minor-patch group in /frontend with 15 updates) closed 2026-07-19T12:54:03Z unmerged — the 19-update superset landed the same day as PR #2423."
+      ],
+      "files": [
+        "frontend/pnpm-lock.yaml"
+      ],
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-20",
+      "plan": null
     }
   ]
 }
