@@ -88,6 +88,41 @@ const securityHeaders = [
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
 ];
 
+// ---------------------------------------------------------------------------
+// Layout Preview Bridge — env-gated frame-ancestors carve-out
+//
+// The admin layout editor embeds reality-web pages in an iframe to provide a
+// live preview of layout changes. By default the security headers above deny
+// all framing (`frame-ancestors 'none'` / `X-Frame-Options: DENY`).
+//
+// To allow the admin panel to embed specific pages, set:
+//
+//   LAYOUT_PREVIEW_FRAME_ANCESTORS=https://admin.example.com http://localhost:3100
+//
+// Format: space-separated list of allowed framing origins (same syntax as
+// the CSP frame-ancestors directive). Only requests carrying the query
+// parameter `?layoutPreview=1` receive the relaxed headers — all other
+// requests continue to be served with DENY.
+//
+// Reference: layout preview bridge plan (Task 5, Layout Editor feature).
+//
+// Next.js header-ordering semantics (Next.js 16+):
+//   When multiple `headers()` entries match a request, ALL matching entries'
+//   headers are applied. For duplicate header keys, the LAST matching entry
+//   wins (headers are applied in order, each overwriting any prior value for
+//   the same key). Therefore the blanket entry is listed FIRST and the
+//   carve-out entry is listed AFTER — the carve-out's CSP value overwrites
+//   the blanket entry's `frame-ancestors 'none'`.
+//
+// X-Frame-Options is intentionally OMITTED from the carve-out entry: XFO
+// cannot express origin allowlists (only DENY / SAMEORIGIN), and modern
+// browsers that support CSP frame-ancestors ignore XFO when CSP is present.
+// Omitting XFO from the override lets the blanket entry's `DENY` be
+// superseded solely by the CSP frame-ancestors value from the carve-out.
+// ---------------------------------------------------------------------------
+
+const layoutPreviewOrigins = (process.env.LAYOUT_PREVIEW_FRAME_ANCESTORS || '').trim();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for Docker deployment
@@ -132,12 +167,56 @@ const nextConfig = {
   },
 
   async headers() {
-    return [
+    const entries = [
+      // Blanket entry — applied to every route. Listed FIRST so that the
+      // carve-out entry (when present) can overwrite same-key headers via
+      // Next.js last-wins semantics.
       {
         source: '/:path*',
         headers: securityHeaders,
       },
     ];
+
+    if (layoutPreviewOrigins) {
+      // Carve-out entry — only matched when ?layoutPreview=1 is present.
+      // Applied AFTER the blanket entry so its CSP frame-ancestors value
+      // overwrites the blanket `frame-ancestors 'none'`. X-Frame-Options is
+      // deliberately excluded (see comment block above).
+      const previewCsp = [
+        "default-src 'self'",
+        `script-src ${scriptSrc.join(' ')}`,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https:",
+        "font-src 'self' data:",
+        `connect-src ${Array.from(connectSrcOrigins).join(' ')}`,
+        `frame-ancestors ${layoutPreviewOrigins}`,
+        "base-uri 'self'",
+        "form-action 'self'",
+        "object-src 'none'",
+      ].join('; ');
+
+      entries.push({
+        source: '/:path*',
+        has: [{ type: 'query', key: 'layoutPreview', value: '1' }],
+        headers: [
+          { key: 'Content-Security-Policy', value: previewCsp },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // X-Frame-Options intentionally omitted — cannot express allowlists;
+          // CSP frame-ancestors supersedes it in all modern browsers.
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      });
+    }
+
+    return entries;
   },
 
   // Rewrite /api/* to the prod reality-server when running on a *.dev.rlt.sk

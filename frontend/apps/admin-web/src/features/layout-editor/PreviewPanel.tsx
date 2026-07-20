@@ -296,6 +296,14 @@ export function PreviewPanel({ screen, platform, draft, token, onSectionSelected
         </button>
       </div>
 
+      {/* Framing hint — always visible below URL input */}
+      <div data-testid="preview-framing-hint" style={NOTE_STYLE}>
+        {t('admin.layout.preview.framingHint', {
+          defaultValue:
+            'The framed site must allow embedding from this origin (reality-web: set LAYOUT_PREVIEW_FRAME_ANCESTORS).',
+        })}
+      </div>
+
       {/* URL validation error */}
       {urlError && (
         <div data-testid="preview-url-error" style={ERROR_STYLE} role="alert">
