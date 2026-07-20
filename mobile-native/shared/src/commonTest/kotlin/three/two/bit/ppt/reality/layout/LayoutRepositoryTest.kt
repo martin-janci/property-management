@@ -12,8 +12,10 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
@@ -221,6 +223,51 @@ class LayoutRepositoryTest {
         val layout = repo.getListingDetailLayout()
 
         assertEquals(DEFAULT_LISTING_DETAIL_LAYOUT, layout)
+    }
+
+    // -------------------------------------------------------------------
+    // Sanitization: duplicate section types are deduped (first kept)
+    // -------------------------------------------------------------------
+
+    @Test
+    fun getListingDetailLayout_duplicate_section_types_deduped_first_kept() = runTest {
+        val bodyWithDuplicates =
+            """
+            {
+              "screen": "reality/listing-detail",
+              "version": 1,
+              "sections": [
+                {"type": "gallery.v1", "presentation": "visible"},
+                {"type": "listing-header.v1", "presentation": "visible"},
+                {"type": "gallery.v1", "presentation": "placeholder"},
+                {"type": "listing-header.v1", "presentation": "placeholder"}
+              ]
+            }
+            """
+                .trimIndent()
+        val repo = repoCapturing(Captured(), HttpStatusCode.OK, bodyWithDuplicates)
+
+        val layout = repo.getListingDetailLayout()
+
+        assertEquals(2, layout.sections.size, "duplicate types must be dropped")
+        assertEquals("gallery.v1", layout.sections[0].type)
+        assertEquals("listing-header.v1", layout.sections[1].type)
+        // First occurrence kept — both were "visible", the placeholder dupes dropped.
+        assertTrue(layout.sections[0].isVisible, "first gallery occurrence (visible) is kept")
+        assertTrue(layout.sections[1].isVisible, "first header occurrence (visible) is kept")
+    }
+
+    // -------------------------------------------------------------------
+    // Cancellation must propagate (not swallowed into the default layout)
+    // -------------------------------------------------------------------
+
+    @Test
+    fun getListingDetailLayout_cancellation_propagates() = runTest {
+        val engine = MockEngine { throw CancellationException("cancelled mid-fetch") }
+        val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
+        val repo = LayoutRepository(baseUrl = "https://example.test", client = client)
+
+        assertFailsWith<CancellationException> { repo.getListingDetailLayout() }
     }
 
     // -------------------------------------------------------------------

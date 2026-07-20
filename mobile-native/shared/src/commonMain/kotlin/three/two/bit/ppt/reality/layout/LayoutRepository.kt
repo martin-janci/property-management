@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.api.HttpClientProvider
 
@@ -29,7 +30,12 @@ class LayoutRepository(
      *
      * On any failure (non-2xx, network error, JSON decode error, or server echoes a different
      * screen identifier) returns [DEFAULT_LISTING_DETAIL_LAYOUT]. An empty sections list from a 200
-     * response is accepted as-is.
+     * response is accepted as-is. [CancellationException] is NOT swallowed — coroutine cancellation
+     * always propagates.
+     *
+     * Fetched sections are sanitized: elements whose `type` duplicates an earlier element's type
+     * are dropped (first occurrence kept). This protects consumers that key UI elements by section
+     * type (e.g. Android's LazyColumn static keys) from server-sent duplicates.
      */
     suspend fun getListingDetailLayout(): ResolvedLayoutScreen {
         return try {
@@ -39,17 +45,27 @@ class LayoutRepository(
                 }
 
             if (!response.status.isSuccess()) {
+                println(
+                    "LayoutRepository: falling back to default layout: HTTP ${response.status.value}"
+                )
                 return DEFAULT_LISTING_DETAIL_LAYOUT
             }
 
             val layout = response.body<ResolvedLayoutScreen>()
 
             if (layout.screen != DEFAULT_LISTING_DETAIL_LAYOUT.screen) {
+                println(
+                    "LayoutRepository: falling back to default layout: " +
+                        "unexpected screen echo '${layout.screen}'"
+                )
                 DEFAULT_LISTING_DETAIL_LAYOUT
             } else {
-                layout
+                layout.copy(sections = layout.sections.distinctBy { it.type })
             }
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            println("LayoutRepository: falling back to default layout: ${e.message}")
             DEFAULT_LISTING_DETAIL_LAYOUT
         }
     }
