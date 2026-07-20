@@ -103,6 +103,7 @@ UC-15 + UC-02 + UC-03 + UC-04 hub for residents on mobile (RN). The home screen 
 
 <!-- newest entries on top -->
 
+- 2026-07-20 — agent: RN mobile dashboard renders via cached resolved layout (next-launch activation).
 - 2026-07-20 — agent: layout preview mode (postMessage bridge) added.
 - 2026-07-20 — agent: org-admin customize entry point added (/dashboard/customize, layout tenant editor)
 - 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)

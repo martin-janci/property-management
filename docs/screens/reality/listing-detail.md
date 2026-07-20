@@ -120,6 +120,7 @@ Single-property detail view — converts portal traffic into UC-46 inquiries (Ca
 
 <!-- newest entries on top -->
 
+- 2026-07-20 — agent: Android listing detail renders via shared resolved layout dispatch (iOS follow-up pending).
 - 2026-07-20 — agent: layout preview mode (postMessage bridge) added.
 - 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)
 - 2026-06-07 — agent: reconciled screen-map with PR #1085 (reality-web listing-detail SSR metadata hardening). PR extracted a defensive `buildListingMetadata(listing: unknown)` helper + `FALLBACK_METADATA` into a new `metadata.ts` module (with `metadata.test.ts`, 8 cases) so a malformed/partial 200 body no longer throws in `generateMetadata` during SSR; `page.tsx` now delegates to it. Documented the SSR fallback in States > Error and Notes > Specific. Frontmatter unchanged: reality-web buildStatus stays `shipped` (no UI/route change) and apiStatus stays `partial` (no endpoint change — still only `listings_get`); this is a robustness fix, not a feature.
