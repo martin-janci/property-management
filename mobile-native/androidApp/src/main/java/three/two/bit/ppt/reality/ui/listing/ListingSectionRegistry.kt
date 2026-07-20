@@ -1,7 +1,9 @@
 package three.two.bit.ppt.reality.ui.listing
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -123,6 +125,8 @@ object ListingSectionRegistry {
                     item(key = "placeholder-listing-header") { PlaceholderSection() }
                 } else {
                     item(key = "listing-header") { HeaderSection(listing = ctx.listing) }
+                    // Pre-refactor layout had a dedicated 18dp gap after the header.
+                    item(key = "listing-header-gap") { Spacer(modifier = Modifier.height(18.dp)) }
                 }
             }
 
