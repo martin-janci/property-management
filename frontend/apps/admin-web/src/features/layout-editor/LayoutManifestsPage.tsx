@@ -1,0 +1,415 @@
+/**
+ * LayoutManifestsPage — list and upload platform manifests (Task 5, Layout Editor MVP)
+ *
+ * Lists stored manifests (platform, component count, updated_at, expandable JSON preview)
+ * and provides an upload form with platform <select> + <textarea>.
+ *
+ * Client-side gate before PUT:
+ *   1. Body must parse as valid JSON.
+ *   2. Parsed object must have a `components` object.
+ *   3. If the body contains a `platform` field it must match the selected platform.
+ * Violations render inline errors; no request is fired.
+ *
+ * Hint: copy a manifest from the checked-in sources:
+ *   - frontend/apps/ppt-web/src/features/layout/manifest.json  (web)
+ *   - frontend/apps/reality-web/src/lib/layout-manifest.json   (mobile)
+ */
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type React from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useAdminAuth } from '../../auth/AdminAuthContext';
+import { useToast } from '../../components/Toast';
+import { listManifests, type Manifest, putManifest } from './api';
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const PAGE_STYLE: React.CSSProperties = {
+  padding: '24px',
+  maxWidth: 900,
+  margin: '0 auto',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 24,
+};
+
+const CARD_STYLE: React.CSSProperties = {
+  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+  borderRadius: 'var(--ppt-radius-lg, 10px)',
+  padding: '20px 24px',
+  background: 'var(--ppt-bg-surface, #fff)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 16,
+};
+
+const CARD_TITLE_STYLE: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 600,
+  color: 'var(--ppt-fg-primary, #111827)',
+  margin: 0,
+};
+
+const TABLE_STYLE: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: 13,
+};
+
+const TH_STYLE: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '6px 10px',
+  fontWeight: 600,
+  color: 'var(--ppt-fg-secondary, #6b7280)',
+  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: '6px 10px',
+  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
+  verticalAlign: 'top',
+};
+
+const PRE_STYLE: React.CSSProperties = {
+  margin: '8px 0 0 0',
+  padding: '8px',
+  background: 'var(--ppt-bg-muted, #f9fafb)',
+  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+  borderRadius: 6,
+  fontSize: 11,
+  overflowX: 'auto',
+  maxHeight: 200,
+  overflowY: 'auto',
+};
+
+const SELECT_STYLE: React.CSSProperties = {
+  padding: '6px 10px',
+  fontSize: 14,
+  borderRadius: 6,
+  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+  minWidth: 140,
+};
+
+const TEXTAREA_STYLE: React.CSSProperties = {
+  width: '100%',
+  minHeight: 160,
+  padding: '8px 10px',
+  fontSize: 13,
+  fontFamily: 'monospace',
+  borderRadius: 6,
+  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+  resize: 'vertical',
+  boxSizing: 'border-box',
+};
+
+const BTN_PRIMARY: React.CSSProperties = {
+  padding: '6px 16px',
+  fontSize: 14,
+  borderRadius: 6,
+  cursor: 'pointer',
+  border: '1px solid transparent',
+  fontWeight: 500,
+  background: 'var(--ppt-primary-600, #2563eb)',
+  color: '#fff',
+  borderColor: 'var(--ppt-primary-600, #2563eb)',
+};
+
+const ALERT_STYLE: React.CSSProperties = {
+  background: 'var(--ppt-danger-50, #fef2f2)',
+  border: '1px solid var(--ppt-danger-200, #fecaca)',
+  borderRadius: 8,
+  padding: '10px 14px',
+  color: 'var(--ppt-danger-800, #991b1b)',
+  fontSize: 13,
+};
+
+const HINT_STYLE: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--ppt-fg-secondary, #6b7280)',
+  fontFamily: 'monospace',
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export default function LayoutManifestsPage() {
+  const { t } = useTranslation();
+  const { token } = useAdminAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+
+  // -------------------------------------------------------------------------
+  // List query
+  // -------------------------------------------------------------------------
+
+  const manifestsQuery = useQuery({
+    queryKey: ['admin', 'platform', 'layout', 'manifests'],
+    queryFn: () => listManifests(token),
+    staleTime: 60_000,
+  });
+
+  const rows = manifestsQuery.data ?? [];
+
+  // -------------------------------------------------------------------------
+  // Expandable JSON state (keyed by platform)
+  // -------------------------------------------------------------------------
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  // -------------------------------------------------------------------------
+  // Upload form state
+  // -------------------------------------------------------------------------
+
+  const [platform, setPlatform] = useState<'web' | 'mobile'>('web');
+  const [manifestText, setManifestText] = useState('');
+  const [formError, setFormError] = useState('');
+
+  // -------------------------------------------------------------------------
+  // Upload mutation
+  // -------------------------------------------------------------------------
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ parsedManifest }: { parsedManifest: Manifest }) =>
+      putManifest(token, platform, parsedManifest),
+    onSuccess: () => {
+      showToast({
+        type: 'success',
+        title: t('admin.manifests.uploaded', { defaultValue: 'Manifest uploaded successfully' }),
+      });
+      setManifestText('');
+      setFormError('');
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'platform', 'layout', 'manifests'],
+      });
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('admin.manifests.uploadError', { defaultValue: 'Upload failed' }),
+        message: err instanceof Error ? err.message : String(err),
+      });
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // Client-side validation + submit
+  // -------------------------------------------------------------------------
+
+  function handleUpload() {
+    setFormError('');
+
+    // 1. Must parse as valid JSON
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(manifestText);
+    } catch {
+      setFormError(
+        t('admin.manifests.invalidJson', {
+          defaultValue: 'Invalid JSON — please check your input.',
+        })
+      );
+      return;
+    }
+
+    // 2. Must have a `components` object
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      typeof (parsed as Record<string, unknown>).components !== 'object' ||
+      (parsed as Record<string, unknown>).components === null
+    ) {
+      setFormError(
+        t('admin.manifests.missingComponents', {
+          defaultValue: 'Manifest must have a "components" object.',
+        })
+      );
+      return;
+    }
+
+    // 3. If body has a `platform` field it must match the selected platform
+    const bodyPlatform = (parsed as Record<string, unknown>).platform;
+    if (bodyPlatform !== undefined && bodyPlatform !== platform) {
+      setFormError(
+        t('admin.manifests.platformMismatch', {
+          defaultValue: `Platform mismatch: body says "${String(bodyPlatform)}" but selected platform is "${platform}".`,
+        })
+      );
+      return;
+    }
+
+    uploadMutation.mutate({ parsedManifest: parsed as Manifest });
+  }
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
+  return (
+    <div style={PAGE_STYLE}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+        {t('admin.manifests.title', { defaultValue: 'Layout Manifests' })}
+      </h1>
+
+      {/* ------------------------------------------------------------------- */}
+      {/* Stored manifests list                                                 */}
+      {/* ------------------------------------------------------------------- */}
+      <div style={CARD_STYLE}>
+        <h2 style={CARD_TITLE_STYLE}>
+          {t('admin.manifests.listTitle', { defaultValue: 'Stored Manifests' })}
+        </h2>
+
+        {manifestsQuery.isLoading && (
+          <span style={{ fontSize: 13, color: 'var(--ppt-fg-secondary, #6b7280)' }}>
+            {t('admin.manifests.loading', { defaultValue: 'Loading…' })}
+          </span>
+        )}
+
+        {rows.length === 0 && !manifestsQuery.isLoading && (
+          <span style={{ fontSize: 13, color: 'var(--ppt-fg-secondary, #6b7280)' }}>
+            {t('admin.manifests.empty', { defaultValue: 'No manifests stored yet.' })}
+          </span>
+        )}
+
+        {rows.length > 0 && (
+          <table style={TABLE_STYLE}>
+            <thead>
+              <tr>
+                <th style={TH_STYLE}>
+                  {t('admin.manifests.colPlatform', { defaultValue: 'Platform' })}
+                </th>
+                <th style={TH_STYLE}>
+                  {t('admin.manifests.colComponents', { defaultValue: 'Components' })}
+                </th>
+                <th style={TH_STYLE}>
+                  {t('admin.manifests.colUpdatedAt', { defaultValue: 'Updated at' })}
+                </th>
+                <th style={TH_STYLE} />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.platform}>
+                  <td style={TD_STYLE}>{row.platform}</td>
+                  <td style={TD_STYLE}>{Object.keys(row.manifest?.components ?? {}).length}</td>
+                  <td style={TD_STYLE}>{new Date(row.updated_at).toLocaleString()}</td>
+                  <td style={TD_STYLE}>
+                    <button
+                      type="button"
+                      style={{
+                        fontSize: 12,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--ppt-primary-600, #2563eb)',
+                        padding: 0,
+                      }}
+                      onClick={() =>
+                        setExpanded((prev) => ({ ...prev, [row.platform]: !prev[row.platform] }))
+                      }
+                      data-testid={`expand-btn-${row.platform}`}
+                    >
+                      {expanded[row.platform]
+                        ? t('admin.manifests.collapse', { defaultValue: 'Collapse' })
+                        : t('admin.manifests.expand', { defaultValue: 'Expand' })}
+                    </button>
+                    {expanded[row.platform] && (
+                      <pre style={PRE_STYLE}>{JSON.stringify(row.manifest, null, 2)}</pre>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* ------------------------------------------------------------------- */}
+      {/* Upload form                                                           */}
+      {/* ------------------------------------------------------------------- */}
+      <div style={CARD_STYLE}>
+        <h2 style={CARD_TITLE_STYLE}>
+          {t('admin.manifests.uploadTitle', { defaultValue: 'Upload Manifest' })}
+        </h2>
+
+        {/* Hint line */}
+        <p style={HINT_STYLE}>
+          {t('admin.manifests.hint', {
+            defaultValue:
+              'Copy from checked-in manifests: ' +
+              'frontend/apps/ppt-web/src/features/layout/manifest.json (web) · ' +
+              'frontend/apps/reality-web/src/lib/layout-manifest.json (mobile)',
+          })}
+        </p>
+
+        {/* Platform select */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label htmlFor="manifest-platform-select" style={{ fontSize: 13, fontWeight: 500 }}>
+            {t('admin.manifests.platformLabel', { defaultValue: 'Platform' })}
+          </label>
+          <select
+            id="manifest-platform-select"
+            aria-label={t('admin.manifests.platformLabel', { defaultValue: 'Platform' })}
+            value={platform}
+            onChange={(e) => {
+              setPlatform(e.target.value as 'web' | 'mobile');
+              setFormError('');
+            }}
+            style={SELECT_STYLE}
+          >
+            <option value="web">web</option>
+            <option value="mobile">mobile</option>
+          </select>
+        </div>
+
+        {/* Manifest JSON textarea */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label htmlFor="manifest-json-textarea" style={{ fontSize: 13, fontWeight: 500 }}>
+            {t('admin.manifests.jsonLabel', { defaultValue: 'Manifest JSON' })}
+          </label>
+          <textarea
+            id="manifest-json-textarea"
+            aria-label={t('admin.manifests.jsonLabel', { defaultValue: 'Manifest JSON' })}
+            value={manifestText}
+            onChange={(e) => {
+              setManifestText(e.target.value);
+              setFormError('');
+            }}
+            style={TEXTAREA_STYLE}
+            placeholder='{"platform": "web", "components": { ... }}'
+            data-testid="manifest-json-textarea"
+          />
+        </div>
+
+        {/* Inline validation error */}
+        {formError && (
+          <div style={ALERT_STYLE} role="alert" data-testid="manifest-form-error">
+            {formError}
+          </div>
+        )}
+
+        <div>
+          <button
+            type="button"
+            style={{
+              ...BTN_PRIMARY,
+              opacity: uploadMutation.isPending ? 0.6 : 1,
+              cursor: uploadMutation.isPending ? 'not-allowed' : 'pointer',
+            }}
+            disabled={uploadMutation.isPending || !manifestText.trim()}
+            onClick={handleUpload}
+            data-testid="manifest-upload-btn"
+          >
+            {uploadMutation.isPending
+              ? t('admin.manifests.uploading', { defaultValue: 'Uploading…' })
+              : t('admin.manifests.uploadBtn', { defaultValue: 'Upload' })}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
