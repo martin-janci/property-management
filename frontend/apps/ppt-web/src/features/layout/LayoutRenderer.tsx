@@ -1,4 +1,5 @@
 import type { ResolvedScreen } from '@ppt/api-client';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import type { SectionRegistry } from './registry';
@@ -19,12 +20,16 @@ function Placeholder() {
 export interface LayoutRendererProps {
   layout: ResolvedScreen;
   registry: SectionRegistry;
+  /** When set, every section wrapper intercepts clicks (capture phase),
+   *  calls preventDefault + stopPropagation, and invokes this callback
+   *  with the section type. When unset: no listener, clicks pass through. */
+  onSectionClick?: (type: string) => void;
 }
 
 /** Renders a resolved layout defensively (spec §4): unknown type → skip +
  *  warn once; placeholder presentation → Placeholder; crashing section →
  *  Placeholder via boundary, siblings unaffected; container owns spacing. */
-export function LayoutRenderer({ layout, registry }: LayoutRendererProps) {
+export function LayoutRenderer({ layout, registry, onSectionClick }: LayoutRendererProps) {
   return (
     <div className="layout-sections">
       {layout.sections.map((section) => {
@@ -36,14 +41,37 @@ export function LayoutRenderer({ layout, registry }: LayoutRendererProps) {
           }
           return null;
         }
+
+        const handleClickCapture = onSectionClick
+          ? (e: React.MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSectionClick(section.type);
+            }
+          : undefined;
+
         if (section.presentation === 'placeholder') {
-          return <Placeholder key={section.type} />;
+          return (
+            <div
+              key={section.type}
+              data-layout-section={section.type}
+              onClickCapture={handleClickCapture}
+            >
+              <Placeholder />
+            </div>
+          );
         }
         const Component = def.component;
         return (
-          <ErrorBoundary key={section.type} fallback={<Placeholder />}>
-            <Component mode={section.mode} props={section.props} />
-          </ErrorBoundary>
+          <div
+            key={section.type}
+            data-layout-section={section.type}
+            onClickCapture={handleClickCapture}
+          >
+            <ErrorBoundary fallback={<Placeholder />}>
+              <Component mode={section.mode} props={section.props} />
+            </ErrorBoundary>
+          </div>
         );
       })}
     </div>
