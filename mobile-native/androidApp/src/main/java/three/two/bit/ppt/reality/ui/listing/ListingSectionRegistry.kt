@@ -43,9 +43,12 @@ data class ListingSectionContext(
  * - listing-header.v1 → [HeaderSection]
  * - key-details.v1 → [QuickStatsStrip]
  * - description.v1 → [TabStrip] + tab-gated description / building / nearby / price-history
- * - agent-contact.v1 → controls [StickyAgentBar] visibility (rendered inline in the list) and
- *   signals [BottomActionBar] visibility (tracked separately by the caller via
- *   [sectionHasAgentContact] / [sectionAgentContactIsActive])
+ * - agent-contact.v1 → POSITION-INDEPENDENT: the VISIBILITY of [StickyAgentBar] and
+ *   [BottomActionBar] is gated on this section being present and active, but the bars are rendered
+ *   at fixed positions by the caller ([ListingContent]) — NOT at the section's list position. This
+ *   ensures pixel-identical output regardless of where agent-contact.v1 appears in the server
+ *   layout (e.g. last in [DEFAULT_LISTING_DETAIL_LAYOUT]). Only the placeholder case emits a card
+ *   in-list.
  * - features.v1 → no-op (features are rendered inside description.v1's tab 0)
  * - additional-info.v1 → no-op
  * - resources.v1 → no-op
@@ -76,13 +79,15 @@ object ListingSectionRegistry {
     /**
      * Emit LazyList items for a single [section].
      *
-     * The [agentContactSection] helpers ([sectionHasAgentContact] / [sectionAgentContactIsActive])
-     * let the caller decide whether to render [BottomActionBar] outside the lazy list without
-     * requiring a separate pass over the sections list.
+     * The [sectionAgentContactIsActive] helper lets the caller decide whether to render
+     * [StickyAgentBar] and [BottomActionBar] at their fixed visual positions (after the gallery and
+     * at screen-bottom respectively) without requiring a separate pass over the sections list.
      *
-     * NOTE: agent-contact.v1 is the only type whose output (StickyAgentBar) is rendered *inside*
-     * the LazyColumn here; the BottomActionBar must be placed by the caller at screen bottom
-     * (outside the LazyColumn) and should only render when [sectionAgentContactIsActive] is true.
+     * NOTE: agent-contact.v1 with a non-placeholder presentation emits NOTHING in the lazy list.
+     * [StickyAgentBar] is placed by the caller immediately after the gallery item;
+     * [BottomActionBar] is placed by the caller outside the LazyColumn at screen-bottom. This makes
+     * bar position independent of where agent-contact.v1 appears in the server-resolved layout
+     * order.
      */
     fun LazyListScope.sectionItems(section: ResolvedLayoutSection, ctx: ListingSectionContext) {
         when (section.type) {
@@ -103,13 +108,14 @@ object ListingSectionRegistry {
             }
 
             "agent-contact.v1" -> {
+                // POSITION-INDEPENDENT: when the section is active (non-placeholder), the bars
+                // are rendered at fixed slots by the caller (StickyAgentBar after gallery,
+                // BottomActionBar at screen-bottom). Nothing is emitted in-list for the active
+                // case so that the bar position does not change with the layout order.
                 if (section.isPlaceholder) {
                     item(key = "placeholder-agent-contact") { PlaceholderSection() }
-                } else {
-                    item(key = "agent-contact") {
-                        StickyAgentBar(listing = ctx.listing, onCallClick = ctx.onCallClick)
-                    }
                 }
+                // else: no-op — StickyAgentBar and BottomActionBar rendered by ListingContent
             }
 
             "listing-header.v1" -> {

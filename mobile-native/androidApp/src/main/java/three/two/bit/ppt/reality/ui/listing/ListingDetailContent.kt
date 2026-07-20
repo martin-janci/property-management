@@ -42,21 +42,42 @@ internal fun ListingContent(
         )
 
     // Determine whether the agent-contact section is active (visible, non-placeholder).
-    // This controls BottomActionBar visibility outside the LazyColumn.
-    val showActionBar = ListingSectionRegistry.sectionAgentContactIsActive(layout.sections)
+    // StickyAgentBar and BottomActionBar positions are FIXED — agent-contact.v1 controls
+    // visibility only, not render position (position-independent bar placement).
+    val showAgentBars = ListingSectionRegistry.sectionAgentContactIsActive(layout.sections)
+
+    // True when a visible (non-placeholder) gallery section is present in the layout.
+    val hasVisibleGallery = layout.sections.any { it.type == "gallery.v1" && !it.isPlaceholder }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = if (showActionBar) 110.dp else 16.dp),
+            contentPadding = PaddingValues(bottom = if (showAgentBars) 110.dp else 16.dp),
         ) {
+            // When no visible gallery is present but agent bars are active, StickyAgentBar
+            // renders at the very top of the list (traditional fallback position).
+            if (showAgentBars && !hasVisibleGallery) {
+                item(key = "agent-contact-bar") {
+                    StickyAgentBar(listing = ctx.listing, onCallClick = ctx.onCallClick)
+                }
+            }
+
             for (section in layout.sections) {
                 sectionItems(section = section, ctx = ctx)
+                // After the gallery item, insert StickyAgentBar at its traditional fixed slot.
+                // This is position-independent: agent-contact.v1 controls visibility but NOT
+                // the render position — so the bar always appears right after the gallery
+                // regardless of where agent-contact.v1 lands in the server layout order.
+                if (section.type == "gallery.v1" && !section.isPlaceholder && showAgentBars) {
+                    item(key = "agent-contact-bar") {
+                        StickyAgentBar(listing = ctx.listing, onCallClick = ctx.onCallClick)
+                    }
+                }
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
 
-        if (showActionBar) {
+        if (showAgentBars) {
             BottomActionBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onMessageClick = onMessageClick,
