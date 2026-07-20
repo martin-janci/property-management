@@ -2,6 +2,7 @@ pub mod admin;
 pub mod resolved;
 pub mod tenant;
 pub mod types;
+pub mod webhook;
 
 use crate::state::AppState;
 use axum::routing::{get, post, put};

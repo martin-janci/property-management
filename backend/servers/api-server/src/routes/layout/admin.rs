@@ -10,6 +10,7 @@ use super::types::{
     KillRequest, PreviewResolveRequest, PublishRequest, PutDraftRequest, PutManifestRequest,
     PutRailsRequest, RollbackRequest, ScreenQuery, ValidationErrorsResponse,
 };
+use super::webhook;
 
 fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsResponse>) {
     (
@@ -291,6 +292,7 @@ pub async fn publish(
         .publish(&mut conn, &req.screen, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    webhook::notify_layout_change(&req.screen, "published");
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -327,6 +329,7 @@ pub async fn rollback(
             ),
             other => bad_request(vec![format!("db error: {other}")]),
         })?;
+    webhook::notify_layout_change(&req.screen, "rolled_back");
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -355,6 +358,7 @@ pub async fn kill(
         .kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+    webhook::notify_layout_change(&req.screen, "killed");
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -448,6 +452,7 @@ pub async fn unkill(
         .await
         .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
     if removed {
+        webhook::notify_layout_change(&req.screen, "unkilled");
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err((
