@@ -73,7 +73,14 @@ export function isPreviewParentMessage(data: unknown): data is PreviewParentMess
   if (d['kind'] !== LAYOUT_PREVIEW_KIND) return false;
   if (d['protocol'] !== LAYOUT_PREVIEW_PROTOCOL) return false;
   if (d['type'] !== 'config') return false;
-  return d['resolved'] !== undefined && d['resolved'] !== null;
+  const resolved = d['resolved'];
+  if (resolved === null || typeof resolved !== 'object' || Array.isArray(resolved)) return false;
+  const r = resolved as Record<string, unknown>;
+  return (
+    typeof r['screen'] === 'string' &&
+    typeof r['version'] === 'number' &&
+    Array.isArray(r['sections'])
+  );
 }
 
 // ============================================
@@ -123,8 +130,10 @@ export function connectPreviewChild(opts: {
   screen?: string;
   onConfig: (resolved: ResolvedScreenLike) => void;
   win?: Window;
+  parentWindow?: Pick<Window, 'postMessage'>;
 }): { sendSectionClick: (sectionType: string) => void; dispose: () => void } {
   const win = opts.win ?? window;
+  const parentWin = opts.parentWindow ?? win.parent;
 
   function handleMessage(event: MessageEvent): void {
     if (event.origin !== opts.parentOrigin) return;
@@ -141,7 +150,7 @@ export function connectPreviewChild(opts: {
     type: 'ready',
     ...(opts.screen !== undefined ? { screen: opts.screen } : {}),
   };
-  win.postMessage(readyMsg, opts.parentOrigin);
+  parentWin.postMessage(readyMsg, opts.parentOrigin);
 
   return {
     sendSectionClick(sectionType: string): void {
@@ -151,7 +160,7 @@ export function connectPreviewChild(opts: {
         type: 'section-click',
         sectionType,
       };
-      win.postMessage(msg, opts.parentOrigin);
+      parentWin.postMessage(msg, opts.parentOrigin);
     },
     dispose(): void {
       win.removeEventListener('message', handleMessage);

@@ -3,21 +3,30 @@
  * ADAPT: @ppt/shared has no Vitest setup, so these tests live here in ppt-web
  * and import from @ppt/shared via the workspace alias.
  */
-import { describe, expect, it, vi } from 'vitest';
+
+import type { ResolvedScreenLike } from '@ppt/shared';
 import {
-  LAYOUT_PREVIEW_KIND,
-  LAYOUT_PREVIEW_PROTOCOL,
   connectPreviewChild,
   connectPreviewParent,
   isPreviewChildMessage,
   isPreviewParentMessage,
+  LAYOUT_PREVIEW_KIND,
+  LAYOUT_PREVIEW_PROTOCOL,
   readPreviewParams,
 } from '@ppt/shared';
-import type { ResolvedScreenLike } from '@ppt/shared';
+import { describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Minimal fake window: two fake windows wired together so postMessage on one
-// triggers listeners on the other (with configurable origin).
+// Minimal fake window infrastructure.
+//
+// makeFakeWindow(origin) — a standalone fake window with its own postMessage
+//   spy and listener list.  To wire two windows together for message delivery,
+//   call routeMessages(src, srcOrigin, dst) which makes src.postMessage deliver
+//   to dst's listeners.
+//
+// makeFakeWindowPair(originA, originB) — convenience wrapper that returns two
+//   pre-wired windows: winA.postMessage delivers to winB (as originA), and
+//   winB.postMessage delivers to winA (as originB).
 // ---------------------------------------------------------------------------
 
 interface FakeMessageEvent {
@@ -27,47 +36,43 @@ interface FakeMessageEvent {
 
 type MessageListener = (e: FakeMessageEvent) => void;
 
+function makeFakeWindow(origin: string) {
+  const listeners: MessageListener[] = [];
+
+  const win = {
+    origin,
+    listeners, // exposed for direct injection in security-invariant tests
+    addEventListener: vi.fn((event: string, cb: MessageListener) => {
+      if (event === 'message') listeners.push(cb);
+    }),
+    removeEventListener: vi.fn((event: string, cb: MessageListener) => {
+      if (event === 'message') {
+        const idx = listeners.indexOf(cb);
+        if (idx !== -1) listeners.splice(idx, 1);
+      }
+    }),
+    postMessage: vi.fn(),
+  };
+
+  return win;
+}
+
+type FakeWindow = ReturnType<typeof makeFakeWindow>;
+
+/** Make src.postMessage deliver to dst.listeners, stamping srcOrigin on the event. */
+function routeMessages(src: FakeWindow, srcOrigin: string, dst: FakeWindow) {
+  src.postMessage.mockImplementation((data: unknown, targetOrigin: string) => {
+    if (targetOrigin !== '*' && targetOrigin !== dst.origin) return;
+    for (const cb of [...dst.listeners]) cb({ data, origin: srcOrigin });
+  });
+}
+
 function makeFakeWindowPair(originA: string, originB: string) {
-  const listenersA: MessageListener[] = [];
-  const listenersB: MessageListener[] = [];
-
-  const winA = {
-    origin: originA,
-    addEventListener: vi.fn((event: string, cb: MessageListener) => {
-      if (event === 'message') listenersA.push(cb);
-    }),
-    removeEventListener: vi.fn((event: string, cb: MessageListener) => {
-      if (event === 'message') {
-        const idx = listenersA.indexOf(cb);
-        if (idx !== -1) listenersA.splice(idx, 1);
-      }
-    }),
-    postMessage: vi.fn((data: unknown, targetOrigin: string) => {
-      // winA.postMessage → delivers to listenersB with originA as event.origin
-      if (targetOrigin !== '*' && targetOrigin !== originB) return; // origin mismatch silently dropped
-      for (const cb of [...listenersB]) cb({ data, origin: originA });
-    }),
-  };
-
-  const winB = {
-    origin: originB,
-    addEventListener: vi.fn((event: string, cb: MessageListener) => {
-      if (event === 'message') listenersB.push(cb);
-    }),
-    removeEventListener: vi.fn((event: string, cb: MessageListener) => {
-      if (event === 'message') {
-        const idx = listenersB.indexOf(cb);
-        if (idx !== -1) listenersB.splice(idx, 1);
-      }
-    }),
-    postMessage: vi.fn((data: unknown, targetOrigin: string) => {
-      // winB.postMessage → delivers to listenersA with originB as event.origin
-      if (targetOrigin !== '*' && targetOrigin !== originA) return;
-      for (const cb of [...listenersA]) cb({ data, origin: originB });
-    }),
-  };
-
-  return { winA, winB, listenersA, listenersB };
+  const winA = makeFakeWindow(originA);
+  const winB = makeFakeWindow(originB);
+  routeMessages(winA, originA, winB);
+  routeMessages(winB, originB, winA);
+  return { winA, winB, listenersA: winA.listeners, listenersB: winB.listeners };
 }
 
 const PARENT_ORIGIN = 'https://parent.example.com';
@@ -97,9 +102,9 @@ describe('protocol constants', () => {
 // ---------------------------------------------------------------------------
 describe('isPreviewChildMessage', () => {
   it('accepts valid ready message', () => {
-    expect(
-      isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'ready' }),
-    ).toBe(true);
+    expect(isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'ready' })).toBe(
+      true
+    );
   });
   it('accepts ready with optional screen', () => {
     expect(
@@ -108,7 +113,7 @@ describe('isPreviewChildMessage', () => {
         protocol: 1,
         type: 'ready',
         screen: 'home',
-      }),
+      })
     ).toBe(true);
   });
   it('accepts valid section-click message', () => {
@@ -118,23 +123,21 @@ describe('isPreviewChildMessage', () => {
         protocol: 1,
         type: 'section-click',
         sectionType: 'header',
-      }),
+      })
     ).toBe(true);
   });
   it('rejects wrong kind', () => {
-    expect(
-      isPreviewChildMessage({ kind: 'other', protocol: 1, type: 'ready' }),
-    ).toBe(false);
+    expect(isPreviewChildMessage({ kind: 'other', protocol: 1, type: 'ready' })).toBe(false);
   });
   it('rejects wrong protocol', () => {
-    expect(
-      isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 2, type: 'ready' }),
-    ).toBe(false);
+    expect(isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 2, type: 'ready' })).toBe(
+      false
+    );
   });
   it('rejects unknown type', () => {
-    expect(
-      isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'unknown' }),
-    ).toBe(false);
+    expect(isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'unknown' })).toBe(
+      false
+    );
   });
   it('rejects null / primitives', () => {
     expect(isPreviewChildMessage(null)).toBe(false);
@@ -143,7 +146,7 @@ describe('isPreviewChildMessage', () => {
   });
   it('rejects section-click without sectionType', () => {
     expect(
-      isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'section-click' }),
+      isPreviewChildMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'section-click' })
     ).toBe(false);
   });
 });
@@ -159,7 +162,7 @@ describe('isPreviewParentMessage', () => {
         protocol: 1,
         type: 'config',
         resolved: SAMPLE_RESOLVED,
-      }),
+      })
     ).toBe(true);
   });
   it('rejects wrong kind', () => {
@@ -169,7 +172,7 @@ describe('isPreviewParentMessage', () => {
         protocol: 1,
         type: 'config',
         resolved: SAMPLE_RESOLVED,
-      }),
+      })
     ).toBe(false);
   });
   it('rejects wrong protocol', () => {
@@ -179,17 +182,67 @@ describe('isPreviewParentMessage', () => {
         protocol: 2,
         type: 'config',
         resolved: SAMPLE_RESOLVED,
-      }),
+      })
     ).toBe(false);
   });
   it('rejects missing resolved', () => {
-    expect(
-      isPreviewParentMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'config' }),
-    ).toBe(false);
+    expect(isPreviewParentMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'config' })).toBe(
+      false
+    );
   });
   it('rejects null / primitives', () => {
     expect(isPreviewParentMessage(null)).toBe(false);
     expect(isPreviewParentMessage(undefined)).toBe(false);
+  });
+  it('rejects resolved=null', () => {
+    expect(
+      isPreviewParentMessage({
+        kind: LAYOUT_PREVIEW_KIND,
+        protocol: 1,
+        type: 'config',
+        resolved: null,
+      })
+    ).toBe(false);
+  });
+  it('rejects resolved=array (bad shape)', () => {
+    expect(
+      isPreviewParentMessage({
+        kind: LAYOUT_PREVIEW_KIND,
+        protocol: 1,
+        type: 'config',
+        resolved: [],
+      })
+    ).toBe(false);
+  });
+  it('rejects resolved missing screen string', () => {
+    expect(
+      isPreviewParentMessage({
+        kind: LAYOUT_PREVIEW_KIND,
+        protocol: 1,
+        type: 'config',
+        resolved: { screen: 42, version: 1, sections: [] },
+      })
+    ).toBe(false);
+  });
+  it('rejects resolved missing version number', () => {
+    expect(
+      isPreviewParentMessage({
+        kind: LAYOUT_PREVIEW_KIND,
+        protocol: 1,
+        type: 'config',
+        resolved: { screen: 'home', version: '1', sections: [] },
+      })
+    ).toBe(false);
+  });
+  it('rejects resolved where sections is not an array', () => {
+    expect(
+      isPreviewParentMessage({
+        kind: LAYOUT_PREVIEW_KIND,
+        protocol: 1,
+        type: 'config',
+        resolved: { screen: 'home', version: 1, sections: null },
+      })
+    ).toBe(false);
   });
 });
 
@@ -202,7 +255,7 @@ describe('readPreviewParams', () => {
   });
   it('returns null when layoutPreview=0', () => {
     expect(
-      readPreviewParams('?layoutPreview=0&parentOrigin=https://parent.example.com'),
+      readPreviewParams('?layoutPreview=0&parentOrigin=https://parent.example.com')
     ).toBeNull();
   });
   it('returns null when parentOrigin missing', () => {
@@ -215,14 +268,12 @@ describe('readPreviewParams', () => {
     expect(readPreviewParams('?layoutPreview=1&parentOrigin=/relative')).toBeNull();
   });
   it('returns { parentOrigin } for valid params', () => {
-    const result = readPreviewParams(
-      '?layoutPreview=1&parentOrigin=https://parent.example.com',
-    );
+    const result = readPreviewParams('?layoutPreview=1&parentOrigin=https://parent.example.com');
     expect(result).toEqual({ parentOrigin: 'https://parent.example.com' });
   });
   it('normalizes parentOrigin via URL().origin (strips path/query)', () => {
     const result = readPreviewParams(
-      '?layoutPreview=1&parentOrigin=https://parent.example.com/some/path?x=1',
+      '?layoutPreview=1&parentOrigin=https://parent.example.com/some/path?x=1'
     );
     expect(result).toEqual({ parentOrigin: 'https://parent.example.com' });
   });
@@ -237,88 +288,100 @@ describe('readPreviewParams', () => {
 // connectPreviewChild
 // ---------------------------------------------------------------------------
 describe('connectPreviewChild', () => {
-  it('sends ready immediately on connect with correct targetOrigin', () => {
-    const { winA: childWin, winB: parentWin } = makeFakeWindowPair(
-      CHILD_ORIGIN,
-      PARENT_ORIGIN,
-    );
-    const onConfig = vi.fn();
+  it('sends ready to parentWindow (not childWin) with correct targetOrigin', () => {
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
+    // Wire parentWin → childWin so parent-sent config reaches childWin listeners
+    routeMessages(parentWin, PARENT_ORIGIN, childWin);
+
     connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
-      onConfig,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
+      onConfig: vi.fn(),
     });
-    expect(childWin.postMessage).toHaveBeenCalledOnce();
-    const [msg, targetOrigin] = childWin.postMessage.mock.calls[0];
+
+    // parentWin.postMessage must have been called (not childWin)
+    expect(parentWin.postMessage).toHaveBeenCalledOnce();
+    expect(childWin.postMessage).not.toHaveBeenCalled();
+
+    const [msg, targetOrigin] = parentWin.postMessage.mock.calls[0];
     expect(targetOrigin).toBe(PARENT_ORIGIN); // never '*'
     expect(msg).toMatchObject({
       kind: LAYOUT_PREVIEW_KIND,
       protocol: 1,
       type: 'ready',
     });
-    // suppress unused var warning
-    void parentWin;
   });
 
   it('sends ready with screen when provided', () => {
-    const { winA: childWin } = makeFakeWindowPair(CHILD_ORIGIN, PARENT_ORIGIN);
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
     connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       screen: 'home',
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig: vi.fn(),
     });
-    const [msg] = childWin.postMessage.mock.calls[0];
+    const [msg] = parentWin.postMessage.mock.calls[0];
     expect(msg).toMatchObject({ type: 'ready', screen: 'home' });
+    expect(childWin.postMessage).not.toHaveBeenCalled();
   });
 
   it('delivers config callback for messages from parentOrigin', () => {
-    const { winA: childWin, winB: parentWin } = makeFakeWindowPair(
-      CHILD_ORIGIN,
-      PARENT_ORIGIN,
-    );
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
+    // parentWin.postMessage → childWin listeners (for incoming config)
+    routeMessages(parentWin, PARENT_ORIGIN, childWin);
+
     const onConfig = vi.fn();
     connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig,
     });
-    // Parent sends config
+    // Parent sends config to childWin
     parentWin.postMessage(
       { kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'config', resolved: SAMPLE_RESOLVED },
-      CHILD_ORIGIN,
+      CHILD_ORIGIN
     );
     expect(onConfig).toHaveBeenCalledOnce();
     expect(onConfig).toHaveBeenCalledWith(SAMPLE_RESOLVED);
   });
 
   it('ignores config from foreign origin (security invariant)', () => {
-    const { winA: childWin, listenersA } = makeFakeWindowPair(CHILD_ORIGIN, PARENT_ORIGIN);
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
     const onConfig = vi.fn();
     connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig,
     });
-    // Simulate a foreign-origin message delivered directly to listeners
-    for (const cb of listenersA) {
+    // Inject message directly with a foreign origin
+    for (const cb of childWin.listeners) {
       cb({
         data: { kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'config', resolved: SAMPLE_RESOLVED },
-        origin: FOREIGN_ORIGIN, // wrong origin
+        origin: FOREIGN_ORIGIN,
       });
     }
     expect(onConfig).not.toHaveBeenCalled();
   });
 
   it('ignores malformed messages (silently)', () => {
-    const { winA: childWin, listenersA } = makeFakeWindowPair(CHILD_ORIGIN, PARENT_ORIGIN);
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
     const onConfig = vi.fn();
     connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig,
     });
-    for (const cb of listenersA) {
+    for (const cb of childWin.listeners) {
       cb({ data: { kind: 'other', type: 'config' }, origin: PARENT_ORIGIN });
       cb({ data: null, origin: PARENT_ORIGIN });
       cb({ data: 42, origin: PARENT_ORIGIN });
@@ -326,16 +389,18 @@ describe('connectPreviewChild', () => {
     expect(onConfig).not.toHaveBeenCalled();
   });
 
-  it('sendSectionClick posts to parentOrigin (never *)', () => {
-    const { winA: childWin } = makeFakeWindowPair(CHILD_ORIGIN, PARENT_ORIGIN);
+  it('sendSectionClick posts to parentWindow (not childWin), targetOrigin=parentOrigin', () => {
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
     const { sendSectionClick } = connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig: vi.fn(),
     });
     sendSectionClick('header');
-    // postMessage called twice: once for ready, once for section-click
-    const calls = childWin.postMessage.mock.calls;
+    // parentWin.postMessage called twice: once for ready, once for section-click
+    const calls = parentWin.postMessage.mock.calls;
     expect(calls).toHaveLength(2);
     const [msg, targetOrigin] = calls[1];
     expect(targetOrigin).toBe(PARENT_ORIGIN);
@@ -345,13 +410,17 @@ describe('connectPreviewChild', () => {
       type: 'section-click',
       sectionType: 'header',
     });
+    // childWin must never have been used for outbound messages
+    expect(childWin.postMessage).not.toHaveBeenCalled();
   });
 
-  it('dispose removes the message listener', () => {
-    const { winA: childWin } = makeFakeWindowPair(CHILD_ORIGIN, PARENT_ORIGIN);
+  it('dispose removes the message listener from win (not parentWindow)', () => {
+    const childWin = makeFakeWindow(CHILD_ORIGIN);
+    const parentWin = makeFakeWindow(PARENT_ORIGIN);
     const { dispose } = connectPreviewChild({
       parentOrigin: PARENT_ORIGIN,
       win: childWin as unknown as Window,
+      parentWindow: parentWin as unknown as Pick<Window, 'postMessage'>,
       onConfig: vi.fn(),
     });
     expect(childWin.addEventListener).toHaveBeenCalledOnce();
@@ -369,10 +438,7 @@ describe('connectPreviewChild', () => {
 // ---------------------------------------------------------------------------
 describe('connectPreviewParent', () => {
   it('calls onReady when child sends ready from childOrigin', () => {
-    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(
-      PARENT_ORIGIN,
-      CHILD_ORIGIN,
-    );
+    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(PARENT_ORIGIN, CHILD_ORIGIN);
     const onReady = vi.fn();
     connectPreviewParent({
       childWindow: () => childWin as unknown as Window,
@@ -382,18 +448,12 @@ describe('connectPreviewParent', () => {
       win: parentWin as unknown as Window,
     });
     // child sends ready
-    childWin.postMessage(
-      { kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'ready' },
-      PARENT_ORIGIN,
-    );
+    childWin.postMessage({ kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'ready' }, PARENT_ORIGIN);
     expect(onReady).toHaveBeenCalledOnce();
   });
 
   it('calls onSectionClick when child sends section-click from childOrigin', () => {
-    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(
-      PARENT_ORIGIN,
-      CHILD_ORIGIN,
-    );
+    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(PARENT_ORIGIN, CHILD_ORIGIN);
     const onSectionClick = vi.fn();
     connectPreviewParent({
       childWindow: () => childWin as unknown as Window,
@@ -404,16 +464,13 @@ describe('connectPreviewParent', () => {
     });
     childWin.postMessage(
       { kind: LAYOUT_PREVIEW_KIND, protocol: 1, type: 'section-click', sectionType: 'gallery' },
-      PARENT_ORIGIN,
+      PARENT_ORIGIN
     );
     expect(onSectionClick).toHaveBeenCalledWith('gallery');
   });
 
   it('ignores ready/section-click from foreign origin (security invariant)', () => {
-    const { winA: parentWin, listenersA } = makeFakeWindowPair(
-      PARENT_ORIGIN,
-      CHILD_ORIGIN,
-    );
+    const { winA: parentWin, listenersA } = makeFakeWindowPair(PARENT_ORIGIN, CHILD_ORIGIN);
     const onReady = vi.fn();
     const onSectionClick = vi.fn();
     connectPreviewParent({
@@ -438,10 +495,7 @@ describe('connectPreviewParent', () => {
   });
 
   it('ignores malformed messages from childOrigin', () => {
-    const { winA: parentWin, listenersA } = makeFakeWindowPair(
-      PARENT_ORIGIN,
-      CHILD_ORIGIN,
-    );
+    const { winA: parentWin, listenersA } = makeFakeWindowPair(PARENT_ORIGIN, CHILD_ORIGIN);
     const onReady = vi.fn();
     connectPreviewParent({
       childWindow: () => null,
@@ -458,10 +512,7 @@ describe('connectPreviewParent', () => {
   });
 
   it('sendConfig posts to child window with childOrigin as targetOrigin (never *)', () => {
-    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(
-      PARENT_ORIGIN,
-      CHILD_ORIGIN,
-    );
+    const { winA: parentWin, winB: childWin } = makeFakeWindowPair(PARENT_ORIGIN, CHILD_ORIGIN);
     const { sendConfig } = connectPreviewParent({
       childWindow: () => childWin as unknown as Window,
       childOrigin: CHILD_ORIGIN,
