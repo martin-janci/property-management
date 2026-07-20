@@ -7,7 +7,7 @@ vi.mock('next/cache', () => ({
 }));
 
 import { revalidateTag } from 'next/cache';
-import { POST, layoutTagsFor } from './route';
+import { layoutTagsFor, POST } from './route';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -38,6 +38,10 @@ describe('layoutTagsFor', () => {
 
   it('uses first slash split', () => {
     expect(layoutTagsFor('reality/listing-detail/extra')).toEqual(['layout:listing-detail']);
+  });
+
+  it('returns null when second segment is empty', () => {
+    expect(layoutTagsFor('foo/')).toBeNull();
   });
 });
 
@@ -103,6 +107,16 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 422 when screen has no slash', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'listing-detail' });
+    const sig = makeSignature(SECRET, body);
+    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    const res = await POST(req);
+    expect(res.status).toBe(422);
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it('returns 422 when second segment is empty (e.g., "foo/")', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'foo/' });
     const sig = makeSignature(SECRET, body);
     const req = makeRequest(body, { 'X-Webhook-Signature': sig });
     const res = await POST(req);

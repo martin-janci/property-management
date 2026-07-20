@@ -7,8 +7,12 @@ import { NextResponse } from 'next/server';
 // Only screens that contain a slash are valid (e.g. "reality/listing-detail").
 // ---------------------------------------------------------------------------
 
-export function layoutTagsFor(screen: string): string[] {
-  return ['layout:' + screen.split('/')[1]];
+export function layoutTagsFor(screen: string): string[] | null {
+  const parts = screen.split('/');
+  const segment = parts[1];
+  // Require non-empty second segment (e.g., reject 'foo/')
+  if (!segment) return null;
+  return ['layout:' + segment];
 }
 
 // ---------------------------------------------------------------------------
@@ -55,13 +59,17 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const screen = (body as { screen: string }).screen;
 
-  // 5. Validate screen contains a slash
+  // 5. Validate screen contains a slash and has non-empty second segment
   if (!screen.includes('/')) {
     return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
   }
 
   // 6. Revalidate tags
   const tags = layoutTagsFor(screen);
+  if (!tags) {
+    return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
+  }
+
   for (const tag of tags) {
     revalidateTag(tag, 'default');
   }

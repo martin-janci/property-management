@@ -54,6 +54,8 @@ over `grep -r <noun> backend/`.
   `api-server/src/routes/layout/` (admin + tenant + resolved) and
   `reality-server/src/routes/layout.rs` (public resolved).
   Spec: `docs/superpowers/specs/2026-07-19-layout-content-manager-design.md`.
+  Publish webhook: `api-server/src/routes/layout/webhook.rs` → `reality-web/src/app/api/layout-revalidate`
+  (POST, HMAC-SHA256 signature, Next.js ISR revalidation). Envs: `LAYOUT_WEBHOOK_URL`, `LAYOUT_WEBHOOK_SECRET`.
   Frontend: `ppt-web/src/features/layout/` + `reality-web/src/lib/layout.ts` +
   `reality-web/src/components/listings/LayoutSections.tsx` (registries, defensive
   renderers, checked-in web manifests for PUT /platform-admin/layout/manifests).
