@@ -7,7 +7,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAdminAuth } from '../../auth/AdminAuthContext';
@@ -250,7 +250,7 @@ export default function LayoutEditorPage() {
   }, [manifestsQuery.data, platform]);
 
   // -------------------------------------------------------------------------
-  // Local draft + rails state (deep-cloned from envelope on load/screen change)
+  // Local draft + rails state (deep-cloned from envelope on explicit reseed)
   // -------------------------------------------------------------------------
 
   const [localDraft, setLocalDraft] = useState<ScreenConfig | null>(null);
@@ -258,10 +258,27 @@ export default function LayoutEditorPage() {
   const [draftDirty, setDraftDirty] = useState(false);
   const [railsDirty, setRailsDirty] = useState(false);
 
-  // Seed local state whenever configQuery data changes (load or screen change)
+  // Reseed epoch — bump this to force a reseed from the server (e.g. after rollback).
+  // Invalidation alone (publish, save) does NOT bump epoch; only rollback does.
+  const [reseedEpoch, setReseedEpoch] = useState(0);
+
+  // Track what was last seeded so we only reseed on screen change or explicit epoch bump.
+  const lastSeededRef = useRef<{ screen: string; epoch: number } | null>(null);
+
   const envelope = configQuery.data;
+
   useEffect(() => {
     if (!envelope) return;
+
+    const shouldSeed =
+      lastSeededRef.current === null ||
+      lastSeededRef.current.screen !== selectedScreen ||
+      lastSeededRef.current.epoch !== reseedEpoch;
+
+    if (!shouldSeed) return;
+
+    lastSeededRef.current = { screen: selectedScreen, epoch: reseedEpoch };
+
     setLocalDraft(deepClone(envelope.config.draft));
     const rails = envelope.config.rails;
     const hasRails =
@@ -272,15 +289,21 @@ export default function LayoutEditorPage() {
     setDraftDirty(false);
     setRailsDirty(false);
     setPublishErrors([]);
-  }, [envelope]);
+  }, [envelope, selectedScreen, reseedEpoch]);
 
   // -------------------------------------------------------------------------
   // Mutations
   // -------------------------------------------------------------------------
 
+  // Track the JSON payload sent in saveDraftMutation so onSuccess can compare
+  // against current local state — only clear dirty if no new edits arrived
+  // during the round-trip.
+  const sentDraftJsonRef = useRef<string | null>(null);
+
   const saveDraftMutation = useMutation({
     mutationFn: () => {
       if (!localDraft) throw new Error('no draft');
+      sentDraftJsonRef.current = JSON.stringify(localDraft);
       return putDraft(token, selectedScreen, localDraft);
     },
     onSuccess: () => {
@@ -288,7 +311,12 @@ export default function LayoutEditorPage() {
         type: 'success',
         title: t('admin.layout.draftSaved', { defaultValue: 'Draft saved' }),
       });
-      setDraftDirty(false);
+      // Only clear dirty if the user hasn't made new edits since mutate() fired.
+      if (sentDraftJsonRef.current === JSON.stringify(localDraft)) {
+        setDraftDirty(false);
+      }
+      // Invalidate to sync server version number — but do NOT reseed (local IS
+      // what was saved; reseeding would clobber any edits made during round-trip).
       queryClient.invalidateQueries({
         queryKey: ['admin', 'platform', 'layout', 'config', selectedScreen],
       });
@@ -302,14 +330,23 @@ export default function LayoutEditorPage() {
     },
   });
 
+  const sentRailsJsonRef = useRef<string | null>(null);
+
   const saveRailsMutation = useMutation({
-    mutationFn: () => putRails(token, selectedScreen, localRails),
+    mutationFn: () => {
+      sentRailsJsonRef.current = JSON.stringify(localRails);
+      return putRails(token, selectedScreen, localRails);
+    },
     onSuccess: () => {
       showToast({
         type: 'success',
         title: t('admin.layout.railsSaved', { defaultValue: 'Rails saved' }),
       });
-      setRailsDirty(false);
+      // Only clear dirty if no new edits arrived during the round-trip.
+      if (sentRailsJsonRef.current === JSON.stringify(localRails)) {
+        setRailsDirty(false);
+      }
+      // Invalidate only — no reseed (local state IS what was saved).
       queryClient.invalidateQueries({
         queryKey: ['admin', 'platform', 'layout', 'config', selectedScreen],
       });
@@ -356,9 +393,12 @@ export default function LayoutEditorPage() {
         type: 'success',
         title: t('admin.layout.rolledBack', { defaultValue: 'Rolled back' }),
       });
+      // Invalidate AND bump reseedEpoch — server is now the truth, discard
+      // any in-flight local edits and reseed from the refetched envelope.
       queryClient.invalidateQueries({
         queryKey: ['admin', 'platform', 'layout', 'config', selectedScreen],
       });
+      setReseedEpoch((e) => e + 1);
     },
     onError: (err) => {
       showToast({
@@ -735,6 +775,16 @@ export default function LayoutEditorPage() {
                   ? t('admin.layout.publishing', { defaultValue: 'Publishing…' })
                   : t('admin.layout.publish', { defaultValue: 'Publish' })}
               </button>
+              {(draftDirty || railsDirty) && (
+                <span
+                  style={{ fontSize: 12, color: 'var(--ppt-warning-700, #b45309)' }}
+                  data-testid="publish-dirty-warning"
+                >
+                  {t('admin.layout.publishDirtyWarning', {
+                    defaultValue: 'You have unsaved changes — Publish uses the last saved draft.',
+                  })}
+                </span>
+              )}
             </div>
 
             {/* Version history table */}

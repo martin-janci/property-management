@@ -55,7 +55,15 @@ vi.mock('./api', async (importOriginal) => {
 // Import mocked functions after vi.mock is hoisted
 // ---------------------------------------------------------------------------
 
-import { getConfig, listManifests, listScreens, publish, putDraft, rollback } from './api';
+import {
+  getConfig,
+  listManifests,
+  listScreens,
+  publish,
+  putDraft,
+  putRails,
+  rollback,
+} from './api';
 
 // ---------------------------------------------------------------------------
 // Sample fixtures
@@ -122,7 +130,7 @@ function renderPage() {
 
   const qc = makeQueryClient();
 
-  return render(
+  const result = render(
     <QueryClientProvider client={qc}>
       <MemoryRouter>
         <AdminAuthProvider>
@@ -133,6 +141,8 @@ function renderPage() {
       </MemoryRouter>
     </QueryClientProvider>
   );
+
+  return { ...result, queryClient: qc };
 }
 
 // ---------------------------------------------------------------------------
@@ -275,5 +285,133 @@ describe('LayoutEditorPage', () => {
     await user.click(screen.getByRole('button', { name: /rollback/i }));
 
     await waitFor(() => expect(rollback).toHaveBeenCalledWith('test-token', 'home/dashboard', 1));
+  });
+
+  // -------------------------------------------------------------------------
+  // 5. Background refetch does NOT clobber dirty local state
+  // -------------------------------------------------------------------------
+
+  it('dirty edits survive a background refetch (reseed policy: no clobber on invalidation)', async () => {
+    const user = userEvent.setup();
+    const { queryClient } = renderPage();
+
+    // Wait for screens, then select
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+
+    // Wait for Hero section to appear, then toggle visibility (dirty)
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+    await user.click(screen.getByTestId('hide-btn-Hero'));
+
+    // Save Draft should be enabled (dirty flag set)
+    const saveDraftBtn = screen.getByTestId('save-draft-btn');
+    expect(saveDraftBtn).not.toBeDisabled();
+
+    // Simulate background refetch — invalidation triggers a new network fetch,
+    // but since epoch and screen haven't changed, the seed effect must NOT fire.
+    await queryClient.refetchQueries({
+      queryKey: ['admin', 'platform', 'layout', 'config', 'home/dashboard'],
+    });
+
+    // Dirty flag must still be set and Save Draft still enabled
+    expect(screen.getByTestId('save-draft-btn')).not.toBeDisabled();
+
+    // The Hero toggle button still has the 'Show section' title (visible=false after toggle)
+    // — the seed effect must NOT have fired and reset it to visible=true.
+    const hideBtn = screen.getByTestId('hide-btn-Hero');
+    expect(hideBtn.getAttribute('title')).toMatch(/show section/i);
+  });
+
+  // -------------------------------------------------------------------------
+  // 6. Rollback success reseeds from the refetched envelope
+  // -------------------------------------------------------------------------
+
+  it('rollback success reseeds tree from the refetched envelope draft', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    // After rollback, getConfig resolves with a different draft (Stats section)
+    const ROLLBACK_ENVELOPE: ConfigEnvelope = {
+      ...SAMPLE_ENVELOPE,
+      config: {
+        ...SAMPLE_ENVELOPE.config,
+        draft: {
+          screen: 'home/dashboard',
+          version: 0,
+          sections: [{ type: 'Stats', visible: true }],
+        },
+      },
+    };
+
+    // First call returns original (Hero), subsequent calls return rollback result (Stats)
+    vi.mocked(getConfig)
+      .mockResolvedValueOnce(SAMPLE_ENVELOPE)
+      .mockResolvedValue(ROLLBACK_ENVELOPE);
+
+    vi.mocked(rollback).mockResolvedValue(undefined);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+
+    // Wait for initial Hero to appear
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+
+    // Click Rollback (version 1)
+    await user.click(screen.getByRole('button', { name: /rollback/i }));
+
+    await waitFor(() => expect(rollback).toHaveBeenCalledWith('test-token', 'home/dashboard', 1));
+
+    // After rollback + reseed, tree must now show Stats (from ROLLBACK_ENVELOPE)
+    await waitFor(() => {
+      expect(screen.getByTestId('hide-btn-Stats')).toBeTruthy();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 7. Publish dirty warning shows when dirty; disappears after Save Draft
+  // -------------------------------------------------------------------------
+
+  it('dirty warning appears next to Publish when dirty; disappears after successful Save Draft', async () => {
+    vi.mocked(putDraft).mockResolvedValue(undefined);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+
+    // Initially no dirty warning
+    expect(screen.queryByTestId('publish-dirty-warning')).toBeNull();
+
+    // Make a dirty edit
+    await user.click(screen.getByTestId('hide-btn-Hero'));
+
+    // Warning should now appear
+    expect(await screen.findByTestId('publish-dirty-warning')).toBeTruthy();
+    expect(screen.getByTestId('publish-dirty-warning').textContent).toMatch(/unsaved changes/i);
+
+    // Save Draft
+    await user.click(screen.getByTestId('save-draft-btn'));
+
+    // After successful save, warning disappears
+    await waitFor(() => {
+      expect(screen.queryByTestId('publish-dirty-warning')).toBeNull();
+    });
+
+    // Rails dirty warning: also test via putRails path
+    expect(putRails).not.toHaveBeenCalled(); // guard
   });
 });
