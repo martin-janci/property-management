@@ -13,7 +13,6 @@
  * per-section JSON parse error flag; everything else derives from props.
  */
 
-import { Badge, Button } from '@ppt/ui-kit';
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -86,6 +85,74 @@ const ADD_ROW_STYLE: React.CSSProperties = {
   borderTop: '1px solid var(--ppt-border-default, #e5e7eb)',
   marginTop: 8,
 };
+
+// Inline replacements for ui-kit Badge / Button (admin-web uses no ui-kit)
+const BADGE_BASE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  borderRadius: 4,
+  padding: '1px 6px',
+  fontSize: 11,
+  fontWeight: 600,
+  lineHeight: '18px',
+};
+
+const BADGE_VARIANT: Record<string, React.CSSProperties> = {
+  secondary: {
+    background: 'var(--ppt-bg-subtle, #f3f4f6)',
+    color: 'var(--ppt-fg-secondary, #6b7280)',
+  },
+  warning: {
+    background: 'var(--ppt-warning-100, #fef3c7)',
+    color: 'var(--ppt-warning-700, #b45309)',
+  },
+  danger: { background: 'var(--ppt-danger-100, #fee2e2)', color: 'var(--ppt-danger-700, #b91c1c)' },
+};
+
+const BTN_BASE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 6,
+  padding: '3px 10px',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  border: '1px solid transparent',
+  lineHeight: '18px',
+  background: 'none',
+};
+
+const BTN_VARIANT: Record<string, React.CSSProperties> = {
+  ghost: { color: 'var(--ppt-fg-secondary, #6b7280)', border: '1px solid transparent' },
+  danger: {
+    background: 'var(--ppt-danger-600, #dc2626)',
+    color: '#fff',
+    border: '1px solid var(--ppt-danger-700, #b91c1c)',
+  },
+  secondary: {
+    background: 'var(--ppt-bg-subtle, #f3f4f6)',
+    color: 'var(--ppt-fg-primary, #111827)',
+    border: '1px solid var(--ppt-border-default, #e5e7eb)',
+  },
+  primary: {
+    background: 'var(--ppt-primary-600, #2563eb)',
+    color: '#fff',
+    border: '1px solid var(--ppt-primary-700, #1d4ed8)',
+  },
+};
+
+function badgeStyle(variant: string): React.CSSProperties {
+  return { ...BADGE_BASE, ...(BADGE_VARIANT[variant] ?? {}) };
+}
+
+function btnStyle(variant: string, disabled?: boolean): React.CSSProperties {
+  return {
+    ...BTN_BASE,
+    ...(BTN_VARIANT[variant] ?? {}),
+    ...(disabled ? { opacity: 0.4, cursor: 'not-allowed' } : {}),
+  };
+}
 
 const SELECT_STYLE: React.CSSProperties = {
   padding: '5px 8px',
@@ -251,30 +318,30 @@ export function SectionTreeEditor({
 
               {/* Required lock badge — required sections have NO hide control */}
               {required && (
-                <Badge variant="secondary" size="sm" data-testid={`lock-badge-${type}`}>
+                <span style={badgeStyle('secondary')} data-testid={`lock-badge-${type}`}>
                   {t('admin.layout.requiredBadge', { defaultValue: 'Required' })}
-                </Badge>
+                </span>
               )}
 
               {/* Unknown-type warning badge */}
               {unknown && (
-                <Badge variant="warning" size="sm" data-testid={`unknown-badge-${type}`}>
+                <span style={badgeStyle('warning')} data-testid={`unknown-badge-${type}`}>
                   {t('admin.layout.unknownBadge', { defaultValue: 'Unknown type' })}
-                </Badge>
+                </span>
               )}
 
               {/* Killed badge */}
               {killed && (
-                <Badge variant="danger" size="sm" data-testid={`killed-badge-${type}`}>
+                <span style={badgeStyle('danger')} data-testid={`killed-badge-${type}`}>
                   {t('admin.layout.killedBadge', { defaultValue: 'Killed' })}
-                </Badge>
+                </span>
               )}
 
               {/* Eye toggle — only for optional sections */}
               {!required && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
+                  type="button"
+                  style={btnStyle('ghost')}
                   data-testid={`hide-btn-${type}`}
                   onClick={() => toggleVisible(type)}
                   title={
@@ -284,63 +351,63 @@ export function SectionTreeEditor({
                   }
                 >
                   {(section.visible ?? true) ? '👁' : '🙈'}
-                </Button>
+                </button>
               )}
 
               {/* Kill / Unkill button */}
               {killed ? (
-                <Button
-                  variant="danger"
-                  size="sm"
+                <button
+                  type="button"
+                  style={btnStyle('danger')}
                   data-testid={`unkill-btn-${type}`}
                   onClick={() => handleUnkill(type)}
                 >
                   {t('admin.layout.unkillBtn', { defaultValue: 'Unkill' })}
-                </Button>
+                </button>
               ) : (
-                <Button
-                  variant="danger"
-                  size="sm"
+                <button
+                  type="button"
+                  style={btnStyle('danger')}
                   data-testid={`kill-btn-${type}`}
                   onClick={() => handleKill(type)}
                 >
                   {t('admin.layout.killBtn', { defaultValue: 'Kill' })}
-                </Button>
+                </button>
               )}
 
               {/* Remove button — optional sections only */}
               {!required && (
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
+                  type="button"
+                  style={btnStyle('secondary')}
                   data-testid={`remove-btn-${type}`}
                   onClick={() => onChange(sections.filter((s) => s.type !== type))}
                 >
                   {t('admin.layout.removeBtn', { defaultValue: 'Remove' })}
-                </Button>
+                </button>
               )}
 
               {/* Reorder buttons */}
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
+                style={btnStyle('ghost', idx === 0)}
                 data-testid={`move-up-${type}`}
                 disabled={idx === 0}
                 onClick={() => reorder(idx, idx - 1)}
                 aria-label={t('admin.layout.moveUp', { defaultValue: 'Move up' })}
               >
                 ↑
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              </button>
+              <button
+                type="button"
+                style={btnStyle('ghost', idx === sections.length - 1)}
                 data-testid={`move-down-${type}`}
                 disabled={idx === sections.length - 1}
                 onClick={() => reorder(idx, idx + 1)}
                 aria-label={t('admin.layout.moveDown', { defaultValue: 'Move down' })}
               >
                 ↓
-              </Button>
+              </button>
             </div>
 
             {/* Mode select — only when manifest entry has supported_modes */}
@@ -412,15 +479,15 @@ export function SectionTreeEditor({
               </option>
             ))}
           </select>
-          <Button
-            variant="primary"
-            size="sm"
+          <button
+            type="button"
+            style={btnStyle('primary', !addType)}
             data-testid="add-section-btn"
             disabled={!addType}
             onClick={handleAdd}
           >
             {t('admin.layout.addSectionBtn', { defaultValue: 'Add section' })}
-          </Button>
+          </button>
         </div>
       )}
     </div>
