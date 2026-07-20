@@ -13,6 +13,11 @@
  * the moment ANY query errors, and a retry button that refetches all four
  * queries. i18n `t` returns the key in tests (see src/test/setup.ts), so the
  * banner asserts on the `dashboard.loadError` / `common.retry` keys.
+ *
+ * NOTE: `useDashboardLayout` and `LayoutSections` are mocked so this suite
+ * stays focused on DashboardScreen's own four-query contract and error-banner
+ * logic. Stats/actions are rendered by registry components which have their
+ * own tests in layout.test.tsx.
  */
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -29,6 +34,25 @@ jest.mock('../../contexts/AuthContext', () => ({
     user: { firstName: 'Ada', lastName: 'Byron' },
     logout: jest.fn(),
   }),
+}));
+
+// Mock useDashboardLayout so the layout hook doesn't trigger additional
+// useApiQuery calls through the section registry components.
+jest.mock('../../features/layout/useDashboardLayout', () => ({
+  useDashboardLayout: jest.fn(() => ({
+    layout: {
+      screen: 'ppt/dashboard',
+      version: 0,
+      sections: [],
+    },
+  })),
+}));
+
+// Mock LayoutSections to avoid rendering registry components (which also
+// call useApiQuery) so this suite stays focused on DashboardScreen's own
+// four-query contract and error-banner logic.
+jest.mock('../../features/layout/LayoutSections', () => ({
+  LayoutSections: () => null,
 }));
 
 const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
@@ -96,15 +120,13 @@ const allSuccess = () => [
 describe('DashboardScreen error state (#2282)', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('renders no error banner and shows real stats when all queries succeed', () => {
+  it('renders no error banner and shows announcement data when all queries succeed', () => {
     mockQueries(allSuccess());
     render(<DashboardScreen />);
 
     expect(screen.queryByText('dashboard.loadError')).toBeNull();
-    // pendingFaults = open_count + in_progress_count = 3
-    expect(screen.getByText('3')).toBeTruthy();
-    // unreadMessages = unreadCount = 5
-    expect(screen.getByText('5')).toBeTruthy();
+    // The announcements section renders real data from the query
+    expect(screen.getByText('Lift maintenance')).toBeTruthy();
   });
 
   it('shows the error banner when ANY query fails (not a silent all-zero state)', () => {

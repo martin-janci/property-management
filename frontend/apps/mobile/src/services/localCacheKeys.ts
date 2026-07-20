@@ -20,3 +20,8 @@ export const LAST_SYNC_KEY = 'ppt_last_sync';
 // widget layout config (which references building ids, i.e. tenant data).
 export const WIDGET_CONFIG_KEY = '@ppt/widget_configs';
 export const WIDGET_DATA_KEY = '@ppt/widget_data';
+
+// `useDashboardLayout` / layout registry — server-driven resolved screen layout,
+// persisted across restarts so the last-known layout activates at launch before
+// the background fetch completes (next-launch activation pattern).
+export const LAYOUT_CACHE_KEY = (screen: string) => `ppt_layout_${screen.replace(/\//g, '_')}`;

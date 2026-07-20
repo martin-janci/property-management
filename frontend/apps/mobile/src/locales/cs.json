@@ -490,5 +490,9 @@
     "errorRoleRequired": "Prosim zadejte nazev role.",
     "errorPasswordTooShort": "Heslo musi mit alespon 4 znaky.",
     "errorInvalidDays": "Prosim zadejte platny pocet dni."
+  },
+  "layout": {
+    "placeholderTitle": "Sekce není dostupná",
+    "placeholderBody": "Tato sekce momentálně není dostupná."
   }
 }

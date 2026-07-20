@@ -450,5 +450,9 @@
     "errorRoleRequired": "Prosze podac nazwe roli.",
     "errorPasswordTooShort": "Haslo musi miec co najmniej 4 znaki.",
     "errorInvalidDays": "Prosze podac prawidlowa liczbe dni."
+  },
+  "layout": {
+    "placeholderTitle": "Sekcja niedostępna",
+    "placeholderBody": "Ta sekcja jest obecnie niedostępna."
   }
 }

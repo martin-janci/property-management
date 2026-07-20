@@ -3,30 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryErrorBanner } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
+import { LayoutSections } from '../../features/layout/LayoutSections';
+import { dashboardRegistry, NavigateContext } from '../../features/layout/registry';
+import { useDashboardLayout } from '../../features/layout/useDashboardLayout';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
-
-// Dashboard card types
-interface DashboardStats {
-  pendingFaults: number;
-  unreadAnnouncements: number;
-  activeVotes: number;
-  unreadMessages: number;
-  upcomingPayments: number;
-}
 
 interface Announcement {
   id: string;
   title: string;
   createdAt: string;
   category: 'general' | 'urgent' | 'maintenance' | 'event';
-}
-
-interface PendingAction {
-  id: string;
-  type: 'vote' | 'payment' | 'reading' | 'fault';
-  title: string;
-  dueDate?: string;
 }
 
 interface ApiAnnouncement {
@@ -66,6 +53,7 @@ interface DashboardScreenProps {
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
+  const { layout } = useDashboardLayout('ppt/dashboard');
 
   // Each card pulls its own count so a single slow/down endpoint doesn't
   // stall the whole dashboard. `staleTime` is short here because the
@@ -98,35 +86,6 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       // The list endpoint doesn't expose category yet — default to general
       // so the card colour stays neutral.
       category: 'general',
-    }));
-
-  const stats: DashboardStats = {
-    pendingFaults:
-      (faultsStatsQuery.data?.statistics?.open_count ?? 0) +
-      (faultsStatsQuery.data?.statistics?.in_progress_count ?? 0),
-    unreadAnnouncements: announcements.length,
-    activeVotes: (votesQuery.data?.votes ?? []).filter((v) => v.status === 'active').length,
-    unreadMessages:
-      unreadMessagesQuery.data?.unreadCount ??
-      unreadMessagesQuery.data?.unread_count ??
-      unreadMessagesQuery.data?.count ??
-      0,
-    upcomingPayments: 0,
-  };
-
-  // The api-server has no aggregate "pending resident actions" endpoint
-  // yet. Once it exists (one feed combining vote eligibility, due
-  // payments, scheduled meter reading windows, …) this card will read
-  // from there. For now show whatever signals we already have so the
-  // card isn't silently empty.
-  const pendingActions: PendingAction[] = (votesQuery.data?.votes ?? [])
-    .filter((v) => v.status === 'active')
-    .slice(0, 3)
-    .map((v) => ({
-      id: v.id,
-      type: 'vote',
-      title: v.title,
-      dueDate: v.end_at,
     }));
 
   const isFetching =
@@ -176,147 +135,101 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     }
   };
 
-  const getActionIcon = (type: PendingAction['type']): string => {
-    switch (type) {
-      case 'vote':
-        return '🗳️';
-      case 'payment':
-        return '💳';
-      case 'reading':
-        return '📊';
-      case 'fault':
-        return '🔧';
-      default:
-        return '📋';
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>{t('dashboard.welcomeBack')}</Text>
-          <Text style={styles.userName}>
-            {user?.firstName} {user?.lastName}
-          </Text>
-        </View>
-        <Pressable style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutText}>{t('auth.logout')}</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
-        }
-      >
-        {/* Error banner — shown when any card's query failed so the zeroed
-            stats below aren't mistaken for a genuinely empty building (#2282).
-            Extracted to the shared QueryErrorBanner component (#2323). */}
-        {hasError && <QueryErrorBanner message={t('dashboard.loadError')} onRetry={onRefresh} />}
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <Pressable style={styles.statCard} onPress={() => onNavigate?.('Faults')}>
-            <Text style={styles.statNumber}>{stats.pendingFaults}</Text>
-            <Text style={styles.statLabel}>{t('dashboard.openFaults')}</Text>
-          </Pressable>
-          <Pressable style={styles.statCard} onPress={() => onNavigate?.('Announcements')}>
-            <Text style={styles.statNumber}>{stats.unreadAnnouncements}</Text>
-            <Text style={styles.statLabel}>{t('dashboard.newAnnouncements')}</Text>
-          </Pressable>
-          <Pressable style={styles.statCard} onPress={() => onNavigate?.('Voting')}>
-            <Text style={styles.statNumber}>{stats.activeVotes}</Text>
-            <Text style={styles.statLabel}>{t('dashboard.activeVotes')}</Text>
-          </Pressable>
-          <Pressable style={styles.statCard} onPress={() => onNavigate?.('Messages')}>
-            <Text style={styles.statNumber}>{stats.unreadMessages}</Text>
-            <Text style={styles.statLabel}>{t('dashboard.unreadMessages')}</Text>
+    <NavigateContext.Provider value={onNavigate}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>{t('dashboard.welcomeBack')}</Text>
+            <Text style={styles.userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+          </View>
+          <Pressable style={styles.logoutButton} onPress={logout}>
+            <Text style={styles.logoutText}>{t('auth.logout')}</Text>
           </Pressable>
         </View>
 
-        {/* Pending Actions */}
-        {pendingActions.length > 0 && (
+        <ScrollView
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+            />
+          }
+        >
+          {/* Error banner — shown when any card's query failed so the zeroed
+              stats below aren't mistaken for a genuinely empty building (#2282).
+              Extracted to the shared QueryErrorBanner component (#2323). */}
+          {hasError && <QueryErrorBanner message={t('dashboard.loadError')} onRetry={onRefresh} />}
+
+          {/* Managed sections — stats grid and pending actions are now rendered
+              through the layout registry (next-launch activation pattern). */}
+          <LayoutSections layout={layout} registry={dashboardRegistry} />
+
+          {/* Recent Announcements */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('dashboard.pendingActions')}</Text>
-            <View style={styles.actionsList}>
-              {pendingActions.map((action) => (
-                <Pressable key={action.id} style={styles.actionCard}>
-                  <Text style={styles.actionIcon}>{getActionIcon(action.type)}</Text>
-                  <View style={styles.actionContent}>
-                    <Text style={styles.actionTitle}>{action.title}</Text>
-                    {action.dueDate && (
-                      <Text style={styles.actionDue}>
-                        {t('dashboard.due', { date: formatDate(action.dueDate) })}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('dashboard.recentAnnouncements')}</Text>
+              <Pressable onPress={() => onNavigate?.('Announcements')}>
+                <Text style={styles.seeAllText}>{t('dashboard.seeAll')}</Text>
+              </Pressable>
+            </View>
+            <View style={styles.announcementsList}>
+              {announcements.map((announcement) => (
+                <Pressable key={announcement.id} style={styles.announcementCard}>
+                  <View style={styles.announcementHeader}>
+                    <View
+                      style={[
+                        styles.categoryBadge,
+                        { backgroundColor: getCategoryColor(announcement.category) },
+                      ]}
+                    >
+                      <Text style={styles.categoryText}>
+                        {t(`dashboard.category.${announcement.category}`)}
                       </Text>
-                    )}
+                    </View>
+                    <Text style={styles.announcementDate}>
+                      {formatDate(announcement.createdAt)}
+                    </Text>
                   </View>
-                  <Text style={styles.actionArrow}>›</Text>
+                  <Text style={styles.announcementTitle}>{announcement.title}</Text>
                 </Pressable>
               ))}
             </View>
           </View>
-        )}
 
-        {/* Recent Announcements */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('dashboard.recentAnnouncements')}</Text>
-            <Pressable onPress={() => onNavigate?.('Announcements')}>
-              <Text style={styles.seeAllText}>{t('dashboard.seeAll')}</Text>
-            </Pressable>
-          </View>
-          <View style={styles.announcementsList}>
-            {announcements.map((announcement) => (
-              <Pressable key={announcement.id} style={styles.announcementCard}>
-                <View style={styles.announcementHeader}>
-                  <View
-                    style={[
-                      styles.categoryBadge,
-                      { backgroundColor: getCategoryColor(announcement.category) },
-                    ]}
-                  >
-                    <Text style={styles.categoryText}>
-                      {t(`dashboard.category.${announcement.category}`)}
-                    </Text>
-                  </View>
-                  <Text style={styles.announcementDate}>{formatDate(announcement.createdAt)}</Text>
-                </View>
-                <Text style={styles.announcementTitle}>{announcement.title}</Text>
+          {/* Quick Actions */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
+            <View style={styles.quickActionsGrid}>
+              <Pressable style={styles.quickAction} onPress={() => onNavigate?.('ReportFault')}>
+                <Text style={styles.quickActionIcon}>🔧</Text>
+                <Text style={styles.quickActionLabel}>{t('dashboard.reportFault')}</Text>
               </Pressable>
-            ))}
+              <Pressable style={styles.quickAction} onPress={() => onNavigate?.('Documents')}>
+                <Text style={styles.quickActionIcon}>📄</Text>
+                <Text style={styles.quickActionLabel}>{t('dashboard.documents')}</Text>
+              </Pressable>
+              <Pressable style={styles.quickAction} onPress={() => onNavigate?.('MeterReading')}>
+                <Text style={styles.quickActionIcon}>📊</Text>
+                <Text style={styles.quickActionLabel}>{t('dashboard.meterReading')}</Text>
+              </Pressable>
+              <Pressable style={styles.quickAction} onPress={() => onNavigate?.('Payments')}>
+                <Text style={styles.quickActionIcon}>💳</Text>
+                <Text style={styles.quickActionLabel}>{t('dashboard.payments')}</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
-          <View style={styles.quickActionsGrid}>
-            <Pressable style={styles.quickAction} onPress={() => onNavigate?.('ReportFault')}>
-              <Text style={styles.quickActionIcon}>🔧</Text>
-              <Text style={styles.quickActionLabel}>{t('dashboard.reportFault')}</Text>
-            </Pressable>
-            <Pressable style={styles.quickAction} onPress={() => onNavigate?.('Documents')}>
-              <Text style={styles.quickActionIcon}>📄</Text>
-              <Text style={styles.quickActionLabel}>{t('dashboard.documents')}</Text>
-            </Pressable>
-            <Pressable style={styles.quickAction} onPress={() => onNavigate?.('MeterReading')}>
-              <Text style={styles.quickActionIcon}>📊</Text>
-              <Text style={styles.quickActionLabel}>{t('dashboard.meterReading')}</Text>
-            </Pressable>
-            <Pressable style={styles.quickAction} onPress={() => onNavigate?.('Payments')}>
-              <Text style={styles.quickActionIcon}>💳</Text>
-              <Text style={styles.quickActionLabel}>{t('dashboard.payments')}</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Bottom spacing */}
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-    </View>
+          {/* Bottom spacing */}
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+      </View>
+    </NavigateContext.Provider>
   );
 }
 
@@ -335,22 +248,6 @@ const styles = StyleSheet.create({
   logoutButton: { padding: 8 },
   logoutText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
   scrollView: { flex: 1 },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12 },
-  statCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  statNumber: { fontSize: 28, fontWeight: 'bold', color: colors.accent },
-  statLabel: { fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
   section: { padding: 16 },
   sectionHeader: {
     flexDirection: 'row',
@@ -360,24 +257,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 12 },
   seeAllText: { color: colors.accent, fontSize: 14 },
-  actionsList: { gap: 8 },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  actionIcon: { fontSize: 24, marginRight: 12 },
-  actionContent: { flex: 1 },
-  actionTitle: { fontSize: 15, fontWeight: '500', color: colors.text },
-  actionDue: { fontSize: 13, color: colors.warning, marginTop: 2 },
-  actionArrow: { fontSize: 24, color: colors.textSubtle },
   announcementsList: { gap: 8 },
   announcementCard: {
     backgroundColor: colors.surface,

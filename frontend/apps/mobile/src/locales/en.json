@@ -490,5 +490,9 @@
     "errorRoleRequired": "Please enter a role name.",
     "errorPasswordTooShort": "Password must be at least 4 characters.",
     "errorInvalidDays": "Please enter a valid number of days."
+  },
+  "layout": {
+    "placeholderTitle": "Section unavailable",
+    "placeholderBody": "This section is currently not available."
   }
 }

@@ -450,5 +450,9 @@
     "errorRoleRequired": "Kerlek add meg a szerepkor nevet.",
     "errorPasswordTooShort": "A jelszonak legalabb 4 karakternek kell lennie.",
     "errorInvalidDays": "Kerlek adj meg ervenyes napszamot."
+  },
+  "layout": {
+    "placeholderTitle": "Szakasz nem elérhető",
+    "placeholderBody": "Ez a szakasz jelenleg nem elérhető."
   }
 }
