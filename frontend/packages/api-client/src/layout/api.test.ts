@@ -6,67 +6,145 @@ import {
   TenantLayoutError,
 } from './api';
 
-vi.mock('../lib/fetch', () => ({
-  authenticatedFetchJson: vi.fn(),
-}));
-
 vi.mock('../auth', () => ({
   getToken: vi.fn(),
   getOrg: vi.fn(),
 }));
 
 import { getOrg, getToken } from '../auth';
-import { authenticatedFetchJson } from '../lib/fetch';
 
-const mockFetch = vi.mocked(authenticatedFetchJson);
 const mockGetToken = vi.mocked(getToken);
 const mockGetOrg = vi.mocked(getOrg);
 
+function okJson(payload: unknown) {
+  return {
+    ok: true,
+    json: vi.fn().mockResolvedValue(payload),
+  } as unknown as Response;
+}
+
 describe('fetchResolvedLayout', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+    mockGetToken.mockReturnValue('tok-abc');
+    mockGetOrg.mockReturnValue('org-123');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('returns a valid ResolvedScreen', async () => {
-    mockFetch.mockResolvedValueOnce({
-      screen: 'dashboard',
-      version: 1,
-      sections: [{ type: 'hero', presentation: 'visible' }],
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(
+      okJson({
+        screen: 'dashboard',
+        version: 1,
+        sections: [{ type: 'hero', presentation: 'visible' }],
+      })
+    );
     const result = await fetchResolvedLayout('dashboard');
     expect(result.screen).toBe('dashboard');
     expect(result.sections).toHaveLength(1);
   });
 
+  it('sends Authorization and X-Tenant-ID headers', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      okJson({ screen: 'dashboard', version: 1, sections: [] })
+    );
+    await fetchResolvedLayout('dashboard');
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/v1/layout/resolved/dashboard?platform=web',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer tok-abc',
+          'X-Tenant-ID': 'org-123',
+        }),
+      })
+    );
+  });
+
+  it('omits X-Tenant-ID when getOrg() returns null', async () => {
+    mockGetOrg.mockReturnValue(null);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      okJson({ screen: 'dashboard', version: 1, sections: [] })
+    );
+    await fetchResolvedLayout('dashboard');
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    const headers = (options as RequestInit).headers as Record<string, string>;
+    expect(headers['X-Tenant-ID']).toBeUndefined();
+  });
+
   it('throws when sections is missing', async () => {
-    mockFetch.mockResolvedValueOnce({ screen: 'dashboard', version: 1 } as never);
+    vi.mocked(fetch).mockResolvedValueOnce(okJson({ screen: 'dashboard', version: 1 }));
     await expect(fetchResolvedLayout('dashboard')).rejects.toThrow(
       'layout: malformed ResolvedScreen payload'
     );
   });
 
   it('throws when sections is not an array', async () => {
-    mockFetch.mockResolvedValueOnce({
-      screen: 'dashboard',
-      version: 1,
-      sections: 'bad' as never,
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(
+      okJson({ screen: 'dashboard', version: 1, sections: 'bad' })
+    );
     await expect(fetchResolvedLayout('dashboard')).rejects.toThrow(
       'layout: malformed ResolvedScreen payload'
     );
   });
 
   it('throws when payload is null', async () => {
-    mockFetch.mockResolvedValueOnce(null as never);
+    vi.mocked(fetch).mockResolvedValueOnce(okJson(null));
     await expect(fetchResolvedLayout('dashboard')).rejects.toThrow(
       'layout: malformed ResolvedScreen payload'
     );
   });
 
+  it('throws TenantLayoutError on non-2xx', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({}),
+    } as unknown as Response);
+    const err = await fetchResolvedLayout('dashboard').catch((e) => e);
+    expect(err).toBeInstanceOf(TenantLayoutError);
+    expect((err as TenantLayoutError).status).toBe(400);
+  });
+
+  it('filters out null / non-object / missing-type elements', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      okJson({
+        screen: 'dashboard',
+        version: 1,
+        sections: [
+          null,
+          42,
+          'string',
+          { presentation: 'visible' },
+          { type: 7, presentation: 'visible' },
+          { type: 'hero', presentation: 'visible' },
+        ],
+      })
+    );
+    const result = await fetchResolvedLayout('dashboard');
+    expect(result.sections).toEqual([{ type: 'hero', presentation: 'visible' }]);
+  });
+
+  it('clamps sections to 100 entries', async () => {
+    const sections = Array.from({ length: 150 }, (_, i) => ({
+      type: `s${i}`,
+      presentation: 'visible',
+    }));
+    vi.mocked(fetch).mockResolvedValueOnce(okJson({ screen: 'dashboard', version: 1, sections }));
+    const result = await fetchResolvedLayout('dashboard');
+    expect(result.sections).toHaveLength(100);
+    expect(result.sections[99]?.type).toBe('s99');
+  });
+
   it('passes platform param to the URL', async () => {
-    mockFetch.mockResolvedValueOnce({
-      screen: 'home',
-      version: 2,
-      sections: [],
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(okJson({ screen: 'home', version: 2, sections: [] }));
     await fetchResolvedLayout('home', 'mobile');
-    expect(mockFetch).toHaveBeenCalledWith('/api/v1/layout/resolved/home?platform=mobile');
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/v1/layout/resolved/home?platform=mobile',
+      expect.anything()
+    );
   });
 });
 

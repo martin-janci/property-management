@@ -5,6 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getOrg } from '../auth';
 import {
   fetchResolvedLayout,
   fetchTenantLayout,
@@ -16,9 +17,11 @@ import {
 
 export const layoutKeys = {
   all: ['layout'] as const,
+  // Keys include the active org so an org switch never serves the previous
+  // org's cached layout (keys without the org would collide across orgs).
   resolved: (screen: string, platform: string) =>
-    [...layoutKeys.all, 'resolved', screen, platform] as const,
-  tenant: (screen: string) => [...layoutKeys.all, 'tenant', screen] as const,
+    [...layoutKeys.all, getOrg() ?? 'no-org', 'resolved', screen, platform] as const,
+  tenant: (screen: string) => [...layoutKeys.all, getOrg() ?? 'no-org', 'tenant', screen] as const,
 };
 
 export function useResolvedLayout(screen: string, platform: 'web' | 'mobile' = 'web') {
@@ -44,7 +47,9 @@ export function useSaveTenantLayoutOverride(screen: string) {
   return useMutation<unknown, Error, TenantOverride>({
     mutationFn: (override: TenantOverride) => saveTenantLayoutOverride(screen, override),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: layoutKeys.tenant(screen) });
+      // Invalidate ALL layout keys (tenant + resolved) — a saved override
+      // changes what /resolved returns for this org too.
+      queryClient.invalidateQueries({ queryKey: layoutKeys.all });
     },
   });
 }

@@ -7,7 +7,6 @@
  */
 
 import { getOrg, getToken } from '../auth';
-import { authenticatedFetchJson } from '../lib/fetch';
 
 export interface ResolvedSection {
   type: string;
@@ -24,20 +23,37 @@ export interface ResolvedScreen {
 
 const API_BASE = '/api/v1/layout';
 
+/** Hard cap on the number of sections accepted from the server. */
+const MAX_SECTIONS = 100;
+
+/** True when `s` is an object with a string `type` — the minimum shape the
+ *  renderer can handle without throwing. */
+function isRenderableSection(s: unknown): s is ResolvedSection {
+  return s !== null && typeof s === 'object' && typeof (s as { type?: unknown }).type === 'string';
+}
+
 /** Fetch the resolved layout for a screen. Throws on any failure — callers
  *  are expected to fall back to their DEFAULT_LAYOUT (spec §4: the layout
- *  endpoint is additive, never gating). */
+ *  endpoint is additive, never gating).
+ *
+ *  Uses `tenantRequest` (not `authenticatedFetchJson`) so the request carries
+ *  X-Tenant-ID — the backend TenantExtractor 400s without it on non-pinned
+ *  hosts. Element-level defense: non-object elements / missing string `type`
+ *  are dropped, and the section list is clamped to MAX_SECTIONS. */
 export async function fetchResolvedLayout(
   screen: string,
   platform: 'web' | 'mobile' = 'web'
 ): Promise<ResolvedScreen> {
-  const data = await authenticatedFetchJson<ResolvedScreen>(
+  const data = await tenantRequest<ResolvedScreen>(
     `${API_BASE}/resolved/${screen}?platform=${platform}`
   );
   if (!data || !Array.isArray(data.sections)) {
     throw new Error('layout: malformed ResolvedScreen payload');
   }
-  return data;
+  return {
+    ...data,
+    sections: data.sections.filter(isRenderableSection).slice(0, MAX_SECTIONS),
+  };
 }
 
 // ---------------------------------------------------------------------------
