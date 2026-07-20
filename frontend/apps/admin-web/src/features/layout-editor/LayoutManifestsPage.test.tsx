@@ -228,6 +228,39 @@ describe('LayoutManifestsPage', () => {
   });
 
   // -------------------------------------------------------------------------
+  // 3b. Array body → inline error, putManifest NOT called
+  // -------------------------------------------------------------------------
+
+  it('rejects array root and array components with inline error', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => screen.getByLabelText(/manifest json/i));
+
+    const textarea = screen.getByLabelText(/manifest json/i);
+
+    // Array root
+    fireEvent.change(textarea, { target: { value: '[]' } });
+    await user.click(screen.getByRole('button', { name: /upload/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeTruthy();
+    });
+    expect(screen.getByRole('alert').textContent).toMatch(/components/i);
+    expect(putManifest).not.toHaveBeenCalled();
+
+    // Reset and try {"components": []}
+    fireEvent.change(textarea, { target: { value: '{"components": []}' } });
+    await user.click(screen.getByRole('button', { name: /upload/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeTruthy();
+    });
+    expect(screen.getByRole('alert').textContent).toMatch(/components/i);
+    expect(putManifest).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
   // 4. Valid upload calls putManifest and shows success toast
   // -------------------------------------------------------------------------
 

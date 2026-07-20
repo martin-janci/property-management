@@ -216,12 +216,14 @@ export default function LayoutManifestsPage() {
       return;
     }
 
-    // 2. Must have a `components` object
+    // 2. Must be a non-array object with a non-array `components` object
     if (
       typeof parsed !== 'object' ||
       parsed === null ||
+      Array.isArray(parsed) ||
       typeof (parsed as Record<string, unknown>).components !== 'object' ||
-      (parsed as Record<string, unknown>).components === null
+      (parsed as Record<string, unknown>).components === null ||
+      Array.isArray((parsed as Record<string, unknown>).components)
     ) {
       setFormError(
         t('admin.manifests.missingComponents', {
