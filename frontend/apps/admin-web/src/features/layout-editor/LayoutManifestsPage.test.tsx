@@ -290,4 +290,38 @@ describe('LayoutManifestsPage', () => {
       expect(screen.getByText(/uploaded/i)).toBeTruthy();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // 5. Body without `platform` → inject from selected platform, no error
+  // -------------------------------------------------------------------------
+
+  it('body without platform field injects platform from selector before PUT (no error)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => screen.getByLabelText(/manifest json/i));
+
+    // Platform defaults to "web"; paste a manifest WITHOUT a platform field
+    const noPlatformJson = JSON.stringify({
+      components: { Hero: { required: false }, NewSection: { required: true } },
+    });
+
+    const textarea = screen.getByLabelText(/manifest json/i);
+    fireEvent.change(textarea, { target: { value: noPlatformJson } });
+
+    const uploadBtn = screen.getByRole('button', { name: /upload/i });
+    await user.click(uploadBtn);
+
+    // No form error shown (success toast may appear but error div must be absent)
+    expect(screen.queryByTestId('manifest-form-error')).toBeNull();
+
+    // putManifest called with platform='web' injected into the manifest body
+    await waitFor(() =>
+      expect(putManifest).toHaveBeenCalledWith(
+        'test-token',
+        'web',
+        expect.objectContaining({ platform: 'web', components: expect.any(Object) })
+      )
+    );
+  });
 });

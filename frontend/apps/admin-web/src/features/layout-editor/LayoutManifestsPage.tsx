@@ -233,7 +233,8 @@ export default function LayoutManifestsPage() {
       return;
     }
 
-    // 3. If body has a `platform` field it must match the selected platform
+    // 3. If body has a `platform` field it must match the selected platform;
+    //    if the field is absent, inject it from the selected platform before PUT.
     const bodyPlatform = (parsed as Record<string, unknown>).platform;
     if (bodyPlatform !== undefined && bodyPlatform !== platform) {
       setFormError(
@@ -242,6 +243,9 @@ export default function LayoutManifestsPage() {
         })
       );
       return;
+    }
+    if (bodyPlatform === undefined) {
+      (parsed as Record<string, unknown>).platform = platform;
     }
 
     uploadMutation.mutate({ parsedManifest: parsed as Manifest });

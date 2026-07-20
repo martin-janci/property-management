@@ -414,4 +414,74 @@ describe('LayoutEditorPage', () => {
     // Rails dirty warning: also test via putRails path
     expect(putRails).not.toHaveBeenCalled(); // guard
   });
+
+  // -------------------------------------------------------------------------
+  // 8. Dirty screen change — confirm=false keeps selection; confirm=true switches
+  // -------------------------------------------------------------------------
+
+  it('dirty state + screen change with confirm=false keeps current selection and edits', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+
+    // Select first screen and make a dirty edit
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+    await user.click(screen.getByTestId('hide-btn-Hero'));
+    expect(screen.getByTestId('publish-dirty-warning')).toBeTruthy();
+
+    // Attempt to switch to a different screen — confirm returns false
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/profile');
+
+    // Selection must remain home/dashboard
+    const select = screen.getByRole('combobox', { name: /screen/i }) as HTMLSelectElement;
+    expect(select.value).toBe('home/dashboard');
+
+    // Dirty warning still visible (edits intact)
+    expect(screen.getByTestId('publish-dirty-warning')).toBeTruthy();
+  });
+
+  it('dirty state + screen change with confirm=true switches screen', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+
+    // Select first screen and make a dirty edit
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+    await user.click(screen.getByTestId('hide-btn-Hero'));
+    expect(screen.getByTestId('publish-dirty-warning')).toBeTruthy();
+
+    // Set up a mock config for the second screen
+    vi.mocked(getConfig).mockResolvedValue({
+      config: {
+        screen: 'home/profile',
+        draft: { screen: 'home/profile', version: 0, sections: [] },
+        published: null,
+        published_version: 0,
+        rails: { hideable: [], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      },
+      versions: [],
+      kills: [],
+    });
+
+    // Switch screens — confirm returns true
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/profile');
+
+    // Selection must have changed
+    const select = screen.getByRole('combobox', { name: /screen/i }) as HTMLSelectElement;
+    expect(select.value).toBe('home/profile');
+  });
 });

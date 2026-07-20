@@ -445,14 +445,33 @@ export default function LayoutEditorPage() {
   // Handlers
   // -------------------------------------------------------------------------
 
-  const handleScreenChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedScreen(e.target.value);
-    setNewScreenInput('');
-    setNewScreenError('');
-    setPublishErrors([]);
-  }, []);
+  const handleScreenChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (
+        (draftDirty || railsDirty) &&
+        !window.confirm(
+          t('admin.layout.discardConfirm', { defaultValue: 'Discard unsaved changes?' })
+        )
+      ) {
+        return;
+      }
+      setSelectedScreen(e.target.value);
+      setNewScreenInput('');
+      setNewScreenError('');
+      setPublishErrors([]);
+    },
+    [draftDirty, railsDirty, t]
+  );
 
   const handleNewScreenSubmit = useCallback(() => {
+    if (
+      (draftDirty || railsDirty) &&
+      !window.confirm(
+        t('admin.layout.discardConfirm', { defaultValue: 'Discard unsaved changes?' })
+      )
+    ) {
+      return;
+    }
     const val = newScreenInput.trim();
     if (!SCREEN_PATTERN.test(val)) {
       setNewScreenError(
@@ -470,7 +489,7 @@ export default function LayoutEditorPage() {
     setDraftDirty(false);
     setRailsDirty(false);
     setPublishErrors([]);
-  }, [newScreenInput, t]);
+  }, [draftDirty, railsDirty, newScreenInput, t]);
 
   const handleDraftChange = useCallback((next: ScreenConfig['sections'][0][]) => {
     setLocalDraft((prev) => (prev ? { ...prev, sections: next } : prev));

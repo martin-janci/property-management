@@ -201,3 +201,24 @@ describe('Scenario 4: whitelist input resyncs on external rails prop change', ()
     expect((screen.getByTestId('whitelist-faq.v1') as HTMLInputElement).value).toBe('title, limit');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Scenario 5 — mode_editable checkboxes per type
+// ---------------------------------------------------------------------------
+
+describe('Scenario 5: mode_editable checkboxes', () => {
+  it('checking mode_editable for a type adds it to mode_editable array', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<RailsEditor {...buildProps({ onChange })} />);
+
+    const checkbox = screen.getByTestId('mode-editable-faq.v1') as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+
+    await user.click(checkbox);
+
+    expect(onChange).toHaveBeenCalledOnce();
+    const next: Rails = onChange.mock.calls[0][0];
+    expect(next.mode_editable).toContain('faq.v1');
+  });
+});
