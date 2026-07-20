@@ -1701,7 +1701,8 @@
       "show": "Zobrazit sekci",
       "moveUp": "Přesunout nahoru",
       "moveDown": "Přesunout dolů",
-      "mode": "Režim zobrazení"
+      "mode": "Režim zobrazení",
+      "modeDefault": "výchozí"
     }
   }
 }

@@ -274,6 +274,39 @@ describe('Test 4: 422 errors render verbatim', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Test 4b: a 422 carrying an EMPTY errors array must fall back to the generic
+// save-error toast. Rendering `[]` into the alert list would otherwise leave
+// the user with an empty <ul role="alert"> and no indication the save failed.
+// ---------------------------------------------------------------------------
+describe('Test 4b: 422 with empty errors shows generic toast', () => {
+  it('shows the generic save-error toast instead of an empty list', async () => {
+    const user = userEvent.setup();
+    const { TenantLayoutError } = await import('@ppt/api-client');
+    mockSaveImpl = vi.fn().mockRejectedValue(new TenantLayoutError(422, []));
+    mockEnvelope = {
+      override: null,
+      rails: { hideable: ['hero'], mode_editable: [], reorderable: false, prop_whitelist: {} },
+      published: { sections: [{ type: 'hero', visible: true }] },
+      manifest: null,
+    };
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('hero')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: /layout\.customize\.(hide|show)/ }));
+    await user.click(screen.getByRole('button', { name: 'layout.customize.save' }));
+
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', title: 'layout.customize.saveError' })
+      );
+    });
+    // No empty validation-error list rendered
+    expect(document.querySelector('ul[role="alert"]')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Test 6: an edit made while a save is in flight must not be discarded.
 //
 // Regression for the tautological "changed since sent" check: the previous

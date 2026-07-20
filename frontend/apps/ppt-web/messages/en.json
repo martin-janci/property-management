@@ -3883,7 +3883,8 @@
       "show": "Show section",
       "moveUp": "Move up",
       "moveDown": "Move down",
-      "mode": "Display mode"
+      "mode": "Display mode",
+      "modeDefault": "default"
     }
   }
 }

@@ -148,16 +148,19 @@ export function TenantSectionEditor({
         const effectiveVisible = sectionPatch.visible ?? base.visible ?? true;
         const effectiveMode = sectionPatch.mode ?? base.mode;
 
+        // Guard the whole manifest path — a malformed envelope may lack
+        // `components` entirely, and indexing into undefined would throw.
+        const manifestComponent = manifest?.components?.[type];
+
         const canHide = rails.hideable.includes(type);
         const canReorder = rails.reorderable;
         const canEditMode =
           rails.mode_editable.includes(type) &&
-          manifest?.components[type]?.supported_modes !== undefined &&
-          (manifest.components[type].supported_modes?.length ?? 0) > 0;
+          (manifestComponent?.supported_modes?.length ?? 0) > 0;
         const propWhitelist = rails.prop_whitelist[type] ?? [];
         const hasControls = canHide || canReorder || canEditMode || propWhitelist.length > 0;
 
-        const supportedModes = manifest?.components[type]?.supported_modes ?? [];
+        const supportedModes = manifestComponent?.supported_modes ?? [];
 
         const toggleVisible = () => {
           const existingPatch = { ...(override.sections?.[type] ?? {}) };
@@ -181,7 +184,13 @@ export function TenantSectionEditor({
 
         const changeMode = (mode: string) => {
           const existingPatch = { ...(override.sections?.[type] ?? {}) };
-          const next: Record<string, unknown> = { ...existingPatch, mode };
+          const next: Record<string, unknown> = { ...existingPatch };
+          if (mode === '') {
+            // Empty option — remove the mode from the patch (back to default)
+            delete next.mode;
+          } else {
+            next.mode = mode;
+          }
           onChange(pruneSectionPatch(override, type, next));
         };
 
@@ -245,9 +254,10 @@ export function TenantSectionEditor({
                   <select
                     className="tenant-editor__select"
                     aria-label={t('layout.customize.mode')}
-                    value={effectiveMode ?? ''}
+                    value={sectionPatch.mode ?? ''}
                     onChange={(e) => changeMode(e.target.value)}
                   >
+                    <option value="">{t('layout.customize.modeDefault')}</option>
                     {supportedModes.map((m) => (
                       <option key={m} value={m}>
                         {m}

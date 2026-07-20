@@ -57,10 +57,13 @@ describe('usePreviewLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearSearchParams();
+    // Allowlist gate: preview only activates when parentOrigin matches this env
+    vi.stubEnv('VITE_LAYOUT_PREVIEW_PARENT_ORIGINS', PARENT_ORIGIN);
   });
 
   afterEach(() => {
     clearSearchParams();
+    vi.unstubAllEnvs();
   });
 
   describe('when NOT in preview mode (no params)', () => {
@@ -142,6 +145,35 @@ describe('usePreviewLayout', () => {
       const { result } = renderHook(() => usePreviewLayout('ppt/dashboard'));
       expect(result.current.inPreview).toBe(false);
       expect(mockConnectPreviewChild).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('allowlist gate (VITE_LAYOUT_PREVIEW_PARENT_ORIGINS)', () => {
+    it('never activates preview when the env var is unset', () => {
+      vi.stubEnv('VITE_LAYOUT_PREVIEW_PARENT_ORIGINS', '');
+      setSearchParams(`?layoutPreview=1&parentOrigin=${encodeURIComponent(PARENT_ORIGIN)}`);
+      const { result } = renderHook(() => usePreviewLayout('ppt/dashboard'));
+      expect(result.current.inPreview).toBe(false);
+      expect(mockConnectPreviewChild).not.toHaveBeenCalled();
+    });
+
+    it('does not activate when parentOrigin is not in the allowlist', () => {
+      vi.stubEnv('VITE_LAYOUT_PREVIEW_PARENT_ORIGINS', 'https://allowed.example.com');
+      setSearchParams(`?layoutPreview=1&parentOrigin=${encodeURIComponent(PARENT_ORIGIN)}`);
+      const { result } = renderHook(() => usePreviewLayout('ppt/dashboard'));
+      expect(result.current.inPreview).toBe(false);
+      expect(mockConnectPreviewChild).not.toHaveBeenCalled();
+    });
+
+    it('activates when parentOrigin matches one of several comma-separated entries', () => {
+      vi.stubEnv(
+        'VITE_LAYOUT_PREVIEW_PARENT_ORIGINS',
+        `https://other.example.com, ${PARENT_ORIGIN}`
+      );
+      setSearchParams(`?layoutPreview=1&parentOrigin=${encodeURIComponent(PARENT_ORIGIN)}`);
+      const { result } = renderHook(() => usePreviewLayout('ppt/dashboard'));
+      expect(result.current.inPreview).toBe(true);
+      expect(mockConnectPreviewChild).toHaveBeenCalledOnce();
     });
   });
 });

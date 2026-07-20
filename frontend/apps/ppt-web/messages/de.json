@@ -1594,7 +1594,8 @@
       "show": "Abschnitt anzeigen",
       "moveUp": "Nach oben verschieben",
       "moveDown": "Nach unten verschieben",
-      "mode": "Anzeigemodus"
+      "mode": "Anzeigemodus",
+      "modeDefault": "Standard"
     }
   }
 }

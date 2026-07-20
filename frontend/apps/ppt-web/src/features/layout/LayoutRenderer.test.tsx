@@ -88,6 +88,21 @@ describe('LayoutRenderer', () => {
     err.mockRestore();
   });
 
+  it('skips malformed elements (null / non-object / missing string type) without throwing', () => {
+    const malformed = [
+      null,
+      42,
+      'string',
+      { presentation: 'visible' },
+      { type: 7, presentation: 'visible' },
+      { type: 'alpha.v1', presentation: 'visible' },
+    ] as unknown as ResolvedScreen['sections'];
+    render(<LayoutRenderer registry={registry} layout={layoutOf(malformed)} />);
+    expect(screen.getByText('ALPHA')).toBeInTheDocument();
+    // Only the well-formed section rendered a wrapper
+    expect(document.querySelectorAll('[data-layout-section]')).toHaveLength(1);
+  });
+
   // -------------------------------------------------------------------------
   // data-layout-section tagging
   // -------------------------------------------------------------------------
