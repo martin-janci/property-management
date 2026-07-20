@@ -7,10 +7,10 @@
  * window.confirm is mocked per test that needs it.
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { SectionConfig, Manifest } from './api';
+import { describe, expect, it, vi } from 'vitest';
+import type { Manifest, SectionConfig } from './api';
 import { SectionTreeEditor } from './SectionTreeEditor';
 
 // ---------------------------------------------------------------------------
@@ -241,7 +241,9 @@ describe('Scenario 6: add-section select', () => {
     render(<SectionTreeEditor {...buildProps()} />);
 
     const addSelect = screen.getByTestId('add-section-select') as HTMLSelectElement;
-    const options = Array.from(addSelect.options).map((o) => o.value).filter(Boolean);
+    const options = Array.from(addSelect.options)
+      .map((o) => o.value)
+      .filter(Boolean);
 
     // promo.v1 is in manifest but not in sections
     expect(options).toContain('promo.v1');
@@ -262,6 +264,102 @@ describe('Scenario 6: add-section select', () => {
     expect(onChange).toHaveBeenCalledOnce();
     const next: SectionConfig[] = onChange.mock.calls[0][0];
     expect(next[next.length - 1]).toMatchObject({ type: 'promo.v1', visible: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 5b — unkill confirm
+// ---------------------------------------------------------------------------
+
+describe('Scenario 5b: unkill confirm', () => {
+  it('clicking Unkill (confirm mocked true) calls onUnkill with the type', async () => {
+    const onUnkill = vi.fn();
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<SectionTreeEditor {...buildProps({ kills: ['faq.v1'], onUnkill })} />);
+
+    await user.click(screen.getByTestId('unkill-btn-faq.v1'));
+
+    expect(window.confirm).toHaveBeenCalledOnce();
+    expect(onUnkill).toHaveBeenCalledWith('faq.v1');
+
+    vi.restoreAllMocks();
+  });
+
+  it('clicking Unkill (confirm mocked false) does NOT call onUnkill', async () => {
+    const onUnkill = vi.fn();
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(<SectionTreeEditor {...buildProps({ kills: ['faq.v1'], onUnkill })} />);
+
+    await user.click(screen.getByTestId('unkill-btn-faq.v1'));
+
+    expect(onUnkill).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 8 — props resync when sections prop changes externally
+// ---------------------------------------------------------------------------
+
+describe('Scenario 8: props textarea resyncs on external sections change', () => {
+  it('shows updated props when sections prop changes (draft reload / rollback)', () => {
+    const props = buildProps({
+      sections: [{ type: 'faq.v1', visible: true, props: { color: 'red' } }],
+    });
+    const { rerender } = render(<SectionTreeEditor {...props} />);
+
+    // Initially shows original props
+    const textarea = screen.getByTestId('props-textarea-faq.v1') as HTMLTextAreaElement;
+    expect(textarea.value).toContain('red');
+
+    // Simulate external update (draft reload / rollback)
+    rerender(
+      <SectionTreeEditor
+        {...props}
+        sections={[{ type: 'faq.v1', visible: true, props: { color: 'blue' } }]}
+      />
+    );
+
+    expect((screen.getByTestId('props-textarea-faq.v1') as HTMLTextAreaElement).value).toContain(
+      'blue'
+    );
+  });
+
+  it('adding a section then blurring its props textarea shows no error and no spurious onChange', () => {
+    const onChange = vi.fn();
+
+    // Start with sections that have a newly-added type (no props set)
+    render(
+      <SectionTreeEditor
+        {...buildProps({
+          onChange,
+          sections: [
+            { type: 'gallery.v1', visible: true },
+            { type: 'faq.v1', visible: true },
+            { type: 'promo.v1', visible: true },
+          ],
+        })}
+      />
+    );
+
+    const textarea = screen.getByTestId('props-textarea-promo.v1');
+
+    // Focus then blur without typing — derived text is '{}' which is valid JSON
+    fireEvent.focus(textarea);
+    fireEvent.blur(textarea);
+
+    // No error shown
+    expect(screen.queryByTestId('props-error-promo.v1')).not.toBeInTheDocument();
+    // onChange called with valid empty props ({}), not suppressed
+    expect(onChange).toHaveBeenCalledOnce();
+    const next: SectionConfig[] = onChange.mock.calls[0][0];
+    const promoRow = next.find((s) => s.type === 'promo.v1');
+    expect(promoRow?.props).toEqual({});
   });
 });
 

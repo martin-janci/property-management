@@ -13,8 +13,7 @@
  * per-section JSON parse error flag; everything else derives from props.
  */
 
-import { Badge } from '@ppt/ui-kit';
-import { Button } from '@ppt/ui-kit';
+import { Badge, Button } from '@ppt/ui-kit';
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -109,17 +108,14 @@ export function SectionTreeEditor({
 }: Props) {
   const { t } = useTranslation();
 
-  // Local state: in-progress props text per section type
-  const [propsText, setPropsText] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    for (const s of sections) {
-      init[s.type] = JSON.stringify(s.props ?? {}, null, 2);
-    }
-    return init;
-  });
-
-  // Local state: parse-error flag per section type
-  const [propsError, setPropsError] = useState<Record<string, boolean>>({});
+  // Local state: in-flight props edit for the one section currently being edited.
+  // When null (or type doesn't match), the textarea derives its value from the
+  // sections prop — so external updates (draft reload, rollback) always win.
+  const [editingProps, setEditingProps] = useState<{
+    type: string;
+    text: string;
+    error: boolean;
+  } | null>(null);
 
   // Add-section select state
   const [addType, setAddType] = useState('');
@@ -156,27 +152,35 @@ export function SectionTreeEditor({
   }
 
   function toggleVisible(type: string) {
-    onChange(
-      sections.map((s) => (s.type === type ? { ...s, visible: !(s.visible ?? true) } : s)),
-    );
+    onChange(sections.map((s) => (s.type === type ? { ...s, visible: !(s.visible ?? true) } : s)));
   }
 
   function changeMode(type: string, mode: string) {
     onChange(sections.map((s) => (s.type === type ? { ...s, mode } : s)));
   }
 
+  function handlePropsFocus(type: string, section: SectionConfig) {
+    // Start editing: seed text from prop (or current in-flight text if already editing this type)
+    if (editingProps?.type !== type) {
+      setEditingProps({ type, text: JSON.stringify(section.props ?? {}, null, 2), error: false });
+    }
+  }
+
   function handlePropsChange(type: string, text: string) {
-    setPropsText((prev) => ({ ...prev, [type]: text }));
+    setEditingProps({ type, text, error: false });
   }
 
   function commitProps(type: string) {
-    const raw = propsText[type] ?? '';
+    const raw =
+      editingProps?.type === type
+        ? editingProps.text
+        : JSON.stringify(sections.find((s) => s.type === type)?.props ?? {}, null, 2);
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      setPropsError((prev) => ({ ...prev, [type]: false }));
+      setEditingProps(null);
       onChange(sections.map((s) => (s.type === type ? { ...s, props: parsed } : s)));
     } catch {
-      setPropsError((prev) => ({ ...prev, [type]: true }));
+      setEditingProps((prev) => (prev?.type === type ? { ...prev, error: true } : prev));
     }
   }
 
@@ -185,7 +189,7 @@ export function SectionTreeEditor({
       window.confirm(
         t('admin.layout.killConfirm', {
           defaultValue: `Kill section "${type}"? This will hide it for all users.`,
-        }),
+        })
       )
     ) {
       onKill(type);
@@ -197,7 +201,7 @@ export function SectionTreeEditor({
       window.confirm(
         t('admin.layout.unkillConfirm', {
           defaultValue: `Unkill section "${type}"? It will become visible again.`,
-        }),
+        })
       )
     ) {
       onUnkill(type);
@@ -216,7 +220,7 @@ export function SectionTreeEditor({
 
   const presentTypes = new Set(sections.map((s) => s.type));
   const addableTypes = manifest
-    ? Object.keys(manifest.components).filter((t) => !presentTypes.has(t))
+    ? Object.keys(manifest.components).filter((typeKey) => !presentTypes.has(typeKey))
     : [];
 
   // -------------------------------------------------------------------------
@@ -232,8 +236,11 @@ export function SectionTreeEditor({
         const killed = isKilled(type);
         const unknown = isUnknown(type);
         const supportedModes = component?.supported_modes;
-        const hasPropsError = propsError[type] === true;
-        const currentPropsText = propsText[type] ?? JSON.stringify(section.props ?? {}, null, 2);
+        const isEditingThis = editingProps?.type === type;
+        const hasPropsError = isEditingThis && editingProps.error;
+        const currentPropsText = isEditingThis
+          ? editingProps.text
+          : JSON.stringify(section.props ?? {}, null, 2);
 
         return (
           <div key={type} style={ROW_STYLE}>
@@ -244,33 +251,21 @@ export function SectionTreeEditor({
 
               {/* Required lock badge — required sections have NO hide control */}
               {required && (
-                <Badge
-                  variant="secondary"
-                  size="sm"
-                  data-testid={`lock-badge-${type}`}
-                >
+                <Badge variant="secondary" size="sm" data-testid={`lock-badge-${type}`}>
                   {t('admin.layout.requiredBadge', { defaultValue: 'Required' })}
                 </Badge>
               )}
 
               {/* Unknown-type warning badge */}
               {unknown && (
-                <Badge
-                  variant="warning"
-                  size="sm"
-                  data-testid={`unknown-badge-${type}`}
-                >
+                <Badge variant="warning" size="sm" data-testid={`unknown-badge-${type}`}>
                   {t('admin.layout.unknownBadge', { defaultValue: 'Unknown type' })}
                 </Badge>
               )}
 
               {/* Killed badge */}
               {killed && (
-                <Badge
-                  variant="danger"
-                  size="sm"
-                  data-testid={`killed-badge-${type}`}
-                >
+                <Badge variant="danger" size="sm" data-testid={`killed-badge-${type}`}>
                   {t('admin.layout.killedBadge', { defaultValue: 'Killed' })}
                 </Badge>
               )}
@@ -377,6 +372,7 @@ export function SectionTreeEditor({
               <textarea
                 data-testid={`props-textarea-${type}`}
                 value={currentPropsText}
+                onFocus={() => handlePropsFocus(type, section)}
                 onChange={(e) => handlePropsChange(type, e.target.value)}
                 onBlur={() => commitProps(type)}
                 style={{
@@ -389,11 +385,7 @@ export function SectionTreeEditor({
                 aria-invalid={hasPropsError}
               />
               {hasPropsError && (
-                <div
-                  data-testid={`props-error-${type}`}
-                  role="alert"
-                  style={ERROR_STYLE}
-                >
+                <div data-testid={`props-error-${type}`} role="alert" style={ERROR_STYLE}>
                   {t('admin.layout.propsInvalidJson', { defaultValue: 'Invalid JSON' })}
                 </div>
               )}
