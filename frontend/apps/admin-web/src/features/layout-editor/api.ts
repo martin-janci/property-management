@@ -111,7 +111,7 @@ async function request<T>(
   token: string | null,
   path: string,
   init: RequestInit = {},
-  opts: { emptyOn404?: T } = {},
+  opts: { emptyOn404?: T } = {}
 ): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
@@ -122,7 +122,7 @@ async function request<T>(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const errors = Array.isArray((body as { errors?: unknown }).errors)
-      ? ((body as { errors: string[] }).errors)
+      ? (body as { errors: string[] }).errors
       : [];
     throw new LayoutApiError(res.status, errors);
   }

@@ -34,11 +34,14 @@ describe('layout-editor api', () => {
   });
 
   it('publish surfaces 422 errors as LayoutApiError.errors', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ errors: ['required section gallery.v1 is hidden'] }), {
-        status: 422,
-      }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ errors: ['required section gallery.v1 is hidden'] }), {
+          status: 422,
+        })
+      )
+    );
     const err = await publish('tok', 'ppt/dashboard').catch((e: unknown) => e);
     expect(err).toBeInstanceOf(LayoutApiError);
     expect((err as LayoutApiError).status).toBe(422);
