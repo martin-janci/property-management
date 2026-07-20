@@ -7,6 +7,7 @@
  * Route: /dashboard/customize (lazy, ProtectedRoute requiredRoles org_admin|super_admin)
  */
 import {
+  type LayoutRails,
   TenantLayoutError,
   type TenantOverride,
   useSaveTenantLayoutOverride,
@@ -45,10 +46,6 @@ export function DashboardCustomizePage() {
     seedRef.current = true;
     setLocalOverride(envelope.override?.override_config ?? {});
   }
-
-  // Reset seed when envelope identity changes (e.g. after refetch invalidates cache)
-  // NOTE: this is intentionally outside useEffect to avoid a render-cycle delay;
-  // it's safe because it only sets state when the envelope identity changes.
 
   const handleChange = (next: TenantOverride) => {
     setLocalOverride(next);
@@ -113,11 +110,12 @@ export function DashboardCustomizePage() {
   }
 
   const published = envelope.published;
-  const rails = envelope.rails as {
-    hideable: string[];
-    mode_editable: string[];
-    reorderable: boolean;
-    prop_whitelist: Record<string, string[]>;
+  const rails: LayoutRails = {
+    hideable: [],
+    mode_editable: [],
+    reorderable: false,
+    prop_whitelist: {},
+    ...(envelope.rails as Partial<LayoutRails>),
   };
 
   return (

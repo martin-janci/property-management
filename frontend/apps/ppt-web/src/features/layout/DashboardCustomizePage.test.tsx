@@ -186,6 +186,25 @@ describe('Test 2: not-published envelope shows info panel, no editor', () => {
     });
     expect(screen.queryByText('hero')).toBeNull();
   });
+
+  it('renders read-only rows when rails is empty object without crashing', async () => {
+    mockEnvelope = {
+      override: null,
+      rails: Object.create(null),
+      published: {
+        sections: [
+          { type: 'hero', visible: true },
+          { type: 'stats', visible: true },
+        ],
+      },
+      manifest: null,
+    };
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('hero')).toBeInTheDocument();
+      expect(screen.getByText('stats')).toBeInTheDocument();
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
