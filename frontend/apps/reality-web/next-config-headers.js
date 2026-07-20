@@ -7,8 +7,6 @@
  * Called by next.config.js; exported for tests.
  */
 
-'use strict';
-
 /**
  * @typedef {{ key: string; value: string }} HeaderEntry
  */

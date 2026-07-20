@@ -87,7 +87,9 @@ function resolveApiBase(host: string | null): string {
  */
 export async function getResolvedLayout(host: string | null): Promise<ResolvedScreen> {
   try {
-    const tags = host ? [`host:${host}:layout:listing-detail`] : ['layout:listing-detail'];
+    const tags = host
+      ? [`host:${host}:layout:listing-detail`, 'layout:listing-detail']
+      : ['layout:listing-detail'];
     const response = await fetch(
       `${resolveApiBase(host)}/api/v1/layout/resolved/${SCREEN}?platform=web`,
       { headers: host ? { Host: host } : {}, next: { revalidate: 60, tags } }
