@@ -1,0 +1,146 @@
+{
+  "date": "2026-07-21",
+  "run_iso": "2026-07-21T03:13:00Z",
+  "last_run_iso": "2026-07-20T03:12:00Z",
+  "cursors_at_start": {
+    "last_pr_seen": 2428,
+    "last_issue_seen": 2422,
+    "last_commit_sha": "f2a174ccb010b061799d2b5f95bcce3fe744b651"
+  },
+  "cursors_at_end": {
+    "last_pr_seen": 2432,
+    "last_issue_seen": 2422,
+    "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-docs/repo-map.md",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-20T03:12:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "docs/repo-map.md touched 5x this run (once per merged Layout & Content Manager slice: #2428–#2432). Cumulative-type re-emit — signal id already in seen_signals; score not re-applied per Phase 1 dedup rule.",
+        "runs_seen bumps 1 → 2 in hotspot_history (crosses the repeated-churn threshold — the next run in which it is a hotspot will emit repeated-churn +1)."
+      ],
+      "notes": "cumulative-type re-emit (allowlist member); the existing backlog row refactor-churn-hotspot-repo-map-md-2026-07-20 is updated in place with the new evidence line — no new item, no score change."
+    },
+    {
+      "id": "churn-hotspot-docs/screens/ppt/dashboard.md",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-20T03:12:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "docs/screens/ppt/dashboard.md touched 3x this run — Layout & Content Manager pilot integration (PRs #2427/#2430 defensive-rendering + preview bridge; PR #2432 mobile registries). Screen-map integration churn, low code-signal."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-20T03:12:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "LayoutEditorPage.tsx touched 2x this run (900 lines total: initial creation in #2428, then extended in #2430 for iframe live-preview integration). New file series, expected iteration during the slice cascade."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2431-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2431",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2431 (Layout publish webhook — signed ISR revalidation) touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts (matches the src/app/** trigger set) without updating any docs/screens/reality/*.md.",
+        "Heuristic caveat: the touched file is an internal API webhook, not a user-facing screen. Best-effort heuristic per routine spec — treat as review candidate, not promotable plan. Operator can dismiss without action."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-propinput-json-coerce",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/layout/TenantSectionEditor.tsx:59-84 — PropInput displays string prop values raw (no quotes) then commit() calls JSON.parse(val) first. A string value like \"true\", \"123\", \"null\" or \"[]\" is displayed as-is, and any onBlur (even with no user edit) parses and stores it as the coerced boolean/number/null/array in override.sections[type].props, silently corrupting the override payload sent by handleSave → useSaveTenantLayoutOverride."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-savedirty-stale-closure",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/layout/DashboardCustomizePage.tsx:58-69 — comment says 'Only clear dirty if the override hasn't changed since we sent' but the check `JSON.stringify(localOverride) === json` compares two snapshots of the same closure-captured localOverride — tautologically true. Concurrent edits made during the in-flight mutateAsync (the TenantSectionEditor is not gated by mutation.isPending) are not detected; isDirty is cleared on success and the user may navigate away thinking the newest keystrokes were saved. A ref mirroring localOverride is needed for a real 'changed since sent' check."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:240-297 — queryFn returns generateMockData() after a setTimeout(300) with TODO 'Replace with actual API call when backend is ready' (line 243); executeAction mutation does the same and resolves { success: true } without hitting any endpoint. This hook backs ActionQueue, which is a required section in dashboardRegistry (LayoutRenderer → registry.tsx:22-26) on ManagerDashboardPage and is used directly by ResidentDashboardPage — so production users see fabricated action items and approve/reject/dismiss clicks are silent no-ops."
+      ],
+      "expert": "completeness"
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "ppt-web-ui",
+    "selection_reason": "churn-aligned + oldest-unreviewed (tied 2026-07-13 with ppt-web-ui alone since api-core moved to 2026-07-20 last run; and this run's layout PRs all landed in ppt-web features/)",
+    "experts_used": ["frontend", "completeness"],
+    "findings_count": 3,
+    "next_segment_hint": "mobile-rn (oldest unreviewed after this run: 2026-07-14, tied with api-handlers)"
+  },
+  "phase_1_6": {
+    "mode": "upkeep-lightweight",
+    "pm_cursor_advanced": true,
+    "pm_role_run_today": "pm-security",
+    "pm_cursor_next": "pm-data (index 6)",
+    "coverage_cursor_advanced": true,
+    "coverage_cursor_next_index_before": 12,
+    "coverage_cursor_next_index_after": 0,
+    "coverage_epic_rechecked": "epic-9 (index 12) — 1/1 stories done, no change",
+    "action_list_touched": false,
+    "risks_touched": false,
+    "project_state_refreshed": true,
+    "note": "Quiet-scoped delivery day (5 merged PRs, one Layout & Content Manager theme). No sprint-status change worth materializing in action-list.json or risks.json; project-state.md date line refreshed to keep it live."
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score≥3 + allowlist type: screen-map-drift/screen-map-orphan/fixme-in-merged-code/dep-update-noise lockfile-drift/stalled-review). The one screen-map-drift signal this run is medium-confidence heuristic (API webhook, not user-facing screen — false-positive caveat noted in evidence).",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-07-21.md && head -1 | grep '^# 2026-07-21$'", "observed": "brief written with H1 '# 2026-07-21'", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state advancement: last_pr_seen 2428→2432, last_commit_sha changed, seen_signals grew, hotspot_history keys grew, pm_cursor.next_index 5→6, coverage_cursor.next_index 12→0, review_cursor.ppt-web-ui advanced", "observed": "multi-key advance", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "no duplicate ids added (6 new ids all distinct)", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id from seen_signals re-emitted with score_delta != 0", "observed": "the only re-emit (churn-hotspot-docs/repo-map.md) is cumulative-allowlisted and re-emitted with score_delta=0", "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "max score in backlog stays ≤ 2 for touched items", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "no open item is 14d+ old (all updated_at ≥ 2026-07-20 or older items are done/dropped)", "observed": "the 7 open items pre-run were all updated_at=2026-07-20 (1 day old); no decay window reached", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "no new plans/ files this run", "observed": "0 new plans, adversarial pass vacuously satisfied", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "0 new plans ≤ 2", "observed": "0", "expected": "≤ 2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "grep for secret patterns in staged diff (excluding baseline docs)", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "byte-identical after regen from backlog.json", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failures reported; cursors advanced only for succeeded phases", "observed": "all phases succeeded", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior plan slug still appears in plans/ or plans/_archive/", "observed": "no plans changed this run — set is stable", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ archive count at HEAD", "observed": "unchanged (6 → 6)", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical after regen from backlog.json (triage rows only)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions length ≤ 3 with per-type ≤ 1; idempotency vs auto_fix_history", "observed": "auto_fix_actions=[] (no candidate met bar)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index in 0..7 (6); coverage_cursor.next_index in [0,13) (0) AND coverage_cursor advanced when pm_cursor advanced", "observed": "all satisfied — pm 5→6 and coverage 12→0 both advanced", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram token patterns in staged added lines (excluding baseline docs)", "observed": "0 hits", "expected": "0" }
+  ]
+}

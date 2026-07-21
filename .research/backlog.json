@@ -4509,16 +4509,18 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "git-log-since-2026-07-16"
+        "git-log-since-2026-07-16",
+        "git-log-since-2026-07-20T03:12:00Z"
       ],
       "evidence": [
-        "docs/repo-map.md touched 4x this window across the layout-core / control-plane / defensive-rendering / MyListings-KMP PRs — per-PR refresh, low code-signal."
+        "docs/repo-map.md touched 4x this window across the layout-core / control-plane / defensive-rendering / MyListings-KMP PRs — per-PR refresh, low code-signal.",
+        "2026-07-21: still churning — 5 more touches this run (once per Layout & Content Manager slice #2428-#2432). Cumulative re-emit, score unchanged; hotspot_history.runs_seen -> 2, next hit as hotspot will emit repeated-churn."
       ],
       "files": [
         "docs/repo-map.md"
       ],
       "created_at": "2026-07-20",
-      "updated_at": "2026-07-20",
+      "updated_at": "2026-07-21",
       "plan": null
     },
     {
@@ -4580,6 +4582,128 @@
       ],
       "created_at": "2026-07-20",
       "updated_at": "2026-07-20",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
+      "title": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-20T03:12:00Z"
+      ],
+      "evidence": [
+        "docs/screens/ppt/dashboard.md touched 3x this run: PR #2427 (defensive rendering pilot integration), PR #2430 (live preview bridge — screen-map log entries), PR #2432 (mobile registries — mobile leg screen-map update). Screen-map integration churn, low code-signal."
+      ],
+      "files": [
+        "docs/screens/ppt/dashboard.md"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-since-2026-07-20T03:12:00Z"
+      ],
+      "evidence": [
+        "LayoutEditorPage.tsx touched 2x this run — created in PR #2428 (Layout editor MVP) and extended in PR #2430 (live preview bridge PreviewPanel wiring). Iteration inside a single feature series; monitor for repeated-churn if it re-fires next window."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2431-reality",
+      "title": "Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2431"
+      ],
+      "evidence": [
+        "PR #2431 (Layout publish webhook — signed ISR revalidation) matches the src/app/** drift trigger via frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts. No docs/screens/reality/*.md touched.",
+        "Best-effort heuristic caveat: the touched file is an internal webhook (/api/), not a user-facing screen, so a matching doc under docs/screens/reality/ would be inappropriate. Treat as review candidate, not promotable plan — operator can dismiss."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-propinput-json-coerce",
+      "title": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review ppt-web-ui 2026-07-21"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/layout/TenantSectionEditor.tsx:59-84 — PropInput renders string prop values raw (no quotes) then commit() calls JSON.parse(val) first. String values like \"true\", \"123\", \"null\", \"[]\" are displayed as-is, and any onBlur (even without a user edit) parses and stores the coerced boolean/number/null/array in override.sections[type].props, corrupting the payload sent by handleSave -> useSaveTenantLayoutOverride."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/layout/TenantSectionEditor.tsx"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-savedirty-stale-closure",
+      "title": "DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review ppt-web-ui 2026-07-21"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/layout/DashboardCustomizePage.tsx:58-69 — comment says 'Only clear dirty if the override has not changed since we sent' but JSON.stringify(localOverride) === json compares two snapshots of the same closure-captured localOverride (tautologically true). TenantSectionEditor is not gated by mutation.isPending, so concurrent edits while the save is in flight are not detected; isDirty is cleared on success and the user may navigate away thinking the newest keystrokes were saved. Fix: mirror localOverride in a ref and compare ref.current stringify against the sent JSON."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/layout/DashboardCustomizePage.tsx"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
+      "title": "Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review ppt-web-ui 2026-07-21"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:240-297 — queryFn returns generateMockData() after setTimeout(300) with '// TODO: Replace with actual API call when backend is ready' (line 243); executeAction mutation does the same and resolves { success: true } without hitting any endpoint. Backs the action-queue.v1 section registered in the dashboard section registry (LayoutRenderer -> registry.tsx:22-26) on ManagerDashboardPage and is used directly by ResidentDashboardPage — production users see fabricated action items and every approve/reject/dismiss click is a silent no-op."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts"
+      ],
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
       "plan": null
     }
   ]

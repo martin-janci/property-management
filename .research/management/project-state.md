@@ -2,6 +2,8 @@
 
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
+_Last touched (upkeep-only, no deep re-analysis): 2026-07-21 — routine Phase 1.6 lightweight run. Advanced pm_cursor 5 → 6 (pm-security done today; pm-data next) and coverage_cursor 12 → 0 (epic-9 re-checked, still 1/1 done — cycled back to epic-10a). The delivery sections below are the 2026-06-16 snapshot and NOT refreshed — the sprint has since shipped Layout & Content Manager (PRs #2424–#2432, defensive rendering + editor MVP + tenant editor + preview bridge + publish webhook + mobile registries). For a deep re-analysis, invoke `/ppt-project-management scan` locally._
+
 ## Executive summary
 
 - **`dev` backend is RED (issue #1437, critical).** PR #1426 merged despite breaking compile; ALL backend CI gates are now broken on `dev` until #1435 or #1436 lands. This is the **second dev-red incident in 14 days** (cf. #1332 unblocked 2026-06-14 via #1379) and exposes a structural gap: `backend.yml` runs on PR but not on push, so a merge that conflicts with `main`/peer PRs can break compile silently after-the-fact. pm-devops is filing this as the headline blocker.
