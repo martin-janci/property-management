@@ -742,7 +742,7 @@ async fn process_view_webhook(
     // anchor this gate depends on). Previously both calls were fire-and-forget
     // (`let _ = ...`), so `increment_syndication_stats` ran unconditionally and
     // every duplicate delivery re-added `views_count` into the syndication's
-    // `total_views` counter (migration 00219) — the exact view-count inflation
+    // `total_views` counter (migration 00220) — the exact view-count inflation
     // PR #2354 set out to prevent. We now mirror the inquiry path's dedup:
     // advance the counter only when the event was newly recorded.
     let record_result = state
@@ -1342,7 +1342,7 @@ mod tests {
     // delivery (same `(portal, event_type, external_id)`, caught by the partial
     // unique index from migration 00219 / #2358) must classify as `Duplicate` so
     // the handler skips `increment_syndication_stats` and does not inflate the
-    // syndication's `total_views` counter (migration 00219). This is the DB-free
+    // syndication's `total_views` counter (migration 00220). This is the DB-free
     // equivalent of a round-trip "second delivery does not advance the counter"
     // check — the view path branches on exactly this classification, and a full
     // `#[sqlx::test]` round-trip is not runnable in this sandbox (no live DB, and
