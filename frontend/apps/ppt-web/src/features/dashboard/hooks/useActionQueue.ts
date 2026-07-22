@@ -5,6 +5,7 @@
  * @module features/dashboard/hooks/useActionQueue
  */
 
+import { getMode, parseMode } from '@ppt/dev-panel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
@@ -48,7 +49,7 @@ export interface ActionQueueFilters {
   search?: string;
 }
 
-interface ActionQueueData {
+export interface ActionQueueData {
   items: ActionItem[];
   total: number;
   counts: {
@@ -59,7 +60,60 @@ interface ActionQueueData {
   };
 }
 
-// Mock data generator for development
+/**
+ * Dev-only mock gate.
+ *
+ * There is no backend action-queue endpoint yet (no `/api/v1/action-queue`
+ * route in api-server, no TypeSpec contract). To avoid shipping fabricated
+ * action items to production users — and silent no-op approve/reject/dismiss
+ * mutations — the mock data + simulated mutations are served ONLY when the app
+ * runs in DEV under the dev-panel `mock` API mode. In every other case (prod
+ * builds, `local`/`worktree` modes) the queue resolves empty and mutations
+ * fail loudly rather than pretending to succeed.
+ *
+ * Track the backend gap: see PR body "API gap" section.
+ */
+export function isActionQueueMockEnabled(): boolean {
+  return import.meta.env.DEV && getMode(parseMode(import.meta.env.VITE_API_DEFAULT)) === 'mock';
+}
+
+/** Empty queue returned when the mock is disabled and no real backend exists. */
+function emptyQueue(): ActionQueueData {
+  return { items: [], total: 0, counts: { urgent: 0, high: 0, medium: 0, low: 0 } };
+}
+
+/** Apply client-side filters to an action-queue payload. Exported for testing. */
+export function applyActionQueueFilters(
+  data: ActionQueueData,
+  filters?: ActionQueueFilters
+): ActionQueueData {
+  let filteredItems = data.items;
+
+  if (filters?.types?.length) {
+    filteredItems = filteredItems.filter((item) => filters.types!.includes(item.type));
+  }
+
+  if (filters?.priorities?.length) {
+    filteredItems = filteredItems.filter((item) => filters.priorities!.includes(item.priority));
+  }
+
+  if (filters?.search) {
+    const searchLower = filters.search.toLowerCase();
+    filteredItems = filteredItems.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower)
+    );
+  }
+
+  return {
+    items: filteredItems,
+    total: filteredItems.length,
+    counts: data.counts,
+  };
+}
+
+// Mock data generator — DEV-only (see isActionQueueMockEnabled).
 function generateMockData(role: 'manager' | 'resident'): ActionQueueData {
   const now = new Date();
   const items: ActionItem[] = [];
@@ -240,39 +294,20 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
   const query = useQuery({
     queryKey: ['actionQueue', role, filters],
     queryFn: async (): Promise<ActionQueueData> => {
-      // TODO: Replace with actual API call when backend is ready
-      // const response = await fetch(`/api/v1/action-queue?role=${role}`);
-      // return response.json();
+      // No real backend endpoint exists yet (see isActionQueueMockEnabled).
+      // Outside DEV mock mode we return an empty queue so production users
+      // never see fabricated action items — the ActionQueue component then
+      // renders its "all caught up" empty state.
+      if (!isActionQueueMockEnabled()) {
+        return emptyQueue();
+      }
 
-      // For now, return mock data
+      // TODO(backend): replace with real call once `/api/v1/action-queue`
+      // (and the TypeSpec contract + generated client hook) exist:
+      //   const response = await client.actionQueue.list({ role });
+      //   return response.data;
       await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate network delay
-      const data = generateMockData(role);
-
-      // Apply filters
-      let filteredItems = data.items;
-
-      if (filters?.types?.length) {
-        filteredItems = filteredItems.filter((item) => filters.types!.includes(item.type));
-      }
-
-      if (filters?.priorities?.length) {
-        filteredItems = filteredItems.filter((item) => filters.priorities!.includes(item.priority));
-      }
-
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredItems = filteredItems.filter(
-          (item) =>
-            item.title.toLowerCase().includes(searchLower) ||
-            item.description.toLowerCase().includes(searchLower)
-        );
-      }
-
-      return {
-        items: filteredItems,
-        total: filteredItems.length,
-        counts: data.counts,
-      };
+      return applyActionQueueFilters(generateMockData(role), filters);
     },
     staleTime: 30000, // 30 seconds
     refetchInterval: 60000, // 1 minute
@@ -281,12 +316,16 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
   // Mutation for executing an action
   const executeAction = useMutation({
     mutationFn: async ({ itemId, action }: { itemId: string; action: ActionButton['action'] }) => {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/action-queue/${itemId}/execute`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ action }),
-      // });
+      // Fail loudly outside DEV mock mode instead of returning a fake success:
+      // approve/reject/dismiss must not be silent no-ops in production while the
+      // backend endpoint is missing. The surfaced error drives the caller's
+      // error handling (mutation `isError`) rather than a lie.
+      if (!isActionQueueMockEnabled()) {
+        throw new Error('Action queue backend is not implemented yet (no /api/v1/action-queue).');
+      }
 
+      // TODO(backend): replace with real call once the endpoint exists:
+      //   await client.actionQueue.execute({ itemId, action });
       await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
       return { success: true, itemId, action };
     },
@@ -334,5 +373,7 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
     dismissItem,
     handleAction,
     isExecuting: executeAction.isPending,
+    isExecuteError: executeAction.isError,
+    executeError: executeAction.error,
   };
 }
