@@ -235,26 +235,6 @@
       "retry_round": 1
     },
     {
-      "id": "gh-issue-2434",
-      "action": "Follow-up: portal-webhook dedup comments cite wrong migration (00218 vs actual 00219) (PR #2377) (Closes #2434)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-22T10:03:58Z (#2434)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T10:03:58Z",
-      "issue_ref": {
-        "number": 2434,
-        "url": "https://github.com/martin-janci/property-management/issues/2434",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2435",
       "action": "Follow-up: tenant layout-override write discards the acting user — updated_by always NULL (PR #2426) (Closes #2435)",
       "owner_role": "pm-tech-lead",
@@ -357,20 +337,6 @@
           "follow-up"
         ]
       }
-    },
-    {
-      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform [retry 2/2 of failed code-review-mobile-native-kmp-deeplink-token-not-url-decoded]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=code-review-mobile-native-kmp-deeplink-token-not-url-decoded reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T02:16:12Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T12:10:08Z",
-      "retry_of": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
-      "retry_round": 2
     },
     {
       "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router-retry2",
@@ -479,6 +445,78 @@
       "first_open_at": "2026-07-22T14:06:53Z",
       "retry_of": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
       "retry_round": 1
+    },
+    {
+      "id": "gap-84-2-no-frontend-ui-component-consuming-the-retry1",
+      "action": "[RECONCILED-DONE: manager-facing e-sign UI already on dev; signer /sign page tracked via screen-map document-sign PR #2306] No frontend UI component consuming the signature request flow (84-2-esignature-email E-Signature Email Integration) [retry 1/2 of failed gap-84-2-no-frontend-ui-component-consuming-the]",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gap-84-2-no-frontend-ui-component-consuming-the reason=failed-no-pr cooldown_ok newest_failure=2026-07-14T06:40:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gap-84-2-no-frontend-ui-component-consuming-the",
+      "retry_round": 1
+    },
+    {
+      "id": "gap-screens-link-uc-33-sub-ucs-retry1",
+      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter [retry 1/2 of failed gap-screens-link-uc-33-sub-ucs]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gap-screens-link-uc-33-sub-ucs reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T00:15:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gap-screens-link-uc-33-sub-ucs",
+      "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2318-retry1",
+      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318) [retry 1/2 of failed gh-issue-2318]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gh-issue-2318 reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T12:08:02Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gh-issue-2318",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2318,
+        "url": "https://github.com/martin-janci/property-management/issues/2318",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2320-retry1",
+      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 1/2 of failed gh-issue-2320]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gh-issue-2320 reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T12:08:02Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gh-issue-2320",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2320,
+        "url": "https://github.com/martin-janci/property-management/issues/2320",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
