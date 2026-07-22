@@ -89,7 +89,7 @@ pub async fn get_tenant_override(
               (status = 422, description = "Out-of-rails edits rejected")))]
 pub async fn put_tenant_override(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     tenant: TenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<PutTenantOverrideRequest>,
@@ -199,7 +199,7 @@ pub async fn put_tenant_override(
             org_id,
             &req.screen,
             &req.override_config,
-            None,
+            Some(auth.user_id),
         )
         .await;
     rls.release().await;
