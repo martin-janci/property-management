@@ -1,28 +1,6 @@
 {
-  "generated": "2026-07-22T18:25:00Z",
+  "generated": "2026-07-22T20:23:00Z",
   "assignments": [
-    {
-      "task_id": "gh-issue-2449",
-      "branch": "auto-impl/gh-issue-2449-bc61923e",
-      "status": "review",
-      "claimed_at": "2026-07-22T18:07:00Z",
-      "last_updated": "2026-07-22T18:25:00Z",
-      "status_changed_at": "2026-07-22T18:25:00Z",
-      "pr_number": 2452,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2452",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2452 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=layout-core Props docstring honesty fix; crate green locally (fmt+clippy+15 tests); api-server/reality-server clippy blocked by sandbox swagger-ui download -> CI",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
     {
       "task_id": "code-review-api-core-scheduler-units-target-cross-tenant",
       "branch": "auto-impl/code-review-api-core-scheduler-units-tar-87063b46",

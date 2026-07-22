@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-22T12:13:45Z",
+  "archived_at": "2026-07-22T20:13:59Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2935,6 +2935,20 @@
       "source": "gap-scan 2026-07-13"
     },
     {
+      "id": "gap-80-2-ac-4-usedraftstorage-is-not-imported-retry1",
+      "action": "[GHOST-RETRY-DROP (dispatcher verify): coverage: gap-80-2 archived already-satisfied 2026-07-13] [already-satisfied on dev: AC-4 wired in FileDisputePage.tsx, 37 tests pass — false-positive gap] AC-4: useDraftStorage is NOT imported or called from FileDisputePageRoute.tsx — draft auto-save not wired into the filing flow (80-2-dispute-filing-flow Dispute Filing Flow) [retry 1/2 of failed gap-80-2-ac-4-usedraftstorage-is-not-imported]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T14:06:53Z (retry_of=gap-80-2-ac-4-usedraftstorage-is-not-imported reason=failed-no-pr cooldown_ok newest_failure=2026-07-13T18:17:56Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T14:06:53Z",
+      "retry_of": "gap-80-2-ac-4-usedraftstorage-is-not-imported",
+      "retry_round": 1
+    },
+    {
       "id": "gap-80-3-disputedetailroute-in-app-tsx-is-stub",
       "action": "DisputeDetailRoute in App.tsx is stub (not using DisputeDetailPage.tsx) — routing wiring incomplete (80-3-mediation-resolution Mediation and Resolution)",
       "owner_role": "pm-frontend",
@@ -3448,6 +3462,20 @@
       "last_updated": "2026-07-14T06:40:45Z"
     },
     {
+      "id": "gap-84-2-no-frontend-ui-component-consuming-the-retry1",
+      "action": "[GHOST-RETRY-DROP (dispatcher verify): action-text RECONCILED-DONE: e-sign UI already on dev (PR #2306)] [RECONCILED-DONE: manager-facing e-sign UI already on dev; signer /sign page tracked via screen-map document-sign PR #2306] No frontend UI component consuming the signature request flow (84-2-esignature-email E-Signature Email Integration) [retry 1/2 of failed gap-84-2-no-frontend-ui-component-consuming-the]",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gap-84-2-no-frontend-ui-component-consuming-the reason=failed-no-pr cooldown_ok newest_failure=2026-07-14T06:40:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gap-84-2-no-frontend-ui-component-consuming-the",
+      "retry_round": 1
+    },
+    {
       "id": "gap-84-2-no-screen-map-entry-for-a",
       "action": "No screen-map entry for a signature/e-sign screen in shipped state (84-2-esignature-email E-Signature Email Integration)",
       "owner_role": "pm-integration",
@@ -3752,6 +3780,27 @@
       }
     },
     {
+      "id": "gap-screens-link-uc-33-sub-ucs-retry1",
+      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter [retry 1/2 of failed gap-screens-link-uc-33-sub-ucs]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gap-screens-link-uc-33-sub-ucs reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T00:15:00Z) | gc1-reconcile 2026-07-22T20:02:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gap-screens-link-uc-33-sub-ucs",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-22T20:02:56Z"
+      }
+    },
+    {
       "id": "gap-screens-link-uc-40",
       "action": "Link UC-40 to a screen-map (appears in stories but no screen-map use-cases frontmatter)",
       "owner_role": "pm-frontend",
@@ -3894,6 +3943,28 @@
         ]
       },
       "last_updated": "2026-07-12T20:18:01Z"
+    },
+    {
+      "id": "gh-issue-1680-retry2",
+      "action": "[BAD-RETRY-REMINT-DROP: operator-blocked infra task re-minted from a [DROPPED] failure; not codeable in cron env] [DROPPED: not completable in no-build cloud env / needs operator] Research dispatcher: cron environment can't run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) (Closes #1680) [retry 2/2 of failed gh-issue-1680]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T20:03:54Z (retry_of=gh-issue-1680 reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T20:03:54Z",
+      "retry_of": "gh-issue-1680",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 1680,
+        "url": "https://github.com/martin-janci/property-management/issues/1680",
+        "labels": [
+          "dispatcher",
+          "infrastructure"
+        ]
+      }
     },
     {
       "id": "gh-issue-1995",
@@ -6588,6 +6659,35 @@
       }
     },
     {
+      "id": "gh-issue-2318-retry1",
+      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318) [retry 1/2 of failed gh-issue-2318]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gh-issue-2318 reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T12:08:02Z) | gc1-reconcile 2026-07-22T20:02:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gh-issue-2318",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2318,
+        "url": "https://github.com/martin-janci/property-management/issues/2318",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-22T20:02:56Z"
+      }
+    },
+    {
       "id": "gh-issue-2319",
       "action": "Follow-up: worker logs warn for benign no-device skips + PushNotConfigured overload, stale docs, dead trait param (PR #2310) (Closes #2319)",
       "owner_role": "pm-tech-lead",
@@ -6639,6 +6739,35 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-15T14:04:08Z"
+      }
+    },
+    {
+      "id": "gh-issue-2320-retry1",
+      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 1/2 of failed gh-issue-2320]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T16:07:29Z (retry_of=gh-issue-2320 reason=failed-no-pr cooldown_ok newest_failure=2026-07-15T12:08:02Z) | gc1-reconcile 2026-07-22T20:02:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T16:07:29Z",
+      "retry_of": "gh-issue-2320",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2320,
+        "url": "https://github.com/martin-janci/property-management/issues/2320",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-22T20:02:56Z"
       }
     },
     {
@@ -7666,6 +7795,33 @@
         ]
       },
       "gc1_closed": "merged PR #2421 on dev 2026-07-18T04:16:30Z"
+    },
+    {
+      "id": "gh-issue-2435",
+      "action": "Follow-up: tenant layout-override write discards the acting user — updated_by always NULL (PR #2426) (Closes #2435)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-22T10:03:58Z (#2435) | gc1-reconcile 2026-07-22T20:02:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T10:03:58Z",
+      "issue_ref": {
+        "number": 2435,
+        "url": "https://github.com/martin-janci/property-management/issues/2435",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2443,
+        "merged_at": "2026-07-22T18:22:24Z",
+        "at": "2026-07-22T20:02:56Z"
+      }
     },
     {
       "id": "pm-backend-fix-ai-equipment-idor",

@@ -6785,6 +6785,28 @@
       "merge_attempted_at": "2026-07-22T14:11:00Z"
     },
     {
+      "task_id": "gh-issue-2449",
+      "branch": "auto-impl/gh-issue-2449-bc61923e",
+      "status": "merged",
+      "claimed_at": "2026-07-22T18:07:00Z",
+      "last_updated": "2026-07-22T20:22:30Z",
+      "status_changed_at": "2026-07-22T20:22:30Z",
+      "pr_number": 2452,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2452",
+      "merged_at": "2026-07-22T20:22:01Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2452 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=layout-core Props docstring honesty fix; crate green locally (fmt+clippy+15 tests); api-server/reality-server clippy blocked by sandbox swagger-ui download -> CI",
+      "reviewer_summary": "verdict=approve head_oid=dd2cd8bb34f6654ca3147296ddc783a0496b1dc0 note=doc-honesty-fix-verified-accurate; scope-drift-ok (single intended file); posted as comment (self-approve blocked)",
+      "last_reviewed_oid": "dd2cd8bb34f6654ca3147296ddc783a0496b1dc0",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-22T20:15:00Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7561,5 +7583,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-22T18:25:31Z"
+  "archived_at": "2026-07-22T20:23:20Z"
 }
