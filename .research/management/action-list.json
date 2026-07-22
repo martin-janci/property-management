@@ -255,20 +255,6 @@
       }
     },
     {
-      "id": "code-review-mobile-native-kmp-search-stale-response-race-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] SearchScreen stale-response race — overlapping searches can clobber newer results [retry 2/2 of failed code-review-mobile-native-kmp-search-stale-response-race]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=code-review-mobile-native-kmp-search-stale-response-race reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T06:04:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T10:05:12Z",
-      "retry_of": "code-review-mobile-native-kmp-search-stale-response-race",
-      "retry_round": 2
-    },
-    {
       "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2",
       "action": "Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refactor-churn-hotspot-backend-crates-db-src-models-mod-rs]",
       "owner_role": "pm-tech-lead",
