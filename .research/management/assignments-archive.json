@@ -6587,6 +6587,28 @@
       "merge_attempted_at": "2026-07-18T04:02:29Z"
     },
     {
+      "task_id": "gh-issue-2445",
+      "branch": "auto-impl/gh-issue-2445-f710d2c3",
+      "status": "merged",
+      "claimed_at": "2026-07-22T12:12:42Z",
+      "last_updated": "2026-07-22T14:14:15Z",
+      "status_changed_at": "2026-07-22T14:14:15Z",
+      "pr_number": 2446,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2446",
+      "merged_at": "2026-07-22T14:11:35Z",
+      "specialist": "ppt-rust-backend",
+      "implementer_summary": "pr=2446 status=done specialist=ppt-rust-backend scope_drift=false code_reuse_warn=none note=Cargo.lock-only ammonia 4.1.3->4.1.4; cargo-deny advisories ok, tree shows 4.1.4; cargo check compile left to CI",
+      "reviewer_summary": "verdict=approve head_oid=2f834226dbc64bc57e0f7a4eae8effebf3ec5ba6 note=lockfile-only ammonia 4.1.3->4.1.4 clears RUSTSEC-2026-0213; all CI green; scope confined to Cargo.lock",
+      "last_reviewed_oid": "2f834226dbc64bc57e0f7a4eae8effebf3ec5ba6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-22T14:11:00Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7363,5 +7385,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-22T10:16:42Z"
+  "archived_at": "2026-07-22T14:14:57Z"
 }
