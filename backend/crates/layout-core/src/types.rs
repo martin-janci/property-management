@@ -1,7 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-/// Free-form props bag; values validated against component prop schemas at publish time.
+/// Free-form props bag.
+///
+/// Only prop *keys* are gated: tenant overrides are checked against
+/// `rails.prop_whitelist[type]` (see [`crate::validate::validate_tenant_override`]).
+/// Prop *values* are NOT yet validated — any type, range, or length passes
+/// through unchecked at both publish and tenant-override time. Per-prop schema
+/// enforcement (type/min/max/maxLen) is not implemented; see issue #2449.
 pub type Props = BTreeMap<String, serde_json::Value>;
 
 /// Semantic, versioned component type name, e.g. "price-box.v1" (spec §3.1).
