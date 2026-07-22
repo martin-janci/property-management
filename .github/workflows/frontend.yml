@@ -1,43 +1,105 @@
 name: Frontend
 
+# SINGLE-PRODUCER GATING (2026-07-22, mirrors backend.yml / #1672)
+# ----------------------------------------------------------------
+# This workflow now ALWAYS runs on `pull_request` (no `paths:` filter) so that
+# the aggregator job `frontend` below is the SOLE, deterministic producer of a
+# single status context on every PR shape (frontend, mixed, pure-backend).
+#
+# Pattern (aggregator variant of backend.yml's #1672 design):
+#   - A first `changes` job (dorny/paths-filter) decides whether the PR touched
+#     frontend paths (or this workflow file itself). On push/dispatch there is
+#     no PR diff, so frontend=true is forced and the full suite runs.
+#   - The heavy jobs (lint, tests, builds) run only when
+#     `needs.changes.outputs.frontend == 'true'` and otherwise SKIP cleanly.
+#   - The final `frontend` job runs `if: ${{ !cancelled() }}` so it always
+#     reports; it fails iff any needed job failed/cancelled (or, on a
+#     frontend-touched PR, did not succeed), and succeeds when everything
+#     succeeded-or-skipped. One producer per context name = no race between a
+#     no-op run and the real run on mixed PRs (the #1672 spoofed-green class).
+#
+# FOLLOW-UP (operator action, out of scope here): register `frontend` as a
+# required status-check context on `dev` branch protection via
+# branch-protection-setup.yml. Until then this context is informational.
+#
+# Push runs are restricted to dev/main with paths (same as backend.yml): a
+# feature-branch push must not create a second run reporting the same contexts
+# on a PR head SHA (BIT-346 class).
+
 on:
   push:
+    branches: [dev, main]
     paths:
       - 'frontend/**'
+      # Fire when the workflow itself changes, otherwise edits to this file
+      # never get CI on dev/main tips (same rationale as backend.yml).
+      - '.github/workflows/frontend.yml'
+  # NO `paths:` filter — this workflow must run on EVERY PR so the `frontend`
+  # aggregator context is produced exactly once per PR head SHA (#1672).
   pull_request:
-    paths:
-      - 'frontend/**'
+  # Manual lever for maintainers (parity with backend.yml, PAP-123 class).
+  workflow_dispatch:
+
+# A newer push to the PR branch makes an in-flight run obsolete — cancel it so
+# the reported context always reflects the PR's current tip.
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  # Single source of truth for "did this PR touch the frontend?". Every heavy
+  # job keys off `needs.changes.outputs.frontend`. On push/workflow_dispatch
+  # there is no PR diff to inspect, so we force frontend=true and run the full
+  # suite (mirrors backend.yml's `changes` job, including the coalesced
+  # `filter || force` output — see the BIT-346 note there).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend || steps.force.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect frontend changes
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/frontend.yml'
+
+      # Non-PR events (push to dev/main, manual dispatch) always exercise the
+      # full suite — there is no diff to filter against. The `id` is REQUIRED
+      # so the job output above can read this value.
+      - name: Force frontend=true for non-PR events
+        id: force
+        if: github.event_name != 'pull_request'
+        run: echo "frontend=true" >> "$GITHUB_OUTPUT"
+
   lint:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     name: Lint & Format Check
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '20'
-
+      # pnpm must be installed BEFORE setup-node so `cache: pnpm` can resolve
+      # the store path. This replaces the previous hand-rolled
+      # store-path + actions/cache steps that were copy-pasted per job.
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 8
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm
-        uses: actions/cache@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
@@ -48,35 +110,25 @@ jobs:
         run: pnpm check
 
   test-ppt-web:
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.frontend == 'true'
     name: Test Property Management Web
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '20'
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 8
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm
-        uses: actions/cache@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
@@ -87,35 +139,25 @@ jobs:
         run: pnpm test:run
 
   build-ppt-web:
-    needs: [lint, test-ppt-web]
+    needs: [changes, lint, test-ppt-web]
+    if: needs.changes.outputs.frontend == 'true'
     name: Build Property Management Web
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '20'
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 8
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm
-        uses: actions/cache@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
@@ -136,35 +178,25 @@ jobs:
           path: frontend/apps/ppt-web/dist
 
   build-reality-web:
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.frontend == 'true'
     name: Build Reality Portal Web
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '20'
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 8
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm
-        uses: actions/cache@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
@@ -181,22 +213,25 @@ jobs:
           path: frontend/apps/reality-web/.next
 
   build-mobile:
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.frontend == 'true'
     name: Build Property Management Mobile
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '20'
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
@@ -205,3 +240,57 @@ jobs:
       - name: Typecheck mobile
         working-directory: frontend/apps/mobile
         run: pnpm typecheck
+
+  # ALWAYS-REPORTING aggregator context `frontend` (single producer, #1672
+  # pattern). Reports on every PR shape:
+  #   - pure-backend PR: all heavy jobs skipped -> this job succeeds (no-op).
+  #   - frontend-touched PR: fails unless EVERY heavy job succeeded.
+  # `!cancelled()` (not `always()`) so a user-cancelled run doesn't paint a
+  # green context over unfinished work.
+  # FOLLOW-UP: make `frontend` a required context on `dev` via
+  # branch-protection-setup.yml (operator action, not done in this PR).
+  frontend:
+    needs: [changes, lint, test-ppt-web, build-ppt-web, build-reality-web, build-mobile]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate frontend job results
+        run: |
+          echo "changes.frontend:  ${{ needs.changes.outputs.frontend }}"
+          echo "lint:              ${{ needs.lint.result }}"
+          echo "test-ppt-web:      ${{ needs.test-ppt-web.result }}"
+          echo "build-ppt-web:     ${{ needs.build-ppt-web.result }}"
+          echo "build-reality-web: ${{ needs.build-reality-web.result }}"
+          echo "build-mobile:      ${{ needs.build-mobile.result }}"
+
+          fail=0
+          for entry in \
+            "changes:${{ needs.changes.result }}" \
+            "lint:${{ needs.lint.result }}" \
+            "test-ppt-web:${{ needs.test-ppt-web.result }}" \
+            "build-ppt-web:${{ needs.build-ppt-web.result }}" \
+            "build-reality-web:${{ needs.build-reality-web.result }}" \
+            "build-mobile:${{ needs.build-mobile.result }}"; do
+            job="${entry%%:*}"; result="${entry#*:}"
+            # Any hard failure/cancellation fails the aggregate, regardless of
+            # whether the PR touched frontend paths.
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              echo "::error::Frontend job '$job' result: $result"
+              fail=1
+            fi
+            # On a frontend-touched PR every job must have actually SUCCEEDED —
+            # a skip here means it was short-circuited by an upstream failure.
+            if [ "${{ needs.changes.outputs.frontend }}" = "true" ] && [ "$result" != "success" ]; then
+              echo "::error::Frontend paths changed but job '$job' did not succeed (result: $result)"
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+          if [ "${{ needs.changes.outputs.frontend }}" != "true" ]; then
+            echo "No frontend/** changes — frontend suite not required; context satisfied as no-op."
+          else
+            echo "All frontend jobs passed."
+          fi
