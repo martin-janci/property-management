@@ -34,7 +34,7 @@
 #   IG4 cross-reference in PR body                  WARN-only (PR not local)
 #   IG5 plan's Test plan commands exist             WARN-only (parses prose)
 #   IG6 no diff in "Out of scope" paths             HARD when OOS declared
-#   IG7 `just check` + `just test` succeed          HARD (skippable)
+#   IG7 `just verify` succeeds (impact-scoped gate) HARD (skippable)
 #   IG8 archive-move + backlog flip in this PR      HARD (skippable pre-final-commit)
 
 set -euo pipefail
@@ -256,32 +256,15 @@ echo
 # IG7 — just check + just test
 # These are slow; gated by --skip IG7 for fast pre-push smoke runs.
 # -----------------------------------------------------------------------
-echo "IG7  just check + just test"
+echo "IG7  just verify (deterministic impact-scoped gate)"
 if skipped IG7; then skip "IG7 skipped via --skip (run before pushing)"
-elif ! command -v just >/dev/null 2>&1; then
-  warn "just not installed — skipping"
-elif [ ! -f "$REPO_ROOT/justfile" ]; then
-  # Distinguish "no justfile at all" from "recipe missing" — otherwise a
-  # missing/corrupt justfile is misreported below as "recipe not found".
-  warn "justfile not found at $REPO_ROOT/justfile — skipping IG7"
+elif [ ! -x "$REPO_ROOT/scripts/verify-impact.sh" ]; then
+  warn "scripts/verify-impact.sh not found/executable — skipping IG7"
 else
-  if just --justfile "$REPO_ROOT/justfile" --list 2>/dev/null | grep -q '^    check'; then
-    if (cd "$REPO_ROOT" && just check) >/tmp/goal-check.check.log 2>&1; then
-      ok "just check passed"
-    else
-      fail "just check failed (see /tmp/goal-check.check.log)"
-    fi
+  if (cd "$REPO_ROOT" && ./scripts/verify-impact.sh --base "$BASE") >/tmp/goal-check.verify.log 2>&1; then
+    ok "just verify passed — $(grep -m1 '^VERIFY OK ' /tmp/goal-check.verify.log || echo 'VERIFY OK line missing?')"
   else
-    warn "just check recipe not found"
-  fi
-  if just --justfile "$REPO_ROOT/justfile" --list 2>/dev/null | grep -q '^    test'; then
-    if (cd "$REPO_ROOT" && just test) >/tmp/goal-check.test.log 2>&1; then
-      ok "just test passed"
-    else
-      fail "just test failed (see /tmp/goal-check.test.log)"
-    fi
-  else
-    warn "just test recipe not found"
+    fail "just verify failed (see /tmp/goal-check.verify.log): $(grep -m1 '^VERIFY FAIL: ' /tmp/goal-check.verify.log || true)"
   fi
 fi
 echo
