@@ -86,7 +86,7 @@
           "issue": 2417,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) — docs-only, scheduler.rs is correct"
+          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \\u2014 docs-only, scheduler.rs is correct"
         },
         {
           "pr": 2335,
@@ -334,7 +334,7 @@
           "issue": 2324,
           "findings": 5,
           "specialist": "react-web",
-          "note": "list hooks call nonexistent backend endpoints — create flow still broken"
+          "note": "list hooks call nonexistent backend endpoints \\u2014 create flow still broken"
         },
         {
           "pr": 2287,
@@ -646,7 +646,7 @@
           "issue": 2301,
           "findings": 1,
           "specialist": "pm-backend",
-          "note": "mobile OS push (FCM/APNs) transport merge review — follow-up filed as #2301"
+          "note": "mobile OS push (FCM/APNs) transport merge review \\u2014 follow-up filed as #2301"
         },
         {
           "pr": 2297,
