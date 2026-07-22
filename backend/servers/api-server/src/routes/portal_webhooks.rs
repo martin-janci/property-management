@@ -738,7 +738,7 @@ async fn process_view_webhook(
     // captured valid delivery replayed inside the freshness window, or an
     // honest portal's at-least-once retry, arrives with the same
     // `(portal, event_type, external_id)` and hits the partial unique index on
-    // `portal_webhook_events` created by migration 00218 (#2358 — the dedup
+    // `portal_webhook_events` created by migration 00219 (#2358 — the dedup
     // anchor this gate depends on). Previously both calls were fire-and-forget
     // (`let _ = ...`), so `increment_syndication_stats` ran unconditionally and
     // every duplicate delivery re-added `views_count` into the syndication's
@@ -1340,7 +1340,7 @@ mod tests {
     // Regression for #2360: the view path double-counted on replay/retry.
     // The counter increment must run ONLY on a fresh insert; a duplicate
     // delivery (same `(portal, event_type, external_id)`, caught by the partial
-    // unique index from migration 00218 / #2358) must classify as `Duplicate` so
+    // unique index from migration 00219 / #2358) must classify as `Duplicate` so
     // the handler skips `increment_syndication_stats` and does not inflate the
     // syndication's `total_views` counter (migration 00219). This is the DB-free
     // equivalent of a round-trip "second delivery does not advance the counter"
