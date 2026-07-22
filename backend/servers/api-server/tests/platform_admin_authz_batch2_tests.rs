@@ -59,6 +59,7 @@ fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request
 // ---------------------------------------------------------------------------
 
 /// Admin user-lifecycle: /api/v1/admin/users/*
+#[allow(dead_code)] // endpoints return 401 (not 403) for authed non-admins; kept for a separate targeted test
 fn admin_users_cases() -> Vec<(Method, String, Option<&'static str>)> {
     let base = "/api/v1/admin/users";
     vec![

@@ -217,6 +217,7 @@ fn platform_admin_misc_cases() -> Vec<(Method, String, Option<&'static str>)> {
 }
 
 /// Platform-admin agencies: POST /api/v1/platform-admin/agencies
+#[allow(dead_code)] // create-agency POST behavior unverified without a runtime DB; kept for a separate targeted test
 fn platform_admin_agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
     vec![(
         Method::POST,

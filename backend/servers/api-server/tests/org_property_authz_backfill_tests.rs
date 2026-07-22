@@ -166,7 +166,7 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::PUT,
             format!("{base}/{UUID}/branding"),
-            Some(r#"{"primary_color":"#fff"}"#),
+            Some(r##"{"primary_color":"#fff"}"##),
         ),
         (Method::GET, format!("{base}/{UUID}/members"), None),
         (
@@ -174,7 +174,11 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/{UUID}/members/invite"),
             Some(r#"{"email":"user@example.com"}"#),
         ),
-        (Method::DELETE, format!("{base}/{UUID}/members/{UUID2}"), None),
+        (
+            Method::DELETE,
+            format!("{base}/{UUID}/members/{UUID2}"),
+            None,
+        ),
         (
             Method::PUT,
             format!("{base}/{UUID}/members/{UUID2}/role"),
