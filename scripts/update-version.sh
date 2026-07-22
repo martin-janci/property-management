@@ -128,6 +128,27 @@ if [[ -f "$CARGO_LOCK" && -f "$CARGO_TOML" ]]; then
     fi
 fi
 
+# deploy-server is excluded from the workspace (sqlite feature isolation —
+# see .research/build-experience-report-2026-07-22.md) so it carries an
+# explicit version + its own Cargo.lock; keep both in sync with VERSION.
+DEPLOY_TOML="$ROOT_DIR/backend/servers/deploy-server/Cargo.toml"
+if [[ -f "$DEPLOY_TOML" ]]; then
+    sed "0,/^version = \"[^\"]*\"/s//version = \"$VERSION\"/" "$DEPLOY_TOML" > "$DEPLOY_TOML.tmp"
+    mv "$DEPLOY_TOML.tmp" "$DEPLOY_TOML"
+    echo -e "  ${GREEN}✓${NC} Updated $DEPLOY_TOML"
+fi
+DEPLOY_LOCK="$ROOT_DIR/backend/servers/deploy-server/Cargo.lock"
+if [[ -f "$DEPLOY_LOCK" ]]; then
+    MEMBERS="deploy-server" VERSION="$VERSION" awk '
+        BEGIN { split(ENVIRON["MEMBERS"], a, /[[:space:]]+/); for (i in a) member[a[i]] = 1 }
+        /^name = "/ { cur = $0; gsub(/^name = "|"$/, "", cur); is_member = (cur in member) }
+        is_member && /^version = "/ { print "version = \"" ENVIRON["VERSION"] "\""; next }
+        { print }
+    ' "$DEPLOY_LOCK" > "$DEPLOY_LOCK.tmp"
+    mv "$DEPLOY_LOCK.tmp" "$DEPLOY_LOCK"
+    echo -e "  ${GREEN}✓${NC} Updated $DEPLOY_LOCK (deploy-server)"
+fi
+
 # ==================== Frontend (TypeScript) ====================
 echo "Updating frontend packages..."
 update_package_json "$ROOT_DIR/frontend/package.json"

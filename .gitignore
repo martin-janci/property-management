@@ -37,6 +37,8 @@ orchestrate
 !backend/
 !backend/**
 backend/target/
+# deploy-server is workspace-excluded (own target dir; see build-experience report)
+backend/servers/deploy-server/target/
 backend/**/*.rs.bk
 # backend/Cargo.lock — tracked for reproducible Docker builds
 

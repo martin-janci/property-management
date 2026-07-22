@@ -1,0 +1,31 @@
+# Workspace clippy configuration (2026-07-22).
+#
+# Conservative invariant rules only — every rule here had ZERO hits in the
+# workspace when added, so it enforces the status quo rather than creating
+# lint debt. CI runs clippy with `-D warnings`, which promotes the
+# warn-by-default `clippy::disallowed_methods` lint to an error.
+#
+# Escape hatch for a justified future use: annotate the call site with
+# `#[allow(clippy::disallowed_methods)]` plus a comment explaining why.
+#
+# Evaluated but EXCLUDED (existing hits — cleanup tracked as follow-ups):
+#   - std::env::set_var / std::env::remove_var: ~70+ call sites, almost all in
+#     tests (JWT_SECRET, RUST_ENV, portal-webhook secrets, ...). Mutating
+#     process env is unsound under parallel test threads (see the comment at
+#     servers/api-server/src/routes/auth.rs:1067) and an RLS/test-flakiness
+#     hazard, but banning it needs a test-helper migration first.
+#   - std::thread::sleep: 1 hit (servers/deploy-server/src/infra/docker.rs).
+
+[[disallowed-methods]]
+path = "std::process::exit"
+reason = """process::exit skips destructors and tokio graceful shutdown; in library
+crates it can also kill the whole test binary mid-suite. Return an error (or a
+process exit code from main) instead. Zero call sites existed when this rule
+was added — keep it that way, or #[allow] with justification in a server main."""
+
+[[disallowed-methods]]
+path = "futures::executor::block_on"
+reason = """Blocking a tokio worker thread on a future deadlocks the runtime under
+load. Use `.await`, or for sync/test contexts a dedicated
+`tokio::runtime::Runtime::block_on` (current-thread) as done in
+crates/integrations/src/embedding.rs. Zero call sites existed when added."""

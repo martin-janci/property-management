@@ -1,6 +1,40 @@
 #!/bin/bash
+# pre-push hook — Rust quality gate, path-gated.
+#
+# Only runs cargo fmt + clippy when the outgoing commits actually touch
+# backend/**. Docs-only / frontend-only pushes skip the (expensive)
+# workspace clippy entirely. Behavior for backend-touching pushes is
+# unchanged from the previous hook.
+#
+# git passes pushed refs on stdin: "<local_ref> <local_sha> <remote_ref> <remote_sha>"
 set -e
 BACKEND_DIR="./backend"
+ZERO=0000000000000000000000000000000000000000
+
+TOUCHES_BACKEND=0
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+    [ -z "$local_sha" ] && continue
+    [ "$local_sha" = "$ZERO" ] && continue      # branch deletion — nothing to check
+    if [ "$remote_sha" = "$ZERO" ]; then
+        # New remote branch: diff against merge-base with origin/dev (fallback: all files in HEAD)
+        base="$(git merge-base origin/dev "$local_sha" 2>/dev/null || true)"
+        if [ -n "$base" ]; then
+            range_files="$(git diff --name-only "$base" "$local_sha")"
+        else
+            range_files="$(git ls-tree -r --name-only "$local_sha")"
+        fi
+    else
+        range_files="$(git diff --name-only "$remote_sha" "$local_sha" 2>/dev/null || git ls-tree -r --name-only "$local_sha")"
+    fi
+    if printf '%s\n' "$range_files" | grep -q '^backend/'; then
+        TOUCHES_BACKEND=1
+    fi
+done
+
+if [ "$TOUCHES_BACKEND" -eq 0 ]; then
+    echo "Pre-push: no backend/ changes in outgoing commits — skipping Rust checks."
+    exit 0
+fi
 
 echo "Running pre-push quality gate: Rust formatting + clippy..."
 

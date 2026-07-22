@@ -1,0 +1,70 @@
+# deploy-server standalone CI (2026-07-22)
+# ----------------------------------------
+# servers/deploy-server was evicted from the backend workspace (root
+# Cargo.toml `exclude`) because it is the sole sqlx `sqlite` feature user
+# and its presence caused feature-unification churn between `-p` and
+# `--workspace` builds for every agent verify loop
+# (see .research/build-experience-report-2026-07-22.md).
+#
+# After eviction it is no longer covered by backend.yml's `--workspace`
+# commands, so this workflow provides its coverage. It is path-filtered
+# and ADVISORY (not a required context) — deploy-server is an ops tool,
+# not product code.
+#
+# Follow-up: cargo-deny coverage for deploy-server's standalone graph
+# (backend/deny.toml no longer scans it) — needs a deny config decision.
+
+name: Deploy Server
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - 'backend/servers/deploy-server/**'
+      - '.github/workflows/deploy-server.yml'
+  pull_request:
+    paths:
+      - 'backend/servers/deploy-server/**'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-server-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  check-test:
+    name: deploy-server check + test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/servers/deploy-server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.94.1'
+          components: rustfmt, clippy
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend/servers/deploy-server
+          shared-key: deploy-server
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test
