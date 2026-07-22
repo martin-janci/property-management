@@ -386,9 +386,15 @@ impl Scheduler {
         &self,
         announcement: &db::models::Announcement,
     ) -> Result<Vec<uuid::Uuid>, sqlx::Error> {
-        // Parse target_ids from JSON
-        let target_ids: Vec<uuid::Uuid> =
-            serde_json::from_value(announcement.target_ids.clone()).unwrap_or_default();
+        // Parse target_ids from JSON. On a malformed payload we fall back to an
+        // empty set (fail-safe — never panic in the scheduler loop) but emit a
+        // warning so a broken announcement is diagnosable instead of silently
+        // publishing zero notifications.
+        let target_ids = parse_announcement_target_ids(
+            announcement.id,
+            &announcement.target_type,
+            &announcement.target_ids,
+        );
 
         match announcement.target_type.as_str() {
             "all" => {
@@ -1513,6 +1519,31 @@ impl Scheduler {
     }
 }
 
+/// Parse an announcement's `target_ids` JSON payload into a list of UUIDs.
+///
+/// Fail-safe: a malformed payload yields an empty target set (never panics in
+/// the scheduler loop), but emits a `warn` carrying the announcement id and the
+/// parse error so a broken announcement is diagnosable instead of silently
+/// publishing zero notifications.
+fn parse_announcement_target_ids(
+    announcement_id: uuid::Uuid,
+    target_type: &str,
+    target_ids: &serde_json::Value,
+) -> Vec<uuid::Uuid> {
+    match serde_json::from_value(target_ids.clone()) {
+        Ok(ids) => ids,
+        Err(err) => {
+            tracing::warn!(
+                announcement_id = %announcement_id,
+                target_type = %target_type,
+                error = %err,
+                "Failed to parse announcement target_ids; treating as empty target set"
+            );
+            Vec::new()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1679,5 +1710,49 @@ mod tests {
         assert_eq!(metrics.payment_reminders_sent, 0);
         assert_eq!(metrics.invoices_transitioned_to_overdue, 0);
         assert_eq!(metrics.errors, 0);
+    }
+
+    #[test]
+    fn test_parse_target_ids_valid_uuid_array() {
+        let a = Uuid::new_v4();
+        let b = Uuid::new_v4();
+        let payload = serde_json::json!([a, b]);
+        let ids = parse_announcement_target_ids(Uuid::new_v4(), "units", &payload);
+        assert_eq!(ids, vec![a, b], "well-formed UUID array parses through");
+    }
+
+    #[test]
+    fn test_parse_target_ids_empty_array() {
+        let payload = serde_json::json!([]);
+        let ids = parse_announcement_target_ids(Uuid::new_v4(), "units", &payload);
+        assert!(ids.is_empty(), "empty array yields empty target set");
+    }
+
+    #[test]
+    fn test_parse_target_ids_malformed_falls_back_to_empty() {
+        // A malformed payload (object where an array of UUIDs is expected) must
+        // NOT panic and must degrade to an empty target set — the warn side
+        // effect makes it diagnosable, which is the point of the fix.
+        let payload = serde_json::json!({ "not": "a uuid array" });
+        let ids = parse_announcement_target_ids(Uuid::new_v4(), "building", &payload);
+        assert!(
+            ids.is_empty(),
+            "malformed target_ids degrades to empty, not a panic"
+        );
+    }
+
+    #[test]
+    fn test_parse_target_ids_non_uuid_strings_falls_back_to_empty() {
+        // Array of non-UUID strings is also malformed for a Vec<Uuid>.
+        let payload = serde_json::json!(["nope", "still-not-a-uuid"]);
+        let ids = parse_announcement_target_ids(Uuid::new_v4(), "roles", &payload);
+        assert!(ids.is_empty(), "non-UUID string array degrades to empty");
+    }
+
+    #[test]
+    fn test_parse_target_ids_null_falls_back_to_empty() {
+        let payload = serde_json::Value::Null;
+        let ids = parse_announcement_target_ids(Uuid::new_v4(), "all", &payload);
+        assert!(ids.is_empty(), "null target_ids degrades to empty");
     }
 }
