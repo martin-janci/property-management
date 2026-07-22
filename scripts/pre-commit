@@ -46,6 +46,30 @@ FAILED=0
 # Get staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
+# -----------------------------------------------------------------------------
+# Frontend package scoping: derive pnpm --filter args from the staged files so
+# lint/typecheck only run for the touched packages instead of the whole
+# workspace. Files outside apps/* & packages/* (root configs, lockfile) fall
+# back to workspace-wide checks (previous behavior).
+# -----------------------------------------------------------------------------
+FE_FILTER_ARGS=()
+FE_WORKSPACE_WIDE=0
+while IFS= read -r f; do
+    case "$f" in
+        frontend/apps/*/*|frontend/packages/*/*)
+            pkg_dir=$(echo "$f" | cut -d/ -f2-3)      # apps/<name> or packages/<name>
+            FE_FILTER_ARGS+=("--filter" "./$pkg_dir")
+            ;;
+        frontend/*)
+            FE_WORKSPACE_WIDE=1
+            ;;
+    esac
+done <<< "$STAGED_FILES"
+# de-duplicate filter pairs
+if [[ ${#FE_FILTER_ARGS[@]} -gt 0 ]]; then
+    mapfile -t FE_FILTER_ARGS < <(printf '%s\n' "${FE_FILTER_ARGS[@]}" | paste -d' ' - - | sort -u | tr ' ' '\n')
+fi
+
 # =============================================================================
 # Check 1: Rust Formatting (cargo fmt)
 # =============================================================================
@@ -141,7 +165,13 @@ if echo "$STAGED_FILES" | grep -q '^frontend/.*\.\(ts\|tsx\|js\|jsx\)$'; then
     if [[ -f "$FRONTEND_DIR/package.json" ]]; then
         # Check if pnpm lint exists
         if (cd "$FRONTEND_DIR" && grep -q '"lint"' package.json 2>/dev/null); then
-            if ! (cd "$FRONTEND_DIR" && pnpm lint 2>/dev/null); then
+            # Scope to the staged packages when possible; workspace-wide otherwise.
+            if [[ $FE_WORKSPACE_WIDE -eq 0 && ${#FE_FILTER_ARGS[@]} -gt 0 ]]; then
+                LINT_CMD=(pnpm "${FE_FILTER_ARGS[@]}" run --if-present lint)
+            else
+                LINT_CMD=(pnpm lint)
+            fi
+            if ! (cd "$FRONTEND_DIR" && "${LINT_CMD[@]}" 2>/dev/null); then
                 echo ""
                 echo -e "${RED}╔══════════════════════════════════════════════════════════════════╗${NC}"
                 echo -e "${RED}║  PRE-COMMIT HOOK FAILED: TypeScript/JavaScript lint failed       ║${NC}"
@@ -174,7 +204,13 @@ if echo "$STAGED_FILES" | grep -q '^frontend/.*\.\(ts\|tsx\)$'; then
     FRONTEND_DIR="$ROOT_DIR/frontend"
     if [[ -f "$FRONTEND_DIR/package.json" ]]; then
         if (cd "$FRONTEND_DIR" && grep -q '"typecheck"' package.json 2>/dev/null); then
-            if ! (cd "$FRONTEND_DIR" && pnpm typecheck 2>/dev/null); then
+            # Scope to the staged packages when possible; workspace-wide otherwise.
+            if [[ $FE_WORKSPACE_WIDE -eq 0 && ${#FE_FILTER_ARGS[@]} -gt 0 ]]; then
+                TYPECHECK_CMD=(pnpm "${FE_FILTER_ARGS[@]}" run --if-present typecheck)
+            else
+                TYPECHECK_CMD=(pnpm typecheck)
+            fi
+            if ! (cd "$FRONTEND_DIR" && "${TYPECHECK_CMD[@]}" 2>/dev/null); then
                 echo ""
                 echo -e "${RED}╔══════════════════════════════════════════════════════════════════╗${NC}"
                 echo -e "${RED}║  PRE-COMMIT HOOK FAILED: TypeScript type check failed            ║${NC}"

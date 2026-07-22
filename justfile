@@ -82,6 +82,14 @@ build-mobile-native:
 # CODE QUALITY
 # =============================================================================
 
+# Deterministic impact-scoped verify gate (see scripts/verify-impact.sh + .claude/skills/_verify-rules.md)
+verify *ARGS:
+    ./scripts/verify-impact.sh {{ARGS}}
+
+# Print the verify plan without running it (quote VERIFY-PLAN block in PR bodies)
+verify-plan:
+    ./scripts/verify-impact.sh --plan-only
+
 # Run all quality checks
 check: check-backend check-frontend
 
@@ -229,22 +237,22 @@ audit:
 # GIT HELPERS
 # =============================================================================
 
-# Create a feature branch
+# Create a feature branch (branch model: PRs target dev)
 feature name:
-    git checkout main
-    git pull origin main
+    git checkout dev
+    git pull origin dev
     git checkout -b feature/{{name}}
 
-# Create a bugfix branch
+# Create a bugfix branch (branch model: PRs target dev)
 bugfix name:
-    git checkout main
-    git pull origin main
+    git checkout dev
+    git pull origin dev
     git checkout -b bugfix/{{name}}
 
-# Sync current branch with main
+# Sync current branch with dev
 sync:
-    git fetch origin main
-    git rebase origin/main
+    git fetch origin dev
+    git rebase origin/dev
 
 # =============================================================================
 # CI/CD HELPERS
