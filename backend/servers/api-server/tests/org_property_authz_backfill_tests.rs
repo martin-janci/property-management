@@ -7,7 +7,6 @@
 //!   1. an unauthenticated request is rejected (401);
 //!   2. an authenticated user without org membership is rejected (403).
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{

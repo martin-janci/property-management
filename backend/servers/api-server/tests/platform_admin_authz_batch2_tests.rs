@@ -16,7 +16,6 @@
 //!   1. Unauthenticated → 401
 //!   2. Authenticated ordinary user (no capabilities) → 403
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{

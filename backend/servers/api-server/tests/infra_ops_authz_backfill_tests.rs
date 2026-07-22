@@ -11,7 +11,6 @@
 //! Note that `/api/v1/infrastructure/health/metrics` is intentionally exempt from
 //! the platform-admin capability gate since it is a Prometheus scrape endpoint.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{

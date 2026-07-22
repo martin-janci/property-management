@@ -12,7 +12,6 @@
 //! belongs to no organization and holds no building-manager/owner/resident
 //! roles, so all tenant-scoped authz gates reject them.
 
-#[allow(dead_code)]
 mod common;
 
 use axum::{
