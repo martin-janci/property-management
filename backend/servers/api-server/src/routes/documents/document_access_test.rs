@@ -1,6 +1,6 @@
 use super::{
-    document_access_allowed, scope_membership_allows, validate_file_key_org_scope,
-    validate_upload_url_request,
+    document_access_allowed, scope_membership_allows, validate_document_org_scope,
+    validate_file_key_org_scope, validate_upload_url_request,
 };
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -281,6 +281,35 @@ fn upload_url_request_rejects_negative_size() {
 // it via the presigned download/preview handlers — a bucket-wide IDOR
 // (mirrors the messaging guard from #1791/#1770).
 // ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// #2422 — application-layer org scoping for get_document.
+//
+// `get_document` reads via `find_by_id_with_details_rls`, whose SQL scopes only
+// by `id` and leans on the `documents` FORCE-RLS policy for org isolation. The
+// FORCE policy is the primary control but fails open on a BYPASSRLS/superuser
+// pool, so `validate_document_org_scope` re-checks the org application-side.
+// These pin the accept/reject contract (404, shared error shape) without a DB —
+// mirroring the inline guard in get_download_url / get_preview_url /
+// intelligence.rs.
+// ----------------------------------------------------------------------------
+
+#[test]
+fn document_org_scope_accepts_same_org() {
+    let org_id = Uuid::new_v4();
+    assert!(validate_document_org_scope(org_id, org_id).is_ok());
+}
+
+#[test]
+fn document_org_scope_rejects_foreign_org_as_404() {
+    let document_org = Uuid::new_v4();
+    let tenant_org = Uuid::new_v4();
+    let err = validate_document_org_scope(document_org, tenant_org)
+        .expect_err("foreign-org document must be rejected");
+    // A cross-org id must be indistinguishable from a missing one — 404, not a
+    // 403, so the existence of the document is not leaked.
+    assert_eq!(err.0, StatusCode::NOT_FOUND);
+}
 
 #[test]
 fn file_key_own_org_prefix_accepted() {
