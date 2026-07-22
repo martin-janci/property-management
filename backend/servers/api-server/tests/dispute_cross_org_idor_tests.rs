@@ -388,3 +388,183 @@ async fn mediation_notes_present_for_owning_org(pool: PgPool) {
         "org B must not read org A's dispute (and thus never its notes)"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Sub-resource cross-org IDOR contract (issue #2441)
+//
+// The five sub-resource repo methods (`list_parties`, `add_party`,
+// `list_evidence`, `delete_evidence`, `list_activities`) previously queried by
+// path-supplied `dispute_id` alone, with no org scoping — a systemic
+// cross-tenant IDOR. Each now takes the caller's `org_id` and rejects a
+// foreign-org `dispute_id` (reads/`add_party` → `NotFound`; `delete_evidence` →
+// `false`, i.e. handler 404), while the owning org still succeeds. These tests
+// pin that contract at the repository layer (the layer that enforces it), so
+// they fail on the pre-fix code and pass after.
+// ---------------------------------------------------------------------------
+
+/// Seed an evidence row on a dispute; returns its id.
+async fn seed_evidence(pool: &PgPool, dispute_id: Uuid, uploaded_by: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO dispute_evidence (
+            dispute_id, uploaded_by, filename, original_filename,
+            content_type, size_bytes, storage_url, description
+        )
+        VALUES ($1, $2, 'ev.pdf', 'evidence.pdf', 'application/pdf', 1024,
+                's3://ppt-evidence/secret-object.pdf', 'sensitive')
+        RETURNING id
+        "#,
+    )
+    .bind(dispute_id)
+    .bind(uploaded_by)
+    .fetch_one(pool)
+    .await
+    .expect("seed evidence")
+}
+
+// R4 — list_parties: owner reads the roster, foreign org gets NotFound.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_parties_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-parties-a").await;
+    let org_b = seed_org(&pool, "sub-parties-b").await;
+    let user_a = seed_user(&pool, "sub-parties-a@dispute-idor.test").await;
+    let party_user = seed_user(&pool, "sub-parties-p@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+    repo.add_party(dispute_a, party_user, "respondent", org_a)
+        .await
+        .expect("seed party in org A");
+
+    // Owning org reads the roster.
+    let own = repo
+        .list_parties(dispute_a, org_a)
+        .await
+        .expect("org A lists its own parties");
+    assert!(
+        own.iter().any(|p| p.user_id == party_user),
+        "org A must see the party it added"
+    );
+
+    // Foreign org is denied — no PII disclosure.
+    let cross = repo.list_parties(dispute_a, org_b).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B must not list org A's parties, got {cross:?}"
+    );
+}
+
+// R5 — add_party: owner upserts, foreign org is NotFound and nothing is written.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_party_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-add-a").await;
+    let org_b = seed_org(&pool, "sub-add-b").await;
+    let user_a = seed_user(&pool, "sub-add-a@dispute-idor.test").await;
+    let injected = seed_user(&pool, "sub-add-injected@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    // Foreign-org write must fail and inject nothing.
+    let cross = repo.add_party(dispute_a, injected, "mediator", org_b).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B must not inject a party into org A's dispute, got {cross:?}"
+    );
+    let injected_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM dispute_parties WHERE dispute_id = $1 AND user_id = $2",
+    )
+    .bind(dispute_a)
+    .bind(injected)
+    .fetch_one(&pool)
+    .await
+    .expect("count parties");
+    assert_eq!(injected_count, 0, "cross-org add_party must write no row");
+
+    // Owning org succeeds.
+    let party = repo
+        .add_party(dispute_a, injected, "witness", org_a)
+        .await
+        .expect("org A adds a party to its own dispute");
+    assert_eq!(party.user_id, injected);
+    assert_eq!(party.role, "witness");
+}
+
+// R6 — list_evidence: owner reads, foreign org gets NotFound (no storage_url leak).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_evidence_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-lsev-a").await;
+    let org_b = seed_org(&pool, "sub-lsev-b").await;
+    let user_a = seed_user(&pool, "sub-lsev-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+    let _ev = seed_evidence(&pool, dispute_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    let own = repo
+        .list_evidence(dispute_a, org_a)
+        .await
+        .expect("org A lists its own evidence");
+    assert_eq!(own.len(), 1, "org A sees its evidence");
+
+    let cross = repo.list_evidence(dispute_a, org_b).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B must not list org A's evidence, got {cross:?}"
+    );
+}
+
+// R7 — delete_evidence: foreign org deletes nothing (row survives); owner deletes.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_evidence_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-delev-a").await;
+    let org_b = seed_org(&pool, "sub-delev-b").await;
+    let user_a = seed_user(&pool, "sub-delev-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+    let evidence = seed_evidence(&pool, dispute_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    // Foreign org cannot destroy the evidence — nothing deleted, row survives.
+    let cross = repo
+        .delete_evidence(dispute_a, evidence, org_b)
+        .await
+        .expect("delete query ok");
+    assert!(!cross, "org B must not delete org A's evidence");
+    let survives: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM dispute_evidence WHERE id = $1")
+        .bind(evidence)
+        .fetch_one(&pool)
+        .await
+        .expect("count evidence");
+    assert_eq!(survives, 1, "cross-org delete must leave the row intact");
+
+    // Owning org deletes successfully.
+    let own = repo
+        .delete_evidence(dispute_a, evidence, org_a)
+        .await
+        .expect("delete query ok");
+    assert!(own, "org A deletes its own evidence");
+}
+
+// R8 — list_activities: owner reads the trail, foreign org gets NotFound.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_activities_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-act-a").await;
+    let org_b = seed_org(&pool, "sub-act-b").await;
+    let user_a = seed_user(&pool, "sub-act-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    // Owning org reads its (possibly empty) activity trail without error.
+    repo.list_activities(dispute_a, org_a, 50, 0)
+        .await
+        .expect("org A lists its own activities");
+
+    // Foreign org is denied.
+    let cross = repo.list_activities(dispute_a, org_b, 50, 0).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B must not list org A's activities, got {cross:?}"
+    );
+}

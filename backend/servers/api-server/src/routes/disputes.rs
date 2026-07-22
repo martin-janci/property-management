@@ -104,6 +104,45 @@ pub fn router() -> Router<AppState> {
 }
 
 // =============================================================================
+// Shared helpers
+// =============================================================================
+
+/// Derive the caller's organization from the verified JWT, or 403 if absent.
+///
+/// Issue #2441: dispute sub-resource handlers must scope by the JWT tenant
+/// (never a path- or body-supplied org) so they cannot cross tenants.
+fn require_org(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })
+}
+
+/// Map a repository error from an org-scoped sub-resource call to an HTTP
+/// response. `NotFound` (dispute absent or owned by another org) becomes 404 so
+/// the response is not a cross-tenant existence oracle; everything else is 500.
+fn map_dispute_err(
+    err: common::errors::AppError,
+    log_ctx: &str,
+) -> (StatusCode, Json<ErrorResponse>) {
+    match err {
+        common::errors::AppError::NotFound(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
+        ),
+        e => {
+            tracing::error!("{}: {:?}", log_ctx, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", log_ctx)),
+            )
+        }
+    }
+}
+
+// =============================================================================
 // Request/Response Types
 // =============================================================================
 
@@ -706,64 +745,58 @@ async fn withdraw_dispute(
 }
 
 /// List parties for a dispute.
+///
+/// Issue #2441: the party roster (`user_id` + `role` PII) is scoped to the
+/// caller's JWT tenant. A `dispute_id` owned by another org returns 404 so a
+/// caller cannot enumerate a foreign dispute's parties.
 async fn list_parties(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeParty>>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .dispute_repo
-        .list_parties(id)
-        .await
-        .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list parties: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to list parties")),
-            )
-        })
+    let organization_id = require_org(&user)?;
+    match state.dispute_repo.list_parties(id, organization_id).await {
+        Ok(parties) => Ok(Json(parties)),
+        Err(e) => Err(map_dispute_err(e, "Failed to list parties")),
+    }
 }
 
 /// Add a party to a dispute.
+///
+/// Issue #2441: the upsert is scoped to the caller's JWT tenant. A `dispute_id`
+/// owned by another org returns 404 and is never mutated, so a caller cannot
+/// inject or overwrite a party (e.g. a MEDIATOR role) on a foreign dispute.
 async fn add_party(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<AddPartyRequest>,
 ) -> Result<(StatusCode, Json<DisputeParty>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    let organization_id = require_org(&user)?;
+    match state
         .dispute_repo
-        .add_party(id, data.user_id, &data.role)
+        .add_party(id, data.user_id, &data.role, organization_id)
         .await
-        .map(|p| (StatusCode::CREATED, Json(p)))
-        .map_err(|e| {
-            tracing::error!("Failed to add party: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to add party")),
-            )
-        })
+    {
+        Ok(party) => Ok((StatusCode::CREATED, Json(party))),
+        Err(e) => Err(map_dispute_err(e, "Failed to add party")),
+    }
 }
 
 /// List evidence for a dispute.
+///
+/// Issue #2441: evidence metadata (including the S3 `storage_url`) is scoped to
+/// the caller's JWT tenant. A `dispute_id` owned by another org returns 404.
 async fn list_evidence(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeEvidence>>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .dispute_repo
-        .list_evidence(id)
-        .await
-        .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list evidence: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to list evidence")),
-            )
-        })
+    let organization_id = require_org(&user)?;
+    match state.dispute_repo.list_evidence(id, organization_id).await {
+        Ok(evidence) => Ok(Json(evidence)),
+        Err(e) => Err(map_dispute_err(e, "Failed to list evidence")),
+    }
 }
 
 /// Add evidence to a dispute.
@@ -792,22 +825,21 @@ async fn add_evidence(
 }
 
 /// Delete evidence from a dispute.
+///
+/// Issue #2441: the delete is scoped to the caller's JWT tenant via the parent
+/// dispute. A `dispute_id`/`evidence_id` owned by another org matches nothing
+/// and returns 404, so a caller cannot destroy a foreign org's evidence.
 async fn delete_evidence(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(&user)?;
     let deleted = state
         .dispute_repo
-        .delete_evidence(id, evidence_id)
+        .delete_evidence(id, evidence_id, organization_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete evidence: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to delete evidence")),
-            )
-        })?;
+        .map_err(|e| map_dispute_err(e, "Failed to delete evidence"))?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -820,24 +852,29 @@ async fn delete_evidence(
 }
 
 /// List activities for a dispute.
+///
+/// Issue #2441: the activity log is scoped to the caller's JWT tenant. A
+/// `dispute_id` owned by another org returns 404.
 async fn list_activities(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<DisputeActivity>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let organization_id = require_org(&user)?;
+    match state
         .dispute_repo
-        .list_activities(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
+        .list_activities(
+            id,
+            organization_id,
+            query.limit.unwrap_or(50),
+            query.offset.unwrap_or(0),
+        )
         .await
-        .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list activities: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to list activities")),
-            )
-        })
+    {
+        Ok(activities) => Ok(Json(activities)),
+        Err(e) => Err(map_dispute_err(e, "Failed to list activities")),
+    }
 }
 
 // =============================================================================

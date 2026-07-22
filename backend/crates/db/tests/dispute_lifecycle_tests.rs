@@ -109,10 +109,13 @@ async fn file_then_full_status_lifecycle(pool: PgPool) {
 
     // Filing seeds the complainant + respondent as parties and a
     // `dispute_filed` activity.
-    let parties = repo.list_parties(dispute.id).await.expect("list parties");
+    let parties = repo
+        .list_parties(dispute.id, org)
+        .await
+        .expect("list parties");
     assert_eq!(parties.len(), 2, "complainant + respondent are seeded");
     let activities = repo
-        .list_activities(dispute.id, 50, 0)
+        .list_activities(dispute.id, org, 50, 0)
         .await
         .expect("list activities");
     assert!(
@@ -138,7 +141,7 @@ async fn file_then_full_status_lifecycle(pool: PgPool) {
 
     // Every transition recorded a status_changed activity (4 transitions).
     let activities = repo
-        .list_activities(dispute.id, 50, 0)
+        .list_activities(dispute.id, org, 50, 0)
         .await
         .expect("list activities");
     let status_changes = activities
@@ -349,7 +352,10 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
     assert_eq!(evidence.dispute_id, dispute.id);
     assert_eq!(evidence.uploaded_by, user);
 
-    let listed = repo.list_evidence(dispute.id).await.expect("list evidence");
+    let listed = repo
+        .list_evidence(dispute.id, org)
+        .await
+        .expect("list evidence");
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].id, evidence.id);
 
@@ -364,7 +370,7 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
     );
 
     let activities = repo
-        .list_activities(dispute.id, 50, 0)
+        .list_activities(dispute.id, org, 50, 0)
         .await
         .expect("list activities");
     assert!(
@@ -380,7 +386,7 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
         .await
         .expect("file second dispute");
     let wrong_scope = repo
-        .delete_evidence(other.id, evidence.id)
+        .delete_evidence(other.id, evidence.id, org)
         .await
         .expect("delete query ok");
     assert!(
@@ -388,7 +394,7 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
         "evidence is not deletable via a foreign dispute id"
     );
     let right_scope = repo
-        .delete_evidence(dispute.id, evidence.id)
+        .delete_evidence(dispute.id, evidence.id, org)
         .await
         .expect("delete query ok");
     assert!(right_scope, "evidence is deletable via its own dispute id");
