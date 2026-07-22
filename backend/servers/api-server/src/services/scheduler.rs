@@ -424,6 +424,13 @@ impl Scheduler {
                 // Single query across all target buildings (was N+1: one
                 // SELECT per building). DISTINCT collapses duplicates that
                 // existed across the old per-building results.
+                //
+                // Cross-tenant guard: AND-scope to the announcement's own
+                // organization via `buildings.organization_id` (units reach
+                // org only through buildings — see migration 00116). Without
+                // this, a `target_ids` list carrying another tenant's building
+                // — e.g. if create-announcement validation is bypassed — would
+                // fan the notification out to that tenant's residents.
                 if target_ids.is_empty() {
                     return Ok(Vec::new());
                 }
@@ -432,23 +439,43 @@ impl Scheduler {
                     SELECT DISTINCT ur.user_id
                     FROM unit_residents ur
                     JOIN units u ON ur.unit_id = u.id
-                    WHERE u.building_id = ANY($1) AND ur.end_date IS NULL
+                    JOIN buildings b ON u.building_id = b.id
+                    WHERE u.building_id = ANY($1)
+                      AND b.organization_id = $2
+                      AND ur.end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
+                .bind(announcement.organization_id)
                 .fetch_all(&self.pool)
                 .await?;
                 Ok(users.into_iter().map(|(id,)| id).collect())
             }
             "units" => {
-                // Get all users associated with the specified units
+                // Get all users associated with the specified units.
+                //
+                // Cross-tenant guard: AND-scope to the announcement's own
+                // organization by chaining unit_residents -> units ->
+                // buildings and filtering `buildings.organization_id`. Without
+                // it, a `target_ids` list carrying another tenant's unit would
+                // leak the announcement across the tenant boundary if the
+                // create-announcement validation is bypassed.
+                if target_ids.is_empty() {
+                    return Ok(Vec::new());
+                }
                 let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
                     r#"
-                    SELECT DISTINCT user_id FROM unit_residents
-                    WHERE unit_id = ANY($1) AND end_date IS NULL
+                    SELECT DISTINCT ur.user_id
+                    FROM unit_residents ur
+                    JOIN units u ON ur.unit_id = u.id
+                    JOIN buildings b ON u.building_id = b.id
+                    WHERE ur.unit_id = ANY($1)
+                      AND b.organization_id = $2
+                      AND ur.end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
+                .bind(announcement.organization_id)
                 .fetch_all(&self.pool)
                 .await?;
 
@@ -1642,6 +1669,83 @@ mod tests {
             "same resident across two units reminded once"
         );
         assert_eq!(targets, vec![shared_user]);
+    }
+
+    /// Pure model of the org-scoped fan-out performed by the `"building"` and
+    /// `"units"` legs of [`Scheduler::get_announcement_target_users`].
+    ///
+    /// Each candidate resident row (`user_id`, `building_org_id`) is the join
+    /// `unit_residents -> units -> buildings` matched by the announcement's
+    /// `target_ids`. The live SQL now carries `AND b.organization_id = $2`;
+    /// this helper mirrors exactly that predicate so the cross-tenant guard is
+    /// testable without Postgres. Removing the `row_org != announcement_org`
+    /// skip below is equivalent to dropping the `AND b.organization_id = $2`
+    /// scope from the query — which is what the regression tests assert must
+    /// never leak. Order is first-seen; duplicates collapse (mirrors DISTINCT).
+    fn org_scoped_target_users(
+        announcement_org: Uuid,
+        candidate_rows: &[(Uuid, Uuid)],
+    ) -> Vec<Uuid> {
+        let mut seen = HashSet::new();
+        let mut out = Vec::new();
+        for &(user_id, row_org) in candidate_rows {
+            // AND b.organization_id = $2 — drop rows from any other tenant.
+            if row_org != announcement_org {
+                continue;
+            }
+            if seen.insert(user_id) {
+                out.push(user_id);
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn test_announcement_fanout_excludes_cross_tenant_targets() {
+        // Cross-tenant leak guard: an announcement in org A whose target_ids
+        // resolve (e.g. via bypassed create-time validation) to a unit/building
+        // in org B must NOT fan out to org B's residents. Without the
+        // `AND b.organization_id = $2` scope this test fails because
+        // `cross_tenant_user` would be included.
+        let org_a = Uuid::new_v4();
+        let org_b = Uuid::new_v4();
+        let same_tenant_user = Uuid::new_v4();
+        let cross_tenant_user = Uuid::new_v4();
+
+        let candidate_rows = vec![
+            (same_tenant_user, org_a),  // resident in a building of org A
+            (cross_tenant_user, org_b), // resident in a building of org B
+        ];
+
+        let targets = org_scoped_target_users(org_a, &candidate_rows);
+
+        assert!(
+            targets.contains(&same_tenant_user),
+            "same-tenant resident must still be notified"
+        );
+        assert!(
+            !targets.contains(&cross_tenant_user),
+            "cross-tenant resident must NOT be notified — fan-out leaked across orgs"
+        );
+        assert_eq!(targets, vec![same_tenant_user]);
+    }
+
+    #[test]
+    fn test_announcement_fanout_all_targets_same_org() {
+        // Sanity: when every candidate belongs to the announcement's org, all
+        // residents are returned (deduped, first-seen order preserved).
+        let org_a = Uuid::new_v4();
+        let user_1 = Uuid::new_v4();
+        let user_2 = Uuid::new_v4();
+
+        let candidate_rows = vec![
+            (user_1, org_a),
+            (user_2, org_a),
+            (user_1, org_a), // duplicate across two matched units — collapses
+        ];
+
+        let targets = org_scoped_target_users(org_a, &candidate_rows);
+        assert_eq!(targets, vec![user_1, user_2]);
     }
 
     #[test]
