@@ -16,7 +16,7 @@
 -- and surfaced by the read paths. The dedup *anchor* that makes the gate's
 -- `Duplicate` branch reachable (the partial unique index on
 -- `portal_webhook_events (portal, event_type, external_id)`) is created by the
--- sibling change for #2358 in migration 00218; once that lands, a replayed
+-- sibling change for #2358 in migration 00219; once that lands, a replayed
 -- delivery is suppressed and these counters no longer inflate.
 --
 -- RLS: `listing_syndications` is already FORCE ROW LEVEL SECURITY (00110), and
