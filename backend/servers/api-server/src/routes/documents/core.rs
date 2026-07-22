@@ -765,7 +765,7 @@ async fn list_documents(
 async fn get_document(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DocumentDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -775,6 +775,14 @@ async fn get_document(
         .await
     {
         Ok(Some(document)) => {
+            // Defense-in-depth cross-tenant guard. `find_by_id_with_details_rls`
+            // relies on the connection's `app.current_org_id` GUC + the
+            // `documents` FORCE-RLS policy to scope by org, but that lookup takes
+            // no org argument and a BYPASSRLS/superuser pool is not bound by
+            // FORCE. Re-check the org explicitly so a foreign-org document is
+            // invisible (404, not an existence leak), matching the sibling read
+            // handlers (`get_download_url`, `get_preview_url`, intelligence.rs).
+            validate_document_org_scope(document.document.organization_id, tenant.tenant_id)?;
             rls.release().await;
             Ok(Json(DocumentDetailResponse { document }))
         }
@@ -1531,6 +1539,30 @@ pub(crate) fn validate_file_key_org_scope(
                 "INVALID_FILE_KEY",
                 "file_key must reference an object uploaded for this organization",
             )),
+        ));
+    }
+    Ok(())
+}
+
+/// Application-layer org guard for a single fetched document (#2422).
+///
+/// `get_document` reads via `find_by_id_with_details_rls`, whose SQL scopes
+/// only by `id` and relies on the `documents` FORCE-RLS policy + the
+/// connection's `app.current_org_id` GUC to enforce org isolation. That is the
+/// primary control, but it fails open on a BYPASSRLS/superuser pool (e.g. the
+/// integration-test pool) which FORCE does not bind. Re-check the org here so a
+/// foreign-org document is indistinguishable from a missing one (404, not an
+/// existence leak), mirroring the inline guard in the sibling read handlers
+/// (`get_download_url`, `get_preview_url`, `intelligence.rs`). Kept as a pure
+/// function so the accept/reject contract can be unit-tested without a DB.
+pub(crate) fn validate_document_org_scope(
+    document_org_id: Uuid,
+    tenant_org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if document_org_id != tenant_org_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
         ));
     }
     Ok(())
