@@ -66,14 +66,25 @@ impl DisputeRepository {
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // Add complainant as party
-        self.add_party(dispute.id, req.filed_by, party_role::COMPLAINANT)
-            .await?;
+        // Add complainant as party (org derived from the dispute we just
+        // created, so the org-scope guard in `add_party` is satisfied).
+        self.add_party(
+            dispute.id,
+            req.filed_by,
+            party_role::COMPLAINANT,
+            dispute.organization_id,
+        )
+        .await?;
 
         // Add respondents as parties
         for respondent_id in req.respondent_ids {
-            self.add_party(dispute.id, respondent_id, party_role::RESPONDENT)
-                .await?;
+            self.add_party(
+                dispute.id,
+                respondent_id,
+                party_role::RESPONDENT,
+                dispute.organization_id,
+            )
+            .await?;
         }
 
         // Record activity
@@ -492,7 +503,40 @@ impl DisputeRepository {
         Ok(())
     }
 
-    pub async fn list_parties(&self, dispute_id: Uuid) -> Result<Vec<DisputeParty>, AppError> {
+    /// Verify a dispute exists and belongs to `org_id`, returning `NotFound`
+    /// otherwise.
+    ///
+    /// Issue #2441: the dispute sub-resource tables (`dispute_parties`,
+    /// `dispute_evidence`, `dispute_activities`) are not RLS-protected on this
+    /// pool — that is why `get_dispute` derives the org from the JWT and calls
+    /// `find_by_id_with_details_for_org`. The sub-resource read/write methods
+    /// share this guard so a caller in org A cannot reach org B's rows by
+    /// guessing a `dispute_id`. Mapping "no such row in this org" to `NotFound`
+    /// keeps the response from becoming a cross-tenant existence oracle.
+    async fn ensure_dispute_in_org(&self, dispute_id: Uuid, org_id: Uuid) -> Result<(), AppError> {
+        let found: Option<Uuid> =
+            sqlx::query_scalar("SELECT id FROM disputes WHERE id = $1 AND organization_id = $2")
+                .bind(dispute_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
+
+        if found.is_none() {
+            return Err(AppError::NotFound("Dispute not found".to_string()));
+        }
+        Ok(())
+    }
+
+    /// List the parties on a dispute, scoped to the caller's organization
+    /// (issue #2441). A foreign-org `dispute_id` yields `NotFound`.
+    pub async fn list_parties(
+        &self,
+        dispute_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<DisputeParty>, AppError> {
+        self.ensure_dispute_in_org(dispute_id, org_id).await?;
+
         let parties = sqlx::query_as::<_, DisputeParty>(
             r#"
             SELECT id, dispute_id, user_id, role, notified_at, responded_at, created_at
@@ -509,31 +553,53 @@ impl DisputeRepository {
         Ok(parties)
     }
 
+    /// Add (or upsert) a party on a dispute, scoped to `org_id` (issue #2441).
+    ///
+    /// The INSERT is gated by an `EXISTS` predicate on the parent dispute's
+    /// organization, so the write is atomic — a caller from another org cannot
+    /// inject or overwrite a party by guessing the `dispute_id`. A foreign-org
+    /// (or unknown) `dispute_id` selects no source row, upserts nothing, and
+    /// surfaces as `NotFound`.
     pub async fn add_party(
         &self,
         dispute_id: Uuid,
         user_id: Uuid,
         role: &str,
+        org_id: Uuid,
     ) -> Result<DisputeParty, AppError> {
         let party = sqlx::query_as::<_, DisputeParty>(
             r#"
             INSERT INTO dispute_parties (dispute_id, user_id, role)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (dispute_id, user_id) DO UPDATE SET role = $3
+            SELECT $1, $2, $3
+            WHERE EXISTS (
+                SELECT 1 FROM disputes WHERE id = $1 AND organization_id = $4
+            )
+            ON CONFLICT (dispute_id, user_id) DO UPDATE SET role = EXCLUDED.role
             RETURNING id, dispute_id, user_id, role, notified_at, responded_at, created_at
             "#,
         )
         .bind(dispute_id)
         .bind(user_id)
         .bind(role)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Dispute not found".to_string()))?;
 
         Ok(party)
     }
 
-    pub async fn list_evidence(&self, dispute_id: Uuid) -> Result<Vec<DisputeEvidence>, AppError> {
+    /// List the evidence on a dispute, scoped to the caller's organization
+    /// (issue #2441). A foreign-org `dispute_id` yields `NotFound`, so evidence
+    /// metadata (including the S3 `storage_url`) never leaks across tenants.
+    pub async fn list_evidence(
+        &self,
+        dispute_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<DisputeEvidence>, AppError> {
+        self.ensure_dispute_in_org(dispute_id, org_id).await?;
+
         let evidence = sqlx::query_as::<_, DisputeEvidence>(
             r#"
             SELECT id, dispute_id, uploaded_by, filename, original_filename, content_type,
@@ -585,27 +651,52 @@ impl DisputeRepository {
         Ok(evidence)
     }
 
+    /// Delete an evidence row, scoped to the caller's organization via the
+    /// parent dispute (issue #2441).
+    ///
+    /// The `EXISTS` predicate on `disputes.organization_id` makes the delete
+    /// atomic and tenant-safe — a caller in org A cannot destroy org B's
+    /// evidence by guessing the `dispute_id`/`evidence_id`. Returns `false`
+    /// (→ handler 404) when nothing in the caller's org matched. Mirrors the
+    /// sibling `ViolationRepository::delete_evidence` guard.
     pub async fn delete_evidence(
         &self,
         dispute_id: Uuid,
         evidence_id: Uuid,
+        org_id: Uuid,
     ) -> Result<bool, AppError> {
-        let result = sqlx::query("DELETE FROM dispute_evidence WHERE id = $1 AND dispute_id = $2")
-            .bind(evidence_id)
-            .bind(dispute_id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let result = sqlx::query(
+            r#"
+            DELETE FROM dispute_evidence de
+            WHERE de.id = $1
+              AND de.dispute_id = $2
+              AND EXISTS (
+                  SELECT 1 FROM disputes d
+                  WHERE d.id = de.dispute_id AND d.organization_id = $3
+              )
+            "#,
+        )
+        .bind(evidence_id)
+        .bind(dispute_id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(result.rows_affected() > 0)
     }
 
+    /// List the activity trail on a dispute, scoped to the caller's
+    /// organization (issue #2441). A foreign-org `dispute_id` yields `NotFound`.
     pub async fn list_activities(
         &self,
         dispute_id: Uuid,
+        org_id: Uuid,
         limit: i32,
         offset: i32,
     ) -> Result<Vec<DisputeActivity>, AppError> {
+        self.ensure_dispute_in_org(dispute_id, org_id).await?;
+
         let activities = sqlx::query_as::<_, DisputeActivity>(
             r#"
             SELECT id, dispute_id, actor_id, activity_type, description, metadata, created_at
