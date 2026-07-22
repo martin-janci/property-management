@@ -108,6 +108,9 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-minimum-32-characters-long
       RUST_LOG: debug
+      # Servers refuse to boot without ESIGN_* secrets unless RUST_ENV signals
+      # a dev environment (found 2026-07-22 live-testing the dev compose flow).
+      RUST_ENV: development
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin123
@@ -150,6 +153,9 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-minimum-32-characters-long
       RUST_LOG: debug
+      # Servers refuse to boot without ESIGN_* secrets unless RUST_ENV signals
+      # a dev environment (found 2026-07-22 live-testing the dev compose flow).
+      RUST_ENV: development
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin123

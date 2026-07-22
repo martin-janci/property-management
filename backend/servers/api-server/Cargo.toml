@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
+# `cargo run -p api-server` broke when the ppt-features/ppt-seed bins were
+# added (docker-compose.dev.yml and backend/CLAUDE.md both rely on it).
+default-run = "api-server"
 
 [lib]
 name = "api_server"
