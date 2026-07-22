@@ -20,7 +20,7 @@ Any plan whose *Required capabilities* or *Suggested approach* references
 ## What it gives you
 
 - Workspace layout — every crate's responsibility in one line
-- Per-crate iteration loop (`cargo check -p <crate>`)
+- Per-crate iteration loop (`cargo clippy -p <crate>`)
 - sqlx offline-data workflow
 - Where seed data lives (and why `just seed` does NOT exist)
 
@@ -58,10 +58,11 @@ how to invoke seeding today.
 1. **Iterate on one crate.** The whole-workspace check is slow; iterate per crate:
    ```bash
    cd backend
-   cargo check -p <crate>          # fastest signal
-   cargo clippy -p <crate> -- -D warnings
-   cargo test   -p <crate> -- <filter>
+   cargo clippy -p <crate> --all-targets -- -D warnings   # type gate + lint in one pass
+   cargo test   -p <crate> -- <filter>                    # or: cargo nextest run -p <crate>
    ```
+   No `cargo check` step — clippy subsumes it and the two don't share
+   artifacts, so running both pays for the compile twice.
 2. **Run a server binary locally** (Docker not required — direct cargo):
    ```bash
    just api              # api-server on :8080
@@ -71,7 +72,7 @@ how to invoke seeding today.
    [`ppt-dev-stack`](../ppt-dev-stack/SKILL.md) if needed.
 3. **sqlx — add or change a query.**
    - Edit the query.
-   - With DB up, `cd backend && cargo check -p db` to validate against live schema.
+   - With DB up, `cd backend && cargo clippy -p db --all-targets -- -D warnings` to compile-validate.
    - Refresh offline data so CI passes:
      ```bash
      just db-prepare      # cargo sqlx prepare --workspace
@@ -84,9 +85,9 @@ how to invoke seeding today.
    just db-migrate              # apply locally
    just db-prepare              # regenerate sqlx offline cache if queries changed
    ```
-5. **Whole-workspace gate** before claiming done:
+5. **Gate** before claiming done:
    ```bash
-   just check-backend && just test-backend
+   just verify    # impact-scoped: per-crate + reverse dependents; escalates only when needed
    ```
 
 ## Deterministic verification
@@ -117,19 +118,17 @@ echo OK
 ## Smoke check (single command)
 
 ```bash
-cd backend && cargo check --workspace --message-format=short
+cd backend && cargo metadata --no-deps --format-version=1 >/dev/null && echo OK
 ```
-
-> Note: first run downloads + compiles deps and can take several minutes;
-> subsequent runs are fast. The verification harness times out individual
-> smoke checks — if this one's never been run on the host, run it manually
-> first to warm the cache.
 
 ## After-task verification
 
 ```bash
-just check-backend && just test-backend
+just verify    # quote VERIFY-PLAN block + VERIFY OK <hash> in PR body (IG7)
 ```
+
+See [`_verify-rules.md`](../_verify-rules.md) — no `cargo build`/`--release`
+locally; clippy is the type gate.
 
 ## Cross-references
 

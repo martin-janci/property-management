@@ -24,6 +24,24 @@ name: Backend
 #                             branch protection for pure-frontend PRs.
 # One producer per required context name = no race, on any PR shape.
 # `backend-skip.yml` is therefore removed.
+#
+# BUILD-EXPERIENCE RESTRUCTURE (2026-07-22)
+# -----------------------------------------
+# Per .research/build-experience-report-2026-07-22.md (Workstream A):
+#   - `test-shard`/`test-rest` no longer wait on `check` (de-serialized; the
+#     required `test` aggregator still needs + fails on `check`, so
+#     required-context semantics are unchanged).
+#   - `build` (release build) no longer runs on pull_request — push to
+#     dev/main, schedule, and dispatch only.
+#   - `lint` merged into `check`: clippy (`--all-targets -D warnings`) replaced
+#     `cargo check` as the sole type gate; the standalone
+#     backend-fmt-clippy-gate.yml stays as the fast advisory signal.
+#   - `deny-ban-presence` deleted — duplicated the required standalone
+#     deny-toml-ban-gate.yml workflow verbatim.
+#   - sqlx-cli installed via taiki-e/install-action (prebuilt) instead of
+#     `cargo install`; rust-cache moved to a shared `backend` lineage saved
+#     only from `dev` (release `build` keeps its own lineage — profiles
+#     differ); CARGO_INCREMENTAL=0 workflow-wide.
 
 on:
   push:
@@ -62,6 +80,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings"
+  # Incremental compilation only bloats CI caches (per-session artifacts that
+  # never get reused across runs) — disable it workflow-wide (2026-07-22).
+  CARGO_INCREMENTAL: 0
 
 # A newer push to the PR branch makes an in-flight run obsolete — cancel it so
 # the required contexts always reflect the PR's current tip and we don't pay for
@@ -109,37 +130,6 @@ jobs:
         if: github.event_name != 'pull_request'
         run: echo "backend=true" >> "$GITHUB_OUTPUT"
 
-  lint:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: backend
-
-      - name: Check formatting
-        working-directory: backend
-        run: cargo fmt --all -- --check
-
-      # `--all-targets` includes test/bench targets — without it, test-only
-      # lint debt lands silently and the documented local pre-flight
-      # (`cargo clippy --workspace --all-targets -- -D warnings`) diverges
-      # from CI (PAP-124).
-      - name: Clippy
-        working-directory: backend
-        env:
-          SQLX_OFFLINE: true
-        run: cargo clippy --workspace --all-targets -- -D warnings
-
   # REQUIRED context `check`. Always runs (so the required status is always
   # produced exactly once — #1672). When no backend paths changed it short-
   # circuits to a no-op; otherwise it runs the real, heavy steps. Every real
@@ -162,17 +152,23 @@ jobs:
       - name: Install Rust
         if: needs.changes.outputs.backend == 'true'
         uses: dtolnay/rust-toolchain@1.94.1
+        with:
+          components: rustfmt, clippy
 
       - name: Cache Cargo
         if: needs.changes.outputs.backend == 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          shared-key: "backend"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
-      # Formatting is enforced here in the REQUIRED `check` job, not only in the
-      # non-blocking `lint` job — so a rustfmt violation blocks merge into dev
-      # instead of landing and needing a fixup PR. This recurred on #1563/#1580
-      # (merged red-`lint` on green `check`) → #1581; tracked as GH #1592.
+      # Formatting is enforced here in the REQUIRED `check` job — so a rustfmt
+      # violation blocks merge into dev instead of landing and needing a fixup
+      # PR. This recurred on #1563/#1580 (merged red-`lint` on green `check`,
+      # back when a separate non-blocking `lint` job existed) → #1581; tracked
+      # as GH #1592. The `lint` job itself was folded in here 2026-07-22.
       - name: Check formatting
         if: needs.changes.outputs.backend == 'true'
         working-directory: backend
@@ -252,12 +248,19 @@ jobs:
         working-directory: backend
         run: ./scripts/check-rls-coverage.sh --strict
 
-      - name: Check
+      # Clippy is the sole type gate (2026-07-22): it fully subsumes
+      # `cargo check --workspace` (clippy runs the same type-checking pass),
+      # so compiling the workspace twice in two jobs was pure waste.
+      # `--all-targets` includes test/bench targets — without it, test-only
+      # lint debt lands silently and the documented local pre-flight
+      # (`cargo clippy --workspace --all-targets -- -D warnings`) diverges
+      # from CI (PAP-124).
+      - name: Clippy (type gate)
         if: needs.changes.outputs.backend == 'true'
         working-directory: backend
         env:
           SQLX_OFFLINE: true
-        run: cargo check --workspace
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
   # SHARDED backend tests (issue #2222).
   # ------------------------------------
@@ -293,8 +296,12 @@ jobs:
   # `test`, produced by the thin aggregator job below — one producer, per
   # #1672); the matrix legs report `test-shard (0..N)` and skip cleanly on
   # pure-frontend PRs.
+  # De-serialized from `check` (2026-07-22): the test legs start immediately
+  # instead of waiting ~10 min for clippy + the shell gates. The required
+  # `test` aggregator below still needs `check` and hard-fails if it didn't
+  # succeed, so the merge gate semantics are unchanged.
   test-shard:
-    needs: [changes, check]
+    needs: [changes]
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 150
@@ -347,13 +354,20 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
 
-      # Give each matrix leg its own cache namespace so parallel shards don't
-      # clobber one another's `Swatinem/rust-cache` entry.
+      # Shared `backend-test` lineage for all test legs (2026-07-22): the bulk
+      # of the cache value is the dependency artifacts, which are identical
+      # across shards (same env → same final key; rust-cache saves are atomic,
+      # first-finisher wins, so parallel legs can't clobber each other). Kept
+      # separate from the `backend` lineage because the CARGO_PROFILE_*_DEBUG=0
+      # overrides here produce artifacts incompatible with the check job's.
+      # Saved only from dev pushes so PR runs don't churn the cache.
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
-          key: test-shard-${{ matrix.shard }}
+          shared-key: "backend-test"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
       # The voting PDF-report path (routes/voting.rs::render_pdf_report, added
       # in #1625) loads the LiberationSans TTFs from
@@ -416,8 +430,10 @@ jobs:
   # Like the shards, this is NOT the required context — the aggregator `test`
   # job below gates on it too (so coverage stays exactly-once, no false green,
   # #1672) and it skips cleanly on pure-frontend PRs.
+  # De-serialized from `check` (2026-07-22) — same rationale as test-shard;
+  # the required `test` aggregator still gates on `check`.
   test-rest:
-    needs: [changes, check]
+    needs: [changes]
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 150
@@ -430,9 +446,10 @@ jobs:
       CARGO_BUILD_JOBS: "2"
 
     services:
-      # Non-api-server crates (reality-server, accounting-server, deploy-server,
-      # library crates) provision their own `#[sqlx::test]` databases against
-      # this Postgres, same as the shard job.
+      # Non-api-server crates (reality-server, accounting-server, library
+      # crates) provision their own `#[sqlx::test]` databases against this
+      # Postgres, same as the shard job. (deploy-server is workspace-excluded
+      # since 2026-07-22 — covered by deploy-server.yml instead.)
       postgres:
         image: pgvector/pgvector:pg16
         env:
@@ -453,12 +470,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
 
-      # Own cache namespace so this leg doesn't clobber a shard's cache entry.
+      # Same shared `backend-test` lineage as the shards (2026-07-22): dep
+      # artifacts dominate and are identical; atomic first-finisher-wins saves
+      # mean no clobbering. Saved only from dev pushes.
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
-          key: test-rest
+          shared-key: "backend-test"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
       # Parity with test-shard: the voting PDF-report path needs the Liberation
       # TTFs, and some non-api-server crates exercise shared render helpers.
@@ -523,10 +544,17 @@ jobs:
           fi
           echo "All backend test shards and the non-shard leg passed."
 
+  # Not run on pull_request (2026-07-22): a full `--release --workspace` build
+  # proves nothing the required `check`/`test` contexts don't already prove on
+  # a PR, and it was the single most expensive job on the PR hot path. It still
+  # runs on push to dev/main, the weekly schedule, and manual dispatch — the
+  # events whose artifacts (backend-binaries) are actually consumed. `build` is
+  # not a required context and nothing in this workflow needs it, so skipping
+  # it on PRs breaks no DAG edge.
   build:
     runs-on: ubuntu-latest
     needs: [changes, test]
-    if: needs.changes.outputs.backend == 'true'
+    if: github.event_name != 'pull_request' && needs.changes.outputs.backend == 'true'
 
     steps:
       - uses: actions/checkout@v7
@@ -534,10 +562,15 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
 
+      # Own `backend-release` lineage — release-profile artifacts share nothing
+      # with the dev/test-profile lineages and would poison them (2026-07-22).
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          shared-key: "backend-release"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
       # Same disk-exhaustion guard as the test job: the release build of the
       # whole workspace also fills the runner's root disk during linking.
@@ -596,9 +629,16 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          shared-key: "backend"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
+      # Prebuilt binary via install-action (2026-07-22) — `cargo install
+      # sqlx-cli` compiled the CLI from source on every run (~minutes).
       - name: Install SQLx CLI
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+        uses: taiki-e/install-action@v2
+        with:
+          tool: sqlx-cli
 
       - name: Run database migrations
         working-directory: backend/crates/db
@@ -651,10 +691,13 @@ jobs:
         run: cargo test --test rls_smoke_tests -- --ignored --skip smoke_test_phase0_rls_cross_tenant_isolation --nocapture --test-threads=1
 
   # Story 80.1: RLS Security Penetration Tests (full suite)
-  # NOTE: Security tests depend on the 'check' job (RLS scripts + cargo check)
-  # to ensure code and security-enforcement quality before running expensive
-  # penetration tests. They are deliberately NOT gated by 'lint' (fmt/clippy)
-  # to ensure security verification runs even on cosmetic failures (PAP-247).
+  # NOTE: Security tests depend on the 'check' job (RLS enforcement scripts +
+  # the type gate) to ensure code and security-enforcement quality before
+  # running expensive penetration tests — this `needs: check` edge is
+  # deliberate and was kept when the test legs were de-serialized from
+  # `check` (2026-07-22). Historically they were NOT gated by the separate
+  # 'lint' job (since folded into `check`) so security verification ran even
+  # on cosmetic failures (PAP-247).
   security-tests:
     runs-on: ubuntu-latest
     needs: [changes, check]
@@ -693,9 +736,15 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          shared-key: "backend"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
+      # Prebuilt binary via install-action (2026-07-22) — see rls-smoke-test.
       - name: Install SQLx CLI
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+        uses: taiki-e/install-action@v2
+        with:
+          tool: sqlx-cli
 
       - name: Run database migrations
         working-directory: backend/crates/db
@@ -813,12 +862,19 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+          shared-key: "backend"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
 
       # Pin sqlx-cli to the workspace's SQLx version (0.9, see
       # backend/Cargo.toml [workspace.dependencies]) so the offline-cache
       # format the CLI emits/checks matches what the macros expect.
+      # Prebuilt binary via install-action (2026-07-22) instead of a
+      # from-source `cargo install`; the version pin is preserved.
       - name: Install SQLx CLI
-        run: cargo install sqlx-cli --version 0.9.0 --no-default-features --features native-tls,postgres --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: sqlx-cli@0.9.0
 
       # (a) Apply every migration against a fresh database. Fails the PR if any
       #     migration SQL is broken or order-dependent in a way that doesn't
@@ -855,40 +911,7 @@ jobs:
           arguments: --workspace
           rust-version: stable
 
-  # deny-ban-presence (GH #2127, follow-up to #2106/#2111)
-  # ------------------------------------------------------
-  # `cargo deny check bans` only trips when a BANNED version is present in the
-  # graph — DELETING the two quick-xml half-range bans at backend/deny.toml:93-94
-  # leaves `cargo deny` green (nothing to trip). The CODEOWNERS gate on deny.toml
-  # is advisory (branch protection may not enforce "Require review from Code
-  # Owners"), so ban REMOVAL had no independent defence. This job asserts, on the
-  # committed file text, that both half-range bans are still present. It is
-  # deliberately independent of review and of the cargo-deny action.
-  #
-  # Runs on EVERY PR (no `changes` gate): the grep targets a file that always
-  # exists in the tree, so the context is always producible — a prerequisite for
-  # registering it as a required status check on `dev` (see Notes / #2127; the
-  # branch-protection registration in branch-protection-setup.yml needs repo
-  # settings and is intentionally OUT OF SCOPE here).
-  deny-ban-presence:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Assert quick-xml half-range bans are present in backend/deny.toml
-        run: |
-          set -euo pipefail
-          f=backend/deny.toml
-          fail=0
-          if ! grep -Eq 'name[[:space:]]*=[[:space:]]*"quick-xml".*version[[:space:]]*=[[:space:]]*"<0\.41\.0"' "$f"; then
-            echo "::error file=$f::missing lower-bound ban: name = \"quick-xml\", version = \"<0.41.0\""
-            fail=1
-          fi
-          if ! grep -Eq 'name[[:space:]]*=[[:space:]]*"quick-xml".*version[[:space:]]*=[[:space:]]*">0\.41\.0"' "$f"; then
-            echo "::error file=$f::missing upper-bound ban: name = \"quick-xml\", version = \">0.41.0\""
-            fail=1
-          fi
-          if [ "$fail" -ne 0 ]; then
-            echo "The quick-xml =0.41.0 safety pin (XXE/billion-laughs, GH #1519/#1591/#2033/#2056/#2084) must keep BOTH half-range bans. Do not remove them without a focused ota_xml::tests entity-guard review." >&2
-            exit 1
-          fi
-          echo "OK: both quick-xml half-range bans present in $f"
+  # deny-ban-presence (GH #2127) was DELETED here 2026-07-22: it duplicated the
+  # standalone deny-toml-ban-gate.yml workflow verbatim, which carries the
+  # quick-xml half-range ban assertion (XXE/billion-laughs pin) as its own
+  # always-producible context. One producer, no duplicate run.

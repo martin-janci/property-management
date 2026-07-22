@@ -130,8 +130,11 @@ cd frontend && pnpm -r list --depth -1 --json >/dev/null
 ## After-task verification
 
 ```bash
-just check-frontend && just test-frontend
+just verify    # impact-scoped gate (pnpm --filter "...[<merge-base>]") — quote VERIFY-PLAN + VERIFY OK in PR body
 ```
+
+See [`_verify-rules.md`](../_verify-rules.md) — never hand-compose
+workspace-wide commands as a substitute.
 
 ## Cross-references
 

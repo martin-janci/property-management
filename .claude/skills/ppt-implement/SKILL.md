@@ -1,7 +1,7 @@
 ---
 name: ppt-implement
 description: Implement one task end-to-end for the PPT project — pick the right per-stack specialist, code, verify per-stack, push a draft PR against `dev`.
-when_to_use: You are an implementer agent (spawned by the ppt-research-dispatcher routine or hand-invoked) and you have ONE task to land. The dispatcher gives you task text; you select which specialist runs and which verify command to use before opening a PR.
+when_to_use: You are an implementer agent (spawned by the ppt-research-dispatcher routine or hand-invoked) and you have ONE task to land. The dispatcher gives you task text; you select which specialist runs, then `just verify` (scripts/verify-impact.sh) gates the PR automatically.
 mode: both
 capabilities: [C6]
 tags: [workflow, implementer]
@@ -156,70 +156,41 @@ the full list in the PR body under `## Code-reuse review`. If empty,
 
 ## Step 3 — Verify gate (MANDATORY before PR)
 
-Three escalating bands. **Band A is mandatory** — never skip. Run Band B when
-the change is non-trivial (≥50 LOC or touches a public API / migration / config).
-Run Band C when the PR is hot-path (security, billing, auth, data integrity).
-
-### Band A — fast check (per-stack, ALWAYS)
-
-| Specialist     | Minimum verify command(s)                                                                    |
-| ---            | ---                                                                                          |
-| `rust-backend` | `cd backend && cargo check -p <crate>` then `cargo test -p <crate> -- <filter>`              |
-| `db-migration` | `cd backend && cargo sqlx prepare --check` + `cargo test -p db <pattern>`                    |
-| `typespec`     | `cd docs/api/typespec && npx tsp compile .` then `pnpm -F @ppt/api-client build`             |
-| `react-web`    | `pnpm -F ppt-web typecheck` then `pnpm -F ppt-web lint`                                      |
-| `nextjs-web`   | `pnpm -F reality-web typecheck` then `pnpm -F reality-web lint`                              |
-| `react-native` | `pnpm -F mobile typecheck` then `pnpm -F mobile lint`                                        |
-| `kotlin-mp`    | `cd mobile-native && ./gradlew :shared:compileKotlinJvm :androidApp:assembleDebug`           |
-| `ios-swiftui`  | `cd mobile-native && ./gradlew :shared:linkPodReleaseFrameworkIosArm64` (compile only)       |
-| `generic`      | `git diff --check` + `pre-commit run --files <changed>` if `.pre-commit-config.yaml` exists  |
-
-### Band B — full build (when change is non-trivial)
-
-Triggers Band B: ≥50 LOC of substantive change, OR public API surface change,
-OR a new migration, OR config that affects build output. Run AFTER Band A.
-
-| Specialist     | Full-build command(s)                                                                        |
-| ---            | ---                                                                                          |
-| `rust-backend` | `cd backend && cargo build --release -p <crate>` + `cargo clippy -p <crate> -- -D warnings`  |
-| `db-migration` | `cd backend && cargo build -p db` + apply migration on an ephemeral DB (`./scripts/dev-db reset && cargo run -p db --bin migrate`) |
-| `typespec`     | `cd docs/api/typespec && npx tsp compile . --emit '@typespec/openapi3'` then `pnpm -F @ppt/api-client typecheck` |
-| `react-web`    | `pnpm -F ppt-web build` (Vite production build — catches import-time errors lint misses)    |
-| `nextjs-web`   | `pnpm -F reality-web build` (catches SSR-only failures + i18n key drift)                     |
-| `react-native` | `pnpm -F mobile build` (Metro bundle dry-run if available; else `expo prebuild --no-install --clean` to verify config) |
-| `kotlin-mp`    | `cd mobile-native && ./gradlew :androidApp:assembleRelease`                                  |
-| `ios-swiftui`  | `cd mobile-native && ./gradlew :shared:linkPodReleaseFrameworkIosArm64 :shared:assemble`     |
-| `generic`      | (none — Band B doesn't apply to generic)                                                     |
-
-### Band C — CI parity (hot-path PRs only)
-
-Replicate what `.github/workflows/ci.yaml` would run on this PR — locally, so
-red-CI surprises don't happen on push. Use whichever applies:
+Run the deterministic gate:
 
 ```bash
-# Inspect what CI runs for the changed paths:
-gh workflow view ci --repo martin-janci/property-management --yaml | head -200
-
-# Replicate the relevant job. Examples:
-just check                           # repo-wide check target (Justfile)
-just test                            # repo-wide test target
-just lint                            # repo-wide lint target
-
-# Or, with the `act` tool if installed, re-run a single workflow job:
-act -j backend-check  pull_request   # runs the backend-check job locally
-act -j frontend-build pull_request
+just verify        # or: ./scripts/verify-impact.sh
+just verify-plan   # print the plan without running it
 ```
 
-Report Band C results under `## CI parity` in the PR body. If `act` isn't
-available, run the equivalent commands from the workflow file directly and
-note "act not installed — ran workflow commands manually".
+**Band selection is automatic** — `scripts/verify-impact.sh`'s escalation
+table derives the scope from (merge-base with `origin/dev`, changed paths):
+per-crate clippy+tests with reverse dependents for narrow backend diffs,
+`pnpm --filter "...[<merge-base>]"` for frontend diffs, full-workspace only
+when lockfiles / toolchain / migrations / typespec force it, empty plan for
+docs-only diffs. There is no judgment call and no skipping. Guardrails:
+[`.claude/skills/_verify-rules.md`](../_verify-rules.md) — notably: no
+`cargo build`/`--release` locally, no `cargo check` (clippy is the type
+gate), don't re-run an unchanged failing command, flock serializes cargo
+across agents on the host.
+
+CI-parity ("Band C") extras apply ONLY when the task explicitly flags
+hot-path (security, billing, auth, data integrity): in that case, after
+`just verify` is green, additionally replicate the relevant workflow job
+(`gh workflow view backend --yaml`, or `act -j <job> pull_request` if
+installed) and report it under `## CI parity` in the PR body.
+
+Narrow inner-loop commands during development (`cargo clippy -p <crate>`,
+`cargo test -p <crate> -- <filter>`, `pnpm -F <pkg> test`,
+`./gradlew :shared:test`, `npx tsp compile .`) remain encouraged — they
+just don't substitute for the gate.
 
 ### Verify reporting
 
-Quote each command + exit code in the PR body under `## Tested` (Band A),
-`## Built` (Band B), and `## CI parity` (Band C). If any verify command at
-the required band fails: do NOT open a PR. Push partial work to the branch
-and return `pr=none status=partial note=<command-that-failed>`.
+Paste the `VERIFY-PLAN base=<sha> files=<n>` block and the
+`VERIFY OK <hash>` line verbatim in the PR body under `## Verification`.
+If the gate fails: do NOT open a PR. Push partial work to the branch
+and return `pr=none status=partial note=<the VERIFY FAIL line>`.
 
 ## Step 3.5 — IG1–IG8 goal-check (deterministic, MANDATORY before draft PR)
 
@@ -231,7 +202,7 @@ grep the prompt for snippets. Run after Step 3's verify gate and before
 ```bash
 bash .claude/skills/ppt-implement/scripts/goal-check.sh \
   --slug "$SLUG" --base dev \
-  --skip IG7        # IG7 = just check + just test — Step 3 already ran them
+  --skip IG7        # IG7 = just verify — Step 3 already ran it
   # Add --skip IG8 on pre-final commits (archive move is intentionally the
   # LAST commit before merge). Add --skip IG3 only for vectors that
   # legitimately don't require a regression test (e.g. pure docs/refactor —
@@ -278,12 +249,9 @@ gh pr create \
 ## Owner
 <owner_role>
 
-## Tested (Band A — fast check)
-<command>
-<short output / exit 0>
-
-## Built (Band B — full build)
-<command(s) and exit codes — or "skipped: change <50 LOC, no public API/config touch">
+## Verification
+<paste the VERIFY-PLAN base=<sha> files=<n> block verbatim>
+<paste the VERIFY OK <hash> line>
 
 ## CI parity (Band C — hot-path only)
 <command(s) and exit codes — or "skipped: not a hot-path PR (no security/auth/billing/data-integrity change)">
@@ -306,7 +274,7 @@ pr=<number|none> status=<done|partial|blocked> specialist=<name> scope_drift=<tr
 Examples:
 - `pr=512 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=wired useMfa hooks; ppt-web typecheck clean`
 - `pr=513 status=done specialist=rust-backend scope_drift=true code_reuse_warn=JWT_VERIFIER@api_core note=ws sync (drift: handlers/mfa.rs touched; verifier may duplicate)`
-- `pr=none status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=cargo check failed on websocket route stub`
+- `pr=none status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=VERIFY FAIL: cd backend && cargo clippy -p api-core --all-targets -- -D warnings`
 - `pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=needs backend /api/v1/auth/mfa/* first`
 
 The dispatcher writes this verbatim into `.research/management/assignments.json`
