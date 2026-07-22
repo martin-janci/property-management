@@ -11,7 +11,7 @@
  */
 import type { TenantLayoutEnvelope } from '@ppt/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -269,6 +269,98 @@ describe('Test 4: 422 errors render verbatim', () => {
       expect(alert).toBeInTheDocument();
       expect(alert?.textContent).toContain('Field X is invalid');
       expect(alert?.textContent).toContain('Field Y missing');
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 6: an edit made while a save is in flight must not be discarded.
+//
+// Regression for the tautological "changed since sent" check: the previous
+// implementation compared the closure-captured override against a snapshot
+// taken from the same render (always equal), so it cleared dirty on success
+// even when the user had edited during the in-flight save — silently losing
+// that edit. The fix reads the CURRENT override via a ref and re-marks the
+// form dirty when it diverges from the sent payload.
+// ---------------------------------------------------------------------------
+describe('Test 6: edit during in-flight save is preserved', () => {
+  it('keeps the form dirty when a change lands while the save is pending', async () => {
+    const user = userEvent.setup();
+
+    // Deferred save — stays pending until we resolve it, letting us inject an
+    // edit between save-start and save-success.
+    let resolveSave: (value: unknown) => void = () => {};
+    mockSaveImpl = vi.fn(
+      () =>
+        new Promise((res) => {
+          resolveSave = res;
+        })
+    );
+
+    mockEnvelope = {
+      override: null,
+      rails: {
+        hideable: ['hero', 'stats'],
+        mode_editable: [],
+        reorderable: false,
+        prop_whitelist: {},
+      },
+      published: {
+        sections: [
+          { type: 'hero', visible: true },
+          { type: 'stats', visible: true },
+        ],
+      },
+      manifest: null,
+    };
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('hero')).toBeInTheDocument());
+
+    // Edit #1: toggle hero → form dirty, Save enabled.
+    const firstToggle = screen.getAllByRole('button', {
+      name: /layout\.customize\.(hide|show)/,
+    })[0];
+    await user.click(firstToggle);
+
+    const saveBtn = screen.getByRole('button', { name: 'layout.customize.save' });
+    expect(saveBtn).not.toBeDisabled();
+
+    // Start the save — mutateAsync is now pending.
+    await user.click(saveBtn);
+    await waitFor(() => expect(mockSaveImpl).toHaveBeenCalledOnce());
+
+    // The save captured only the hero patch.
+    const [sentPayload] = mockSaveImpl.mock.calls[0] as [{ sections?: Record<string, unknown> }];
+    expect(sentPayload.sections).toMatchObject({ hero: { visible: false } });
+    expect(sentPayload.sections).not.toHaveProperty('stats');
+
+    // Edit #2 (concurrent): toggle stats WHILE the save is in flight.
+    const statsToggle = screen.getAllByRole('button', {
+      name: /layout\.customize\.(hide|show)/,
+    })[1];
+    await user.click(statsToggle);
+
+    // Now let the in-flight save resolve.
+    await act(async () => {
+      resolveSave({});
+    });
+
+    // The later edit must survive: the form stays dirty (Save re-enabled) so
+    // the newer stats change is not silently discarded.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'layout.customize.save' })).not.toBeDisabled();
+    });
+
+    // A follow-up save must send BOTH edits, proving the stats toggle was kept.
+    resolveSave = () => {};
+    mockSaveImpl.mockResolvedValueOnce({});
+    await user.click(screen.getByRole('button', { name: 'layout.customize.save' }));
+    await waitFor(() => expect(mockSaveImpl).toHaveBeenCalledTimes(2));
+    const [secondPayload] = mockSaveImpl.mock.calls[1] as [{ sections?: Record<string, unknown> }];
+    expect(secondPayload.sections).toMatchObject({
+      hero: { visible: false },
+      stats: { visible: false },
     });
   });
 });
