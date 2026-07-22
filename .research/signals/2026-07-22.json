@@ -1,0 +1,213 @@
+{
+  "date": "2026-07-22",
+  "run_iso": "2026-07-22T03:03:07Z",
+  "last_run_iso": "2026-07-21T03:13:00Z",
+  "cursors_at_start": {
+    "last_pr_seen": 2432,
+    "last_issue_seen": 2422,
+    "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d"
+  },
+  "cursors_at_end": {
+    "last_pr_seen": 2432,
+    "last_issue_seen": 2422,
+    "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d"
+  },
+  "phase_1_notes": [
+    "No merged PRs since #2432 (last_pr_seen). Only open PR is #2433 (iOS listing detail, opened 2026-07-20T20:27Z, still <8d — not stalled).",
+    "No new issues since #2422.",
+    "No new commits since 7d52c40... — HEAD unchanged since last run.",
+    "Lag check: 23h < 36h threshold → no lag_warning emitted.",
+    "No churn hotspots — no new commits to derive churn from.",
+    "No screen-map-drift signals — no route files touched this window.",
+    "No screen-map-orphan signals — no route files touched this window."
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "mobile-rn",
+    "selection_reason": "oldest-unreviewed (tied with api-handlers at 2026-07-14; alphabetical tiebreak → mobile-rn, pre-declared in the 2026-07-21 brief). CHURN_FILES was empty this run.",
+    "experts_used": [
+      "frontend",
+      "tester"
+    ],
+    "files_examined": [
+      "frontend/apps/mobile/src/features/layout/registry.tsx",
+      "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts",
+      "frontend/apps/mobile/src/features/layout/layoutCache.ts",
+      "frontend/apps/mobile/src/features/layout/LayoutSections.tsx",
+      "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+      "frontend/apps/mobile/src/hooks/usePushNotifications.ts",
+      "frontend/apps/mobile/src/screens/documents/DocumentUploadScreen.tsx"
+    ],
+    "findings_count": 2,
+    "skipped_notes": [
+      "usePushNotifications.ts console.log lines are __DEV__-gated with a SECURITY comment explicitly preventing token log — not a finding.",
+      "DocumentUploadScreen.tsx `as unknown as Blob` cast (line 172) is the React Native FormData idiom with eslint-disable comment — not a finding.",
+      "useOfflineSupport.ts is well-scoped with a syncingRef re-entrancy guard (issue #1767 legacy) — reviewed and clean."
+    ]
+  },
+  "phase_1_6": {
+    "skipped": true,
+    "reason": "quiet observation window (0 merged PRs, 0 new issues, 0 new commits since last run). Nothing new to synthesise; per routine, G16 is a no-op when Phase 1.6 is skipped. pm_cursor and coverage_cursor left unchanged.",
+    "pm_cursor_next_index_at_end": 6,
+    "coverage_cursor_next_index_at_end": 0
+  },
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-action-queue-dead-press",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx:166 — <Pressable> for pending vote actions has no onPress handler. Tapping the card does nothing. NavigateContext is threaded to DashboardStatsSection but never consumed by ActionQueueSection.",
+        "grep across frontend/apps/mobile/src for ActionQueueSection|onActionPress returned only the component declaration + a test file mention — no external wiring."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-action-queue-hardcoded-type",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx:129-137 — pendingActions map hardcodes type: 'vote'. PendingAction discriminated union (line 21-26) declares 4 types, and getActionIcon() has icons for all 4 (line 148-156), but payment/reading/fault sources aren't queried at all. Dead code in the type union + icon switch."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high AND score>=3 AND allowlist match this run. Both new signals are confidence=medium (static analysis); allowlist requires confidence=high.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-22.md && head -1 | grep '^# 2026-07-22$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … .research/state.json",
+      "observed": "true",
+      "expected": "true",
+      "note": "seen_signals +2, stats.runs +1, review_cursor.mobile-rn advanced null→today, last_run_iso advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev … signals/2026-07-22.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python decay-compare against HEAD backlog.json",
+      "observed": "no open items with updated_at <= 2026-07-08; nothing to decay",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans staged; no adversarial-pass annotation needed",
+      "observed": "0 new plans",
+      "expected": "≤2, each annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep '.md$' | wc -l",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached (with baseline exclusions) | grep secret patterns",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phase-failure line == 'none' → no failed cursors to verify",
+      "observed": "no failed phases",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still resolvable in plans/ or plans/_archive/",
+      "observed": "no plan slugs from run N-1 (2026-07-21 promoted 0 plans); all pre-existing plans still on disk",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files -- .research/plans/_archive/ | wc -l >= git ls-tree HEAD count",
+      "observed": "new=7 old=7",
+      "expected": "new >= old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 not fired — auto_fix_actions is empty; no auto-fix branches pushed; history untouched",
+      "observed": "auto_fix_actions:[], no PRs opened",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 no-op per routine ('If Phase 1.6 was skipped this run, the whole gate is a no-op'). pm_cursor.next_index=6 (in bounds 0..7). coverage_cursor.next_index=0.",
+      "observed": "no-op",
+      "expected": "PASS-when-skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached added-lines regex against telegram token patterns (with baseline exclusions)",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

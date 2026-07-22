@@ -5,8 +5,8 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-21T03:13:00Z",
-  "last_run_ms": 1200000,
+  "last_run_iso": "2026-07-22T03:03:07Z",
+  "last_run_ms": null,
   "last_pr_seen": 2432,
   "last_issue_seen": 2422,
   "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d",
@@ -654,7 +654,9 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-mobile-rn-action-queue-dead-press",
+    "code-review-mobile-rn-action-queue-hardcoded-type"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -664,12 +666,12 @@
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-15",
     "reality-web": "2026-07-17",
-    "mobile-rn": "2026-07-14",
+    "mobile-rn": "2026-07-22",
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 47,
-    "vectors_created": 198,
+    "runs": 48,
+    "vectors_created": 200,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0

@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-21 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-22 03:03 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -18,6 +18,7 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-mobile-rn-action-queue-dead-press` | Mobile ActionQueueSection renders pending vote actions inside <Pressable> with no onPress — every dashboard action tap is a silent no-op (shipped in #2432) | open | 2026-07-22 |  |
 | 2 | test-gap | `screen-map-drift-pr-2431-reality` | Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen) | open | 2026-07-21 |  |
 | 2 | bug | `code-review-ppt-web-ui-propinput-json-coerce` | TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted ("true" -> boolean, "[]" -> array) | open | 2026-07-21 |  |
 | 2 | bug | `code-review-ppt-web-ui-savedirty-stale-closure` | DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded | open | 2026-07-21 |  |
@@ -68,6 +69,7 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | bug | `code-review-mobile-rn-action-queue-hardcoded-type` | Mobile ActionQueueSection hardcodes type: 'vote' — payment/reading/fault action branches (and icons) are unreachable dead code | open | 2026-07-22 |  |
 | 1 | refactor | `refactor-churn-hotspot-repo-map-md-2026-07-20` | Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh) | open | 2026-07-21 |  |
 | 1 | refactor | `refactor-churn-hotspot-ppt-dashboard-md-2026-07-21` | Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration) | open | 2026-07-21 |  |
 | 1 | refactor | `refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21` | Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run | open | 2026-07-21 |  |

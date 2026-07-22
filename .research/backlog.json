@@ -4705,6 +4705,47 @@
       "created_at": "2026-07-21",
       "updated_at": "2026-07-21",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-action-queue-dead-press",
+      "title": "Mobile ActionQueueSection renders pending vote actions inside <Pressable> with no onPress — every dashboard action tap is a silent no-op (shipped in #2432)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review mobile-rn 2026-07-22"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx:166 — <Pressable key={action.id} style={styles.actionCard}> renders vote cards with NO onPress handler. Users see pending vote actions in the mobile dashboard but tapping any card does nothing (no navigation to /voting, no vote-detail open). Sibling to code-review-ppt-web-ui-actionqueue-mock-shipped but in a distinct file/component; landed via PR #2432 (layout mobile registries).",
+        "grep across frontend/apps/mobile/src for ActionQueueSection / onPress bindings returned zero non-declaration/test matches — no wiring exists elsewhere. NavigateContext threads onNavigate to DashboardStatsSection but ActionQueueSection never consumes it."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx"
+      ],
+      "created_at": "2026-07-22",
+      "updated_at": "2026-07-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-action-queue-hardcoded-type",
+      "title": "Mobile ActionQueueSection hardcodes type: 'vote' — payment/reading/fault action branches (and icons) are unreachable dead code",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review mobile-rn 2026-07-22"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx:129-137 — pendingActions is built by mapping votesQuery.data.votes with hardcoded type: 'vote' (line 134). The PendingAction discriminated union (line 21-26) declares 'vote'|'payment'|'reading'|'fault' and getActionIcon() has icons for all four (lines 148-156), but only 'vote' is ever produced. Payment/reading/fault sources aren't queried at all in this component."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/features/layout/registry.tsx"
+      ],
+      "created_at": "2026-07-22",
+      "updated_at": "2026-07-22",
+      "plan": null
     }
   ]
 }
