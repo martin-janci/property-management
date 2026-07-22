@@ -1,9 +1,42 @@
 {
-  "generated": "2026-07-18T16:08:31Z",
+  "generated": "2026-07-22T08:25:28Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-22T08:25:28Z",
+      "prs_scanned": 13,
+      "clean": [
+        2431,
+        2430,
+        2423,
+        2394,
+        2393,
+        2392,
+        2391,
+        2390,
+        2389,
+        2388,
+        2386
+      ],
+      "with_issues": [
+        {
+          "pr": 2426,
+          "issue": 2435,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "put_tenant_override writes updated_by=None (AuthUser bound as _auth, unused) while every other layout write records the actor -> tenant overrides unattributable; RLS itself correct"
+        },
+        {
+          "pr": 2377,
+          "issue": 2434,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "view-webhook dedup gate correct+tested, but 3 comments (portal_webhooks.rs:741,1343; migration 00220:19) cite migration 00218 for the dedup unique index that actually lives in 00219 (00218 is unrelated report_schedules RLS) -- same class as #2417/#2418"
+        }
+      ]
+    },
     {
       "run_at": "2026-07-18T16:08:31Z",
       "prs_scanned": 3,
