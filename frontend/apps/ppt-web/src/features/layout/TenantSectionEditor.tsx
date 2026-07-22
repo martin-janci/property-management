@@ -47,15 +47,46 @@ function pruneSectionPatch(
   return next;
 }
 
+/**
+ * Coerce a blur-committed input string to the value stored in the override.
+ *
+ * A string-typed prop must stay a string: `"true"`, `"[]"` and `"123"` are
+ * legitimate string content, not a signal to coerce them into a boolean /
+ * array / number. We therefore only run JSON coercion when the prop's
+ * *declared* type (the base section's value for this prop) is non-string —
+ * or unknown/untyped, which preserves the ability to enter numbers, booleans
+ * and arrays for whitelisted props that have no string default. JSON that
+ * fails to parse always falls back to the raw string, so user intent for the
+ * whitelisted prop's value is never lost.
+ */
+function coercePropValue(raw: string, declaredValue: unknown): unknown {
+  if (typeof declaredValue === 'string') {
+    return raw;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
 interface PropInputProps {
   type: string;
   propName: string;
   currentValue: unknown;
+  declaredValue: unknown;
   override: TenantOverride;
   onChange(next: TenantOverride): void;
 }
 
-function PropInput({ type, propName, currentValue, override, onChange }: PropInputProps) {
+function PropInput({
+  type,
+  propName,
+  currentValue,
+  declaredValue,
+  override,
+  onChange,
+}: PropInputProps) {
   const display =
     currentValue === undefined || currentValue === null
       ? ''
@@ -73,14 +104,7 @@ function PropInput({ type, propName, currentValue, override, onChange }: PropInp
     if (val === '') {
       delete existingProps[propName];
     } else {
-      // Try JSON parse; fall back to string
-      let parsed: unknown = val;
-      try {
-        parsed = JSON.parse(val);
-      } catch {
-        parsed = val;
-      }
-      existingProps[propName] = parsed;
+      existingProps[propName] = coercePropValue(val, declaredValue);
     }
 
     const newPatch: Record<string, unknown> = { ...existingPatch };
@@ -241,12 +265,16 @@ export function TenantSectionEditor({
                   const currentValue = (override.sections?.[type]?.props ?? base.props ?? {})[
                     propName
                   ];
+                  // Declared type signal: the base section's value for this
+                  // prop. Drives whether a blur-committed string is coerced.
+                  const declaredValue = base.props?.[propName];
                   return (
                     <PropInput
                       key={`${type}:${propName}:${JSON.stringify(currentValue) ?? ''}`}
                       type={type}
                       propName={propName}
                       currentValue={currentValue}
+                      declaredValue={declaredValue}
                       override={override}
                       onChange={onChange}
                     />

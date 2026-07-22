@@ -1,5 +1,5 @@
 import type { BaseSection, LayoutManifest, LayoutRails, TenantOverride } from '@ppt/api-client';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { TenantSectionEditor } from './TenantSectionEditor';
@@ -281,6 +281,44 @@ describe('Scenario 5: whitelisted prop input', () => {
     // props pruned → sections.hero has no props → sections pruned entirely
     expect(next.sections?.hero?.props).toBeUndefined();
     expect(next.sections?.hero).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 5a: string-typed prop is NOT JSON-coerced on commit
+// ---------------------------------------------------------------------------
+
+describe('Scenario 5a: string-typed prop keeps string values', () => {
+  // Whitelist a prop whose base (declared) value is a string. The declared
+  // type must gate coercion so JSON-looking input stays a string instead of
+  // being silently parsed into a boolean / array / number.
+  const stringPropRails: LayoutRails = {
+    ...noRails,
+    prop_whitelist: { hero: ['label'] },
+  };
+  const stringBase: BaseSection[] = [{ type: 'hero', props: { label: 'Welcome' } }];
+
+  // fireEvent.change is used instead of userEvent.type because the JSON-ish
+  // inputs ('[]') contain characters userEvent parses as keyboard descriptors.
+  it.each([['true'], ['[]'], ['123']])('input %j round-trips as the string %j', async (typed) => {
+    const onChange = vi.fn();
+    render(
+      <TenantSectionEditor
+        baseSections={stringBase}
+        rails={stringPropRails}
+        manifest={null}
+        override={emptyOverride}
+        onChange={onChange}
+      />
+    );
+    const input = screen.getByRole('textbox', { name: 'label' });
+    fireEvent.change(input, { target: { value: typed } });
+    fireEvent.blur(input); // commit
+    expect(onChange).toHaveBeenCalledOnce();
+    const next = onChange.mock.calls[0][0] as TenantOverride;
+    const committed = next.sections?.hero?.props?.label;
+    expect(committed).toBe(typed);
+    expect(typeof committed).toBe('string');
   });
 });
 
