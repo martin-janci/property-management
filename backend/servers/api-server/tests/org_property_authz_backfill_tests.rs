@@ -203,9 +203,17 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
             format!("{base}/{UUID}/listings/{UUID2}/history"),
             None,
         ),
-        // NOTE: POST {base}/{UUID}/import (source_url) is intentionally omitted —
-        // the handler performs an outbound fetch of the source URL, which hangs the
-        // synchronous authz sweep in CI. The import read endpoints are covered below.
+        // POST .../import re-added after BIT-559 verification: the handler
+        // (`create_import_job`) performs NO outbound fetch — it calls
+        // `verify_agency_admin` (403 for a non-admin) BEFORE persisting the
+        // `source` string, and `TenantExtractor` runs before the JSON body is
+        // even parsed, so an unauthorized caller is rejected pre-storage. The
+        // earlier CI hang was the ~50-min cold workspace compile, not SSRF.
+        (
+            Method::POST,
+            format!("{base}/{UUID}/import"),
+            Some(r#"{"source":"https://example.com/import.csv"}"#),
+        ),
         (Method::GET, format!("{base}/{UUID}/import/{UUID2}"), None),
         (Method::GET, format!("{base}/{UUID}/import"), None),
     ]
@@ -242,8 +250,18 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
         (Method::PUT, credit.clone(), Some(r#"{"points":6}"#)),
         (Method::DELETE, credit.clone(), None),
         (Method::GET, format!("{cert}/documents"), None),
-        // NOTE: POST {cert}/documents (url) omitted — handler fetches the document
-        // URL, which hangs the synchronous authz sweep in CI.
+        // POST {cert}/documents re-added after BIT-559 verification: the handler
+        // (`create_document`) performs NO outbound fetch — it only stores the
+        // `file_url` string. The `RlsConnection` extractor validates tenant
+        // membership before the handler body (and before the JSON body is
+        // parsed), so a non-member is rejected pre-storage.
+        (
+            Method::POST,
+            format!("{cert}/documents"),
+            Some(
+                r#"{"document_type":"certificate","title":"cert.pdf","file_url":"https://example.com/cert.pdf"}"#,
+            ),
+        ),
         (Method::DELETE, doc.clone(), None),
         (Method::GET, format!("{cert}/milestones"), None),
         (
