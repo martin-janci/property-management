@@ -463,6 +463,13 @@ jobs:
       # `#[ignore]` because it needs a live Redis. Run it once, on partition 1,
       # against the Redis service above (local runs without REDIS_URL still
       # skip it).
+      # --test-threads=1: these tests bind real TCP ports via axum-test's
+      # http_transport, whose free-port registry is PER-PROCESS. nextest runs
+      # each test as its own process, so concurrent tests raced for the same
+      # ports and the pubsub test connected to a SIBLING test's server
+      # (different JWT/db → non-upgrade response → "WebSocket upgrade … is
+      # None", observed on the first #2459 run). The old single-process
+      # `cargo test --include-ignored` never raced; serializing restores that.
       - name: Run ignored WS+Redis integration tests
         if: matrix.shard == 1
         working-directory: backend
@@ -475,6 +482,7 @@ jobs:
           --workspace-remap .
           --profile ci
           --run-ignored ignored-only
+          --test-threads=1
           -E 'binary_id(=api-server::ws_integration_tests)'
 
   # REQUIRED context `test`. Produced by EXACTLY ONE job (#1672). It is a thin
