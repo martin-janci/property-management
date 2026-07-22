@@ -88,6 +88,13 @@ run() {
 # `rest` leg. Kept in sync with the `--exclude` list in `rest` mode below so the
 # partition covers the workspace exactly once. Deriving the list from the
 # filesystem keeps it self-maintaining as servers are added/removed.
+# Intersect with actual workspace members: servers/* dirs that are
+# workspace-excluded (deploy-server since 2026-07-22 — sqlite feature
+# isolation, own workspace + deploy-server.yml CI) still exist on disk but
+# cannot be addressed with `-p` here ("package ID specification did not
+# match any packages").
+workspace_members="$(cargo metadata --no-deps --format-version=1 \
+  | jq -r '.packages[].name')" || exit 64
 mapfile -t server_crates < <(
   find servers -maxdepth 2 -type d -name tests -printf '%h\n' \
     | while read -r d; do
@@ -95,7 +102,8 @@ mapfile -t server_crates < <(
         if find "$d/tests" -maxdepth 1 -name '*.rs' -print -quit | grep -q .; then
           basename "$d"
         fi
-      done | sort -u
+      done | sort -u \
+    | grep -Fx -f <(printf '%s\n' "$workspace_members")
 )
 
 # Enumerate every server integration test binary as a `crate:test` pair.
