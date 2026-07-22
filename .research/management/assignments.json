@@ -88,6 +88,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry2",
+      "branch": "auto-impl/test-gap-hotfix-no-test-pr-1288-webhook-ee949cba",
+      "status": "in-progress",
+      "claimed_at": "2026-07-22T22:13:28Z",
+      "last_updated": "2026-07-22T22:13:28Z",
+      "status_changed_at": "2026-07-22T22:13:28Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
