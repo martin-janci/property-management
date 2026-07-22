@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-18T04:17:53Z",
+  "archived_at": "2026-07-22T08:16:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -27,6 +27,21 @@
       "retry_of": "10b-1-organization-management-dashboard",
       "retry_round": 1,
       "ghost_closed": "dispatcher 2026-07-08: ghost retry of already-shipped work — screen-map admin-organizations.md shipped on dev via PR#1911; verify-first found nothing to add; closed to stop finish-first no-op loop (issue #2153 ghost-retry blind spot)"
+    },
+    {
+      "id": "10b-1-organization-management-dashboard-retry2",
+      "action": "[GHOST-RETRY-DROP: retry-remint minted a row whose work already landed on dev (RECONCILED-DONE); dev-truth guard miss] [RECONCILED-DONE: screen-map admin-organizations.md shipped on dev via PR#1911; verify-first implementer found nothing to add] Coverage gap [mvp]: Organization Management Dashboard — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 2/2 of failed 10b-1-organization-management-dashboard]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=10b-1-organization-management-dashboard reason=failed-no-pr cooldown_ok newest_failure=2026-07-08T16:16:47Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "10b-1-organization-management-dashboard",
+      "retry_round": 2,
+      "last_updated": "2026-07-22T08:13:07Z"
     },
     {
       "id": "10b-2-feature-flag-management",
@@ -1444,6 +1459,21 @@
       "retry_round": 1
     },
     {
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded-retry2",
+      "action": "[GHOST-RETRY-DROP: retry-remint minted a row whose work already landed on dev (RECONCILED-DONE); dev-truth guard miss] [RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform [retry 2/2 of failed code-review-mobile-native-kmp-deeplink-token-not-url-decoded]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=code-review-mobile-native-kmp-deeplink-token-not-url-decoded reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T02:16:12Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "retry_round": 2,
+      "last_updated": "2026-07-22T08:13:07Z"
+    },
+    {
       "id": "code-review-mobile-native-kmp-listing-detail-path-inject",
       "action": "security: ListingRepository.getListingDetail (ListingRepository.kt:46) splices listingId raw into the URL path with no encodeURLPathPart(), unlike ApiClient.getListing which hardens via pathSegment(); listingId is deep-link/nav sourced so '/','?','#','..' can smuggle extra path segments. Apply the same encoding.",
       "owner_role": "pm-security",
@@ -1537,6 +1567,21 @@
         "merged_at": null,
         "at": "2026-07-12T08:04:27Z"
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-search-stale-response-race-retry2",
+      "action": "[GHOST-RETRY-DROP: retry-remint minted a row whose work already landed on dev (RECONCILED-DONE); dev-truth guard miss] [RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] SearchScreen stale-response race — overlapping searches can clobber newer results [retry 2/2 of failed code-review-mobile-native-kmp-search-stale-response-race]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=code-review-mobile-native-kmp-search-stale-response-race reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T06:04:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "code-review-mobile-native-kmp-search-stale-response-race",
+      "retry_round": 2,
+      "last_updated": "2026-07-22T08:13:07Z"
     },
     {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
@@ -6990,6 +7035,32 @@
         "merged_pr": 2375,
         "merged_at": "2026-07-16T08:21:23Z",
         "at": "2026-07-16T08:24:24Z"
+      }
+    },
+    {
+      "id": "gh-issue-2360",
+      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry — increment not gated on dedup (PR #2354) (Closes #2360)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2360) | dev-reconcile 2026-07-22T08:08:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-16T02:05:48Z",
+      "issue_ref": {
+        "number": 2360,
+        "url": "https://github.com/martin-janci/property-management/issues/2360",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "aa157433b703b8001f3f784c9ed13264ea9eee39",
+        "subject": "gh-issue-2360: gate portal view-webhook counter on dedup (no replay/retry inflation) (#2377)",
+        "at": "2026-07-22T08:08:54Z"
       }
     },
     {

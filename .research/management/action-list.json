@@ -2,24 +2,254 @@
   "version": 1,
   "items": [
     {
-      "id": "gh-issue-2360",
-      "action": "Follow-up: per-portal view webhook still inflates syndication stats on replay/retry — increment not gated on dedup (PR #2354) (Closes #2360)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
+      "id": "code-review-api-core-scheduler-units-target-cross-tenant",
+      "action": "scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed",
+      "owner_role": "pm-security",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-16T02:05:48Z (#2360)",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=security)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-07-16T02:05:48Z",
-      "issue_ref": {
-        "number": 2360,
-        "url": "https://github.com/martin-janci/property-management/issues/2360",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
+      "action": "Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-propinput-json-coerce",
+      "action": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-savedirty-stale-closure",
+      "action": "DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2431-reality",
+      "action": "Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "code-review-api-core-scheduler-target-ids-silent-parse",
+      "action": "scheduler.rs get_announcement_target_users() silently swallows target_ids JSON parse errors — malformed payload publishes zero notifications with no log",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2385",
+      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2387",
+      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
+      "action": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
+      "action": "Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-package-json-2026-07-20",
+      "action": "Churn hotspot: frontend/apps/mobile/package.json — 5 touches this window (Expo/expo-notifications/expo-config-plugins dependabot cascade)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
+      "action": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
+      "action": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "82-1-swiftui-project-setup-retry1",
+      "action": "[MACOS-GATE-DEFER: SwiftUI/iOS project setup not buildable in this env or fleet (no macOS toolchain); dispatcher cannot verify — human/macOS path] Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "deferred",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "82-1-swiftui-project-setup",
+      "retry_round": 1,
+      "last_updated": "2026-07-22T08:13:58Z"
+    },
+    {
+      "id": "test-gap-repeated-churn-oauth-integration-tests-retry1",
+      "action": "oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving [retry 1/2 of failed test-gap-repeated-churn-oauth-integration-tests]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=test-gap-repeated-churn-oauth-integration-tests reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T04:04:05Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "test-gap-repeated-churn-oauth-integration-tests",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-15T01:55:00Z"

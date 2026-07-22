@@ -2063,6 +2063,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "dx-routine-lag-catchup-2026-07-retry1",
+      "branch": "auto-impl/dx-routine-lag-catchup-2026-07-retry1-1f616319",
+      "status": "failed",
+      "claimed_at": "2026-07-18T20:10:28Z",
+      "last_updated": "2026-07-22T08:08:17Z",
+      "status_changed_at": "2026-07-22T08:08:17Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [reclaim-declined: dev-truth override — operator-scheduling, not-a-repo-change; backlog-dropped; respawn would re-derive no-op]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "dx-stalled-review-pr-988",
       "branch": "auto-impl/dx-stalled-review-pr-988-0c09679d",
       "status": "failed",
@@ -6035,6 +6057,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2360",
+      "branch": "auto-impl/gh-issue-2360-b8b7bd28",
+      "status": "merged",
+      "claimed_at": "2026-07-16T04:11:18Z",
+      "last_updated": "2026-07-22T08:08:17Z",
+      "status_changed_at": "2026-07-22T08:08:17Z",
+      "pr_number": 2377,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2377",
+      "merged_at": "2026-07-19T15:45:09Z",
+      "specialist": null,
+      "implementer_summary": " [merged on GH #2377 by operator despite quarantine; reconciled quarantined→merged]",
+      "reviewer_summary": "verdict=changes head_oid=46076283690b5e2549aaae002515ff89481db706 note=Ok(None)-dup-collapses-to-Recorded(gate-inert)+clippy-red+00219-migration-collision",
+      "last_reviewed_oid": "46076283690b5e2549aaae002515ff89481db706",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 3,
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-07-16T16:10:37Z",
+      "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes after 3 respawns"
+    },
+    {
       "task_id": "gh-issue-2361",
       "branch": "auto-impl/gh-issue-2361-6d63de68",
       "status": "merged",
@@ -7271,7 +7317,29 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "triage-issue-1380-retry2",
+      "branch": "auto-impl/triage-issue-1380-retry2-898b6c01",
+      "status": "failed",
+      "claimed_at": "2026-07-18T20:10:28Z",
+      "last_updated": "2026-07-22T08:08:17Z",
+      "status_changed_at": "2026-07-22T08:08:17Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [reclaim-declined: dev-truth override — issue #1380 CLOSED+completed 2026-06-15; 2 prior already-resolved failures; backlog-dropped]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-18T04:17:41Z"
+  "archived_at": "2026-07-22T08:15:16Z"
 }
