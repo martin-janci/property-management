@@ -249,20 +249,6 @@
       "retry_round": 2
     },
     {
-      "id": "churn-hotspot-mobile-native-search-screen-kt-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters) [retry 2/2 of failed churn-hotspot-mobile-native-search-screen-kt]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=churn-hotspot-mobile-native-search-screen-kt reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T10:05:12Z",
-      "retry_of": "churn-hotspot-mobile-native-search-screen-kt",
-      "retry_round": 2
-    },
-    {
       "id": "gh-issue-2441",
       "action": "Security: cross-tenant IDOR cluster in disputes.rs sub-resource handlers (5 handlers, no org scoping) (Closes #2441)",
       "owner_role": "pm-security",
@@ -305,34 +291,6 @@
       }
     },
     {
-      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap [retry 2/2 of failed code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T12:10:08Z",
-      "retry_of": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
-      "retry_round": 2
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-announcements-retry2",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy [retry 2/2 of failed refactor-churn-hotspot-mobile-announcements]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=refactor-churn-hotspot-mobile-announcements reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T12:10:08Z",
-      "retry_of": "refactor-churn-hotspot-mobile-announcements",
-      "retry_round": 2
-    },
-    {
       "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry2",
       "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods [retry 2/2 of failed test-gap-hotfix-no-test-pr-1288-webhook-rls]",
       "owner_role": "pm-backend",
@@ -359,26 +317,6 @@
       "first_open_at": "2026-07-22T14:06:53Z",
       "retry_of": "bug-ios-deeplink-info-plist-missing",
       "retry_round": 2
-    },
-    {
-      "id": "gh-issue-2449",
-      "action": "Follow-up: layout tenant/publish validation never checks prop VALUES — only keys; docstring overclaims (PR #2424) (Closes #2449)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-22T18:04:06Z (#2449)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T18:04:06Z",
-      "issue_ref": {
-        "number": 2449,
-        "url": "https://github.com/martin-janci/property-management/issues/2449",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"

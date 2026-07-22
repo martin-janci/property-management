@@ -1,0 +1,41 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-22",
+  "generated_by": "dispatcher-tier1d",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (review_cursor.mobile-rn=2026-07-14, tied with api-handlers which was already reviewed earlier today). No CHURN_FILES handed to this slice, so churn-alignment did not apply.",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 2,
+  "note": "Segment is mature and heavily tested (NFC credential storage uses SecureStore, push-token handling never logs the raw token, deep-link/universal-link parsing host-allowlists, offline queue has thorough FIFO/temp-id-remap logic). Findings below are the two substantive issues; nits skipped per skill.",
+  "signals": [
+    {
+      "id": "code-review-mobile-offline-4xx-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:250 — executeQueuedAction marks EVERY 4xx as permanent (`response.status >= 400 && response.status < 500`), and processQueue (line 352-357) then drops the queued offline action with only a console.error. This blanket rule discards actions on transient 4xx: 401 Unauthorized (common when the access token expired while offline and the queued replay races the token refresh), 408 Request Timeout, and 429 Too Many Requests (explicitly retryable per HTTP semantics). For an offline-first app this means a user's queued fault report / vote / document mutation is silently and permanently lost on a recoverable auth or rate-limit condition, with no persistent record and no user-facing alert (only the transient SyncProgress.failed count). Suggest excluding 401/408/429 (and possibly 425) from the permanent classification so they go through the retry budget."
+      ]
+    },
+    {
+      "id": "code-review-mobile-alert-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:77 — Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') hardcoded English",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:64,77 — Alert.alert('Widget Added', ...) and Alert.alert('Widgets Updated', ...) hardcoded English",
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:115 — Alert.alert('Could not open document', 'The file viewer is unavailable on this device.') hardcoded English",
+        "All three screens already import useTranslation and use t(...) elsewhere, so these are genuine i18n oversights in a 4-language app (sk, cs, de, en). User-facing strings should be wrapped in t('...')."
+      ]
+    }
+  ]
+}
