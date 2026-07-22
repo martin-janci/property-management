@@ -169,6 +169,8 @@ live in **[`docs/git-workflow.md`](docs/git-workflow.md)** -- read it on demand.
 
 The repo also ships a root `justfile` for common cross-stack tasks — run `just` with no args to list recipes.
 
+**Self-check:** `just verify` is the one command to run before pushing — a deterministic, impact-scoped gate (fmt/clippy/tests/typecheck limited to what you changed). `just verify-plan` prints the plan without running it.
+
 ### Run dev servers
 
 ```bash
@@ -196,7 +198,7 @@ cd backend && cargo test                      # full workspace
 cd backend && cargo test -p api-core          # single crate
 
 # Frontend
-cd frontend && pnpm test                      # all packages
+cd frontend && pnpm test                      # all packages (single run — use test:watch for watch mode)
 cd frontend && pnpm typecheck                 # TS check only
 
 # Mobile Native
@@ -237,7 +239,7 @@ Every PR against `dev` must pass these GitHub Actions before merge:
 | `version-bump.yml` | Push to `main` | Auto-bumps patch version after merge |
 | `approve-pr.yml` / `auto-approve.yml` | PR events | Dependabot / trusted-author auto-approval gate (≥2 min after last push) |
 
-Local pre-flight before pushing: `cargo fmt && cargo clippy && cargo test` in `backend/`, `pnpm check && pnpm typecheck && pnpm test` in `frontend/`.
+Local pre-flight before pushing: `just verify` (impact-scoped); or manually `cargo fmt && cargo clippy && cargo test` in `backend/`, `pnpm check && pnpm typecheck && pnpm test` in `frontend/`.
 
 ## Worktrees
 

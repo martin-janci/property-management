@@ -1,3 +1,5 @@
+> ⚠️ Historical snapshot (2026-03-19) — findings are stale; do not act on this.
+
 # PPT Team Audit Report
 
 **Date:** 2026-03-19
